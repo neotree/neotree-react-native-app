@@ -1,11 +1,114 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Text } from 'react-native';
+import copy from '@/constants/copy/auth';
+import makeStyles from '@/ui/styles/makeStyles';
+import { useAuthenticationContext } from '@/contexts/authentication';
+import { signIn } from '@/api/auth';
+
+import { View } from 'react-native';
+import Input from '@/ui/Input';
+import Button from '@/ui/Button';
+import Divider from '@/ui/Divider';
+import Typography from '@/ui/Typography';
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    width: '100%',
+    maxWidth: 400,
+    padding: theme.spacing(2)
+  }
+}));
 
 const Form = () => {
-  return <Text>Auth</Text>;
-};
+  const emailInputRef = React.useRef(null);
+  const passwordInputRef = React.useRef(null);
 
-Form.propTypes = {};
+  const [error, setError] = React.useState(null);
+
+  const { state: { form, authenticating }, setState, setForm } = useAuthenticationContext();
+
+  const onChange = v => {
+    setError(null);
+    setForm(v);
+  };
+
+  const styles = useStyles();
+
+  const authenticate = () => {
+    if (authenticating) return;
+    
+    setState({ authenticating: true });
+    setError(null);
+
+    const done = (e) => {
+      setError(e);
+      setState({ authenticating: false });
+    };
+
+    signIn({ email: form.email, password: form.password })
+      .then(() => done(null))
+      .catch(done);
+  };
+
+  return (
+    <>
+      <View style={[styles.root]}>
+        <Input
+          ref={emailInputRef}
+          fullWidth
+          size="xl"
+          color="secondary"
+          autoCapitalize="none"
+          placeholder={copy.EMAIL_INPUT_TEXT}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordInputRef.current.focus()}
+          blurOnSubmit={false}
+          onChangeText={v => onChange({ email: v })}
+        />
+
+        <Divider border={false} />
+
+        <Input
+          ref={passwordInputRef}
+          fullWidth
+          size="xl"
+          color="secondary"
+          autoCapitalize="none"
+          secureTextEntry
+          autoCompleteType="password"
+          placeholder={copy.PASSWORD_INPUT_TEXT}
+          returnKeyType="go"
+          onSubmitEditing={authenticate}
+          onChangeText={v => onChange({ password: v })}
+        />
+
+        <Divider border={false} />
+
+        {!error ? null : (
+          <>
+            <Typography
+              variant="caption"
+              color="error"
+              style={{ textAlign: 'center' }}
+            >
+              {error.message || error.msg || JSON.stringify(error)}
+            </Typography>
+
+            <Divider border={false} />
+          </>
+        )}
+
+        <Button
+          size="xl"
+          color="secondary"
+          variant="contained"
+          disabled={authenticating}
+          onPress={authenticate}
+        >
+          {copy.SIGN_IN_BUTTON_TEXT}
+        </Button>
+      </View>
+    </>
+  );
+};
 
 export default Form;

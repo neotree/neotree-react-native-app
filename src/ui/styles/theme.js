@@ -4,7 +4,19 @@ export default {
     const spacing = 8;
     return spacing + (spacing * (val - 1));
   },
-  
+
+  fontSize: {
+    default: 18,
+    sm: 12,
+    lg: 25,
+    xl: 30,
+    h1: 35,
+    h2: 30,
+    h3: 25,
+    h4: 20,
+    caption: 12,
+  },
+
   palette: {
     primary: {
       main: '#22a6b3',
@@ -26,6 +38,7 @@ export default {
       primary: '#000',
       secondary: '#999',
       disabled: '#999'
-    }
+    },
+    disabled: '#ddd',
   }
 };
