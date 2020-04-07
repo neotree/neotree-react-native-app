@@ -13,7 +13,7 @@ import Typography from '@/ui/Typography';
 const useStyles = makeStyles(theme => ({
   root: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 500,
     padding: theme.spacing(2)
   }
 }));
@@ -35,7 +35,7 @@ const Form = () => {
 
   const authenticate = () => {
     if (authenticating) return;
-    
+
     setState({ authenticating: true });
     setError(null);
 
@@ -58,10 +58,12 @@ const Form = () => {
           size="xl"
           color="secondary"
           autoCapitalize="none"
+          autoCompleteType="email"
           placeholder={copy.EMAIL_INPUT_TEXT}
           returnKeyType="next"
           onSubmitEditing={() => passwordInputRef.current.focus()}
           blurOnSubmit={false}
+          value={form.email}
           onChangeText={v => onChange({ email: v })}
         />
 
@@ -78,6 +80,7 @@ const Form = () => {
           placeholder={copy.PASSWORD_INPUT_TEXT}
           returnKeyType="go"
           onSubmitEditing={authenticate}
+          value={form.password}
           onChangeText={v => onChange({ password: v })}
         />
 
