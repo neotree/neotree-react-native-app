@@ -15,7 +15,6 @@ export default (theme) => {
     },
 
     logoContainer: {
-      backgroundColor: theme.palette.primary.text,
       alignItems: 'center',
       justifyContent: 'center',
       height: constants.SPLASH_LOGO_HEIGHT,
