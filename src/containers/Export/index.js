@@ -2,14 +2,14 @@ import React from 'react';
 import { View } from 'react-native';
 import Typography from '@/ui/Typography';
 
-const Home = () => {
+const Export = () => {
   return (
     <>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="h1">Home</Typography>
+        <Typography variant="h1">Export</Typography>
       </View>
     </>
   );
 };
 
-export default Home;
+export default Export;

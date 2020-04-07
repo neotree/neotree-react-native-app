@@ -4,14 +4,13 @@ import { onAuthStateChanged } from '@/api/auth';
 import { useAppContext } from '@/contexts/app';
 
 import { View, Text, StyleSheet } from 'react-native';
-import ThemeProvider from '@/ui/styles/ThemeProvider';
+import { LayoutContainer } from '@/components/Layout';
 import LazyComponent from '@/components/LazyComponent';
 import Splash from '@/components/Splash';
 
-const Authentication = LazyComponent(() => import('@/containers/Authentication'));
-const Home = LazyComponent(() => import('@/containers/Home'));
+const Containers = LazyComponent(() => import('@/containers'), { LoaderComponent: Splash });
 
-const NeoTreeApp = () => {
+const NeoTreeApp = (props) => {
   const { setState, state: { authenticatedUser, authenticatedUserInitialised } } = useAppContext();
 
   React.useEffect(() => {
@@ -33,7 +32,11 @@ const NeoTreeApp = () => {
             return <Authentication />;
           }
 
-          return <Home />;
+          return (
+            <LayoutContainer>
+              <Containers />
+            </LayoutContainer>
+          );
         })()}
       </View>
     </>

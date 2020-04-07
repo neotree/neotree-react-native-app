@@ -1,7 +1,9 @@
+import 'react-native-gesture-handler';
 import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import * as firebase from 'firebase';
 import firebaseConfig from './config/firebase.config';
+
+import { NativeRouter } from "react-router-native";
 import Main from '@';
 
 firebase.initializeApp(firebaseConfig);
@@ -9,9 +11,9 @@ firebase.initializeApp(firebaseConfig);
 const App = () => {
   return (
     <>
-      <NavigationContainer>
+      <NativeRouter>
         <Main />
-      </NavigationContainer>
+      </NativeRouter>
     </>
   )
 };
