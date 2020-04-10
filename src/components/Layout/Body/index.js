@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { provideLayoutContext } from '@/contexts/layout/Provider';
 import makeStyles from '@/ui/styles/makeStyles';
 
 import { ScrollView } from 'react-native';
@@ -36,4 +35,4 @@ LayoutBody.propTypes = {
   ]),
 };
 
-export default provideLayoutContext(LayoutBody);
+export default LayoutBody;

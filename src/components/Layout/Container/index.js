@@ -1,9 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { provideLayoutContext } from '@/contexts/layout/Provider';
 import makeStyles from '@/ui/styles/makeStyles';
-
 import { View } from 'react-native';
+import { provideLayoutContext } from '../Context/Provider';
 
 const useStyles = makeStyles(() => ({
   root: {

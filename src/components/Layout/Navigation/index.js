@@ -8,7 +8,7 @@ const useStyles = makeStyles((theme, props) => ({
   root: {
     flexDirection: 'row',
     borderColor: '#ddd',
-    height: 50,
+    height: 60,
     alignItems: 'center',
     ...props.placement === 'bottom' ? {
       borderTopWidth: 1,

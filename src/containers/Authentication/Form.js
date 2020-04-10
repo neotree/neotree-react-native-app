@@ -40,8 +40,10 @@ const Form = () => {
     setError(null);
 
     const done = (e) => {
-      setError(e);
-      setState({ authenticating: false });
+      if (e) {
+        setError(e);
+        setState({ authenticating: false });
+      }
     };
 
     signIn({ email: form.email, password: form.password })

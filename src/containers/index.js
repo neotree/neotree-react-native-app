@@ -31,21 +31,26 @@ const Containers = () => {
           active={isLocationActive('/')}
           onPress={() => history.push('/')}
           label="Homes"
+          icon="md-home"
         />
         <LayoutNavItem
           active={isLocationActive('/export')}
           onPress={() => history.push('/export')}
           label="Export"
+          icon="md-cloud-upload"
         />
         <LayoutNavItem
           active={isLocationActive('/notifications')}
           onPress={() => history.push('/notifications')}
-          color="primary" label="Notifications"
+          color="primary"
+          label="Notifications"
+          icon="md-notifications"
         />
         <LayoutNavItem
           active={isLocationActive('/profile')}
           onPress={() => history.push('/profile')}
           label="Profile"
+          icon="md-person"
         />
       </LayoutNavigation>
     </>
