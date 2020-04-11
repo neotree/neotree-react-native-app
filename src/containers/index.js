@@ -39,13 +39,13 @@ const Containers = () => {
           label="Export"
           icon="md-cloud-upload"
         />
-        <LayoutNavItem
+        {/*<LayoutNavItem
           active={isLocationActive('/notifications')}
           onPress={() => history.push('/notifications')}
           color="primary"
           label="Notifications"
           icon="md-notifications"
-        />
+        />*/}
         <LayoutNavItem
           active={isLocationActive('/profile')}
           onPress={() => history.push('/profile')}

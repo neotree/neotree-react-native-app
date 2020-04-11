@@ -18,7 +18,7 @@ const useStyles = makeStyles((theme, props) => ({
   },
   icon: {
     fontSize: 25,
-    color: props.active ? theme.palette[props.color || 'primary'].main : theme.palette.text.primary
+    color: props.active ? theme.palette[props.color || 'primary'].main : theme.palette.text.secondary
   }
 }));
 
@@ -43,7 +43,7 @@ const LayoutNavItem = ({ children, style, active, color, label, icon, ...props }
           {!label ? null : (
             <Typography
               variant="caption"
-              {...active ? { color } : null}
+              color={active ? color || 'primary' : 'textSecondary'}
             >
               {label}
             </Typography>
