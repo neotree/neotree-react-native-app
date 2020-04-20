@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import makeStyles from '@/ui/styles/makeStyles';
 import { View } from 'react-native';
 import { provideLayoutContext } from '../Context/Provider';
+import Constants from 'expo-constants';
 
 const useStyles = makeStyles(() => ({
   root: {
-    flex: 1
+    flex: 1,
+    marginTop: Constants.statusBarHeight,
   }
 }));
 

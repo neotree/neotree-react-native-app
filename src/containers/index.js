@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import LazyComponent from '@/components/LazyComponent';
+import LazyPage from '@/components/LazyPage';
 import { LayoutContainer, LayoutBody, LayoutNavItem, LayoutNavigation } from '@/components/Layout';
 import { Route, useHistory, useLocation } from "react-router-native";
 
-const Home = LazyComponent(() => import('@/containers/Home'));
-const Notifications = LazyComponent(() => import('@/containers/Notifications'));
-const Export = LazyComponent(() => import('@/containers/Export'));
-const Profile = LazyComponent(() => import('@/containers/Profile'));
+const Home = LazyPage(() => import('@/containers/Home'));
+const Notifications = LazyPage(() => import('@/containers/Notifications'));
+const Export = LazyPage(() => import('@/containers/Export'));
+const Profile = LazyPage(() => import('@/containers/Profile'));
 
 const Containers = () => {
   const history = useHistory();

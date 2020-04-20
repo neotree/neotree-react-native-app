@@ -1,16 +1,16 @@
 import React from 'react';
-import { provideAppContext } from '@/contexts/app/Provider';
 import { onAuthStateChanged } from '@/api/auth';
-import { useAppContext } from '@/contexts/app';
+import { useAppContext, provideAppContext } from '@/contexts/app';
+import { provideCacheContext } from '@/contexts/cache';
 import { useHistory } from 'react-router-native';
 
 import { View, Text, StyleSheet } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
-import LazyComponent from '@/components/LazyComponent';
+import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
 
-const Authentication = LazyComponent(() => import('@/containers/Authentication'), { LoaderComponent: Splash });
-const Containers = LazyComponent(() => import('@/containers'), { LoaderComponent: Splash });
+const Authentication = LazyPage(() => import('@/containers/Authentication'), { LoaderComponent: Splash });
+const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
 
 const NeoTreeApp = (props) => {
   const history = useHistory();
@@ -50,4 +50,6 @@ const NeoTreeApp = (props) => {
   );
 };
 
-export default provideAppContext(NeoTreeApp);
+export default provideAppContext(
+  provideCacheContext(NeoTreeApp)
+);

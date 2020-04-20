@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import makeStyles from '@/ui/styles/makeStyles';
 
-import { ScrollView } from 'react-native';
+import { View } from 'react-native';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -15,14 +15,14 @@ const LayoutBody = ({ children, style, ...props }) => {
 
   return (
     <>
-      <ScrollView
+      <View
         style={[
           styles.root,
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
         {children}
-      </ScrollView>
+      </View>
     </>
   );
 };

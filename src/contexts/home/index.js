@@ -1,16 +1,17 @@
 import React from 'react';
+import { getScripts } from '@/api/scripts';
 import getProvider from './getProvider';
 
 export const Context = React.createContext(null);
 
-export function useAppContext() {
+export function useHomeContext() {
   return React.useContext(Context);
 }
 
 export const Provider = getProvider(Context);
 
-export function provideAppContext(Component) {
-  return function AppContextProvider(props) {
+export function provideHomeContext(Component) {
+  return function HomeContextProvider(props) {
     return (
       <Provider>
         <Component {...props} />
