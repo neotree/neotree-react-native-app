@@ -11,7 +11,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const Scripts = () => {
-  const { state: { scripts } } = useHomeContext();
+  const { state: { scripts, loadingScripts }, getScripts } = useHomeContext();
 
   const styles = useStyles();
 
@@ -19,6 +19,8 @@ const Scripts = () => {
     <View style={[styles.root]}>
       <FlatList
         data={scripts}
+        onRefresh={getScripts}
+        refreshing={loadingScripts}
         renderItem={({ item }) => <Script item={item} />}
         keyExtractor={item => item.id}
       />

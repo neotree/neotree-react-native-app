@@ -7,14 +7,9 @@ import Scripts from './Scripts';
 const Home = () => {
   const { getScripts } = useHomeContext();
 
-  React.useEffect(() => {
-    getScripts();
-  }, []);
-
   return (
     <>
       <View style={{ flex: 1 }}>
-        <Typography variant="h1">Home</Typography>
         <Scripts />
       </View>
     </>

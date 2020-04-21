@@ -5,24 +5,33 @@ import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
 import Typography from '@/ui/Typography';
 import Divider from '@/ui/Divider';
+import { Link } from 'react-router-native';
 
-const useStyles = makeStyles(() => ({
-  root: {}
+const useStyles = makeStyles(theme => ({
+  root: {
+    padding: theme.spacing()
+  }
 }));
 
 const Script = ({ item }) => {
+  const data = { ...item, ...item.data };
+
   const { state: { scripts } } = useHomeContext();
 
   const styles = useStyles();
 
+  const linkWrapper = children => (
+    <Link to={`/script/${data.id}`}>{children}</Link>
+  );
+
   return (
     <>
       <View style={[styles.root]}>
-        <Typography variant="h4">{item.title}</Typography>
-        <Typography variant="caption" color="textSecondary">{item.description}</Typography>
+        {linkWrapper(<Typography>{data.title}</Typography>)}
+        <Typography variant="caption" color="textSecondary">{data.description}</Typography>
       </View>
 
-      <Divider />
+      <Divider border={false} />
     </>
   );
 };

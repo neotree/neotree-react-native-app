@@ -6,7 +6,9 @@ export default Context => {
   return props => {
     const cacheContext = useCacheContext();
 
-    const [state, _setState] = React.useState(cacheContext.homeState || {
+    console.log(cacheContext.state.homeState);
+
+    const [state, _setState] = React.useState(cacheContext.state.homeState || {
       scripts: [],
       loadingScripts: false,
       loadScriptsError: null,
@@ -16,10 +18,6 @@ export default Context => {
     const setState = s => _setState(
       typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
     );
-
-    React.useEffect(() => {
-      return () => cacheContext.setState({ homeState: state });
-    });
 
     const _getScripts = () => {
       setState({ loadScriptsError: null, loadingScripts: true });
@@ -39,12 +37,23 @@ export default Context => {
         }));
     };
 
+    const initialisePage = () => {
+      _getScripts();
+    };
+
+    React.useEffect(() => { initialisePage(); }, []);
+
+    React.useEffect(() => {
+      return () => cacheContext.setState({ homeState: state });
+    }, [state]);
+
     return (
       <Context.Provider
         {...props}
         value={{
           state,
           setState,
+          initialisePage,
           getScripts: _getScripts
         }}
       />

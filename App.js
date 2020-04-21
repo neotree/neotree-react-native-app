@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as firebase from 'firebase';
 import firebaseConfig from './config/firebase.config';
 
-import { NativeRouter } from "react-router-native";
+import { NativeRouter, BackButton } from "react-router-native";
 import Main from '@';
 
 firebase.initializeApp(firebaseConfig);
@@ -12,7 +12,9 @@ const App = () => {
   return (
     <>
       <NativeRouter>
-        <Main />
+        <BackButton>
+          <Main />
+        </BackButton>
       </NativeRouter>
     </>
   )
