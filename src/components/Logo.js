@@ -4,7 +4,7 @@ import constants from '@/constants';
 import { Image } from 'react-native';
 import useTheme from '@/ui/styles/useTheme';
 
-const Logo = ({ color, style }) => {
+const Logo = ({ color, style, size }) => {
   const { palette, spacing } = useTheme();
 
   // const img = Image.resolveAssetSource(require('~/assets/images/neotree.png'));
@@ -14,13 +14,13 @@ const Logo = ({ color, style }) => {
       <Image
         source={require('~/assets/images/neotree.png')}
         style={[
+          style,
           {
-            width: 90,
-            height: 90,
+            width: size || 90,
+            height: size || 90,
             borderRadius: 45,
             backgroundColor: palette[color] ? palette[color].main : 'transparent'
           },
-          style,
         ]}
       />
     </>
@@ -29,6 +29,7 @@ const Logo = ({ color, style }) => {
 
 Logo.propTypes = {
   style: PropTypes.object,
+  size: PropTypes.number,
   color: PropTypes.oneOf(['primary', 'secondary'])
 };
 

@@ -58,7 +58,7 @@ LayoutNavItem.propTypes = {
   children: PropTypes.node,
   icon: PropTypes.string,
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
 };

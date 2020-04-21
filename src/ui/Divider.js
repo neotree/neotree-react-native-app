@@ -27,7 +27,7 @@ Divider.propTypes = {
   spacing: PropTypes.number,
   border: PropTypes.bool,
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
 };

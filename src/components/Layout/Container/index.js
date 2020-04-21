@@ -32,7 +32,7 @@ const LayoutContainer = ({ children, style, ...props }) => {
 LayoutContainer.propTypes = {
   children: PropTypes.node,
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
 };

@@ -51,7 +51,7 @@ Button.propTypes = {
   variant: PropTypes.oneOf(['outlined', 'contained']),
   color: PropTypes.oneOf(['primary', 'secondary', 'disabled', 'error', 'success']),
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
 };

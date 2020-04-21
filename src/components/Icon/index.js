@@ -22,7 +22,7 @@ Icon.propTypes = {
   color: PropTypes.oneOf(['primary', 'secondary', 'disabled', 'error', 'success']),
   size: PropTypes.number,
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
 };

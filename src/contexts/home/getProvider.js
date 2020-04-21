@@ -6,8 +6,6 @@ export default Context => {
   return props => {
     const cacheContext = useCacheContext();
 
-    console.log(cacheContext.state.homeState);
-
     const [state, _setState] = React.useState(cacheContext.state.homeState || {
       scripts: [],
       loadingScripts: false,
@@ -38,7 +36,7 @@ export default Context => {
     };
 
     const initialisePage = () => {
-      _getScripts();
+      if (!state.scriptsInitialised) _getScripts();
     };
 
     React.useEffect(() => { initialisePage(); }, []);

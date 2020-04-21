@@ -52,7 +52,7 @@ const Input = React.forwardRef(({
 
 Input.propTypes = {
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
   size: PropTypes.oneOf(['sm', 'xl', 'lg']),

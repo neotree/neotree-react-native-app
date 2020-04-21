@@ -38,7 +38,7 @@ const LayoutNavigation = ({ children, style, placement, ...props }) => {
 LayoutNavigation.propTypes = {
   children: PropTypes.node,
   style: PropTypes.oneOfType([
-    PropTypes.shape,
+    PropTypes.array,
     PropTypes.object,
   ]),
   placement: PropTypes.oneOf(['top', 'bottom'])
