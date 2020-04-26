@@ -10,7 +10,7 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-const LayoutBody = ({ children, style, ...props }) => {
+const LayoutBody = ({ children, style }) => {
   const styles = useStyles();
 
   return (

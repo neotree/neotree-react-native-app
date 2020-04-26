@@ -38,6 +38,8 @@ const Typography = ({
 };
 
 Typography.propTypes = {
+  variant: PropTypes.string,
+  color: PropTypes.string,
   children: PropTypes.node,
   style: PropTypes.oneOfType([
     PropTypes.array,

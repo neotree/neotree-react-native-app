@@ -1,9 +1,9 @@
 import hexToRGB from '../styles/hexToRGB';
 
-export default (theme, props) => {
+export default (theme) => {
   const transparentize = hex => {
     const { r, g, b } = hexToRGB(hex) || {};
-    return `rgba(${[r || '',g || '',b || ''].join(',')},.08)`;
+    return `rgba(${[r || '', g || '', b || ''].join(',')},.08)`;
   };
 
   return {

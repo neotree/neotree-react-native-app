@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutNavItem } from '@/components/Layout';
-import { useHistory, useLocation } from "react-router-native";
+import { useHistory, useLocation } from 'react-router-native';
 
 const NavMenu = () => {
   const history = useHistory();

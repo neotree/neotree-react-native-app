@@ -4,7 +4,6 @@ import { useHomeContext } from '@/contexts/home';
 import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
 import Typography from '@/ui/Typography';
-import Divider from '@/ui/Divider';
 import { Link } from 'react-router-native';
 
 const useStyles = makeStyles(theme => ({

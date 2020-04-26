@@ -16,7 +16,7 @@ export function provideAppContext(Component) {
         <Component {...props} />
       </Provider>
     );
-  }
+  };
 }
 
 export default Context;

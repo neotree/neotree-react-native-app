@@ -5,6 +5,7 @@ import NavMenu from '@/components/NavMenu';
 import { LayoutContainer, LayoutBody, LayoutNavigation } from '@/components/Layout';
 import { Switch, Route } from "react-router-native";
 
+const Authentication = LazyPage(() => import('@/containers/Authentication'));
 const Home = LazyPage(() => import('@/containers/Home'));
 const Notifications = LazyPage(() => import('@/containers/Notifications'));
 const Export = LazyPage(() => import('@/containers/Export'));
@@ -15,6 +16,7 @@ const Containers = () => {
   return (
     <>
       <Switch>
+        <Route exact path="/auth" component={Authentication} />
         <Route exact path="/script/:scriptId" component={Script} />
         <Route render={() => (
           <>

@@ -4,13 +4,12 @@ export const Context = React.useContext(null);
 
 export const useButtonContext = () => React.useContext(Context);
 
-export const Provider = ({ children, ...props }) => {
+export const Provider = props => {
   return (
     <Context.Provider
+      {...props}
       value={{ props }}
-    >
-      {children}
-    </Context.Provider>
+    />
   );
 };
 
@@ -21,5 +20,5 @@ export function provideButtonContext(Component) {
         <Component {...props} />
       </Provider>
     );
-  }
+  };
 }

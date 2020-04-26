@@ -18,7 +18,7 @@ const useStyles = makeStyles((theme, props) => ({
   }
 }));
 
-const LayoutNavigation = ({ children, style, placement, ...props }) => {
+const LayoutNavigation = ({ children, style, placement }) => {
   const styles = useStyles({ placement });
 
   return (

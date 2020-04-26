@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme, props) => ({
   }
 }));
 
-const LayoutNavItem = ({ children, style, active, color, label, icon, ...props }) => {
+const LayoutNavItem = ({ children, style, active, color, label, icon, disabled, ...props }) => {
   color = color || 'primary';
 
   const styles = useStyles({ active, color });
@@ -31,7 +31,7 @@ const LayoutNavItem = ({ children, style, active, color, label, icon, ...props }
     <>
       <TouchableOpacity
         {...props}
-        disabled={props.disabled || active}
+        disabled={disabled || active}
         style={[
           styles.root,
           ...(style ? style.map ? style : [style] : [])
@@ -39,7 +39,7 @@ const LayoutNavItem = ({ children, style, active, color, label, icon, ...props }
       >
         <>
           {children}
-          {icon ? <Ionicons name={icon} style={styles.icon}/> : null}
+          {icon ? <Ionicons name={icon} style={styles.icon} /> : null}
           {!label ? null : (
             <Typography
               variant="caption"
@@ -55,6 +55,10 @@ const LayoutNavItem = ({ children, style, active, color, label, icon, ...props }
 };
 
 LayoutNavItem.propTypes = {
+  label: PropTypes.string,
+  active: PropTypes.bool,
+  disabled: PropTypes.bool,
+  color: PropTypes.string,
   children: PropTypes.node,
   icon: PropTypes.string,
   style: PropTypes.oneOfType([

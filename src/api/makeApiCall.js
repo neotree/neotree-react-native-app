@@ -1,3 +1,4 @@
+/* global fetch */
 import apiConfig from '~/config/api.config.json';
 
 export default (url = '', opts = {}) => {
@@ -6,12 +7,12 @@ export default (url = '', opts = {}) => {
   let reqOpts = {
     headers: {
       ...opts.headers,
-      'x-api-key': apiConfig.api_key
-    }
+      'x-api-key': apiConfig.api_key,
+    },
   };
 
   if (!opts.method || (opts.method === 'GET') || (opts.method === 'get')) {
-    url = `${url}?payload=${JSON.stringify(opts.payload || {})}`
+    url = `${url}?payload=${JSON.stringify(opts.payload || {})}`;
   } else {
     reqOpts = {
       ...reqOpts,
@@ -29,6 +30,6 @@ export default (url = '', opts = {}) => {
         if (error) return reject(error.map ? error : [error]);
         resolve(res.payload);
       })
-      .catch(s => reject(e.map ? e : [e]));
+      .catch(e => reject(e.map ? e : [e]));
   });
-}
+};

@@ -1,10 +1,9 @@
 import React from 'react';
-import { getScripts } from '@/api/scripts';
 import getProvider from './getProvider';
 
 export const Context = React.createContext(null);
 
-export function useScriptContext(options = {}) {
+export function useScriptContext() {
   return React.useContext(Context);
 }
 
@@ -17,7 +16,7 @@ export function provideScriptContext(Component) {
         <Component {...props} />
       </Provider>
     );
-  }
+  };
 }
 
 export default Context;

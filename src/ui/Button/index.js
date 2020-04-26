@@ -13,6 +13,7 @@ const Button = ({
   color,
   variant,
   size,
+  disabled,
   children,
   ...props
 }) => {
@@ -20,7 +21,7 @@ const Button = ({
     color,
     variant,
     size,
-    disabled: props.disabled
+    disabled
   });
 
   return (
@@ -46,6 +47,7 @@ const Button = ({
 };
 
 Button.propTypes = {
+  disabled: PropTypes.bool,
   children: PropTypes.node,
   size: PropTypes.oneOf(['sm', 'lg', 'xl']),
   variant: PropTypes.oneOf(['outlined', 'contained']),

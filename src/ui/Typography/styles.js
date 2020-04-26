@@ -1,4 +1,4 @@
-export default (theme, props) => {
+export default (theme) => {
   return {
     root: {
       fontSize: 18,

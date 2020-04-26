@@ -1,13 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import constants from '@/constants';
 import { Image } from 'react-native';
 import useTheme from '@/ui/styles/useTheme';
 
 const Logo = ({ color, style, size }) => {
-  const { palette, spacing } = useTheme();
-
-  // const img = Image.resolveAssetSource(require('~/assets/images/neotree.png'));
+  const { palette } = useTheme();
 
   return (
     <>

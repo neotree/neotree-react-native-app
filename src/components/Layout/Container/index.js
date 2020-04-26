@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import makeStyles from '@/ui/styles/makeStyles';
 import { View } from 'react-native';
-import { provideLayoutContext } from '../Context/Provider';
 import Constants from 'expo-constants';
+import { provideLayoutContext } from '../Context/Provider';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -12,7 +12,7 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-const LayoutContainer = ({ children, style, ...props }) => {
+const LayoutContainer = ({ children, style }) => {
   const styles = useStyles();
 
   return (
