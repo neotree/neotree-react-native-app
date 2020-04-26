@@ -1,14 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
 import Divider from '@/ui/Divider';
 import Button from '@/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
+import { LayoutCard } from '@/components/Layout';
 
 const PageRefresher = ({ onRefresh, children }) => {
   return (
     <>
-      <View
+      <LayoutCard
         style={{
           flex: 1,
           alignItems: 'center',
@@ -24,7 +24,7 @@ const PageRefresher = ({ onRefresh, children }) => {
         >
           <Ionicons name="md-refresh" size={40} color="#ddd" />
         </Button>
-      </View>
+      </LayoutCard>
     </>
   );
 };

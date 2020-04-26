@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { provideHomeContext } from '@/contexts/home';
-import Scripts from './Scripts';
+import Header from './Header';
+import Scripts from '../Scripts';
 
 const Home = () => {
   return (
@@ -11,6 +12,7 @@ const Home = () => {
           flex: 1,
         }}
       >
+        <Header />
         <Scripts />
       </View>
     </>

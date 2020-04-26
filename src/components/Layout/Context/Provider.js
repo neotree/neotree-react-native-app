@@ -1,10 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import constants from '@/constants/layout';
 
 import Context from '.';
 
 const ContextProvider = props => {
-  const [state, _setState] = React.useState({});
+  const [state, _setState] = React.useState({
+    MAX_CONTENT_WIDTH: constants.LAYOUT_MAX_CONTENT_WIDTH,
+    NAV_BAR_HEIGHT: constants.LAYOUT_NAV_BAR_HEIGHT,
+  });
 
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })

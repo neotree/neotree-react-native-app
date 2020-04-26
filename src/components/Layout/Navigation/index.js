@@ -1,25 +1,28 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import makeStyles from '@/ui/styles/makeStyles';
-
 import { View } from 'react-native';
+import LayoutCard from '../LayoutCard';
+import { useLayoutContext } from '../Context';
 
-const useStyles = makeStyles((theme, props) => ({
+const useStyles = makeStyles((theme, { placement }) => ({
   root: {
-    flexDirection: 'row',
     borderColor: '#ddd',
-    height: 60,
     alignItems: 'center',
-    ...props.placement === 'bottom' ? {
+    ...placement === 'bottom' ? {
       borderTopWidth: 1,
     } : {
       borderBottomWidth: 1
     },
+  },
+  rootInner: {
+    flexDirection: 'row',
   }
 }));
 
 const LayoutNavigation = ({ children, style, placement }) => {
-  const styles = useStyles({ placement });
+  const layoutContext = useLayoutContext();
+  const styles = useStyles({ placement, layoutContext });
 
   return (
     <>
@@ -29,7 +32,11 @@ const LayoutNavigation = ({ children, style, placement }) => {
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
-        {children}
+        <LayoutCard
+          style={[styles.rootInner]}
+        >
+          {children}
+        </LayoutCard>
       </View>
     </>
   );

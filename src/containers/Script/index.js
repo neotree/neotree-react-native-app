@@ -1,13 +1,12 @@
 import React from 'react';
 import Typography from '@/ui/Typography';
-import { useParams } from 'react-router-native';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import ActivityIndicator from '@/ui/ActivityIndicator';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
+import { LayoutCard } from '@/components/Layout';
 
 const Script = () => {
-  const { scriptId } = useParams();
   const { state: { script, loadingScript, loadingScreens }, initialisePage } = useScriptContext();
 
   if (loadingScript) return <ActivityIndicator size="large" />;
@@ -24,8 +23,10 @@ const Script = () => {
 
   return (
     <>
-      <Typography variant="h4">{script.data.title}  - {scriptId}</Typography>
-      {loadingScreens && <ActivityIndicator size="large" />}
+      <LayoutCard>
+        <Typography variant="h4">{script.data.title}</Typography>
+        {loadingScreens && <ActivityIndicator size="large" />}
+      </LayoutCard>
     </>
   );
 };
