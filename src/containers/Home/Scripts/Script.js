@@ -9,7 +9,10 @@ import { Link } from 'react-router-native';
 
 const useStyles = makeStyles(theme => ({
   root: {
-    padding: theme.spacing()
+    margin: theme.spacing(),
+    padding: theme.spacing(),
+    borderColor: '#ddd',
+    borderWidth: 1,
   }
 }));
 
@@ -30,8 +33,6 @@ const Script = ({ item }) => {
         {linkWrapper(<Typography>{data.title}</Typography>)}
         <Typography variant="caption" color="textSecondary">{data.description}</Typography>
       </View>
-
-      <Divider border={false} />
     </>
   );
 };

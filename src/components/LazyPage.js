@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import LazyComponent from '@/components/LazyComponent';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import useTheme from '@/ui/styles/useTheme';
+import ActivityIndicator from '@/ui/ActivityIndicator';
 
 const LoaderComponent = () => {
   const theme = useTheme();
@@ -10,10 +11,7 @@ const LoaderComponent = () => {
   return (
     <>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator
-          size="large"
-          color={theme.palette.secondary}
-        />
+        <ActivityIndicator size="large" />
       </View>
     </>
   );

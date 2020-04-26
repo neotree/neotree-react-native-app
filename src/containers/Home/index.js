@@ -9,7 +9,11 @@ const Home = () => {
 
   return (
     <>
-      <View style={{ flex: 1 }}>
+      <View
+        style={{
+          flex: 1,
+        }}
+      >
         <Scripts />
       </View>
     </>
