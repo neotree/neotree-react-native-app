@@ -1,15 +1,29 @@
 import React from 'react';
 import Typography from '@/ui/Typography';
+import Button from '@/ui/Button';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
+import { provideScreensContext, useScreensContext } from '@/contexts/screens';
 import ActivityIndicator from '@/ui/ActivityIndicator';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { LayoutCard } from '@/components/Layout';
+import Screens from './Screens';
 
 const Script = () => {
-  const { state: { script, loadingScript, loadingScreens }, initialisePage } = useScriptContext();
+  const {
+    initialisePage,
+    state: { script, scriptInitialised }
+  } = useScriptContext();
 
-  if (loadingScript) return <ActivityIndicator size="large" />;
+  const {
+    canGoToNextScreen,
+    goToNextScreen,
+    state: { loadingScript }
+  } = useScreensContext();
+
+  if (!scriptInitialised || loadingScript) {
+    return <ActivityIndicator size="large" />;
+  }
 
   if (!script) {
     return (
@@ -23,12 +37,27 @@ const Script = () => {
 
   return (
     <>
-      <LayoutCard>
-        <Typography variant="h4">{script.data.title}</Typography>
-        {loadingScreens && <ActivityIndicator size="large" />}
+      <LayoutCard style={{ flex: 1 }}>
+        <Typography variant="h4" style={{ fontWeight: 'normal' }}>
+          {script.data.title}
+        </Typography>
+
+        <Screens />
+
+        {canGoToNextScreen() && (
+          <Button
+            variant="contained"
+            color="primary"
+            onPress={goToNextScreen}
+          >
+            Next
+          </Button>
+        )}
       </LayoutCard>
     </>
   );
 };
 
-export default provideScriptContext(Script);
+export default provideScriptContext(
+  provideScreensContext(Script)
+);

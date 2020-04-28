@@ -1,6 +1,5 @@
 import React from 'react';
 import { getScript } from '@/api/scripts';
-import { getScreens } from '@/api/screens';
 import { useCacheContext } from '@/contexts/cache';
 import { useParams } from 'react-router-native';
 
@@ -14,10 +13,6 @@ export default Context => {
       loadingScript: false,
       loadingScriptError: false,
       scriptInitialised: false,
-      screens: [],
-      loadingScreens: false,
-      loadScreensError: null,
-      screensInitialised: false,
     });
 
     const setState = s => _setState(
@@ -42,28 +37,9 @@ export default Context => {
         }));
     };
 
-    const _getScreens = () => {
-      setState({ loadScreensError: null, loadingScreens: true });
-      getScreens({ payload: { script_id: scriptId } })
-        .then(payload => {
-          setState({
-            screens: payload.screens || [],
-            screensInitialised: true,
-            loadScreensError: payload.error,
-            loadingScreens: false,
-          });
-        })
-        .catch(e => setState({
-          loadScreensError: e,
-          screensInitialised: true,
-          loadingScreens: false,
-        }));
-    };
-
     const initialisePage = (opts = {}) => {
       if (opts.force || !state.screensInitialised) {
         _getScript();
-        _getScreens();
       }
     };
 
@@ -80,7 +56,7 @@ export default Context => {
           state,
           setState,
           initialisePage,
-          getScreens: _getScreens
+          getScript: _getScript
         }}
       />
     );

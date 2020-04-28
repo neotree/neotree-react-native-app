@@ -6,7 +6,7 @@ export default Context => {
   return props => {
     const cacheContext = useCacheContext();
 
-    const [state, _setState] = React.useState(cacheContext.state.homeState || {
+    const [state, _setState] = React.useState(cacheContext.state.scriptsState || {
       scripts: [],
       loadingScripts: false,
       loadScriptsError: null,
@@ -42,7 +42,7 @@ export default Context => {
     React.useEffect(() => { initialisePage(); }, []);
 
     React.useEffect(() => {
-      return () => cacheContext.setState({ homeState: state });
+      return () => cacheContext.setState({ scriptsState: state });
     }, [state]);
 
     return (
