@@ -10,9 +10,6 @@ https://reactnative.dev/docs/environment-setup
 
 `git clone https://github.com/neotree/neotree-react-native-app.git`
 
-`config/api.config.json`
-`config/firebase.config.json`
-
 ## API config
 
 `api.config.json`
@@ -26,6 +23,13 @@ https://reactnative.dev/docs/environment-setup
 `firebase.config.json`
 
 https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
+
+**Place the config files into `neotree-react-native-app/config`**
+
+```
+  config/api.config.json
+  config/firebase.config.json
+```
 
 ## Scripts
 
