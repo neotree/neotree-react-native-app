@@ -1,12 +1,19 @@
 import React from 'react';
-import { getScreens } from '@/api/screens';
-import { useParams, useHistory } from 'react-router-native';
 import { BackHandler, Platform } from 'react-native';
+import useRouter from '@/utils/useRouter';
+
+import _canGoToNextScreen from './_canGoToNextScreen';
+import _canGoToPrevScreen from './_canGoToPrevScreen';
+import _getScreens from './_getScreens';
+import _goToScreen from './_goToScreen';
+import _setActiveScreen from './_setActiveScreen';
+import _goToNextScreen from './_goToNextScreen';
+import _goToPrevScreen from './_goToPrevScreen';
 
 export default Context => {
   return props => {
-    const history = useHistory();
-    const { scriptId, screenId } = useParams();
+    const router = useRouter();
+    const { scriptId, screenId } = router.match.params;
 
     const [state, _setState] = React.useState({
       activeScreen: null,
@@ -22,53 +29,17 @@ export default Context => {
       typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
     );
 
-    const { screens, activeScreenIndex } = state;
-
-    const canGoToNextScreen = () => {
-      return activeScreenIndex < (screens.length - 1);
-    };
-
-    const canGoToPrevScreen = () => {
-      return activeScreenIndex > 0;
-    };
-
-    const setActiveScreen = (i = 0, cb) => {
-      const activeScreenIndex = i < 0 ? 0 : i > (screens.length - 1) ? (screens.length - 1) : i || 0;
-      const activeScreen = screens[activeScreenIndex];
-      setState({ activeScreen, activeScreenIndex });
-      if (cb) cb(activeScreen);
-    };
-
-    const goToScreen = (i = 0) => setActiveScreen(i, activeScreen => {
-      if (activeScreen) {
-        history.push(`/script/${scriptId}${activeScreenIndex === 0 ? '' : `/screen/${activeScreen.id}`}`);
-      }
-    });
-
-    const _getScreens = () => {
-      setState({ loadScreensError: null, loadingScreens: true });
-      getScreens({ payload: { script_id: scriptId } })
-        .then(payload => {
-          const _activeScreenIndex = 0;
-          setState({
-            screens: payload.screens || [],
-            screensInitialised: true,
-            loadScreensError: payload.error,
-            loadingScreens: false,
-            activeScreen: payload.screens[_activeScreenIndex],
-            activeScreenIndex: _activeScreenIndex
-          });
-        })
-        .catch(e => setState({
-          loadScreensError: e,
-          screensInitialised: true,
-          loadingScreens: false,
-        }));
-    };
+    const canGoToNextScreen = _canGoToNextScreen({ state, setState, router });
+    const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router });
+    const getScreens = _getScreens({ state, setState, router });
+    const setActiveScreen = _setActiveScreen({ state, setState, router });
+    const goToScreen = _goToScreen({ state, setState, router, setActiveScreen });
+    const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
+    const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
     const initialisePage = (opts = {}) => {
       if (opts.force || !state.screensInitialised) {
-        _getScreens();
+        getScreens();
       }
     };
 
@@ -78,7 +49,7 @@ export default Context => {
       if (Platform.OS === 'android') {
         backHandler = BackHandler.addEventListener(
           'hardwareBackPress',
-          () => setActiveScreen(activeScreenIndex - 1)
+          () => setActiveScreen(state.activeScreenIndex - 1)
         );
       }
 
@@ -99,9 +70,9 @@ export default Context => {
           canGoToNextScreen,
           canGoToPrevScreen,
           goToScreen,
-          goToNextScreen: () => canGoToNextScreen() && goToScreen(activeScreenIndex + 1),
-          goToPrevScreen: () => canGoToPrevScreen() && goToScreen(activeScreenIndex - 1),
-          getScreens: _getScreens
+          goToNextScreen,
+          goToPrevScreen,
+          getScreens
         }}
       />
     );

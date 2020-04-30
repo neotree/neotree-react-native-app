@@ -1,11 +1,13 @@
 import React from 'react';
-import { getScript } from '@/api/scripts';
 import { useCacheContext } from '@/contexts/cache';
-import { useParams } from 'react-router-native';
+import useRouter from '@/utils/useRouter';
+
+import _getScript from './_getScript';
 
 export default Context => {
   return props => {
-    const { scriptId } = useParams();
+    const router = useRouter();
+    const { scriptId } = router.match.params;
     const cacheContext = useCacheContext();
 
     const [state, _setState] = React.useState(cacheContext.state[`${scriptId}State`] || {
@@ -19,27 +21,11 @@ export default Context => {
       typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
     );
 
-    const _getScript = () => {
-      setState({ loadScriptError: null, loadingScript: true });
-      getScript({ payload: { id: scriptId } })
-        .then(payload => {
-          setState({
-            script: payload.script,
-            scriptInitialised: true,
-            loadScriptError: payload.error,
-            loadingScript: false,
-          });
-        })
-        .catch(e => setState({
-          loadScriptError: e,
-          scriptInitialised: true,
-          loadingScript: false,
-        }));
-    };
+    const getScript = _getScript({ state, setState, router });
 
     const initialisePage = (opts = {}) => {
       if (opts.force || !state.screensInitialised) {
-        _getScript();
+        getScript();
       }
     };
 
@@ -56,7 +42,7 @@ export default Context => {
           state,
           setState,
           initialisePage,
-          getScript: _getScript
+          getScript
         }}
       />
     );

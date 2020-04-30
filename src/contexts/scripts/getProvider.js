@@ -1,9 +1,12 @@
 import React from 'react';
-import { getScripts } from '@/api/scripts';
 import { useCacheContext } from '@/contexts/cache';
+import useRouter from '@/utils/useRouter';
+
+import _getScripts from './_getScripts';
 
 export default Context => {
   return props => {
+    const router = useRouter();
     const cacheContext = useCacheContext();
 
     const [state, _setState] = React.useState(cacheContext.state.scriptsState || {
@@ -17,26 +20,10 @@ export default Context => {
       typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
     );
 
-    const _getScripts = () => {
-      setState({ loadScriptsError: null, loadingScripts: true });
-      getScripts()
-        .then(payload => {
-          setState({
-            scripts: payload.scripts || [],
-            scriptsInitialised: true,
-            loadScriptsError: payload.error,
-            loadingScripts: false,
-          });
-        })
-        .catch(e => setState({
-          loadScriptsError: e,
-          scriptsInitialised: true,
-          loadingScripts: false,
-        }));
-    };
+    const getScripts = _getScripts({ state, setState, router });
 
     const initialisePage = () => {
-      if (!state.scriptsInitialised) _getScripts();
+      if (!state.scriptsInitialised) getScripts();
     };
 
     React.useEffect(() => { initialisePage(); }, []);
@@ -52,7 +39,7 @@ export default Context => {
           state,
           setState,
           initialisePage,
-          getScripts: _getScripts
+          getScripts
         }}
       />
     );
