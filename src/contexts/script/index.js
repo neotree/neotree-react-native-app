@@ -1,13 +1,9 @@
 import React from 'react';
-import getProvider from './getProvider';
+import Provider from './ContextProvider';
 
-export const Context = React.createContext(null);
+export * from './Context';
 
-export function useScriptContext() {
-  return React.useContext(Context);
-}
-
-export const Provider = getProvider(Context);
+export { Provider };
 
 export function provideScriptContext(Component) {
   return function ScriptContextProvider(props) {
@@ -18,5 +14,3 @@ export function provideScriptContext(Component) {
     );
   };
 }
-
-export default Context;

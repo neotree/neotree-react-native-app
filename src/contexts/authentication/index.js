@@ -1,9 +1,16 @@
 import React from 'react';
+import Provider from './ContextProvider';
 
-export const Context = React.createContext(null);
+export * from './Context';
 
-export function useAuthenticationContext() {
-  return React.useContext(Context);
+export { Provider };
+
+export function provideAuthenticationContext(Component) {
+  return function AuthenticationContextProvider(props) {
+    return (
+      <Provider {...props}>
+        <Component {...props} />
+      </Provider>
+    );
+  };
 }
-
-export default Context;

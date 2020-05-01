@@ -1,9 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import Context from './Context';
 
-import Context from '.';
-
-const ContextProvider = props => {
+export default function Provider(props) {
   const [state, _setState] = React.useState({
     form: {
       email: '',
@@ -32,20 +30,4 @@ const ContextProvider = props => {
       />
     </>
   );
-};
-
-ContextProvider.propTypes = {
-  children: PropTypes.node
-};
-
-export function provideAuthenticationContext(Component) {
-  return function Provider(props) {
-    return (
-      <ContextProvider {...props}>
-        <Component {...props} />
-      </ContextProvider>
-    );
-  };
 }
-
-export default ContextProvider;

@@ -1,6 +1,6 @@
 import React from 'react';
 import makeStyles from '@/ui/styles/makeStyles';
-import { provideAuthenticationContext } from '@/contexts/authentication/Provider';
+import { provideAuthenticationContext } from '@/contexts/authentication';
 
 import { ScrollView } from 'react-native';
 import Logo from '@/components/Logo';
