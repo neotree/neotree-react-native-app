@@ -8,6 +8,7 @@ import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { LayoutCard } from '@/components/Layout';
 import Screens from './Screens';
+import Header from './Header';
 
 const Script = () => {
   const {
@@ -37,11 +38,8 @@ const Script = () => {
 
   return (
     <>
+      <Header />
       <LayoutCard style={{ flex: 1 }}>
-        <Typography variant="h4" style={{ fontWeight: 'normal' }}>
-          {script.data.title}
-        </Typography>
-
         <Screens />
 
         {canGoToNextScreen() && (
