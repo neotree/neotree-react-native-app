@@ -18,10 +18,10 @@ const useStyles = makeStyles((theme) => ({
   goBackBtnIcon: {
     fontSize: 20,
     marginRight: theme.spacing(),
-    color: theme.palette.primary.main
+    color: theme.palette.secondary.main
   },
   goBackBtnCaption: {
-    color: theme.palette.primary.main
+    color: theme.palette.secondary.main
   },
 }));
 

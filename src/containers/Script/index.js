@@ -39,7 +39,7 @@ const Script = () => {
   return (
     <>
       <Header />
-      <LayoutCard style={{ flex: 1 }}>
+      <LayoutCard style={{ flex: 1, justifyContent: 'center' }}>
         <Screens />
 
         {canGoToNextScreen() && (

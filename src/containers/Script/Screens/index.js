@@ -1,6 +1,7 @@
 import React from 'react';
 import { useScreensContext } from '@/contexts/screens';
 import Typography from '@/ui/Typography';
+import Divider from '@/ui/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import ActivityIndicator from '@/ui/ActivityIndicator';
@@ -25,7 +26,23 @@ const Screens = () => {
 
   return (
     <>
-      <Typography variant="h2" style={{ fontWeight: 'normal' }}>{activeScreen.data.title}</Typography>
+      <Typography variant="h1">{activeScreen.data.title}</Typography>
+
+      <Divider border={false} spacing={2} />
+
+      {!activeScreen.data.actionText ? null : (
+        <>
+          <Typography style={{ fontWeight: 'normal' }}>{activeScreen.data.actionText}</Typography>
+          <Divider border={false} spacing={2} />
+        </>
+      )}
+
+      {!activeScreen.data.contentText ? null : (
+        <>
+          <Typography style={{ fontWeight: 'normal' }}>{activeScreen.data.contentText}</Typography>
+          <Divider border={false} spacing={2} />
+        </>
+      )}
     </>
   );
 };
