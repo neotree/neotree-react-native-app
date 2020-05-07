@@ -6,6 +6,8 @@ import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import ActivityIndicator from '@/ui/ActivityIndicator';
 
+import ScreenType from './Type';
+
 const Screens = () => {
   const {
     getScreens,
@@ -26,7 +28,7 @@ const Screens = () => {
 
   return (
     <>
-      <Typography variant="h1">{activeScreen.data.title}</Typography>
+      <Typography variant="h1">{activeScreen.data.title} - {activeScreen.type}</Typography>
 
       <Divider border={false} spacing={2} />
 
@@ -43,6 +45,8 @@ const Screens = () => {
           <Divider border={false} spacing={2} />
         </>
       )}
+
+      <ScreenType />
     </>
   );
 };

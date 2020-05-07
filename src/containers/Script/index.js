@@ -6,7 +6,7 @@ import { provideScreensContext, useScreensContext } from '@/contexts/screens';
 import ActivityIndicator from '@/ui/ActivityIndicator';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import { LayoutCard } from '@/components/Layout';
+import { LayoutScrollableContent } from '@/components/Layout';
 import Screens from './Screens';
 import Header from './Header';
 
@@ -39,7 +39,7 @@ const Script = () => {
   return (
     <>
       <Header />
-      <LayoutCard style={{ flex: 1, justifyContent: 'center' }}>
+      <LayoutScrollableContent style={{ flex: 1, justifyContent: 'center' }}>
         <Screens />
 
         {canGoToNextScreen() && (
@@ -51,7 +51,7 @@ const Script = () => {
             Next
           </Button>
         )}
-      </LayoutCard>
+      </LayoutScrollableContent>
     </>
   );
 };
