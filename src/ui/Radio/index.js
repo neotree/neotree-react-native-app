@@ -7,8 +7,8 @@ import { useRadioGroupContext } from '../RadioGroup/Context';
 
 const useStyles = makeStyles((theme, { checked, color }) => {
   color = color || 'primary';
-  const size = 30;
-  const indicatorSize = 20;
+  const size = 25;
+  const indicatorSize = 15;
 
   return {
     root: {

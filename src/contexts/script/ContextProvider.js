@@ -15,11 +15,17 @@ export default function Provider(props) {
     loadingScript: false,
     loadingScriptError: false,
     scriptInitialised: false,
+    form: {},
   });
 
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
+
+  const setForm = s => _setState(prevState => ({
+    ...prevState,
+    form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
+  }));
 
   const getScript = _getScript({ state, setState, router });
 
@@ -41,6 +47,7 @@ export default function Provider(props) {
       value={{
         state,
         setState,
+        setForm,
         initialisePage,
         getScript
       }}

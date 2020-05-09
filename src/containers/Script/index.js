@@ -1,6 +1,5 @@
 import React from 'react';
 import Typography from '@/ui/Typography';
-import Button from '@/ui/Button';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext, useScreensContext } from '@/contexts/screens';
 import ActivityIndicator from '@/ui/ActivityIndicator';
@@ -9,16 +8,17 @@ import scriptPageCopy from '@/constants/copy/scriptPage';
 import { LayoutScrollableContent } from '@/components/Layout';
 import Screens from './Screens';
 import Header from './Header';
+import NextBtn from './NextBtn';
 
 const Script = () => {
+  const scrollableRef = React.useRef(null);
+
   const {
     initialisePage,
     state: { script, scriptInitialised }
   } = useScriptContext();
 
   const {
-    canGoToNextScreen,
-    goToNextScreen,
     state: { loadingScript }
   } = useScreensContext();
 
@@ -28,7 +28,9 @@ const Script = () => {
 
   if (!script) {
     return (
-      <PageRefresher onRefresh={() => initialisePage({ force: true })}>
+      <PageRefresher
+        onRefresh={() => initialisePage({ force: true })}
+      >
         <Typography color="textSecondary">
           {scriptPageCopy.LOAD_SCRIPT_FAILURE_MESSAGE}
         </Typography>
@@ -39,19 +41,14 @@ const Script = () => {
   return (
     <>
       <Header />
-      <LayoutScrollableContent style={{ flex: 1, justifyContent: 'center' }}>
-        <Screens />
 
-        {canGoToNextScreen() && (
-          <Button
-            variant="contained"
-            color="primary"
-            onPress={goToNextScreen}
-          >
-            Next
-          </Button>
-        )}
+      <LayoutScrollableContent
+        ref={scrollableRef}
+      >
+        <Screens />
       </LayoutScrollableContent>
+
+      <NextBtn />
     </>
   );
 };

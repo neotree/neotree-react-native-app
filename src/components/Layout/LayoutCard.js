@@ -14,13 +14,14 @@ const useStyles = makeStyles((theme, { layoutContext }) => ({
   }
 }));
 
-const LayoutCard = ({ children, style }) => {
+const LayoutCard = React.forwardRef(({ children, style }, ref) => {
   const layoutContext = useLayoutContext();
   const styles = useStyles({ layoutContext });
 
   return (
     <>
       <View
+        ref={ref}
         style={[
           styles.root,
           ...(style ? style.map ? style : [style] : [])
@@ -30,7 +31,7 @@ const LayoutCard = ({ children, style }) => {
       </View>
     </>
   );
-};
+});
 
 LayoutCard.propTypes = {
   children: PropTypes.node,

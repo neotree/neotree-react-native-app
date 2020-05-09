@@ -17,11 +17,19 @@ const Button = ({
   children,
   ...props
 }) => {
+  const [shadow] = React.useState({
+    shadowOffsetWidth: 0,
+    shadowOffsetHeight: 0,
+    shadowRadius: 0,
+    shadowOpacity: 0.1,
+  });
+
   const styles = useStyles({
     color,
     variant,
     size,
-    disabled
+    disabled,
+    shadow
   });
 
   return (
@@ -33,14 +41,17 @@ const Button = ({
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
-        {typeof children !== 'string' ? children : (
-          <Text
-            style={[
-              styles.text,
-              styles[`${color}Text`]
-            ]}
-          >{children}</Text>
-        )}
+        {typeof children !== 'string' ?
+          typeof children !== 'function' ? children : children({ styles }) 
+          :
+          (
+            <Text
+              style={[
+                styles.text,
+                styles[`${color}Text`]
+              ]}
+            >{children}</Text>
+          )}
       </TouchableOpacity>
     </>
   );
@@ -48,7 +59,10 @@ const Button = ({
 
 Button.propTypes = {
   disabled: PropTypes.bool,
-  children: PropTypes.node,
+  children: PropTypes.oneOfType([
+    PropTypes.node,
+    PropTypes.func,
+  ]),
   size: PropTypes.oneOf(['sm', 'lg', 'xl']),
   variant: PropTypes.oneOf(['outlined', 'contained']),
   color: PropTypes.oneOf(['primary', 'secondary', 'disabled', 'error', 'success']),

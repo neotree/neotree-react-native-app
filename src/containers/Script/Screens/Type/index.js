@@ -1,13 +1,13 @@
 import React from 'react';
 import { useScreensContext } from '@/contexts/screens';
 
-import YesNo from './YesNo';
-import MultiSelect from './MultiSelect';
-import Form from './Form';
-import Management from './Management';
-import Progress from './Progress';
-import SingleSelect from './SingleSelect';
-import Timer from './Timer';
+import YesNo from './TypeYesNo';
+import MultiSelect from './TypeMultiSelect';
+import Form from './TypeForm';
+import Management from './TypeManagement';
+import Progress from './TypeProgress';
+import SingleSelect from './TypeSingleSelect';
+import Timer from './TypeTimer';
 
 const Type = () => {
   const { state: { activeScreen } } = useScreensContext();

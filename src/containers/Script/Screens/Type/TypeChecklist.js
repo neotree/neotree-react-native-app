@@ -3,21 +3,20 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Typography from '@/ui/Typography';
 
-const YesNo = ({ screen }) => {
+const TypeChecklist = ({ screen }) => {
   const { metadata } = screen.data;
-
+  console.log(metadata);
   return (
     <>
       <View>
-        <Typography>{metadata.negativeLabel}</Typography>
-        <Typography>{metadata.positiveLabel}</Typography>
+        <Typography />
       </View>
     </>
   );
 };
 
-YesNo.propTypes = {
+TypeChecklist.propTypes = {
   screen: PropTypes.object
 };
 
-export default YesNo;
+export default TypeChecklist;

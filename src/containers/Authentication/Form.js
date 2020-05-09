@@ -61,6 +61,8 @@ const Form = () => {
           color="secondary"
           autoCapitalize="none"
           autoCompleteType="email"
+          keyboardType="email-address"
+          textContentType="username"
           placeholder={copy.EMAIL_INPUT_TEXT}
           returnKeyType="next"
           onSubmitEditing={() => passwordInputRef.current.focus()}
@@ -79,6 +81,7 @@ const Form = () => {
           autoCapitalize="none"
           secureTextEntry
           autoCompleteType="password"
+          textContentType="password"
           placeholder={copy.PASSWORD_INPUT_TEXT}
           returnKeyType="go"
           onSubmitEditing={authenticate}

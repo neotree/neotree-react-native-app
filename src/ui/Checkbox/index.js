@@ -7,7 +7,7 @@ import Icon from '../Icon';
 
 const useStyles = makeStyles((theme, { checked, color }) => {
   color = color || 'primary';
-  const size = 30;
+  const size = 25;
 
   return {
     root: {

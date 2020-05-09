@@ -17,6 +17,14 @@ export default (theme, props) => {
         return theme.palette[props.color].main;
       })(),
       borderWidth: 1,
+      ...props.variant !== 'contained' ? null : {
+        shadowOffset: {
+          width: props.shadow.shadowOffsetWidth,
+          height: -props.shadow.shadowOffsetHeight
+        },
+        shadowOpacity: props.shadow.shadowOpacity,
+        shadowRadius: props.shadow.shadowRadius,
+      },
     },
     text: {
       // fontWeight: 'bold',
