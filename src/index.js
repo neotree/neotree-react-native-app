@@ -15,7 +15,11 @@ const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Spl
 const NeoTreeApp = (props) => {
   const history = useHistory();
 
-  const { setState, state: { authenticatedUser, authenticatedUserInitialised } } = useAppContext();
+  const {
+    setState,
+    appIsReady,
+    state: { authenticatedUser, authenticatedUserInitialised }
+  } = useAppContext();
 
   React.useEffect(() => {
     onAuthStateChanged(u => {
@@ -31,7 +35,7 @@ const NeoTreeApp = (props) => {
     <>
       <View style={{ flex: 1 }}>
         {(() => {
-          if (!authenticatedUserInitialised) {
+          if (!appIsReady()) {
             return <Splash />
           }
 

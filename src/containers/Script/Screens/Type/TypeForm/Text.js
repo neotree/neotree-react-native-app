@@ -1,14 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Typography from '@/ui/Typography';
+import Input from '@/ui/Input';
 
 const Text = ({ field }) => {
   return (
     <>
-      <Typography
-        color="secondary"
-        variant="h1"
-      >{field.dataType}</Typography>
+      <Input
+        value=""
+        placeholder={field.label}
+        label={field.label}
+      />
     </>
   );
 };

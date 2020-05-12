@@ -23,7 +23,7 @@ const Form = ({ screen }) => {
             <React.Fragment key={f.key}>
               {(() => {
                 let Component = null;
-                switch (f.dataType) {
+                switch (f.type) {
                   case fieldsTypes.NUMBER:
                     Component = Number;
                     break;

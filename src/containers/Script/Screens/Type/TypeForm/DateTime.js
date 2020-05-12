@@ -6,7 +6,7 @@ import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
 import Typography from '@/ui/Typography';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
   gridContainer: {
     flex: 1,
     flexDirection: 'row',

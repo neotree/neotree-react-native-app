@@ -1,14 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Typography from '@/ui/Typography';
+import UiDropdown from '@/ui/Dropdown';
 
 const DropDown = ({ field }) => {
   return (
     <>
-      <Typography
-        color="secondary"
-        variant="h1"
-      >{field.dataType}</Typography>
+      <UiDropdown
+        value=""
+        label={field.label}
+        placeholder={field.label}
+        options={[]}
+      />
     </>
   );
 };
