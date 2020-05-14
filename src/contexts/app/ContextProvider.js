@@ -1,11 +1,11 @@
 import React from 'react';
-import db from '@/utils/database';
 import Context from './Context';
+import { provideDataContext, useDataContext } from '../data';
 
-export default function Provider(props) {
+function Provider(props) {
+  const { state: { dbTablesInitialised } } = useDataContext();
+
   const [state, _setState] = React.useState({
-    dbTablesInitialised: false,
-    createDBTablesError: null,
     authenticatedUser: null,
     authenticatedUserInitialised: false,
   });
@@ -14,37 +14,14 @@ export default function Provider(props) {
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
-  React.useEffect(() => {
-    const done = (err) => {
-      setState({
-        dbTablesInitialised: true,
-        createDBTablesError: err,
-      });
-    };
-
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'create table if not exists scripts (id string primary key not null, data longtext, createdAt datetime, updatedAt datetime);'
-        );
-        tx.executeSql(
-          'create table if not exists screens (id number primary key not null, data longtext, createdAt datetime, updatedAt datetime);'
-        );
-      },
-      done,
-      rslts => done(null, rslts)
-    );
-  }, []);
-
   const appIsReady = () => {
-    return state.authenticatedUserInitialised && state.dbTablesInitialised;
+    return state.authenticatedUserInitialised && dbTablesInitialised;
   };
 
   return (
     <Context.Provider
       {...props}
       value={{
-        db,
         state,
         setState,
         appIsReady,
@@ -52,3 +29,5 @@ export default function Provider(props) {
     />
   );
 }
+
+export default provideDataContext(Provider);
