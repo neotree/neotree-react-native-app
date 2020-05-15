@@ -1,14 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Typography from '@/ui/Typography';
+import DatePicker from '@/components/DatePicker';
+import formCopy from '@/constants/copy/form';
 
 const Time = ({ field }) => {
+  const [date, setDate] = React.useState(null);
+
   return (
     <>
-      <Typography
-        color="secondary"
-        variant="h1"
-      >{field.dataType}</Typography>
+      <DatePicker
+        mode="time"
+        value={date}
+        placeholder={formCopy.SELECT_TIME}
+        onChange={(e, date) => setDate(date)}
+      >
+        {field.label}
+      </DatePicker>
     </>
   );
 };

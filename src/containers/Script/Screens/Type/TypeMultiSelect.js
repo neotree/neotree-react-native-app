@@ -8,11 +8,11 @@ const YesNo = ({ screen }) => {
 
   const [form, _setForm] = React.useState({});
   const setForm = s => _setForm(prevState => ({ ...prevState, ...s }));
-  
+
   return (
     <>
       <View>
-        {metadata.items.map((item) => {
+        {(metadata.items || []).map((item) => {
           return (
             <React.Fragment key={item.label}>
               <Checkbox

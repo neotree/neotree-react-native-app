@@ -16,7 +16,7 @@ const SingleSelect = ({ screen }) => {
           value={selected}
           onChange={e => setSelected(e.value)}
         >
-          {metadata.items.map((item) => {
+          {(metadata.items || []).map((item) => {
             return (
               <React.Fragment key={item.label}>
                 <Radio
