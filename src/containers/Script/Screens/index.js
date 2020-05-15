@@ -5,10 +5,23 @@ import Divider from '@/ui/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import ActivityIndicator from '@/ui/ActivityIndicator';
-
+import { View } from 'react-native';
+import makeStyles from '@/ui/styles/makeStyles';
 import ScreenType from './Type';
 
+const useStyles = makeStyles(theme => ({
+  actionBox: {
+    backgroundColor: theme.transparentize(theme.palette.secondary.main, 0.2),
+    padding: theme.spacing(2),
+  },
+  actionBoxText: {
+    marginBottom: 3
+  }
+}));
+
 const Screens = () => {
+  const styles = useStyles();
+
   const {
     getScreens,
     state: { activeScreen, screensInitialised, loadingScreens }
@@ -30,21 +43,30 @@ const Screens = () => {
     <>
       <Typography variant="h1">{activeScreen.data.title} - {activeScreen.type}</Typography>
 
+      <Divider border={false} />
+
+      {activeScreen.data.actionText || activeScreen.data.contentText ? (
+        <View style={[styles.actionBox]}>
+          {!activeScreen.data.actionText ? null : (
+            <>
+              <Typography
+                style={[styles.actionBoxText]}
+              >{activeScreen.data.actionText}</Typography>
+            </>
+          )}
+
+          {!activeScreen.data.contentText ? null : (
+            <>
+              <Typography
+                style={[styles.actionBoxText]}
+                variant="caption"
+              >{activeScreen.data.contentText}</Typography>
+            </>
+          )}
+        </View>
+      ) : null}
+
       <Divider border={false} spacing={2} />
-
-      {!activeScreen.data.actionText ? null : (
-        <>
-          <Typography style={{ fontWeight: 'normal' }}>{activeScreen.data.actionText}</Typography>
-          <Divider border={false} spacing={2} />
-        </>
-      )}
-
-      {!activeScreen.data.contentText ? null : (
-        <>
-          <Typography style={{ fontWeight: 'normal' }}>{activeScreen.data.contentText}</Typography>
-          <Divider border={false} spacing={2} />
-        </>
-      )}
 
       <ScreenType />
     </>
