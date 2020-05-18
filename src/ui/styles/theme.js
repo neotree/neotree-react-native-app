@@ -22,12 +22,12 @@ const palette = {
     secondary: '#999',
     disabled: '#999'
   },
-  disabled: '#ddd',
+  disabled: '#ccc',
 };
 
 export default {
   palette,
-  
+
   spacing: (val = 1) => {
     val = val < 1 ? 1 : val;
     const spacing = 8;

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@/ui/Typography';
 
-const Period = ({ field }) => {
+const Period = ({ field, onChange, value }) => {
   return (
     <>
       <Typography
@@ -14,7 +14,10 @@ const Period = ({ field }) => {
 };
 
 Period.propTypes = {
-  field: PropTypes.object.isRequired
+  field: PropTypes.object.isRequired,
+  onChange: PropTypes.func.isRequired,
+  value: PropTypes.any,
+  enabled: PropTypes.bool,
 };
 
 export default Period;

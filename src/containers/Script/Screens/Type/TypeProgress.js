@@ -3,8 +3,12 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Typography from '@/ui/Typography';
 
-const Progress = ({ screen }) => {
+const Progress = ({ screen, context }) => {
   const { metadata } = screen.data;
+
+  React.useEffect(() => {
+    context.setForm({ [screen.id]: true });
+  }, []);
 
   return (
     <>
@@ -16,7 +20,8 @@ const Progress = ({ screen }) => {
 };
 
 Progress.propTypes = {
-  screen: PropTypes.object
+  screen: PropTypes.object,
+  context: PropTypes.object.isRequired,
 };
 
 export default Progress;

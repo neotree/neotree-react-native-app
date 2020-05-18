@@ -3,16 +3,15 @@ import PropTypes from 'prop-types';
 import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 
-const Time = ({ field }) => {
-  const [date, setDate] = React.useState(null);
-
+const Time = ({ field, onChange, value, conditionMet, }) => {
   return (
     <>
       <DatePicker
+        enabled={conditionMet}
         mode="time"
-        value={date}
+        value={value || null}
         placeholder={formCopy.SELECT_TIME}
-        onChange={(e, date) => setDate(date)}
+        onChange={(e, time) => onChange(time)}
       >
         {field.label}
       </DatePicker>
@@ -21,7 +20,10 @@ const Time = ({ field }) => {
 };
 
 Time.propTypes = {
-  field: PropTypes.object.isRequired
+  field: PropTypes.object.isRequired,
+  onChange: PropTypes.func.isRequired,
+  value: PropTypes.any,
+  conditionMet: PropTypes.bool,
 };
 
 export default Time;

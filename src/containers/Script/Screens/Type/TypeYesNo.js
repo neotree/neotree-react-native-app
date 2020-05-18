@@ -4,10 +4,16 @@ import { View } from 'react-native';
 import Radio from '@/ui/Radio';
 import RadioGroup from '@/ui/RadioGroup';
 
-const YesNo = ({ screen }) => {
+const YesNo = ({ screen, context }) => {
   const { metadata } = screen.data;
 
   const [selected, setSelected] = React.useState(null);
+
+  React.useEffect(() => {
+    context.setForm({ 
+      [screen.id]: !selected ? undefined : { key: metadata.key, value: selected }
+    });
+  }, [selected]);
 
   return (
     <>
@@ -32,7 +38,8 @@ const YesNo = ({ screen }) => {
 };
 
 YesNo.propTypes = {
-  screen: PropTypes.object
+  screen: PropTypes.object,
+  context: PropTypes.object.isRequired,
 };
 
 export default YesNo;

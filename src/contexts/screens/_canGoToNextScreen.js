@@ -1,12 +1,14 @@
 export default ({
-  scriptContext: { state: { form } },
   state: {
     screens,
+    form,
     activeScreenIndex,
     activeScreen,
   }
 }) => () => {
-  // if (activeScreen && !form[activeScreen.id]) return false;
+  if (!activeScreen) return false;
+
+  if (!form[activeScreen.id]) return false;
 
   return activeScreenIndex < (screens.length - 1);
 };

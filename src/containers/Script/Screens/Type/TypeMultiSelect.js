@@ -3,11 +3,17 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Checkbox from '@/ui/Checkbox';
 
-const YesNo = ({ screen }) => {
+const YesNo = ({ screen, context }) => {
   const { metadata } = screen.data;
 
   const [form, _setForm] = React.useState({});
   const setForm = s => _setForm(prevState => ({ ...prevState, ...s }));
+
+  React.useEffect(() => {
+    context.setForm({
+      [screen.id]: !Object.keys(form).length ? undefined : { key: metadata.key, value: form }
+    });
+  }, [form]);
 
   return (
     <>
@@ -30,7 +36,8 @@ const YesNo = ({ screen }) => {
 };
 
 YesNo.propTypes = {
-  screen: PropTypes.object
+  screen: PropTypes.object,
+  context: PropTypes.object.isRequired,
 };
 
 export default YesNo;

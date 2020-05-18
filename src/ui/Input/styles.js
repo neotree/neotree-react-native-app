@@ -1,4 +1,4 @@
-export default (theme, { variant, color, size }) => {
+export default (theme, { variant, color, size, editable }) => {
   const defaultBgColor = 'rgba(0,0,0,.08)';
 
   let backgroundColor = 'transparent';
@@ -16,7 +16,8 @@ export default (theme, { variant, color, size }) => {
       ...!size ? null : { fontSize: theme.fontSize[size] },
     },
     label: {
-      marginBottom: 5
+      marginBottom: 5,
+      ...editable ? null : { color: theme.palette.disabled },
     },
   };
 };

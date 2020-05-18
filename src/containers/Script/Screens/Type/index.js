@@ -10,7 +10,9 @@ import SingleSelect from './TypeSingleSelect';
 import Timer from './TypeTimer';
 
 const Type = () => {
-  const { state: { activeScreen } } = useScreensContext();
+  const context = useScreensContext();
+
+  const { state: { activeScreen } } = context;
 
   return (
     <>
@@ -43,7 +45,12 @@ const Type = () => {
             // do nothing
         }
 
-        return !Component ? null : <Component screen={activeScreen} />;
+        return !Component ? null : (
+          <Component
+            screen={activeScreen}
+            context={context}
+          />
+        );
       })()}
     </>
   );

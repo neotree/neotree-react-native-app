@@ -47,10 +47,14 @@ Section.propTypes = {
   image: PropTypes.object,
 };
 
-const Management = ({ screen }) => {
+const Management = ({ screen, context }) => {
   const styles = useStyles();
 
   const { metadata } = screen.data;
+
+  React.useEffect(() => {
+    context.setForm({ [screen.id]: true });
+  }, []);
 
   return (
     <>
@@ -80,7 +84,8 @@ const Management = ({ screen }) => {
 };
 
 Management.propTypes = {
-  screen: PropTypes.object
+  screen: PropTypes.object,
+  context: PropTypes.object.isRequired,
 };
 
 export default Management;

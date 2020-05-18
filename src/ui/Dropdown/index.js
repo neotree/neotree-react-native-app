@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import makeStyles from '@/ui/styles/makeStyles';
-import { View, Picker } from 'react-native';
+import { View } from 'react-native';
+import { Picker } from '@react-native-community/picker';
 import Typography from '../Typography';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme, { enabled }) => ({
   root: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -13,10 +14,12 @@ const useStyles = makeStyles((theme) => ({
   },
   label: {
     marginBottom: 5,
+    ...enabled ? null : { color: theme.palette.disabled },
   },
   picker: {
     flex: 1,
     padding: theme.spacing(),
+    ...enabled ? null : { color: theme.palette.disabled },
   },
 }));
 
@@ -27,9 +30,10 @@ const Dropdown = ({
   value,
   label,
   placeholder,
+  enabled,
   ...props
 }) => {
-  const styles = useStyles();
+  const styles = useStyles({ enabled });
 
   return (
     <>
@@ -40,6 +44,7 @@ const Dropdown = ({
         style={[styles.root, ...(style ? style.map ? style : [style] : [])]}
       >
         <Picker
+          enabled={enabled}
           style={[styles.picker]}
           selectedValue={value}
           onValueChange={onChange}
@@ -60,6 +65,7 @@ const Dropdown = ({
 };
 
 Dropdown.propTypes = {
+  enabled: PropTypes.bool,
   onChange: PropTypes.func,
   value: PropTypes.string,
   label: PropTypes.string,

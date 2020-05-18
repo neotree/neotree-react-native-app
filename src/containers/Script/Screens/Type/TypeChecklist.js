@@ -3,9 +3,13 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Typography from '@/ui/Typography';
 
-const TypeChecklist = ({ screen }) => {
+const TypeChecklist = ({ screen, context }) => {
   const { metadata } = screen.data;
-  console.log(metadata);
+
+  React.useEffect(() => {
+    context.setForm({ [screen.id]: true });
+  }, []);
+
   return (
     <>
       <View>
@@ -16,7 +20,8 @@ const TypeChecklist = ({ screen }) => {
 };
 
 TypeChecklist.propTypes = {
-  screen: PropTypes.object
+  screen: PropTypes.object,
+  context: PropTypes.object.isRequired,
 };
 
 export default TypeChecklist;

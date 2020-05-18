@@ -19,6 +19,7 @@ export default function Provider(props) {
   const { scriptId, screenId } = router.match.params;
 
   const [state, _setState] = React.useState({
+    form: {},
     activeScreen: null,
     screenId,
     screens: [],
@@ -31,6 +32,11 @@ export default function Provider(props) {
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
+
+  const setForm = s => _setState(prevState => ({
+    ...prevState,
+    form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
+  }));
 
   const canGoToNextScreen = _canGoToNextScreen({ state, setState, router, scriptContext });
   const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router, scriptContext });
@@ -69,6 +75,7 @@ export default function Provider(props) {
       value={{
         state,
         setState,
+        setForm,
         scriptContext,
         initialisePage,
         canGoToNextScreen,
@@ -76,7 +83,7 @@ export default function Provider(props) {
         goToScreen,
         goToNextScreen,
         goToPrevScreen,
-        getScreens
+        getScreens,
       }}
     />
   );

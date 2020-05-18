@@ -6,7 +6,7 @@ import makeStyles from '@/ui/styles/makeStyles';
 import moment from 'moment';
 import Typography from '@/ui/Typography';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme, { enabled }) => ({
   root: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -14,6 +14,7 @@ const useStyles = makeStyles(theme => ({
   },
   labelText: {
     marginBottom: 5,
+    ...enabled ? null : { color: theme.palette.disabled },
   },
   btnText: {
 
@@ -27,13 +28,15 @@ const DatePicker = ({
   value,
   onChange,
   placeholder,
+  enabled,
   ...props
 }) => {
+  enabled = enabled !== false;
   labelProps = { ...labelProps };
 
   const [show, setShow] = React.useState(false);
 
-  const styles = useStyles();
+  const styles = useStyles({ enabled });
 
   return (
     <>
@@ -44,6 +47,7 @@ const DatePicker = ({
       )}
 
       <TouchableOpacity
+        disabled={!enabled}
         style={[styles.root]}
         onPress={e => {
           setShow(!show);
@@ -54,10 +58,10 @@ const DatePicker = ({
         <Typography
           {...value ? null : { color: 'textSecondary' }}
           style={[styles.btnText]}
-        >{value ? moment(value).format('LL') : placeholder}</Typography>
+        >{value ? moment(value).format(mode === 'time' ? 'LT' : 'LL') : placeholder}</Typography>
       </TouchableOpacity>
 
-      {show && (
+      {(enabled !== false) && show && (
         <DateTimePicker
           {...props}
           testID="dateTimePicker"
@@ -77,6 +81,7 @@ const DatePicker = ({
 };
 
 DatePicker.propTypes = {
+  enabled: PropTypes.bool,
   mode: PropTypes.oneOf(['date', 'time']),
   children: PropTypes.node,
   labelProps: PropTypes.object,

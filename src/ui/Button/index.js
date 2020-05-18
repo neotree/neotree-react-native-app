@@ -36,13 +36,14 @@ const Button = ({
     <>
       <TouchableOpacity
         {...props}
+        disabled={disabled}
         style={[
           styles.root,
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
         {typeof children !== 'string' ?
-          typeof children !== 'function' ? children : children({ styles }) 
+          typeof children !== 'function' ? children : children({ styles })
           :
           (
             <Text

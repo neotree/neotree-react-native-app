@@ -17,9 +17,11 @@ const Input = React.forwardRef(({
   value,
   label,
   variant,
+  editable,
   ...props
 }, ref) => {
   variant = variant || 'outlined';
+  editable = editable !== false;
 
   const [focused, setFocused] = React.useState(false);
 
@@ -29,6 +31,7 @@ const Input = React.forwardRef(({
     focused,
     value,
     variant,
+    editable,
   });
 
   return (
@@ -37,13 +40,14 @@ const Input = React.forwardRef(({
         <Typography
           style={[styles.label]}
           // variant="caption"
-          color={color}
+          {...editable ? { color } : null}
         >
           {label}
         </Typography>
       )}
       <TextInput
         {...props}
+        editable={editable}
         ref={ref}
         onFocus={e => {
           setFocused(true);
@@ -63,6 +67,7 @@ const Input = React.forwardRef(({
 });
 
 Input.propTypes = {
+  editable: PropTypes.bool,
   noFill: PropTypes.bool,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
