@@ -10,8 +10,11 @@ const YesNo = ({ screen, context }) => {
   const [selected, setSelected] = React.useState(null);
 
   React.useEffect(() => {
-    context.setForm({ 
-      [screen.id]: !selected ? undefined : { key: metadata.key, value: selected }
+    context.setForm({
+      [screen.id]: !selected ? undefined : {
+        key: metadata ? metadata.key : undefined,
+        form: { key: metadata.key, value: selected }
+      }
     });
   }, [selected]);
 

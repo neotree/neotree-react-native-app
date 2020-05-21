@@ -11,7 +11,10 @@ const SingleSelect = ({ screen, context }) => {
 
   React.useEffect(() => {
     context.setForm({
-      [screen.id]: !selected ? undefined : { key: metadata.key, value: selected }
+      [screen.id]: !selected ? undefined : {
+        key: metadata ? metadata.key : undefined,
+        form: { key: metadata.key, value: selected }
+      }
     });
   }, [selected]);
 

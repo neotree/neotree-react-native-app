@@ -23,13 +23,9 @@ export default ({
     if (!screen.data.condition) return target;
 
     const condition = Object.keys(form)
-      .filter(key => form[key])
-      .map(key => screens.filter(s => `${s.id}` === `${key}`)[0])
-      .map(s => {
-        const { key } = (s.data.metadata || {});
-        return !key ? null : ({ key, value: form[s.id].value });
-      })
-      .filter(key => key)
+      .map(key => form[key])
+      .filter(entry => entry && entry.key && entry.form)
+      .map(entry => ({ key: entry.key, value: entry.form.value }))
       .reduce((acc, v) => {
         return acc.split(`$${v.key}`).join(`'${v.value}'`);
       }, screen.data.condition)

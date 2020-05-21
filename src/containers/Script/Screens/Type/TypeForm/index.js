@@ -15,7 +15,7 @@ import Time from './Time';
 const Form = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const { setForm, state: { form, screens } } = context;
+  const { setForm, state: { form } } = context;
 
   const [localForm, setLocalForm] = React.useState([]);
 
@@ -27,7 +27,7 @@ const Form = ({ screen, context }) => {
   React.useEffect(() => {
     setLocalForm(
       form[screen.id] ?
-        form[screen.id]
+        form[screen.id].form
         :
         (metadata.fields || []).map(f => ({ key: f.key, value: null }))
     );
@@ -40,7 +40,9 @@ const Form = ({ screen, context }) => {
       return acc;
     }, true);
 
-    setForm({ [screen.id]: !completed ? undefined : localForm });
+    setForm({
+      [screen.id]: !completed ? undefined : { key: metadata.key, form: localForm },
+    });
   }, [localForm]);
 
   return (
@@ -87,13 +89,9 @@ const Form = ({ screen, context }) => {
 
                   if (f.condition) {
                     let condition = Object.keys(form)
-                      .filter(key => form[key])
-                      .map(key => screens.filter(s => `${s.id}` === `${key}`)[0])
-                      .map(s => {
-                        const { key } = (s.data.metadata || {});
-                        return !key ? null : ({ key, value: form[s.id].value });
-                      })
-                      .filter(key => key)
+                      .map(key => form[key])
+                      .filter(entry => entry && entry.key && entry.form)
+                      .map(entry => ({ key: entry.key, value: entry.form.value }))
                       .reduce((acc = '', s) => {
                         return acc.split(`$${s.key}`).join(`'${s.value}'`);
                       }, f.condition)

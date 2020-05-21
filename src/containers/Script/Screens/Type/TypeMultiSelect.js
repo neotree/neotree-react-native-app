@@ -6,14 +6,19 @@ import Checkbox from '@/ui/Checkbox';
 const YesNo = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const [form, _setForm] = React.useState({});
-  const setForm = s => _setForm(prevState => ({ ...prevState, ...s }));
+  const { setForm, state: { form } } = context;
+
+  const [localForm, _setLocalForm] = React.useState({});
+  const setLocalForm = s => _setLocalForm(prevState => ({ ...prevState, ...s }));
 
   React.useEffect(() => {
-    context.setForm({
-      [screen.id]: !Object.keys(form).length ? undefined : { key: metadata.key, value: form }
+    setForm({
+      [screen.id]: !Object.keys(localForm).length ? undefined : {
+        key: metadata ? metadata.key : undefined,
+        localForm: null,
+      }
     });
-  }, [form]);
+  }, [localForm]);
 
   return (
     <>
@@ -24,8 +29,8 @@ const YesNo = ({ screen, context }) => {
               <Checkbox
                 label={item.label}
                 value={item.id}
-                checked={form[item.id]}
-                onChange={() => setForm({ [item.id]: !form[item.id] })}
+                checked={localForm[item.id]}
+                onChange={() => setLocalForm({ [item.id]: !localForm[item.id] })}
               />
             </React.Fragment>
           );
