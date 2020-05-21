@@ -1,13 +1,17 @@
 export default ({
-  setActiveScreen,
   state: { activeScreenIndex, form, screens },
   router: {
     history,
     match: { params: { scriptId } },
   }
 }) => (direction = 'next') => {
+  if (direction === 'back') {
+    history.goBack();
+    return;
+  }
+
   const getScreen = (i = activeScreenIndex) => {
-    let index = direction === 'next' ? i + 1 : i - 1;
+    let index = i + 1;
     index = index < 0 ? 0 : index > (screens.length - 1) ? (screens.length - 1) : index;
     return { index, screen: screens[index] };
   };
@@ -45,10 +49,5 @@ export default ({
   };
 
   const target = getTargetScreen();
-
-  setActiveScreen(target.index, activeScreen => {
-    if (activeScreen) {
-      history.push(`/script/${scriptId}${activeScreenIndex === 0 ? '' : `/screen/${activeScreen.id}`}`);
-    }
-  });
+  history.push(`/script/${scriptId}/screen/${target.screen.id}`);
 };

@@ -24,10 +24,12 @@ const Screens = () => {
 
   const {
     getScreens,
-    state: { activeScreen, screensInitialised, loadingScreens }
+    state: { activeScreen, screensInitialised, loadingScreens, activeScreenInitialised }
   } = useScreensContext();
 
-  if (loadingScreens || !screensInitialised) return <ActivityIndicator size="large" />;
+  if (loadingScreens || !(screensInitialised && activeScreenInitialised)) {
+    return <ActivityIndicator size="large" />;
+  }
 
   if (!activeScreen) {
     return (

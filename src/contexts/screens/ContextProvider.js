@@ -1,21 +1,17 @@
 import React from 'react';
-import { BackHandler, Platform } from 'react-native';
 import useRouter from '@/utils/useRouter';
-import { useScriptContext } from '@/contexts/script';
 import Context from './Context';
 
 import _canGoToNextScreen from './_canGoToNextScreen';
 import _canGoToPrevScreen from './_canGoToPrevScreen';
 import _getScreens from './_getScreens';
 import _goToScreen from './_goToScreen';
-import _setActiveScreen from './_setActiveScreen';
 import _goToNextScreen from './_goToNextScreen';
 import _goToPrevScreen from './_goToPrevScreen';
 
 export default function Provider(props) {
-  const scriptContext = useScriptContext();
-
   const router = useRouter();
+  const { location } = router;
   const { scriptId, screenId } = router.match.params;
 
   const [state, _setState] = React.useState({
@@ -27,7 +23,10 @@ export default function Provider(props) {
     loadingScreens: false,
     loadScreensError: null,
     screensInitialised: false,
+    activeScreenInitialised: false,
   });
+
+  const { screensInitialised, screens } = state;
 
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
@@ -38,13 +37,12 @@ export default function Provider(props) {
     form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
   }));
 
-  const canGoToNextScreen = _canGoToNextScreen({ state, setState, router, scriptContext });
-  const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router, scriptContext });
-  const getScreens = _getScreens({ state, setState, router, scriptContext });
-  const setActiveScreen = _setActiveScreen({ state, setState, router, scriptContext });
-  const goToScreen = _goToScreen({ state, setState, router, setActiveScreen, scriptContext });
-  const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen, scriptContext });
-  const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen, scriptContext });
+  const canGoToNextScreen = _canGoToNextScreen({ state, setState, router });
+  const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router });
+  const getScreens = _getScreens({ state, setState, router });
+  const goToScreen = _goToScreen({ state, setState, router });
+  const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
+  const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
   const initialisePage = (opts = {}) => {
     if (opts.force || !state.screensInitialised) {
@@ -53,19 +51,12 @@ export default function Provider(props) {
   };
 
   React.useEffect(() => {
-    let backHandler = null;
-
-    if (Platform.OS === 'android') {
-      backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        () => setActiveScreen(state.activeScreenIndex - 1)
-      );
+    if (screensInitialised) {
+      const activeScreenIndex = screenId ? screens.map(s => s.id.toString()).indexOf(screenId) : 0;
+      const activeScreen = screens[activeScreenIndex];
+      setState({ activeScreenIndex, activeScreen, activeScreenInitialised: true });
     }
-
-    return () => {
-      if (backHandler) backHandler.remove();
-    };
-  });
+  }, [screensInitialised, location]);
 
   React.useEffect(() => { initialisePage(); }, [scriptId]);
 
@@ -76,7 +67,6 @@ export default function Provider(props) {
         state,
         setState,
         setForm,
-        scriptContext,
         initialisePage,
         canGoToNextScreen,
         canGoToPrevScreen,
