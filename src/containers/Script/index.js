@@ -1,26 +1,19 @@
 import React from 'react';
 import Typography from '@/ui/Typography';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
-import { provideScreensContext, useScreensContext } from '@/contexts/screens';
+import { provideScreensContext } from '@/contexts/screens';
 import ActivityIndicator from '@/ui/ActivityIndicator';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import { LayoutScrollableContent } from '@/components/Layout';
 import Screens from './Screens';
 import Header from './Header';
 import NextBtn from './NextBtn';
 
 const Script = () => {
-  const scrollableRef = React.useRef(null);
-
   const {
     initialisePage,
-    state: { script, scriptInitialised }
+    state: { script, scriptInitialised, loadingScript }
   } = useScriptContext();
-
-  const {
-    state: { loadingScript }
-  } = useScreensContext();
 
   if (!scriptInitialised || loadingScript) {
     return <ActivityIndicator size="large" />;
@@ -42,11 +35,7 @@ const Script = () => {
     <>
       <Header />
 
-      <LayoutScrollableContent
-        ref={scrollableRef}
-      >
-        <Screens />
-      </LayoutScrollableContent>
+      <Screens />
 
       <NextBtn />
     </>
