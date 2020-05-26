@@ -43,7 +43,7 @@ const Screens = () => {
 
   return (
     <>
-      <Typography variant="h1">{activeScreen.data.title} - {activeScreen.type}</Typography>
+      <Typography variant="h1">{activeScreen.data.title}</Typography>
 
       <Divider border={false} />
 

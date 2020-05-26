@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
 const Timer = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form.value : '';
+  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
 
   const styles = useStyles();
 
@@ -51,7 +51,7 @@ const Timer = ({ screen, context }) => {
     context.setForm({
       [screen.id]: formError || !value ? undefined : {
         key: metadata ? metadata.key : undefined,
-        form: { key: metadata.key, value }
+        form: value
       }
     });
   }, [formError, value]);

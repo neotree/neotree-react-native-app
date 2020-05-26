@@ -7,7 +7,7 @@ import RadioGroup from '@/ui/RadioGroup';
 const YesNo = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form.value : '';
+  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
 
   const [selected, setSelected] = React.useState(_value || null);
 
@@ -15,7 +15,7 @@ const YesNo = ({ screen, context }) => {
     context.setForm({
       [screen.id]: !selected ? undefined : {
         key: metadata ? metadata.key : undefined,
-        form: { key: metadata.key, value: selected }
+        form: selected
       }
     });
   }, [selected]);

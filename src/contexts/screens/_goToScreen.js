@@ -24,10 +24,12 @@ export default ({
 
     const condition = Object.keys(form)
       .map(key => form[key])
-      .filter(entry => entry && entry.key && entry.form)
-      .map(entry => ({ key: entry.key, value: entry.form.value }))
-      .reduce((acc, v) => {
-        return acc.split(`$${v.key}`).join(`'${v.value}'`);
+      .filter(entry => entry && entry.form)
+      .reduce((acc, entry) => {
+        if (entry.form.map) {
+          acc = entry.form.reduce((acc, f) => acc.split(`$${f.key}`).join(`'${f.value}'`), acc);
+        }
+        return acc.split(`$${entry.key}`).join(`'${entry.form}'`);
       }, screen.data.condition)
       .replace(new RegExp(' and ', 'gi'), ' && ')
       .replace(new RegExp(' or ', 'gi'), ' || ')

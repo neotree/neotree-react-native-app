@@ -91,10 +91,12 @@ const Form = ({ screen, context }) => {
                   if (f.condition) {
                     let condition = Object.keys(form)
                       .map(key => form[key])
-                      .filter(entry => entry && entry.key && entry.form)
-                      .map(entry => ({ key: entry.key, value: entry.form.value }))
-                      .reduce((acc = '', s) => {
-                        return acc.split(`$${s.key}`).join(`'${s.value}'`);
+                      .filter(entry => entry && entry.form)
+                      .reduce((acc = '', entry) => {
+                        if (entry.form.map) {
+                          acc = entry.form.reduce((acc, f) => acc.split(`$${f.key}`).join(`'${f.value}'`), acc);
+                        }
+                        return acc.split(`$${entry.key}`).join(`'${entry.form}'`);
                       }, f.condition)
                       .replace(new RegExp(' and ', 'gi'), ' && ')
                       .replace(new RegExp(' or ', 'gi'), ' || ')

@@ -6,7 +6,7 @@ import Checkbox from '@/ui/Checkbox';
 const YesNo = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form.value : null;
+  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : null;
 
   const [selected, setSelected] = React.useState(_value || []);
 
@@ -14,7 +14,7 @@ const YesNo = ({ screen, context }) => {
     context.setForm({
       [screen.id]: !selected.length ? undefined : {
         key: metadata ? metadata.key : undefined,
-        form: { value: selected },
+        form: selected,
       }
     });
   }, [selected]);
