@@ -18,6 +18,7 @@ const Form = ({ screen, context }) => {
   const { setForm, state: { form } } = context;
 
   const [localForm, setLocalForm] = React.useState([]);
+  const [errors, setErrors] = React.useState([]);
 
   const onChange = (index, newVal) => setLocalForm(prevState => prevState.map((v, i) => {
     if (i === index) return { ...v, value: newVal };
@@ -41,7 +42,7 @@ const Form = ({ screen, context }) => {
     }, true);
 
     setForm({
-      [screen.id]: !completed ? undefined : { key: metadata.key, form: localForm },
+      [screen.id]: errors.length || !completed ? undefined : { key: metadata.key, form: localForm },
     });
   }, [localForm]);
 
@@ -117,7 +118,17 @@ const Form = ({ screen, context }) => {
                     form={localForm}
                     conditionMet={conditionMet}
                     value={value}
-                    onChange={v => onChange(i, v)}
+                    onChange={(v, error) => {
+                      onChange(i, v);
+                      setErrors(errs => {
+                        if (errs.map(e => e.index).indexOf(i) > -1) {
+                          return errs
+                            .map(e => e.index === i ? { index: i, error: error } : e)
+                            .filter(e => e.error);
+                        }
+                        return [...errs, { index: i, error }].filter(e => e.error);
+                      });
+                    }}
                   />
                 );
               })()}

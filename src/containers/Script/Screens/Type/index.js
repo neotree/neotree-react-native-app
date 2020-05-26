@@ -14,6 +14,12 @@ const Type = () => {
 
   const { state: { activeScreen } } = context;
 
+  const [screenId, setScreenId] = React.useState(null);
+
+  React.useEffect(() => { setScreenId(activeScreen.id); }, [activeScreen]);
+
+  const shouldDisplay = activeScreen.id === screenId;
+
   return (
     <>
       {(() => {
@@ -44,6 +50,8 @@ const Type = () => {
           default:
             // do nothing
         }
+
+        if (!shouldDisplay) Component = null;
 
         return !Component ? null : (
           <Component

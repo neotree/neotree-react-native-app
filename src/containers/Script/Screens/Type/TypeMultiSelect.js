@@ -6,19 +6,18 @@ import Checkbox from '@/ui/Checkbox';
 const YesNo = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const { setForm, state: { form } } = context;
+  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form.value : null;
 
-  const [localForm, _setLocalForm] = React.useState({});
-  const setLocalForm = s => _setLocalForm(prevState => ({ ...prevState, ...s }));
+  const [selected, setSelected] = React.useState(_value || []);
 
   React.useEffect(() => {
-    setForm({
-      [screen.id]: !Object.keys(localForm).length ? undefined : {
+    context.setForm({
+      [screen.id]: !selected.length ? undefined : {
         key: metadata ? metadata.key : undefined,
-        localForm: null,
+        form: { value: selected },
       }
     });
-  }, [localForm]);
+  }, [selected]);
 
   return (
     <>
@@ -29,8 +28,19 @@ const YesNo = ({ screen, context }) => {
               <Checkbox
                 label={item.label}
                 value={item.id}
-                checked={localForm[item.id]}
-                onChange={() => setLocalForm({ [item.id]: !localForm[item.id] })}
+                checked={selected.indexOf(item.id) > -1}
+                onChange={e => {
+                  const v = e.value;
+                  const exclusives = metadata.items.filter(item => item.exclusive).map(item => item.id);
+                  if (item.exclusive) {
+                    setSelected(e.checked ? [v] : []);
+                  } else {
+                    setSelected(selected => {
+                      return (e.checked ? [...selected, v] : selected.filter(s => s !== v))
+                        .filter(s => exclusives.indexOf(s) < 0);
+                    });
+                  }
+                }}
               />
             </React.Fragment>
           );

@@ -54,7 +54,7 @@ const Management = ({ screen, context }) => {
 
   React.useEffect(() => {
     context.setForm({
-      [screen.id]: { key: metadata ? metadata.key : undefined, form: null } 
+      [screen.id]: { key: metadata ? metadata.key : undefined, form: null }
     });
   }, []);
 

@@ -40,7 +40,13 @@ const DateTime = ({ field, onChange, value, conditionMet, }) => {
 
   return (
     <>
-      {!field.label ? null : <Typography>{field.label}</Typography>}
+      {!field.label ? null : (
+        <Typography
+          {...conditionMet ? null : { style: { color: '#ccc' } }}
+        >
+          {field.label}
+        </Typography>
+      )}
 
       <View style={[styles.gridContainer]}>
         <View style={[styles.gridItem]}>
