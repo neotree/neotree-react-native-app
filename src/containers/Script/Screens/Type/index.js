@@ -29,6 +29,9 @@ const Type = () => {
           case 'yesno':
             Component = YesNo;
             break;
+          case 'checklist':
+            Component = MultiSelect;
+            break;
           case 'multi_select':
             Component = MultiSelect;
             break;

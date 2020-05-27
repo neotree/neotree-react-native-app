@@ -22,29 +22,36 @@ const YesNo = ({ screen, context }) => {
   return (
     <>
       <View>
-        {(metadata.items || []).map((item) => {
-          return (
-            <React.Fragment key={item.label}>
-              <Checkbox
-                label={item.label}
-                value={item.id}
-                checked={selected.map(s => s.value).indexOf(item.id) > -1}
-                onChange={e => {
-                  const value = e.value;
-                  const exclusives = metadata.items.filter(item => item.exclusive).map(item => item.id);
-                  if (item.exclusive) {
-                    setSelected(e.checked ? [{ value }] : []);
-                  } else {
-                    setSelected(selected => {
-                      return (e.checked ? [...selected, { value }] : selected.filter(s => s.value !== value))
-                        .filter(s => exclusives.indexOf(s.value) < 0);
-                    });
-                  }
-                }}
-              />
-            </React.Fragment>
-          );
-        })}
+        {(metadata.items || [])
+          .map((item) => {
+            return (
+              <React.Fragment key={item.label}>
+                <Checkbox
+                  label={item.label}
+                  value={item.id || item.key}
+                  checked={selected.map(s => s.value).indexOf(item.id || item.key) > -1}
+                  onChange={e => {
+                    const value = e.value;
+                    const exclusives = metadata.items
+                      .filter(item => item.exclusive)
+                      .map(item => item.id || item.key);
+                    if (item.exclusive) {
+                      setSelected(e.checked ? [{ value }] : []);
+                    } else {
+                      setSelected(selected => {
+                        return (
+                          e.checked ?
+                            [...selected, { value, id: item.id, key: item.key }]
+                            :
+                            selected.filter(s => s.value !== value)
+                        ).filter(s => exclusives.indexOf(s.value) < 0);
+                      });
+                    }
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
       </View>
     </>
   );
