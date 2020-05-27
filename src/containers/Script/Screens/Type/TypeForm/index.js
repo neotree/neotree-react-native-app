@@ -92,15 +92,25 @@ const Form = ({ screen, context }) => {
                     let condition = Object.keys(form)
                       .map(key => form[key])
                       .filter(entry => entry && entry.form)
-                      .reduce((acc = '', entry) => {
+                      .reduce((acc, entry) => {
+                        acc = acc.trim().replace('&', ' and ').replace(/\s+/g, ' ');
+                        const replace = (condition, key, value) => {
+                          return condition.split(`$${key} =`).join(`'${value}' =`)
+                            .split(`$${key}=`).join(`'${value}' =`)
+                            .split(`$${key} >`).join(`'${value}' >`)
+                            .split(`$${key}>`).join(`'${value}' >`)
+                            .split(`$${key} <`).join(`'${value}' <`)
+                            .split(`$${key}<`).join(`'${value}' <`);
+                        };
+
                         if (entry.form.map) {
-                          acc = entry.form.reduce((acc, f) => acc.split(`$${f.key}`).join(`'${f.value}'`), acc);
+                          const chunks = entry.form.map(f => ({ ...f, condition: acc }))
+                            .map(f => replace(f.condition, f.key || entry.key, f.value));
+                          if (chunks.filter(c => c !== acc).length) return chunks.join(' || ');
+                          return acc;
                         }
-                        return acc.split(`$${entry.key}`).join(`'${entry.form}'`);
-                      }, f.condition)
-                      .replace(new RegExp(' and ', 'gi'), ' && ')
-                      .replace(new RegExp(' or ', 'gi'), ' || ')
-                      .replace(new RegExp(' = ', 'gi'), ' == ');
+                        return replace(acc, entry.key, entry.form);
+                      }, f.condition);
 
                     condition = localForm.reduce((acc = '', v) => {
                       return acc.replace(`$${v.key}`, `'${v.value || ''}'`);

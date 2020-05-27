@@ -28,16 +28,16 @@ const YesNo = ({ screen, context }) => {
               <Checkbox
                 label={item.label}
                 value={item.id}
-                checked={selected.indexOf(item.id) > -1}
+                checked={selected.map(s => s.value).indexOf(item.id) > -1}
                 onChange={e => {
-                  const v = e.value;
+                  const value = e.value;
                   const exclusives = metadata.items.filter(item => item.exclusive).map(item => item.id);
                   if (item.exclusive) {
-                    setSelected(e.checked ? [v] : []);
+                    setSelected(e.checked ? [{ value }] : []);
                   } else {
                     setSelected(selected => {
-                      return (e.checked ? [...selected, v] : selected.filter(s => s !== v))
-                        .filter(s => exclusives.indexOf(s) < 0);
+                      return (e.checked ? [...selected, { value }] : selected.filter(s => s.value !== value))
+                        .filter(s => exclusives.indexOf(s.value) < 0);
                     });
                   }
                 }}

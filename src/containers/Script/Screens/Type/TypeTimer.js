@@ -37,7 +37,6 @@ const useStyles = makeStyles((theme) => ({
 
 const Timer = ({ screen, context }) => {
   const { metadata } = screen.data;
-
   const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
 
   const styles = useStyles();
@@ -61,7 +60,7 @@ const Timer = ({ screen, context }) => {
       const v = Number(value);
       let e = null;
       if (metadata.maxValue && (v > metadata.maxValue)) e = `Max value ${metadata.maxValue}`;
-      if (metadata.minValue && (v > metadata.minValue)) e = `Min value ${metadata.minValue}`;
+      if (metadata.minValue && (v < metadata.minValue)) e = `Min value ${metadata.minValue}`;
       setFormError(e);
     }
   }, [value]);
@@ -117,7 +116,6 @@ const Timer = ({ screen, context }) => {
           <View style={[styles.input]}>
             <Input
               label={metadata.label}
-              size="xl"
               value={value || ''}
               defaultValue={value || ''}
               onChange={e => {

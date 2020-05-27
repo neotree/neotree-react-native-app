@@ -53,9 +53,11 @@ const Screens = () => {
       <LayoutScrollableContent
         ref={scrollableRef}
       >
-        <Typography variant="h1">{activeScreen.data.title}</Typography>
+        <Divider border={false} spacing={2} />
 
-        <Divider border={false} />
+        <Typography variant="h3">{activeScreen.data.title}</Typography>
+
+        <Divider border={false} spacing={2} />
 
         {activeScreen.data.actionText || activeScreen.data.contentText ? (
           <View style={[styles.actionBox]}>

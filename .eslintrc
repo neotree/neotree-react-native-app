@@ -7,6 +7,9 @@
     "import"
   ],
   "rules": {
+    "prefer-destructuring": 0,
+    "newline-per-chained-call": 0,
+    "no-useless-escape": 0,
     "no-eval": 0,
     "no-plusplus": 0,
     "operator-linebreak": 0,

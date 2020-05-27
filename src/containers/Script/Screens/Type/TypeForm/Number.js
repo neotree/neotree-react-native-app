@@ -24,7 +24,7 @@ const NumberField = ({
           if (value) {
             const v = Number(value);
             if (field.maxValue && (v > field.maxValue)) err = `Max value ${field.maxValue}`;
-            if (field.minValue && (v > field.minValue)) err = `Min value ${field.minValue}`;
+            if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
           }
           setError(err);
           onChange(value, err);
