@@ -1,5 +1,4 @@
 import React from 'react';
-import { useCacheContext } from '@/contexts/cache';
 import useRouter from '@/utils/useRouter';
 import Context from './Context';
 
@@ -8,9 +7,8 @@ import _getScript from './_getScript';
 export default function Provider(props) {
   const router = useRouter();
   const { scriptId } = router.match.params;
-  const cacheContext = useCacheContext();
 
-  const [state, _setState] = React.useState(cacheContext.state[`${scriptId}State`] || {
+  const [state, _setState] = React.useState({
     script: null,
     loadingScript: false,
     loadingScriptError: false,
@@ -30,10 +28,6 @@ export default function Provider(props) {
   };
 
   React.useEffect(() => { initialisePage(); }, [scriptId]);
-
-  React.useEffect(() => {
-    return () => cacheContext.setState({ [`${scriptId}State`]: state });
-  }, [state]);
 
   return (
     <Context.Provider

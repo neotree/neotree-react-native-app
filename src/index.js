@@ -54,6 +54,4 @@ const NeoTreeApp = (props) => {
   );
 };
 
-export default provideAppContext(
-  provideCacheContext(NeoTreeApp)
-);
+export default provideAppContext(NeoTreeApp);
