@@ -8,6 +8,7 @@ import _getScreens from './_getScreens';
 import _goToScreen from './_goToScreen';
 import _goToNextScreen from './_goToNextScreen';
 import _goToPrevScreen from './_goToPrevScreen';
+import _parseScreenCondition from './_parseScreenCondition';
 
 export default function Provider(props) {
   const router = useRouter();
@@ -37,10 +38,11 @@ export default function Provider(props) {
     form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
   }));
 
+  const parseScreenCondition = _parseScreenCondition({ state });
   const canGoToNextScreen = _canGoToNextScreen({ state, setState, router });
   const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router });
   const getScreens = _getScreens({ state, setState, router });
-  const goToScreen = _goToScreen({ state, setState, router });
+  const goToScreen = _goToScreen({ state, setState, router, parseScreenCondition });
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
@@ -74,6 +76,7 @@ export default function Provider(props) {
         goToNextScreen,
         goToPrevScreen,
         getScreens,
+        parseScreenCondition
       }}
     />
   );

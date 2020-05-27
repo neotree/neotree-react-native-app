@@ -15,7 +15,7 @@ import Time from './Time';
 const Form = ({ screen, context }) => {
   const { metadata } = screen.data;
 
-  const { setForm, state: { form } } = context;
+  const { setForm, parseScreenCondition, state: { form } } = context;
 
   const [localForm, setLocalForm] = React.useState([]);
   const [errors, setErrors] = React.useState([]);
@@ -85,36 +85,14 @@ const Form = ({ screen, context }) => {
                 let conditionMet = true;
                 let value = null;
 
+                parseScreenCondition(f.condition, form);
+
                 if (state && (state.key === f.key)) {
                   value = state.value;
 
                   if (f.condition) {
-                    let condition = Object.keys(form)
-                      .map(key => form[key])
-                      .filter(entry => entry && entry.form)
-                      .reduce((acc, entry) => {
-                        acc = acc.trim().replace('&', ' and ').replace(/\s+/g, ' ');
-                        const replace = (condition, key, value) => {
-                          return condition.split(`$${key} =`).join(`'${value}' =`)
-                            .split(`$${key}=`).join(`'${value}' =`)
-                            .split(`$${key} >`).join(`'${value}' >`)
-                            .split(`$${key}>`).join(`'${value}' >`)
-                            .split(`$${key} <`).join(`'${value}' <`)
-                            .split(`$${key}<`).join(`'${value}' <`);
-                        };
-
-                        if (entry.form.map) {
-                          const chunks = entry.form.map(f => ({ ...f, condition: acc }))
-                            .map(f => replace(f.condition, f.key || entry.key, f.value));
-                          if (chunks.filter(c => c !== acc).length) return chunks.join(' || ');
-                          return acc;
-                        }
-                        return replace(acc, entry.key, entry.form);
-                      }, f.condition);
-
-                    condition = localForm.reduce((acc = '', v) => {
-                      return acc.replace(`$${v.key}`, `'${v.value || ''}'`);
-                    }, condition);
+                    let condition = parseScreenCondition(f.condition, localForm);
+                    condition = parseScreenCondition(condition, form);
 
                     try {
                       conditionMet = eval(condition);

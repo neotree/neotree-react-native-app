@@ -1,5 +1,6 @@
 export default ({
   state: { activeScreenIndex, form, screens },
+  parseScreenCondition,
   router: {
     history,
     match: { params: { scriptId } },
@@ -20,33 +21,9 @@ export default ({
     let target = getScreen(i);
     const { index, screen } = target;
 
-    if (!screen.data.condition) return target;
+    const condition = parseScreenCondition(screen.data.condition, form);
 
-    const condition = Object.keys(form)
-      .map(key => form[key])
-      .filter(entry => entry && entry.form)
-      .reduce((acc, entry) => {
-        acc = acc.trim().replace('&', ' and ').replace(/\s+/g, ' ');
-        const replace = (condition, key, value) => {
-          return condition.split(`$${key} =`).join(`'${value}' =`)
-            .split(`$${key}=`).join(`'${value}' =`)
-            .split(`$${key} >`).join(`'${value}' >`)
-            .split(`$${key}>`).join(`'${value}' >`)
-            .split(`$${key} <`).join(`'${value}' <`)
-            .split(`$${key}<`).join(`'${value}' <`);
-        };
-
-        if (entry.form.map) {
-          const chunks = entry.form.map(f => ({ ...f, condition: acc }))
-            .map(f => replace(f.condition, f.key || entry.key, f.value));
-          if (chunks.filter(c => c !== acc).length) return chunks.join(' || ');
-          return acc;
-        }
-        return replace(acc, entry.key, entry.form);
-      }, screen.data.condition)
-      .replace(new RegExp(' and ', 'gi'), ' && ')
-      .replace(new RegExp(' or ', 'gi'), ' || ')
-      .replace(new RegExp(' = ', 'gi'), ' == ');
+    if (!condition) return target;
 
     try {
       if (!eval(condition)) {
