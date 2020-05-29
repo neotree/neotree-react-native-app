@@ -1,5 +1,5 @@
 import React from 'react';
-import db from '@/utils/database';
+import { initialiseDatabase } from '@/api/database';
 import Context from './Context';
 
 export default function Provider(props) {
@@ -20,25 +20,15 @@ export default function Provider(props) {
       });
     };
 
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          'create table if not exists scripts (id string primary key not null, data longtext, createdAt datetime, updatedAt datetime);'
-        );
-        tx.executeSql(
-          'create table if not exists screens (id number primary key not null, data longtext, createdAt datetime, updatedAt datetime);'
-        );
-      },
-      done,
-      rslts => done(null, rslts)
-    );
+    initialiseDatabase()
+      .then(rslts => done(rslts))
+      .catch(done);
   }, []);
 
   return (
     <Context.Provider
       {...props}
       value={{
-        db,
         state,
         setState,
       }}

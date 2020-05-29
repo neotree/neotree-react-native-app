@@ -1,7 +1,6 @@
 import React from 'react';
 import { onAuthStateChanged } from '@/api/auth';
 import { useAppContext, provideAppContext } from '@/contexts/app';
-import { provideCacheContext } from '@/contexts/cache';
 import { useHistory } from 'react-router-native';
 
 import { View, Text, StyleSheet } from 'react-native';
