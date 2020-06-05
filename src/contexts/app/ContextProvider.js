@@ -1,6 +1,6 @@
 import React from 'react';
 import Context from './Context';
-import { provideDataContext, useDataContext } from '../data';
+import { useDataContext } from '../data';
 
 function Provider(props) {
   const { state: { dbTablesInitialised } } = useDataContext();
@@ -30,4 +30,4 @@ function Provider(props) {
   );
 }
 
-export default provideDataContext(Provider);
+export default Provider;

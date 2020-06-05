@@ -5,9 +5,13 @@ export default ({
   router: {
     match: { params: { scriptId } }
   }
-}) => () => {
-  setState({ loadScriptError: null, loadingScript: true });
-  getScript({ payload: { id: scriptId } })
+}) => (payload, opts = {}) => {
+  setState({
+    loadScriptError: null,
+    loadingScript: opts.showLoader !== false 
+  });
+
+  getScript({ payload: { id: scriptId, ...payload } })
     .then(payload => {
       setState({
         script: payload.script,

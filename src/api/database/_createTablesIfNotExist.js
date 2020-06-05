@@ -11,7 +11,12 @@ export default () => new Promise((resolve, reject) => {
         q,
         null,
         (tx, rslts) => rslts && resolve(rslts),
-        (tx, e) => e && reject(e)
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
+            reject(e);
+          }
+        }
       )
     );
   }));

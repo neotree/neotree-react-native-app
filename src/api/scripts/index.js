@@ -1,5 +1,64 @@
-import makeApiCall from '../makeApiCall';
+import db from '../database';
 
-export const getScript = options => makeApiCall('/get-script', options);
+export const getScript = (options = {}) => new Promise((resolve, reject) => {
+  const { ..._where } = options.payload || {};
 
-export const getScripts = options => makeApiCall('/get-scripts', options);
+  const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
+    .join(',');
+
+  let q = 'select * from scripts';
+  q = where ? `${q} where ${where}` : q;
+
+  db.transaction(
+    tx => {
+      tx.executeSql(
+        `${q} limit 1;`.trim(),
+        null,
+        (tx, rslts) => resolve({
+          script: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
+        }),
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
+            reject(e);
+          }
+        }
+      );
+    }
+  );
+});
+
+export const getScripts = (options = {}) => new Promise((resolve, reject) => {
+  const { _order, ..._where } = options.payload || {};
+
+  let order = (_order || [['createdAt', 'DESC']]);
+  order = (order.map ? order : [])
+    .map(keyVal => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
+    .filter(clause => clause)
+    .join(',');
+
+  const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
+    .join(',');
+
+  let q = 'select * from scripts';
+  q = where ? `${q} where ${where}` : q;
+  q = order ? `${q} order by ${order}` : q;
+
+  db.transaction(
+    tx => {
+      tx.executeSql(
+        `${q};`.trim(),
+        null,
+        (tx, rslts) => resolve({
+          scripts: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
+        }),
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
+            reject(e);
+          }
+        }
+      );
+    }
+  );
+});

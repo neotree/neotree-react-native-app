@@ -1,5 +1,6 @@
 import React from 'react';
 import useRouter from '@/utils/useRouter';
+// import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
 import _canGoToNextScreen from './_canGoToNextScreen';
@@ -51,6 +52,15 @@ export default function Provider(props) {
       getScreens();
     }
   };
+
+  // useDataRefresherAfterSync('screens', ({ event }) => {
+  //   const shouldGetScreens = event.screens.reduce((acc, s) => {
+  //     if (state.screens.map(s => s.id).indexOf(s.id) > -1) acc = true;
+  //     return acc;
+  //   }, false);
+  //
+  //   if (shouldGetScreens) getScreens(null, { showLoader: false });
+  // });
 
   React.useEffect(() => {
     if (screensInitialised) {

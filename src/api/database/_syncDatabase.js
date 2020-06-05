@@ -1,44 +1,93 @@
+import createTablesIfNotExist from './_createTablesIfNotExist';
 import getLocalDataActivityInfo from './_getLocalDataActivityInfo';
 import getRemoteDataActivityInfo from './_getRemoteDataActivityInfo';
 import insertScreens from './_insertScreens';
 import insertScripts from './_insertScripts';
+import deleteScreens from './_deleteScreens';
 
-import { getScripts } from '../scripts';
-import { getScreens } from '../screens';
+import { getScripts } from '../webeditor/scripts';
+import { getScreens } from '../webeditor/screens';
 
-export default () => new Promise((resolve, reject) => {
+export default data => new Promise((resolve, reject) => {
+  require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
+
   // create tables if not exist
-  Promise.all([
-    getLocalDataActivityInfo(),
-    getRemoteDataActivityInfo(),
-  ])
+  createTablesIfNotExist()
     .catch(reject)
-    .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
-      let _getScripts = null;
-      let _getScreens = null;
-
-      if (remoteDataActivityInfo.scripts.count && !localDataActivityInfo.scripts.count) {
-        _getScripts = getScripts();
-      }
-
-      if (remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
-        _getScreens = getScreens();
-      }
-
-      Promise.all([_getScripts, _getScreens])
+    .then(() => {
+      Promise.all([
+        getLocalDataActivityInfo(),
+        getRemoteDataActivityInfo(),
+      ])
         .catch(reject)
-        .then(([scriptsRslts, screensRslts]) => {
-          const scripts = scriptsRslts ? scriptsRslts.scripts : [];
-          const screens = screensRslts ? screensRslts.screens : [];
-          // insert data into the local database
+        .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
+          let _getScripts = null;
+          let _getScreens = null;
+          let _deleteLocalScreens = null;
+          let _deleteLocalScripts = null;
+
+          if (remoteDataActivityInfo.scripts.count && !localDataActivityInfo.scripts.count) {
+            _getScripts = () => getScripts();
+          }
+
+          if (remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
+            _getScreens = () => getScreens();
+          }
+
+          if (data && data.event) {
+            const eventName = data.event.name;
+
+            if (eventName === 'create_scripts') {
+              _getScripts = () => getScripts({
+                payload: { id: data.event.scripts.map(s => s.id) } });
+            }
+            if (eventName === 'update_scripts') {
+              _getScripts = () => getScripts({
+                payload: { id: data.event.scripts.map(s => s.id) }
+              });
+            }
+            if (eventName === 'delete_scripts') {
+              _deleteLocalScripts = () => deleteScreens({
+                payload: { id: data.event.scripts.map(s => s.id) }
+              });
+            }
+            if (eventName === 'create_screens') {
+              _getScreens = () => getScripts({
+                payload: { id: data.event.screens.map(s => s.id) }
+              });
+            }
+            if (eventName === 'update_screens') {
+              _getScreens = () => getScripts({
+                payload: { id: data.event.screens.map(s => s.id) }
+              });
+            }
+            if (eventName === 'delete_screens') {
+              _deleteLocalScreens = () => deleteScreens({
+                payload: { id: data.event.screens.map(s => s.id) }
+              });
+            }
+          }
 
           Promise.all([
-            insertScripts(scripts),
-            insertScreens(screens),
+            _getScripts ? _getScripts() : null,
+            _getScreens ? _getScreens() : null,
+            _deleteLocalScripts ? _deleteLocalScripts() : null,
+            _deleteLocalScreens ? _deleteLocalScreens() : null,
           ])
             .catch(reject)
-            .then(([insertScriptsRslts, insertScreensRslts]) => {
-              resolve({ insertScriptsRslts, insertScreensRslts });
+            .then(([scriptsRslts, screensRslts]) => {
+              const scripts = scriptsRslts ? scriptsRslts.scripts : [];
+              const screens = screensRslts ? screensRslts.screens : [];
+              // insert data into the local database
+
+              Promise.all([
+                insertScripts(scripts),
+                insertScreens(screens),
+              ])
+                .catch(reject)
+                .then(([insertScriptsRslts, insertScreensRslts]) => {
+                  resolve({ insertScriptsRslts, insertScreensRslts });
+                });
             });
         });
     });

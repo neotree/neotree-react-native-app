@@ -1,35 +1,38 @@
 /* global fetch */
-import apiConfig from '~/config/api.config.json';
 
 export default (url = '', opts = {}) => {
   url = url[0] === '/' ? url : `/${url}`;
 
-  let reqOpts = {
-    headers: {
-      ...opts.headers,
-      'x-api-key': apiConfig.api_key,
-    },
+  const reqOpts = {
+    headers: { ...opts.headers },
   };
 
   if (!opts.method || (opts.method === 'GET') || (opts.method === 'get')) {
     url = `${url}?payload=${JSON.stringify(opts.payload || {})}`;
   } else {
-    reqOpts = {
-      ...reqOpts,
-      body: JSON.stringify({ payload: opts.payload || {} }),
-    };
+    reqOpts.body = JSON.stringify({ payload: opts.payload || {} });
   }
 
+  url = `${opts.apiConfig.api_endpoint}${url}`;
+
+  require('@/utils/logger')('makeApiCall', url);
+
   return new Promise((resolve, reject) => {
-    fetch(`${apiConfig.api_endpoint}${url}`, reqOpts)
+    fetch(url, reqOpts)
       .then(res => {
         return res.json();
       })
       .then(res => {
         const error = res.error || res.errors;
-        if (error) return reject(error.map ? error : [error]);
+        if (error) {
+          require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, error.map ? error : [error]);
+          return reject(error.map ? error : [error]);
+        }
         resolve(res.payload);
       })
-      .catch(e => reject(e.map ? e : [e]));
+      .catch(e => {
+        require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, e.map ? e : [e]);
+        if (e) reject(e);
+      });
   });
 };

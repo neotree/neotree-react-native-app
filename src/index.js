@@ -1,5 +1,6 @@
 import React from 'react';
 import { onAuthStateChanged } from '@/api/auth';
+import { provideDataContext } from '@/contexts/data';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 
@@ -53,4 +54,6 @@ const NeoTreeApp = (props) => {
   );
 };
 
-export default provideAppContext(NeoTreeApp);
+export default provideDataContext(
+  provideAppContext(NeoTreeApp)
+);

@@ -6,7 +6,12 @@ export default () => new Promise((resolve, reject) => {
       'select name from sqllite_master where type="table" and name not like "sqlite_%"',
       null,
       (tx, rslts) => rslts && resolve(rslts),
-      (tx, e) => e && reject(e)
+      (tx, e) => {
+        if (e) {
+          require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
+          reject(e);
+        }  
+      }
     )
   );
 });

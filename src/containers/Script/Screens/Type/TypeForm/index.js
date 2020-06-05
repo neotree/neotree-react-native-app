@@ -13,7 +13,7 @@ import Period from './Period';
 import Time from './Time';
 
 const Form = ({ screen, context }) => {
-  const { metadata } = screen.data;
+  const metadata = screen.data.metadata || {};
 
   const { setForm, parseScreenCondition, state: { form } } = context;
 

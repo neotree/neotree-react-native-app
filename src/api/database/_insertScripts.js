@@ -5,19 +5,37 @@ export default (data = []) => new Promise((resolve, reject) => {
 
   if (!data.length) return resolve(null);
 
+  const done = (err, rslts) => {
+    if (err) return reject(err);
+    resolve(rslts);
+  };
+
   const columns = ['id', 'data', 'createdAt', 'updatedAt'].join(',');
-  const values = data.map(item => [item.id, JSON.stringify({}), item.createdAt, item.updatedAt])
-    .map(values => values.map(v => JSON.stringify(v)).join(','))
+
+  const values = data.map(() => ['?', '?', '?', '?'])
+    .map(values => values.join(','))
     .map(values => `(${values})`)
-    .join(',')
-    .trim();
+    .join(',');
 
   db.transaction(
-    tx => tx.executeSql(
-      `insert or replace into scripts (${columns}) values ${values};`,
-      null,
-      (tx, rslts) => rslts && resolve(rslts),
-      (tx, e) => e && reject(e)
-    )
+    tx => {
+      tx.executeSql(
+        `insert or replace into scripts (${columns}) values ${values};`,
+        data.reduce((acc, s) => [
+          ...acc,
+          s.id,
+          JSON.stringify(s.data || {}),
+          s.createdAt,
+          s.updatedAt
+        ], []),
+        (tx, rslts) => done(null, rslts),
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: insertScripts', e);
+            reject(e);
+          }
+        }
+      );
+    }
   );
 });
