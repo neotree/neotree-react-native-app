@@ -5,6 +5,7 @@ export default () => new Promise((resolve, reject) => {
     'select sql from sqlite_master where name = "scripts";',
     'select sql from sqlite_master where name = "screens";',
     'select sql from sqlite_master where name = "forms";',
+    'select sql from sqlite_master where name = "authenticated_user";',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -15,7 +16,7 @@ export default () => new Promise((resolve, reject) => {
           if (e) {
             require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
             reject(e);
-          }  
+          }
         }
       )
     );

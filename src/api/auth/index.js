@@ -1,4 +1,5 @@
 import * as firebase from 'firebase';
+import db from '../database';
 
 export const signOut = () => firebase.auth().signOut();
 
@@ -11,3 +12,35 @@ export const signIn = (params = {}) => new Promise((resolve, reject) => {
 
 export const onAuthStateChanged = cb => firebase.auth()
   .onAuthStateChanged(user => cb && cb(user));
+
+export const getAuthenticatedUser = () => new Promise((resolve, reject) => {
+  db.transaction(
+    tx => {
+      tx.executeSql(
+        'select * from authenticated_user;',
+        null,
+        (tx, rslts) => {
+          const user = rslts.rows._array[0];
+
+          const details = (() => {
+            if (!user) return null;
+
+            try {
+              return JSON.parse(user.details);
+            } catch (e) {
+              return null;
+            }
+          })();
+
+          resolve({ user: details });
+        },
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: getAuthenticatedUser', e);
+            reject(e);
+          }
+        }
+      );
+    }
+  );
+});

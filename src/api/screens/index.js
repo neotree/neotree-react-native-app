@@ -1,20 +1,13 @@
 import db from '../database';
 
 export const getScreen = (options = {}) => new Promise((resolve, reject) => {
-  const { _order, ..._where } = options.payload || {};
-
-  let order = (_order || [['position', 'ASC']]);
-  order = (order.map ? order : [])
-    .map(keyVal => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-    .filter(clause => clause)
-    .join(',');
+  const { ..._where } = options.payload || {};
 
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
   let q = 'select * from screens';
   q = where ? `${q} where ${where}` : q;
-  q = order ? `${q} order by ${order}` : q;
 
   db.transaction(
     tx => {
@@ -36,12 +29,20 @@ export const getScreen = (options = {}) => new Promise((resolve, reject) => {
 });
 
 export const getScreens = (options = {}) => new Promise((resolve, reject) => {
-  const payload = options.payload || {};
-  const where = Object.keys(payload).map(key => `${key}=${JSON.stringify(payload[key])}`)
+  const { _order, ..._where } = options.payload || {};
+
+  let order = (_order || [['position', 'ASC']]);
+  order = (order.map ? order : [])
+    .map(keyVal => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
+    .filter(clause => clause)
+    .join(',');
+
+  const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
   let q = 'select * from screens';
   q = where ? `${q} where ${where}` : q;
+  q = order ? `${q} order by ${order}` : q;
 
   db.transaction(
     tx => {

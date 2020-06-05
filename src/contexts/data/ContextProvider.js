@@ -1,4 +1,5 @@
 import React from 'react';
+import { onAuthStateChanged } from '@/api/auth';
 import { syncDatabase } from '@/api/database';
 import socket from '@/api/socket';
 import Context from './Context';
@@ -26,6 +27,8 @@ export default function Provider(props) {
         .then(rslts => done(null, rslts))
         .catch(done);
     };
+
+    onAuthStateChanged(user => sync({ name: 'authenticated_user', user }));
 
     socket.on('create_scripts', data => sync({
       name: 'create_scripts',
