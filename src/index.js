@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
 import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
+import OverlayLoader from '@/components/OverlayLoader';
 
 const Authentication = LazyPage(() => import('@/containers/Authentication'), { LoaderComponent: Splash });
 const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
@@ -15,7 +16,7 @@ const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Spl
 const NeoTreeApp = () => {
   const history = useHistory();
 
-  const { appIsReady, state: { authenticatedUser } } = useAppContext();
+  const { appIsReady, state: { displayOverlayLoader, authenticatedUser } } = useAppContext();
 
   React.useEffect(() => {
     if (appIsReady()) {
@@ -36,6 +37,7 @@ const NeoTreeApp = () => {
             </LayoutContainer>
           );
         })()}
+        <OverlayLoader display={displayOverlayLoader} />
       </View>
     </>
   );

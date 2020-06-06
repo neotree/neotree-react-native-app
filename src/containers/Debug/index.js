@@ -11,9 +11,15 @@ import {
   syncDatabase,
   insertAuthenticatedUser
 } from '@/api/database';
+import { useAppContext } from '@/contexts/app';
+
 import * as firebase from 'firebase';
 
 const Debug = () => {
+  const ref = React.useRef();
+
+  const { setState: setAppState } = useAppContext();
+
   const [activities, _setActivities] = React.useState({});
   const setActivities = s => _setActivities(activities => ({ ...activities, ...s }));
 
@@ -22,9 +28,13 @@ const Debug = () => {
     return acc;
   }, false);
 
+  React.useEffect(() => {
+    if (ref.current) setAppState({ displayOverlayLoader: disableAll });
+  }, [disableAll]);
+
   return (
     <>
-      <LayoutCard style={{ flex: 1 }}>
+      <LayoutCard style={{ flex: 1 }} ref={ref}>
         <Divider spacing={2} border={false} />
 
         <Typography variant="h1">Debug</Typography>
