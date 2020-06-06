@@ -31,6 +31,10 @@ export default function Provider(props) {
     getScripts(null, { showLoader: false });
   });
 
+  useDataRefresherAfterSync('app_data_sync', () => {
+    getScripts(null, { showLoader: false });
+  });
+
   return (
     <Context.Provider
       {...props}

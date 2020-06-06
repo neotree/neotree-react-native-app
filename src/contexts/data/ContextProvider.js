@@ -1,13 +1,16 @@
 import React from 'react';
 import { onAuthStateChanged } from '@/api/auth';
 import { syncDatabase } from '@/api/database';
+import { useNetworkContext } from '@/contexts/network';
 import socket from '@/api/socket';
 import Context from './Context';
 
 export default function Provider(props) {
+  const networkState = useNetworkContext();
+
   const [state, _setState] = React.useState({
-    dbTablesInitialised: false,
-    createDBTablesError: null,
+    dataSynced: false,
+    syncDataError: null,
     lastDataSync: null,
   });
 
@@ -59,16 +62,19 @@ export default function Provider(props) {
   React.useEffect(() => {
     const done = (error) => {
       setState({
-        dbTablesInitialised: true,
-        createDBTablesError: error,
-        lastDataSync: { error },
+        dataSynced: true,
+        syncDataError: error,
+        lastDataSync: {
+          error,
+          event: !state.dataSynced ? null : { name: 'app_data_sync' }
+        },
       });
     };
 
     syncDatabase()
       .then(rslts => done(null, rslts))
       .catch(done);
-  }, []);
+  }, [networkState]);
 
   return (
     <Context.Provider

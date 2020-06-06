@@ -1,5 +1,6 @@
 import React from 'react';
 import { provideDataContext } from '@/contexts/data';
+import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 
 import { View } from 'react-native';
@@ -39,6 +40,8 @@ const NeoTreeApp = () => {
   );
 };
 
-export default provideDataContext(
-  provideAppContext(NeoTreeApp)
+export default provideNetworkContext(
+  provideDataContext(
+    provideAppContext(NeoTreeApp)
+  )
 );
