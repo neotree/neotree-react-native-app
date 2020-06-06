@@ -9,31 +9,34 @@ export default function Provider(props) {
   const networkState = useNetworkContext();
 
   const [state, _setState] = React.useState({
+    lastDataSyncEvent: null,
+    syncError: null,
+    syncRslts: null,
     dataSynced: false,
-    syncDataError: null,
-    lastDataSync: null,
   });
 
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
+  const sync = event => {
+    const dataSynced = state.syncRslts && !state.syncRslts.dataInitialised ? false : state.dataSynced;
+
+    setState({ dataSynced });
+
+    const done = (syncError, syncRslts) => setState({
+      dataSynced: true,
+      lastDataSyncEvent: event,
+      syncError,
+      syncRslts: { ...syncRslts }
+    });
+
+    syncDatabase({ event })
+      .then(rslts => done(null, rslts))
+      .catch(done);
+  };
+
   React.useEffect(() => {
-    const sync = event => {
-      const done = (error) => {
-        setState({
-          lastDataSync: { event, error },
-        });
-      };
-
-      syncDatabase({
-        event,
-        forceSync: state.lastDataSync && state.lastDataSync.authenticatedUser ? true : false
-      })
-        .then(rslts => done(null, rslts))
-        .catch(done);
-    };
-
     onAuthStateChanged(user => sync({ name: 'authenticated_user', user }));
 
     socket.on('create_scripts', data => sync({
@@ -62,23 +65,7 @@ export default function Provider(props) {
     }));
   }, []);
 
-  React.useEffect(() => {
-    const done = (error, rslts) => {
-      setState({
-        dataSynced: true,
-        syncDataError: error,
-        lastDataSync: {
-          error,
-          authenticatedUser: !rslts ? null : rslts.authenticatedUser,
-          event: !state.dataSynced ? null : { name: 'app_data_sync' }
-        },
-      });
-    };
-
-    syncDatabase()
-      .then(rslts => done(null, rslts))
-      .catch(done);
-  }, [networkState]);
+  React.useEffect(() => { sync(); }, [networkState]);
 
   return (
     <Context.Provider

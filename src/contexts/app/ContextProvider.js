@@ -24,7 +24,7 @@ function Provider(props) {
 
   const getAuthenticatedUser = _getAuthenticatedUser({ state, setState });
 
-  const appIsReady = () => {
+  const isAppReady = () => {
     return state.authenticatedUserInitialised && dataSynced;
   };
 
@@ -40,7 +40,7 @@ function Provider(props) {
       value={{
         state,
         setState,
-        appIsReady,
+        isAppReady,
         displayOverlayLoader,
       }}
     />

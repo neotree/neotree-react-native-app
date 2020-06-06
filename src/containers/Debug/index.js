@@ -9,7 +9,6 @@ import {
   getLocalDataActivityInfo,
   getRemoteDataActivityInfo,
   syncDatabase,
-  insertAuthenticatedUser
 } from '@/api/database';
 import { useOverlayLoaderState } from '@/contexts/app';
 
@@ -95,11 +94,7 @@ const Debug = () => {
               );
             };
             getRemoteDataActivityInfo()
-              .then(rslts => {
-                insertAuthenticatedUser(firebase.auth().currentUser)
-                  .then(() => done(null, rslts))
-                  .catch(done);
-              })
+              .then(rslts => done(null, rslts))
               .catch(done);
           }}
         >Log webeditor data info</Button>
@@ -120,7 +115,12 @@ const Debug = () => {
               );
             };
             resetTables()
-              .then(rslts => done(null, rslts))
+              // .then(rslts => done(null, rslts))
+              .then(() => {
+                syncDatabase({ event: { name: 'authenticated_user', user: firebase.auth().currentUser } })
+                  .then(rslts => done(null, rslts))
+                  .catch(done);
+              })
               .catch(done);
           }}
         >Reset tables</Button>

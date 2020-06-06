@@ -5,6 +5,7 @@ export default () => new Promise((resolve, reject) => {
     'drop table scripts;',
     'drop table screens;',
     'drop table forms;',
+    'drop table logs',
     // 'drop table authenticated_user;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
@@ -25,8 +26,9 @@ export default () => new Promise((resolve, reject) => {
   Promise.all(querys)
     .then(rslts => resolve({
       scriptsTable: rslts[0],
-      screensTable: rslts[0],
-      formsTable: rslts[0],
+      screensTable: rslts[1],
+      formsTable: rslts[2],
+      logsTable: rslts[3],
     }))
     .catch(reject);
 });

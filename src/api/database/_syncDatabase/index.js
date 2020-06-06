@@ -11,12 +11,16 @@ import deleteScreens from '../_deleteScreens';
 import { getScripts } from '../../webeditor/scripts';
 import { getScreens } from '../../webeditor/screens';
 import { getAuthenticatedUser } from '../../auth';
+import { insertLog, getLastLog } from '../logs';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
 
   Promise.all([
     NetInfo.fetch(), // check internet connection
+
+    getLastLog({ name: 'data_sync' }), // get the last sync log
+
     new Promise((resolve, reject) => { // initialise tables and get authenticated user
       createTablesIfNotExist()
         .catch(reject)
@@ -32,105 +36,95 @@ export default (data = {}) => new Promise((resolve, reject) => {
     })
   ])
     .catch(reject)
-    .then(([network, authenticated]) => {
+    .then(([network, lastLog, authenticated]) => {
+      const dataInitialised = lastLog ? true : false;
+
       const authenticatedUser = authenticated ? authenticated.user : null;
 
       const canSync = network.isInternetReachable && authenticatedUser;
 
-      console.log('canSync', canSync);
+      if (!canSync) return resolve({ dataInitialised, authenticatedUser });
 
-      if (!canSync) return resolve({ authenticatedUser });
+      Promise.all([
+        getLocalDataActivityInfo(),
+        getRemoteDataActivityInfo(),
+      ])
+        .catch(reject)
+        .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
+          let _getScripts = null;
+          let _getScreens = null;
+          let _deleteLocalScreens = null;
+          let _deleteLocalScripts = null;
 
-      const sync = promises => {
-        Promise.all(promises)
-          .catch(reject)
-          .then(([scriptsRslts, screensRslts]) => {
-            const scripts = scriptsRslts ? scriptsRslts.scripts : [];
-            const screens = screensRslts ? screensRslts.screens : [];
-            // insert data into the local database
+          if (remoteDataActivityInfo.scripts.count && !localDataActivityInfo.scripts.count) {
+            _getScripts = () => getScripts();
+          }
 
-            Promise.all([
-              insertScripts(scripts),
-              insertScreens(screens),
-            ])
-              .catch(reject)
-              .then(([insertScriptsRslts, insertScreensRslts]) => {
-                resolve({ authenticatedUser, insertScriptsRslts, insertScreensRslts });
+          if (remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
+            _getScreens = () => getScreens();
+          }
+
+          if (data && data.event) {
+            const eventName = data.event.name;
+
+            if (eventName === 'create_scripts') {
+              _getScripts = () => getScripts({
+                payload: { id: data.event.scripts.map(s => s.id) } });
+            }
+            if (eventName === 'update_scripts') {
+              _getScripts = () => getScripts({
+                payload: { id: data.event.scripts.map(s => s.id) }
               });
-          });
-      };
-
-      if (data && data.event) {
-        const eventName = data.event.name;
-
-        let _getScripts = null;
-        let _getScreens = null;
-        let _deleteLocalScreens = null;
-        let _deleteLocalScripts = null;
-
-        if (eventName === 'create_scripts') {
-          _getScripts = () => getScripts({
-            payload: { id: data.event.scripts.map(s => s.id) } });
-        }
-        if (eventName === 'update_scripts') {
-          _getScripts = () => getScripts({
-            payload: { id: data.event.scripts.map(s => s.id) }
-          });
-        }
-        if (eventName === 'delete_scripts') {
-          _deleteLocalScripts = () => deleteScreens({
-            payload: { id: data.event.scripts.map(s => s.id) }
-          });
-        }
-        if (eventName === 'create_screens') {
-          _getScreens = () => getScreens({
-            payload: { id: data.event.screens.map(s => s.id) }
-          });
-        }
-        if (eventName === 'update_screens') {
-          _getScreens = () => getScreens({
-            payload: { id: data.event.screens.map(s => s.id) }
-          });
-        }
-        if (eventName === 'delete_screens') {
-          _deleteLocalScreens = () => deleteScreens({
-            payload: { id: data.event.screens.map(s => s.id) }
-          });
-        }
-
-        sync([
-          _getScripts ? _getScripts() : null,
-          _getScreens ? _getScreens() : null,
-          _deleteLocalScripts ? _deleteLocalScripts() : null,
-          _deleteLocalScreens ? _deleteLocalScreens() : null,
-        ]);
-      } else {
-        Promise.all([
-          getLocalDataActivityInfo(),
-          getRemoteDataActivityInfo(),
-        ])
-          .catch(reject)
-          .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
-            let _getScripts = null;
-            let _getScreens = null;
-            const _deleteLocalScreens = null;
-            const _deleteLocalScripts = null;
-
-            if (remoteDataActivityInfo.scripts.count && !localDataActivityInfo.scripts.count) {
-              _getScripts = () => getScripts();
             }
-
-            if (remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
-              _getScreens = () => getScreens();
+            if (eventName === 'delete_scripts') {
+              _deleteLocalScripts = () => deleteScreens({
+                payload: { id: data.event.scripts.map(s => s.id) }
+              });
             }
+            if (eventName === 'create_screens') {
+              _getScreens = () => getScreens({
+                payload: { id: data.event.screens.map(s => s.id) }
+              });
+            }
+            if (eventName === 'update_screens') {
+              _getScreens = () => getScreens({
+                payload: { id: data.event.screens.map(s => s.id) }
+              });
+            }
+            if (eventName === 'delete_screens') {
+              _deleteLocalScreens = () => deleteScreens({
+                payload: { id: data.event.screens.map(s => s.id) }
+              });
+            }
+          }
 
-            sync([
-              _getScripts ? _getScripts() : null,
-              _getScreens ? _getScreens() : null,
-              _deleteLocalScripts ? _deleteLocalScripts() : null,
-              _deleteLocalScreens ? _deleteLocalScreens() : null,
-            ]);
-          });
-      }
+          Promise.all([
+            _getScripts ? _getScripts() : null,
+            _getScreens ? _getScreens() : null,
+            _deleteLocalScripts ? _deleteLocalScripts() : null,
+            _deleteLocalScreens ? _deleteLocalScreens() : null,
+          ])
+            .catch(reject)
+            .then(([scriptsRslts, screensRslts]) => {
+              const scripts = scriptsRslts ? scriptsRslts.scripts : [];
+              const screens = screensRslts ? screensRslts.screens : [];
+              // insert data into the local database
+
+              Promise.all([
+                insertLog({ name: 'data_sync' }),
+                insertScripts(scripts),
+                insertScreens(screens),
+              ])
+                .catch(reject)
+                .then(([, insertScriptsRslts, insertScreensRslts]) => {
+                  resolve({
+                    dataInitialised: true,
+                    authenticatedUser,
+                    insertScriptsRslts,
+                    insertScreensRslts
+                  });
+                });
+            });
+        });
     });
 });

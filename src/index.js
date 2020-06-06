@@ -16,20 +16,22 @@ const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Spl
 const NeoTreeApp = () => {
   const history = useHistory();
 
-  const { appIsReady, displayOverlayLoader, state: { authenticatedUser } } = useAppContext();
+  const { isAppReady, displayOverlayLoader, state: { authenticatedUser } } = useAppContext();
+
+  const appIsReady = isAppReady();
 
   React.useEffect(() => {
-    if (appIsReady()) {
+    if (appIsReady) {
       history.entries = [];
       history.push(authenticatedUser ? '/' : '/sign-in');
     }
-  }, [authenticatedUser]);
+  }, [authenticatedUser, appIsReady]);
 
   return (
     <>
       <View style={{ flex: 1 }}>
         {(() => {
-          if (!appIsReady()) return <Splash />;
+          if (!appIsReady) return <Splash />;
 
           return (
             <LayoutContainer>

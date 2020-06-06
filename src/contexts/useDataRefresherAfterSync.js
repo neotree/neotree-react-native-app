@@ -2,7 +2,7 @@ import React from 'react';
 import { useDataContext } from '@/contexts/data';
 
 export default function useDataRefresherAfterSync(eventType, cb) {
-  const { state: { lastDataSync }, setState: setDataContextState } = useDataContext();
+  const { state: { lastDataSyncEvent }, setState: setDataContextState } = useDataContext();
 
   const events = [
     `create_${eventType}`,
@@ -12,11 +12,11 @@ export default function useDataRefresherAfterSync(eventType, cb) {
   ];
 
   React.useEffect(() => {
-    if (lastDataSync && lastDataSync.event &&
-      events.indexOf(lastDataSync.event.name) > -1
+    if (lastDataSyncEvent && lastDataSyncEvent &&
+      events.indexOf(lastDataSyncEvent.name) > -1
     ) {
-      if (cb) cb(lastDataSync);
-      setDataContextState({ lastDataSync: null });
+      if (cb) cb(lastDataSyncEvent);
+      setDataContextState({ lastDataSyncEvent: null });
     }
-  }, [lastDataSync]);
+  }, [lastDataSyncEvent]);
 }
