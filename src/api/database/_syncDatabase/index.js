@@ -35,7 +35,9 @@ export default (data = {}) => new Promise((resolve, reject) => {
     .then(([network, authenticated]) => {
       const authenticatedUser = authenticated ? authenticated.user : null;
 
-      const canSync = network.isInternetReachable && (authenticatedUser || (data && data.forceSync));
+      const canSync = network.isInternetReachable && authenticatedUser;
+
+      console.log('canSync', canSync);
 
       if (!canSync) return resolve({ authenticatedUser });
 

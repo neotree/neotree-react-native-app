@@ -16,7 +16,7 @@ const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Spl
 const NeoTreeApp = () => {
   const history = useHistory();
 
-  const { appIsReady, state: { displayOverlayLoader, authenticatedUser } } = useAppContext();
+  const { appIsReady, displayOverlayLoader, state: { authenticatedUser } } = useAppContext();
 
   React.useEffect(() => {
     if (appIsReady()) {
@@ -37,7 +37,7 @@ const NeoTreeApp = () => {
             </LayoutContainer>
           );
         })()}
-        <OverlayLoader display={displayOverlayLoader} />
+        <OverlayLoader display={displayOverlayLoader()} />
       </View>
     </>
   );

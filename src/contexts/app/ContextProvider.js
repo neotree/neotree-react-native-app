@@ -8,6 +8,7 @@ function Provider(props) {
   const { state: { dataSynced } } = useDataContext();
 
   const [state, _setState] = React.useState({
+    overlayLoaderState: {},
     authenticatedUser: null,
     authenticatedUserInitialised: false,
   });
@@ -15,6 +16,11 @@ function Provider(props) {
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
+
+  const displayOverlayLoader = () => Object.keys(state.overlayLoaderState).reduce((acc, key) => {
+    if (state.overlayLoaderState[key]) acc = true;
+    return acc;
+  }, false);
 
   const getAuthenticatedUser = _getAuthenticatedUser({ state, setState });
 
@@ -35,6 +41,7 @@ function Provider(props) {
         state,
         setState,
         appIsReady,
+        displayOverlayLoader,
       }}
     />
   );

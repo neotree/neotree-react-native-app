@@ -37,7 +37,7 @@ const NavMenu = () => {
       />
       {process.env.NODE_ENV !== 'development' ? null : (
         <LayoutNavItem
-          active={isLocationActive('/profile')}
+          active={isLocationActive('/debug')}
           onPress={() => history.push('/debug')}
           label="Debug"
           icon="md-bug"
