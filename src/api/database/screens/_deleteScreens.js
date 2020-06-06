@@ -1,4 +1,4 @@
-import db from './db';
+import db from '../db';
 
 export default () => new Promise((resolve, reject) => {
   const querys = [
@@ -15,7 +15,7 @@ export default () => new Promise((resolve, reject) => {
           if (e) {
             require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
             reject(e);
-          }  
+          }
         }
       )
     );

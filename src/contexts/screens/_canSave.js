@@ -6,5 +6,5 @@ export default ({
 
   if (!form[activeScreen.id]) return false;
 
-  return !isLastScreen();
+  return isLastScreen();
 };

@@ -4,9 +4,9 @@ import createTablesIfNotExist from '../_createTablesIfNotExist';
 import getLocalDataActivityInfo from '../_getLocalDataActivityInfo';
 import getRemoteDataActivityInfo from '../_getRemoteDataActivityInfo';
 import insertAuthenticatedUser from '../_insertAuthenticatedUser';
-import insertScreens from '../_insertScreens';
-import insertScripts from '../_insertScripts';
-import deleteScreens from '../_deleteScreens';
+
+import { insertScreens, deleteScreens } from '../screens';
+import { insertScripts } from '../scripts';
 
 import { getScripts } from '../../webeditor/scripts';
 import { getScreens } from '../../webeditor/screens';

@@ -1,4 +1,4 @@
-import db from './db';
+import db from '../db';
 
 const query = s => new Promise((resolve, reject) => {
   const columns = ['id', 'data', 'createdAt', 'updatedAt'].join(',');
