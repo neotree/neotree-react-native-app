@@ -22,4 +22,6 @@ export { default as insertScripts } from './_insertScripts';
 
 export { default as insertScreens } from './_insertScreens';
 
+export { default as insertAuthenticatedUser } from './_insertAuthenticatedUser';
+
 export { default } from './db';

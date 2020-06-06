@@ -2,6 +2,7 @@ import React from 'react';
 import { provideDataContext } from '@/contexts/data';
 import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
+import { useHistory } from 'react-router-native';
 
 import { View } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
@@ -12,22 +13,22 @@ const Authentication = LazyPage(() => import('@/containers/Authentication'), { L
 const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
 
 const NeoTreeApp = () => {
-  const {
-    appIsReady,
-    state: { authenticatedUser, authenticatedUserInitialised }
-  } = useAppContext();
+  const history = useHistory();
+
+  const { appIsReady, state: { authenticatedUser } } = useAppContext();
+
+  React.useEffect(() => {
+    if (appIsReady()) {
+      history.entries = [];
+      history.push(authenticatedUser ? '/' : '/sign-in');
+    }
+  }, [authenticatedUser]);
 
   return (
     <>
       <View style={{ flex: 1 }}>
         {(() => {
-          if (!appIsReady()) {
-            return <Splash />
-          }
-
-          if (!authenticatedUser) {
-            return <Authentication />;
-          }
+          if (!appIsReady()) return <Splash />;
 
           return (
             <LayoutContainer>

@@ -35,6 +35,14 @@ const NavMenu = () => {
         label="Profile"
         icon="md-person"
       />
+      {process.env.NODE_ENV !== 'development' ? null : (
+        <LayoutNavItem
+          active={isLocationActive('/profile')}
+          onPress={() => history.push('/debug')}
+          label="Debug"
+          icon="md-bug"
+        />
+      )}
     </>
   );
 };

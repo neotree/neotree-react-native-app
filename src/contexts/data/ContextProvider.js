@@ -26,7 +26,10 @@ export default function Provider(props) {
         });
       };
 
-      syncDatabase({ event })
+      syncDatabase({
+        event,
+        forceSync: state.lastDataSync && state.lastDataSync.authenticatedUser ? true : false
+      })
         .then(rslts => done(null, rslts))
         .catch(done);
     };
@@ -60,12 +63,13 @@ export default function Provider(props) {
   }, []);
 
   React.useEffect(() => {
-    const done = (error) => {
+    const done = (error, rslts) => {
       setState({
         dataSynced: true,
         syncDataError: error,
         lastDataSync: {
           error,
+          authenticatedUser: !rslts ? null : rslts.authenticatedUser,
           event: !state.dataSynced ? null : { name: 'app_data_sync' }
         },
       });

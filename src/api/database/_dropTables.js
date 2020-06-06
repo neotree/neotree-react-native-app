@@ -5,7 +5,7 @@ export default () => new Promise((resolve, reject) => {
     'drop table scripts;',
     'drop table screens;',
     'drop table forms;',
-    'drop table authenticated_user;',
+    // 'drop table authenticated_user;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(

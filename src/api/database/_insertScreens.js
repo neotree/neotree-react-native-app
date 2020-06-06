@@ -1,28 +1,15 @@
 import db from './db';
 
-export default (data = []) => new Promise((resolve, reject) => {
-  data = data || [];
-
-  if (!data.length) return resolve(null);
-
-  const done = (err, rslts) => {
-    if (err) return reject(err);
-    resolve(rslts);
-  };
-
+const query = s => new Promise((resolve, reject) => {
   const columns = ['id', 'screen_id', 'script_id', 'position', 'type', 'data', 'createdAt', 'updatedAt'].join(',');
 
-  const values = data.map(() => ['?', '?', '?', '?', '?', '?', '?', '?'])
-    .map(values => values.join(','))
-    .map(values => `(${values})`)
-    .join(',');
+  const values = ['?', '?', '?', '?', '?', '?', '?', '?'].join(',');
 
   db.transaction(
     tx => {
       tx.executeSql(
-        `insert or replace into screens (${columns}) values ${values};`,
-        data.reduce((acc, s) => [
-          ...acc,
+        `insert or replace into screens (${columns}) values (${values});`,
+        [
           s.id,
           s.screen_id,
           s.script_id,
@@ -31,15 +18,25 @@ export default (data = []) => new Promise((resolve, reject) => {
           JSON.stringify(s.data || {}),
           s.createdAt,
           s.updatedAt
-        ], []),
-        (tx, rslts) => done(null, rslts),
+        ],
+        (tx, rslts) => resolve(rslts),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: insertScreens', e);
+            require('@/utils/logger')(`ERROR: insertScreen - ${s.data.title || s.id}`, e);
             reject(e);
           }
         }
       );
-    }
+    },
   );
+});
+
+export default (data = []) => new Promise((resolve, reject) => {
+  data = data || [];
+
+  if (!data.length) return resolve(null);
+
+  Promise.all(data.map(s => query(s)))
+    .then(rslts => resolve(rslts))
+    .catch(reject);
 });

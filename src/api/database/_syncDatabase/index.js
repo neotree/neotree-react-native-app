@@ -12,7 +12,7 @@ import { getScripts } from '../../webeditor/scripts';
 import { getScreens } from '../../webeditor/screens';
 import { getAuthenticatedUser } from '../../auth';
 
-export default data => new Promise((resolve, reject) => {
+export default (data = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
 
   Promise.all([
@@ -20,16 +20,24 @@ export default data => new Promise((resolve, reject) => {
     new Promise((resolve, reject) => { // initialise tables and get authenticated user
       createTablesIfNotExist()
         .catch(reject)
-        .then(() => getAuthenticatedUser().catch(reject).then(resolve));
+        .then(() => {
+          if (data.event && (data.event.name === 'authenticated_user')) {
+            insertAuthenticatedUser(data.event.user)
+              .catch(reject)
+              .then(() => getAuthenticatedUser().catch(reject).then(resolve));
+          } else {
+            getAuthenticatedUser().catch(reject).then(resolve);
+          }
+        });
     })
   ])
     .catch(reject)
     .then(([network, authenticated]) => {
       const authenticatedUser = authenticated ? authenticated.user : null;
 
-      if (!(network.isInternetReachable && authenticatedUser)) {
-        return resolve();
-      }
+      const canSync = network.isInternetReachable && (authenticatedUser || (data && data.forceSync));
+
+      if (!canSync) return resolve({ authenticatedUser });
 
       const sync = promises => {
         Promise.all(promises)
@@ -45,7 +53,7 @@ export default data => new Promise((resolve, reject) => {
             ])
               .catch(reject)
               .then(([insertScriptsRslts, insertScreensRslts]) => {
-                resolve({ insertScriptsRslts, insertScreensRslts });
+                resolve({ authenticatedUser, insertScriptsRslts, insertScreensRslts });
               });
           });
       };
@@ -57,11 +65,6 @@ export default data => new Promise((resolve, reject) => {
         let _getScreens = null;
         let _deleteLocalScreens = null;
         let _deleteLocalScripts = null;
-        let _insertAuthenticatedUser = null;
-
-        if (eventName === 'authenticated_user') {
-          _insertAuthenticatedUser = () => insertAuthenticatedUser(data.event.user);
-        }
 
         if (eventName === 'create_scripts') {
           _getScripts = () => getScripts({
@@ -98,7 +101,6 @@ export default data => new Promise((resolve, reject) => {
           _getScreens ? _getScreens() : null,
           _deleteLocalScripts ? _deleteLocalScripts() : null,
           _deleteLocalScreens ? _deleteLocalScreens() : null,
-          _insertAuthenticatedUser ? _insertAuthenticatedUser() : null,
         ]);
       } else {
         Promise.all([
