@@ -1,5 +1,6 @@
 import React from 'react';
 import useRouter from '@/utils/useRouter';
+import { useScriptContext } from '@/contexts/script';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
@@ -19,7 +20,10 @@ export default function Provider(props) {
   const { location } = router;
   const { scriptId, screenId } = router.match.params;
 
+  const { state: { script } } = useScriptContext();
+
   const [state, _setState] = React.useState({
+    start_time: new Date(),
     form: {},
     activeScreen: null,
     screenId,
@@ -53,7 +57,7 @@ export default function Provider(props) {
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
-  const saveForm = _saveForm({ state, setState });
+  const saveForm = _saveForm({ state, setState, script });
 
   const initialisePage = (opts = {}) => {
     if (opts.force || !state.screensInitialised) {

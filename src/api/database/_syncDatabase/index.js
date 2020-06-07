@@ -1,14 +1,14 @@
 import NetInfo from '@react-native-community/netinfo';
 
-import initialiseDB from './_initialiseDB';
 import getLocalDataActivityInfo from '../_getLocalDataActivityInfo';
 import getRemoteDataActivityInfo from '../_getRemoteDataActivityInfo';
 import { insertScreens, deleteScreens } from '../screens';
 import { insertScripts } from '../scripts';
 
+import getAuthenticatedUser from './_getAuthenticatedUser';
 import { getScripts } from '../../webeditor/scripts';
 import { getScreens } from '../../webeditor/screens';
-import { insertLog } from '../logs';
+import { getDataStatus, updateDataStatus } from '../data_status';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
@@ -16,12 +16,12 @@ export default (data = {}) => new Promise((resolve, reject) => {
   Promise.all([
     NetInfo.fetch(), // check internet connection
 
-    initialiseDB(data), // this will create tables if they don't exist & get or set authenticated user if there's one
+    getDataStatus(),
+
+    getAuthenticatedUser(data),
   ])
     .catch(reject)
-    .then(([network, dbData]) => {
-      const { dbInitLog, authenticated } = dbData;
-
+    .then(([network, dataStatus, authenticated]) => {
       const authenticatedUser = authenticated ? authenticated.user : null;
 
       const canSync = network.isInternetReachable && authenticatedUser;
@@ -30,17 +30,16 @@ export default (data = {}) => new Promise((resolve, reject) => {
         if (err) return reject(err);
         resolve({
           ...rslts,
-          dbInitLog,
+          dataStatus,
           authenticatedUser,
-          dataInitialised: dbInitLog ? true : false
         });
       };
 
       if (!canSync) return done(null);
 
       Promise.all([
-        getLocalDataActivityInfo(),
-        getRemoteDataActivityInfo(),
+        data.event ? null : getLocalDataActivityInfo(),
+        data.event ? null : getRemoteDataActivityInfo(),
       ])
         .catch(done)
         .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
@@ -49,12 +48,32 @@ export default (data = {}) => new Promise((resolve, reject) => {
           let _deleteLocalScreens = null;
           let _deleteLocalScripts = null;
 
-          if (remoteDataActivityInfo.scripts.count && !localDataActivityInfo.scripts.count) {
+          if (!dataStatus.data_initialised) {
             _getScripts = () => getScripts();
-          }
-
-          if (remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
             _getScreens = () => getScreens();
+          } else {
+            if (remoteDataActivityInfo && remoteDataActivityInfo.scripts) {
+              const lastUpdatedRemote = remoteDataActivityInfo.scripts.lastUpdateDate;
+              const lastUpdatedLocal = localDataActivityInfo.scripts.lastUpdateDate;
+              if (lastUpdatedRemote !== lastUpdatedLocal) {
+                _getScripts = () => getScripts(lastUpdatedLocal ?
+                  { updatedAt: { $gte: lastUpdatedLocal } }
+                  :
+                  {});
+              }
+            }
+
+            if (remoteDataActivityInfo && remoteDataActivityInfo.screens &&
+              remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
+              const lastUpdatedRemote = remoteDataActivityInfo.screenss.lastUpdateDate;
+              const lastUpdatedLocal = localDataActivityInfo.screenss.lastUpdateDate;
+              if (lastUpdatedRemote !== lastUpdatedLocal) {
+                _getScreens = () => getScreens(lastUpdatedLocal ?
+                  { updatedAt: { $gte: lastUpdatedLocal } }
+                  :
+                  {});
+              }
+            }
           }
 
           if (data && data.event) {
@@ -104,16 +123,18 @@ export default (data = {}) => new Promise((resolve, reject) => {
               // insert data into the local database
 
               Promise.all([
-                dbInitLog ? null : insertLog({ name: 'init_data' }),
+                dataStatus.data_initialised ? null : updateDataStatus({ data_initialised: true }),
                 insertScripts(scripts),
                 insertScreens(screens),
               ])
                 .catch(done)
-                .then(([, insertScriptsRslts, insertScreensRslts]) => {
+                .then((rslts) => {
+                  const [, insertScriptsRslts, insertScreensRslts] = rslts;
                   done(null, {
                     authenticatedUser,
                     insertScriptsRslts,
-                    insertScreensRslts
+                    insertScreensRslts,
+                    dataStatus: { ...dataStatus, data_initialised: true },
                   });
                 });
             });

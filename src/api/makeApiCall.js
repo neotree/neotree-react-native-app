@@ -7,18 +7,25 @@ export default (url = '', opts = {}) => {
     headers: { ...opts.headers },
   };
 
-  if (!opts.method || (opts.method === 'GET') || (opts.method === 'get')) {
+  const method = (opts.method || 'GET').toUpperCase();
+
+  if (method === 'GET') {
     url = `${url}?payload=${JSON.stringify(opts.payload || {})}`;
   } else {
-    reqOpts.body = JSON.stringify({ payload: opts.payload || {} });
+    reqOpts.headers['Content-Type'] = 'application/json';
+    reqOpts.body = JSON.stringify({ ...opts.payload });
   }
 
   url = `${opts.apiConfig.api_endpoint}${url}`;
 
-  require('@/utils/logger')('makeApiCall', url);
+  require('@/utils/logger')(
+    `makeApiCall ${(opts.method || 'get').toUpperCase()}:`,
+    url,
+    reqOpts.body
+  );
 
   return new Promise((resolve, reject) => {
-    fetch(url, reqOpts)
+    fetch(url, { method, ...reqOpts })
       .then(res => {
         return res.json();
       })

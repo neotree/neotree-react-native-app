@@ -3,6 +3,7 @@ import { provideDataContext } from '@/contexts/data';
 import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
+import Overlay from '@/ui/Overlay';
 
 import { View } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
@@ -16,7 +17,11 @@ const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Spl
 const NeoTreeApp = () => {
   const history = useHistory();
 
-  const { isAppReady, displayOverlayLoader, state: { authenticatedUser } } = useAppContext();
+  const {
+    isAppReady,
+    authenticatedUser,
+    displayOverlayLoader,
+  } = useAppContext();
 
   const appIsReady = isAppReady();
 
@@ -27,18 +32,21 @@ const NeoTreeApp = () => {
     }
   }, [authenticatedUser, appIsReady]);
 
+  if (!appIsReady) {
+    return (
+      <Overlay>
+        <Splash />
+      </Overlay>
+    );
+  }
+
   return (
     <>
       <View style={{ flex: 1 }}>
-        {(() => {
-          if (!appIsReady) return <Splash />;
+        <LayoutContainer>
+          <Containers />
+        </LayoutContainer>
 
-          return (
-            <LayoutContainer>
-              <Containers />
-            </LayoutContainer>
-          );
-        })()}
         <OverlayLoader display={displayOverlayLoader()} />
       </View>
     </>

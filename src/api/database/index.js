@@ -1,3 +1,5 @@
+export * from './data_status';
+
 export { default as createTablesIfNotExist } from './_createTablesIfNotExist';
 
 export { default as getLocalDataActivityInfo } from './_getLocalDataActivityInfo';

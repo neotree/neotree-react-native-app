@@ -4,8 +4,8 @@ import { useDataContext } from '../data';
 
 function Provider(props) {
   const {
+    isDataReady,
     state: {
-      dataSynced,
       authenticatedUser,
       authenticatedUserInitialised
     }
@@ -13,8 +13,6 @@ function Provider(props) {
 
   const [state, _setState] = React.useState({
     overlayLoaderState: {},
-    authenticatedUser: null,
-    authenticatedUserInitialised: false,
   });
 
   const setState = s => _setState(
@@ -26,16 +24,7 @@ function Provider(props) {
     return acc;
   }, false);
 
-  const isAppReady = () => {
-    return state.authenticatedUserInitialised && dataSynced;
-  };
-
-  React.useEffect(() => {
-    setState({
-      authenticatedUser,
-      authenticatedUserInitialised
-    });
-  }, [authenticatedUser, authenticatedUserInitialised]);
+  const isAppReady = () => isDataReady();
 
   return (
     <Context.Provider
@@ -45,6 +34,8 @@ function Provider(props) {
         setState,
         isAppReady,
         displayOverlayLoader,
+        authenticatedUser,
+        authenticatedUserInitialised,
       }}
     />
   );
