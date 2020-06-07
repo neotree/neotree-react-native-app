@@ -8,6 +8,7 @@ import scriptPageCopy from '@/constants/copy/scriptPage';
 import Screens from './Screens';
 import Header from './Header';
 import NextBtn from './NextBtn';
+import SaveBtn from './SaveBtn';
 
 const Script = () => {
   const {
@@ -38,6 +39,8 @@ const Script = () => {
       <Screens />
 
       <NextBtn />
+
+      <SaveBtn />
     </>
   );
 };

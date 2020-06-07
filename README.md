@@ -12,7 +12,7 @@ https://reactnative.dev/docs/environment-setup
 
 ## API config
 
-`api.config.json`
+`neotree-webeditor-api.json`
 
 1. Log into the web editor
 2. Go to settings
@@ -27,7 +27,7 @@ https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
 **Place the config files into `neotree-react-native-app/config`**
 
 ```
-  config/api.config.json
+  config/neotree-webeditor-api.json
   config/firebase.config.json
 ```
 

@@ -1,5 +1,8 @@
-import makeApiCall from '../makeApiCall';
+import {
+  getScreen as _getScreen,
+  getScreens as _getScreens
+} from '../database/screens';
 
-export const getScreen = options => makeApiCall('/get-screen', options);
+export const getScreen = (options = {}) => _getScreen(options);
 
-export const getScreens = options => makeApiCall('/get-screens', options);
+export const getScreens = (options = {}) => _getScreens(options);

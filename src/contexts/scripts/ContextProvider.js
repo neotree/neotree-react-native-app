@@ -1,5 +1,6 @@
 import React from 'react';
 import useRouter from '@/utils/useRouter';
+import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
 import _getScripts from './_getScripts';
@@ -25,6 +26,14 @@ export default function Provider(props) {
   };
 
   React.useEffect(() => { initialisePage(); }, []);
+
+  useDataRefresherAfterSync('scripts', () => {
+    getScripts(null, { showLoader: false });
+  });
+
+  useDataRefresherAfterSync('app_data_sync', () => {
+    getScripts(null, { showLoader: false });
+  });
 
   return (
     <Context.Provider

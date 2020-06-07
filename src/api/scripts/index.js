@@ -1,5 +1,8 @@
-import makeApiCall from '../makeApiCall';
+import {
+  getScript as _getScript,
+  getScripts as _getScripts
+} from '../database/scripts';
 
-export const getScript = options => makeApiCall('/get-script', options);
+export const getScript = (options = {}) => _getScript(options);
 
-export const getScripts = options => makeApiCall('/get-scripts', options);
+export const getScripts = (options = {}) => _getScripts(options);

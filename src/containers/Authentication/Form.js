@@ -1,14 +1,13 @@
 import React from 'react';
 import copy from '@/constants/copy/auth';
 import makeStyles from '@/ui/styles/makeStyles';
-import { useAuthenticationContext } from '@/contexts/authentication';
 import { signIn } from '@/api/auth';
-
 import { View } from 'react-native';
 import Input from '@/ui/Input';
 import Button from '@/ui/Button';
 import Divider from '@/ui/Divider';
 import Typography from '@/ui/Typography';
+import { useAuthenticationContext } from './Context';
 
 const useStyles = makeStyles(theme => ({
   root: {

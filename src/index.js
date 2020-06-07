@@ -1,46 +1,37 @@
 import React from 'react';
-import { onAuthStateChanged } from '@/api/auth';
+import { provideDataContext } from '@/contexts/data';
+import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 
-import { View, Text, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
 import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
+import OverlayLoader from '@/components/OverlayLoader';
 
 const Authentication = LazyPage(() => import('@/containers/Authentication'), { LoaderComponent: Splash });
 const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
 
-const NeoTreeApp = (props) => {
+const NeoTreeApp = () => {
   const history = useHistory();
 
-  const {
-    setState,
-    appIsReady,
-    state: { authenticatedUser, authenticatedUserInitialised }
-  } = useAppContext();
+  const { isAppReady, displayOverlayLoader, state: { authenticatedUser } } = useAppContext();
+
+  const appIsReady = isAppReady();
 
   React.useEffect(() => {
-    onAuthStateChanged(u => {
-      setState({
-        authenticatedUser: u,
-        authenticatedUserInitialised: true,
-      });
-      if (!authenticatedUser && u) history.push('/');
-    });
-  }, []);
+    if (appIsReady) {
+      history.entries = [];
+      history.push(authenticatedUser ? '/' : '/sign-in');
+    }
+  }, [authenticatedUser, appIsReady]);
 
   return (
     <>
       <View style={{ flex: 1 }}>
         {(() => {
-          if (!appIsReady()) {
-            return <Splash />
-          }
-
-          if (!authenticatedUser) {
-            return <Authentication />;
-          }
+          if (!appIsReady) return <Splash />;
 
           return (
             <LayoutContainer>
@@ -48,9 +39,14 @@ const NeoTreeApp = (props) => {
             </LayoutContainer>
           );
         })()}
+        <OverlayLoader display={displayOverlayLoader()} />
       </View>
     </>
   );
 };
 
-export default provideAppContext(NeoTreeApp);
+export default provideNetworkContext(
+  provideDataContext(
+    provideAppContext(NeoTreeApp)
+  )
+);

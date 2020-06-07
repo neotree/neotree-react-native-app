@@ -5,7 +5,7 @@ import Radio from '@/ui/Radio';
 import RadioGroup from '@/ui/RadioGroup';
 
 const SingleSelect = ({ screen, context }) => {
-  const { metadata } = screen.data;
+  const metadata = screen.data.metadata || {};
 
   const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
 

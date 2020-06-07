@@ -5,9 +5,14 @@ export default ({
   router: {
     match: { params: { scriptId } }
   }
-}) => () => {
-  setState({ loadScreensError: null, loadingScreens: true, screensInitialised: false });
-  getScreens({ payload: { script_id: scriptId } })
+}) => (payload, opts = {}) => {
+  setState({
+    loadScreensError: null,
+    loadingScreens: opts.showLoader !== false,
+    // screensInitialised: false
+  });
+
+  getScreens({ payload: { script_id: scriptId, ...payload } })
     .then(payload => {
       setState({
         screens: payload.screens || [],

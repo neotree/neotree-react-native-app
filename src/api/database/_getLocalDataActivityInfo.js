@@ -9,13 +9,21 @@ export default () => new Promise((resolve, reject) => {
     'select count(id) from screens',
     'select createdAt from screens order by createdAt desc limit 1;',
     'select updatedAt from screens order by updatedAt desc limit 1;',
+
+    'select count(id) from authenticated_user',
+    'select count(id) from forms',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
         q,
         null,
-        (tx, rslts) => rslts && resolve(rslts),
-        (tx, e) => e && reject(e)
+        (tx, rslts) => resolve(rslts),
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: getLocalActivityDataInfo', e);
+            reject(e);
+          }
+        }
       )
     );
   }));
@@ -32,6 +40,12 @@ export default () => new Promise((resolve, reject) => {
           count: rslts[3] ? rslts[3].rows._array[0]['count(id)'] : null,
           lastCreatedDate: rslts[4] && rslts[4].rows._array[0] ? rslts[4].rows._array[0].createdAt : null,
           lastUpdatedDate: rslts[5] && rslts[5].rows._array[0] ? rslts[5].rows._array[0].updatedAt : null,
+        },
+        authenticated_user: {
+          count: rslts[6] ? rslts[6].rows._array[0]['count(id)'] : null,
+        },
+        forms: {
+          count: rslts[7] ? rslts[7].rows._array[0]['count(id)'] : null,
         },
       });
     })
