@@ -23,11 +23,11 @@ const Containers = () => {
         <Route exact path="/sign-in" component={Authentication} />
         <Route exact path="/script/:scriptId" component={Script} />
         <Route exact path="/script/:scriptId/screen/:screenId" component={Script} />
+        <Route path="/export" component={Export} />
         <Route render={() => (
           <>
             <LayoutBody>
               <Route exact path="/" component={Home} />
-              <Route exact path="/export" component={Export} />
               <Route exact path="/notifications" component={Notifications} />
               <Route exact path="/profile" component={Profile} />
               {process.env.NODE_ENV !== 'development' ? null : (

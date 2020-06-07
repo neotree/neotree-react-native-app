@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { provideHomeContext } from '@/contexts/home';
 import { useHistory } from 'react-router-native';
-import Header from './Header';
+import AppHeader from '@/components/AppHeader';
 import Scripts from '../Scripts';
 
 const Home = () => {
@@ -20,7 +20,7 @@ const Home = () => {
           flex: 1,
         }}
       >
-        <Header />
+        <AppHeader />
         <Scripts />
       </View>
     </>
