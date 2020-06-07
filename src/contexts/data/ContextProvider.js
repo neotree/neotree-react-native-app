@@ -1,75 +1,76 @@
 import React from 'react';
-import { onAuthStateChanged } from '@/api/auth';
-import { syncDatabase } from '@/api/database';
+import { getDataStatus, syncDatabase } from '@/api/database';
 import { useNetworkContext } from '@/contexts/network';
-import socket from '@/api/socket';
 import Context from './Context';
+import useSocketEventsListener from './useSocketEventsListener';
 
 export default function Provider(props) {
   const networkState = useNetworkContext();
 
   const [state, _setState] = React.useState({
+    loadingDataStatus: false,
+    dataStatus: null,
+    syncingData: false,
+    dataSynced: false,
     lastDataSyncEvent: null,
     syncError: null,
-    syncRslts: null,
-    dataSynced: false,
   });
 
   const setState = s => _setState(
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
-  const sync = event => {
-    setState({
-      syncingData: true,
-      dataSynced: state.databaseIsReady ? state.dataSynced : false
-    });
+  const { dataStatus, canSync, authenticatedUserInitialised, dataSynced } = state;
 
-    const done = (syncError, syncRslts = {}) => setState({
-      syncingData: false,
-      dataSynced: true,
-      lastDataSyncEvent: event,
-      syncError,
-      databaseIsReady: syncRslts.dbInitLog ? true : false,
-      authenticatedUser: syncRslts.authenticatedUser,
-      authenticatedUserInitialised: (event && event.name === 'authenticated_user') || state.authenticatedUserInitialised
-    });
+  const sync = (event) => {
+    if (dataStatus) {
+      setState({
+        syncingData: true,
+        dataSynced: dataStatus.data_initialised ? dataSynced : false
+      });
 
-    syncDatabase({ event })
-      .then(rslts => done(null, rslts))
-      .catch(done);
+      const done = (syncError, syncRslts = {}) => {
+        setState({
+          syncingData: false,
+          dataSynced: true,
+          lastDataSyncEvent: event,
+          syncError,
+          dataStatus: syncRslts.dataStatus || dataStatus,
+          authenticatedUser: syncRslts.authenticatedUser,
+          authenticatedUserInitialised: true,
+        });
+      };
+
+      syncDatabase({ event })
+        .then(rslts => done(null, rslts))
+        .catch(done);
+    }
   };
 
   React.useEffect(() => {
-    onAuthStateChanged(user => sync({ name: 'authenticated_user', user }));
+    setState({ loadingDataStatus: true });
 
-    socket.on('create_scripts', data => sync({
-      name: 'create_scripts',
-      ...data
-    }));
-    socket.on('update_scripts', data => sync({
-      name: 'update_scripts',
-      ...data
-    }));
-    socket.on('delete_scripts', data => sync({
-      name: 'delete_scripts',
-      ...data
-    }));
-    socket.on('create_screens', data => sync({
-      name: 'create_screens',
-      ...data
-    }));
-    socket.on('update_screens', data => sync({
-      name: 'update_screens',
-      ...data
-    }));
-    socket.on('delete_screens', data => sync({
-      name: 'delete_screens',
-      ...data
-    }));
+    getDataStatus()
+      .then(dataStatus => {
+        setState({
+          dataStatus,
+          canSync: true,
+          loadingDataStatus: false,
+        });
+      })
+      .catch(e => setState({
+        loadDataStatusError: e,
+        loadingDataStatus: false,
+      }));
   }, []);
 
-  React.useEffect(() => { sync(); }, [networkState]);
+  React.useEffect(() => { sync(); }, [canSync, networkState]);
+
+  useSocketEventsListener({ sync, state, setState });
+
+  const isDataReady = () => {
+    return dataSynced && authenticatedUserInitialised;
+  };
 
   return (
     <Context.Provider
@@ -78,6 +79,7 @@ export default function Provider(props) {
         sync,
         state,
         setState,
+        isDataReady,
       }}
     />
   );

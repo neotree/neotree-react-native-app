@@ -7,6 +7,7 @@ export default () => new Promise((resolve, reject) => {
     'drop table if exists forms;',
     'drop table if exists logs',
     'drop table if exists authenticated_user;',
+    'drop table if exists data_status;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -29,6 +30,7 @@ export default () => new Promise((resolve, reject) => {
       screensTable: rslts[1],
       formsTable: rslts[2],
       logsTable: rslts[3],
+      deviceRegistrationTable: rslts[3],
     }))
     .catch(reject);
 });

@@ -1,6 +1,15 @@
 import db from './db';
 
 export default () => new Promise((resolve, reject) => {
+  const dataStatusTable = [
+    'id varchar primary key not null',
+    'unique_key varchar',
+    'device_id integer',
+    'data_initialised boolean',
+    'createdAt datetime',
+    'updatedAt datetime',
+  ].join(',');
+
   const scriptsTableColumns = [
     'id varchar primary key not null',
     'script_id varchar',
@@ -36,17 +45,11 @@ export default () => new Promise((resolve, reject) => {
     'details text'
   ].join(',');
 
-  const logsTableColumns = [
-    'id integer primary key not null',
-    'name string',
-    'createdAt datetime'
-  ].join(',');
-
   const querys = [
+    `create table if not exists data_status (${dataStatusTable});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
     `create table if not exists forms (${formsTableColumns});`,
-    `create table if not exists logs (${logsTableColumns});`,
     `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
@@ -66,10 +69,11 @@ export default () => new Promise((resolve, reject) => {
 
   Promise.all(querys)
     .then(rslts => resolve({
-      scriptsTable: rslts[0],
-      screensTable: rslts[1],
-      formsTable: rslts[2],
-      usersTable: rslts[3]
+      dataStatusTable: rslts[0],
+      scriptsTable: rslts[1],
+      screensTable: rslts[2],
+      formsTable: rslts[3],
+      authenticatedUserTable: rslts[4]
     }))
     .catch(reject);
 });
