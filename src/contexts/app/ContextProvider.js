@@ -1,11 +1,15 @@
 import React from 'react';
 import Context from './Context';
 import { useDataContext } from '../data';
-import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
-import _getAuthenticatedUser from './_getAuthenticatedUser';
 
 function Provider(props) {
-  const { state: { dataSynced } } = useDataContext();
+  const {
+    state: {
+      dataSynced,
+      authenticatedUser,
+      authenticatedUserInitialised
+    }
+  } = useDataContext();
 
   const [state, _setState] = React.useState({
     overlayLoaderState: {},
@@ -22,17 +26,16 @@ function Provider(props) {
     return acc;
   }, false);
 
-  const getAuthenticatedUser = _getAuthenticatedUser({ state, setState });
-
   const isAppReady = () => {
     return state.authenticatedUserInitialised && dataSynced;
   };
 
-  React.useEffect(() => { getAuthenticatedUser(); }, []);
-
-  useDataRefresherAfterSync('authenticated_user', () => {
-    getAuthenticatedUser(null, { showLoader: false });
-  });
+  React.useEffect(() => {
+    setState({
+      authenticatedUser,
+      authenticatedUserInitialised
+    });
+  }, [authenticatedUser, authenticatedUserInitialised]);
 
   return (
     <Context.Provider

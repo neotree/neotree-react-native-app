@@ -20,15 +20,19 @@ export default function Provider(props) {
   );
 
   const sync = event => {
-    const dataSynced = state.syncRslts && !state.syncRslts.dataInitialised ? false : state.dataSynced;
+    setState({
+      syncingData: true,
+      dataSynced: state.databaseIsReady ? state.dataSynced : false
+    });
 
-    setState({ dataSynced });
-
-    const done = (syncError, syncRslts) => setState({
+    const done = (syncError, syncRslts = {}) => setState({
+      syncingData: false,
       dataSynced: true,
       lastDataSyncEvent: event,
       syncError,
-      syncRslts: { ...syncRslts }
+      databaseIsReady: syncRslts.dbInitLog ? true : false,
+      authenticatedUser: syncRslts.authenticatedUser,
+      authenticatedUserInitialised: (event && event.name === 'authenticated_user') || state.authenticatedUserInitialised
     });
 
     syncDatabase({ event })
@@ -71,6 +75,7 @@ export default function Provider(props) {
     <Context.Provider
       {...props}
       value={{
+        sync,
         state,
         setState,
       }}

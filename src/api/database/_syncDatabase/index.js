@@ -1,17 +1,14 @@
 import NetInfo from '@react-native-community/netinfo';
 
-import createTablesIfNotExist from '../_createTablesIfNotExist';
+import initialiseDB from './_initialiseDB';
 import getLocalDataActivityInfo from '../_getLocalDataActivityInfo';
 import getRemoteDataActivityInfo from '../_getRemoteDataActivityInfo';
-import insertAuthenticatedUser from '../_insertAuthenticatedUser';
-
 import { insertScreens, deleteScreens } from '../screens';
 import { insertScripts } from '../scripts';
 
 import { getScripts } from '../../webeditor/scripts';
 import { getScreens } from '../../webeditor/screens';
-import { getAuthenticatedUser } from '../../auth';
-import { insertLog, getLastLog } from '../logs';
+import { insertLog } from '../logs';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
@@ -19,37 +16,33 @@ export default (data = {}) => new Promise((resolve, reject) => {
   Promise.all([
     NetInfo.fetch(), // check internet connection
 
-    getLastLog({ name: 'data_sync' }), // get the last sync log
-
-    new Promise((resolve, reject) => { // initialise tables and get authenticated user
-      createTablesIfNotExist()
-        .catch(reject)
-        .then(() => {
-          if (data.event && (data.event.name === 'authenticated_user')) {
-            insertAuthenticatedUser(data.event.user)
-              .catch(reject)
-              .then(() => getAuthenticatedUser().catch(reject).then(resolve));
-          } else {
-            getAuthenticatedUser().catch(reject).then(resolve);
-          }
-        });
-    })
+    initialiseDB(data), // this will create tables if they don't exist & get or set authenticated user if there's one
   ])
     .catch(reject)
-    .then(([network, lastLog, authenticated]) => {
-      const dataInitialised = lastLog ? true : false;
+    .then(([network, dbData]) => {
+      const { dbInitLog, authenticated } = dbData;
 
       const authenticatedUser = authenticated ? authenticated.user : null;
 
       const canSync = network.isInternetReachable && authenticatedUser;
 
-      if (!canSync) return resolve({ dataInitialised, authenticatedUser });
+      const done = (err, rslts) => {
+        if (err) return reject(err);
+        resolve({
+          ...rslts,
+          dbInitLog,
+          authenticatedUser,
+          dataInitialised: dbInitLog ? true : false
+        });
+      };
+
+      if (!canSync) return done(null);
 
       Promise.all([
         getLocalDataActivityInfo(),
         getRemoteDataActivityInfo(),
       ])
-        .catch(reject)
+        .catch(done)
         .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
           let _getScripts = null;
           let _getScreens = null;
@@ -104,21 +97,20 @@ export default (data = {}) => new Promise((resolve, reject) => {
             _deleteLocalScripts ? _deleteLocalScripts() : null,
             _deleteLocalScreens ? _deleteLocalScreens() : null,
           ])
-            .catch(reject)
+            .catch(done)
             .then(([scriptsRslts, screensRslts]) => {
               const scripts = scriptsRslts ? scriptsRslts.scripts : [];
               const screens = screensRslts ? screensRslts.screens : [];
               // insert data into the local database
 
               Promise.all([
-                insertLog({ name: 'data_sync' }),
+                dbInitLog ? null : insertLog({ name: 'init_data' }),
                 insertScripts(scripts),
                 insertScreens(screens),
               ])
-                .catch(reject)
+                .catch(done)
                 .then(([, insertScriptsRslts, insertScreensRslts]) => {
-                  resolve({
-                    dataInitialised: true,
+                  done(null, {
                     authenticatedUser,
                     insertScriptsRslts,
                     insertScreensRslts

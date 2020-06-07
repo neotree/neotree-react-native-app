@@ -19,7 +19,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
         }),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
+            require('@/utils/logger')('ERROR: getScreen', e);
             reject(e);
           }
         }

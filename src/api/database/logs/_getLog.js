@@ -12,12 +12,14 @@ export default (options = {}) => new Promise((resolve, reject) => {
   db.transaction(
     tx => {
       tx.executeSql(
-        `${q} order by createdAt DESC limit 1;`.trim(),
+        `${q} limit 1;`.trim(),
         null,
-        (tx, rslts) => resolve(rslts.rows._array[0]),
+        (tx, rslts) => resolve({
+          log: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
+        }),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: getLastLog', e);
+            require('@/utils/logger')('ERROR: getLog', e);
             reject(e);
           }
         }

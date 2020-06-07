@@ -12,10 +12,10 @@ export default () => new Promise((resolve, reject) => {
       tx => tx.executeSql(
         q,
         null,
-        (tx, rslts) => rslts && resolve(rslts),
+        (tx, rslts) => resolve(rslts),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: createTablesIfNotExists', e);
+            require('@/utils/logger')('ERROR: describeTables', e);
             reject(e);
           }
         }
