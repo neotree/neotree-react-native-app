@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useHomeContext } from '@/contexts/home';
 import makeStyles from '@/ui/styles/makeStyles';
 import Typography from '@/ui/Typography';
 import { Link } from 'react-router-native';
 import { LayoutCard } from '@/components/Layout';
 
 const useStyles = makeStyles(theme => ({
-  root: {
+  root: {},
+  content: {
     margin: theme.spacing(),
     padding: theme.spacing(),
     borderColor: '#ddd',
@@ -20,18 +20,19 @@ const ListItem = ({ item }) => {
 
   const styles = useStyles();
 
-  const linkWrapper = children => (
-    <Link to={`/script/${data.id}`}>{children}</Link>
-  );
-
   return (
     <>
-      {linkWrapper(
-        <LayoutCard style={[styles.root]}>
-          <Typography>{data.title}</Typography>
-          <Typography variant="caption" color="textSecondary">{data.description}</Typography>
-        </LayoutCard>
-      )}
+      <LayoutCard style={[styles.root]}>
+        <Link
+          to={`/script/${data.id}`}
+          style={[styles.content]}
+        >
+          <>
+            <Typography>{data.title}</Typography>
+            <Typography variant="caption" color="textSecondary">{data.description}</Typography>
+          </>
+        </Link>
+      </LayoutCard>
     </>
   );
 };
