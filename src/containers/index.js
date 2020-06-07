@@ -11,12 +11,13 @@ const Notifications = LazyPage(() => import('@/containers/Notifications'));
 const Export = LazyPage(() => import('@/containers/Export'));
 const Profile = LazyPage(() => import('@/containers/Profile'));
 const Script = LazyPage(() => import('@/containers/Script'));
+const Debug = LazyPage(() => import('@/containers/Debug'));
 
 const Containers = () => {
   return (
     <>
       <Switch>
-        <Route exact path="/auth" component={Authentication} />
+        <Route exact path="/sign-in" component={Authentication} />
         <Route exact path="/script/:scriptId" component={Script} />
         <Route exact path="/script/:scriptId/screen/:screenId" component={Script} />
         <Route render={() => (
@@ -26,6 +27,9 @@ const Containers = () => {
               <Route exact path="/export" component={Export} />
               <Route exact path="/notifications" component={Notifications} />
               <Route exact path="/profile" component={Profile} />
+              {process.env.NODE_ENV !== 'development' ? null : (
+                <Route exact path="/debug" component={Debug} />
+              )}
             </LayoutBody>
 
             <LayoutNavigation placement="bottom">

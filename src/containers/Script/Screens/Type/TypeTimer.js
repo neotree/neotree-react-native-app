@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Timer = ({ screen, context }) => {
-  const { metadata } = screen.data;
+  const metadata = screen.data.metadata || {};
   const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
 
   const styles = useStyles();

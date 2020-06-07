@@ -1,5 +1,6 @@
 import React from 'react';
 import useRouter from '@/utils/useRouter';
+// import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
 import _canGoToNextScreen from './_canGoToNextScreen';
@@ -9,6 +10,9 @@ import _goToScreen from './_goToScreen';
 import _goToNextScreen from './_goToNextScreen';
 import _goToPrevScreen from './_goToPrevScreen';
 import _parseScreenCondition from './_parseScreenCondition';
+import _getLastScreen from './_getLastScreen';
+import _canSave from './_canSave';
+import _saveForm from './_saveForm';
 
 export default function Provider(props) {
   const router = useRouter();
@@ -39,18 +43,32 @@ export default function Provider(props) {
   }));
 
   const parseScreenCondition = _parseScreenCondition({ state });
-  const canGoToNextScreen = _canGoToNextScreen({ state, setState, router });
+  const getLastScreen = _getLastScreen({ state, setState, parseScreenCondition });
+  const isLastScreen = () => state.activeScreen && (state.activeScreen.id === getLastScreen().id);
+  const canSave = _canSave({ state, setState, isLastScreen });
+  const canGoToNextScreen = _canGoToNextScreen({ state, setState, isLastScreen });
   const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router });
   const getScreens = _getScreens({ state, setState, router });
   const goToScreen = _goToScreen({ state, setState, router, parseScreenCondition });
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
+  const saveForm = _saveForm({ state, setState });
+
   const initialisePage = (opts = {}) => {
     if (opts.force || !state.screensInitialised) {
       getScreens();
     }
   };
+
+  // useDataRefresherAfterSync('screens', ({ event }) => {
+  //   const shouldGetScreens = event.screens.reduce((acc, s) => {
+  //     if (state.screens.map(s => s.id).indexOf(s.id) > -1) acc = true;
+  //     return acc;
+  //   }, false);
+  //
+  //   if (shouldGetScreens) getScreens(null, { showLoader: false });
+  // });
 
   React.useEffect(() => {
     if (screensInitialised) {
@@ -76,7 +94,11 @@ export default function Provider(props) {
         goToNextScreen,
         goToPrevScreen,
         getScreens,
-        parseScreenCondition
+        parseScreenCondition,
+        getLastScreen,
+        isLastScreen,
+        canSave,
+        saveForm,
       }}
     />
   );

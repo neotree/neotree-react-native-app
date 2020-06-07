@@ -1,11 +1,18 @@
 import React from 'react';
 import Context from './Context';
-import { provideDataContext, useDataContext } from '../data';
+import { useDataContext } from '../data';
 
 function Provider(props) {
-  const { state: { dbTablesInitialised } } = useDataContext();
+  const {
+    state: {
+      dataSynced,
+      authenticatedUser,
+      authenticatedUserInitialised
+    }
+  } = useDataContext();
 
   const [state, _setState] = React.useState({
+    overlayLoaderState: {},
     authenticatedUser: null,
     authenticatedUserInitialised: false,
   });
@@ -14,9 +21,21 @@ function Provider(props) {
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
-  const appIsReady = () => {
-    return state.authenticatedUserInitialised && dbTablesInitialised;
+  const displayOverlayLoader = () => Object.keys(state.overlayLoaderState).reduce((acc, key) => {
+    if (state.overlayLoaderState[key]) acc = true;
+    return acc;
+  }, false);
+
+  const isAppReady = () => {
+    return state.authenticatedUserInitialised && dataSynced;
   };
+
+  React.useEffect(() => {
+    setState({
+      authenticatedUser,
+      authenticatedUserInitialised
+    });
+  }, [authenticatedUser, authenticatedUserInitialised]);
 
   return (
     <Context.Provider
@@ -24,10 +43,11 @@ function Provider(props) {
       value={{
         state,
         setState,
-        appIsReady,
+        isAppReady,
+        displayOverlayLoader,
       }}
     />
   );
 }
 
-export default provideDataContext(Provider);
+export default Provider;

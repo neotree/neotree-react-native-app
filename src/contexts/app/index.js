@@ -3,6 +3,8 @@ import Provider from './ContextProvider';
 
 export * from './Context';
 
+export { default as useOverlayLoaderState } from './_useOverlayLoaderState';
+
 export { Provider };
 
 export function provideAppContext(Component) {

@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import Checkbox from '@/ui/Checkbox';
 
 const YesNo = ({ screen, context }) => {
-  const { metadata } = screen.data;
+  const metadata = screen.data.metadata || {};
 
   const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : null;
 

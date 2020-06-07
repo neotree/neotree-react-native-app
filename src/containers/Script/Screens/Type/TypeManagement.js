@@ -50,7 +50,7 @@ Section.propTypes = {
 const Management = ({ screen, context }) => {
   const styles = useStyles();
 
-  const { metadata } = screen.data;
+  const metadata = screen.data.metadata || {};
 
   React.useEffect(() => {
     context.setForm({

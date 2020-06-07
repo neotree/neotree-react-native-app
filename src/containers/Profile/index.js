@@ -15,7 +15,7 @@ const Profile = () => {
           color="disabled"
           variant="outlined"
           size="lg"
-          onPress={signOut}
+          onPress={() => signOut()}
         >Sign out</Button>
       </View>
     </>

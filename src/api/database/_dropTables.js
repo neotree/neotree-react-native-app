@@ -2,16 +2,23 @@ import db from './db';
 
 export default () => new Promise((resolve, reject) => {
   const querys = [
-    'drop table scripts;',
-    'drop table screens;',
-    'drop table forms;',
+    'drop table if exists scripts;',
+    'drop table if exists screens;',
+    'drop table if exists forms;',
+    'drop table if exists logs',
+    'drop table if exists authenticated_user;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
         q,
         null,
-        (tx, rslts) => rslts && resolve(rslts),
-        (tx, e) => e && reject(e)
+        (tx, rslts) => resolve(rslts),
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: dropTables', e);
+            reject(e);
+          }
+        }
       )
     );
   }));
@@ -19,8 +26,9 @@ export default () => new Promise((resolve, reject) => {
   Promise.all(querys)
     .then(rslts => resolve({
       scriptsTable: rslts[0],
-      screensTable: rslts[0],
-      formsTable: rslts[0],
+      screensTable: rslts[1],
+      formsTable: rslts[2],
+      logsTable: rslts[3],
     }))
     .catch(reject);
 });
