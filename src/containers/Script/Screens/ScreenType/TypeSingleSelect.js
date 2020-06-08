@@ -7,23 +7,21 @@ import RadioGroup from '@/ui/RadioGroup';
 const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const [selected, setSelected] = React.useState(value || null);
+  const [entry, setEntry] = React.useState(value || {});
 
-  // React.useEffect(() => {
-  //   context.setForm({
-  //     [screen.id]: !selected ? undefined : {
-  //       key: metadata ? metadata.key : undefined,
-  //       form: selected
-  //     }
-  //   });
-  // }, [selected]);
+  React.useEffect(() => {
+    onChange(!entry.value ? null : entry);
+  }, [entry]);
 
   return (
     <>
       <View>
         <RadioGroup
-          value={selected}
-          onChange={e => setSelected(e.value)}
+          value={entry.value}
+          onChange={e => setEntry({
+            value: e.value,
+            item: (metadata.items || []).filter(item => item.id === e.value)[0]
+          })}
         >
           {(metadata.items || []).map((item) => {
             return (

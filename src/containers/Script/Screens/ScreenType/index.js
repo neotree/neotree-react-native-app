@@ -8,6 +8,7 @@ import Management from './TypeManagement';
 import Progress from './TypeProgress';
 import SingleSelect from './TypeSingleSelect';
 import Timer from './TypeTimer';
+import Checklist from './TypeChecklist';
 
 const ScreenType = () => {
   const context = useScreensContext();
@@ -30,7 +31,7 @@ const ScreenType = () => {
             Component = YesNo;
             break;
           case 'checklist':
-            Component = MultiSelect;
+            Component = Checklist;
             break;
           case 'multi_select':
             Component = MultiSelect;
@@ -39,7 +40,7 @@ const ScreenType = () => {
             Component = SingleSelect;
             break;
           case 'form':
-            Component = null; // Form;
+            Component = Form;
             break;
           case 'timer':
             Component = Timer;
@@ -65,11 +66,11 @@ const ScreenType = () => {
             value={value ? value.entry : null}
             onChange={entry => setState(prevState => {
               const form = prevState.form;
-              const isEntered = form.filter(item => item.screen.id).indexOf(activeScreen.id) > -1;
+              const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
               return {
                 ...prevState,
                 form: entry ?
-                  isEntered ?
+                  formEntry ?
                     form.map(item => item.screen.id === activeScreen.id ? { ...item, entry } : item)
                     :
                     [...form, { screen: activeScreen, entry }]

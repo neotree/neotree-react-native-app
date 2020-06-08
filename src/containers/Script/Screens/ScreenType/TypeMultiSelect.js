@@ -3,21 +3,14 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Checkbox from '@/ui/Checkbox';
 
-const YesNo = ({ screen, context }) => {
+const MultiSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const _value = null; // context.state.form[screen.id] ? context.state.form[screen.id].form : null;
+  const [entry, setEntry] = React.useState(value || { value: [] });
 
-  const [selected, setSelected] = React.useState(_value || []);
-
-  // React.useEffect(() => {
-  //   context.setForm({
-  //     [screen.id]: !selected.length ? undefined : {
-  //       key: metadata ? metadata.key : undefined,
-  //       form: selected,
-  //     }
-  //   });
-  // }, [selected]);
+  React.useEffect(() => {
+    onChange(!entry.value.length ? undefined : entry);
+  }, [entry]);
 
   return (
     <>
@@ -28,23 +21,31 @@ const YesNo = ({ screen, context }) => {
               <React.Fragment key={item.label}>
                 <Checkbox
                   label={item.label}
-                  value={item.key}
-                  checked={selected.map(s => s.value).indexOf(item.key) > -1}
+                  value={item.id}
+                  checked={entry.value.map(s => s.value).indexOf(item.id) > -1}
                   onChange={e => {
                     const value = e.value;
                     const exclusives = metadata.items
                       .filter(item => item.exclusive)
-                      .map(item => item.key);
+                      .map(item => item.id);
                     if (item.exclusive) {
-                      setSelected(e.checked ? [{ value }] : []);
+                      setEntry(entry => {
+                        return {
+                          ...entry,
+                          value: e.checked ? [{ value, item }] : []
+                        };
+                      });
                     } else {
-                      setSelected(selected => {
-                        return (
-                          e.checked ?
-                            [...selected, { value, key: item.key }]
-                            :
-                            selected.filter(s => s.value !== value)
-                        ).filter(s => exclusives.indexOf(s.value) < 0);
+                      setEntry(entry => {
+                        return {
+                          ...entry,
+                          value: (
+                            e.checked ?
+                              [...entry.value, { value, item }]
+                              :
+                              entry.value.filter(s => s.value !== value)
+                          ).filter(s => exclusives.indexOf(s.value) < 0)
+                        };
                       });
                     }
                   }}
@@ -57,9 +58,10 @@ const YesNo = ({ screen, context }) => {
   );
 };
 
-YesNo.propTypes = {
+MultiSelect.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
 };
 
-export default YesNo;
+export default MultiSelect;

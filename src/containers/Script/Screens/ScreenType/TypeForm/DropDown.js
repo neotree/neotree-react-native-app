@@ -16,8 +16,8 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
       <UiDropdown
         enabled={conditionMet}
         value={value || ''}
-        label={field.label}
         placeholder={field.label}
+        label={`${field.label}${field.optional ? '' : ' *'}`}
         onChange={v => onChange(v)}
         options={[{ value: '', label: field.label }, ...opts]}
       />

@@ -12,44 +12,55 @@ import DropDown from './DropDown';
 import Period from './Period';
 import Time from './Time';
 
-const Form = ({ screen, context }) => {
+const Form = ({ screen, value, context, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const { setForm, parseScreenCondition, state: { form } } = context;
+  const { parseScreenCondition, state: { form } } = context;
 
-  const [localForm, setLocalForm] = React.useState([]);
-  const [errors, setErrors] = React.useState([]);
+  const defaultValue = (metadata.fields || []).map(f => ({
+    value: null,
+    field: f
+  }));
 
-  const onChange = (index, newVal) => setLocalForm(prevState => prevState.map((v, i) => {
-    if (i === index) return { ...v, value: newVal };
-    return v;
+  const [entry, setEntry] = React.useState(value || { value: defaultValue });
+
+  const _onChange = (index, newVal) => setEntry(prevState => ({
+    ...prevState,
+    value: prevState.value.map((v, i) => {
+      if (i === index) return { ...v, ...newVal };
+      return v;
+    })
   }));
 
   React.useEffect(() => {
-    setLocalForm(
-      form[screen.id] ?
-        form[screen.id].form
-        :
-        (metadata.fields || []).map(f => ({ key: f.key, value: null }))
-    );
-  }, [screen]);
+    const completed = entry.value.reduce((acc, { value, field }) => {
+      let conditionMet = true;
 
-  React.useEffect(() => {
-    const completed = localForm.reduce((acc, v, i) => {
-      const f = (metadata.fields || [])[i];
-      if (!f.condition && (f.optional === false) && !v.value) acc = false;
+      if (field.condition) {
+        try {
+          conditionMet = eval(field.condition);
+        } catch (e) {
+          // do nothing
+        }
+      }
+
+      if (conditionMet && !field.optional && !value) return false;
+      // if (!(field.condition && field.optional && value)) acc = false;
       return acc;
     }, true);
 
-    setForm({
-      [screen.id]: errors.length || !completed ? undefined : { key: metadata.key, form: localForm },
-    });
-  }, [localForm]);
+    const hasErrors = entry.value.filter(v => v.error).length;
+
+    onChange(hasErrors || !completed ? undefined : entry);
+  }, [entry]);
+
+  const c = "$NeoTreeOutcome = 'DC' or $NeoTreeOutcome = 'ABS' or $NeoTreeOutcome = 'TRH' or $NeoTreeOutcome = 'TRO' or $NeoTreeOutcome = 'NND<24' or $NeoTreeOutcome = 'NND>24'";
+  parseScreenCondition(c, [{ screen, entry }]);
 
   return (
     <>
       <View>
-        {metadata.fields.map((f, i) => {
+        {(metadata.fields || []).map((f, i) => {
           return (
             <React.Fragment key={f.key}>
               {(() => {
@@ -80,44 +91,28 @@ const Form = ({ screen, context }) => {
                     // do nothing
                 }
 
-                const state = localForm[i];
-
                 let conditionMet = true;
-                let value = null;
 
-                parseScreenCondition(f.condition, form);
+                if (f.condition) {
+                  let condition = parseScreenCondition(f.condition, [{ screen, entry }]);
+                  condition = parseScreenCondition(condition, form);
 
-                if (state && (state.key === f.key)) {
-                  value = state.value;
-
-                  if (f.condition) {
-                    let condition = parseScreenCondition(f.condition, localForm);
-                    condition = parseScreenCondition(condition, form);
-
-                    try {
-                      conditionMet = eval(condition);
-                    } catch (e) {
-                      conditionMet = true;
-                    }
+                  try {
+                    conditionMet = eval(condition);
+                    // require('@/utils/logger')(`Evaluate screen condition ${f.condition}`, conditionMet);
+                  } catch (e) {
+                    // require('@/utils/logger')(`ERROR: Evaluate screen condition ${f.condition}`, e);
+                    // do nothing
                   }
                 }
 
                 return !Component ? null : (
                   <Component
                     field={f}
-                    form={localForm}
                     conditionMet={conditionMet}
-                    value={value}
+                    value={entry.value[i].value}
                     onChange={(v, error) => {
-                      onChange(i, v);
-                      setErrors(errs => {
-                        if (errs.map(e => e.index).indexOf(i) > -1) {
-                          return errs
-                            .map(e => e.index === i ? { index: i, error: error } : e)
-                            .filter(e => e.error);
-                        }
-                        return [...errs, { index: i, error }].filter(e => e.error);
-                      });
+                      _onChange(i, { value: v, error, field: f });
                     }}
                   />
                 );
@@ -134,7 +129,9 @@ const Form = ({ screen, context }) => {
 
 Form.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired
+  context: PropTypes.object.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
 };
 
 export default Form;

@@ -30,7 +30,7 @@ const NumberField = ({
           onChange(value, err);
         }}
         // placeholder={field.label}
-        label={field.label}
+        label={`${field.label}${field.optional ? '' : ' *'}`}
         keyboardType="numeric"
       />
 

@@ -7,19 +7,19 @@ import RadioGroup from '@/ui/RadioGroup';
 const YesNo = ({ screen, onChange, value }) => {
   const metadata = screen.data.metadata || {};
 
-  const [selected, setSelected] = React.useState(value ? value.value : null);
+  const [entry, setEntry] = React.useState(value || {});
 
   React.useEffect(() => {
-    onChange(!selected ? null : { value: selected });
-  }, [selected]);
+    onChange(!entry.value ? null : entry);
+  }, [entry]);
 
   return (
     <>
       <View>
         <RadioGroup
           name={metadata.key}
-          value={selected}
-          onChange={e => setSelected(e.value)}
+          value={entry.value}
+          onChange={e => setEntry({ value: e.value })}
         >
           <Radio
             label={metadata.positiveLabel}

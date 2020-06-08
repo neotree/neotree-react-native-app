@@ -8,15 +8,13 @@ const useStyles = makeStyles(() => ({
   root: {},
 }));
 
-const Management = ({ screen, context }) => {
+const Management = ({ screen, onChange }) => {
   const styles = useStyles();
 
   const metadata = screen.data.metadata || {};
 
   React.useEffect(() => {
-    // context.setForm({
-    //   [screen.id]: { key: metadata ? metadata.key : undefined, form: null }
-    // });
+    onChange({ not_required: true });
   }, []);
 
   return (
@@ -48,7 +46,8 @@ const Management = ({ screen, context }) => {
 
 Management.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
+  // value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
 };
 
 export default Management;
