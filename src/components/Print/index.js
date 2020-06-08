@@ -4,8 +4,8 @@ import * as ExpoPrint from 'expo-print';
 import IconButton from '@/ui/IconButton';
 
 const Print = ({ options }) => {
-  const [printing, setPrinting] = React.useState(false);
-  const [printingError, setPrintingError] = React.useState(false);
+  const [, setPrinting] = React.useState(false);
+  const [, setPrintingError] = React.useState(false);
 
   const print = () => {
     setPrinting(true);
@@ -16,8 +16,6 @@ const Print = ({ options }) => {
         setPrintingError(e);
       });
   };
-
-  console.log(printing, printingError);
 
   return (
     <>

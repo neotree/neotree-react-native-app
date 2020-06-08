@@ -17,8 +17,8 @@ const NavMenu = () => {
         icon="md-home"
       />
       <LayoutNavItem
-        active={isLocationActive('/export')}
-        onPress={() => history.push('/export')}
+        active={isLocationActive('/forms')}
+        onPress={() => history.push('/forms')}
         label="Export"
         icon="md-cloud-upload"
       />

@@ -7,14 +7,19 @@ import { Link } from 'react-router-native';
 import { LayoutCard } from '@/components/Layout';
 import { View } from 'react-native';
 import moment from 'moment';
+import Checkbox from '@/ui/Checkbox';
 
-const useStyles = makeStyles(theme => ({
-  root: {},
+const useStyles = makeStyles((theme, { canSelectItems }) => ({
+  root: {
+    flexDirection: 'row',
+  },
   content: {
-    margin: theme.spacing(),
+    marginVertical: theme.spacing(),
+    marginLeft: canSelectItems ? theme.spacing() : 0,
     padding: theme.spacing(),
     borderColor: '#ddd',
     borderWidth: 1,
+    flex: 1,
   },
   grid: {
     flexDirection: 'row'
@@ -24,12 +29,20 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const ListItem = ({ item }) => {
-  const styles = useStyles();
+const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
+  const styles = useStyles({ canSelectItems });
 
   return (
     <>
       <LayoutCard style={[styles.root]}>
+        {canSelectItems && (
+          <Checkbox
+            value=""
+            checked={selectedItems.indexOf(item.id) > -1}
+            onChange={() => selectItems(item.id)}
+          />
+        )}
+
         <Link
           to={`/export/form/${item.id}`}
           style={[styles.content]}
@@ -37,14 +50,14 @@ const ListItem = ({ item }) => {
           <>
             <View style={[styles.grid]}>
               <View style={[styles.gridItem]}>
-                <Typography variant="caption" color="textSecondary">Creation date</Typography>
+                <Typography variant="caption" color="secondary">Creation date</Typography>
                 <Typography style={[{ fontSize: 15 }]}>
                   {moment(item.data.started_at).format('DD MMM, YYYY HH:MM')}
                 </Typography>
               </View>
 
               <View style={[styles.gridItem]}>
-                <Typography variant="caption" color="textSecondary">Completion date</Typography>
+                <Typography variant="caption" color="secondary">Completion date</Typography>
                 <Typography style={[{ fontSize: 15 }]}>
                   {!item.completed_at ?
                     moment(item.data.completed_at).format('DD MMM, YYYY HH:MM')
@@ -56,7 +69,7 @@ const ListItem = ({ item }) => {
 
             <Divider border={false} />
 
-            <Typography variant="caption" color="textSecondary">Script</Typography>
+            <Typography variant="caption" color="secondary">Script</Typography>
             <Typography>{item.data.script.title}</Typography>
           </>
         </Link>
@@ -66,7 +79,10 @@ const ListItem = ({ item }) => {
 };
 
 ListItem.propTypes = {
-  item: PropTypes.object.isRequired
+  item: PropTypes.object.isRequired,
+  selectedItems: PropTypes.array.isRequired,
+  selectItems: PropTypes.func.isRequired,
+  canSelectItems: PropTypes.bool,
 };
 
 export default ListItem;
