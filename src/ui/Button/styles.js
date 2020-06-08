@@ -11,20 +11,24 @@ export default (theme, props) => {
         if (props.color && props.variant === 'contained') return theme.palette[props.color].main;
         return 'transparent';
       })(),
-      borderColor: (() => {
-        if (props.disabled) return theme.palette.disabled;
-        if (!props.color) return 'transparent';
-        return theme.palette[props.color].main;
-      })(),
-      borderWidth: 1,
-      ...props.variant !== 'contained' ? null : {
+
+      ...props.variant === 'outlined' ? {
+        borderWidth: 1,
+        borderColor: (() => {
+          if (props.disabled) return theme.palette.disabled;
+          if (!props.color) return 'transparent';
+          return theme.palette[props.color].main;
+        })(),
+      } : null,
+
+      ...props.variant === 'contained' ? {
         shadowOffset: {
           width: props.shadow.shadowOffsetWidth,
           height: -props.shadow.shadowOffsetHeight
         },
         shadowOpacity: props.shadow.shadowOpacity,
         shadowRadius: props.shadow.shadowRadius,
-      },
+      } : null,
     },
     text: {
       // fontWeight: 'bold',

@@ -8,8 +8,13 @@ import makeStyles from '@/ui/styles/makeStyles';
 import { TouchableOpacity } from 'react-native';
 
 const useStyles = makeStyles((theme) => ({
+  root: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   title: {
     padding: theme.spacing(),
+    flex: 1,
   },
   goBackBtn: {
     flexDirection: 'row',
@@ -25,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const PageTitle = ({ title, onBackPress }) => {
+const PageTitle = ({ title, onBackPress, children }) => {
   const styles = useStyles();
   const history = useHistory();
 
@@ -47,6 +52,8 @@ const PageTitle = ({ title, onBackPress }) => {
         <Typography variant="h3" style={[styles.title]}>
           {title}
         </Typography>
+
+        {children}
       </LayoutNavigation>
     </>
   );
@@ -55,6 +62,7 @@ const PageTitle = ({ title, onBackPress }) => {
 PageTitle.propTypes = {
   title: PropTypes.string,
   onBackPress: PropTypes.func,
+  children: PropTypes.node
 };
 
 export default PageTitle;

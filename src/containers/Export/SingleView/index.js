@@ -1,11 +1,12 @@
 import React from 'react';
-import Typography from '@/ui/Typography';
 import { useExportDataContext } from '@/contexts/export-data';
 import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
 import { LayoutCard } from '@/components/Layout';
 import { useParams } from 'react-router-native';
 import PageTitle from '@/components/PageTitle';
+import FormPreview from '@/components/FormPreview';
+import Print from '@/components/Print';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -24,17 +25,11 @@ const SingleView = () => {
 
   return (
     <>
-      <PageTitle title="Session details" />
+      <PageTitle title="Session details">
+        <Print options={{ html: '<h1>Hello world</h1>' }} />
+      </PageTitle>
       <View style={[styles.root]}>
-        <LayoutCard>
-          {item.data.form.map(({ entry }) => {
-            return (
-              <View key={id}>
-                
-              </View>
-            );
-          })}
-        </LayoutCard>
+        <FormPreview Wrapper={LayoutCard} form={item} />
       </View>
     </>
   );
