@@ -70,7 +70,7 @@ const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
             <Divider border={false} />
 
             <Typography variant="caption" color="secondary">Script</Typography>
-            <Typography>{item.data.script.title}</Typography>
+            <Typography>{item.data.script.data.title}</Typography>
           </>
         </Link>
       </LayoutCard>
