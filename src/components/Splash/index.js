@@ -12,7 +12,7 @@ export { useSplashLogoAnimation };
 const useStyles = makeStyles(styles);
 
 const Splash = ({ children }) => {
-  const scale = useSplashLogoAnimation();
+  // const scale = useSplashLogoAnimation();
 
   const styles = useStyles();
 
@@ -21,7 +21,10 @@ const Splash = ({ children }) => {
       <View style={[styles.root]}>
         <View style={[styles.content]}>
           <Animated.View
-            style={[styles.logoContainer, { transform: [{ scale }] }]}
+            style={[
+              styles.logoContainer,
+              // { transform: [{ scale }] }
+            ]}
           >
             <Logo />
           </Animated.View>
