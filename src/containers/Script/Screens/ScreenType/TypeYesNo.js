@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Radio from '@/ui/Radio';
 import RadioGroup from '@/ui/RadioGroup';
+import Typography from '@/ui/Typography';
 
 const YesNo = ({ screen, onChange, value }) => {
   const metadata = screen.data.metadata || {};
@@ -16,6 +17,7 @@ const YesNo = ({ screen, onChange, value }) => {
   return (
     <>
       <View>
+        <Typography>{metadata.label}</Typography>
         <RadioGroup
           name={metadata.key}
           value={entry.value}
@@ -23,11 +25,11 @@ const YesNo = ({ screen, onChange, value }) => {
         >
           <Radio
             label={metadata.positiveLabel}
-            value="yes"
+            value="Yes"
           />
           <Radio
             label={metadata.negativeLabel}
-            value="no"
+            value="No"
           />
         </RadioGroup>
       </View>

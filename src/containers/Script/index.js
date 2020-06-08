@@ -5,7 +5,11 @@ import { provideScreensContext } from '@/contexts/screens';
 import ActivityIndicator from '@/ui/ActivityIndicator';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
+import { Switch, Route } from 'react-router-native';
+
 import Screens from './Screens';
+import PreviewForm from './PreviewForm';
+
 import Header from './Header';
 import NextBtn from './NextBtn';
 import SaveBtn from './SaveBtn';
@@ -34,13 +38,26 @@ const Script = () => {
 
   return (
     <>
-      <Header />
+      <Switch>
+        <Route
+          path="/script/:scriptId/preview-form"
+          component={PreviewForm}
+        />
 
-      <Screens />
+        <Route
+          render={() => (
+            <>
+              <Header />
 
-      <NextBtn />
+              <Screens />
 
-      <SaveBtn />
+              <NextBtn />
+
+              <SaveBtn />
+            </>
+          )}
+        />
+      </Switch>
     </>
   );
 };

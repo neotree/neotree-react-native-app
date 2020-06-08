@@ -57,7 +57,7 @@ export default function Provider(props) {
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
-  const saveForm = _saveForm({ state, setState, script });
+  const saveForm = _saveForm({ state, setState, script, router });
 
   const initialisePage = (opts = {}) => {
     if (opts.force || !state.screensInitialised) {

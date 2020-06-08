@@ -3,6 +3,7 @@ import { saveForm } from '@/api/forms';
 export default ({
   setState,
   script,
+  router,
   state: { form, activeScreen, start_time }
 }) => (payload = {}) =>
   new Promise((resolve, reject) => {
@@ -12,6 +13,7 @@ export default ({
       setState({ savingForm: false });
       if (err) return reject(err);
       resolve(rslts);
+      if (payload.completed) router.history.push(`/script/${script.id}/preview-form`);
     };
 
     saveForm({

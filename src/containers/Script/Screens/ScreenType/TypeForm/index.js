@@ -54,9 +54,6 @@ const Form = ({ screen, value, context, onChange }) => {
     onChange(hasErrors || !completed ? undefined : entry);
   }, [entry]);
 
-  const c = "$NeoTreeOutcome = 'DC' or $NeoTreeOutcome = 'ABS' or $NeoTreeOutcome = 'TRH' or $NeoTreeOutcome = 'TRO' or $NeoTreeOutcome = 'NND<24' or $NeoTreeOutcome = 'NND>24'";
-  parseScreenCondition(c, [{ screen, entry }]);
-
   return (
     <>
       <View>
