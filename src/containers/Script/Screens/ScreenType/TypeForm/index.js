@@ -1,0 +1,140 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import { View } from 'react-native';
+import Divider from '@/ui/Divider';
+import { fieldsTypes } from '@/constants/screen';
+
+import Number from './Number';
+import Date from './Date';
+import DateTime from './DateTime';
+import Text from './Text';
+import DropDown from './DropDown';
+import Period from './Period';
+import Time from './Time';
+
+const Form = ({ screen, context }) => {
+  const metadata = screen.data.metadata || {};
+
+  const { setForm, parseScreenCondition, state: { form } } = context;
+
+  const [localForm, setLocalForm] = React.useState([]);
+  const [errors, setErrors] = React.useState([]);
+
+  const onChange = (index, newVal) => setLocalForm(prevState => prevState.map((v, i) => {
+    if (i === index) return { ...v, value: newVal };
+    return v;
+  }));
+
+  React.useEffect(() => {
+    setLocalForm(
+      form[screen.id] ?
+        form[screen.id].form
+        :
+        (metadata.fields || []).map(f => ({ key: f.key, value: null }))
+    );
+  }, [screen]);
+
+  React.useEffect(() => {
+    const completed = localForm.reduce((acc, v, i) => {
+      const f = (metadata.fields || [])[i];
+      if (!f.condition && (f.optional === false) && !v.value) acc = false;
+      return acc;
+    }, true);
+
+    setForm({
+      [screen.id]: errors.length || !completed ? undefined : { key: metadata.key, form: localForm },
+    });
+  }, [localForm]);
+
+  return (
+    <>
+      <View>
+        {metadata.fields.map((f, i) => {
+          return (
+            <React.Fragment key={f.key}>
+              {(() => {
+                let Component = null;
+                switch (f.type) {
+                  case fieldsTypes.NUMBER:
+                    Component = Number;
+                    break;
+                  case fieldsTypes.DATE:
+                    Component = Date;
+                    break;
+                  case fieldsTypes.DATETIME:
+                    Component = DateTime;
+                    break;
+                  case fieldsTypes.DROPDOWN:
+                    Component = DropDown;
+                    break;
+                  case fieldsTypes.PERIOD:
+                    Component = Period;
+                    break;
+                  case fieldsTypes.TEXT:
+                    Component = Text;
+                    break;
+                  case fieldsTypes.TIME:
+                    Component = Time;
+                    break;
+                  default:
+                    // do nothing
+                }
+
+                const state = localForm[i];
+
+                let conditionMet = true;
+                let value = null;
+
+                parseScreenCondition(f.condition, form);
+
+                if (state && (state.key === f.key)) {
+                  value = state.value;
+
+                  if (f.condition) {
+                    let condition = parseScreenCondition(f.condition, localForm);
+                    condition = parseScreenCondition(condition, form);
+
+                    try {
+                      conditionMet = eval(condition);
+                    } catch (e) {
+                      conditionMet = true;
+                    }
+                  }
+                }
+
+                return !Component ? null : (
+                  <Component
+                    field={f}
+                    form={localForm}
+                    conditionMet={conditionMet}
+                    value={value}
+                    onChange={(v, error) => {
+                      onChange(i, v);
+                      setErrors(errs => {
+                        if (errs.map(e => e.index).indexOf(i) > -1) {
+                          return errs
+                            .map(e => e.index === i ? { index: i, error: error } : e)
+                            .filter(e => e.error);
+                        }
+                        return [...errs, { index: i, error }].filter(e => e.error);
+                      });
+                    }}
+                  />
+                );
+              })()}
+
+              <Divider border={false} spacing={2} />
+            </React.Fragment>
+          );
+        })}
+      </View>
+    </>
+  );
+};
+
+Form.propTypes = {
+  screen: PropTypes.object,
+  context: PropTypes.object.isRequired
+};
+
+export default Form;

@@ -24,7 +24,7 @@ export default function Provider(props) {
 
   const [state, _setState] = React.useState({
     start_time: new Date(),
-    form: {},
+    form: [],
     activeScreen: null,
     screenId,
     screens: [],
