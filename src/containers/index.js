@@ -12,7 +12,7 @@ const Notifications = LazyPage(() => import('@/containers/Notifications'));
 const Forms = LazyPage(() => import('@/containers/Forms'));
 const Profile = LazyPage(() => import('@/containers/Profile'));
 const Script = LazyPage(() => import('@/containers/Script'));
-const Debug = LazyPage(() => import('@/containers/Debug'));
+// const Debug = LazyPage(() => import('@/containers/Debug'));
 
 const Containers = () => {
   return (
@@ -31,9 +31,9 @@ const Containers = () => {
               <Route exact path="/" component={Home} />
               <Route exact path="/notifications" component={Notifications} />
               <Route exact path="/profile" component={Profile} />
-              {process.env.NODE_ENV !== 'development' ? null : (
+              {/*process.env.NODE_ENV !== 'development' ? null : (
                 <Route exact path="/debug" component={Debug} />
-              )}
+              )*/}
             </LayoutBody>
 
             <LayoutNavigation placement="bottom">
