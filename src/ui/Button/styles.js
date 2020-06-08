@@ -1,4 +1,9 @@
 export default (theme, props) => {
+  const color = theme.palette[props.color] ?
+    theme.palette[props.color].main || theme.palette[props.color]
+    :
+    props.color;
+
   return {
     root: {
       padding: theme.spacing(),
@@ -7,8 +12,8 @@ export default (theme, props) => {
       justifyContent: 'center',
       textAlign: 'center',
       backgroundColor: (() => {
-        if (props.disabled) return theme.palette.disabled;
-        if (props.color && props.variant === 'contained') return theme.palette[props.color].main;
+        if (props.variant && props.disabled) return theme.palette.disabled;
+        if (color && props.variant === 'contained') return color;
         return 'transparent';
       })(),
 
@@ -16,8 +21,8 @@ export default (theme, props) => {
         borderWidth: 1,
         borderColor: (() => {
           if (props.disabled) return theme.palette.disabled;
-          if (!props.color) return 'transparent';
-          return theme.palette[props.color].main;
+          if (!color) return 'transparent';
+          return color;
         })(),
       } : null,
 
@@ -35,9 +40,9 @@ export default (theme, props) => {
       fontSize: theme.fontSize[props.size] || theme.fontSize.default,
       color: (() => {
         if (props.disabled) return theme.palette.text.disabled;
-        if (!props.color) return theme.palette.text.primary;
-        if (props.variant === 'contained') return theme.palette[props.color].text;
-        return theme.palette[props.color].main;
+        if (!color) return theme.palette.text.primary;
+        if (props.variant === 'contained') return theme.palette[color].text;
+        return color;
       })()
     },
   };

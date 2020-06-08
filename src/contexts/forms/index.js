@@ -5,8 +5,8 @@ export * from './Context';
 
 export { Provider };
 
-export function provideExportDataContext(Component) {
-  return function ExportDataContextProvider(props) {
+export function provideFormsContext(Component) {
+  return function formsContextProvider(props) {
     return (
       <Provider>
         <Component {...props} />

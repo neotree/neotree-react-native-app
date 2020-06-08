@@ -66,7 +66,7 @@ Button.propTypes = {
   ]),
   size: PropTypes.oneOf(['sm', 'lg', 'xl']),
   variant: PropTypes.oneOf(['outlined', 'contained']),
-  color: PropTypes.oneOf(['primary', 'secondary', 'disabled', 'error', 'success']),
+  color: PropTypes.string,
   style: PropTypes.oneOfType([
     PropTypes.array,
     PropTypes.object,
