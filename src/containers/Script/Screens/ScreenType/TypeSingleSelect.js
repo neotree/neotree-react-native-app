@@ -4,28 +4,24 @@ import { View } from 'react-native';
 import Radio from '@/ui/Radio';
 import RadioGroup from '@/ui/RadioGroup';
 
-const SingleSelect = ({ screen, context }) => {
+const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
-
-  const [selected, setSelected] = React.useState(_value || null);
+  const [entry, setEntry] = React.useState(value || {});
 
   React.useEffect(() => {
-    context.setForm({
-      [screen.id]: !selected ? undefined : {
-        key: metadata ? metadata.key : undefined,
-        form: selected
-      }
-    });
-  }, [selected]);
+    onChange(!entry.value ? null : entry);
+  }, [entry]);
 
   return (
     <>
       <View>
         <RadioGroup
-          value={selected}
-          onChange={e => setSelected(e.value)}
+          value={entry.value}
+          onChange={e => setEntry({
+            value: e.value,
+            item: (metadata.items || []).filter(item => item.id === e.value)[0]
+          })}
         >
           {(metadata.items || []).map((item) => {
             return (
@@ -45,7 +41,8 @@ const SingleSelect = ({ screen, context }) => {
 
 SingleSelect.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
 };
 
 export default SingleSelect;

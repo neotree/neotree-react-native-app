@@ -4,11 +4,11 @@ import { View } from 'react-native';
 import Typography from '@/ui/Typography';
 
 const Progress = ({ screen, context }) => {
-  const metadata = screen.data.metadata || {};
-
-  React.useEffect(() => {
-    context.setForm({ [screen.id]: true });
-  }, []);
+  // const metadata = screen.data.metadata || {};
+  //
+  // React.useEffect(() => {
+  //   context.setForm({ [screen.id]: true });
+  // }, []);
 
   return (
     <>

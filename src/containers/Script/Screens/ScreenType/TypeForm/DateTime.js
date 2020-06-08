@@ -39,7 +39,7 @@ const DateTime = ({ field, onChange, value, conditionMet, }) => {
         <Typography
           {...conditionMet ? null : { style: { color: '#ccc' } }}
         >
-          {field.label}
+          {field.label}{field.label}{field.optional ? '' : ' *'}
         </Typography>
       )}
 

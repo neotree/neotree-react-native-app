@@ -8,7 +8,7 @@ import ActivityIndicator from '@/ui/ActivityIndicator';
 import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
 import { LayoutScrollableContent } from '@/components/Layout';
-import ScreenType from './Type';
+import ScreenType from './ScreenType';
 
 const useStyles = makeStyles(theme => ({
   actionBox: {
@@ -55,7 +55,7 @@ const Screens = () => {
       >
         <Divider border={false} spacing={2} />
 
-        <Typography variant="h3">{activeScreen.data.title}</Typography>
+        <Typography variant="h3">{activeScreen.data.title} - {activeScreen.type}</Typography>
 
         <Divider border={false} spacing={2} />
 

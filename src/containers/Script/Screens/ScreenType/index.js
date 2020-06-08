@@ -8,11 +8,12 @@ import Management from './TypeManagement';
 import Progress from './TypeProgress';
 import SingleSelect from './TypeSingleSelect';
 import Timer from './TypeTimer';
+import Checklist from './TypeChecklist';
 
-const Type = () => {
+const ScreenType = () => {
   const context = useScreensContext();
 
-  const { state: { activeScreen } } = context;
+  const { state: { activeScreen, form }, setState } = context;
 
   const [screenId, setScreenId] = React.useState(null);
 
@@ -30,7 +31,7 @@ const Type = () => {
             Component = YesNo;
             break;
           case 'checklist':
-            Component = MultiSelect;
+            Component = Checklist;
             break;
           case 'multi_select':
             Component = MultiSelect;
@@ -56,10 +57,27 @@ const Type = () => {
 
         if (!shouldDisplay) Component = null;
 
+        const value = form.filter(item => item.screen.id === activeScreen.id)[0];
+
         return !Component ? null : (
           <Component
             screen={activeScreen}
             context={context}
+            value={value ? value.entry : null}
+            onChange={entry => setState(prevState => {
+              const form = prevState.form;
+              const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
+              return {
+                ...prevState,
+                form: entry ?
+                  formEntry ?
+                    form.map(item => item.screen.id === activeScreen.id ? { ...item, entry } : item)
+                    :
+                    [...form, { screen: activeScreen, entry }]
+                  :
+                  form.filter(item => item.screen.id !== activeScreen.id)
+              };
+            })}
           />
         );
       })()}
@@ -67,4 +85,4 @@ const Type = () => {
   );
 };
 
-export default Type;
+export default ScreenType;

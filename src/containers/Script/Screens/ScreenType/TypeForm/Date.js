@@ -4,15 +4,28 @@ import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 
 const FieldDate = ({ field, onChange, value, conditionMet, }) => {
+  const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
+
+  const onDateChange = (e, date) => {
+    setDate(date);
+    onChange(date);
+  };
+
+  React.useEffect(() => {
+    const v = value ? new Date(value).toString() : null;
+    const d = date ? new Date(date).toString() : null;
+    if (v !== d) onChange(date);
+  });
+
   return (
     <>
       <DatePicker
         enabled={conditionMet}
-        value={value || null}
+        value={date || null}
         placeholder={formCopy.SELECT_DATE}
-        onChange={(e, date) => onChange(date)}
+        onChange={onDateChange}
       >
-        {field.label}
+        {field.label}{field.optional ? '' : ' *'}
       </DatePicker>
     </>
   );
