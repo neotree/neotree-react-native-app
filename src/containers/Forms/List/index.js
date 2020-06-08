@@ -49,14 +49,11 @@ const List = () => {
               <View>
                 <Checkbox
                   value=""
+                  label="Select"
                   checked={selectedItems.length === data.length}
                   onChange={() => selectItems(selectedItems.length ? selectedItems : data.map(item => item.id))}
                 />
               </View>
-
-              <Typography style={[styles.selectAllItem]}>
-                Select
-              </Typography>
 
               <DeleteBtn style={[styles.selectAllItem]} />
             </View>

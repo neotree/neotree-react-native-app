@@ -44,7 +44,7 @@ const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
         )}
 
         <Link
-          to={`/export/form/${item.id}`}
+          to={`/forms/form/${item.id}`}
           style={[styles.content]}
         >
           <>
