@@ -4,6 +4,11 @@ export default (theme, props) => {
     :
     props.color;
 
+  const textColor = theme.palette[props.color] ?
+    theme.palette[props.color].text || theme.palette[props.color]
+    :
+    props.color;
+
   return {
     root: {
       padding: theme.spacing(),
@@ -41,7 +46,7 @@ export default (theme, props) => {
       color: (() => {
         if (props.disabled) return theme.palette.text.disabled;
         if (!color) return theme.palette.text.primary;
-        if (props.variant === 'contained') return theme.palette[color].text;
+        if (props.variant === 'contained') return textColor;
         return color;
       })()
     },

@@ -12,7 +12,7 @@ const Form = ({ screen, form }) => {
   return (
     <>
       <View>
-        {metadata.fields.map(f => {
+        {(metadata.fields || []).map(f => {
           let text = null;
 
           return (

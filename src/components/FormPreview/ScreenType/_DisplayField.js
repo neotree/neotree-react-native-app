@@ -10,7 +10,7 @@ const DisplayField = ({ values, label }) => {
 
   return (
     <>
-      <View style={{ backgroundColor: 'transparent' }}>
+      <View>
         <Typography>{label}</Typography>
         {(values || []).map((v) => {
           return (

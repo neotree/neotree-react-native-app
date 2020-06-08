@@ -7,6 +7,7 @@ import { useParams } from 'react-router-native';
 import PageTitle from '@/components/PageTitle';
 import FormPreview from '@/components/FormPreview';
 import Print from '@/components/Print';
+import generateHTML from './generateHTML';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -26,7 +27,7 @@ const SingleView = () => {
   return (
     <>
       <PageTitle title="Session details">
-        <Print options={{ html: '<h1>Hello world</h1>' }} />
+        <Print options={{ html: generateHTML(item) }} />
       </PageTitle>
       <View style={[styles.root]}>
         <FormPreview Wrapper={LayoutCard} form={item} />
