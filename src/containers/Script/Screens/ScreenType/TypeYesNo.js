@@ -3,38 +3,33 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Radio from '@/ui/Radio';
 import RadioGroup from '@/ui/RadioGroup';
+import Typography from '@/ui/Typography';
 
-const YesNo = ({ screen, context }) => {
+const YesNo = ({ screen, onChange, value }) => {
   const metadata = screen.data.metadata || {};
 
-  const _value = context.state.form[screen.id] ? context.state.form[screen.id].form : '';
-
-  const [selected, setSelected] = React.useState(_value || null);
+  const [entry, setEntry] = React.useState(value || {});
 
   React.useEffect(() => {
-    context.setForm({
-      [screen.id]: !selected ? undefined : {
-        key: metadata ? metadata.key : undefined,
-        form: selected
-      }
-    });
-  }, [selected]);
+    onChange(!entry.value ? null : entry);
+  }, [entry]);
 
   return (
     <>
       <View>
+        <Typography>{metadata.label}</Typography>
         <RadioGroup
           name={metadata.key}
-          value={selected}
-          onChange={e => setSelected(e.value)}
+          value={entry.value}
+          onChange={e => setEntry({ value: e.value })}
         >
           <Radio
             label={metadata.positiveLabel}
-            value="yes"
+            value="Yes"
           />
           <Radio
             label={metadata.negativeLabel}
-            value="no"
+            value="No"
           />
         </RadioGroup>
       </View>
@@ -44,7 +39,8 @@ const YesNo = ({ screen, context }) => {
 
 YesNo.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
+  value: PropTypes.any,
+  onChange: PropTypes.func.isRequired,
 };
 
 export default YesNo;

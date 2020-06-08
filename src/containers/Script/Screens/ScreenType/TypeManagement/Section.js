@@ -6,8 +6,7 @@ import makeStyles from '@/ui/styles/makeStyles';
 import Image from '@/components/Image';
 
 const useStyles = makeStyles(theme => ({
-  root: {},
-  section: {
+  root: {
     marginVertical: theme.spacing(),
     padding: theme.spacing(),
     borderWidth: 1,
@@ -25,7 +24,7 @@ const Section = ({ title, text, image }) => {
 
   return (
     <View
-      style={[styles.section]}
+      style={[styles.root]}
     >
       {!title ? null : <Typography variant="h4">{title}</Typography>}
       {!text ? null : <Typography>{text}</Typography>}
@@ -47,47 +46,4 @@ Section.propTypes = {
   image: PropTypes.object,
 };
 
-const Management = ({ screen, context }) => {
-  const styles = useStyles();
-
-  const metadata = screen.data.metadata || {};
-
-  React.useEffect(() => {
-    context.setForm({
-      [screen.id]: { key: metadata ? metadata.key : undefined, form: null }
-    });
-  }, []);
-
-  return (
-    <>
-      <View
-        style={[styles.root]}
-      >
-        <Section
-          title={metadata.title1}
-          text={metadata.text1}
-          image={metadata.image1}
-        />
-
-        <Section
-          title={metadata.title2}
-          text={metadata.text2}
-          image={metadata.image2}
-        />
-
-        <Section
-          title={metadata.title3}
-          text={metadata.text3}
-          image={metadata.image3}
-        />
-      </View>
-    </>
-  );
-};
-
-Management.propTypes = {
-  screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
-};
-
-export default Management;
+export default Section;

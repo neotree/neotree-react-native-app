@@ -5,9 +5,8 @@ import makeStyles from '@/ui/styles/makeStyles';
 import { LayoutCard } from '@/components/Layout';
 import { useParams } from 'react-router-native';
 import PageTitle from '@/components/PageTitle';
-import FormPreview from '@/components/FormPreview';
-import Print from '@/components/Print';
-import generateHTML from './generateHTML';
+import PreviewForm from '../PreviewForm';
+import Print from '../PrintForm';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -22,15 +21,16 @@ const SingleView = () => {
 
   const { state: { data } } = useFormsContext();
 
-  const item = data.filter(f => f.id.toString() === formId)[0];
+  const form = data.filter(f => f.id.toString() === formId)
+    .map(f => f.data.form)[0];
 
   return (
     <>
       <PageTitle title="Session details">
-        <Print options={{ html: generateHTML(item) }} />
+        <Print form={form} />
       </PageTitle>
       <View style={[styles.root]}>
-        <FormPreview Wrapper={LayoutCard} form={item} />
+        <PreviewForm Wrapper={LayoutCard} form={form} />
       </View>
     </>
   );

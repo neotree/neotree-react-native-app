@@ -22,6 +22,7 @@ const Containers = () => {
       <Switch>
         <Route exact path="/sign-in" component={Authentication} />
         <Route exact path="/script/:scriptId" component={Script} />
+        <Route exact path="/script/:scriptId/preview-form" component={Script} />
         <Route exact path="/script/:scriptId/screen/:screenId" component={Script} />
         <Route path="/forms" component={Forms} />
         <Route render={() => (

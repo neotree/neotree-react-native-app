@@ -14,7 +14,7 @@ const Text = ({ field, onChange, value, conditionMet, }) => {
           onChange(value);
         }}
         // placeholder={field.label}
-        label={field.label}
+        label={`${field.label}${field.optional ? '' : ' *'}`}
       />
     </>
   );

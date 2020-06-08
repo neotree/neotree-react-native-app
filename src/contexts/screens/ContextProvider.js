@@ -24,7 +24,7 @@ export default function Provider(props) {
 
   const [state, _setState] = React.useState({
     start_time: new Date(),
-    form: {},
+    form: [],
     activeScreen: null,
     screenId,
     screens: [],
@@ -57,7 +57,7 @@ export default function Provider(props) {
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
-  const saveForm = _saveForm({ state, setState, script });
+  const saveForm = _saveForm({ state, setState, script, router });
 
   const initialisePage = (opts = {}) => {
     if (opts.force || !state.screensInitialised) {
