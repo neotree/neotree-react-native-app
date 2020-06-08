@@ -20,23 +20,18 @@ const useStyles = makeStyles(() => ({
 const DateTime = ({ field, onChange, value, conditionMet, }) => {
   const styles = useStyles();
 
-  const [date, setDate] = React.useState(null);
-  const [time, setTime] = React.useState(null);
+  const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   const onDateChange = (e, date) => {
-    const time = `${date.getHours()}:${date.getMinutes()}`;
     setDate(date);
-    if (date) setTime(time);
-    onChange({ time, date });
+    onChange(date);
   };
 
   React.useEffect(() => {
-    if (value) {
-      if (value.date !== date) setDate(value.date);
-      if (value.time !== time) setTime(value.time);
-    }
-    if (field.defaultValue && !date) onDateChange(null, new Date());
-  }, [value]);
+    const v = value ? new Date(value).toString() : null;
+    const d = date ? new Date(date).toString() : null;
+    if (v !== d) onChange(date);
+  });
 
   return (
     <>

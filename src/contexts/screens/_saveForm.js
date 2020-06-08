@@ -21,11 +21,10 @@ export default ({
         completed_at: payload.completed ? new Date() : null,
         canceled_at: payload.completed ? null : new Date(),
         script: { id: script.id, title: script.data.title },
-        form: Object.keys(form)
-          .map(screenId => ({
-            entry: form[screenId],
-            screen: screens.filter(s => s.id === screenId)
-              .map(s => ({ id: s.id, title: s.data.title, type: s.type }))[0]
+        form: screens.filter(s => Object.keys(form).indexOf(s.id.toString()) > -1)
+          .map(s => ({
+            screen: s,
+            entry: form[s.id]
           }))
       },
       script_id: activeScreen.script_id
