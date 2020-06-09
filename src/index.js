@@ -31,6 +31,14 @@ const NeoTreeApp = () => {
     }
   }, [authenticatedUser, appIsReady]);
 
+  if (splashScreen.display) {
+    return (
+      <Overlay>
+        <Splash>{splashScreen.text}</Splash>
+      </Overlay>
+    );
+  }
+
   return (
     <>
       <View style={{ flex: 1 }}>
@@ -40,12 +48,6 @@ const NeoTreeApp = () => {
 
         <OverlayLoader display={displayOverlayLoader()} />
       </View>
-
-      {splashScreen.display && (
-        <Overlay>
-          <Splash>{splashScreen.text}</Splash>
-        </Overlay>
-      )}
     </>
   );
 };

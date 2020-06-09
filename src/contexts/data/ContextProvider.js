@@ -22,7 +22,7 @@ export default function Provider(props) {
 
   const { dataStatus, canSync, authenticatedUserInitialised, dataSynced } = state;
 
-  const sync = (event) => {
+  const sync = (event, callback) => {
     if (dataStatus) {
       setState({
         syncingData: true,
@@ -30,6 +30,8 @@ export default function Provider(props) {
       });
 
       const done = (syncError, syncRslts = {}) => {
+        if (callback) callback(syncError, syncRslts);
+
         setState({
           syncingData: false,
           dataSynced: true,
@@ -72,8 +74,6 @@ export default function Provider(props) {
     return dataSynced && authenticatedUserInitialised;
   };
 
-  console.log(state.authenticatedUser);
-
   return (
     <Context.Provider
       {...props}
@@ -81,7 +81,7 @@ export default function Provider(props) {
         sync,
         state,
         setState,
-        isDataReady,
+        dataIsReady: isDataReady(),
       }}
     />
   );

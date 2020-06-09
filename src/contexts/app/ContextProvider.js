@@ -5,7 +5,7 @@ import { useDataContext } from '../data';
 
 function Provider(props) {
   const {
-    isDataReady,
+    dataIsReady,
     state: {
       syncingData,
       authenticatedUser,
@@ -28,7 +28,7 @@ function Provider(props) {
     return acc;
   }, false);
 
-  const isAppReady = () => isDataReady();
+  const isAppReady = () => dataIsReady;
 
   const getSplashScreenInfo = () => {
     const text = syncingData ? copy.SYNCING_DATA_TEXT : '';
