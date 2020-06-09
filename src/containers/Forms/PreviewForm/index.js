@@ -134,7 +134,7 @@ const PreviewForm = ({ form, scrollable, Wrapper }) => {
 
 PreviewForm.propTypes = {
   scrollable: PropTypes.bool,
-  form: PropTypes.object.isRequired,
+  form: PropTypes.array.isRequired,
   Wrapper: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.object
