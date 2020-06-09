@@ -18,12 +18,11 @@ const NeoTreeApp = () => {
   const history = useHistory();
 
   const {
-    isAppReady,
+    appIsReady,
+    splashScreen,
     authenticatedUser,
     displayOverlayLoader,
   } = useAppContext();
-
-  const appIsReady = isAppReady();
 
   React.useEffect(() => {
     if (appIsReady) {
@@ -31,14 +30,6 @@ const NeoTreeApp = () => {
       history.push(authenticatedUser ? '/' : '/sign-in');
     }
   }, [authenticatedUser, appIsReady]);
-
-  if (!appIsReady) {
-    return (
-      <Overlay>
-        <Splash />
-      </Overlay>
-    );
-  }
 
   return (
     <>
@@ -49,6 +40,12 @@ const NeoTreeApp = () => {
 
         <OverlayLoader display={displayOverlayLoader()} />
       </View>
+
+      {splashScreen.display && (
+        <Overlay>
+          <Splash>{splashScreen.text}</Splash>
+        </Overlay>
+      )}
     </>
   );
 };
