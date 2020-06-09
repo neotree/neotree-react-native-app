@@ -7,6 +7,7 @@ import Input from '@/ui/Input';
 import Button from '@/ui/Button';
 import Divider from '@/ui/Divider';
 import Typography from '@/ui/Typography';
+import { useOverlayLoaderState } from '@/contexts/app';
 import { useAuthenticationContext } from './Context';
 
 const useStyles = makeStyles(theme => ({
@@ -31,6 +32,8 @@ const Form = () => {
   };
 
   const styles = useStyles();
+
+  useOverlayLoaderState('authenticate', authenticating);
 
   const authenticate = () => {
     if (authenticating) return;
