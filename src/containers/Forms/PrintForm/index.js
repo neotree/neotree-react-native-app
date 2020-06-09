@@ -1,12 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Print from '@/components/Print';
+import formToHTML from './formToHTML';
 
-const PrintForm = () => {
+const PrintForm = ({ form }) => {
   return (
     <>
       <Print
-        options={{ html: '<h1>NeoTree</h1>' }}
+        options={{ html: formToHTML(form) }}
       />
     </>
   );
