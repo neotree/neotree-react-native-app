@@ -1,12 +1,12 @@
 import React from 'react';
-import { onAuthStateChanged } from '@/api/auth';
+// import { onAuthStateChanged } from '@/api/auth';
 import socket from '@/api/socket';
 
 export default ({ sync }, params = []) => {
   React.useEffect(() => {
-    onAuthStateChanged(u => {
-      sync({ name: 'authenticated_user', user: u });
-    });
+    // onAuthStateChanged(u => {
+    //   sync({ name: 'authenticated_user', user: u });
+    // });
 
     socket.on('create_scripts', data => sync({
       name: 'create_scripts',

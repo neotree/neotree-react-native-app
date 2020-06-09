@@ -4,7 +4,7 @@ const deleteForm = (_where = {}) => new Promise((resolve, reject) => {
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
-  let q = 'delete from screens';
+  let q = 'delete from scripts';
   q = where ? `${q} where ${where}` : q;
 
   db.transaction(
@@ -15,7 +15,7 @@ const deleteForm = (_where = {}) => new Promise((resolve, reject) => {
         (tx, rslts) => resolve({ rslts }),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: deleteScreen', e);
+            require('@/utils/logger')('ERROR: deleteScript', e);
             reject(e);
           }
         }

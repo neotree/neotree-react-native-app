@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
 import Logo from '@/components/Logo';
 import Animated from 'react-native-reanimated';
+import Typography from '@/ui/Typography';
 import styles from './styles';
 import useSplashLogoAnimation from './useSplashLogoAnimation';
 
@@ -28,7 +29,10 @@ const Splash = ({ children }) => {
           >
             <Logo />
           </Animated.View>
-          {children}
+          {typeof children === 'string' ?
+            <Typography variant="caption" style={[styles.text]}>{children}</Typography>
+            :
+            children}
         </View>
       </View>
     </>

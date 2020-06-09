@@ -4,6 +4,10 @@ export { default as getAuthenticatedUser } from './getAuthenticatedUser';
 
 export const signOut = () => firebase.auth().signOut();
 
+export const getRemoteAuthenticatedUser = () => new Promise(resolve => {
+  resolve(firebase.auth().currentUser);
+});
+
 export const signIn = (params = {}) => new Promise((resolve, reject) => {
   firebase.auth()
     .signInWithEmailAndPassword(params.email, params.password)

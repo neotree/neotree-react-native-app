@@ -3,7 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import getLocalDataActivityInfo from '../_getLocalDataActivityInfo';
 import getRemoteDataActivityInfo from '../_getRemoteDataActivityInfo';
 import { insertScreens, deleteScreens } from '../screens';
-import { insertScripts } from '../scripts';
+import { insertScripts, deleteScripts } from '../scripts';
 
 import getAuthenticatedUser from './_getAuthenticatedUser';
 import { getScripts } from '../../webeditor/scripts';
@@ -89,9 +89,10 @@ export default (data = {}) => new Promise((resolve, reject) => {
               });
             }
             if (eventName === 'delete_scripts') {
-              _deleteLocalScripts = () => deleteScreens({
-                payload: { id: data.event.scripts.map(s => s.id) }
-              });
+              const _scripts = data.event.scripts || [];
+              if (_scripts.length) {
+                _deleteLocalScripts = () => deleteScripts(_scripts.map(s => ({ id: s.id })));
+              }
             }
             if (eventName === 'create_screens') {
               _getScreens = () => getScreens({
@@ -104,9 +105,10 @@ export default (data = {}) => new Promise((resolve, reject) => {
               });
             }
             if (eventName === 'delete_screens') {
-              _deleteLocalScreens = () => deleteScreens({
-                payload: { id: data.event.screens.map(s => s.id) }
-              });
+              const _screens = data.event.screens || [];
+              if (_screens.length) {
+                _deleteLocalScreens = () => deleteScreens(_screens.map(s => ({ id: s.id })));
+              }
             }
           }
 
