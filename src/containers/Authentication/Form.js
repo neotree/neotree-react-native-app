@@ -1,13 +1,14 @@
 import React from 'react';
 import copy from '@/constants/copy/auth';
 import makeStyles from '@/ui/styles/makeStyles';
-import { signIn } from '@/api/auth';
+import { signIn, getRemoteAuthenticatedUser } from '@/api/auth';
 import { View } from 'react-native';
 import Input from '@/ui/Input';
 import Button from '@/ui/Button';
 import Divider from '@/ui/Divider';
 import Typography from '@/ui/Typography';
 import { useOverlayLoaderState } from '@/contexts/app';
+import { useDataContext } from '@/contexts/data';
 import { useAuthenticationContext } from './Context';
 
 const useStyles = makeStyles(theme => ({
@@ -19,12 +20,12 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const Form = () => {
+  const dataContext = useDataContext();
+  const { state: { form, authenticating }, setState, setForm } = useAuthenticationContext();
+
   const emailInputRef = React.useRef(null);
   const passwordInputRef = React.useRef(null);
-
   const [error, setError] = React.useState(null);
-
-  const { state: { form, authenticating }, setState, setForm } = useAuthenticationContext();
 
   const onChange = v => {
     setError(null);
@@ -42,10 +43,18 @@ const Form = () => {
     setError(null);
 
     const done = (e) => {
-      if (e) {
-        setError(e);
-        setState({ authenticating: false });
+      if (!e) {
+        return getRemoteAuthenticatedUser()
+          .then(u => dataContext.sync({ name: 'authenticated_user', user: u }, () => {
+            setState({ authenticating: false });
+          }))
+          .catch(e => {
+            setError(e);
+            setState({ authenticating: false });
+          });
       }
+      setError(e);
+      setState({ authenticating: false });
     };
 
     signIn({ email: form.email, password: form.password })

@@ -9,6 +9,10 @@ export default (theme) => {
       backgroundColor: theme.palette.primary.main,
     },
 
+    text: {
+      color: theme.palette.primary.text,
+    },
+
     content: {
       alignItems: 'center',
       justifyContent: 'center',

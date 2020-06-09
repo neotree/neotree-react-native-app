@@ -22,14 +22,16 @@ export default function Provider(props) {
 
   const { dataStatus, canSync, authenticatedUserInitialised, dataSynced } = state;
 
-  const sync = (event) => {
+  const sync = (event, callback) => {
     if (dataStatus) {
       setState({
         syncingData: true,
-        dataSynced: dataStatus.data_initialised ? dataSynced : false
+        dataSynced: dataStatus.data_initialised
       });
 
       const done = (syncError, syncRslts = {}) => {
+        if (callback) callback(syncError, syncRslts);
+
         setState({
           syncingData: false,
           dataSynced: true,
@@ -79,7 +81,7 @@ export default function Provider(props) {
         sync,
         state,
         setState,
-        isDataReady,
+        dataIsReady: isDataReady(),
       }}
     />
   );
