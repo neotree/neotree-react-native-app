@@ -13,6 +13,20 @@ export default html => `
       #headerSubtitle {
         color: #999;
       }
+      .form-table-wrapper {
+        
+      }
+      .form-table-title {
+        padding: 10px;
+        background: #ccc;
+        color: #000;
+      }
+      .form-table {
+        width: 100%;
+      }
+      .form-table td {
+        width: 50%;
+      }
     </style>
   </header>
   <body>
