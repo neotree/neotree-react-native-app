@@ -4,6 +4,7 @@ import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 import Overlay from '@/ui/Overlay';
+import Debug from '@/components/Debug';
 
 import { View } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
@@ -48,6 +49,8 @@ const NeoTreeApp = () => {
 
         <OverlayLoader display={displayOverlayLoader()} />
       </View>
+
+      <Debug />
     </>
   );
 };
