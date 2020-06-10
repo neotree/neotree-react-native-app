@@ -5,7 +5,6 @@ export default () => new Promise((resolve, reject) => {
     'drop table if exists scripts;',
     'drop table if exists screens;',
     'drop table if exists forms;',
-    'drop table if exists logs',
     'drop table if exists authenticated_user;',
     'drop table if exists data_status;',
   ].map(q => new Promise((resolve, reject) => {
@@ -29,8 +28,8 @@ export default () => new Promise((resolve, reject) => {
       scriptsTable: rslts[0],
       screensTable: rslts[1],
       formsTable: rslts[2],
-      logsTable: rslts[3],
-      deviceRegistrationTable: rslts[3],
+      authenticatedUserTable: rslts[3],
+      dataStatusTable: rslts[3],
     }))
     .catch(reject);
 });
