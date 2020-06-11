@@ -12,6 +12,10 @@ export default () => new Promise((resolve, reject) => {
 
     'select count(id) from authenticated_user',
     'select count(id) from forms',
+
+    'select count(id) from diagnoses',
+    'select createdAt from diagnoses order by createdAt desc limit 1;',
+    'select updatedAt from diagnoses order by updatedAt desc limit 1;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -46,6 +50,11 @@ export default () => new Promise((resolve, reject) => {
         },
         forms: {
           count: rslts[7] ? rslts[7].rows._array[0]['count(id)'] : null,
+        },
+        diagnoses: {
+          count: rslts[8] ? rslts[8].rows._array[0]['count(id)'] : null,
+          lastCreatedDate: rslts[9] && rslts[9].rows._array[0] ? rslts[4].rows._array[0].createdAt : null,
+          lastUpdatedDate: rslts[10] && rslts[10].rows._array[0] ? rslts[5].rows._array[0].updatedAt : null,
         },
       });
     })
