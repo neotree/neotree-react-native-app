@@ -5,7 +5,7 @@ import { View, TouchableOpacity } from 'react-native';
 import Typography from '../Typography';
 import { useRadioGroupContext } from '../RadioGroup/Context';
 
-const useStyles = makeStyles((theme, { checked, color }) => {
+const useStyles = makeStyles((theme, { checked, color, variant }) => {
   color = color || 'primary';
   const size = 25;
   const indicatorSize = 15;
@@ -15,6 +15,11 @@ const useStyles = makeStyles((theme, { checked, color }) => {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: theme.spacing(),
+      ...variant !== 'outlined' ? null : {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: theme.spacing(2),
+      },
     },
     icon: {
       width: size,
@@ -52,12 +57,13 @@ const Radio = props => {
     onChange,
     color,
     name,
+    variant,
     ..._props
   } = props;
 
   const _checked = radioCroupContext ? radioCroupContext.selected === value : checked;
 
-  const styles = useStyles({ checked: _checked, color });
+  const styles = useStyles({ checked: _checked, color, variant });
 
   return (
     <TouchableOpacity
@@ -96,6 +102,7 @@ Radio.propTypes = {
   label: PropTypes.string,
   checked: PropTypes.bool,
   value: PropTypes.string,
+  variant: PropTypes.oneOf(['outlined']),
   color: PropTypes.oneOf(['primary', 'secondary']),
   style: PropTypes.oneOfType([
     PropTypes.array,
