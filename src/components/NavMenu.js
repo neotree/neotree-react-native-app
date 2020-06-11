@@ -17,10 +17,10 @@ const NavMenu = () => {
         icon="md-home"
       />
       <LayoutNavItem
-        active={isLocationActive('/forms')}
-        onPress={() => history.push('/forms')}
-        label="Export"
-        icon="md-cloud-upload"
+        active={isLocationActive('/history')}
+        onPress={() => history.push('/history')}
+        label="History"
+        icon="md-time"
       />
       {/*<LayoutNavItem
         active={isLocationActive('/notifications')}
@@ -35,14 +35,6 @@ const NavMenu = () => {
         label="Profile"
         icon="md-person"
       />
-      {/*process.env.NODE_ENV !== 'development' ? null : (
-        <LayoutNavItem
-          active={isLocationActive('/debug')}
-          onPress={() => history.push('/debug')}
-          label="Debug"
-          icon="md-bug"
-        />
-      )*/}
     </>
   );
 };
