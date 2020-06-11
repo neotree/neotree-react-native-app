@@ -9,7 +9,7 @@ import NetworkStatusBar from '@/components/NetworkStatusBar';
 const Authentication = LazyPage(() => import('@/containers/Authentication'));
 const Home = LazyPage(() => import('@/containers/Home'));
 const Notifications = LazyPage(() => import('@/containers/Notifications'));
-const History = LazyPage(() => import('@/containers/History'));
+const Forms = LazyPage(() => import('@/containers/Forms'));
 const Profile = LazyPage(() => import('@/containers/Profile'));
 const Script = LazyPage(() => import('@/containers/Script'));
 // const Debug = LazyPage(() => import('@/containers/Debug'));
@@ -24,7 +24,7 @@ const Containers = () => {
         <Route exact path="/script/:scriptId" component={Script} />
         <Route exact path="/script/:scriptId/preview-form" component={Script} />
         <Route exact path="/script/:scriptId/screen/:screenId" component={Script} />
-        <Route path="/history" component={History} />
+        <Route path="/forms" component={Forms} />
         <Route render={() => (
           <>
             <LayoutBody>

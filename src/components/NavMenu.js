@@ -17,8 +17,8 @@ const NavMenu = () => {
         icon="md-home"
       />
       <LayoutNavItem
-        active={isLocationActive('/history')}
-        onPress={() => history.push('/history')}
+        active={isLocationActive('/forms')}
+        onPress={() => history.push('/forms')}
         label="History"
         icon="md-time"
       />
