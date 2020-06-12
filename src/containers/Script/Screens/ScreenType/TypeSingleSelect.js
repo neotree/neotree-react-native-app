@@ -27,6 +27,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
             return (
               <React.Fragment key={item.label}>
                 <Radio
+                  variant="outlined"
                   label={item.label}
                   value={item.id}
                 />

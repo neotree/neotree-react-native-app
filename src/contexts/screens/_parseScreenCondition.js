@@ -16,11 +16,13 @@ export default ({ state }) => (_condition, form = state.form) => {
     };
 
     if (value.map) {
-      const chunks = value.map(({ field }) => {
-        return value.reduce((acc, { field, value: v }) => {
-          return replace(acc || '', field.key, v);
-        }, field.condition);
-      })
+      const chunks = value
+        .filter(v => v.field)
+        .map(({ field }) => {
+          return value.reduce((acc, { field, value: v }) => {
+            return replace(acc || '', field.key, v);
+          }, field.condition);
+        })
         .filter(chunk => chunk);
 
       if (chunks.filter(chunk => chunk !== acc).length) {

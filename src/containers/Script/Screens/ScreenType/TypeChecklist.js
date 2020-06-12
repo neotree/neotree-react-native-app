@@ -20,6 +20,7 @@ const Checklist = ({ screen, value, onChange }) => {
             return (
               <React.Fragment key={item.label}>
                 <Checkbox
+                  variant="outlined"
                   label={item.label}
                   value={item.key}
                   checked={entry.value.map(s => s.value).indexOf(item.key) > -1}

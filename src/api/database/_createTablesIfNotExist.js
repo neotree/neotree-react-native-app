@@ -30,6 +30,17 @@ export default () => new Promise((resolve, reject) => {
     'updatedAt datetime'
   ].join(',');
 
+  const diagnosesTableColumns = [
+    'id integer primary key not null',
+    'script_id varchar',
+    'diagnosis_id varchar',
+    'position integer',
+    'type varchar',
+    'data text',
+    'createdAt datetime',
+    'updatedAt datetime'
+  ].join(',');
+
   const formsTableColumns = [
     'id integer primary key not null',
     'script_id varchar',
@@ -50,6 +61,7 @@ export default () => new Promise((resolve, reject) => {
     `create table if not exists data_status (${dataStatusTable});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
+    `create table if not exists diagnoses (${diagnosesTableColumns});`,
     `create table if not exists forms (${formsTableColumns});`,
     `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
@@ -73,8 +85,9 @@ export default () => new Promise((resolve, reject) => {
       dataStatusTable: rslts[0],
       scriptsTable: rslts[1],
       screensTable: rslts[2],
-      formsTable: rslts[3],
-      authenticatedUserTable: rslts[4]
+      diagnosesTable: rslts[3],
+      formsTable: rslts[4],
+      authenticatedUserTable: rslts[5]
     }))
     .catch(reject);
 });
