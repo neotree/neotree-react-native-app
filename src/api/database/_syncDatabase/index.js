@@ -3,11 +3,13 @@ import NetInfo from '@react-native-community/netinfo';
 import getLocalDataActivityInfo from '../_getLocalDataActivityInfo';
 import getRemoteDataActivityInfo from '../_getRemoteDataActivityInfo';
 import { insertScreens, deleteScreens } from '../screens';
+import { insertDiagnoses, deleteDiagnoses } from '../diagnoses';
 import { insertScripts, deleteScripts } from '../scripts';
 
 import getAuthenticatedUser from './_getAuthenticatedUser';
 import { getScripts } from '../../webeditor/scripts';
 import { getScreens } from '../../webeditor/screens';
+import { getDiagnoses } from '../../webeditor/diagnoses';
 import { getDataStatus, updateDataStatus } from '../data_status';
 
 export default (data = {}) => new Promise((resolve, reject) => {
@@ -47,6 +49,8 @@ export default (data = {}) => new Promise((resolve, reject) => {
           let _getScreens = null;
           let _deleteLocalScreens = null;
           let _deleteLocalScripts = null;
+          let _getDiagnoses = null;
+          let _deleteLocalDiagnoses = null;
 
           if (!dataStatus.data_initialised) {
             _getScripts = () => getScripts();
@@ -94,6 +98,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
                 _deleteLocalScripts = () => deleteScripts(_scripts.map(s => ({ id: s.id })));
               }
             }
+
             if (eventName === 'create_screens') {
               _getScreens = () => getScreens({
                 payload: { id: data.event.screens.map(s => s.id) }
@@ -110,6 +115,23 @@ export default (data = {}) => new Promise((resolve, reject) => {
                 _deleteLocalScreens = () => deleteScreens(_screens.map(s => ({ id: s.id })));
               }
             }
+
+            if (eventName === 'create_diagnoses') {
+              _getDiagnoses = () => getDiagnoses({
+                payload: { id: data.event.diagnoses.map(s => s.id) }
+              });
+            }
+            if (eventName === 'update_diagnoses') {
+              _getDiagnoses = () => getDiagnoses({
+                payload: { id: data.event.diagnoses.map(s => s.id) }
+              });
+            }
+            if (eventName === 'delete_diagnoses') {
+              const _diagnoses = data.event.diagnoses || [];
+              if (_diagnoses.length) {
+                _deleteLocalDiagnoses = () => deleteDiagnoses(_diagnoses.map(s => ({ id: s.id })));
+              }
+            }
           }
 
           Promise.all([
@@ -117,25 +139,30 @@ export default (data = {}) => new Promise((resolve, reject) => {
             _getScreens ? _getScreens() : null,
             _deleteLocalScripts ? _deleteLocalScripts() : null,
             _deleteLocalScreens ? _deleteLocalScreens() : null,
+            _getDiagnoses ? _getDiagnoses() : null,
+            _deleteLocalDiagnoses ? _deleteLocalDiagnoses() : null,
           ])
             .catch(done)
-            .then(([scriptsRslts, screensRslts]) => {
+            .then(([scriptsRslts, screensRslts, diagnosesRslts]) => {
               const scripts = scriptsRslts ? scriptsRslts.scripts : [];
               const screens = screensRslts ? screensRslts.screens : [];
+              const diagnoses = diagnosesRslts ? diagnosesRslts.diagnoses : [];
               // insert data into the local database
 
               Promise.all([
                 dataStatus.data_initialised ? null : updateDataStatus({ data_initialised: true }),
                 insertScripts(scripts),
                 insertScreens(screens),
+                insertDiagnoses(diagnoses)
               ])
                 .catch(done)
                 .then((rslts) => {
-                  const [, insertScriptsRslts, insertScreensRslts] = rslts;
+                  const [, insertScriptsRslts, insertScreensRslts, insertDiagnosesRslts] = rslts;
                   done(null, {
                     authenticatedUser,
                     insertScriptsRslts,
                     insertScreensRslts,
+                    insertDiagnosesRslts,
                     dataStatus: { ...dataStatus, data_initialised: true },
                   });
                 });

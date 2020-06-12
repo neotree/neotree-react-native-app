@@ -5,7 +5,7 @@ import { View, TouchableOpacity } from 'react-native';
 import Typography from '../Typography';
 import Icon from '../Icon';
 
-const useStyles = makeStyles((theme, { checked, color }) => {
+const useStyles = makeStyles((theme, { checked, color, variant }) => {
   color = color || 'primary';
   const size = 25;
 
@@ -13,7 +13,12 @@ const useStyles = makeStyles((theme, { checked, color }) => {
     root: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: theme.spacing(),
+      marginVertical: theme.spacing(),
+      ...variant !== 'outlined' ? null : {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: theme.spacing(2),
+      },
     },
     iconBox: {
       width: size,
@@ -44,9 +49,10 @@ const Checkbox = ({
   onChange,
   color,
   name,
+  variant,
   ..._props
 }) => {
-  const styles = useStyles({ checked, color });
+  const styles = useStyles({ checked, color, variant });
 
   return (
     <TouchableOpacity
@@ -85,6 +91,7 @@ Checkbox.propTypes = {
   label: PropTypes.string,
   checked: PropTypes.bool,
   value: PropTypes.string,
+  variant: PropTypes.oneOf(['outlined']),
   color: PropTypes.oneOf(['primary', 'secondary']),
   style: PropTypes.oneOfType([
     PropTypes.array,

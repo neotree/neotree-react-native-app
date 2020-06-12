@@ -20,6 +20,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
             return (
               <React.Fragment key={item.label}>
                 <Checkbox
+                  variant="outlined"
                   label={item.label}
                   value={item.id}
                   checked={entry.value.map(s => s.value).indexOf(item.id) > -1}
