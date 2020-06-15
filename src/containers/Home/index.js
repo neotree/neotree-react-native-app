@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { provideHomeContext } from '@/contexts/home';
 import { useHistory } from 'react-router-native';
-import { Content, Header, Left, Body, Button, Icon, Title, Drawer } from 'native-base';
+import { Header, Left, Body, Button, Icon, Title, Drawer } from 'native-base';
 import Sidebar from './Sidebar';
 import Scripts from '../Scripts';
 
@@ -23,7 +23,7 @@ const Home = () => {
         // onClose={() => drawerRef.current._root.close()}
         content={<Sidebar />}
       >
-        <View style={{ flex: 1, }}>
+        <View style={{ flex: 1, backgroundColor: '#f6f7f9', }}>
           <Header>
             <Left>
               <Button
