@@ -5,7 +5,7 @@ import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 import Overlay from '@/ui/Overlay';
 // import Debug from '@/components/Debug';
-
+import { Container } from 'native-base';
 import { View } from 'react-native';
 import { LayoutContainer } from '@/components/Layout';
 import LazyPage from '@/components/LazyPage';
@@ -42,15 +42,17 @@ const NeoTreeApp = () => {
 
   return (
     <>
-      <View style={{ flex: 1 }}>
-        <LayoutContainer>
-          <Containers />
-        </LayoutContainer>
+      <Container>
+        <View style={{ flex: 1 }}>
+          <LayoutContainer>
+            <Containers />
+          </LayoutContainer>
 
-        <OverlayLoader display={displayOverlayLoader()} />
-      </View>
+          <OverlayLoader display={displayOverlayLoader()} />
+        </View>
 
-      {/*<Debug />*/}
+        {/*<Debug />*/}
+      </Container>
     </>
   );
 };
