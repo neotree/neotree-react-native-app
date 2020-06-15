@@ -15,7 +15,7 @@ const ListItem = ({ item }) => {
           <Card>
             <CardItem>
               <Body>
-                <Text>{data.title}</Text>
+                <Text style={{ fontWeight: 'bold' }}>{data.title}</Text>
                 <Text style={{ color: '#999', marginTop: 8 }}>{data.description}</Text>
               </Body>
             </CardItem>
