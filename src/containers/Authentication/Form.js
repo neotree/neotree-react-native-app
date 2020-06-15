@@ -3,12 +3,10 @@ import copy from '@/constants/copy/auth';
 import makeStyles from '@/ui/styles/makeStyles';
 import { signIn, getRemoteAuthenticatedUser } from '@/api/auth';
 import { View } from 'react-native';
-import Input from '@/ui/Input';
-import Button from '@/ui/Button';
-import Divider from '@/ui/Divider';
-import Typography from '@/ui/Typography';
+import Divider from '@/components/Divider';
 import { useOverlayLoaderState } from '@/contexts/app';
 import { useDataContext } from '@/contexts/data';
+import { Label, Form, Item, Input, Button, Text } from 'native-base';
 import { useAuthenticationContext } from './Context';
 
 const useStyles = makeStyles(theme => ({
@@ -19,7 +17,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const Form = () => {
+const AuthForm = () => {
   const dataContext = useDataContext();
   const { state: { form, authenticating }, setState, setForm } = useAuthenticationContext();
 
@@ -65,69 +63,64 @@ const Form = () => {
   return (
     <>
       <View style={[styles.root]}>
-        <Input
-          ref={emailInputRef}
-          fullWidth
-          size="xl"
-          color="secondary"
-          autoCapitalize="none"
-          autoCompleteType="email"
-          keyboardType="email-address"
-          textContentType="username"
-          placeholder={copy.EMAIL_INPUT_TEXT}
-          returnKeyType="next"
-          onSubmitEditing={() => passwordInputRef.current.focus()}
-          blurOnSubmit={false}
-          value={form.email}
-          onChangeText={v => onChange({ email: v })}
-        />
+        <Form>
+          <Item floatingLabel>
+            <Label>{copy.EMAIL_INPUT_TEXT}</Label>
+            <Input
+              ref={emailInputRef}
+              autoCapitalize="none"
+              autoCompleteType="email"
+              keyboardType="email-address"
+              textContentType="username"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordInputRef.current.focus()}
+              blurOnSubmit={false}
+              value={form.email}
+              onChangeText={v => onChange({ email: v })}
+            />
+          </Item>
 
-        <Divider border={false} />
+          <Item floatingLabel last>
+            <Label>{copy.PASSWORD_INPUT_TEXT}</Label>
+            <Input
+              ref={passwordInputRef}
+              autoCapitalize="none"
+              secureTextEntry
+              autoCompleteType="password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={authenticate}
+              value={form.password}
+              onChangeText={v => onChange({ password: v })}
+            />
+          </Item>
 
-        <Input
-          ref={passwordInputRef}
-          fullWidth
-          size="xl"
-          color="secondary"
-          autoCapitalize="none"
-          secureTextEntry
-          autoCompleteType="password"
-          textContentType="password"
-          placeholder={copy.PASSWORD_INPUT_TEXT}
-          returnKeyType="go"
-          onSubmitEditing={authenticate}
-          value={form.password}
-          onChangeText={v => onChange({ password: v })}
-        />
+          <Divider border={false} />
 
-        <Divider border={false} />
+          {!error ? null : (
+            <>
+              <Text
+                error
+                style={{ textAlign: 'center', color: '#b20008' }}
+              >
+                {error.message || error.msg || JSON.stringify(error)}
+              </Text>
 
-        {!error ? null : (
-          <>
-            <Typography
-              variant="caption"
-              color="error"
-              style={{ textAlign: 'center' }}
-            >
-              {error.message || error.msg || JSON.stringify(error)}
-            </Typography>
+              <Divider border={false} />
+            </>
+          )}
 
-            <Divider border={false} />
-          </>
-        )}
-
-        <Button
-          size="xl"
-          color="secondary"
-          variant="contained"
-          disabled={authenticating}
-          onPress={authenticate}
-        >
-          {copy.SIGN_IN_BUTTON_TEXT}
-        </Button>
+          <Button
+            block
+            disabled={authenticating}
+            onPress={authenticate}
+          >
+            <Text>{copy.SIGN_IN_BUTTON_TEXT}</Text>
+          </Button>
+        </Form>
       </View>
     </>
   );
 };
 
-export default Form;
+export default AuthForm;
