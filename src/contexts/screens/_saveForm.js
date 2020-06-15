@@ -1,4 +1,4 @@
-import { saveForm } from '@/api/forms';
+import { saveSession } from '@/api/sessions';
 
 export default ({
   setState,
@@ -16,7 +16,7 @@ export default ({
       if (payload.completed) router.history.push(`/script/${script.id}/preview-form`);
     };
 
-    saveForm({
+    saveSession({
       ...payload,
       data: {
         started_at: start_time,

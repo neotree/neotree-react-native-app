@@ -1,6 +1,6 @@
 import React from 'react';
-import Preview from '@/containers/Forms/PreviewForm';
-import PrintForm from '@/containers/Forms/PrintForm';
+import PreviewSessionForm from '@/containers/Sessions/PreviewSessionForm';
+import PrintSessionForm from '@/containers/Sessions/PrintSessionForm';
 import { useScreensContext } from '@/contexts/screens';
 import { LayoutCard } from '@/components/Layout';
 import PageTitle from '@/components/PageTitle';
@@ -17,9 +17,9 @@ const PreviewForm = () => {
   return (
     <>
       <PageTitle title="Summary" onBackPress={() => history.push('/')}>
-        <PrintForm form={form} />
+        <PrintSessionForm form={form} />
       </PageTitle>
-      <Preview
+      <PreviewSessionForm
         form={form}
         Wrapper={LayoutCard}
       />

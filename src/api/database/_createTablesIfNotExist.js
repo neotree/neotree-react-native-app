@@ -41,7 +41,7 @@ export default () => new Promise((resolve, reject) => {
     'updatedAt datetime'
   ].join(',');
 
-  const formsTableColumns = [
+  const sessionsTableColumns = [
     'id integer primary key not null',
     'script_id varchar',
     'data text',
@@ -62,7 +62,7 @@ export default () => new Promise((resolve, reject) => {
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
     `create table if not exists diagnoses (${diagnosesTableColumns});`,
-    `create table if not exists forms (${formsTableColumns});`,
+    `create table if not exists sessions (${sessionsTableColumns});`,
     `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
@@ -86,7 +86,7 @@ export default () => new Promise((resolve, reject) => {
       scriptsTable: rslts[1],
       screensTable: rslts[2],
       diagnosesTable: rslts[3],
-      formsTable: rslts[4],
+      sessionsTable: rslts[4],
       authenticatedUserTable: rslts[5]
     }))
     .catch(reject);

@@ -4,7 +4,7 @@ export default () => new Promise((resolve, reject) => {
   const querys = [
     'drop table if exists scripts;',
     'drop table if exists screens;',
-    'drop table if exists forms;',
+    'drop table if exists sessions;',
     'drop table if exists authenticated_user;',
     'drop table if exists data_status;',
     'drop table if exists diagnoses;',
@@ -28,7 +28,7 @@ export default () => new Promise((resolve, reject) => {
     .then(rslts => resolve({
       scriptsTable: rslts[0],
       screensTable: rslts[1],
-      formsTable: rslts[2],
+      sessionsTable: rslts[2],
       authenticatedUserTable: rslts[3],
       dataStatusTable: rslts[3],
       diagnosesTable: rslts[3],

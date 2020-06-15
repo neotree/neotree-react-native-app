@@ -11,7 +11,7 @@ export default () => new Promise((resolve, reject) => {
     'select updatedAt from screens order by updatedAt desc limit 1;',
 
     'select count(id) from authenticated_user',
-    'select count(id) from forms',
+    'select count(id) from sessions',
 
     'select count(id) from diagnoses',
     'select createdAt from diagnoses order by createdAt desc limit 1;',
@@ -48,7 +48,7 @@ export default () => new Promise((resolve, reject) => {
         authenticated_user: {
           count: rslts[6] ? rslts[6].rows._array[0]['count(id)'] : null,
         },
-        forms: {
+        sessions: {
           count: rslts[7] ? rslts[7].rows._array[0]['count(id)'] : null,
         },
         diagnoses: {
