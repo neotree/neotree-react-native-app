@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Input from '@/ui/Input';
-import Divider from '@/ui/Divider';
-import Typography from '@/ui/Typography';
+import { Input, Form, Item, Text } from 'native-base';
 
 const NumberField = ({
   field,
@@ -14,35 +12,36 @@ const NumberField = ({
 
   return (
     <>
-      <Input
-        editable={conditionMet}
-        value={value || ''}
-        defaultValue={value || ''}
-        onChange={e => {
-          const value = e.nativeEvent.text;
-          let err = null;
-          if (value) {
-            const v = Number(value);
-            if (field.maxValue && (v > field.maxValue)) err = `Max value ${field.maxValue}`;
-            if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
-          }
-          setError(err);
-          onChange(value, err);
-        }}
-        // placeholder={field.label}
-        label={`${field.label}${field.optional ? '' : ' *'}`}
-        keyboardType="numeric"
-      />
+      <Form>
+        <Text style={error ? { color: '#b20008' } : {}}>{field.label}</Text>
+        <Item regular error={error ? true : false}>
+          <Input
+            editable={conditionMet}
+            value={value || ''}
+            defaultValue={value || ''}
+            onChange={e => {
+              const value = e.nativeEvent.text;
+              let err = null;
+              if (value) {
+                const v = Number(value);
+                if (field.maxValue && (v > field.maxValue)) err = `Max value ${field.maxValue}`;
+                if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
+              }
+              setError(err);
+              onChange(value, err);
+            }}
+            // placeholder={field.label}
+            label={`${field.label}${field.optional ? '' : ' *'}`}
+            keyboardType="numeric"
+          />
+        </Item>
+      </Form>
 
       {!error ? null : (
         <>
-          <Divider border={false} />
-          <Typography
-            variant="caption"
-            color="error"
-          >
+          <Text style={{ color: '#b20008' }}>
             {error}
-          </Typography>
+          </Text>
         </>
       )}
     </>

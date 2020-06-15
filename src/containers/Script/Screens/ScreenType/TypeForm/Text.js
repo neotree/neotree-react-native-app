@@ -1,30 +1,45 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Input from '@/ui/Input';
+import { Input, Form, Item, Text } from 'native-base';
 
-const Text = ({ field, onChange, value, conditionMet, }) => {
+const FieldText = ({ field, onChange, value, conditionMet, }) => {
+  const [error] = React.useState(null);
+
   return (
     <>
-      <Input
-        editable={conditionMet}
-        value={value || ''}
-        defaultValue={value || ''}
-        onChange={e => {
-          const value = e.nativeEvent.text;
-          onChange(value);
-        }}
-        // placeholder={field.label}
-        label={`${field.label}${field.optional ? '' : ' *'}`}
-      />
+      <Form>
+        <Text style={error ? { color: '#b20008' } : {}}>{field.label}</Text>
+        <Item regular error={error ? true : false}>
+          <Input
+            editable={conditionMet}
+            value={value || ''}
+            defaultValue={value || ''}
+            onChange={e => {
+              const value = e.nativeEvent.text;
+              onChange(value);
+            }}
+            // placeholder={field.label}
+            label={`${field.label}${field.optional ? '' : ' *'}`}
+          />
+        </Item>
+      </Form>
+
+      {!error ? null : (
+        <>
+          <Text style={{ color: '#b20008' }}>
+            {error}
+          </Text>
+        </>
+      )}
     </>
   );
 };
 
-Text.propTypes = {
+FieldText.propTypes = {
   field: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.any,
   conditionMet: PropTypes.bool,
 };
 
-export default Text;
+export default FieldText;
