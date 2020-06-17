@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { LayoutScrollableContent } from '@/components/Layout';
+import { ScrollView } from 'react-native';
 import { fieldsTypes } from '@/constants/screen';
 import moment from 'moment';
 import Entry from './Entry';
@@ -8,7 +8,7 @@ import Entry from './Entry';
 const PreviewSessionForm = ({ form, scrollable, Wrapper }) => {
   scrollable = scrollable !== false;
   Wrapper = Wrapper || React.Fragment;
-  const RootComponent = scrollable ? LayoutScrollableContent : React.Fragment;
+  const RootComponent = scrollable ? ScrollView : React.Fragment;
 
   return (
     <>

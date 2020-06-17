@@ -1,7 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import LazyPage from '@/components/LazyPage';
-import NavMenu from '@/components/NavMenu';
 import { Switch, Route } from "react-router-native";
 import NetworkStatusBar from '@/components/NetworkStatusBar';
 
@@ -28,7 +26,5 @@ const Containers = () => {
     </>
   );
 };
-
-Containers.propTypes = {};
 
 export default Containers;
