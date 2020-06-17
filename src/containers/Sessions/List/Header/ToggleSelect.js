@@ -1,17 +1,18 @@
 import React from 'react';
-import IconButton from '@/ui/IconButton';
 import { useSessionsContext } from '@/contexts/sessions';
+import { Button, Icon } from 'native-base';
 
 const ToggleSelect = () => {
   const { setState, state: { canSelectItems } } = useSessionsContext();
 
   return (
     <>
-      <IconButton
-        color="primary"
+      <Button
+        transparent
         onPress={() => setState({ canSelectItems: !canSelectItems })}
-        icon="md-checkbox"
-      />
+      >
+        <Icon name="checkbox" />
+      </Button>
     </>
   );
 };

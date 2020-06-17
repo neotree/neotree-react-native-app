@@ -1,15 +1,9 @@
 import React from 'react';
-import Divider from '@/ui/Divider';
 import { useSessionsContext } from '@/contexts/sessions';
 import { View, FlatList } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
-import PageTitle from '@/components/PageTitle';
-import Checkbox from '@/ui/Checkbox';
-import { LayoutCard } from '@/components/Layout';
 import ListItem from './ListItem';
-import ExportLink from './ExportLink';
-import DeleteBtn from './DeleteBtn';
-import ToggleSelect from './ToggleSelect';
+import Header from './Header';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -34,32 +28,7 @@ const List = () => {
 
   return (
     <>
-      <PageTitle title="Session history">
-        <ExportLink />
-        <ToggleSelect />
-      </PageTitle>
-
-      <Divider border={false} />
-
-      {canSelectItems && (
-        <>
-          <LayoutCard>
-            <View style={[styles.selectAll]}>
-              <View>
-                <Checkbox
-                  value=""
-                  label="Select"
-                  checked={selectedItems.length === sessions.length}
-                  onChange={() => selectItems(selectedItems.length ? selectedItems : sessions.map(item => item.id))}
-                />
-              </View>
-
-              <DeleteBtn style={[styles.selectAllItem]} />
-            </View>
-          </LayoutCard>
-          <Divider border={false} />
-        </>
-      )}
+      <Header />
 
       <View style={[styles.root]}>
         <FlatList

@@ -2,11 +2,10 @@ import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
 import { View } from 'react-native';
 import makeStyles from '@/ui/styles/makeStyles';
-import { LayoutCard } from '@/components/Layout';
+import { Content } from 'native-base';
 import { useParams } from 'react-router-native';
-import PageTitle from '@/components/PageTitle';
 import PreviewSessionForm from '../PreviewSessionForm';
-import PrintSessionForm from '../PrintSessionForm';
+import Header from './Header';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -14,23 +13,23 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+const Wrapper = props => <Content {...props} padder />;
+
 const SingleView = () => {
   const styles = useStyles();
 
   const { sessionId } = useParams();
 
-  const { state: { data } } = useSessionsContext();
+  const { state: { sessions } } = useSessionsContext();
 
-  const session = data.filter(f => f.id.toString() === sessionId)
-    .map(f => f.data.session)[0];
+  const form = sessions.filter(f => f.id.toString() === sessionId)
+    .map(f => f.data.form)[0];
 
   return (
     <>
-      <PageTitle title="Session details">
-        <PrintSessionForm form={session.form} />
-      </PageTitle>
+      <Header form={form} />
       <View style={[styles.root]}>
-        <PreviewSessionForm Wrapper={LayoutCard} form={session.form} />
+        <PreviewSessionForm Wrapper={Wrapper} form={form} />
       </View>
     </>
   );

@@ -1,17 +1,18 @@
 import React from 'react';
-import IconButton from '@/ui/IconButton';
 import { useHistory } from 'react-router-native';
+import { Button, Icon } from 'native-base';
 
 const ExportLink = () => {
   const history = useHistory();
 
   return (
     <>
-      <IconButton
-        color="primary"
+      <Button
+        transparent
         onPress={() => history.push('/sessions/export')}
-        icon="md-save"
-      />
+      >
+        <Icon name="save" />
+      </Button>
     </>
   );
 };

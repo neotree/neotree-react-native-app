@@ -1,21 +1,24 @@
 import React from 'react';
-import IconButton from '@/ui/IconButton';
 import { useSessionsContext } from '@/contexts/sessions';
 import { useOverlayLoaderState } from '@/contexts/app';
+import { Button, Icon } from 'native-base';
 
 const DeleteBtn = () => {
   const { state: { selectedItems, deletingSessions }, deleteSessions } = useSessionsContext();
 
   useOverlayLoaderState('delete_sessions', deletingSessions);
 
+  const disabled = selectedItems.length === 0;
+
   return (
     <>
-      <IconButton
-        disabled={selectedItems.length === 0}
-        color="error"
+      <Button
+        transparent
+        disabled={disabled}
         onPress={() => deleteSessions()}
-        icon="md-trash"
-      />
+      >
+        <Icon name="trash" style={[disabled ? null : { color: '#b20008' }]} />
+      </Button>
     </>
   );
 };

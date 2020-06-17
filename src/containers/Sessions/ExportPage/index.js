@@ -1,64 +1,47 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
-import { LayoutCard } from '@/components/Layout';
-import PageTitle from '@/components/PageTitle';
-import Radio from '@/ui/Radio';
-import RadioGroup from '@/ui/RadioGroup';
-import Divider from '@/ui/Divider';
-import Button from '@/ui/Button';
-import { View } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
-
-const useStyles = makeStyles(theme => ({
-  session: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: theme.spacing(),
-  },
-}));
+import { ListItem, Text, Right, Left, Radio, Content, Button } from 'native-base';
+import Header from './Header';
 
 const ExportPage = () => {
   const [format, setFormat] = React.useState('excel');
 
-  const styles = useStyles();
+  const opts = [
+    { label: 'Excel Spreadsheet', value: 'excel' },
+    { label: 'JSON', value: 'json' },
+    { label: 'JSONAPI', value: 'jsonapi' },
+  ];
 
   return (
     <>
-      <PageTitle title="Export" />
+      <Header />
 
-      <Divider border={false} spacing={2} />
-
-      <LayoutCard>
-        <View style={[styles.session]}>
-          <RadioGroup
-            name="format"
-            value={format}
-            onChange={e => setFormat(e.value)}
+      <Content padder>
+        {opts.map(opt => (
+          <ListItem
+            key={opt.value}
+            selected={format === opt.value}
+            onPress={() => setFormat(opt.value)}
           >
-            <Radio
-              value="excel"
-              label="Excel Spreadsheet"
-            />
-            <Radio
-              value="json"
-              label="JSON"
-            />
-            <Radio
-              value="jsonapi"
-              label="JSONAPI"
-            />
-          </RadioGroup>
-        </View>
-
-        <Divider border={false} spacing={2} />
+            <Left>
+              <Text>{opt.label}</Text>
+            </Left>
+            <Right>
+              <Radio
+                selected={format === opt.value}
+                onPress={() => setFormat(opt.value)}
+              />
+            </Right>
+          </ListItem>
+        ))}
 
         <Button
-          variant="outlined"
-          color="secondary"
+          block
+          disabled={!format}
         >
-          Export
+          <Text>Export</Text>
         </Button>
-      </LayoutCard>
+      </Content>
     </>
   );
 };

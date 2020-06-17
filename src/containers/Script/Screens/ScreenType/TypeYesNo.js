@@ -1,10 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-// import Radio from '@/ui/Radio';
-// import Divider from '@/ui/Divider';
-// import RadioGroup from '@/ui/RadioGroup';
-// import Typography from '@/ui/Typography';
 import { ListItem, Text, Right, Left, Radio } from 'native-base';
 
 const YesNo = ({ screen, onChange, value }) => {

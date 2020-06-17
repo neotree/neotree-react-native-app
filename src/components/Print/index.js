@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import * as ExpoPrint from 'expo-print';
-import IconButton from '@/ui/IconButton';
+import { Button, Icon } from 'native-base';
 
 const Print = ({ options }) => {
   const [, setPrinting] = React.useState(false);
@@ -19,11 +19,10 @@ const Print = ({ options }) => {
 
   return (
     <>
-      <IconButton
-        color="primary"
+      <Button
+        transparent
         onPress={() => print()}
-        icon="md-print"
-      />
+      ><Icon name="print" /></Button>
     </>
   );
 };
