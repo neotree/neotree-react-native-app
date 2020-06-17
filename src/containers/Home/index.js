@@ -25,7 +25,7 @@ const Home = () => {
       >
         <View style={{ flex: 1, backgroundColor: '#f6f7f9', }}>
           <Header>
-            <Left>
+            <Left style={{ maxWidth: 50 }}>
               <Button
                 transparent
                 onPress={() => drawerRef.current._root.open()}

@@ -21,7 +21,7 @@ export default ({
       data: {
         started_at: start_time,
         completed_at: payload.completed ? new Date() : null,
-        canceled_at: payload.completed ? null : new Date(),
+        canceled_at: payload.canceled ? null : new Date(),
         script,
         form
       },

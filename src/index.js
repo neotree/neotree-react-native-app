@@ -5,7 +5,7 @@ import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 import Overlay from '@/ui/Overlay';
 // import Debug from '@/components/Debug';
-import { Container, StyleProvider } from 'native-base';
+import { Container, StyleProvider, Root } from 'native-base';
 import getTheme from '@/native-base-theme/components';
 import material from '@/native-base-theme/variables/material';
 import { View } from 'react-native';
@@ -44,19 +44,21 @@ const NeoTreeApp = () => {
 
   return (
     <>
-      <StyleProvider style={getTheme(material)}>
-        <Container>
-          <View style={{ flex: 1 }}>
-            <LayoutContainer>
-              <Containers />
-            </LayoutContainer>
+      <Root>
+        <StyleProvider style={getTheme(material)}>
+          <Container>
+            <View style={{ flex: 1 }}>
+              <LayoutContainer>
+                <Containers />
+              </LayoutContainer>
 
-            <OverlayLoader display={displayOverlayLoader()} />
-          </View>
+              <OverlayLoader display={displayOverlayLoader()} />
+            </View>
 
-          {/*<Debug />*/}
-        </Container>
-      </StyleProvider>
+            {/*<Debug />*/}
+          </Container>
+        </StyleProvider>
+      </Root>
     </>
   );
 };

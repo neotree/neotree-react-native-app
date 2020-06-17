@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import Radio from '@/ui/Radio';
-import RadioGroup from '@/ui/RadioGroup';
+import { ListItem, Text, Right, Left, Radio } from 'native-base';
 
 const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
@@ -16,25 +15,23 @@ const SingleSelect = ({ screen, value, onChange }) => {
   return (
     <>
       <View>
-        <RadioGroup
-          value={entry.value}
-          onChange={e => setEntry({
-            value: e.value,
-            item: (metadata.items || []).filter(item => item.id === e.value)[0]
-          })}
-        >
-          {(metadata.items || []).map((item) => {
-            return (
-              <React.Fragment key={item.label}>
-                <Radio
-                  variant="outlined"
-                  label={item.label}
-                  value={item.id}
-                />
-              </React.Fragment>
-            );
-          })}
-        </RadioGroup>
+        {(metadata.items || []).map(item => (
+          <ListItem
+            key={item.id}
+            selected={entry.value === item.id}
+            onPress={() => setEntry({ value: item.id, item })}
+          >
+            <Left>
+              <Text>{item.label}</Text>
+            </Left>
+            <Right>
+              <Radio
+                selected={entry.value === item.id}
+                onPress={() => setEntry({ value: item.id })}
+              />
+            </Right>
+          </ListItem>
+        ))}
       </View>
     </>
   );
