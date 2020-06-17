@@ -55,7 +55,7 @@ const Screens = () => {
       >
         <Divider border={false} spacing={2} />
 
-        <Typography variant="h3">{activeScreen.data.title} - {activeScreen.type}</Typography>
+        <Typography variant="h3">{activeScreen.data.title}</Typography>
 
         <Divider border={false} spacing={2} />
 
