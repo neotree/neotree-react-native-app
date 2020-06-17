@@ -1,27 +1,20 @@
 import React from 'react';
 import PreviewSessionForm from '@/containers/Sessions/PreviewSessionForm';
-import PrintSessionForm from '@/containers/Sessions/PrintSessionForm';
 import { useScreensContext } from '@/contexts/screens';
-import { LayoutCard } from '@/components/Layout';
-import PageTitle from '@/components/PageTitle';
-import { useHistory } from 'react-router-native';
-import useBackButton from '@/utils/useBackButton';
+import { Content } from 'native-base';
+import Header from './Header';
+
+const Wrapper = props => <Content {...props} padder />;
 
 const PreviewForm = () => {
-  const history = useHistory();
-
   const { state: { form } } = useScreensContext();
-
-  useBackButton(() => history.push('/'));
 
   return (
     <>
-      <PageTitle title="Summary" onBackPress={() => history.push('/')}>
-        <PrintSessionForm form={form} />
-      </PageTitle>
+      <Header form={form} />
       <PreviewSessionForm
         form={form}
-        Wrapper={LayoutCard}
+        Wrapper={Wrapper}
       />
     </>
   );

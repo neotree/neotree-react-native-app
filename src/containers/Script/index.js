@@ -1,11 +1,11 @@
 import React from 'react';
-import Typography from '@/ui/Typography';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext } from '@/contexts/screens';
-import ActivityIndicator from '@/ui/ActivityIndicator';
+import { Spinner, Text } from 'native-base';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { Switch, Route } from 'react-router-native';
+import { View } from 'react-native';
 
 import Screens from './Screens';
 import PreviewForm from './PreviewForm';
@@ -21,7 +21,11 @@ const Script = () => {
   } = useScriptContext();
 
   if (!scriptInitialised || loadingScript) {
-    return <ActivityIndicator size="large" />;
+    return (
+      <View style={{ alignItems: 'center', justifyContent: 'center', margin: 100 }}>
+        <Spinner color="blue" />
+      </View>
+    );
   }
 
   if (!script) {
@@ -29,9 +33,9 @@ const Script = () => {
       <PageRefresher
         onRefresh={() => initialisePage({ force: true })}
       >
-        <Typography color="textSecondary">
+        <Text style={{ color: '#999' }}>
           {scriptPageCopy.LOAD_SCRIPT_FAILURE_MESSAGE}
-        </Typography>
+        </Text>
       </PageRefresher>
     );
   }

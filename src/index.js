@@ -3,13 +3,12 @@ import { provideDataContext } from '@/contexts/data';
 import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
-import Overlay from '@/ui/Overlay';
+import Overlay from '@/components/Overlay';
 // import Debug from '@/components/Debug';
 import { Container, StyleProvider, Root } from 'native-base';
 import getTheme from '@/native-base-theme/components';
 import material from '@/native-base-theme/variables/material';
 import { View } from 'react-native';
-import { LayoutContainer } from '@/components/Layout';
 import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
 import OverlayLoader from '@/components/OverlayLoader';
@@ -48,10 +47,7 @@ const NeoTreeApp = () => {
         <StyleProvider style={getTheme(material)}>
           <Container>
             <View style={{ flex: 1 }}>
-              <LayoutContainer>
-                <Containers />
-              </LayoutContainer>
-
+              <Containers />
               <OverlayLoader display={displayOverlayLoader()} />
             </View>
 

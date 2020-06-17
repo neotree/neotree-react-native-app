@@ -1,6 +1,5 @@
 import React from 'react';
 import copy from '@/constants/copy/auth';
-import makeStyles from '@/ui/styles/makeStyles';
 import { signIn, getRemoteAuthenticatedUser } from '@/api/auth';
 import { View } from 'react-native';
 import Divider from '@/components/Divider';
@@ -8,14 +7,6 @@ import { useOverlayLoaderState } from '@/contexts/app';
 import { useDataContext } from '@/contexts/data';
 import { Label, Form, Item, Input, Button, Text } from 'native-base';
 import { useAuthenticationContext } from './Context';
-
-const useStyles = makeStyles(theme => ({
-  root: {
-    width: '100%',
-    maxWidth: 500,
-    padding: theme.spacing(2)
-  }
-}));
 
 const AuthForm = () => {
   const dataContext = useDataContext();
@@ -29,8 +20,6 @@ const AuthForm = () => {
     setError(null);
     setForm(v);
   };
-
-  const styles = useStyles();
 
   useOverlayLoaderState('authenticate', authenticating);
 
@@ -62,7 +51,15 @@ const AuthForm = () => {
 
   return (
     <>
-      <View style={[styles.root]}>
+      <View
+        style={[
+          {
+            width: '100%',
+            maxWidth: 500,
+            padding: 20
+          }
+        ]}
+      >
         <Form>
           <Item floatingLabel>
             <Label>{copy.EMAIL_INPUT_TEXT}</Label>

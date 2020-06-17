@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from 'react-native';
-import Typography from '@/ui/Typography';
 import { provideSessionsContext } from '@/contexts/sessions';
 import { Switch, Route } from 'react-router-native';
 import LazyPage from '@/components/LazyPage';

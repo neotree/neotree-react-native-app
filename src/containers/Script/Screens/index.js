@@ -3,9 +3,8 @@ import { useScreensContext } from '@/contexts/screens';
 import Divider from '@/components/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import ActivityIndicator from '@/ui/ActivityIndicator';
 import { View, ScrollView } from 'react-native';
-import { Content, Text } from 'native-base';
+import { Content, Text, Spinner } from 'native-base';
 import ScreenType from './ScreenType';
 
 const Screens = () => {
@@ -21,7 +20,7 @@ const Screens = () => {
   }, [activeScreen]);
 
   if (loadingScreens || !(screensInitialised && activeScreenInitialised)) {
-    return <ActivityIndicator size="large" />;
+    return <Spinner color="blue" />;
   }
 
   if (!activeScreen) {

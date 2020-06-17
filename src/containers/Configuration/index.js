@@ -1,12 +1,10 @@
 import React from 'react';
-import PageTitle from '@/components/PageTitle';
+import Header from './Header';
 
 const Configuration = () => {
   return (
     <>
-      <PageTitle
-        title="Configuration"
-      />
+      <Header />
     </>
   );
 };

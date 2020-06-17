@@ -1,18 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Typography from '@/ui/Typography';
-import Divider from '@/ui/Divider';
+import Divider from '@/components/Divider';
+import { Text } from 'native-base';
 
 const Entry = ({ label, values }) => { // eslint-disable-line
   return (
     <>
-      <Typography>{label}</Typography>
+      <Text>{label}</Text>
       {values.map(v => {
         return (
-          <Typography
+          <Text
             key={v.key}
-            variant="textSecondary"
-          >{v.text}</Typography>
+            style={{ color: '#999' }}
+          >{v.text}</Text>
         );
       })}
       <Divider spacing={2} />

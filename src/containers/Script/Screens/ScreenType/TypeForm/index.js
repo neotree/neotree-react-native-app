@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import Divider from '@/ui/Divider';
+import Divider from '@/components/Divider';
 import { fieldsTypes } from '@/constants/screen';
 
 import Number from './Number';
