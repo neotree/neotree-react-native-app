@@ -26,7 +26,7 @@ const HeaderComponent = () => {
         </Left>
 
         <Body>
-          <Title>Configuaration</Title>
+          <Title>Configuration</Title>
         </Body>
       </Header>
     </>
