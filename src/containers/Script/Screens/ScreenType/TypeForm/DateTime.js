@@ -36,7 +36,7 @@ const DateTime = ({ field, onChange, value, conditionMet, }) => {
         <Text
           {...conditionMet ? null : { style: { color: '#ccc' } }}
         >
-          {field.label}{field.label}{field.optional ? '' : ' *'}
+          {field.label}{field.optional ? '' : ' *'}
         </Text>
       )}
 
