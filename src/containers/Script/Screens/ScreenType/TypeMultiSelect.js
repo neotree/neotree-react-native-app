@@ -53,6 +53,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
                   <CheckBox
                     checked={checked}
                     onPress={onPress}
+                    color="blue"
                   />
                   <Body>
                     <Text>{item.label}</Text>

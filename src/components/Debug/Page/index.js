@@ -23,6 +23,7 @@ const Screen = () => {
           style={{ flexDirection: 'row', alignItems: 'center' }}
         >
           <CheckBox
+            color="blue"
             checked={false}
             onPress={() => setState({ hideDebugButton: true })}
           />

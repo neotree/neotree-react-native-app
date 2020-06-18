@@ -17,6 +17,7 @@ const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
                 <CheckBox
                   checked={selectedItems.indexOf(item.id) > -1}
                   onPress={() => selectItems(item.id)}
+                  color="blue"
                 />
               </View>
             )}

@@ -48,6 +48,7 @@ const HeaderComponent = () => {
             <Content padder contentContainerStyle={[{ flexDirection: 'row', alignItems: 'center' }]}>
               <View style={{ marginRight: 20 }}>
                 <CheckBox
+                  color="blue"
                   checked={selectedItems.length === sessions.length}
                   onPress={() => selectItems(selectedItems.length ? selectedItems : sessions.map(item => item.id))}
                 />
