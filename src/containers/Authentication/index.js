@@ -18,7 +18,7 @@ const Authentication = () => {
         keyboardShouldPersistTaps="never"
       >
         <>
-          <Logo color="primary" />
+          <Logo color="black" />
           <Form />
         </>
       </ScrollView>

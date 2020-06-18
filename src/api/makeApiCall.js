@@ -1,9 +1,6 @@
 /* global fetch */
-import NetInfo from '@react-native-community/netinfo';
 
 export default (url = '', opts = {}) => {
-  url = url[0] === '/' ? url : `/${url}`;
-
   const reqOpts = {
     headers: { ...opts.headers },
   };
@@ -17,8 +14,6 @@ export default (url = '', opts = {}) => {
     reqOpts.body = JSON.stringify({ ...opts.payload });
   }
 
-  url = `${opts.apiConfig.api_endpoint}${url}`;
-
   require('@/utils/logger')(
     `makeApiCall ${(opts.method || 'get').toUpperCase()}:`,
     url,
@@ -26,30 +21,14 @@ export default (url = '', opts = {}) => {
   );
 
   return new Promise((resolve, reject) => {
-    NetInfo.fetch()
-      .then(({ isInternetReachable }) => {
-        if (!isInternetReachable) {
-          require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, 'No internet connection');
-          return reject(new Error('No internet connection'));
-        }
-
-        fetch(url, { method, ...reqOpts })
-          .then(res => {
-            return res.json();
-          })
-          .then(res => {
-            const error = res.error || res.errors;
-            if (error) {
-              require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, error.map ? error : [error]);
-              return reject(error.map ? error : [error]);
-            }
-            resolve(res.payload);
-          })
-          .catch(e => {
-            require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, e.map ? e : [e]);
-            if (e) reject(e);
-          });
+    fetch(url, { method, ...reqOpts })
+      .then(res => {
+        return res.json();
       })
-      .catch(reject);
+      .then(res => resolve(res))
+      .catch(e => {
+        require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, e.map ? e : [e]);
+        reject(e);
+      });
   });
 };

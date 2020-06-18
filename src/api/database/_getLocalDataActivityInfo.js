@@ -16,6 +16,10 @@ export default () => new Promise((resolve, reject) => {
     'select count(id) from diagnoses',
     'select createdAt from diagnoses order by createdAt desc limit 1;',
     'select updatedAt from diagnoses order by updatedAt desc limit 1;',
+
+    'select count(id) from config_keys',
+    'select createdAt from config_keys order by createdAt desc limit 1;',
+    'select updatedAt from config_keys order by updatedAt desc limit 1;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -53,8 +57,13 @@ export default () => new Promise((resolve, reject) => {
         },
         diagnoses: {
           count: rslts[8] ? rslts[8].rows._array[0]['count(id)'] : null,
-          lastCreatedDate: rslts[9] && rslts[9].rows._array[0] ? rslts[4].rows._array[0].createdAt : null,
-          lastUpdatedDate: rslts[10] && rslts[10].rows._array[0] ? rslts[5].rows._array[0].updatedAt : null,
+          lastCreatedDate: rslts[9] && rslts[9].rows._array[0] ? rslts[9].rows._array[0].createdAt : null,
+          lastUpdatedDate: rslts[10] && rslts[10].rows._array[0] ? rslts[10].rows._array[0].updatedAt : null,
+        },
+        config_keys: {
+          count: rslts[11] ? rslts[11].rows._array[0]['count(id)'] : null,
+          lastCreatedDate: rslts[12] && rslts[12].rows._array[0] ? rslts[12].rows._array[0].createdAt : null,
+          lastUpdatedDate: rslts[13] && rslts[13].rows._array[0] ? rslts[13].rows._array[0].updatedAt : null,
         },
       });
     })
