@@ -66,6 +66,13 @@ export default () => new Promise((resolve, reject) => {
     'updatedAt datetime'
   ].join(',');
 
+  const configurationTableColumns = [
+    'id varchar primary key not null',
+    'data text',
+    'createdAt datetime',
+    'updatedAt datetime'
+  ].join(',');
+
   const querys = [
     `create table if not exists data_status (${dataStatusTable});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
@@ -74,6 +81,7 @@ export default () => new Promise((resolve, reject) => {
     `create table if not exists sessions (${sessionsTableColumns});`,
     `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
     `create table if not exists config_keys (${config_keysTableColumns});`,
+    `create table if not exists configuration (${configurationTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -99,6 +107,7 @@ export default () => new Promise((resolve, reject) => {
       sessionsTable: rslts[4],
       authenticatedUserTable: rslts[5],
       config_keysTable: rslts[6],
+      configurationTable: rslts[7],
     }))
     .catch(reject);
 });

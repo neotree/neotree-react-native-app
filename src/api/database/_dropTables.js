@@ -9,6 +9,7 @@ export default () => new Promise((resolve, reject) => {
     'drop table if exists data_status;',
     'drop table if exists diagnoses;',
     'drop table if exists config_keys;',
+    'drop table if exists configuration;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -34,6 +35,7 @@ export default () => new Promise((resolve, reject) => {
       dataStatusTable: rslts[4],
       diagnosesTable: rslts[5],
       config_keysTable: rslts[6],
+      configurationTable: rslts[7],
     }))
     .catch(reject);
 });
