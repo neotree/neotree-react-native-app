@@ -32,18 +32,28 @@ const Form = ({ screen, value, context, onChange }) => {
     })
   }));
 
+  const evaluateCondition = f => {
+    let conditionMet = true;
+
+    if (f.condition) {
+      let condition = parseScreenCondition(f.condition, [{ screen, entry }]);
+      condition = parseScreenCondition(condition, form);
+
+      try {
+        conditionMet = eval(condition);
+        // require('@/utils/logger')(`Evaluate screen condition ${f.condition}`, conditionMet);
+      } catch (e) {
+        // require('@/utils/logger')(`ERROR: Evaluate screen condition ${f.condition}`, e);
+        // do nothing
+      }
+    }
+
+    return conditionMet;
+  };
+
   React.useEffect(() => {
     const completed = entry.value.reduce((acc, { value, field }) => {
-      let conditionMet = true;
-
-      if (field.condition) {
-        try {
-          conditionMet = eval(field.condition);
-        } catch (e) {
-          // do nothing
-        }
-      }
-
+      const conditionMet = evaluateCondition(field);
       if (conditionMet && !field.optional && !value) return false;
       // if (!(field.condition && field.optional && value)) acc = false;
       return acc;
@@ -88,20 +98,7 @@ const Form = ({ screen, value, context, onChange }) => {
                     // do nothing
                 }
 
-                let conditionMet = true;
-
-                if (f.condition) {
-                  let condition = parseScreenCondition(f.condition, [{ screen, entry }]);
-                  condition = parseScreenCondition(condition, form);
-
-                  try {
-                    conditionMet = eval(condition);
-                    // require('@/utils/logger')(`Evaluate screen condition ${f.condition}`, conditionMet);
-                  } catch (e) {
-                    // require('@/utils/logger')(`ERROR: Evaluate screen condition ${f.condition}`, e);
-                    // do nothing
-                  }
-                }
+                const conditionMet = evaluateCondition(f);
 
                 return !Component ? null : (
                   <Component

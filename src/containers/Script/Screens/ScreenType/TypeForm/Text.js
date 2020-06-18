@@ -8,7 +8,12 @@ const FieldText = ({ field, onChange, value, conditionMet, }) => {
   return (
     <>
       <Form>
-        <Text style={error ? { color: '#b20008' } : {}}>{field.label}</Text>
+        <Text
+          style={[
+            error ? { color: '#b20008' } : {},
+            !conditionMet ? { color: '#999' } : {},
+          ]}
+        >{field.label}</Text>
         <Item regular error={error ? true : false}>
           <Input
             editable={conditionMet}

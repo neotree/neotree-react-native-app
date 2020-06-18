@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { Picker, Form, Icon, Item, Text } from 'native-base';
 
 const DropDown = ({ field, onChange, value, conditionMet, }) => {
+  const [error] = React.useState(null);
+
   const opts = (field.values || '').split('\n')
     .map((v = '') => v.trim())
     .filter(v => v)
@@ -18,7 +20,12 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
   return (
     <>
       <Form>
-        <Text>{field.label}</Text>
+        <Text
+          style={[
+            error ? { color: '#b20008' } : {},
+            !conditionMet ? { color: '#999' } : {},
+          ]}
+        >{field.label}</Text>
         <Item regular>
           <Picker
             enabled={conditionMet}
