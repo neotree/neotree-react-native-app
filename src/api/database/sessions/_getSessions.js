@@ -12,7 +12,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
-  let q = 'select * from sessions limit 1';
+  let q = 'select * from sessions';
   q = where ? `${q} where ${where}` : q;
   q = order ? `${q} order by ${order}` : q;
 
