@@ -5,7 +5,8 @@ import { View } from 'react-native';
 import Divider from '@/components/Divider';
 import { useOverlayLoaderState } from '@/contexts/app';
 import { useDataContext } from '@/contexts/data';
-import { Label, Form, Item, Input, Button, Text } from 'native-base';
+import { Label, Form, Item, Input, Button } from 'native-base';
+import Text from '@/components/Text';
 import { useAuthenticationContext } from './Context';
 
 const AuthForm = () => {

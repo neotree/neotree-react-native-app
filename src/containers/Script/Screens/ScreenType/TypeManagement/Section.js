@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Image from '@/components/Image';
-import { Card, CardItem, Text } from 'native-base';
+import { Card, CardItem } from 'native-base';
+import Text from '@/components/Text';
 
 const Section = ({ title, text, image }) => {
   if (!(title || text || image)) return null;

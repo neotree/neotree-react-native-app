@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Input, Form, Item, Text } from 'native-base';
+import { Input, Form, Item } from 'native-base';
+import Text from '@/components/Text';
 
 const FieldText = ({ field, onChange, value, conditionMet, }) => {
   const [error] = React.useState(null);

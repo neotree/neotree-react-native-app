@@ -2,8 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Platform, Vibration } from 'react-native';
 import Divider from '@/components/Divider';
-import { Button, Text, Input, Form, Item } from 'native-base';
+import { Button, Input, Form, Item } from 'native-base';
 import formCopy from '@/constants/copy/form';
+import Text from '@/components/Text';
 
 const styles = {
   timerView: {

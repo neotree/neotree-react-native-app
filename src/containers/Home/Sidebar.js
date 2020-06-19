@@ -1,23 +1,15 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { Link } from 'react-router-native';
+import { useHistory } from 'react-router-native';
 import Logo from '@/components/Logo';
 import theme from '@/native-base-theme/variables/material';
-import { Text, Icon } from 'native-base';
+import { Icon, List, ListItem, Left, Body } from 'native-base';
 import SignOutBtn from '@/components/SignOutBtn';
-
-const styles = {
-  link: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  linkIcon: {
-    marginRight: 10,
-  }
-};
+import Text from '@/components/Text';
 
 const Sidebar = () => {
+  const history = useHistory();
+
   return (
     <>
       <ScrollView
@@ -43,23 +35,31 @@ const Sidebar = () => {
             <Logo color="white" />
           </View>
 
-          <Link style={[styles.link]} to="/configuration">
-            <>
-              <Icon style={[styles.linkIcon]} disabled active name="settings" />
-              <Text>Configuration</Text>
-            </>
-          </Link>
-
-          <Link style={[styles.link]} to="/sessions">
-            <>
-              <Icon style={[styles.linkIcon]} disabled active name="folder-open" />
-              <Text>History</Text>
-            </>
-          </Link>
-
-          <SignOutBtn
-            icon={<Icon disabled active name="log-out" />}
-          />
+          <List>
+            {[
+              { icon: 'settings', label: 'Configuration', link: '/configuration' },
+              { icon: 'folder-open', label: 'History', link: '/sessions' },
+            ].map(opt => {
+              return (
+                <ListItem avatar key={opt.label} onPress={() => history.push(opt.link)}>
+                  <Left>
+                    <Icon style={{ color: '#999' }} name={opt.icon} />
+                  </Left>
+                  <Body>
+                    <Text>{opt.label}</Text>
+                  </Body>
+                </ListItem>
+              );
+            })}
+            <ListItem avatar>
+              <Left>
+                <Icon style={{ color: '#999' }} name="log-out" />
+              </Left>
+              <Body>
+                <SignOutBtn />
+              </Body>
+            </ListItem>
+          </List>
         </View>
       </ScrollView>
     </>

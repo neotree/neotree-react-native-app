@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ListItem, Left, Right, Switch, Text } from 'native-base';
+import { ListItem, Left, Right, Switch } from 'native-base';
 import { useConfigKeysContext } from '@/contexts/config_keys';
 import Content from '@/components/Content';
+import Text from '@/components/Text';
 
 const ListItemComponent = ({ item }) => {
   const data = { ...item, ...item.data };

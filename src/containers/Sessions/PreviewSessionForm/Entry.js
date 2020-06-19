@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Divider from '@/components/Divider';
-import { Text } from 'native-base';
+import Text from '@/components/Text';
 
 const Entry = ({ label, values }) => { // eslint-disable-line
   return (

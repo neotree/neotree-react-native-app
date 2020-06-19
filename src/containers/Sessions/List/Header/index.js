@@ -3,7 +3,8 @@ import { useSessionsContext } from '@/contexts/sessions';
 import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import { View } from 'react-native';
-import { Header, Body, Left, Title, Right, Button, Icon, CheckBox, Content } from 'native-base';
+import { Header, Body, Left, Title, Right, Button, Icon, Content } from 'native-base';
+import CheckBox from '@/components/CheckBox';
 
 import ExportLink from './ExportLink';
 import DeleteBtn from './DeleteBtn';
@@ -48,7 +49,6 @@ const HeaderComponent = () => {
             <Content padder contentContainerStyle={[{ flexDirection: 'row', alignItems: 'center' }]}>
               <View style={{ marginRight: 20 }}>
                 <CheckBox
-                  color="blue"
                   checked={selectedItems.length === sessions.length}
                   onPress={() => selectItems(selectedItems.length ? selectedItems : sessions.map(item => item.id))}
                 />

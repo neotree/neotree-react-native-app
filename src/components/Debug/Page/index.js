@@ -1,8 +1,9 @@
 import React from 'react';
-import { Text, CheckBox } from 'native-base';
 import { TouchableOpacity } from 'react-native';
 import Divider from '@/components/Divider';
 import { useAppContext } from '@/contexts/app';
+import CheckBox from '@/components/CheckBox';
+import Text from '@/components/Text';
 import Container from './Container';
 
 const Screen = () => {
@@ -23,7 +24,6 @@ const Screen = () => {
           style={{ flexDirection: 'row', alignItems: 'center' }}
         >
           <CheckBox
-            color="blue"
             checked={false}
             onPress={() => setState({ hideDebugButton: true })}
           />

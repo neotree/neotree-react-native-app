@@ -12,7 +12,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
-  let q = 'select * from sessions';
+  let q = 'select * from sessions limit 1';
   q = where ? `${q} where ${where}` : q;
   q = order ? `${q} order by ${order}` : q;
 
@@ -21,9 +21,11 @@ export default (options = {}) => new Promise((resolve, reject) => {
       tx.executeSql(
         `${q};`.trim(),
         null,
-        (tx, rslts) => resolve({
-          sessions: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
-        }),
+        (tx, rslts) => {
+          resolve({
+            sessions: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
+          });
+        },
         (tx, e) => {
           if (e) {
             require('@/utils/logger')('ERROR: getSessions', e);

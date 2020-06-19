@@ -5,8 +5,7 @@ import { Content } from 'native-base';
 
 const styles = {
   root: {
-    width: '95%',
-    maxWidth: 600,
+    width: '90%',
     marginLeft: 'auto',
     marginRight: 'auto',
   },

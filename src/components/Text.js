@@ -4,7 +4,7 @@ import { Text } from 'native-base';
 
 const styles = {
   root: {
-    fontSize: 20,
+    fontSize: 18,
   },
   h1: {
     fontSize: 40,

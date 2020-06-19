@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
-import { ListItem, Text, Right, Left, Radio, Button } from 'native-base';
+import { ListItem, Right, Left, Radio, Button } from 'native-base';
+import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Header from './Header';
 

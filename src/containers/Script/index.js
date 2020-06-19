@@ -1,11 +1,12 @@
 import React from 'react';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext } from '@/contexts/screens';
-import { Spinner, Text } from 'native-base';
+import { Spinner } from 'native-base';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { Switch, Route } from 'react-router-native';
 import { View } from 'react-native';
+import Text from '@/components/Text';
 
 import Screens from './Screens';
 import PreviewForm from './PreviewForm';

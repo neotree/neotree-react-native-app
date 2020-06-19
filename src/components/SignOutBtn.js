@@ -45,7 +45,6 @@ const SignOutBtn = ({ icon, style, ...props }) => {
           {
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 10,
           },
           ...(style ? style.map ? style : [style] : [])
         ]}

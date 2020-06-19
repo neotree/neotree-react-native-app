@@ -4,8 +4,8 @@ import Divider from '@/components/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { View, ScrollView } from 'react-native';
-import { Spinner, Text } from 'native-base';
-// import Text from '@/components/Text';
+import { Spinner } from 'native-base';
+import Text from '@/components/Text';
 import Content from '@/components/Content';
 import ScreenType from './ScreenType';
 

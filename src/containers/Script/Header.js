@@ -26,7 +26,7 @@ const HeaderComponent = () => {
         {
           text: copy.ALERT_OK,
           onPress: () => {
-            saveForm({ canceled: true });
+            saveForm({ canceled: true, saveInBackground: true, });
             history.push('/');
           }
         }

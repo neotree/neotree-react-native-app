@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-native';
-import { Card, CardItem, Body, Text } from 'native-base';
-// import Text from '@/components/Text';
+import { Card, CardItem, Body } from 'native-base';
+import Text from '@/components/Text';
 import Content from '@/components/Content';
 
 const ListItem = ({ item }) => {
@@ -17,7 +17,7 @@ const ListItem = ({ item }) => {
           <Card>
             <CardItem>
               <Body>
-                <Text style={{ fontWeight: 'bold' }}>{data.title}</Text>
+                <Text>{data.title}</Text>
                 <Text style={{ color: '#999', marginTop: 8 }}>{data.description}</Text>
               </Body>
             </CardItem>

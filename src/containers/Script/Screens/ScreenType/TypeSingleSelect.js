@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import { ListItem, Text, Right, Left, Radio } from 'native-base';
+import { ListItem, Right, Left, Radio } from 'native-base';
+import Text from '@/components/Text';
 
 const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};

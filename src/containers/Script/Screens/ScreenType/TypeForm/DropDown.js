@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Picker, Form, Icon, Item, Text } from 'native-base';
+import { Picker, Form, Icon, Item } from 'native-base';
+import Text from '@/components/Text';
 
 const DropDown = ({ field, onChange, value, conditionMet, }) => {
   const [error] = React.useState(null);

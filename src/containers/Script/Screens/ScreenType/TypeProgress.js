@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import { Text } from 'native-base';
+import Text from '@/components/Text';
 
 const Progress = ({ screen, context }) => {
   // const metadata = screen.data.metadata || {};

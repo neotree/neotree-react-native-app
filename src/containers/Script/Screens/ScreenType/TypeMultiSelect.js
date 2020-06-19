@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import { ListItem, Text, Body, CheckBox } from 'native-base';
+import { ListItem, Body } from 'native-base';
+import CheckBox from '@/components/CheckBox';
+import Text from '@/components/Text';
 
 const MultiSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
@@ -53,7 +55,6 @@ const MultiSelect = ({ screen, value, onChange }) => {
                   <CheckBox
                     checked={checked}
                     onPress={onPress}
-                    color="blue"
                   />
                   <Body>
                     <Text>{item.label}</Text>

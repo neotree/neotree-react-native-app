@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 import { View } from 'react-native';
-import { Text } from 'native-base';
+import Text from '@/components/Text';
 
 const styles = {
   gridContainer: {
