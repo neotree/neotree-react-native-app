@@ -1,12 +1,15 @@
 import { deleteSessions } from '@/api/sessions';
 
-export default ({ setState, state: { selectedItems, session } }) => () => {
+export default ({ setState, state: { sessions } }) => (ids = []) => {
+  if (!(ids && ids.length)) return;
+
   setState({ deletingSessions: true, deleteSessionsError: null });
-  deleteSessions(selectedItems.map(id => ({ id })))
+  
+  deleteSessions(ids.map(id => ({ id })))
     .then(() => {
       setState({
         selectedItems: [],
-        session: session.filter(item => selectedItems.indexOf(item.id) < 0),
+        sessions: sessions.filter(item => ids.indexOf(item.id) < 0),
         canSelectItems: false,
         deletingSessions: false,
         deleteSessionsError: null

@@ -22,7 +22,7 @@ export default ({
       data: {
         started_at: start_time,
         completed_at: completed ? new Date() : null,
-        canceled_at: canceled ? null : new Date(),
+        canceled_at: canceled ? new Date() : null,
         script,
         form
       },

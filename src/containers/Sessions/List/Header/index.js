@@ -1,18 +1,13 @@
 import React from 'react';
-import { useSessionsContext } from '@/contexts/sessions';
 import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
-import { View } from 'react-native';
-import { Header, Body, Left, Title, Right, Button, Icon, Content } from 'native-base';
-import CheckBox from '@/components/CheckBox';
+import { Header, Body, Left, Title, Right, Button, Icon } from 'native-base';
 
 import ExportLink from './ExportLink';
 import DeleteBtn from './DeleteBtn';
-import ToggleSelect from './ToggleSelect';
 
 const HeaderComponent = () => {
   const history = useHistory();
-  const { state: { sessions, selectedItems, canSelectItems }, selectItems } = useSessionsContext();
 
   const goBack = () => {
     history.entries = [];
@@ -39,28 +34,9 @@ const HeaderComponent = () => {
 
         <Right>
           <ExportLink />
-          <ToggleSelect />
+          <DeleteBtn />
         </Right>
       </Header>
-
-      {canSelectItems && (
-        <>
-          <View style={{ height: 50 }}>
-            <Content padder contentContainerStyle={[{ flexDirection: 'row', alignItems: 'center' }]}>
-              <View style={{ marginRight: 20 }}>
-                <CheckBox
-                  checked={selectedItems.length === sessions.length}
-                  onPress={() => selectItems(selectedItems.length ? selectedItems : sessions.map(item => item.id))}
-                />
-              </View>
-
-              <View style={{ marginRight: 20 }}>
-                <DeleteBtn />
-              </View>
-            </Content>
-          </View>
-        </>
-      )}
     </>
   );
 };

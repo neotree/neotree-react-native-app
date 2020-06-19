@@ -6,59 +6,47 @@ import { View } from 'react-native';
 import moment from 'moment';
 import { Card, CardItem, Body } from 'native-base';
 import Content from '@/components/Content';
-import CheckBox from '@/components/CheckBox';
 import Text from '@/components/Text';
 
-const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
+const ListItem = ({ item }) => {
   return (
     <>
       <View style={{ flex: 1 }}>
         <Content padder>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {canSelectItems && (
-              <View style={{ marginRight: 20 }}>
-                <CheckBox
-                  checked={selectedItems.indexOf(item.id) > -1}
-                  onPress={() => selectItems(item.id)}
-                />
-              </View>
-            )}
-
-            <Link
-              to={`/sessions/session/${item.id}`}
-              style={[{ flex: 1 }]}
-            >
-              <Card>
-                <CardItem>
-                  <Body>
-                    <View style={[{ flexDirection: 'row' }]}>
-                      <View style={[{ flex: 1 }]}>
-                        <Text style={{ color: '#999' }}>Creation date</Text>
-                        <Text>
-                          {moment(item.data.started_at).format('DD MMM, YYYY HH:MM')}
-                        </Text>
-                      </View>
-
-                      <View style={[{ flex: 1 }]}>
-                        <Text style={{ color: '#999' }}>Completion date</Text>
-                        <Text>
-                          {item.data.completed_at ?
-                            moment(item.data.completed_at).format('DD MMM, YYYY HH:MM')
-                            :
-                            'N/A'}
-                        </Text>
-                      </View>
+          <Link
+            to={`/sessions/session/${item.id}`}
+            style={[{ flex: 1 }]}
+          >
+            <Card>
+              <CardItem>
+                <Body>
+                  <View style={[{ flexDirection: 'row' }]}>
+                    <View style={[{ flex: 1 }]}>
+                      <Text style={{ color: '#999' }}>Creation date</Text>
+                      <Text>
+                        {moment(item.data.started_at).format('DD MMM, YYYY HH:MM')}
+                      </Text>
                     </View>
 
-                    <Divider border={false} />
+                    <View style={[{ flex: 1 }]}>
+                      <Text style={{ color: '#999' }}>Completion date</Text>
+                      <Text>
+                        {item.data.completed_at ?
+                          moment(item.data.completed_at).format('DD MMM, YYYY HH:MM')
+                          :
+                          'N/A'}
+                      </Text>
+                    </View>
+                  </View>
 
-                    <Text style={{ color: '#999' }}>Script</Text>
-                    <Text>{item.data.script.data.title}</Text>
-                  </Body>
-                </CardItem>
-              </Card>
-            </Link>
-          </View>
+                  <Divider border={false} />
+
+                  <Text style={{ color: '#999' }}>Script</Text>
+                  <Text>{item.data.script.data.title}</Text>
+                </Body>
+              </CardItem>
+            </Card>
+          </Link>
         </Content>
       </View>
     </>
@@ -67,9 +55,6 @@ const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
 
 ListItem.propTypes = {
   item: PropTypes.object.isRequired,
-  selectedItems: PropTypes.array.isRequired,
-  selectItems: PropTypes.func.isRequired,
-  canSelectItems: PropTypes.bool,
 };
 
 export default ListItem;

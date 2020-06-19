@@ -1,23 +1,34 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
 import { useOverlayLoaderState } from '@/contexts/app';
-import { Button, Icon } from 'native-base';
+import { Button, Icon, ActionSheet } from 'native-base';
 
 const DeleteBtn = () => {
-  const { state: { selectedItems, deletingSessions }, deleteSessions } = useSessionsContext();
+  const { state: { sessions, deletingSessions }, deleteSessions } = useSessionsContext();
 
   useOverlayLoaderState('delete_sessions', deletingSessions);
-
-  const disabled = selectedItems.length === 0;
 
   return (
     <>
       <Button
         transparent
-        disabled={disabled}
-        onPress={() => deleteSessions()}
+        onPress={() => {
+          ActionSheet.show(
+            {
+              options: ['Incomplete sessions', 'ALL sessions'],
+              title: 'Permanantly delete'
+            },
+            i => {
+              const incompleted = sessions.filter(s => !s.data.completed_at)
+                .map(s => s.id);
+              const completed = sessions.filter(s => s.data.completed_at)
+                .map(s => s.id);
+              deleteSessions(i === 0 ? incompleted : completed);
+            }
+          );
+        }}
       >
-        <Icon name="trash" style={[disabled ? null : { color: '#b20008' }]} />
+        <Icon name="trash" />
       </Button>
     </>
   );
