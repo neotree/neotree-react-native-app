@@ -10,4 +10,6 @@ export default {
 
   SPLASH_LOGO_HEIGHT: 100,
   SPLASH_LOGO_WIDTH: 100,
+
+  DEFAULT_SPACING: 10,
 };

@@ -1,6 +1,6 @@
 import db from '../db';
 
-const deleteForm = (_where = {}) => new Promise((resolve, reject) => {
+const deleteSession = (_where = {}) => new Promise((resolve, reject) => {
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
@@ -29,7 +29,7 @@ export default (params = []) => new Promise((resolve, reject) => {
 
   if (!params.map) params = [params];
 
-  Promise.all(params.map(where => deleteForm(where)))
+  Promise.all(params.map(where => deleteSession(where)))
     .catch(reject)
     .then(resolve);
 });

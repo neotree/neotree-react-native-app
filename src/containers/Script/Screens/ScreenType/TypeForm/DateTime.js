@@ -3,10 +3,9 @@ import PropTypes from 'prop-types';
 import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 import { View } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
-import Typography from '@/ui/Typography';
+import Text from '@/components/Text';
 
-const useStyles = makeStyles(() => ({
+const styles = {
   gridContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -15,11 +14,9 @@ const useStyles = makeStyles(() => ({
     flex: 1,
     padding: 5,
   },
-}));
+};
 
 const DateTime = ({ field, onChange, value, conditionMet, }) => {
-  const styles = useStyles();
-
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   const onDateChange = (e, date) => {
@@ -36,11 +33,11 @@ const DateTime = ({ field, onChange, value, conditionMet, }) => {
   return (
     <>
       {!field.label ? null : (
-        <Typography
+        <Text
           {...conditionMet ? null : { style: { color: '#ccc' } }}
         >
-          {field.label}{field.label}{field.optional ? '' : ' *'}
-        </Typography>
+          {field.label}{field.optional ? '' : ' *'}
+        </Text>
       )}
 
       <View style={[styles.gridContainer]}>

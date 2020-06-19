@@ -1,38 +1,49 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
 import Logo from '@/components/Logo';
-import Animated from 'react-native-reanimated';
-import Typography from '@/ui/Typography';
-import styles from './styles';
-import useSplashLogoAnimation from './useSplashLogoAnimation';
+import Divider from '@/components/Divider';
+import { Text } from 'native-base';
+import constants from '@/constants';
 
-export { useSplashLogoAnimation };
-
-const useStyles = makeStyles(styles);
-
-const Splash = ({ children }) => {
-  // const scale = useSplashLogoAnimation();
-
-  const styles = useStyles();
-
+const Splash = ({ text, children }) => {
   return (
     <>
-      <View style={[styles.root]}>
-        <View style={[styles.content]}>
-          <Animated.View
+      <View
+        style={[{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#fff'
+        }]}
+      >
+        <View
+          style={[{
+            alignItems: 'center',
+            justifyContent: 'center',
+          }]}
+        >
+          <View
             style={[
-              styles.logoContainer,
-              // { transform: [{ scale }] }
+              {
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: constants.SPLASH_LOGO_HEIGHT,
+                width: constants.SPLASH_LOGO_WIDTH,
+                margin: constants.DEFAULT_SPACING
+              }
             ]}
           >
             <Logo />
-          </Animated.View>
-          {typeof children === 'string' ?
-            <Typography variant="caption" style={[styles.text]}>{children}</Typography>
-            :
-            children}
+          </View>
+          {!text ? null : (
+            <>
+              <Divider border={false} />
+              <Text style={{ color: '#999' }}>{text}</Text>
+              <Divider border={false} />
+            </>
+          )}
+          {children}
         </View>
       </View>
     </>
@@ -40,7 +51,8 @@ const Splash = ({ children }) => {
 };
 
 Splash.propTypes = {
-  children: PropTypes.node
+  text: PropTypes.string,
+  children: PropTypes.node,
 };
 
 export default Splash;

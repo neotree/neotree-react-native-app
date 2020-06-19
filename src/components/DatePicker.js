@@ -1,25 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform, TouchableOpacity } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
+import { Platform, View } from 'react-native';
 import moment from 'moment';
-import Typography from '@/ui/Typography';
+import { Form, Item, Text } from 'native-base';
 
-const useStyles = makeStyles((theme, { enabled }) => ({
-  root: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: theme.spacing()
-  },
-  labelText: {
-    marginBottom: 5,
-    ...enabled ? null : { color: theme.palette.disabled },
-  },
-  btnText: {
-
-  }
-}));
+const styles = {
+  errorText: { color: '#b20008' },
+  disabledText: { color: '#ccc' },
+  formItem: { padding: 12 },
+};
 
 const DatePicker = ({
   children,
@@ -35,46 +25,54 @@ const DatePicker = ({
   labelProps = { ...labelProps };
 
   const [show, setShow] = React.useState(false);
-
-  const styles = useStyles({ enabled });
+  const [error] = React.useState(null);
 
   return (
     <>
-      {!children ? null : (
-        <Typography
-          style={[styles.labelText]}
-        >{children}</Typography>
-      )}
+      <Form>
+        {!children ? null : (
+          <Text
+            style={[
+              enabled ? null : styles.disabledText,
+              !error ? null : styles.errorText
+            ]}
+          >{children}</Text>
+        )}
 
-      <TouchableOpacity
-        disabled={!enabled}
-        style={[styles.root]}
-        onPress={e => {
-          setShow(!show);
-          if (labelProps.onPress) labelProps.onPress(e);
-        }}
-        {...labelProps}
-      >
-        <Typography
-          {...value ? null : { color: 'textSecondary' }}
-          style={[styles.btnText]}
-        >{value ? moment(value).format(mode === 'time' ? 'LT' : 'LL') : placeholder}</Typography>
-      </TouchableOpacity>
+        <Item
+          regular
+          style={[styles.formItem]}
+          error={error ? true : false}
+          disabled={!enabled}
+          onPress={e => {
+            setShow(!show);
+            if (labelProps.onPress) labelProps.onPress(e);
+          }}
+        >
+          <Text
+            style={[enabled ? null : styles.disabledText]}
+          >
+            {value ? moment(value).format(mode === 'time' ? 'LT' : 'LL') : placeholder}
+          </Text>
+        </Item>
+      </Form>
 
       {(enabled !== false) && show && (
-        <DateTimePicker
-          {...props}
-          testID="dateTimePicker"
-          timeZoneOffsetInMinutes={0}
-          value={value || new Date()}
-          mode={mode}
-          is24Hour
-          display="default"
-          onChange={(e, date) => {
-            setShow(Platform.OS === 'ios');
-            if (onChange) onChange(e, date || value);
-          }}
-        />
+        <View style={{ flex: 1 }}>
+          <DateTimePicker
+            {...props}
+            testID="dateTimePicker"
+            timeZoneOffsetInMinutes={0}
+            value={value || new Date()}
+            mode={mode}
+            is24Hour
+            display="default"
+            onChange={(e, date) => {
+              setShow(Platform.OS === 'ios');
+              if (onChange) onChange(e, date || value);
+            }}
+          />
+        </View>
       )}
     </>
   );

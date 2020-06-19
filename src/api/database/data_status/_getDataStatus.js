@@ -6,6 +6,27 @@ import createTablesIfNotExist from '../_createTablesIfNotExist';
 import makeApiCall from '../../webeditor/makeApiCall';
 import updateDataStatus from './_updateDataStatus';
 
+const _getDataStatus = () => new Promise((resolve, reject) => {
+  db.transaction(
+    tx => {
+      tx.executeSql(
+        'select * from data_status limit 1;',
+        null,
+        (tx, rslts) => {
+          const dataStatus = rslts.rows._array[0];
+          resolve(dataStatus);
+        },
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: _getDataStatus', e);
+            reject(e);
+          }
+        }
+      );
+    }
+  );
+});
+
 const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
   const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
 
@@ -63,56 +84,42 @@ const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
   );
 });
 
-const _getDataStatus = () => new Promise((resolve, reject) => {
-  db.transaction(
-    tx => {
-      tx.executeSql(
-        'select * from data_status limit 1;',
-        null,
-        (tx, rslts) => {
-          const dataStatus = rslts.rows._array[0];
+const getDataStatus = () => new Promise((resolve, reject) => {
+  _getDataStatus()
+    .catch(reject)
+    .then(dataStatus => {
+      const registerIfNotFound = () => {
+        createDataStatus()
+          .catch(reject)
+          .then(() => _getDataStatus().catch(reject).then(resolve));
+      };
 
-          const registerIfNotFound = (dataStatus) => {
-            createDataStatus()
-              .catch(reject)
-              .then(() => _getDataStatus(dataStatus).catch(reject).then(resolve));
-          };
+      if (dataStatus) {
+        NetInfo.fetch()
+          .catch(() => resolve(dataStatus))
+          .then(network => {
+            if (!network.isInternetReachable) return resolve(dataStatus);
 
-          if (dataStatus) {
-            NetInfo.fetch()
+            makeApiCall('/get-device', { payload: { unique_key: dataStatus.unique_key } })
               .catch(() => resolve(dataStatus))
-              .then(network => {
-                if (!network.isInternetReachable) return resolve(dataStatus);
-
-                makeApiCall('/get-device', { payload: { unique_key: dataStatus.unique_key } })
-                  .catch(() => resolve(dataStatus))
-                  .then(device => {
-                    if (device) return resolve(dataStatus);
-                    registerIfNotFound(dataStatus);
-                  });
+              .then(device => {
+                if (device) return resolve(dataStatus);
+                registerIfNotFound(dataStatus);
               });
+          });
 
-            return;
-          }
+        return;
+      }
 
-          registerIfNotFound();
-        },
-        (tx, e) => {
-          if (e) {
-            require('@/utils/logger')('ERROR: getDataStatus', e);
-            reject(e);
-          }
-        }
-      );
-    }
-  );
+      registerIfNotFound();
+    });
 });
 
 export default () => new Promise((resolve, reject) => {
   createTablesIfNotExist()
     .catch(reject)
     .then(() => {
-      _getDataStatus()
+      getDataStatus()
         .then(resolve)
         .catch(reject);
     });

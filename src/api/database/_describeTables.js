@@ -4,10 +4,12 @@ export default () => new Promise((resolve, reject) => {
   const querys = [
     'select sql from sqlite_master where name = "scripts";',
     'select sql from sqlite_master where name = "screens";',
-    'select sql from sqlite_master where name = "forms";',
+    'select sql from sqlite_master where name = "sessions";',
     'select sql from sqlite_master where name = "diagnoses";',
     'select sql from sqlite_master where name = "authenticated_user";',
     'select sql from sqlite_master where name = "data_status";',
+    'select sql from sqlite_master where name = "config_keys";',
+    'select sql from sqlite_master where name = "configuration";',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -32,6 +34,8 @@ export default () => new Promise((resolve, reject) => {
       logsTable: rslts[3],
       authenticatedUserTable: rslts[4],
       dataStatusTable: rslts[5],
+      config_keysTable: rslts[6],
+      configurationTable: rslts[7],
     }))
     .catch(reject);
 });

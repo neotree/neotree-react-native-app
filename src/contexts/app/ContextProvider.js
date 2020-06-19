@@ -1,4 +1,6 @@
 import React from 'react';
+import * as Font from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 import copy from '@/constants/copy';
 import Context from './Context';
 import { useDataContext } from '../data';
@@ -23,12 +25,22 @@ function Provider(props) {
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
+  React.useEffect(() => {
+    Font.loadAsync({
+      Roboto: require('native-base/Fonts/Roboto.ttf'),
+      Roboto_medium: require('native-base/Fonts/Roboto_medium.ttf'),
+      ...Ionicons.font,
+    })
+      .then(() => setState({ fontsLoaded: true }))
+      .catch(() => setState({ fontsLoaded: true }));
+  }, []);
+
   const displayOverlayLoader = () => Object.keys(state.overlayLoaderState).reduce((acc, key) => {
     if (state.overlayLoaderState[key]) acc = true;
     return acc;
   }, false);
 
-  const isAppReady = () => dataIsReady;
+  const isAppReady = () => state.fontsLoaded && dataIsReady;
 
   const getSplashScreenInfo = () => {
     const text = syncingData ? copy.SYNCING_DATA_TEXT : '';

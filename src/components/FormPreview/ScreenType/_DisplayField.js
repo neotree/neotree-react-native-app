@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Typography from '@/ui/Typography';
-import Divider from '@/ui/Divider';
+import Divider from '@/components/Divider';
 import { View } from 'react-native';
+import { Text } from 'native-base';
 
 const DisplayField = ({ values, label }) => {
   values = values || [];
@@ -11,10 +11,10 @@ const DisplayField = ({ values, label }) => {
   return (
     <>
       <View>
-        <Typography>{label}</Typography>
+        <Text>{label}</Text>
         {(values || []).map((v) => {
           return (
-            <Typography variant="textSecondary">{v.text}</Typography>
+            <Text style={{ color: '#999' }}>{v.text}</Text>
           );
         })}
         <Divider spacing={2} />

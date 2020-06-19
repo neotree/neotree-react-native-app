@@ -1,42 +1,32 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
-import Typography from '@/ui/Typography';
-import makeStyles from '@/ui/styles/makeStyles';
 import Image from '@/components/Image';
-
-const useStyles = makeStyles(theme => ({
-  root: {
-    marginVertical: theme.spacing(),
-    padding: theme.spacing(),
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  sectionImage: {
-    marginVertical: theme.spacing(),
-  }
-}));
+import { Card, CardItem } from 'native-base';
+import Text from '@/components/Text';
 
 const Section = ({ title, text, image }) => {
-  const styles = useStyles();
-
   if (!(title || text || image)) return null;
 
   return (
-    <View
-      style={[styles.root]}
-    >
-      {!title ? null : <Typography variant="h4">{title}</Typography>}
-      {!text ? null : <Typography>{text}</Typography>}
+    <Card>
+      {!title ? null : (
+        <CardItem>
+          <Text style={{ fontWeight: 'bold' }}>{title}</Text>
+        </CardItem>
+      )}
+      {!text ? null : (
+        <CardItem>
+          <Text>{text}</Text>
+        </CardItem>
+      )}
       {!image ? null : (
         <Image
           fullWidth
           resizeMode="contain"
           source={{ uri: image.data }}
-          style={[styles.sectionImage]}
         />
       )}
-    </View>
+    </Card>
   );
 };
 
