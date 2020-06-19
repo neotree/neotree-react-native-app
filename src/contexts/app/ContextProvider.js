@@ -8,7 +8,6 @@ import { useDataContext } from '../data';
 function Provider(props) {
   const {
     dataIsReady,
-    fontsLoaded,
     state: {
       syncingData,
       authenticatedUser,
@@ -47,7 +46,7 @@ function Provider(props) {
     const text = syncingData ? copy.SYNCING_DATA_TEXT : '';
     return {
       display: !isAppReady() || state.displaySplashScreen,
-      text: fontsLoaded ? state.splashScreenText || text : null
+      text: state.splashScreenText || text
     };
   };
 

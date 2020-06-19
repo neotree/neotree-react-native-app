@@ -36,7 +36,7 @@ const NeoTreeApp = () => {
   if (splashScreen.display) {
     return (
       <Overlay>
-        <Splash>{splashScreen.text}</Splash>
+        <Splash text={splashScreen.text} />
       </Overlay>
     );
   }

@@ -2,10 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Logo from '@/components/Logo';
+import Divider from '@/components/Divider';
 import { Text } from 'native-base';
 import constants from '@/constants';
 
-const Splash = ({ children }) => {
+const Splash = ({ text, children }) => {
   return (
     <>
       <View
@@ -35,10 +36,14 @@ const Splash = ({ children }) => {
           >
             <Logo />
           </View>
-          {typeof children === 'string' ?
-            <Text>{children}</Text>
-            :
-            children}
+          {!text ? null : (
+            <>
+              <Divider border={false} />
+              <Text style={{ color: '#999' }}>{text}</Text>
+              <Divider border={false} />
+            </>
+          )}
+          {children}
         </View>
       </View>
     </>
@@ -46,7 +51,8 @@ const Splash = ({ children }) => {
 };
 
 Splash.propTypes = {
-  children: PropTypes.node
+  text: PropTypes.string,
+  children: PropTypes.node,
 };
 
 export default Splash;
