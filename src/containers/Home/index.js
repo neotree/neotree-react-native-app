@@ -20,6 +20,8 @@ const Home = () => {
     <>
       <Drawer
         ref={drawerRef}
+        openDrawerOffset={0.3}
+        panCloseMask={0.3}
         // onClose={() => drawerRef.current._root.close()}
         content={<Sidebar />}
       >
