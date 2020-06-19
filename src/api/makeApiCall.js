@@ -1,8 +1,6 @@
 /* global fetch */
 
 export default (url = '', opts = {}) => {
-  url = url[0] === '/' ? url : `/${url}`;
-
   const reqOpts = {
     headers: { ...opts.headers },
   };
@@ -16,8 +14,6 @@ export default (url = '', opts = {}) => {
     reqOpts.body = JSON.stringify({ ...opts.payload });
   }
 
-  url = `${opts.apiConfig.api_endpoint}${url}`;
-
   require('@/utils/logger')(
     `makeApiCall ${(opts.method || 'get').toUpperCase()}:`,
     url,
@@ -29,17 +25,10 @@ export default (url = '', opts = {}) => {
       .then(res => {
         return res.json();
       })
-      .then(res => {
-        const error = res.error || res.errors;
-        if (error) {
-          require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, error.map ? error : [error]);
-          return reject(error.map ? error : [error]);
-        }
-        resolve(res.payload);
-      })
+      .then(res => resolve(res))
       .catch(e => {
         require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, e.map ? e : [e]);
-        if (e) reject(e);
+        reject(e);
       });
   });
 };

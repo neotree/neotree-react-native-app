@@ -1,15 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Image } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
-
-const useStyles = makeStyles(() => ({
-  image: {}
-}));
 
 const CustomImage = ({ style, source, fullWidth, ...props }) => {
-  const styles = useStyles();
-
   const [layout, setLayout] = React.useState(null);
   const [imageSize, setImageSize] = React.useState(null);
   const [getSizeError, setGetSizeError] = React.useState(null);
@@ -30,8 +23,6 @@ const CustomImage = ({ style, source, fullWidth, ...props }) => {
       source={source}
       onLayout={e => setLayout(e.nativeEvent.layout)}
       style={[
-        styles.image,
-
         ...(typeof style === 'function' ?
           [style({ imageSize: layout ? imageSize : null, layout, getSizeError })]
           :

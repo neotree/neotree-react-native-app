@@ -1,10 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import Radio from '@/ui/Radio';
-import Divider from '@/ui/Divider';
-import RadioGroup from '@/ui/RadioGroup';
-import Typography from '@/ui/Typography';
+import { ListItem, Right, Left, Radio } from 'native-base';
+import Text from '@/components/Text';
 
 const YesNo = ({ screen, onChange, value }) => {
   const metadata = screen.data.metadata || {};
@@ -15,27 +13,33 @@ const YesNo = ({ screen, onChange, value }) => {
     onChange(!entry.value ? null : entry);
   }, [entry]);
 
+  const opts = [
+    { value: 'Yes', label: metadata.positiveLabel || 'Yes' },
+    { value: 'No', label: metadata.negativeLabel || 'No' },
+  ];
+
   return (
     <>
       <View>
-        <Typography>{metadata.label}</Typography>
-        <Divider border={false} />
-        <RadioGroup
-          name={metadata.key}
-          value={entry.value}
-          onChange={e => setEntry({ value: e.value })}
-        >
-          <Radio
-            variant="outlined"
-            label={metadata.positiveLabel}
-            value="Yes"
-          />
-          <Radio
-            variant="outlined"
-            label={metadata.negativeLabel}
-            value="No"
-          />
-        </RadioGroup>
+        {/*<Text>{metadata.label}</Text>*/}
+
+        {opts.map(opt => (
+          <ListItem
+            key={opt.value}
+            selected={entry.value === opt.value}
+            onPress={() => setEntry({ value: opt.value })}
+          >
+            <Left>
+              <Text>{opt.label}</Text>
+            </Left>
+            <Right>
+              <Radio
+                selected={entry.value === opt.value}
+                onPress={() => setEntry({ value: opt.value })}
+              />
+            </Right>
+          </ListItem>
+        ))}
       </View>
     </>
   );

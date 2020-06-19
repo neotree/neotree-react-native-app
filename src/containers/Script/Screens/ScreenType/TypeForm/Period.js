@@ -1,14 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Typography from '@/ui/Typography';
+import Text from '@/components/Text';
 
 const Period = ({ field, onChange, value }) => {
   return (
     <>
-      <Typography
-        color="secondary"
-        variant="h1"
-      >{field.dataType}</Typography>
+      <Text>{field.dataType}</Text>
     </>
   );
 };

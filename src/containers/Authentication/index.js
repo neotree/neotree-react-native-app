@@ -1,26 +1,24 @@
 import React from 'react';
-import makeStyles from '@/ui/styles/makeStyles';
 import { ScrollView } from 'react-native';
 import Logo from '@/components/Logo';
-import Divider from '@/ui/Divider';
 import { provideAuthenticationContext } from './Context';
-import styles from './styles';
 import Form from './Form';
 
-const useStyles = makeStyles(styles);
-
 const Authentication = () => {
-  const styles = useStyles();
-
   return (
     <>
       <ScrollView
-        contentContainerStyle={[styles.root]}
+        contentContainerStyle={[
+          {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }
+        ]}
         keyboardShouldPersistTaps="never"
       >
         <>
-          <Logo color="primary" />
-          <Divider border={false} spacing={2} />
+          <Logo color="black" />
           <Form />
         </>
       </ScrollView>

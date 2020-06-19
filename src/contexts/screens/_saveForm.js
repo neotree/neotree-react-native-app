@@ -1,27 +1,28 @@
-import { saveForm } from '@/api/forms';
+import { saveSession } from '@/api/sessions';
 
 export default ({
   setState,
   script,
   router,
   state: { form, activeScreen, start_time }
-}) => (payload = {}) =>
-  new Promise((resolve, reject) => {
-    setState({ savingForm: true });
+}) => (_payload = {}) => {
+  const { completed, canceled, saveInBackground, ...payload } = _payload;
+  return new Promise((resolve, reject) => {
+    if (!saveInBackground) setState({ savingForm: true });
 
     const done = (err, rslts) => {
-      setState({ savingForm: false });
+      if (!saveInBackground) setState({ savingForm: false });
       if (err) return reject(err);
       resolve(rslts);
-      if (payload.completed) router.history.push(`/script/${script.id}/preview-form`);
+      if (completed) router.history.push(`/script/${script.id}/preview-form`);
     };
 
-    saveForm({
+    saveSession({
       ...payload,
       data: {
         started_at: start_time,
-        completed_at: payload.completed ? new Date() : null,
-        canceled_at: payload.completed ? null : new Date(),
+        completed_at: completed ? new Date() : null,
+        canceled_at: canceled ? new Date() : null,
         script,
         form
       },
@@ -30,3 +31,4 @@ export default ({
       .then(rslts => done(null, rslts))
       .catch(done);
   });
+};

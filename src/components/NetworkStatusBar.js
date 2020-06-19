@@ -1,28 +1,14 @@
 import React from 'react';
-import makeStyles from '@/ui/styles/makeStyles';
 import { useNetworkContext } from '@/contexts/network';
 import { View } from 'react-native';
 import copy from '@/constants/copy';
-import Typography from '@/ui/Typography';
-
-const useStyles = makeStyles((theme, { isOnline }) => ({
-  root: {
-    padding: 3,
-    textAlign: 'center',
-    backgroundColor: isOnline ? theme.palette.success.main : '#999',
-  },
-  text: {
-    color: isOnline ? theme.palette.success.text : '#ccc'
-  }
-}));
+import { Text } from 'native-base';
 
 const NetworkStatusBar = () => {
   const networkState = useNetworkContext();
 
   const [isOnline, setIsOnline] = React.useState(true);
   const [displayBar, setDisplayBar] = React.useState(false);
-
-  const styles = useStyles({ isOnline });
 
   React.useEffect(() => {
     if (networkState) {
@@ -49,14 +35,24 @@ const NetworkStatusBar = () => {
   return (
     <>
       <View
-        style={[styles.root]}
+        style={[
+          {
+            padding: 3,
+            textAlign: 'center',
+            backgroundColor: isOnline ? '#2ecc71' : '#999',
+          }
+        ]}
       >
-        <Typography
-          variant="caption"
-          style={[styles.text]}
+        <Text
+          style={[
+            {
+              color: isOnline ? '#fff' : '#ccc',
+              fontSize: 15
+            }
+          ]}
         >
           {isOnline ? copy.ONLINE_MESSAGE : copy.OFFLINE_MESSAGE}
-        </Typography>
+        </Text>
       </View>
     </>
   );

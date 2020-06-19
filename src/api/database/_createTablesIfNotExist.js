@@ -7,6 +7,7 @@ export default () => new Promise((resolve, reject) => {
     'unique_key varchar',
     'device_id integer',
     'data_initialised boolean',
+    'last_sync_date datetime',
     'createdAt datetime',
     'updatedAt datetime',
   ].join(',');
@@ -41,7 +42,7 @@ export default () => new Promise((resolve, reject) => {
     'updatedAt datetime'
   ].join(',');
 
-  const formsTableColumns = [
+  const sessionsTableColumns = [
     'id integer primary key not null',
     'script_id varchar',
     'data text',
@@ -57,13 +58,30 @@ export default () => new Promise((resolve, reject) => {
     'details text'
   ].join(',');
 
+  const config_keysTableColumns = [
+    'id varchar primary key not null',
+    'config_key_id varchar',
+    'data text',
+    'createdAt datetime',
+    'updatedAt datetime'
+  ].join(',');
+
+  const configurationTableColumns = [
+    'id varchar primary key not null',
+    'data text',
+    'createdAt datetime',
+    'updatedAt datetime'
+  ].join(',');
+
   const querys = [
     `create table if not exists data_status (${dataStatusTable});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
     `create table if not exists diagnoses (${diagnosesTableColumns});`,
-    `create table if not exists forms (${formsTableColumns});`,
+    `create table if not exists sessions (${sessionsTableColumns});`,
     `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
+    `create table if not exists config_keys (${config_keysTableColumns});`,
+    `create table if not exists configuration (${configurationTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -86,8 +104,10 @@ export default () => new Promise((resolve, reject) => {
       scriptsTable: rslts[1],
       screensTable: rslts[2],
       diagnosesTable: rslts[3],
-      formsTable: rslts[4],
-      authenticatedUserTable: rslts[5]
+      sessionsTable: rslts[4],
+      authenticatedUserTable: rslts[5],
+      config_keysTable: rslts[6],
+      configurationTable: rslts[7],
     }))
     .catch(reject);
 });

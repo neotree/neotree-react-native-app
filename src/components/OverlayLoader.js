@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Overlay from '@/ui/Overlay';
-import ActivityIndicator from '@/ui/ActivityIndicator';
+import Overlay from '@/components/Overlay';
+import { Spinner } from 'native-base';
 
 const OverlayLoader = ({ display, style, ...props }) => {
   if (!display) return null;
@@ -15,7 +15,7 @@ const OverlayLoader = ({ display, style, ...props }) => {
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
-        <ActivityIndicator size="large" />
+        <Spinner color="blue" />
       </Overlay>
     </>
   );

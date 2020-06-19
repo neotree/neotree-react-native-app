@@ -1,22 +1,8 @@
 import React from 'react';
-import IconButton from '@/ui/IconButton';
 import { useScreensContext } from '@/contexts/screens';
-import makeStyles from '@/ui/styles/makeStyles';
-
-const useStyles = makeStyles(theme => {
-  return {
-    root: {
-      margin: theme.spacing(2),
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-    }
-  };
-});
+import { Button, Icon } from 'native-base';
 
 const NextBtn = () => {
-  const styles = useStyles();
-
   const {
     canGoToNextScreen,
     goToNextScreen,
@@ -25,13 +11,21 @@ const NextBtn = () => {
   return (
     <>
       {canGoToNextScreen() && (
-        <IconButton
-          variant="contained"
-          color="primary"
+        <Button
           onPress={goToNextScreen}
-          style={[styles.root]}
-          icon="md-arrow-forward"
-        />
+          style={[
+            {
+              height: 50,
+              width: 50,
+              borderRadius: 25,
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              right: 20,
+              bottom: 20,
+            }
+          ]}
+        ><Icon name="arrow-forward" /></Button>
       )}
     </>
   );

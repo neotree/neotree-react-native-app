@@ -1,29 +1,16 @@
 import React from 'react';
 import { useScreensContext } from '@/contexts/screens';
-import Typography from '@/ui/Typography';
-import Divider from '@/ui/Divider';
+import Divider from '@/components/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import ActivityIndicator from '@/ui/ActivityIndicator';
-import { View } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
-import { LayoutScrollableContent } from '@/components/Layout';
+import { View, ScrollView } from 'react-native';
+import { Spinner } from 'native-base';
+import Text from '@/components/Text';
+import Content from '@/components/Content';
 import ScreenType from './ScreenType';
 
-const useStyles = makeStyles(theme => ({
-  actionBox: {
-    backgroundColor: theme.transparentize(theme.palette.secondary.main, 0.2),
-    padding: theme.spacing(2),
-  },
-  actionBoxText: {
-    marginBottom: 3
-  }
-}));
-
 const Screens = () => {
-  const scrollableRef = React.useRef(null);
-
-  const styles = useStyles();
+  const scrollViewRef = React.useRef(null);
 
   const {
     getScreens,
@@ -31,59 +18,65 @@ const Screens = () => {
   } = useScreensContext();
 
   React.useEffect(() => {
-    if (scrollableRef.current) scrollableRef.current.scrollViewRef.scrollTo({ y: 0, animated: true });
+    if (scrollViewRef.current) scrollViewRef.current.scrollTo({ y: 0, animated: true });
   }, [activeScreen]);
 
   if (loadingScreens || !(screensInitialised && activeScreenInitialised)) {
-    return <ActivityIndicator size="large" />;
+    return <Spinner color="blue" />;
   }
 
   if (!activeScreen) {
     return (
       <PageRefresher onRefresh={getScreens}>
-        <Typography color="textSecondary">
+        <Text style={{ color: '#999' }}>
           {scriptPageCopy.SCRIPT_HAS_NO_SCREENS}
-        </Typography>
+        </Text>
       </PageRefresher>
     );
   }
 
   return (
     <>
-      <LayoutScrollableContent
-        ref={scrollableRef}
+      <ScrollView
+        ref={scrollViewRef}
       >
-        <Divider border={false} spacing={2} />
+        <Content padder>
+          <Divider border={false} />
 
-        <Typography variant="h3">{activeScreen.data.title} - {activeScreen.type}</Typography>
+          <Text
+            style={[{ fontSize: 30, fontWeight: 'bold' }]}
+          >{activeScreen.data.title}</Text>
 
-        <Divider border={false} spacing={2} />
+          <Divider border={false} />
 
-        {activeScreen.data.actionText || activeScreen.data.contentText ? (
-          <View style={[styles.actionBox]}>
-            {!activeScreen.data.actionText ? null : (
-              <>
-                <Typography
-                  style={[styles.actionBoxText]}
-                >{activeScreen.data.actionText}</Typography>
-              </>
-            )}
+          {activeScreen.data.actionText || activeScreen.data.contentText ? (
+            <View
+              style={[{ backgroundColor: 'rgba(241, 196, 15,.2)', padding: 10 }]}
+            >
+              {!activeScreen.data.actionText ? null : (
+                <>
+                  <Text
+                    style={[{ marginBottom: 10 }]}
+                  >{activeScreen.data.actionText}</Text>
+                </>
+              )}
 
-            {!activeScreen.data.contentText ? null : (
-              <>
-                <Typography
-                  style={[styles.actionBoxText]}
-                  variant="caption"
-                >{activeScreen.data.contentText}</Typography>
-              </>
-            )}
-          </View>
-        ) : null}
+              {!activeScreen.data.contentText ? null : (
+                <>
+                  <Text
+                    style={[{ marginBottom: 10 }]}
+                    variant="caption"
+                  >{activeScreen.data.contentText}</Text>
+                </>
+              )}
+            </View>
+          ) : null}
 
-        <Divider border={false} spacing={2} />
+          <Divider border={false} spacing={2} />
 
-        <ScreenType />
-      </LayoutScrollableContent>
+          <ScreenType />
+        </Content>
+      </ScrollView>
     </>
   );
 };

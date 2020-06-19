@@ -1,16 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import makeStyles from '@/ui/styles/makeStyles';
 import Section from './Section';
 
-const useStyles = makeStyles(() => ({
-  root: {},
-}));
-
 const Management = ({ screen, onChange }) => {
-  const styles = useStyles();
-
   const metadata = screen.data.metadata || {};
 
   React.useEffect(() => {
@@ -19,9 +12,7 @@ const Management = ({ screen, onChange }) => {
 
   return (
     <>
-      <View
-        style={[styles.root]}
-      >
+      <View>
         <Section
           title={metadata.title1}
           text={metadata.text1}

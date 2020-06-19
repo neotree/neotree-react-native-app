@@ -1,22 +1,24 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Image } from 'react-native';
-import useTheme from '@/ui/styles/useTheme';
 
-const Logo = ({ color, style, size }) => {
-  const { palette } = useTheme();
+const Logo = ({ style, size, color }) => {
+  const src = color === 'white' ?
+    require('~/assets/images/neotree-icon-black.png')
+    :
+    require('~/assets/images/neotree-icon-black.png');
 
   return (
     <>
       <Image
-        source={require('~/assets/images/neotree.png')}
+        source={src}
         style={[
           style,
           {
             width: size || 90,
             height: size || 90,
             borderRadius: 45,
-            backgroundColor: palette[color] ? palette[color].main : 'transparent'
+            // backgroundColor: palette[color] ? palette[color].main : 'transparent'
           },
         ]}
       />
@@ -27,7 +29,7 @@ const Logo = ({ color, style, size }) => {
 Logo.propTypes = {
   style: PropTypes.object,
   size: PropTypes.number,
-  color: PropTypes.oneOf(['primary', 'secondary'])
+  color: PropTypes.oneOf(['black', 'white']),
 };
 
 export default Logo;

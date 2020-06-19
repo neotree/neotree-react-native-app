@@ -1,23 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Platform, Vibration } from 'react-native';
-import Divider from '@/ui/Divider';
-import Button from '@/ui/Button';
-import Typography from '@/ui/Typography';
-import Input from '@/ui/Input';
-import makeStyles from '@/ui/styles/makeStyles';
+import Divider from '@/components/Divider';
+import { Button, Input, Form, Item } from 'native-base';
 import formCopy from '@/constants/copy/form';
+import Text from '@/components/Text';
 
-const useStyles = makeStyles((theme) => ({
+const styles = {
   timerView: {
-    backgroundColor: theme.transparentize(theme.palette.primary.main, 0.2),
-    padding: theme.spacing(),
+    backgroundColor: 'rgba(41, 128, 185,.2)',
+    padding: 10,
     minHeight: 150,
     textAlign: 'center',
     justifyContent: 'center',
   },
   timer: {
     textAlign: 'center',
+    fontSize: 40,
+    fontWeight: 'bold',
   },
   form: {
     flexDirection: 'row',
@@ -28,17 +28,18 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
   },
   multiplier: {
-    marginLeft: theme.spacing(),
+    marginLeft: 10,
+    color: '#999',
   },
   value: {
     textAlign: 'center',
+    fontSize: 40,
+    fontWeight: 'bold',
   }
-}));
+};
 
 const Timer = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
-
-  const styles = useStyles();
 
   const [timerIsRunning, setTimerIsRunning] = React.useState(false);
   const [seconds, setSeconds] = React.useState(metadata.timerValue || 0);
@@ -88,16 +89,17 @@ const Timer = ({ screen, value, onChange }) => {
         <View
           style={[styles.timerView]}
         >
-          <Typography
-            variant="h1"
+          <Text
             style={[styles.timer]}
           >
             {`${`0${Math.floor(seconds / 60)}`.slice(-2)}:${`0${seconds % 60}`.slice(-2)}`}
-          </Typography>
+          </Text>
           <Button
+            block
+            transparent
             onPress={() => setTimerIsRunning(!timerIsRunning)}
           >
-            {timerIsRunning ? formCopy.STOP_TIMER : formCopy.START_TIMER}
+            <Text>{timerIsRunning ? formCopy.STOP_TIMER : formCopy.START_TIMER}</Text>
           </Button>
         </View>
 
@@ -107,37 +109,40 @@ const Timer = ({ screen, value, onChange }) => {
           style={[styles.form]}
         >
           <View style={[styles.input]}>
-            <Input
-              label={metadata.label}
-              value={entry.value || ''}
-              defaultValue={entry.value || ''}
-              onChange={e => {
-                const value = e.nativeEvent.text;
-                setEntry({ value });
-              }}
-              keyboardType="numeric"
-            />
+            <Form>
+              <Text style={formError ? { color: '#b20008' } : {}}>{metadata.label}</Text>
+              <Item regular error={formError ? true : false}>
+                <Input
+                  label={metadata.label}
+                  value={entry.value || ''}
+                  defaultValue={entry.value || ''}
+                  onChange={e => {
+                    const value = e.nativeEvent.text;
+                    setEntry({ value });
+                  }}
+                  keyboardType="numeric"
+                />
+              </Item>
+            </Form>
           </View>
 
           {!metadata.multiplier ? null : (
-            <Typography
-              color="textSecondary"
+            <Text
               style={[styles.multiplier]}
             >
               x {metadata.multiplier}
-            </Typography>
+            </Text>
           )}
         </View>
 
         {!formError ? null : (
           <>
             <Divider border={false} />
-            <Typography
-              variant="caption"
-              color="error"
+            <Text
+              style={{ color: '#b20008', fontSize: 15 }}
             >
               {formError}
-            </Typography>
+            </Text>
           </>
         )}
 
@@ -145,12 +150,11 @@ const Timer = ({ screen, value, onChange }) => {
           <>
             <Divider spacing={2} border={false} />
 
-            <Typography
-              variant="h1"
+            <Text
               style={[styles.value]}
             >
               {Number(entry.value) * Number(metadata.multiplier || 1)}
-            </Typography>
+            </Text>
           </>
         )}
       </View>
