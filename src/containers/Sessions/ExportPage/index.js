@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
-import { ListItem, Text, Right, Left, Radio, Content, Button } from 'native-base';
+import { ListItem, Text, Right, Left, Radio, Button } from 'native-base';
+import Content from '@/components/Content';
 import Header from './Header';
 
 const ExportPage = () => {

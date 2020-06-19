@@ -1,7 +1,7 @@
 import React from 'react';
 import PreviewSessionForm from '@/containers/Sessions/PreviewSessionForm';
 import { useScreensContext } from '@/contexts/screens';
-import { Content } from 'native-base';
+import Content from '@/components/Content';
 import Header from './Header';
 
 const Wrapper = props => <Content {...props} padder />;

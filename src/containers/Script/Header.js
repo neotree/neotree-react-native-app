@@ -26,9 +26,8 @@ const HeaderComponent = () => {
         {
           text: copy.ALERT_OK,
           onPress: () => {
-            saveForm({ canceled: true })
-              .then(() => history.push('/'))
-              .catch(() => history.push('/'));
+            saveForm({ canceled: true });
+            history.push('/');
           }
         }
       ],

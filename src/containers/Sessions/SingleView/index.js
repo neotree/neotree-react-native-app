@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
 import { View } from 'react-native';
-import { Content } from 'native-base';
+import Content from '@/components/Content';
 import { useParams } from 'react-router-native';
 import PreviewSessionForm from '../PreviewSessionForm';
 import Header from './Header';

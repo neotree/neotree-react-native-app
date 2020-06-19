@@ -4,7 +4,9 @@ import Divider from '@/components/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { View, ScrollView } from 'react-native';
-import { Content, Text, Spinner } from 'native-base';
+import { Spinner, Text } from 'native-base';
+// import Text from '@/components/Text';
+import Content from '@/components/Content';
 import ScreenType from './ScreenType';
 
 const Screens = () => {
@@ -39,13 +41,13 @@ const Screens = () => {
         ref={scrollViewRef}
       >
         <Content padder>
-          <Divider border={false} spacing={2} />
+          <Divider border={false} />
 
           <Text
             style={[{ fontSize: 30, fontWeight: 'bold' }]}
           >{activeScreen.data.title}</Text>
 
-          <Divider border={false} spacing={2} />
+          <Divider border={false} />
 
           {activeScreen.data.actionText || activeScreen.data.contentText ? (
             <View

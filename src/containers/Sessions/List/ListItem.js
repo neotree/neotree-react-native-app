@@ -4,7 +4,8 @@ import Divider from '@/components/Divider';
 import { Link } from 'react-router-native';
 import { View } from 'react-native';
 import moment from 'moment';
-import { Card, CardItem, Body, Content, Text, CheckBox } from 'native-base';
+import { Card, CardItem, Body, Text, CheckBox } from 'native-base';
+import Content from '@/components/Content';
 
 const ListItem = ({ item, selectedItems, canSelectItems, selectItems }) => {
   return (
