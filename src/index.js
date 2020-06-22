@@ -12,6 +12,7 @@ import { View } from 'react-native';
 import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
 import OverlayLoader from '@/components/OverlayLoader';
+import NetworkStatusBar from '@/components/NetworkStatusBar';
 
 const Authentication = LazyPage(() => import('@/containers/Authentication'), { LoaderComponent: Splash });
 const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
@@ -46,10 +47,13 @@ const NeoTreeApp = () => {
       <Root>
         <StyleProvider style={getTheme(material)}>
           <Container>
-            <View style={{ flex: 1 }}>
-              <Containers />
+            <>
+              <View style={{ flex: 1 }}>
+                <Containers />
+              </View>
+              <NetworkStatusBar />
               <OverlayLoader display={displayOverlayLoader()} />
-            </View>
+            </>
 
             {/*<Debug />*/}
           </Container>
