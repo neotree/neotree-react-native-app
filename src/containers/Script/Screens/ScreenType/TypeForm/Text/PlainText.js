@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Input, Form, Item } from 'native-base';
 import Text from '@/components/Text';
 
-const FieldText = ({ field, onChange, value, conditionMet, }) => {
+const PlainText = ({ field, onChange, value, conditionMet, }) => {
   const [error] = React.useState(null);
 
   return (
@@ -17,6 +17,7 @@ const FieldText = ({ field, onChange, value, conditionMet, }) => {
         >{field.label}</Text>
         <Item regular error={error ? true : false}>
           <Input
+            autoCapitalize="characters"
             editable={conditionMet}
             value={value || ''}
             defaultValue={value || ''}
@@ -41,11 +42,11 @@ const FieldText = ({ field, onChange, value, conditionMet, }) => {
   );
 };
 
-FieldText.propTypes = {
+PlainText.propTypes = {
   field: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.any,
   conditionMet: PropTypes.bool,
 };
 
-export default FieldText;
+export default PlainText;
