@@ -30,6 +30,7 @@ const NumberField = ({
               let err = null;
               if (value) {
                 const v = Number(value);
+                if (isNaN(v)) err = 'Input is not a number';
                 if (field.maxValue && (v > field.maxValue)) err = `Max value ${field.maxValue}`;
                 if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
               }
