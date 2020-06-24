@@ -34,11 +34,13 @@ export default (data = {}) => new Promise((resolve, reject) => {
 
       const done = (err, rslts) => {
         if (err) return reject(err);
-        updateDataStatus({
-          data_initialised: true,
-          last_sync_date: new Date().toString(),
-          updatedAt: new Date().toString(),
-        });
+        if (!err) {
+          updateDataStatus({
+            data_initialised: true,
+            last_sync_date: new Date().toString(),
+            updatedAt: new Date().toString(),
+          });
+        }
         resolve({
           ...rslts,
           authenticatedUser,
