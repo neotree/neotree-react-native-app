@@ -57,25 +57,25 @@ const ScreenType = () => {
 
         if (!shouldDisplay) Component = null;
 
-        const value = form.filter(item => item.screen.id === activeScreen.id)[0];
+        const value = form.filter(item => item.screenId === activeScreen.id)[0];
 
         return !Component ? null : (
           <Component
             screen={activeScreen}
             context={context}
-            value={value ? value.entry : null}
+            value={value || null}
             onChange={entry => setState(prevState => {
               const form = prevState.form;
-              const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
+              const formEntry = form.filter(item => item.screenId === activeScreen.id)[0];
               return {
                 ...prevState,
                 form: entry ?
                   formEntry ?
-                    form.map(item => item.screen.id === activeScreen.id ? { ...item, entry } : item)
+                    form.map(item => item.screenId === activeScreen.id ? { ...entry, screenTitle: activeScreen.data.title, screenId: activeScreen.id, type: activeScreen.type } : item)
                     :
-                    [...form, { screen: activeScreen, entry }]
+                    [...form, { ...entry, screenTitle: activeScreen.data.title, screenId: activeScreen.id, type: activeScreen.type }]
                   :
-                  form.filter(item => item.screen.id !== activeScreen.id)
+                  form.filter(item => item.screenId !== activeScreen.id)
               };
             })}
           />

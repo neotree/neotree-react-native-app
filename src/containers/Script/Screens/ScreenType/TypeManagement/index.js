@@ -7,7 +7,7 @@ const Management = ({ screen, onChange }) => {
   const metadata = screen.data.metadata || {};
 
   React.useEffect(() => {
-    onChange({ not_required: true });
+    onChange({ values: [] });
   }, []);
 
   return (

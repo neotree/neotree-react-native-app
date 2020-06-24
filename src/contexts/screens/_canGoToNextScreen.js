@@ -4,7 +4,7 @@ export default ({
 }) => () => {
   if (!activeScreen) return false;
 
-  if (!form.filter(({ screen }) => screen.id === activeScreen.id)[0]) return false;
+  if (!form.filter(({ screenId }) => screenId === activeScreen.id)[0]) return false;
 
   return !isLastScreen();
 };

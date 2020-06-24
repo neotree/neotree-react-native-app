@@ -37,7 +37,7 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
             selectedValue={value}
             onValueChange={v => onChange(v)}
           >
-            <Picker.Item label="Select..." value="" />
+            <Picker.Item label="" value="" />
             {opts.map(opt => (
               <Picker.Item
                 key={opt.value}
