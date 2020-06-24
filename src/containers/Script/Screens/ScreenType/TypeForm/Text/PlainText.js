@@ -14,7 +14,7 @@ const PlainText = ({ field, onChange, value, conditionMet, }) => {
             error ? { color: '#b20008' } : {},
             !conditionMet ? { color: '#999' } : {},
           ]}
-        >{field.label}</Text>
+        >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular error={error ? true : false}>
           <Input
             autoCapitalize="characters"
@@ -26,7 +26,7 @@ const PlainText = ({ field, onChange, value, conditionMet, }) => {
               onChange(value);
             }}
             // placeholder={field.label}
-            label={`${field.label}${field.optional ? '' : ' *'}`}
+            // label={`${field.label}${field.optional ? '' : ' *'}`}
           />
         </Item>
       </Form>

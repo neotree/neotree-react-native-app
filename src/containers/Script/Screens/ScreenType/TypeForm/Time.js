@@ -6,7 +6,7 @@ import formCopy from '@/constants/copy/form';
 const Time = ({ field, onChange, value, conditionMet, }) => {
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
-  const onDateChange = (e, date) => {
+  const onDateChange = (date) => {
     setDate(date);
     onChange(date);
   };

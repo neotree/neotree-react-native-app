@@ -41,21 +41,26 @@ const Sidebar = () => {
               { icon: 'folder-open', label: 'History', link: '/sessions' },
             ].map(opt => {
               return (
-                <ListItem avatar key={opt.label} onPress={() => history.push(opt.link)}>
+                <ListItem
+                  avatar
+                  key={opt.label}
+                  onPress={() => history.push(opt.link)}
+                  style={{ padding: 10 }}
+                >
                   <Left>
                     <Icon style={{ color: '#999' }} name={opt.icon} />
                   </Left>
-                  <Body>
+                  <Body style={{ borderColor: 'transparent' }}>
                     <Text>{opt.label}</Text>
                   </Body>
                 </ListItem>
               );
             })}
-            <ListItem avatar>
+            <ListItem avatar style={{ padding: 10 }}>
               <Left>
                 <Icon style={{ color: '#999' }} name="log-out" />
               </Left>
-              <Body>
+              <Body style={{ borderColor: 'transparent' }}>
                 <SignOutBtn />
               </Body>
             </ListItem>
