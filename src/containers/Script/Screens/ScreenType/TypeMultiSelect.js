@@ -8,10 +8,10 @@ import Text from '@/components/Text';
 const MultiSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const [entry, setEntry] = React.useState(value || { value: [] });
+  const [entry, setEntry] = React.useState(value || { values: [] });
 
   React.useEffect(() => {
-    onChange(!entry.value.length ? undefined : entry);
+    onChange(!entry.values.length ? undefined : entry);
   }, [entry]);
 
   return (
@@ -19,7 +19,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
       <View>
         {(metadata.items || [])
           .map((item) => {
-            const checked = entry.value.map(s => s.value).indexOf(item.id) > -1;
+            const checked = entry.values.map(s => s.value).indexOf(item.id) > -1;
 
             const onPress = () => {
               const value = item.id;
@@ -31,18 +31,18 @@ const MultiSelect = ({ screen, value, onChange }) => {
                 setEntry(entry => {
                   return {
                     ...entry,
-                    value: _checked ? [{ value, item }] : []
+                    values: _checked ? [{ value, label: item.label, key: item.id, type: item.dataType || item.type, }] : []
                   };
                 });
               } else {
                 setEntry(entry => {
                   return {
                     ...entry,
-                    value: (
+                    values: (
                       _checked ?
-                        [...entry.value, { value, item }]
+                        [...entry.values, { value, label: item.label, key: item.id, }]
                         :
-                        entry.value.filter(s => s.value !== value)
+                        entry.values.filter(s => s.value !== value)
                     ).filter(s => exclusives.indexOf(s.value) < 0)
                   };
                 });
