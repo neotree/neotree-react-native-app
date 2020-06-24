@@ -1,6 +1,7 @@
 import React from 'react';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext } from '@/contexts/screens';
+import { provideDiagnosesContext } from '@/contexts/diagnoses';
 import { Spinner } from 'native-base';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
@@ -68,5 +69,7 @@ const Script = () => {
 };
 
 export default provideScriptContext(
-  provideScreensContext(Script)
+  provideDiagnosesContext(
+    provideScreensContext(Script)
+  )
 );
