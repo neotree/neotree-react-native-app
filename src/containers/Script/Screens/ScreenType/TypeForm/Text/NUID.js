@@ -4,6 +4,25 @@ import { View } from 'react-native';
 import { Input, Form, Item } from '@/components/Form';
 import Text from '@/components/Text';
 
+const validateUID = (value = '') => {
+  const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
+  const allowedLastHalf = /^[0-9]*$/gi;
+  const [_firstHalf, _lastHalf] = (value || '').split('-');
+
+  const firstHalfHasForbiddenChars = !allowedFirstHalf.test(_firstHalf);
+  const lastHalfHasForbiddenChars = !allowedLastHalf.test(_lastHalf);
+  const firstHalfIsValid = (_firstHalf.length === 4) && !firstHalfHasForbiddenChars;
+  const lastHalfIsValid = (_lastHalf.length === 4) && !lastHalfHasForbiddenChars;
+
+  return {
+    firstHalfHasForbiddenChars,
+    lastHalfHasForbiddenChars,
+    firstHalfIsValid,
+    lastHalfIsValid,
+    isValid: firstHalfIsValid && lastHalfIsValid,
+  };
+};
+
 const NUID = ({ field, onChange, value, conditionMet, }) => {
   const [_firstHalf, _lastHalf] = (value || '').split('-');
 
@@ -13,28 +32,25 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   const [firstHalf, setFirstHalf] = React.useState(_firstHalf || '');
   const [lastHalf, setLastHalf] = React.useState(_lastHalf || '');
 
-  const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
-  const allowedLastHalf = /^[0-9]*$/gi;
   const _value = `${firstHalf}-${lastHalf}`;
+  const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
 
   React.useEffect(() => {
     if (firstHalf.length === 4) lastHalfRef.current._root.focus();
   }, [firstHalf]);
 
   React.useEffect(() => {
-    const valueIsValid = (_value.length === 9) &&
-      allowedFirstHalf.test(firstHalf) && allowedLastHalf.test(lastHalf);
-    onChange(valueIsValid ? _value : '');
+    onChange(validateUID(_value).isValid ? _value : '');
   }, [_value]);
 
-  const disableLastHalf = !(conditionMet && allowedFirstHalf.test(firstHalf)) && (firstHalf.length < 4);
-  const error = !(allowedFirstHalf.test(firstHalf) && allowedLastHalf.test(lastHalf) && conditionMet) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);
+  const disableLastHalf = !(conditionMet && firstHalfIsValid);
+  const error = !(firstHalfIsValid && lastHalfIsValid && conditionMet) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);
 
   return (
     <>
       <Text
         style={[
-          (allowedFirstHalf.test(firstHalf) && allowedLastHalf.test(lastHalf) && !error) ? {} : { color: '#b20008' },
+          (firstHalfIsValid && lastHalfIsValid && !error) ? {} : { color: '#b20008' },
           !conditionMet ? { color: '#999' } : {},
         ]}
       >{field.label}</Text>
@@ -42,7 +58,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
       <View style={[{ flexDirection: 'row', alignItems: 'flex-start' }]}>
         <View style={[{ flex: 1 }]}>
           <Form>
-            <Item error={!allowedFirstHalf.test(firstHalf) ? true : false} disabled={!conditionMet}>
+            <Item error={!firstHalfIsValid ? true : false} disabled={!conditionMet}>
               <Input
                 ref={firstHalfRef}
                 maxLength={4}
@@ -60,7 +76,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
             </Item>
           </Form>
 
-          {allowedFirstHalf.test(firstHalf) ? null : (
+          {!firstHalfHasForbiddenChars ? null : (
             <>
               <Text style={{ color: '#b20008' }}>
                 Allowed characters: ABCDEF
@@ -73,7 +89,10 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
 
         <View style={[{ flex: 1 }]}>
           <Form>
-            <Item error={!allowedLastHalf.test(lastHalf) ? true : false} disabled={disableLastHalf}>
+            <Item
+              error={!lastHalfIsValid ? true : false}
+              disabled={disableLastHalf}
+            >
               <Input
                 ref={lastHalfRef}
                 onKeyPress={e => {
@@ -98,7 +117,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
             </Item>
           </Form>
 
-          {allowedLastHalf.test(lastHalf) ? null : (
+          {!lastHalfHasForbiddenChars ? null : (
             <>
               <Text style={{ color: '#b20008' }}>
                 Allowed characters: 0123456789
