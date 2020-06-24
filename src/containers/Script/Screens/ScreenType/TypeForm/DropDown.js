@@ -23,7 +23,7 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
             error ? { color: '#b20008' } : {},
             !conditionMet ? { color: '#999' } : {},
           ]}
-        >{field.label}</Text>
+        >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular>
           <Picker
             ref={pickerRef}

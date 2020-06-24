@@ -53,7 +53,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
           (firstHalfIsValid && lastHalfIsValid && !error) ? {} : { color: '#b20008' },
           !conditionMet ? { color: '#999' } : {},
         ]}
-      >{field.label}</Text>
+      >{field.label}{field.optional ? '' : ' *'}</Text>
 
       <View style={[{ flexDirection: 'row', alignItems: 'flex-start' }]}>
         <View style={[{ flex: 1 }]}>
@@ -71,7 +71,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
                   setFirstHalf(value);
                 }}
                 // placeholder={field.label}
-                label={`${field.label}${field.optional ? '' : ' *'}`}
+                // label={`${field.label}${field.optional ? '' : ' *'}`}
               />
             </Item>
           </Form>

@@ -23,7 +23,7 @@ export default function Provider(props) {
   const { state: { script } } = useScriptContext();
 
   const [state, _setState] = React.useState({
-    start_time: new Date(),
+    start_time: new Date().toString(),
     form: [],
     activeScreen: null,
     screenId,

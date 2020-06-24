@@ -19,7 +19,7 @@ const NumberField = ({
             error ? { color: '#b20008' } : {},
             !conditionMet ? { color: '#999' } : {},
           ]}
-        >{field.label}</Text>
+        >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular error={error ? true : false}>
           <Input
             editable={conditionMet}
@@ -38,7 +38,7 @@ const NumberField = ({
               onChange(value, err);
             }}
             // placeholder={field.label}
-            label={`${field.label}${field.optional ? '' : ' *'}`}
+            // label={`${field.label}${field.optional ? '' : ' *'}`}
             keyboardType="numeric"
           />
         </Item>
