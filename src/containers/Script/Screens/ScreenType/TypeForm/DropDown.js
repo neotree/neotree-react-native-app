@@ -4,6 +4,7 @@ import { Picker, Form, Icon, Item } from 'native-base';
 import Text from '@/components/Text';
 
 const DropDown = ({ field, onChange, value, conditionMet, }) => {
+  const pickerRef = React.useRef(null);
   const [error] = React.useState(null);
 
   const opts = (field.values || '').split('\n')
@@ -13,10 +14,6 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
       v = v.split(',');
       return { value: v[0], label: v[1] };
     });
-
-  React.useEffect(() => {
-    if (opts[0]) onChange(opts[0].value || '');
-  }, []);
 
   return (
     <>
@@ -29,6 +26,7 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
         >{field.label}</Text>
         <Item regular>
           <Picker
+            ref={pickerRef}
             enabled={conditionMet}
             mode="dialog"
             iosIcon={<Icon name="arrow-down" />}
@@ -38,8 +36,8 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
             style={{ width: undefined }}
             selectedValue={value}
             onValueChange={v => onChange(v)}
-            prompt={field.label}
           >
+            <Picker.Item label="Select..." value="" />
             {opts.map(opt => (
               <Picker.Item
                 key={opt.value}
