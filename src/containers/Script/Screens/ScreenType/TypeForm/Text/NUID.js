@@ -79,7 +79,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
           {!firstHalfHasForbiddenChars ? null : (
             <>
               <Text style={{ color: '#b20008' }}>
-                Allowed characters: ABCDEF
+                Allowed characters: ABCDEF0123456789
               </Text>
             </>
           )}
