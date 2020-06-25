@@ -1,4 +1,9 @@
-export default ({ state }) => (_condition = '', form = state.form) => {
+export const sanitizeCondition = (condition = '') => condition
+  .replace(new RegExp(' and ', 'gi'), ' && ')
+  .replace(new RegExp(' or ', 'gi'), ' || ')
+  .replace(new RegExp(' = ', 'gi'), ' == ');
+
+export const parseCondition = ({ state }) => (_condition = '', form = state.form) => {
   const values = form.reduce((acc, entry) => [...acc, ...entry.values], []);
   const condition = values.reduce((acc, { value, type, key }) => {
     value = value || '';
@@ -9,10 +14,7 @@ export default ({ state }) => (_condition = '', form = state.form) => {
       .split(`$${key} >`).join(`${value} >`)
       .split(`$${key}>`).join(`${value} >`)
       .split(`$${key} <`).join(`${value} <`)
-      .split(`$${key}<`).join(`${value} <`)
-      .replace(new RegExp(' and ', 'gi'), ' && ')
-      .replace(new RegExp(' or ', 'gi'), ' || ')
-      .replace(new RegExp(' = ', 'gi'), ' == ');
+      .split(`$${key}<`).join(`${value} <`);
   }, _condition);
   return condition;
 };

@@ -19,7 +19,15 @@ const SingleSelect = ({ screen, value, onChange }) => {
     <>
       <View>
         {(metadata.items || []).map(item => {
-          const onChange = setEntry({ values: [{ value: item.id, label: item.label, key: item.id, type: item.dataType || item.type, }] });
+          const onChange = () => setEntry({
+            values: [{
+              value: item.id,
+              label: item.label,
+              key: metadata.key,
+              type: item.type,
+              dataType: item.dataType,
+            }]
+          });
           return (
             <ListItem
               key={item.id}
@@ -31,7 +39,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
               </Left>
               <Right>
                 <Radio
-                  selected={entry.value === item.id}
+                  selected={_value === item.id}
                   onPress={() => onChange()}
                 />
               </Right>

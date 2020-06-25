@@ -17,7 +17,6 @@ const PlainText = ({ field, onChange, value, conditionMet, }) => {
         >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular error={error ? true : false}>
           <Input
-            autoCapitalize="characters"
             editable={conditionMet}
             value={value || ''}
             defaultValue={value || ''}
