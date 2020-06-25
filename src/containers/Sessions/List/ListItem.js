@@ -24,7 +24,7 @@ const ListItem = ({ item }) => {
                     <View style={[{ flex: 1 }]}>
                       <Text style={{ color: '#999' }}>Creation date</Text>
                       <Text>
-                        {moment(item.data.started_at).format('DD MMM, YYYY HH:MM')}
+                        {moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:MM')}
                       </Text>
                     </View>
 
@@ -32,7 +32,7 @@ const ListItem = ({ item }) => {
                       <Text style={{ color: '#999' }}>Completion date</Text>
                       <Text>
                         {item.data.completed_at ?
-                          moment(item.data.completed_at).format('DD MMM, YYYY HH:MM')
+                          moment(new Date(item.data.completed_at)).format('DD MMM, YYYY HH:MM')
                           :
                           'N/A'}
                       </Text>

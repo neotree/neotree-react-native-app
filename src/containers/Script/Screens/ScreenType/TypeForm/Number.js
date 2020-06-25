@@ -19,7 +19,7 @@ const NumberField = ({
             error ? { color: '#b20008' } : {},
             !conditionMet ? { color: '#999' } : {},
           ]}
-        >{field.label}</Text>
+        >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular error={error ? true : false}>
           <Input
             editable={conditionMet}
@@ -30,6 +30,7 @@ const NumberField = ({
               let err = null;
               if (value) {
                 const v = Number(value);
+                if (isNaN(v)) err = 'Input is not a number';
                 if (field.maxValue && (v > field.maxValue)) err = `Max value ${field.maxValue}`;
                 if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
               }
@@ -37,7 +38,7 @@ const NumberField = ({
               onChange(value, err);
             }}
             // placeholder={field.label}
-            label={`${field.label}${field.optional ? '' : ' *'}`}
+            // label={`${field.label}${field.optional ? '' : ' *'}`}
             keyboardType="numeric"
           />
         </Item>

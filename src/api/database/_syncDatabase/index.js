@@ -1,7 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
 
-import getLocalDataActivityInfo from '../_getLocalDataActivityInfo';
-import getRemoteDataActivityInfo from '../_getRemoteDataActivityInfo';
 import { insertScreens, deleteScreens } from '../screens';
 import { insertDiagnoses, deleteDiagnoses } from '../diagnoses';
 import { insertScripts, deleteScripts } from '../scripts';
@@ -12,6 +10,7 @@ import { getScripts } from '../../webeditor/scripts';
 import { getConfigKeys } from '../../webeditor/config_keys';
 import { getScreens } from '../../webeditor/screens';
 import { getDiagnoses } from '../../webeditor/diagnoses';
+import { syncData as syncRemoteData } from '../../webeditor/syncData';
 import { getDataStatus, updateDataStatus } from '../data_status';
 
 export default (data = {}) => new Promise((resolve, reject) => {
@@ -35,212 +34,198 @@ export default (data = {}) => new Promise((resolve, reject) => {
 
       const done = (err, rslts) => {
         if (err) return reject(err);
+        if (!err) {
+          updateDataStatus({
+            data_initialised: true,
+            last_sync_date: new Date().toString(),
+            updatedAt: new Date().toString(),
+          });
+        }
         resolve({
           ...rslts,
-          dataStatus,
           authenticatedUser,
+          dataStatus: { ...dataStatus, data_initialised: true },
         });
       };
 
       if (!canSync) return done(null);
 
-      Promise.all([
-        data.event ? null : getLocalDataActivityInfo(),
-        data.event ? null : getRemoteDataActivityInfo({ lastSyncDate: dataStatus.last_sync_date }),
-      ])
-        .catch(e => {
-          require('@/utils/logger')('ERROR: syncDatabase - getLocalDataActivityInfo(), getRemoteDataActivityInfo()', e);
-          done(e);
-        })
-        .then(([localDataActivityInfo, remoteDataActivityInfo]) => {
-          let _getScripts = null;
-          let _getConfigKeys = null;
-          let _getScreens = null;
-          let _deleteLocalScreens = null;
-          let _deleteLocalScripts = null;
-          let _deleteLocalConfigKeys = null;
-          let _getDiagnoses = null;
-          let _deleteLocalDiagnoses = null;
-
-          if (!dataStatus.data_initialised) {
-            _getScripts = () => getScripts();
-            _getScreens = () => getScreens();
-            _getConfigKeys = () => getConfigKeys();
-            _getDiagnoses = () => getDiagnoses();
-          } else {
-            if (remoteDataActivityInfo && remoteDataActivityInfo.config_keys) {
-              const lastUpdatedRemote = remoteDataActivityInfo.config_keys.lastUpdateDate;
-              const lastUpdatedLocal = localDataActivityInfo.config_keys.lastUpdateDate;
-              if (lastUpdatedRemote !== lastUpdatedLocal) {
-                _getConfigKeys = () => getConfigKeys(lastUpdatedLocal ?
-                  { updatedAt: { $gte: lastUpdatedLocal } }
-                  :
-                  {});
-              }
-            }
-
-            if (remoteDataActivityInfo && remoteDataActivityInfo.scripts) {
-              const lastUpdatedRemote = remoteDataActivityInfo.scripts.lastUpdateDate;
-              const lastUpdatedLocal = localDataActivityInfo.scripts.lastUpdateDate;
-              if (lastUpdatedRemote !== lastUpdatedLocal) {
-                _getScripts = () => getScripts(lastUpdatedLocal ?
-                  { updatedAt: { $gte: lastUpdatedLocal } }
-                  :
-                  {});
-              }
-            }
-
-            if (remoteDataActivityInfo && remoteDataActivityInfo.screens &&
-              remoteDataActivityInfo.screens.count && !localDataActivityInfo.screens.count) {
-              const lastUpdatedRemote = remoteDataActivityInfo.screenss.lastUpdateDate;
-              const lastUpdatedLocal = localDataActivityInfo.screenss.lastUpdateDate;
-              if (lastUpdatedRemote !== lastUpdatedLocal) {
-                _getScreens = () => getScreens(lastUpdatedLocal ?
-                  { updatedAt: { $gte: lastUpdatedLocal } }
-                  :
-                  {});
-              }
-            }
-
-            if (remoteDataActivityInfo && remoteDataActivityInfo.scripts &&
-              remoteDataActivityInfo.scripts.lastDeleted.length) {
-              _deleteLocalScripts = () => deleteScripts(remoteDataActivityInfo.scripts.lastDeleted);
-            }
-
-            if (remoteDataActivityInfo && remoteDataActivityInfo.screens &&
-              remoteDataActivityInfo.screens.lastDeleted.length) {
-              _deleteLocalScreens = () => deleteScreens(remoteDataActivityInfo.screens.lastDeleted);
-            }
-
-            if (remoteDataActivityInfo && remoteDataActivityInfo.diagnoses &&
-              remoteDataActivityInfo.diagnoses.lastDeleted.length) {
-              _deleteLocalDiagnoses = () => deleteDiagnoses(remoteDataActivityInfo.diagnoses.lastDeleted);
-            }
-
-            if (remoteDataActivityInfo && remoteDataActivityInfo.config_keys &&
-              remoteDataActivityInfo.config_keys.lastDeleted.length) {
-              _deleteLocalConfigKeys = () => deleteConfigKeys(remoteDataActivityInfo.config_keys.lastDeleted);
-            }
-          }
-
-          if (data && data.event) {
-            const eventName = data.event.name;
-
-            if (eventName === 'create_config_keys') {
-              _getConfigKeys = () => getConfigKeys({
-                payload: { id: data.event.config_keys.map(s => s.id) } });
-            }
-            if (eventName === 'update_config_keys') {
-              _getConfigKeys = () => getConfigKeys({
-                payload: { id: data.event.config_keys.map(s => s.id) }
+      if (!dataStatus.data_initialised) {
+        return Promise.all([
+          getScripts(),
+          getScreens(),
+          getConfigKeys(),
+          getDiagnoses(),
+        ])
+          .catch(e => {
+            require('@/utils/logger')('ERROR: syncDatabase - if (!dataStatus.data_initialised), getRemoteDataActivityInfo()', e);
+            done(e);
+          })
+          .then(([{ scripts }, { screens }, { config_keys }, { diagnoses }]) => {
+            Promise.all([
+              insertConfigKeys(config_keys),
+              insertScripts(scripts),
+              insertScreens(screens),
+              insertDiagnoses(diagnoses)
+            ])
+              .catch(e => {
+                require('@/utils/logger')('ERROR: syncDatabase - updateDataStatus, insertConfigKeys, insertScripts, insertScreens, insertDiagnoses', e);
+                done(e);
+              })
+              .then((rslts) => {
+                const [insertConfigKeysRslts, insertScriptsRslts, insertScreensRslts, insertDiagnosesRslts] = rslts;
+                done(null, {
+                  insertConfigKeysRslts,
+                  insertScriptsRslts,
+                  insertScreensRslts,
+                  insertDiagnosesRslts,
+                });
               });
-            }
-            if (eventName === 'delete_config_keys') {
-              const _config_keys = data.event.config_keys || [];
-              if (_config_keys.length) {
-                _deleteLocalConfigKeys = () => deleteConfigKeys(_config_keys.map(s => ({ id: s.id })));
-              }
-            }
+          });
+      }
 
-            if (eventName === 'create_scripts') {
-              _getScripts = () => getScripts({
-                payload: { id: data.event.scripts.map(s => s.id) } });
-            }
-            if (eventName === 'update_scripts') {
-              _getScripts = () => getScripts({
-                payload: { id: data.event.scripts.map(s => s.id) }
-              });
-            }
-            if (eventName === 'delete_scripts') {
-              const _scripts = data.event.scripts || [];
-              if (_scripts.length) {
-                _deleteLocalScripts = () => deleteScripts(_scripts.map(s => ({ id: s.id })));
-              }
-            }
+      if (data && data.event) {
+        const eventName = data.event.name;
 
-            if (eventName === 'create_screens') {
-              _getScreens = () => getScreens({
-                payload: { id: data.event.screens.map(s => s.id) }
-              });
-            }
-            if (eventName === 'update_screens') {
-              _getScreens = () => getScreens({
-                payload: { id: data.event.screens.map(s => s.id) }
-              });
-            }
-            if (eventName === 'delete_screens') {
-              const _screens = data.event.screens || [];
-              if (_screens.length) {
-                _deleteLocalScreens = () => deleteScreens(_screens.map(s => ({ id: s.id })));
-              }
-            }
-
-            if (eventName === 'create_diagnoses') {
-              _getDiagnoses = () => getDiagnoses({
-                payload: { id: data.event.diagnoses.map(s => s.id) }
-              });
-            }
-            if (eventName === 'update_diagnoses') {
-              _getDiagnoses = () => getDiagnoses({
-                payload: { id: data.event.diagnoses.map(s => s.id) }
-              });
-            }
-            if (eventName === 'delete_diagnoses') {
-              const _diagnoses = data.event.diagnoses || [];
-              if (_diagnoses.length) {
-                _deleteLocalDiagnoses = () => deleteDiagnoses(_diagnoses.map(s => ({ id: s.id })));
-              }
-            }
-          }
-
-          Promise.all([
-            _getConfigKeys ? _getConfigKeys() : null,
-            _getScripts ? _getScripts() : null,
-            _getScreens ? _getScreens() : null,
-            _getDiagnoses ? _getDiagnoses() : null,
-            _deleteLocalDiagnoses ? _deleteLocalDiagnoses() : null,
-            _deleteLocalScripts ? _deleteLocalScripts() : null,
-            _deleteLocalScreens ? _deleteLocalScreens() : null,
-            _deleteLocalConfigKeys ? _deleteLocalConfigKeys() : null,
-          ])
+        const syncEvent = ({ eventName, collection, getter, setter }) => {
+          getter({ payload: { id: data.event[collection].map(s => s.id) } })
             .catch(e => {
-              require('@/utils/logger')('ERROR: syncDatabase - _getConfigKeys, _getScripts, _getScreens, _getDiagnoses, _deleteLocalDiagnoses, _deleteLocalScripts, _deleteLocalScreens, _deleteLocalConfigKeys', e);
+              require('@/utils/logger')(`ERROR: syncDatabase - if (eventName === "${eventName}")`, e);
               done(e);
             })
-            .then(([configKeysRslts, scriptsRslts, screensRslts, diagnosesRslts]) => {
-              const config_keys = configKeysRslts ? configKeysRslts.config_keys : [];
-              const scripts = scriptsRslts ? scriptsRslts.scripts : [];
-              const screens = screensRslts ? screensRslts.screens : [];
-              const diagnoses = diagnosesRslts ? diagnosesRslts.diagnoses : [];
-              // insert data into the local database
-
-              Promise.all([
-                updateDataStatus({
-                  data_initialised: true,
-                  last_sync_date: new Date().toString(),
-                  updatedAt: new Date().toString(),
-                }),
-                insertConfigKeys(config_keys),
-                insertScripts(scripts),
-                insertScreens(screens),
-                insertDiagnoses(diagnoses)
-              ])
+            .then(payload => {
+              setter(payload[collection])
                 .catch(e => {
-                  require('@/utils/logger')('ERROR: syncDatabase - updateDataStatus, insertConfigKeys, insertScripts, insertScreens, insertDiagnoses', e);
+                  require('@/utils/logger')(`ERROR: syncDatabase - if (eventName === "${eventName}")`, e);
                   done(e);
                 })
-                .then((rslts) => {
-                  const [, insertConfigKeys, insertScriptsRslts, insertScreensRslts, insertDiagnosesRslts] = rslts;
-                  done(null, {
-                    authenticatedUser,
-                    insertConfigKeys,
-                    insertScriptsRslts,
-                    insertScreensRslts,
-                    insertDiagnosesRslts,
-                    dataStatus: { ...dataStatus, data_initialised: true },
-                  });
-                });
+                .then(rslts => done(null, { rslts }));
             });
+        };
+
+        if ((eventName === 'create_config_keys') || (eventName === 'update_config_keys')) {
+          return syncEvent({
+            eventName,
+            collection: 'config_keys',
+            getter: getConfigKeys,
+            setter: insertConfigKeys,
+          });
+        }
+
+        if ((eventName === 'create_scripts') || (eventName === 'update_scripts')) {
+          return syncEvent({
+            eventName,
+            collection: 'scripts',
+            getter: getScripts,
+            setter: insertScripts,
+          });
+        }
+
+        if ((eventName === 'create_screens') || (eventName === 'update_screens')) {
+          return syncEvent({
+            eventName,
+            collection: 'screens',
+            getter: getScreens,
+            setter: insertScreens,
+          });
+        }
+
+        if ((eventName === 'update_diagnoses') || (eventName === 'create_diagnoses')) {
+          return syncEvent({
+            eventName,
+            collection: 'diagnoses',
+            getter: getDiagnoses,
+            setter: insertDiagnoses,
+          });
+        }
+
+        if (eventName === 'delete_scripts') {
+          const _scripts = data.event.scripts || [];
+          if (_scripts.length) {
+            return deleteScripts(_scripts.map(s => ({ id: s.id })))
+              .catch(e => {
+                require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_scripts")', e);
+                done(e);
+              })
+              .then(rslts => done(null, { rslts }));
+          }
+        }
+
+
+        if (eventName === 'delete_screens') {
+          const _screens = data.event.screens || [];
+          if (_screens.length) {
+            deleteScreens(_screens.map(s => ({ id: s.id })))
+              .catch(e => {
+                require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_screens")', e);
+                done(e);
+              })
+              .then(rslts => done(null, { rslts }));
+          }
+        }
+
+        if (eventName === 'delete_diagnoses') {
+          const _diagnoses = data.event.diagnoses || [];
+          if (_diagnoses.length) {
+            deleteDiagnoses(_diagnoses.map(s => ({ id: s.id })))
+              .catch(e => {
+                require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_diagnoses")', e);
+                done(e);
+              })
+              .then(rslts => done(null, { rslts }));
+          }
+        }
+
+        if (eventName === 'delete_config_keys') {
+          const _diagnoses = data.event.diagnoses || [];
+          if (_diagnoses.length) {
+            deleteConfigKeys(_diagnoses.map(s => ({ id: s.id })))
+              .catch(e => {
+                require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_config_keys")', e);
+                done(e);
+              })
+              .then(rslts => done(null, { rslts }));
+          }
+        }
+
+        return done();
+      }
+
+      if (!dataStatus.last_sync_date) return done();
+
+      syncRemoteData({ payload: { lastSyncDate: dataStatus.last_sync_date } })
+        .catch(e => {
+          require('@/utils/logger')('ERROR: syncDatabase - syncRemoteData', e);
+          done(e);
+        })
+        .then(payload => {
+          const { scripts, screens, config_keys, diagnoses } = payload;
+          const merge = (dataset1 = [], dataset2 = []) => [...dataset1, ...dataset2]
+            .reduce((acc, item) => {
+              return acc.map(item => item.id).indexOf(item.id) >= 0 ?
+                acc : [...acc, item];
+            }, []);
+
+          const scriptsToInsert = merge(scripts.lastUpdated, scripts.lastCreated);
+          const screensToInsert = merge(screens.lastUpdated, screens.lastCreated);
+          const diagnosesToInsert = merge(diagnoses.lastUpdated, diagnoses.lastCreated);
+          const keysToInsert = merge(config_keys.lastUpdated, config_keys.lastCreated);
+
+          Promise.all([
+            !scriptsToInsert.length ? null : insertScripts(scriptsToInsert),
+            !screensToInsert.length ? null : insertScreens(screensToInsert),
+            !diagnosesToInsert.length ? null : insertDiagnoses(diagnosesToInsert),
+            !keysToInsert.length ? null : insertConfigKeys(keysToInsert),
+            !screens.lastDeleted.length ? null : deleteScreens(screens.lastDeleted.map(s => ({ id: s.id }))),
+            !diagnoses.lastDeleted.length ? null : deleteDiagnoses(diagnoses.lastDeleted.map(s => ({ id: s.id }))),
+            !scripts.lastDeleted.length ? null : deleteScripts(scripts.lastDeleted.map(s => ({ id: s.id }))),
+            !config_keys.lastDeleted.length ? null : deleteConfigKeys(config_keys.lastDeleted.map(s => ({ id: s.id }))),
+          ])
+            .catch(e => {
+              require('@/utils/logger')('ERROR: syncDatabase - syncRemoteData(Promise.all)', e);
+              done(e);
+            })
+            .then(rslts => done(null, { rslts }));
         });
     });
 });

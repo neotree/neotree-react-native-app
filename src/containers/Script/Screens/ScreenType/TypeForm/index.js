@@ -15,18 +15,23 @@ import Time from './Time';
 const Form = ({ screen, value, context, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const { parseScreenCondition, state: { form } } = context;
+  const { parseScreenCondition, sanitizeCondition, state: { form } } = context;
 
-  const defaultValue = (metadata.fields || []).map(f => ({
+  const fields = metadata.fields || [];
+
+  const defaultValue = fields.map(f => ({
     value: null,
-    field: f
+    label: f.label,
+    key: f.key,
+    type: f.type,
+    dataType: f.dataType,
   }));
 
-  const [entry, setEntry] = React.useState(value || { value: defaultValue });
+  const [entry, setEntry] = React.useState(value || { values: defaultValue });
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
     ...prevState,
-    value: prevState.value.map((v, i) => {
+    values: prevState.values.map((v, i) => {
       if (i === index) return { ...v, ...newVal };
       return v;
     })
@@ -36,8 +41,10 @@ const Form = ({ screen, value, context, onChange }) => {
     let conditionMet = true;
 
     if (f.condition) {
-      let condition = parseScreenCondition(f.condition, [{ screen, entry }]);
+      let condition = parseScreenCondition(f.condition, [entry]);
       condition = parseScreenCondition(condition, form);
+      console.log(condition);
+      condition = sanitizeCondition(condition);
 
       try {
         conditionMet = eval(condition);
@@ -52,14 +59,15 @@ const Form = ({ screen, value, context, onChange }) => {
   };
 
   React.useEffect(() => {
-    const completed = entry.value.reduce((acc, { value, field }) => {
-      const conditionMet = evaluateCondition(field);
+    const completed = entry.values.reduce((acc, { value }, i) => {
+      const field = fields[i];
+      const conditionMet = evaluateCondition(fields[i]);
       if (conditionMet && !field.optional && !value) return false;
       // if (!(field.condition && field.optional && value)) acc = false;
       return acc;
     }, true);
 
-    const hasErrors = entry.value.filter(v => v.error).length;
+    const hasErrors = entry.values.filter(v => v.error).length;
 
     onChange(hasErrors || !completed ? undefined : entry);
   }, [entry]);
@@ -104,9 +112,9 @@ const Form = ({ screen, value, context, onChange }) => {
                   <Component
                     field={f}
                     conditionMet={conditionMet}
-                    value={entry.value[i].value}
-                    onChange={(v, error) => {
-                      _onChange(i, { value: v, error, field: f });
+                    value={entry.values[i].value}
+                    onChange={(v, error, valueText) => {
+                      _onChange(i, { error, value: v, valueText });
                     }}
                   />
                 );

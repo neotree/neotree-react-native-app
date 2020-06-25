@@ -3,12 +3,18 @@ import PropTypes from 'prop-types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform, View } from 'react-native';
 import moment from 'moment';
-import { Form, Item, Text } from 'native-base';
+import { Form, Item, Text, Icon } from 'native-base';
 
 const styles = {
   errorText: { color: '#b20008' },
+  text: { flex: 1, },
   disabledText: { color: '#ccc' },
-  formItem: { padding: 12 },
+  formItem: {
+    paddingVertical: 15,
+    paddingHorizontal: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 };
 
 const DatePicker = ({
@@ -50,10 +56,11 @@ const DatePicker = ({
           }}
         >
           <Text
-            style={[enabled ? null : styles.disabledText]}
+            style={[styles.text, enabled ? null : styles.disabledText]}
           >
             {value ? moment(value).format(mode === 'time' ? 'LT' : 'LL') : placeholder}
           </Text>
+          <Icon style={[enabled ? null : { color: '#ccc' }]} name="arrow-dropdown" />
         </Item>
       </Form>
 

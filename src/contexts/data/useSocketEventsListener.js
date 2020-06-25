@@ -1,9 +1,15 @@
 import React from 'react';
 // import { onAuthStateChanged } from '@/api/auth';
-import socket from '@/api/socket';
+import { startSocket } from '@/api/socket';
 
 export default ({ sync }, params = []) => {
+  sync = e => {
+    require('@/utils/logger')('socket event', e);
+    sync(e);
+  };
+
   React.useEffect(() => {
+    const socket = startSocket();
     // onAuthStateChanged(u => {
     //   sync({ name: 'authenticated_user', user: u });
     // });

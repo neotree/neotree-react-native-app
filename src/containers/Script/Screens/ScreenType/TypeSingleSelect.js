@@ -7,32 +7,45 @@ import Text from '@/components/Text';
 const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const [entry, setEntry] = React.useState(value || {});
+  const [entry, setEntry] = React.useState(value || { values: [] });
+
+  const _value = entry.values[0] ? entry.values[0].value : null;
 
   React.useEffect(() => {
-    onChange(!entry.value ? null : entry);
+    onChange(!entry.values.length ? undefined : entry);
   }, [entry]);
 
   return (
     <>
       <View>
-        {(metadata.items || []).map(item => (
-          <ListItem
-            key={item.id}
-            selected={entry.value === item.id}
-            onPress={() => setEntry({ value: item.id, item })}
-          >
-            <Left>
-              <Text>{item.label}</Text>
-            </Left>
-            <Right>
-              <Radio
-                selected={entry.value === item.id}
-                onPress={() => setEntry({ value: item.id })}
-              />
-            </Right>
-          </ListItem>
-        ))}
+        {(metadata.items || []).map(item => {
+          const onChange = () => setEntry({
+            values: [{
+              value: item.id,
+              label: item.label,
+              key: metadata.key,
+              type: item.type,
+              dataType: item.dataType,
+            }]
+          });
+          return (
+            <ListItem
+              key={item.id}
+              selected={_value === item.id}
+              onPress={() => onChange()}
+            >
+              <Left>
+                <Text>{item.label}</Text>
+              </Left>
+              <Right>
+                <Radio
+                  selected={_value === item.id}
+                  onPress={() => onChange()}
+                />
+              </Right>
+            </ListItem>
+          );
+        })}
       </View>
     </>
   );

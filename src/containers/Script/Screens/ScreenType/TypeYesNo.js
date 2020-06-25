@@ -7,10 +7,10 @@ import Text from '@/components/Text';
 const YesNo = ({ screen, onChange, value }) => {
   const metadata = screen.data.metadata || {};
 
-  const [entry, setEntry] = React.useState(value || {});
+  const [entry, setEntry] = React.useState(value || { values: [] });
 
   React.useEffect(() => {
-    onChange(!entry.value ? null : entry);
+    onChange(!entry.values.length ? undefined : entry);
   }, [entry]);
 
   const opts = [
@@ -18,28 +18,41 @@ const YesNo = ({ screen, onChange, value }) => {
     { value: 'No', label: metadata.negativeLabel || 'No' },
   ];
 
+  const _value = entry.values[0] ? entry.values[0].value : null;
+
   return (
     <>
       <View>
         {/*<Text>{metadata.label}</Text>*/}
 
-        {opts.map(opt => (
-          <ListItem
-            key={opt.value}
-            selected={entry.value === opt.value}
-            onPress={() => setEntry({ value: opt.value })}
-          >
-            <Left>
-              <Text>{opt.label}</Text>
-            </Left>
-            <Right>
-              <Radio
-                selected={entry.value === opt.value}
-                onPress={() => setEntry({ value: opt.value })}
-              />
-            </Right>
-          </ListItem>
-        ))}
+        {opts.map(opt => {
+          const onChange = () => setEntry({
+            values: [{
+              value: opt.value,
+              key: metadata.key || opt.key,
+              label: opt.label,
+              type: metadata.dataType || opt.type,
+              dataType: opt.dataType,
+            }],
+          });
+          return (
+            <ListItem
+              key={opt.value}
+              selected={_value === opt.value}
+              onPress={() => onChange()}
+            >
+              <Left>
+                <Text>{opt.label}</Text>
+              </Left>
+              <Right>
+                <Radio
+                  selected={_value === opt.value}
+                  onPress={() => onChange()}
+                />
+              </Right>
+            </ListItem>
+          );
+        })}
       </View>
     </>
   );
