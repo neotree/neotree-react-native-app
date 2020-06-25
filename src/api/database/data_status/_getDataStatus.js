@@ -2,7 +2,6 @@ import getRandomString from '@/utils/getRandomString';
 import NetInfo from '@react-native-community/netinfo';
 import getDeviceInfo from '@/utils/getDeviceInfo';
 import db from '../db';
-import createTablesIfNotExist from '../_createTablesIfNotExist';
 import makeApiCall from '../../webeditor/makeApiCall';
 import updateDataStatus from './_updateDataStatus';
 
@@ -115,12 +114,4 @@ const getDataStatus = () => new Promise((resolve, reject) => {
     });
 });
 
-export default () => new Promise((resolve, reject) => {
-  createTablesIfNotExist()
-    .catch(reject)
-    .then(() => {
-      getDataStatus()
-        .then(resolve)
-        .catch(reject);
-    });
-});
+export default () => getDataStatus();
