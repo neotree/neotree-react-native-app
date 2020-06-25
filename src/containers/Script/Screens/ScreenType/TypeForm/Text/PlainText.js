@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Input, Form, Item } from 'native-base';
 import Text from '@/components/Text';
 
-const FieldText = ({ field, onChange, value, conditionMet, }) => {
+const PlainText = ({ field, onChange, value, conditionMet, }) => {
   const [error] = React.useState(null);
 
   return (
@@ -14,7 +14,7 @@ const FieldText = ({ field, onChange, value, conditionMet, }) => {
             error ? { color: '#b20008' } : {},
             !conditionMet ? { color: '#999' } : {},
           ]}
-        >{field.label}</Text>
+        >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular error={error ? true : false}>
           <Input
             editable={conditionMet}
@@ -25,7 +25,7 @@ const FieldText = ({ field, onChange, value, conditionMet, }) => {
               onChange(value);
             }}
             // placeholder={field.label}
-            label={`${field.label}${field.optional ? '' : ' *'}`}
+            // label={`${field.label}${field.optional ? '' : ' *'}`}
           />
         </Item>
       </Form>
@@ -41,11 +41,11 @@ const FieldText = ({ field, onChange, value, conditionMet, }) => {
   );
 };
 
-FieldText.propTypes = {
+PlainText.propTypes = {
   field: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.any,
   conditionMet: PropTypes.bool,
 };
 
-export default FieldText;
+export default PlainText;

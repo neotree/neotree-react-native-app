@@ -43,22 +43,24 @@ const Timer = ({ screen, value, onChange }) => {
 
   const [timerIsRunning, setTimerIsRunning] = React.useState(false);
   const [seconds, setSeconds] = React.useState(metadata.timerValue || 0);
-  const [entry, setEntry] = React.useState(value || {});
   const [formError, setFormError] = React.useState(null);
+  const [entry, setEntry] = React.useState(value || { values: [] });
+
+  const _value = entry.values[0] ? entry.values[0].value : null;
 
   React.useEffect(() => {
-    onChange(formError || !entry.value ? undefined : entry);
-  }, [formError, entry]);
+    onChange(!entry.values.filter(v => v).length ? undefined : entry);
+  }, [entry]);
 
   React.useEffect(() => {
-    if (entry.value) {
-      const v = Number(entry.value);
+    if (_value) {
+      const v = Number(_value);
       let e = null;
       if (metadata.maxValue && (v > metadata.maxValue)) e = `Max value ${metadata.maxValue}`;
       if (metadata.minValue && (v < metadata.minValue)) e = `Min value ${metadata.minValue}`;
       setFormError(e);
     }
-  }, [entry]);
+  }, [_value]);
 
   React.useEffect(() => {
     let timeOut = null;
@@ -114,11 +116,19 @@ const Timer = ({ screen, value, onChange }) => {
               <Item regular error={formError ? true : false}>
                 <Input
                   label={metadata.label}
-                  value={entry.value || ''}
-                  defaultValue={entry.value || ''}
+                  value={_value || ''}
+                  defaultValue={_value || ''}
                   onChange={e => {
                     const value = e.nativeEvent.text;
-                    setEntry({ value });
+                    setEntry({
+                      values: [{
+                        value,
+                        label: metadata.label,
+                        key: metadata.key,
+                        type: metadata.type || metadata.dataType, 
+                        dataType: metadata.dataType,
+                      }]
+                    });
                   }}
                   keyboardType="numeric"
                 />
@@ -146,14 +156,14 @@ const Timer = ({ screen, value, onChange }) => {
           </>
         )}
 
-        {!entry.value ? null : (
+        {!_value ? null : (
           <>
             <Divider spacing={2} border={false} />
 
             <Text
               style={[styles.value]}
             >
-              {Number(entry.value) * Number(metadata.multiplier || 1)}
+              {Number(_value) * Number(metadata.multiplier || 1)}
             </Text>
           </>
         )}

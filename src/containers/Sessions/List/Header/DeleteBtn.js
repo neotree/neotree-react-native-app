@@ -21,9 +21,8 @@ const DeleteBtn = () => {
             i => {
               const incompleted = sessions.filter(s => !s.data.completed_at)
                 .map(s => s.id);
-              const completed = sessions.filter(s => s.data.completed_at)
-                .map(s => s.id);
-              deleteSessions(i === 0 ? incompleted : completed);
+              const all = sessions.map(s => s.id);
+              deleteSessions(i === 0 ? incompleted : all);
             }
           );
         }}

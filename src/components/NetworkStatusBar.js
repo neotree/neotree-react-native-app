@@ -47,7 +47,8 @@ const NetworkStatusBar = () => {
           style={[
             {
               color: isOnline ? '#fff' : '#ccc',
-              fontSize: 15
+              fontSize: 15,
+              textAlign: 'center',
             }
           ]}
         >
