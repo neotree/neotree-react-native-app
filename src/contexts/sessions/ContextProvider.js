@@ -2,6 +2,7 @@ import React from 'react';
 import Context from './Context';
 import _getSessions from './_getSessions';
 import _deleteSessions from './_deleteSessions';
+import _export from './_export';
 
 function Provider(props) {
   const [state, _setState] = React.useState({
@@ -46,6 +47,7 @@ function Provider(props) {
         getSessions,
         selectItems,
         deleteSessions,
+        ..._export({ state, setState }),
       }}
     />
   );
