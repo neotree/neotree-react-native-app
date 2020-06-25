@@ -3,9 +3,9 @@ import moment from 'moment';
 
 export default form => {
   const entries = form
-    .filter(({ entry }) => !entry.not_required)
-    .map(({ screen, entry: { value } }) => {
-      const metadata = screen.data.metadata || {};
+    .filter(({ values }) => values.length)
+    .map(({ screen, values }) => {
+      const metadata = screen.metadata;
 
       let entries = null;
 
@@ -13,41 +13,34 @@ export default form => {
         case 'yesno':
           entries = [{
             label: metadata.label,
-            values: [{ text: value, key: screen.id }]
+            values,
           }];
           break;
         case 'checklist':
           entries = [{
             label: metadata.label,
-            values: value.map(({ item }) => ({
-              key: item.key,
-              text: item.label,
-            }))
+            values,
           }];
           break;
         case 'multi_select':
           entries = [{
             label: metadata.label,
-            values: value.map(({ item }) => ({
-              key: item.id,
-              text: item.label,
-            }))
+            values,
           }];
           break;
         case 'single_select':
           entries = [{
             label: metadata.label,
             values: [{
-              text: (metadata.items || []).filter(item => item.id === value)
-                .map(item => item.label)[0],
-              key: screen.id
+              key: screen.id,
+              values,
             }]
           }];
           break;
         case 'timer':
           entries = [{
             label: metadata.label,
-            values: [{ text: value, key: screen.id }]
+            values,
           }];
           break;
         case 'progress':
@@ -57,10 +50,12 @@ export default form => {
           entries = null;
           break;
         case 'form':
-          entries = value.map(({ value, field }) => {
+          entries = values.map(entry => {
+            const { value, type, label, valueText, } = entry;
+
             let text = value;
 
-            switch (field.type) {
+            switch (type) {
               case fieldsTypes.NUMBER:
                 // do nothing
                 break;
@@ -71,16 +66,7 @@ export default form => {
                 text = value ? moment(value).format('DD MMM, YYYY HH:MM') : 'N/A';
                 break;
               case fieldsTypes.DROPDOWN:
-                text = (field.values || '').split('\n')
-                  .map((v = '') => v.trim())
-                  .filter(v => v)
-                  .map(v => {
-                    v = v.split(',');
-                    return { value: v[0], label: v[1] };
-                  })
-                  .filter(v => v.value === value)
-                  .map(v => v.label)[0];
-                // do nothing
+                text = valueText || value;
                 break;
               case fieldsTypes.PERIOD:
                 // do nothing
@@ -96,14 +82,10 @@ export default form => {
             }
 
             return {
-              label: field.label,
-              values: [{
-                key: field.key,
-                text,
-              }]
+              label,
+              values: [{ ...entry, text }]
             };
           });
-
           break;
         default:
           // do nothing

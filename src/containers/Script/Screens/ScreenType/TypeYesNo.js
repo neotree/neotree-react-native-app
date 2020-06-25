@@ -26,11 +26,19 @@ const YesNo = ({ screen, onChange, value }) => {
         {/*<Text>{metadata.label}</Text>*/}
 
         {opts.map(opt => {
+          const onChange = () => setEntry({
+            values: [{
+              value: opt.value,
+              key: opt.key || metadata.key,
+              label: opt.label,
+              type: opt.dataType || opt.type,
+            }],
+          });
           return (
             <ListItem
               key={opt.value}
               selected={_value === opt.value}
-              onPress={() => setEntry({ value: opt.value })}
+              onPress={() => onChange()}
             >
               <Left>
                 <Text>{opt.label}</Text>
@@ -38,7 +46,7 @@ const YesNo = ({ screen, onChange, value }) => {
               <Right>
                 <Radio
                   selected={_value === opt.value}
-                  onPress={() => setEntry({ values: [{ value: opt.value, key: opt.key || metadata.key, label: opt.label, type: opt.dataType || opt.type, }], })}
+                  onPress={() => onChange()}
                 />
               </Right>
             </ListItem>

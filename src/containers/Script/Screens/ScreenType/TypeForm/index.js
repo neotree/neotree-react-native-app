@@ -23,7 +23,8 @@ const Form = ({ screen, value, context, onChange }) => {
     value: null,
     label: f.label,
     key: f.key,
-    type: f.dataType || f.type,
+    type: f.type,
+    dataType: f.dataType,
   }));
 
   const [entry, setEntry] = React.useState(value || { values: defaultValue });
@@ -110,8 +111,8 @@ const Form = ({ screen, value, context, onChange }) => {
                     field={f}
                     conditionMet={conditionMet}
                     value={entry.values[i].value}
-                    onChange={(v, error) => {
-                      _onChange(i, { error, value: v });
+                    onChange={(v, error, valueText) => {
+                      _onChange(i, { error, value: v, valueText });
                     }}
                   />
                 );
