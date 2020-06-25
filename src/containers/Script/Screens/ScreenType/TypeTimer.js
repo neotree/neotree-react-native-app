@@ -120,7 +120,15 @@ const Timer = ({ screen, value, onChange }) => {
                   defaultValue={_value || ''}
                   onChange={e => {
                     const value = e.nativeEvent.text;
-                    setEntry({ values: [{ value, label: metadata.label, key: metadata.key, type: metadata.dataType || metadata.type, }] });
+                    setEntry({
+                      values: [{
+                        value,
+                        label: metadata.label,
+                        key: metadata.key,
+                        type: metadata.type || metadata.dataType, 
+                        dataType: metadata.dataType,
+                      }]
+                    });
                   }}
                   keyboardType="numeric"
                 />

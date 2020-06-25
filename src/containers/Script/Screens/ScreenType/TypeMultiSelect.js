@@ -27,11 +27,20 @@ const MultiSelect = ({ screen, value, onChange }) => {
               const exclusives = metadata.items
                 .filter(item => item.exclusive)
                 .map(item => item.id);
+
+              const _entry = {
+                value,
+                label: item.label,
+                key: metadata.key || item.id,
+                type: item.type,
+                dataType: item.dataType,
+              };
+
               if (item.exclusive) {
                 setEntry(entry => {
                   return {
                     ...entry,
-                    values: _checked ? [{ value, label: item.label, key: item.id, type: item.dataType || item.type, }] : []
+                    values: _checked ? [_entry] : []
                   };
                 });
               } else {
@@ -40,7 +49,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
                     ...entry,
                     values: (
                       _checked ?
-                        [...entry.values, { value, label: item.label, key: item.id, }]
+                        [...entry.values, _entry]
                         :
                         entry.values.filter(s => s.value !== value)
                     ).filter(s => exclusives.indexOf(s.value) < 0)

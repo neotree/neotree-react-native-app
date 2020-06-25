@@ -29,9 +29,10 @@ const YesNo = ({ screen, onChange, value }) => {
           const onChange = () => setEntry({
             values: [{
               value: opt.value,
-              key: opt.key || metadata.key,
+              key: metadata.key || opt.key,
               label: opt.label,
-              type: opt.dataType || opt.type,
+              type: metadata.dataType || opt.type,
+              dataType: opt.dataType,
             }],
           });
           return (
