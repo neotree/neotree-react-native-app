@@ -1,5 +1,6 @@
 import React from 'react';
-import { getDataStatus, syncDatabase } from '@/api/database';
+import { getAuthenticatedUser } from '@/api/auth';
+import { syncDatabase, createTablesIfNotExist } from '@/api/database';
 import { useNetworkContext } from '@/contexts/network';
 import Context from './Context';
 import useSocketEventsListener from './useSocketEventsListener';
@@ -11,7 +12,6 @@ export default function Provider(props) {
     loadingDataStatus: false,
     dataStatus: null,
     syncingData: false,
-    dataSynced: false,
     lastDataSyncEvent: null,
     syncError: null,
   });
@@ -20,58 +20,65 @@ export default function Provider(props) {
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
-  const { dataStatus, canSync, authenticatedUserInitialised, dataSynced } = state;
+  const { dataStatus, authenticatedUserInitialised, authenticatedUser } = state;
 
   const sync = (event, callback) => {
-    if (dataStatus) {
+    const u = event && event.name === 'authenticated_user' ? event.user : authenticatedUser;
+    setState({ syncingData: true, authenticatedUser: u, });
+
+    const done = (syncError, syncRslts = {}) => {
+      if (callback) callback(syncError, syncRslts);
+
       setState({
-        syncingData: true,
-        dataSynced: dataStatus.data_initialised
+        syncingData: false,
+        lastDataSyncEvent: event,
+        syncError,
+        dataStatus: syncRslts.dataStatus,
+        authenticatedUser: syncRslts.authenticatedUser,
+        authenticatedUserInitialised: true,
       });
+    };
 
-      const done = (syncError, syncRslts = {}) => {
-        if (callback) callback(syncError, syncRslts);
-
-        setState({
-          syncingData: false,
-          dataSynced: true,
-          lastDataSyncEvent: event,
-          syncError,
-          dataStatus: syncRslts.dataStatus || dataStatus,
-          authenticatedUser: syncRslts.authenticatedUser,
-          authenticatedUserInitialised: true,
-        });
-      };
-
-      syncDatabase({ event })
-        .then(rslts => done(null, rslts))
-        .catch(done);
-    }
+    syncDatabase({ event })
+      .then(rslts => done(null, rslts))
+      .catch(done);
   };
 
   React.useEffect(() => {
-    setState({ loadingDataStatus: true });
-
-    getDataStatus()
-      .then(dataStatus => {
-        setState({
-          dataStatus,
-          canSync: true,
-          loadingDataStatus: false,
-        });
+    createTablesIfNotExist()
+      .catch(e => {
+        require('@/utils/logger')('ERROR: createTablesIfNotExist', e);
+        setState({ createTablesError: e });
       })
-      .catch(e => setState({
-        loadDataStatusError: e,
-        loadingDataStatus: false,
-      }));
+      .then(() => {
+        setState({ loadingAuthenticatedUser: true });
+
+        getAuthenticatedUser()
+          .then(({ user }) => {
+            setState({
+              authenticatedUser: user,
+              loadingAuthenticatedUser: false,
+              authenticatedUserInitialised: true,
+            });
+            if (user) sync();
+          })
+          .catch(e => setState({
+            loadAuthenticatedUserError: e,
+            loadingAuthenticatedUser: false,
+            authenticatedUserInitialised: true,
+          }));
+      });
   }, []);
 
-  React.useEffect(() => { sync(); }, [canSync, networkState]);
+  React.useEffect(() => { if (authenticatedUser) sync(); }, [networkState]);
 
   useSocketEventsListener({ sync, state, setState });
 
   const isDataReady = () => {
-    return dataSynced && authenticatedUserInitialised;
+    return authenticatedUser ?
+      dataStatus ? dataStatus.data_initialised : false
+      :
+      authenticatedUserInitialised;
   };
 
   return (
