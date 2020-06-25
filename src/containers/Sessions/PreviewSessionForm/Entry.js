@@ -12,7 +12,7 @@ const Entry = ({ label, values }) => { // eslint-disable-line
           <Text
             key={v.key}
             style={{ color: '#999' }}
-          >{v.text}</Text>
+          >{v.text || v.valueText || v.label || v.value}</Text>
         );
       })}
       <Divider spacing={2} />
@@ -22,10 +22,7 @@ const Entry = ({ label, values }) => { // eslint-disable-line
 
 Entry.propTypes = {
   label: PropTypes.string,
-  values: PropTypes.arrayOf(PropTypes.shape({
-    text: PropTypes.string,
-    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
-  }))
+  values: PropTypes.array,
 };
 
 export default Entry;

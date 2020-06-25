@@ -5,8 +5,8 @@ import NUID from './NUID';
 
 const FieldText = props => {
   const { field } = props;
-
-  const isNeotreeID = field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
+  const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') ||
+    field.key.match(new RegExp('neotree', 'gi'));
 
   return (
     <>
