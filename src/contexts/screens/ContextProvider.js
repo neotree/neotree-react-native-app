@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import useRouter from '@/utils/useRouter';
 import { useScriptContext } from '@/contexts/script';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
@@ -15,7 +16,7 @@ import _getLastScreen from './_getLastScreen';
 import _canSave from './_canSave';
 import _saveForm from './_saveForm';
 
-export default function Provider(props) {
+export default function Provider({ children }) {
   const router = useRouter();
   const { location } = router;
   const { scriptId, screenId } = router.match.params;
@@ -106,7 +107,6 @@ export default function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         state,
         setState,
@@ -125,6 +125,10 @@ export default function Provider(props) {
         canSave,
         saveForm,
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+};

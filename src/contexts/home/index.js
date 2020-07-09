@@ -8,7 +8,7 @@ export { Provider };
 export function provideHomeContext(Component) {
   return function HomeContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

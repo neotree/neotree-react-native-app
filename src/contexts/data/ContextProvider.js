@@ -1,11 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { getAuthenticatedUser } from '@/api/auth';
 import { syncDatabase, createTablesIfNotExist } from '@/api/database';
 import { useNetworkContext } from '@/contexts/network';
 import Context from './Context';
 import useSocketEventsListener from './useSocketEventsListener';
 
-export default function Provider(props) {
+export default function Provider({ children, socket }) {
   const networkState = useNetworkContext();
 
   const [state, _setState] = React.useState({
@@ -72,7 +73,7 @@ export default function Provider(props) {
 
   React.useEffect(() => { if (authenticatedUser) sync(); }, [networkState]);
 
-  useSocketEventsListener({ sync, state, setState });
+  useSocketEventsListener({ sync, socket });
 
   const isDataReady = () => {
     return authenticatedUser ?
@@ -83,13 +84,17 @@ export default function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         sync,
         state,
         setState,
         dataIsReady: isDataReady(),
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+  socket: PropTypes.object.isRequired,
+};

@@ -8,7 +8,7 @@ export { Provider };
 export function provideNetworkContext(Component) {
   return function NetworkContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

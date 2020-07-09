@@ -1,10 +1,11 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Context from './Context';
 import _getSessions from './_getSessions';
 import _deleteSessions from './_deleteSessions';
 import _export from './_export';
 
-function Provider(props) {
+function Provider({ children }) {
   const [state, _setState] = React.useState({
     sessions: [],
     canSelectItems: false,
@@ -40,7 +41,6 @@ function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         state,
         setState,
@@ -49,8 +49,12 @@ function Provider(props) {
         deleteSessions,
         ..._export({ state, setState }),
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+};
 
 export default Provider;

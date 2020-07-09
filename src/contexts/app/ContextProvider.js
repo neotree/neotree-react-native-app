@@ -1,11 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import copy from '@/constants/copy';
 import Context from './Context';
 import { useDataContext } from '../data';
 
-function Provider(props) {
+function Provider({ children, socket }) {
   const {
     dataIsReady,
     state: {
@@ -52,18 +53,23 @@ function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         state,
         setState,
         displayOverlayLoader,
+        socket,
         authenticatedUser,
         authenticatedUserInitialised,
         appIsReady: isAppReady(),
         splashScreen: getSplashScreenInfo(),
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+  socket: PropTypes.object.isRequired,
+};
 
 export default Provider;
