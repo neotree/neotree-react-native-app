@@ -30,17 +30,17 @@ export default (data = {}) => new Promise((resolve, reject) => {
     .then(([network, dataStatus, authenticated]) => {
       const authenticatedUser = authenticated ? authenticated.user : null;
 
-      const canSync = network.isInternetReachable && authenticatedUser;
+      const canSync = dataStatus && network.isInternetReachable && authenticatedUser;
+      
+      const _updateDataStatus = () => updateDataStatus({
+        data_initialised: true,
+        last_sync_date: new Date().toString(),
+        updatedAt: new Date().toString(),
+      });
 
-      const done = (err, rslts) => {
+      const done = (err, rslts, cb) => {
         if (err) return reject(err);
-        if (!err) {
-          updateDataStatus({
-            data_initialised: true,
-            last_sync_date: new Date().toString(),
-            updatedAt: new Date().toString(),
-          });
-        }
+        if (!err && cb) cb();
         resolve({
           ...rslts,
           authenticatedUser,
@@ -48,7 +48,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
         });
       };
 
-      if (!canSync) return done(null);
+      if (!canSync) return done();
 
       if (!dataStatus.data_initialised) {
         return Promise.all([
@@ -79,7 +79,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
                   insertScriptsRslts,
                   insertScreensRslts,
                   insertDiagnosesRslts,
-                });
+                }, _updateDataStatus);
               });
           });
       }
@@ -99,7 +99,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
                   require('@/utils/logger')(`ERROR: syncDatabase - if (eventName === "${eventName}")`, e);
                   done(e);
                 })
-                .then(rslts => done(null, { rslts }));
+                .then(rslts => done(null, { rslts }, _updateDataStatus));
             });
         };
 
@@ -147,7 +147,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
                 require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_scripts")', e);
                 done(e);
               })
-              .then(rslts => done(null, { rslts }));
+              .then(rslts => done(null, { rslts }, _updateDataStatus));
           }
         }
 
@@ -172,7 +172,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
                 require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_diagnoses")', e);
                 done(e);
               })
-              .then(rslts => done(null, { rslts }));
+              .then(rslts => done(null, { rslts }, _updateDataStatus));
           }
         }
 
@@ -184,7 +184,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
                 require('@/utils/logger')('ERROR: syncDatabase - if (eventName === "delete_config_keys")', e);
                 done(e);
               })
-              .then(rslts => done(null, { rslts }));
+              .then(rslts => done(null, { rslts }, _updateDataStatus));
           }
         }
 
@@ -225,7 +225,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
               require('@/utils/logger')('ERROR: syncDatabase - syncRemoteData(Promise.all)', e);
               done(e);
             })
-            .then(rslts => done(null, { rslts }));
+            .then(rslts => done(null, { rslts }, _updateDataStatus));
         });
     });
 });
