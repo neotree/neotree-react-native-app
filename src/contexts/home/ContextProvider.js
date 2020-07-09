@@ -1,7 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Context from './Context';
 
-export default function Provider(props) {
+export default function Provider({ children }) {
   const [state, _setState] = React.useState({});
 
   const setState = s => _setState(
@@ -10,11 +11,14 @@ export default function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         state,
         setState,
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+};

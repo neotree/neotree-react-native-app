@@ -10,7 +10,7 @@ export { Provider };
 export function provideAppContext(Component) {
   return function AppContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

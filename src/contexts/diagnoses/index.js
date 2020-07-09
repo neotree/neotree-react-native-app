@@ -8,7 +8,7 @@ export { Provider };
 export function provideDiagnosesContext(Component) {
   return function DiagnosesContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

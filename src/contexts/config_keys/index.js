@@ -8,7 +8,7 @@ export { Provider };
 export function provideConfigKeysContext(Component) {
   return function ConfigKeysContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );
