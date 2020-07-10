@@ -2,7 +2,7 @@ import React from 'react';
 // import { onAuthStateChanged } from '@/api/auth';
 import { useDataContext } from './Context';
 
-export default ({ sync: _sync, socket }, params = []) => {
+export default ({ sync: _sync, socket }, params) => {
   const sync = e => {
     require('@/utils/logger')('socket event', e);
     _sync(e);

@@ -1,5 +1,11 @@
 import makeApiCall from './makeApiCall';
 
-export const getScript = options => makeApiCall('/get-script', options);
+export const getScript = (body = {}, reqOpts = {}) => makeApiCall('/get-script', {
+    body,
+    ...reqOpts,
+});
 
-export const getScripts = options => makeApiCall('/get-scripts', options);
+export const getScripts = (body = {}, reqOpts = {}) => makeApiCall('/get-scripts', {
+    body,
+    ...reqOpts,
+});

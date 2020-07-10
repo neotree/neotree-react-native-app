@@ -11,10 +11,6 @@ import firebaseConfig from './config/firebase.config';
 const socket = io(apiConfig.host);
 firebase.initializeApp(firebaseConfig);
 
-socket.on('update_scripts', data => {
-  console.log(data); // { scripts: [{ id: 1 }] }
-});
-
 const App = () => {
   return (
     <>

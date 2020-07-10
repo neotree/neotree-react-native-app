@@ -73,7 +73,7 @@ export default function Provider({ children, socket }) {
 
   React.useEffect(() => { if (authenticatedUser) sync(); }, [networkState]);
 
-  useSocketEventsListener({ sync, socket });
+  useSocketEventsListener({ sync, socket }, [authenticatedUser]);
 
   const isDataReady = () => {
     return authenticatedUser ?

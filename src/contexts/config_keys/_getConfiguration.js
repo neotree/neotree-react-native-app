@@ -7,11 +7,11 @@ export default ({ setState }) => (payload, opts = {}) => {
   });
 
   getConfiguration({ ...payload })
-    .then(payload => {
+    .then(res => {
       setState({
-        configuration: { ...(payload.configuration || {}).data },
+        configuration: { ...(res.configuration || {}).data },
         configKeysInitialised: true,
-        loadConfigurationError: payload.error,
+        loadConfigurationError: res.error,
         loadingConfiguration: false,
       });
     })
