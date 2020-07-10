@@ -1,7 +1,7 @@
 import db from '../db';
 
 export default (options = {}) => new Promise((resolve, reject) => {
-  const { ..._where } = options.payload || {};
+  const { ..._where } = options || {};
 
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');

@@ -10,10 +10,10 @@ export default ({ state, setState }) => (payload, opts = {}) => {
   });
 
   saveConfiguration(configuration)
-    .then(payload => {
+    .then(res => {
       setState({
         configKeysInitialised: true,
-        saveConfigurationError: payload.error,
+        saveConfigurationError: res.error,
         savingConfiguration: false,
       });
     })

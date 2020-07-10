@@ -12,12 +12,12 @@ export default ({
     // screensInitialised: false
   });
 
-  getScreens({ payload: { script_id: scriptId, ...payload } })
-    .then(payload => {
+  getScreens({ script_id: scriptId, ...payload })
+    .then(res => {
       setState({
-        screens: payload.screens || [],
+        screens: res.screens || [],
         screensInitialised: true,
-        loadScreensError: payload.error,
+        loadScreensError: res.error,
         loadingScreens: false,
       });
     })

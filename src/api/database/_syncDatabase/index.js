@@ -14,8 +14,6 @@ import { syncData as syncRemoteData } from '../../webeditor/syncData';
 import { getDataStatus, updateDataStatus } from '../data_status';
 
 export default (data = {}) => new Promise((resolve, reject) => {
-  require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
-
   Promise.all([
     NetInfo.fetch(), // check internet connection
 
@@ -49,6 +47,8 @@ export default (data = {}) => new Promise((resolve, reject) => {
       };
 
       if (!canSync) return done();
+
+      require('@/utils/logger')('syncDatabase', `${data ? JSON.stringify(data) : ''}`);
 
       if (!dataStatus.data_initialised) {
         return Promise.all([
@@ -88,13 +88,13 @@ export default (data = {}) => new Promise((resolve, reject) => {
         const eventName = data.event.name;
 
         const syncEvent = ({ eventName, collection, getter, setter }) => {
-          getter({ payload: { id: data.event[collection].map(s => s.id) } })
+          getter({ id: data.event[collection].map(s => s.id) })
             .catch(e => {
               require('@/utils/logger')(`ERROR: syncDatabase - if (eventName === "${eventName}")`, e);
               done(e);
             })
-            .then(payload => {
-              setter(payload[collection])
+            .then(res => {
+              setter(res[collection])
                 .catch(e => {
                   require('@/utils/logger')(`ERROR: syncDatabase - if (eventName === "${eventName}")`, e);
                   done(e);
@@ -193,13 +193,13 @@ export default (data = {}) => new Promise((resolve, reject) => {
 
       if (!dataStatus.last_sync_date) return done();
 
-      syncRemoteData({ payload: { lastSyncDate: dataStatus.last_sync_date } })
+      syncRemoteData({ lastSyncDate: dataStatus.last_sync_date })
         .catch(e => {
           require('@/utils/logger')('ERROR: syncDatabase - syncRemoteData', e);
           done(e);
         })
-        .then(payload => {
-          const { scripts, screens, config_keys, diagnoses } = payload;
+        .then(res => {
+          const { scripts, screens, config_keys, diagnoses } = res;
           const merge = (dataset1 = [], dataset2 = []) => [...dataset1, ...dataset2]
             .reduce((acc, item) => {
               return acc.map(item => item.id).indexOf(item.id) >= 0 ?

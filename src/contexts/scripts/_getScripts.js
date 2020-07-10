@@ -7,11 +7,11 @@ export default ({ setState }) => (payload, opts = {}) => {
   });
 
   getScripts({ ...payload })
-    .then(payload => {
+    .then(res => {
       setState({
-        scripts: payload.scripts || [],
+        scripts: res.scripts || [],
         scriptsInitialised: true,
-        loadScriptsError: payload.error,
+        loadScriptsError: res.error,
         loadingScripts: false,
       });
     })

@@ -1,3 +1,6 @@
 import makeApiCall from './makeApiCall';
 
-export const syncData = options => makeApiCall('/sync-data', options);
+export const syncData = (body = {}, reqOpts = {}) => makeApiCall('/sync-data', {
+    body,
+    ...reqOpts,
+});

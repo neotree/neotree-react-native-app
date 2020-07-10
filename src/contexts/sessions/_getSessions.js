@@ -3,9 +3,9 @@ import { getSessions } from '@/api/sessions';
 export default ({ setState }) => () => {
   setState({ loadingSessions: true, loadSessionsError: null });
   getSessions()
-    .then(payload => {
+    .then(res => {
       setState({
-        sessions: payload.sessions,
+        sessions: res.sessions,
         loadingSessions: false,
         loadSessionsError: null
       });
