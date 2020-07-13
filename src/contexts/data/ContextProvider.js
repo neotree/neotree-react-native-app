@@ -22,7 +22,7 @@ export default function Provider({ children, socket }) {
     typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
   );
 
-  const { acceptedEvents, dataStatus, authenticatedUserInitialised, authenticatedUser } = state;
+  const { syncingData, acceptedEvents, dataStatus, authenticatedUserInitialised, authenticatedUser } = state;
 
   const sync = (e, callback) => {
     if (e) {
@@ -118,7 +118,7 @@ export default function Provider({ children, socket }) {
     return authenticatedUser ?
       dataStatus ? dataStatus.data_initialised : false
       :
-      authenticatedUserInitialised;
+      syncingData ? false : authenticatedUserInitialised;
   };
 
   return (
