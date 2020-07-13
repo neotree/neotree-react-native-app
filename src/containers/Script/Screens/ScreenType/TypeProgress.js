@@ -49,7 +49,7 @@ const Progress = ({ screen, onChange }) => {
 
 Progress.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
+  onChange: PropTypes.func.isRequired,
 };
 
 export default Progress;
