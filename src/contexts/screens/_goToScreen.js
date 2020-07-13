@@ -28,15 +28,23 @@ export default ({
 
     if (!condition) return target;
 
+    let conditionMet = false;
+
+    // try {
+    //   if (!eval(condition)) {
+    //     target = getTargetScreen(index);
+    //   }
+    // } catch (e) {
+    //   // do nothing
+    // }
+
     try {
-      if (!eval(condition)) {
-        target = getTargetScreen(index);
-      }
+      conditionMet = eval(condition);
     } catch (e) {
       // do nothing
     }
 
-    return target;
+    return conditionMet ? target : getTargetScreen(index);
   };
 
   const target = getTargetScreen();
