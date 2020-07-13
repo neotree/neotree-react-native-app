@@ -15,6 +15,7 @@ export default () => new Promise((resolve, reject) => {
   const scriptsTableColumns = [
     'id varchar primary key not null',
     'script_id varchar',
+    'position integer',
     'data text',
     'createdAt datetime',
     'updatedAt datetime'
@@ -61,6 +62,7 @@ export default () => new Promise((resolve, reject) => {
   const config_keysTableColumns = [
     'id varchar primary key not null',
     'config_key_id varchar',
+    'position integer',
     'data text',
     'createdAt datetime',
     'updatedAt datetime'
