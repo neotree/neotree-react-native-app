@@ -58,11 +58,12 @@ const ScreenType = () => {
         if (!shouldDisplay) Component = null;
 
         const value = form.filter(item => item.screen.id === activeScreen.id)[0];
+        const { label, dataType } = (activeScreen.data.metadata || {});
         const screen = {
           title: activeScreen.data.title,
           id: activeScreen.id,
           type: activeScreen.type,
-          metadata: { label: (activeScreen.data.metadata || {}).label },
+          metadata: { label, dataType,  },
         };
 
         return !Component ? null : (

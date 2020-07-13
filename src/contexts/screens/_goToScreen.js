@@ -24,7 +24,7 @@ export default ({
 
     const condition = sanitizeCondition(parseScreenCondition(screen.data.condition, form));
 
-    console.log(condition);
+    console.log(screen.data.condition, condition);
 
     if (!condition) return target;
 

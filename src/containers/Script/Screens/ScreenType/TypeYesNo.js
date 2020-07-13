@@ -14,8 +14,8 @@ const YesNo = ({ screen, onChange, value }) => {
   }, [entry]);
 
   const opts = [
-    { value: 'Yes', label: metadata.positiveLabel || 'Yes' },
-    { value: 'No', label: metadata.negativeLabel || 'No' },
+    { value: true, label: metadata.positiveLabel || 'Yes' },
+    { value: false, label: metadata.negativeLabel || 'No' },
   ];
 
   const _value = entry.values[0] ? entry.values[0].value : null;
@@ -32,7 +32,7 @@ const YesNo = ({ screen, onChange, value }) => {
               key: metadata.key || opt.key,
               label: opt.label,
               type: metadata.dataType || opt.type,
-              dataType: opt.dataType,
+              dataType: metadata.dataType,
             }],
           });
           return (
