@@ -8,7 +8,7 @@ export { Provider };
 export function provideDataContext(Component) {
   return function DataContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

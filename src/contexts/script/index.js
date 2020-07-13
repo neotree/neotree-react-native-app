@@ -8,7 +8,7 @@ export { Provider };
 export function provideScriptContext(Component) {
   return function ScriptContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

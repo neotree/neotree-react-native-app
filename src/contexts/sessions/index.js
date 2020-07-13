@@ -8,7 +8,7 @@ export { Provider };
 export function provideSessionsContext(Component) {
   return function sessionsContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

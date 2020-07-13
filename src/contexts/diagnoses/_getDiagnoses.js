@@ -12,12 +12,12 @@ export default ({
     // diagnosesInitialised: false
   });
 
-  getDiagnoses({ payload: { script_id: scriptId, ...payload } })
-    .then(payload => {
+  getDiagnoses({ script_id: scriptId, ...payload })
+    .then(res => {
       setState({
-        diagnoses: payload.diagnoses || [],
+        diagnoses: res.diagnoses || [],
         diagnosesInitialised: true,
-        loadDiagnosesError: payload.error,
+        loadDiagnosesError: res.error,
         loadingDiagnoses: false,
       });
     })

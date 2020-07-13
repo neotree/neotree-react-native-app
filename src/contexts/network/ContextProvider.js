@@ -1,8 +1,9 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import NetInfo from '@react-native-community/netinfo';
 import Context from './Context';
 
-function Provider(props) {
+function Provider({ children }) {
   const [state, setState] = React.useState(null);
 
   React.useEffect(() => {
@@ -12,10 +13,13 @@ function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={state}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+};
 
 export default Provider;

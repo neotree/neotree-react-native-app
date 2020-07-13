@@ -1,5 +1,11 @@
 import makeApiCall from './makeApiCall';
 
-export const getConfigKey = options => makeApiCall('/get-config-key', options);
+export const getConfigKey = (body = {}, reqOpts = {}) => makeApiCall('/get-config-key', {
+    body,
+    ...reqOpts,
+});
 
-export const getConfigKeys = options => makeApiCall('/get-config-keys', options);
+export const getConfigKeys = (body = {}, reqOpts = {}) => makeApiCall('/get-config-keys', {
+    body,
+    ...reqOpts,
+});
