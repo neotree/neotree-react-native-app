@@ -9,6 +9,7 @@ import Progress from './TypeProgress';
 import SingleSelect from './TypeSingleSelect';
 import Timer from './TypeTimer';
 import Checklist from './TypeChecklist';
+import List from './TypeList';
 
 const ScreenType = () => {
   const context = useScreensContext();
@@ -51,6 +52,9 @@ const ScreenType = () => {
           case 'management':
             Component = Management;
             break;
+          case 'list':
+            Component = List;
+          break;
           default:
             // do nothing
         }
