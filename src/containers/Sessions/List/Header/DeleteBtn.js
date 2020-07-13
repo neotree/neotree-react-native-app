@@ -15,14 +15,15 @@ const DeleteBtn = () => {
         onPress={() => {
           ActionSheet.show(
             {
-              options: ['Incomplete sessions', 'ALL sessions'],
-              title: 'Permanantly delete'
+              options: ['Incomplete sessions', 'ALL sessions', 'Cancel'],
+              title: 'Permanantly delete',
+              cancelButtonIndex: 2,
             },
             i => {
               const incompleted = sessions.filter(s => !s.data.completed_at)
                 .map(s => s.id);
               const all = sessions.map(s => s.id);
-              deleteSessions(i === 0 ? incompleted : all);
+              if (i < 2) deleteSessions(i === 0 ? incompleted : all);
             }
           );
         }}

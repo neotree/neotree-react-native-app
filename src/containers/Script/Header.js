@@ -71,7 +71,8 @@ const HeaderComponent = () => {
               ActionSheet.show(
                 {
                   options: ['Cancel Script?'],
-                  title: 'Action'
+                  title: 'Action',
+                  // cancelButtonIndex: 1,
                 },
                 i => i === 0 && cancelScript()
               );
