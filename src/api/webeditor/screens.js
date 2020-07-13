@@ -1,5 +1,11 @@
 import makeApiCall from './makeApiCall';
 
-export const getScreen = options => makeApiCall('/get-screen', options);
+export const getScreen = (body = {}, reqOpts = {}) => makeApiCall('/get-screen', {
+    body,
+    ...reqOpts,
+});
 
-export const getScreens = options => makeApiCall('/get-screens', options);
+export const getScreens = (body = {}, reqOpts = {}) => makeApiCall('/get-screens', {
+    body,
+    ...reqOpts,
+});

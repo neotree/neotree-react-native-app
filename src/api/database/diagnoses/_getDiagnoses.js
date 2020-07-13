@@ -1,7 +1,7 @@
 import db from '../db';
 
 export default (options = {}) => new Promise((resolve, reject) => {
-  const { _order, ..._where } = options.payload || {};
+  const { _order, ..._where } = options || {};
 
   let order = (_order || [['position', 'ASC']]);
   order = (order.map ? order : [])

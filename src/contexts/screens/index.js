@@ -8,7 +8,7 @@ export { Provider };
 export function provideScreensContext(Component) {
   return function ScreensContextProvider(props) {
     return (
-      <Provider>
+      <Provider {...props}>
         <Component {...props} />
       </Provider>
     );

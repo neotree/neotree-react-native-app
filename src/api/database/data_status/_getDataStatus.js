@@ -27,6 +27,8 @@ const _getDataStatus = () => new Promise((resolve, reject) => {
 });
 
 const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
+  require('@/utils/logger')('createDataStatus');
+
   const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
 
   const status = {
@@ -58,7 +60,7 @@ const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
 
               makeApiCall('/register-device', {
                 method: 'POST',
-                payload: { unique_key, details: JSON.stringify(getDeviceInfo()) }
+                body: { unique_key, details: JSON.stringify(getDeviceInfo()) }
               })
                 .catch(() => resolve(saveDataStatus))
                 .then(saveDevice => {
@@ -99,7 +101,7 @@ const getDataStatus = () => new Promise((resolve, reject) => {
           .then(network => {
             if (!network.isInternetReachable) return resolve(dataStatus);
 
-            makeApiCall('/get-device', { payload: { unique_key: dataStatus.unique_key } })
+            makeApiCall('/get-device', { body: { unique_key: dataStatus.unique_key } })
               .catch(() => resolve(dataStatus))
               .then(device => {
                 if (device) return resolve(dataStatus);

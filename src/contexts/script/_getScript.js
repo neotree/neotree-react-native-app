@@ -11,12 +11,12 @@ export default ({
     loadingScript: opts.showLoader !== false 
   });
 
-  getScript({ payload: { id: scriptId, ...payload } })
-    .then(payload => {
+  getScript({ id: scriptId, ...payload })
+    .then(res => {
       setState({
-        script: payload.script,
+        script: res.script,
         scriptInitialised: true,
-        loadScriptError: payload.error,
+        loadScriptError: res.error,
         loadingScript: false,
       });
     })

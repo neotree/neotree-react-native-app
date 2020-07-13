@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import useRouter from '@/utils/useRouter';
 import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
@@ -7,7 +8,7 @@ import _getConfigKeys from './_getConfigKeys';
 import _getConfiguration from './_getConfiguration';
 import _saveConfiguration from './_saveConfiguration';
 
-export default function Provider(props) {
+export default function Provider({ children }) {
   const router = useRouter();
 
   const [state, _setState] = React.useState({
@@ -43,7 +44,6 @@ export default function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         state,
         setState,
@@ -52,6 +52,10 @@ export default function Provider(props) {
         getConfiguration,
         saveConfiguration
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+};

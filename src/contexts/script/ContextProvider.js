@@ -1,11 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import useRouter from '@/utils/useRouter';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
 import _getScript from './_getScript';
 
-export default function Provider(props) {
+export default function Provider({ children }) {
   const router = useRouter();
   const { scriptId } = router.match.params;
 
@@ -37,13 +38,16 @@ export default function Provider(props) {
 
   return (
     <Context.Provider
-      {...props}
       value={{
         state,
         setState,
         initialisePage,
         getScript
       }}
-    />
+    >{children}</Context.Provider>
   );
 }
+
+Provider.propTypes = {
+  children: PropTypes.node,
+};
