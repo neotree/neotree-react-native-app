@@ -3,7 +3,7 @@ import db from '../db';
 export default (options = {}) => new Promise((resolve, reject) => {
   const { _order, ..._where } = options || {};
 
-  let order = (_order || [['createdAt', 'DESC']]);
+  let order = (_order || [['position', 'ASC']]);
   order = (order.map ? order : [])
     .map(keyVal => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
     .filter(clause => clause)

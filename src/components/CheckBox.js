@@ -7,8 +7,9 @@ const CheckBoxComponent = ({ style, checked, ...props }) => {
     <>
       <CheckBox
         color="blue"
-        checked={checked}
+        checked={!!checked}
         style={[
+          // { width: 25, height: 25, alignItems: 'center', justifyContent: 'center', },
           checked ? null : { borderColor: '#ccc', color: '#ccc' },
           ...(style ? style.map ? style : [style] : [])
         ]}

@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import Divider from '@/components/Divider';
 import { fieldsTypes } from '@/constants/screen';
 
+import FormItem from './_FormItem';
 import Number from './Number';
 import Date from './Date';
 import DateTime from './DateTime';
@@ -28,8 +29,17 @@ const Form = ({ screen, value, context, onChange }) => {
   }));
 
   const [entry, setEntry] = React.useState(value || { values: defaultValue });
+  const [entryCache, setEntryCache] = React.useState(value || { values: defaultValue });
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
+    ...prevState,
+    values: prevState.values.map((v, i) => {
+      if (i === index) return { ...v, ...newVal };
+      return v;
+    })
+  }));
+
+  const setCache = (index, newVal) => setEntryCache(prevState => ({
     ...prevState,
     values: prevState.values.map((v, i) => {
       if (i === index) return { ...v, ...newVal };
@@ -41,17 +51,18 @@ const Form = ({ screen, value, context, onChange }) => {
     let conditionMet = true;
 
     if (f.condition) {
+      conditionMet = false;
       let condition = parseScreenCondition(f.condition, [entry]);
-      condition = parseScreenCondition(condition, form);
-      console.log(condition);
-      condition = sanitizeCondition(condition);
 
       try {
-        conditionMet = eval(condition);
-        // require('@/utils/logger')(`Evaluate screen condition ${f.condition}`, conditionMet);
+        conditionMet = eval(sanitizeCondition(condition));
       } catch (e) {
-        // require('@/utils/logger')(`ERROR: Evaluate screen condition ${f.condition}`, e);
-        // do nothing
+        try {
+          condition = parseScreenCondition(sanitizeCondition(condition), form);
+          conditionMet = eval(sanitizeCondition(condition));
+        } catch (e) {
+          // do nothing
+        }
       }
     }
 
@@ -108,15 +119,25 @@ const Form = ({ screen, value, context, onChange }) => {
 
                 const conditionMet = evaluateCondition(f);
 
+                const onChange = (v, error, valueText) => {
+                  _onChange(i, { error, value: v, valueText });
+                };
+
                 return !Component ? null : (
-                  <Component
-                    field={f}
+                  <FormItem
+                    setCache={v => setCache(i, { value: v })}
                     conditionMet={conditionMet}
-                    value={entry.values[i].value}
-                    onChange={(v, error, valueText) => {
-                      _onChange(i, { error, value: v, valueText });
-                    }}
-                  />
+                    value={entry.values[i].value} 
+                    valueCache={entryCache.values[i].value}
+                    onChange={onChange}
+                  >
+                    <Component
+                      field={f}
+                      conditionMet={conditionMet}
+                      value={entry.values[i].value}                      
+                      onChange={onChange}
+                    />
+                  </FormItem>
                 );
               })()}
 

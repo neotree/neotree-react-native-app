@@ -37,14 +37,11 @@ const validateUID = (value = '') => {
 };
 
 const NUID = ({ field, onChange, value, conditionMet, }) => {
-  value = field.defaultValue ? makeUID() : value;
-  const [_firstHalf, _lastHalf] = (value || '').split('-');
-
   const firstHalfRef = React.useRef(null);
   const lastHalfRef = React.useRef(null);
 
-  const [firstHalf, setFirstHalf] = React.useState(_firstHalf || '');
-  const [lastHalf, setLastHalf] = React.useState(_lastHalf || '');
+  const [firstHalf, setFirstHalf] = React.useState('');
+  const [lastHalf, setLastHalf] = React.useState('');
 
   const _value = `${firstHalf}-${lastHalf}`;
   const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
@@ -56,6 +53,13 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   React.useEffect(() => {
     onChange(validateUID(_value).isValid ? _value : '');
   }, [_value]);
+
+  React.useEffect(() => {
+    value = field.defaultValue ? makeUID() : value;
+    const [_firstHalf, _lastHalf] = (value || '').split('-');
+    setFirstHalf(_firstHalf || '');
+    setLastHalf(_lastHalf || '');
+  }, [value]);
 
   const disableLastHalf = !(conditionMet && firstHalfIsValid);
   const error = !(firstHalfIsValid && lastHalfIsValid && conditionMet) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);
