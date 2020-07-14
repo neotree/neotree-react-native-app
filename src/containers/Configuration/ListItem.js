@@ -19,7 +19,6 @@ const ListItemComponent = ({ item }) => {
       <Content padder>
         <ListItem
           selected={false}
-          onPress={() => onPress()}
         >
           <Left>
             <Text>{data.label}</Text>
@@ -27,7 +26,7 @@ const ListItemComponent = ({ item }) => {
           <Right>
             <Switch
               value={selected}
-              onPress={() => onPress()}
+              onValueChange={() => onPress()}
             />
           </Right>
         </ListItem>

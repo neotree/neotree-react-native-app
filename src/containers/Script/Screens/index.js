@@ -37,16 +37,24 @@ const Screens = () => {
 
   return (
     <>
+      <View
+        style={{
+          width: '90%',
+          paddingVertical: 10,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          flexDirection: 'row',
+        }}
+      >
+        <Text>{activeScreen.data.title}</Text>
+        <View style={{ marginLeft: 'auto' }} />
+        <Text>{activeScreen.data.step}</Text>
+      </View>
+
       <ScrollView
         ref={scrollViewRef}
       >
         <Content padder>
-          <Divider border={false} />
-
-          <Text
-            style={[{ fontSize: 30, fontWeight: 'bold' }]}
-          >{activeScreen.data.title}</Text>
-
           <Divider border={false} />
 
           {activeScreen.data.actionText || activeScreen.data.contentText ? (

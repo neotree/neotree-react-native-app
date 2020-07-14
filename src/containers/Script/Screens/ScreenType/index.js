@@ -9,6 +9,7 @@ import Progress from './TypeProgress';
 import SingleSelect from './TypeSingleSelect';
 import Timer from './TypeTimer';
 import Checklist from './TypeChecklist';
+import List from './TypeList';
 
 const ScreenType = () => {
   const context = useScreensContext();
@@ -51,6 +52,9 @@ const ScreenType = () => {
           case 'management':
             Component = Management;
             break;
+          case 'list':
+            Component = List;
+          break;
           default:
             // do nothing
         }
@@ -58,11 +62,12 @@ const ScreenType = () => {
         if (!shouldDisplay) Component = null;
 
         const value = form.filter(item => item.screen.id === activeScreen.id)[0];
+        const { label, dataType } = (activeScreen.data.metadata || {});
         const screen = {
           title: activeScreen.data.title,
           id: activeScreen.id,
           type: activeScreen.type,
-          metadata: { label: (activeScreen.data.metadata || {}).label },
+          metadata: { label, dataType,  },
         };
 
         return !Component ? null : (
