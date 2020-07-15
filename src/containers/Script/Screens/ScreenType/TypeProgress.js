@@ -31,7 +31,7 @@ const Progress = ({ screen, onChange }) => {
                   fontSize: 40, 
                   color: item.checked ? 'green' : '#ccc' 
                 }} 
-                name="checkmark-circle"                   
+                name="checkmark-circle-outline"                   
               />
               </View>
 
