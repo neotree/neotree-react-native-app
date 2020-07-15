@@ -23,9 +23,9 @@ export default ({
 
     const condition = parseScreenCondition(screen.data.condition);
 
-    if (!condition) return target;
+    console.log(screens.length, activeScreenIndex, screen.data.condition, condition);
 
-    console.log(screen.data.condition, condition);
+    if (!condition) return target;
 
     let conditionMet = false;
 
