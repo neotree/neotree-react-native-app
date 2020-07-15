@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import useRouter from '@/utils/useRouter';
 import { useScriptContext } from '@/contexts/script';
+import { useDiagnosesContext } from '@/contexts/diagnoses';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
@@ -22,6 +23,7 @@ export default function Provider({ children }) {
   const { scriptId, screenId } = router.match.params;
 
   const { state: { script } } = useScriptContext();
+  const diagnosesContext = useDiagnosesContext();
 
   const [state, _setState] = React.useState({
     start_time: new Date().toString(),
@@ -58,7 +60,7 @@ export default function Provider({ children }) {
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
-  const saveForm = _saveForm({ state, setState, script, router });
+  const saveForm = _saveForm({ diagnosesContext, state, setState, script, router });
 
   const initialisePage = (opts = {}) => {
     if (opts.force || !state.screensInitialised) {
