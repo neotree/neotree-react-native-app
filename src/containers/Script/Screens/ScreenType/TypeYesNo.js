@@ -37,6 +37,7 @@ const YesNo = ({ screen, onChange, value }) => {
           });
           return (
             <ListItem
+              noIndent
               key={opt.value}
               selected={_value === opt.value}
               onPress={() => onChange()}

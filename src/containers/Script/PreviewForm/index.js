@@ -4,7 +4,7 @@ import { useScreensContext } from '@/contexts/screens';
 import Content from '@/components/Content';
 import Header from './Header';
 
-const Wrapper = props => <Content {...props} padder />;
+const Wrapper = props => <Content {...props} />;
 
 const PreviewForm = () => {
   const { state: { form } } = useScreensContext();

@@ -12,7 +12,7 @@ const ListItem = ({ item }) => {
   return (
     <>
       <View style={{ flex: 1 }}>
-        <Content padder>
+        <Content>
           <Link
             to={`/sessions/session/${item.id}`}
             style={[{ flex: 1 }]}

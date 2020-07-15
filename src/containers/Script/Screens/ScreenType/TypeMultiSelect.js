@@ -60,7 +60,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
 
             return (
               <React.Fragment key={item.id}>
-                <ListItem onPress={onPress}>
+                <ListItem onPress={onPress} noIndent>
                   <CheckBox
                     checked={checked}
                     onPress={onPress}

@@ -7,7 +7,7 @@ const PageRefresher = ({ onRefresh, children }) => {
   return (
     <>
       <Content
-        padder
+       
         style={{
           flex: 1,
           alignItems: 'center',

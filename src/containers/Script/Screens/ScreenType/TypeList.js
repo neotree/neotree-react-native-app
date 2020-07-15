@@ -19,6 +19,7 @@ const TypeList = ({ screen, onChange }) => {
           return (
             <ListItem 
               key={key}
+              noIndent
             >
               <Body style={{ flex: 1, }}>
                 <Text>{item.label}</Text>

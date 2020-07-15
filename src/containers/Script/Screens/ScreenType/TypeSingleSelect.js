@@ -30,6 +30,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
           });
           return (
             <ListItem
+              noIndent
               key={item.id}
               selected={_value === item.id}
               onPress={() => onChange()}

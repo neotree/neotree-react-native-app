@@ -16,7 +16,7 @@ const ListItemComponent = ({ item }) => {
 
   return (
     <>
-      <Content padder>
+      <Content>
         <ListItem
           selected={false}
         >
