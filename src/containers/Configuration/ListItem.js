@@ -10,9 +10,9 @@ const ListItemComponent = ({ item }) => {
 
   const { state: { configuration }, saveConfiguration } = useConfigKeysContext();
 
-  const selected = configuration[item.id] ? true : false;
+  const selected = !!configuration[data.configKey];
 
-  const onPress = () => saveConfiguration({ [item.id]: !selected });
+  const onPress = () => saveConfiguration({ [data.configKey]: !selected });
 
   return (
     <>

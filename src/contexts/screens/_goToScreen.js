@@ -1,7 +1,6 @@
 export default ({
   state: { activeScreenIndex, form, screens },
   parseScreenCondition,
-  sanitizeCondition,
   router: {
     history,
     match: { params: { scriptId } },
@@ -22,7 +21,7 @@ export default ({
     let target = getScreen(i);
     const { index, screen } = target;
 
-    const condition = sanitizeCondition(parseScreenCondition(screen.data.condition, form));
+    const condition = parseScreenCondition(screen.data.condition);
 
     console.log(screen.data.condition, condition);
 

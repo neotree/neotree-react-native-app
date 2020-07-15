@@ -1,6 +1,5 @@
 export default ({
   parseScreenCondition,
-  sanitizeCondition,
   state: { screens, activeScreen, }
 }) => () => {
   if (!activeScreen) return false;
@@ -13,7 +12,7 @@ export default ({
 
     if (s.data.condition) {
       try {
-        if (!eval(sanitizeCondition(parseScreenCondition(s.condition)))) {
+        if (!eval(parseScreenCondition(s.condition))) {
           next = getLastScreen(screens[getIndex(next) + 1]);
         }
       } catch (e) {
