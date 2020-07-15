@@ -60,7 +60,7 @@ const Checklist = ({ screen, value, onChange }) => {
 
             return (
               <React.Fragment key={item.key}>
-                <ListItem onPress={onPress}>
+                <ListItem onPress={onPress} noIndent>
                   <CheckBox
                     checked={checked}
                     onPress={onPress}

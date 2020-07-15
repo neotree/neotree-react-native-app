@@ -6,7 +6,7 @@ import { useParams } from 'react-router-native';
 import PreviewSessionForm from '../PreviewSessionForm';
 import Header from './Header';
 
-const Wrapper = props => <Content {...props} padder />;
+const Wrapper = props => <Content {...props} />;
 
 const SingleView = () => {
   const { sessionId } = useParams();
