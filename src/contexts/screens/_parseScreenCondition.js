@@ -5,7 +5,7 @@ const sanitizeCondition = (condition = '') => condition
 
 export default function parseScreenCondition({ state: { form: f, configuration } }) { 
   return (_condition = '', form = f) => {
-    const parseConditionString = (s = '', key, value) => s
+    const parseConditionString = (s = '', key, value) => !s ? '' : s
     .split(`$${key} =`).join(`${value} =`)
     .split(`$${key}=`).join(`${value} =`)
     .split(`$${key} >`).join(`${value} >`)
