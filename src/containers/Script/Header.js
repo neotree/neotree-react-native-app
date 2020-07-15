@@ -70,7 +70,7 @@ const HeaderComponent = () => {
         </Body>
 
         <Right style={{ maxWidth: 50 }}>
-          {!!activeScreen.data.infoText && (
+          {activeScreen && !!activeScreen.data.infoText && (
             <Button
               transparent
               onPress={() => setOpenInfoModal(true)}
@@ -97,7 +97,8 @@ const HeaderComponent = () => {
         </Right>
       </Header>
 
-      <Modal 
+      {!!activeScreen && (
+        <Modal 
         open={openInfoModal}
         onClose={() => setOpenInfoModal(false)}
         style={{ 
@@ -111,6 +112,7 @@ const HeaderComponent = () => {
        <Divider border={false} />
        <Text note>{activeScreen.data.infoText}</Text> 
       </Modal>
+      )}
     </>
   );
 };

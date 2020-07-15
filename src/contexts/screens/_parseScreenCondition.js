@@ -15,7 +15,7 @@ export default function parseScreenCondition({ state: { form: f, configuration }
 
     const parseForm = (_condition = '', form) => {
       const values = form.reduce((acc, entry) => [...acc, ...entry.values], []);
-      const condition = values.reduce((acc, { value, type, key, dataType }) => {
+      const chunks = values.map(({ value, type, key, dataType }) => {
         value = value || '';
         const t = dataType || type;
 
@@ -30,9 +30,12 @@ export default function parseScreenCondition({ state: { form: f, configuration }
             value = JSON.stringify(value);
         }
 
-        return parseConditionString(acc, key, value);
-      }, _condition);
-      return condition;
+        return parseConditionString(_condition, key, value);
+      });
+      return chunks
+        .filter(c => c !== _condition)
+        .map(c => `(${c})`)
+        .join(' || ') || _condition;
     };
 
     let condition = form ? parseForm(_condition, form) : _condition;
