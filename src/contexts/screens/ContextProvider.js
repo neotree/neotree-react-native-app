@@ -29,6 +29,7 @@ export default function Provider({ children }) {
   const [state, _setState] = React.useState({
     start_time: new Date().toString(),
     form: [],
+    configuration: {},
     activeScreen: null,
     screenId,
     screens: [],
