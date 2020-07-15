@@ -4,7 +4,7 @@ export default ({
   setState,
   script,
   router,
-  diagnosesContext: { state: { diagnoses } },
+  diagnoses,
   state: { form, activeScreen, start_time, screens }
 }) => (_payload = {}) => {
   console.log(diagnoses);
