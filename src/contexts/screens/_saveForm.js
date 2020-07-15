@@ -7,7 +7,6 @@ export default ({
   diagnoses,
   state: { form, activeScreen, start_time, screens }
 }) => (_payload = {}) => {
-  console.log(diagnoses);
   const { completed, canceled, saveInBackground, ...payload } = _payload;
   return new Promise((resolve, reject) => {
     if (!saveInBackground) setState({ savingForm: true });
