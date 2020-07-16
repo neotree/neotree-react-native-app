@@ -12,7 +12,7 @@ const styles = {
   },
   gridItem: {
     flex: 1,
-    padding: 5,
+    // padding: 5,
   },
 };
 
@@ -49,6 +49,8 @@ const DateTime = ({ field, onChange, value, conditionMet, }) => {
             onChange={onDateChange}
           />
         </View>
+
+        <View style={{ width: 10 }} />
 
         <View style={[styles.gridItem]}>
           <DatePicker

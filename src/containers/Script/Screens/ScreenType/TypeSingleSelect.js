@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { ListItem, Right, Left, Radio } from 'native-base';
 import Text from '@/components/Text';
+import Select from '@/components/Select';
 
 const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
@@ -17,9 +18,16 @@ const SingleSelect = ({ screen, value, onChange }) => {
 
   return (
     <>
-      <View>
-        {(metadata.items || []).map(item => {
-          const onChange = () => setEntry({
+      <Select
+        variant="radio"
+        value={entry.values.map(e => e.value)}
+        options={(metadata.items || []).map(item => ({ 
+          label: item.label,
+          value: item.id,
+        }))}
+        onChange={(item, i) => {
+          item = (metadata.items || [])[i];
+          setEntry({
             values: [{
               value: item.id,
               label: item.label,
@@ -28,25 +36,8 @@ const SingleSelect = ({ screen, value, onChange }) => {
               dataType: item.dataType,
             }]
           });
-          return (
-            <ListItem
-              key={item.id}
-              selected={_value === item.id}
-              onPress={() => onChange()}
-            >
-              <Left>
-                <Text>{item.label}</Text>
-              </Left>
-              <Right>
-                <Radio
-                  selected={_value === item.id}
-                  onPress={() => onChange()}
-                />
-              </Right>
-            </ListItem>
-          );
-        })}
-      </View>
+        }}
+      />
     </>
   );
 };

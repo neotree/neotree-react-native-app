@@ -25,7 +25,7 @@ const ExportPage = () => {
     <>
       <Header />
 
-      <Content containerProps={{ style: { flex: 1 } }} padder>
+      <Content containerProps={{ style: { flex: 1 } }}>
         <Card style={{ padding: 20 }}>
           {opts.map(opt => (
             <ListItem

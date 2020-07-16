@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Divider from '@/components/Divider';
-import { Button, Icon, Content } from 'native-base';
+import { Button, Icon } from 'native-base';
+import { View } from 'react-native';
 
 const PageRefresher = ({ onRefresh, children }) => {
   return (
     <>
-      <Content
-        padder
+      <View
         style={{
           flex: 1,
           alignItems: 'center',
@@ -20,10 +20,11 @@ const PageRefresher = ({ onRefresh, children }) => {
 
         <Button
           onPress={onRefresh}
+          transparent
         >
           <Icon name="refresh" size={40} color="#ddd" />
         </Button>
-      </Content>
+      </View>
     </>
   );
 };

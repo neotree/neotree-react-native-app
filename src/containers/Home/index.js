@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { provideHomeContext } from '@/contexts/home';
 import { useHistory } from 'react-router-native';
 import { Header, Left, Body, Button, Icon, Title, Drawer } from 'native-base';
+import * as Permissions from 'expo-permissions';
 import Sidebar from './Sidebar';
 import Scripts from '../Scripts';
 
@@ -14,6 +15,12 @@ const Home = () => {
   React.useEffect(() => {
     history.entries = [];
     history.push('/');
+  }, []);
+
+  React.useEffect(() => {
+    Promise.all([
+      Permissions.askAsync(Permissions.NOTIFICATIONS),
+    ]);
   }, []);
 
   return (

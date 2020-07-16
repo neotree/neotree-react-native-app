@@ -37,51 +37,43 @@ const Screens = () => {
 
   return (
     <>
-      <View
-        style={{
-          width: '90%',
-          paddingVertical: 10,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          flexDirection: 'row',
-        }}
-      >
-        <Text>{activeScreen.data.title}</Text>
-        <View style={{ marginLeft: 'auto' }} />
-        <Text>{activeScreen.data.step}</Text>
-      </View>
+      {!!activeScreen.data.actionText && (
+        <Content
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+          }}
+          containerProps={{          
+            style: { backgroundColor: '#f5f5f5' },
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text>{activeScreen.data.actionText}</Text>
+          </View>
+          <View>
+            <Text>{activeScreen.data.step}</Text>
+          </View>
+        </Content>
+      )}
 
       <ScrollView
         ref={scrollViewRef}
       >
-        <Content padder>
-          <Divider border={false} />
-
-          {activeScreen.data.actionText || activeScreen.data.contentText ? (
-            <View
-              style={[{ backgroundColor: 'rgba(241, 196, 15,.2)', padding: 10 }]}
+        {!!activeScreen.data.contentText && (
+          <>
+            <Content
+              containerProps={{          
+                style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
+              }}
             >
-              {!activeScreen.data.actionText ? null : (
-                <>
-                  <Text
-                    style={[{ marginBottom: 10 }]}
-                  >{activeScreen.data.actionText}</Text>
-                </>
-              )}
-
-              {!activeScreen.data.contentText ? null : (
-                <>
-                  <Text
-                    style={[{ marginBottom: 10 }]}
-                    variant="caption"
-                  >{activeScreen.data.contentText}</Text>
-                </>
-              )}
-            </View>
-          ) : null}
-
-          <Divider border={false} spacing={2} />
-
+              <Text>{activeScreen.data.contentText}</Text>
+            </Content>
+            <Divider border={false} />
+          </>
+        )}
+        
+        <Content>
+          <Divider border={false} />
           <ScreenType />
         </Content>
       </ScrollView>

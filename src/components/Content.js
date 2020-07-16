@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
-import { Content } from 'native-base';
 
 const styles = {
-  root: {
-    width: '90%',
+  content: {
+    width: '98%',
     marginLeft: 'auto',
     marginRight: 'auto',
+    padding: 10,
   },
 };
 
@@ -23,7 +23,7 @@ const ContentComponent = ({ style, containerProps, ...props }) => {
           ...(containerProps.style ? containerProps.style.map ? containerProps.style : [containerProps.style] : [])
         ]}
       >
-        <Content
+        <View
           style={[
             styles.content,
             ...(style ? style.map ? style : [style] : [])
