@@ -34,9 +34,7 @@ const Period = ({ form, field, onChange, value, conditionMet, }) => {
     }
   }, [calc]);
 
-  React.useEffect(() => {
-    onChange(_value);
-  }, [_value]);
+  React.useEffect(() => { onChange(_value); }, [_value]);
   
   return (
     <>
@@ -51,11 +49,11 @@ const Period = ({ form, field, onChange, value, conditionMet, }) => {
           <Input
             autocorrect={false}
             editable={!field.calculation && conditionMet}
-            value={value || ''}
-            defaultValue={value || ''}
+            value={_value || ''}
+            defaultValue={_value || ''}
             onChange={e => {
               const value = e.nativeEvent.text;
-              onChange(value);
+              set_value(value);
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}
