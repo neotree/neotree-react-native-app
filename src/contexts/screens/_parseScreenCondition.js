@@ -25,7 +25,7 @@ export const _parseScreenCondition = (_condition = '', opts = {}) => {
           value = value || null;
           break;
         case 'boolean':
-          value = value || false;
+          value = Boolean(value);
           break;
         default:
           value = JSON.stringify(value);
