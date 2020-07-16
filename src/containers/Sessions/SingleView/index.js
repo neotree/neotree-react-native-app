@@ -6,21 +6,22 @@ import { useParams } from 'react-router-native';
 import PreviewSessionForm from '../PreviewSessionForm';
 import Header from './Header';
 
-const Wrapper = props => <Content {...props} padder />;
+const Wrapper = props => <Content {...props} />;
 
 const SingleView = () => {
   const { sessionId } = useParams();
 
   const { state: { sessions } } = useSessionsContext();
 
-  const form = sessions.filter(f => f.id.toString() === sessionId)
-    .map(f => f.data.form)[0];
+  const session = sessions.filter(f => f.id.toString() === sessionId).map(s => s.data)[0];
+  const form = session ? session.form : null;
+  const scriptId = session ? session.script.id : null;
 
   return (
     <>
       <Header form={form} />
       <View style={[{ flex: 1 }]}>
-        <PreviewSessionForm Wrapper={Wrapper} form={form} />
+        <PreviewSessionForm scriptId={scriptId} Wrapper={Wrapper} form={form} />
       </View>
     </>
   );

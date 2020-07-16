@@ -40,8 +40,15 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   const firstHalfRef = React.useRef(null);
   const lastHalfRef = React.useRef(null);
 
-  const [firstHalf, setFirstHalf] = React.useState('');
-  const [lastHalf, setLastHalf] = React.useState('');
+  const getDefault = () => {
+    const uid = field.defaultValue ? makeUID() : '';
+    const [firstHalf, lastHalf] = uid.split('-');
+    return { uid, firstHalf, lastHalf, };
+  };
+
+  const [_defaultVal] = React.useState(getDefault());
+  const [firstHalf, setFirstHalf] = React.useState(_defaultVal.firstHalf);
+  const [lastHalf, setLastHalf] = React.useState(_defaultVal.lastHalf);
 
   const _value = `${firstHalf}-${lastHalf}`;
   const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
@@ -51,14 +58,14 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   }, [firstHalf]);
 
   React.useEffect(() => {
-    onChange(validateUID(_value).isValid ? _value : '');
-  }, [_value]);
+    const v = validateUID(_value).isValid ? _value : _defaultVal.uid;
+    if (v !== value) onChange(v);
+  });
 
   React.useEffect(() => {
-    value = field.defaultValue ? makeUID() : value;
     const [_firstHalf, _lastHalf] = (value || '').split('-');
-    setFirstHalf(_firstHalf || '');
-    setLastHalf(_lastHalf || '');
+    setFirstHalf(_firstHalf || _defaultVal.firstHalf);
+    setLastHalf(_lastHalf || _defaultVal.lastHalf); 
   }, [value]);
 
   const disableLastHalf = !(conditionMet && firstHalfIsValid);
@@ -78,6 +85,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
           <Form>
             <Item error={!firstHalfIsValid ? true : false} disabled={!conditionMet}>
               <Input
+                autoCorrect={false}
                 ref={firstHalfRef}
                 maxLength={4}
                 autoCapitalize="characters"
@@ -112,6 +120,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
               disabled={disableLastHalf}
             >
               <Input
+                autoCorrect={false}
                 ref={lastHalfRef}
                 onKeyPress={e => {
                   if (e.nativeEvent.key === 'Backspace' && !lastHalf) {

@@ -66,9 +66,9 @@ const Timer = ({ screen, value, onChange }) => {
     let timeOut = null;
 
     if (timerIsRunning && (seconds > 0)) {
-      timeOut = setTimeout(() => setSeconds(seconds - 1), 1000);
-    } else {
-      if (timerIsRunning) {
+      const s = seconds - 1;
+      timeOut = setTimeout(() => setSeconds(s), 1000);
+      if (s === 0) {
         if (Platform.OS === 'ios') {
           Vibration.vibrate(10 * 1000);
         }
@@ -76,6 +76,7 @@ const Timer = ({ screen, value, onChange }) => {
           Vibration.vibrate([1000], true);
         }
       }
+    } else {
       setSeconds(metadata.timerValue);
       setTimerIsRunning(false);
     }

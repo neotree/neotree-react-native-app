@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { ListItem, Body } from 'native-base';
 import CheckBox from '@/components/CheckBox';
 import Text from '@/components/Text';
+import Select from '@/components/Select';
 
 const Checklist = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
@@ -16,63 +17,62 @@ const Checklist = ({ screen, value, onChange }) => {
 
   return (
     <>
-      <View>
-        {(metadata.items || [])
-          .map((item) => {
-            const checked = entry.values.map(s => s.value).indexOf(item.key) > -1;
+      <Select
+        variant="checkbox"
+        options={(metadata.items || []).map(item => ({ 
+          label: item.label,
+          value: item.key,
+          disabled: (() => {
+            const exclusiveChecked = entry.values.reduce((acc, item) => {
+              if (item.exclusive) acc = true;
+              return acc;
+            }, false);
+            return item.exclusive ? false : exclusiveChecked;
+          })(),
+        }))}
+        value={entry.values.map(e => e.value)}
+        onChange={(item, i) => {
+          item = (metadata.items || [])[i];
 
-            const onPress = () => {
-              const value = item.key;
-              const _checked = !checked;
-              const exclusives = metadata.items
-                .filter(item => item.exclusive)
-                .map(item => item.key);
+          const checked = entry.values.map(s => s.value).indexOf(item.key) > -1;
 
-              const _entry = {
-                value,
-                label: item.label,
-                key: metadata.key || item.key,
-                type: item.type,
-                dataType: item.dataType,
+          const value = item.key;
+          const _checked = !checked;
+          const exclusives = metadata.items
+            .filter(item => item.exclusive)
+            .map(item => item.key);
+
+          const _entry = {
+            value,
+            label: item.label,
+            key: metadata.key || item.key,
+            type: item.type,
+            dataType: item.dataType,
+            exclusive: item.exclusive,
+          };
+
+          if (item.exclusive) {
+            setEntry(entry => {
+              return {
+                ...entry,
+                values: _checked ? [_entry] : []
               };
-
-              if (item.exclusive) {
-                setEntry(entry => {
-                  return {
-                    ...entry,
-                    values: _checked ? [_entry] : []
-                  };
-                });
-              } else {
-                setEntry(entry => {
-                  return {
-                    ...entry,
-                    values: (
-                      _checked ?
-                        [...entry.values, _entry]
-                        :
-                        entry.values.filter(s => s.value !== value)
-                    ).filter(s => exclusives.indexOf(s.value) < 0)
-                  };
-                });
-              }
-            };
-
-            return (
-              <React.Fragment key={item.key}>
-                <ListItem onPress={onPress}>
-                  <CheckBox
-                    checked={checked}
-                    onPress={onPress}
-                  />
-                  <Body>
-                    <Text>{item.label}</Text>
-                  </Body>
-                </ListItem>
-              </React.Fragment>
-            );
-          })}
-      </View>
+            });
+          } else {
+            setEntry(entry => {
+              return {
+                ...entry,
+                values: (
+                  _checked ?
+                    [...entry.values, _entry]
+                    :
+                    entry.values.filter(s => s.value !== value)
+                ).filter(s => exclusives.indexOf(s.value) < 0)
+              };
+            });
+          }
+        }}
+      />
     </>
   );
 };

@@ -10,7 +10,7 @@ const ListItem = ({ item }) => {
 
   return (
     <>
-      <Content padder>
+      <Content>
         <Link
           to={`/script/${data.id}`}
         >

@@ -1,7 +1,6 @@
 export default ({
-  state: { activeScreenIndex, form, screens },
+  state: { activeScreenIndex, activeScreen, screens },
   parseScreenCondition,
-  sanitizeCondition,
   router: {
     history,
     match: { params: { scriptId } },
@@ -22,21 +21,11 @@ export default ({
     let target = getScreen(i);
     const { index, screen } = target;
 
-    const condition = sanitizeCondition(parseScreenCondition(screen.data.condition, form));
-
-    console.log(screen.data.condition, condition);
+    const condition = parseScreenCondition(screen.data.condition);
 
     if (!condition) return target;
 
     let conditionMet = false;
-
-    // try {
-    //   if (!eval(condition)) {
-    //     target = getTargetScreen(index);
-    //   }
-    // } catch (e) {
-    //   // do nothing
-    // }
 
     try {
       conditionMet = eval(condition);
@@ -44,7 +33,7 @@ export default ({
       // do nothing
     }
 
-    return conditionMet ? target : getTargetScreen(index);
+    return conditionMet ? target : index >= screens.length ? activeScreen : getTargetScreen(index);
   };
 
   const target = getTargetScreen();

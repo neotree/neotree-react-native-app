@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { ListItem, Right, Left, Radio } from 'native-base';
 import Text from '@/components/Text';
+import Select from '@/components/Select';
 
 const YesNo = ({ screen, onChange, value }) => {
   const metadata = screen.data.metadata || {};
@@ -14,19 +15,20 @@ const YesNo = ({ screen, onChange, value }) => {
   }, [entry]);
 
   const opts = [
-    { value: true, label: metadata.positiveLabel || 'Yes' },
-    { value: false, label: metadata.negativeLabel || 'No' },
+    { value: 'true', label: metadata.positiveLabel || 'Yes' },
+    { value: 'false', label: metadata.negativeLabel || 'No' },
   ];
 
   const _value = entry.values[0] ? entry.values[0].value : null;
 
   return (
     <>
-      <View>
-        {/*<Text>{metadata.label}</Text>*/}
-
-        {opts.map(opt => {
-          const onChange = () => setEntry({
+      <Select
+        variant="radio"
+        options={opts}
+        value={entry.values.map(e => e.value)}
+        onChange={opt => {
+          setEntry({
             values: [{
               value: opt.value,
               key: metadata.key || opt.key,
@@ -35,25 +37,8 @@ const YesNo = ({ screen, onChange, value }) => {
               dataType: metadata.dataType,
             }],
           });
-          return (
-            <ListItem
-              key={opt.value}
-              selected={_value === opt.value}
-              onPress={() => onChange()}
-            >
-              <Left>
-                <Text>{opt.label}</Text>
-              </Left>
-              <Right>
-                <Radio
-                  selected={_value === opt.value}
-                  onPress={() => onChange()}
-                />
-              </Right>
-            </ListItem>
-          );
-        })}
-      </View>
+        }}
+      />
     </>
   );
 };

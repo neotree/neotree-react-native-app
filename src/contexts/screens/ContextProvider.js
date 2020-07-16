@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import useRouter from '@/utils/useRouter';
 import { useScriptContext } from '@/contexts/script';
+import { useDiagnosesContext } from '@/contexts/diagnoses';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
@@ -11,10 +12,11 @@ import _getScreens from './_getScreens';
 import _goToScreen from './_goToScreen';
 import _goToNextScreen from './_goToNextScreen';
 import _goToPrevScreen from './_goToPrevScreen';
-import { parseCondition, sanitizeCondition } from './_parseScreenCondition';
+import _parseScreenCondition from './_parseScreenCondition';
 import _getLastScreen from './_getLastScreen';
 import _canSave from './_canSave';
 import _saveForm from './_saveForm';
+import _getConfiguration from './_getConfiguration';
 
 export default function Provider({ children }) {
   const router = useRouter();
@@ -22,10 +24,12 @@ export default function Provider({ children }) {
   const { scriptId, screenId } = router.match.params;
 
   const { state: { script } } = useScriptContext();
+  const { state: { diagnoses } } = useDiagnosesContext();
 
   const [state, _setState] = React.useState({
     start_time: new Date().toString(),
     form: [],
+    configuration: {},
     activeScreen: null,
     screenId,
     screens: [],
@@ -47,23 +51,23 @@ export default function Provider({ children }) {
     form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
   }));
 
-  const parseScreenCondition = parseCondition({ state });
-  const getLastScreen = _getLastScreen({ state, setState, parseScreenCondition, sanitizeCondition, });
+  const parseScreenCondition = _parseScreenCondition({ state });
+  const getLastScreen = _getLastScreen({ state, setState, parseScreenCondition, });
   const isLastScreen = () => state.activeScreen && (state.activeScreen.id === getLastScreen().id);
   const canSave = _canSave({ state, setState, isLastScreen });
   const canGoToNextScreen = _canGoToNextScreen({ state, setState, isLastScreen });
   const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router });
   const getScreens = _getScreens({ state, setState, router });
-  const goToScreen = _goToScreen({ state, setState, router, parseScreenCondition, sanitizeCondition, });
+  const getConfiguration = _getConfiguration({ state, setState, router });
+  const goToScreen = _goToScreen({ state, setState, router, parseScreenCondition, });
   const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
   const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
-  const saveForm = _saveForm({ state, setState, script, router });
+  const saveForm = _saveForm({ diagnoses, state, setState, script, router });
 
-  const initialisePage = (opts = {}) => {
-    if (opts.force || !state.screensInitialised) {
-      getScreens();
-    }
+  const initialisePage = () => {
+    getScreens();
+    getConfiguration();
   };
 
   // useDataRefresherAfterSync('screens', ({ event }) => {
@@ -119,7 +123,6 @@ export default function Provider({ children }) {
         goToPrevScreen,
         getScreens,
         parseScreenCondition,
-        sanitizeCondition,
         getLastScreen,
         isLastScreen,
         canSave,

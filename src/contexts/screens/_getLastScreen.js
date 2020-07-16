@@ -1,30 +1,34 @@
 export default ({
   parseScreenCondition,
-  sanitizeCondition,
   state: { screens, activeScreen, }
-}) => () => {
+}) => () => { 
   if (!activeScreen) return false;
 
-  const getLastScreen = (s = activeScreen) => {
-    if (!s) return s;
+  const getScreenIndex = s => !s ? -1 : screens.map(s => s.id).indexOf(s.id);
+  const activeScreenIndex = getScreenIndex(activeScreen);
 
-    const getIndex = s => screens.map(s => s.id).indexOf(s.id);
-    let next = screens[getIndex(s) + 1];
+  const getLastScreen = (currentIndex = i) => {
+    const _current = screens[currentIndex];
 
-    if (s.data.condition) {
+    let nextIndex = currentIndex + 1;
+    let next = screens[nextIndex];
+
+    if (next && next.data.condition) {
+      let conditionMet = false;    
       try {
-        if (!eval(sanitizeCondition(parseScreenCondition(s.condition)))) {
-          next = getLastScreen(screens[getIndex(next) + 1]);
-        }
+        conditionMet = eval(parseScreenCondition(next.data.condition));
       } catch (e) {
         // do nothing
       }
+      if (!conditionMet) {
+        const nextNextIndex = nextIndex + 1;
+        next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex); 
+      }        
     }
 
-    if (next) s = getLastScreen(next);
-
-    return s;
+    const lastIndex = getScreenIndex(next);
+    return lastIndex > -1 ? getLastScreen(lastIndex) : _current;
   };
 
-  return getLastScreen();
+  return getLastScreen(activeScreenIndex);
 };

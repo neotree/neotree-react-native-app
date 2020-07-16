@@ -4,6 +4,7 @@ export default ({
   setState,
   script,
   router,
+  diagnoses,
   state: { form, activeScreen, start_time, screens }
 }) => (_payload = {}) => {
   const { completed, canceled, saveInBackground, ...payload } = _payload;

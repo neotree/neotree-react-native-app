@@ -7,7 +7,7 @@ const Container = ({ children }) => {
   return (
     <>
       <Overlay color="#fff">
-        <Content padder>
+        <Content>
           {children}
         </Content>
       </Overlay>
