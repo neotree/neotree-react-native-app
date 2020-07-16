@@ -1,5 +1,5 @@
 export default ({
-  state: { activeScreenIndex, form, screens },
+  state: { activeScreenIndex, activeScreen, screens },
   parseScreenCondition,
   router: {
     history,
@@ -33,7 +33,7 @@ export default ({
       // do nothing
     }
 
-    return conditionMet ? target : getTargetScreen(index);
+    return conditionMet ? target : index >= screens.length ? activeScreen : getTargetScreen(index);
   };
 
   const target = getTargetScreen();
