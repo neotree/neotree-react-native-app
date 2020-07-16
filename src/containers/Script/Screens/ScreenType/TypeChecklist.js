@@ -27,7 +27,7 @@ const Checklist = ({ screen, value, onChange }) => {
               if (item.exclusive) acc = true;
               return acc;
             }, false);
-            return item.exclusive ? false : !exclusiveChecked;
+            return item.exclusive ? false : exclusiveChecked;
           })(),
         }))}
         value={entry.values.map(e => e.value)}

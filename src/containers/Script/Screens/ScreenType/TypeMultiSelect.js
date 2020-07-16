@@ -19,6 +19,13 @@ const MultiSelect = ({ screen, value, onChange }) => {
         options={(metadata.items || []).map(item => ({ 
           label: item.label,
           value: item.id,
+          disabled: (() => {
+            const exclusiveChecked = entry.values.reduce((acc, item) => {
+              if (item.exclusive) acc = true;
+              return acc;
+            }, false);
+            return item.exclusive ? false : exclusiveChecked;
+          })(),
         }))}
         onChange={(opt, i) => {
           const item = (metadata.items || [])[i];
@@ -35,6 +42,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
             key: metadata.key || item.id,
             type: item.type,
             dataType: item.dataType,
+            exclusive: item.exclusive,
           };
 
           if (item.exclusive) {
