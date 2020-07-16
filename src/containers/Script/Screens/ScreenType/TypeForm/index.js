@@ -131,6 +131,7 @@ const Form = ({ screen, value, context, onChange }) => {
                       conditionMet={conditionMet}
                       value={entry.values[i].value}                      
                       onChange={onChange}
+                      form={entry}
                     />
                   </FormItem>
                 );

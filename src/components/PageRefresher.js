@@ -20,6 +20,7 @@ const PageRefresher = ({ onRefresh, children }) => {
 
         <Button
           onPress={onRefresh}
+          transparent
         >
           <Icon name="refresh" size={40} color="#ddd" />
         </Button>

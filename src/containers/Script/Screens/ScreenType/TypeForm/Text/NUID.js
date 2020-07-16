@@ -58,8 +58,9 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   }, [firstHalf]);
 
   React.useEffect(() => {
-    onChange(validateUID(_value).isValid ? _value : _defaultVal.uid);
-  }, [_value]);
+    const v = validateUID(_value).isValid ? _value : _defaultVal.uid;
+    if (v !== value) onChange(v);
+  });
 
   React.useEffect(() => {
     const [_firstHalf, _lastHalf] = (value || '').split('-');
@@ -84,6 +85,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
           <Form>
             <Item error={!firstHalfIsValid ? true : false} disabled={!conditionMet}>
               <Input
+                autoCorrect={false}
                 ref={firstHalfRef}
                 maxLength={4}
                 autoCapitalize="characters"
@@ -118,6 +120,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
               disabled={disableLastHalf}
             >
               <Input
+                autoCorrect={false}
                 ref={lastHalfRef}
                 onKeyPress={e => {
                   if (e.nativeEvent.key === 'Backspace' && !lastHalf) {

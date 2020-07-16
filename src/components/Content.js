@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 const styles = {
   content: {
-    width: '90%',
+    width: '98%',
     marginLeft: 'auto',
     marginRight: 'auto',
     padding: 10,

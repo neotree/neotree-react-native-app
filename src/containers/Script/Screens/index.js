@@ -43,28 +43,37 @@ const Screens = () => {
             alignItems: 'center',
             flexDirection: 'row',
           }}
+          containerProps={{          
+            style: { backgroundColor: '#f5f5f5' },
+          }}
         >
-          <Text>{activeScreen.data.actionText}</Text>
-          <View style={{ marginLeft: 'auto' }} />
-          <Text>{activeScreen.data.step}</Text>
+          <View style={{ flex: 1 }}>
+            <Text>{activeScreen.data.actionText}</Text>
+          </View>
+          <View>
+            <Text>{activeScreen.data.step}</Text>
+          </View>
         </Content>
       )}
-
-      {!!activeScreen.data.contentText && (
-          <Content
-            containerProps={{          
-              style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
-            }}
-          >
-            <Text>{activeScreen.data.contentText}</Text>
-          </Content>
-        )}
 
       <ScrollView
         ref={scrollViewRef}
       >
+        {!!activeScreen.data.contentText && (
+          <>
+            <Content
+              containerProps={{          
+                style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
+              }}
+            >
+              <Text>{activeScreen.data.contentText}</Text>
+            </Content>
+            <Divider border={false} />
+          </>
+        )}
+        
         <Content>
-          <Divider border={false} spacing={2} />
+          <Divider border={false} />
           <ScreenType />
         </Content>
       </ScrollView>
