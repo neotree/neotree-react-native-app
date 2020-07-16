@@ -32,11 +32,12 @@ export const _parseScreenCondition = (_condition = '', opts = {}) => {
       }
 
       return parseConditionString(_condition, key, value);
-    });
-    return chunks
-      .filter(c => c !== _condition)
-      .map(c => `(${c})`)
-      .join(' || ') || _condition;
+    }).filter(c => c !== _condition);
+
+    const parsedCondition = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks)
+      .join(' || ');
+
+    return parsedCondition || _condition;
   };
 
   let condition = form ? parseForm(_condition, form) : _condition;
