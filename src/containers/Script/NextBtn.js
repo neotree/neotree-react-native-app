@@ -1,20 +1,26 @@
 import React from 'react';
 import { useScreensContext } from '@/contexts/screens';
-import { Button, Icon } from 'native-base';
+import { Icon } from 'native-base';
+import { Link } from 'react-router-native';
+import { TouchableOpacity } from 'react-native';
+import theme from '@/native-base-theme/variables/commonColor';
 
 const NextBtn = () => {
   const {
     canGoToNextScreen,
-    goToNextScreen,
+    getScreenLink,
   } = useScreensContext();
 
   return (
     <>
       {canGoToNextScreen() && (
-        <Button
-          onPress={goToNextScreen}
+        <Link
+          replace
+          to={getScreenLink('next')}
+          component={TouchableOpacity}
           style={[
             {
+              backgroundColor: theme.brandPrimary,
               height: 50,
               width: 50,
               borderRadius: 25,
@@ -25,7 +31,7 @@ const NextBtn = () => {
               bottom: 20,
             }
           ]}
-        ><Icon name="arrow-forward" /></Button>
+        ><Icon style={{ color: '#fff' }} name="arrow-forward" /></Link>
       )}
     </>
   );

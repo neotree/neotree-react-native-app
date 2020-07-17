@@ -1,20 +1,22 @@
 import React from 'react';
 import { useScriptContext } from '@/contexts/script';
 import { useScreensContext } from '@/contexts/screens';
-import { useHistory } from 'react-router-native';
+import { useHistory, useLocation, Link } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import copy from '@/constants/copy';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { Header, Body, Title, Left, Button, Icon, Right, ActionSheet } from 'native-base';
-import { Alert } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 import Modal from '@/components/Modal';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 
 const HeaderComponent = () => {
   const history = useHistory();
+  const { pathname: currentLink } = useLocation();
   const { state: { script } } = useScriptContext();
-  const { saveForm, state: { activeScreen } } = useScreensContext();
+  const { getScreenLink, saveForm, state: { activeScreen } } = useScreensContext();
+  const backLink = getScreenLink('back');
 
   const cancelScript = () => {
     Alert.alert(
@@ -38,18 +40,11 @@ const HeaderComponent = () => {
     );
   };
 
-  const goBack = () => {
-    const currentIndex = history.entries.length - 1;
-    const lastIndex = currentIndex - 1;
-    if (lastIndex) {
-      history.go(lastIndex);
-      history.entries = history.entries.filter((e, i) => i !== currentIndex);
-    } else {
-      cancelScript();
-    }
-  };
-
-  useBackButton(() => { goBack(); });
+  useBackButton(() => {
+    history.entries = [];
+    history.push(backLink || currentLink);
+    if (!backLink) cancelScript();
+  });
 
   const [openInfoModal, setOpenInfoModal] = React.useState(false);
 
@@ -57,12 +52,14 @@ const HeaderComponent = () => {
     <>
       <Header>
         <Left style={{ maxWidth: 50 }}>
-          <Button
+          <Link
             transparent
-            onPress={() => goBack()}
+            component={TouchableOpacity}
+            to={backLink || currentLink}
+            onPress={() => !backLink && cancelScript()}
           >
-            <Icon name="arrow-back" />
-          </Button>
+            <Icon style={{ color: '#fff' }} name="arrow-back" />
+          </Link>
         </Left>
 
         <Body>
