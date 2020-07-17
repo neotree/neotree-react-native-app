@@ -3,15 +3,10 @@ import PropTypes from 'prop-types';
 import useRouter from '@/utils/useRouter';
 import { useScriptContext } from '@/contexts/script';
 import { useDiagnosesContext } from '@/contexts/diagnoses';
+import { Button, Text } from 'native-base';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
-
-import _getScreens from './_getScreens';
-import _parseScreenCondition from './_parseScreenCondition';
-import _canSave from './_canSave';
-import _saveForm from './_saveForm';
-import _getConfiguration from './_getConfiguration';
-import _screenNavigation from './screenNavigation';
+import ContextValue from './ContextValue';
 
 export default function Provider({ children }) {
   const router = useRouter();
@@ -21,7 +16,7 @@ export default function Provider({ children }) {
   const { state: { script } } = useScriptContext();
   const { state: { diagnoses } } = useDiagnosesContext();
 
-  const [state, _setState] = React.useState({
+  const [state, setState] = React.useState({
     start_time: new Date().toString(),
     form: [],
     configuration: {},
@@ -36,28 +31,13 @@ export default function Provider({ children }) {
   });
 
   const { screensInitialised, screens } = state;
-
-  const setState = s => _setState(
-    typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
-  );
-
-  const setForm = s => _setState(prevState => ({
-    ...prevState,
-    form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
-  }));
-
-  const parseScreenCondition = _parseScreenCondition({ state });
-  const screenNavigation = _screenNavigation({ state, setState, router, parseScreenCondition });
-  const canSave = _canSave({ state, setState, ...screenNavigation  });
-  const getScreens = _getScreens({ state, setState, router });
-  const getConfiguration = _getConfiguration({ state, setState, router });
-
-  const saveForm = _saveForm({ diagnoses, state, setState, script, router });
-
-  const initialisePage = () => {
-    getScreens();
-    getConfiguration();
-  };
+  const contextValue = new ContextValue({
+    state, 
+    setState, 
+    router,  
+    diagnoses,
+    script,
+  });
 
   // useDataRefresherAfterSync('screens', ({ event }) => {
   //   const shouldGetScreens = event.screens.reduce((acc, s) => {
@@ -72,7 +52,7 @@ export default function Provider({ children }) {
     if (screensInitialised) {
       const activeScreenIndex = screenId ? screens.map(s => s.id.toString()).indexOf(screenId) : 0;
       const activeScreen = screens[activeScreenIndex];
-      setState({
+      contextValue.setState({
         activeScreenIndex,
         activeScreenInitialised: true,
         activeScreen: !activeScreen ? null : {
@@ -96,21 +76,11 @@ export default function Provider({ children }) {
     }
   }, [screensInitialised, location]);
 
-  React.useEffect(() => { initialisePage(); }, [scriptId]);
+  React.useEffect(() => { contextValue.initialisePage(); }, [scriptId]);
 
   return (
     <Context.Provider
-      value={{
-        state,
-        setState,
-        setForm,
-        initialisePage,
-        ...screenNavigation,
-        getScreens,
-        parseScreenCondition,
-        canSave,
-        saveForm,
-      }}
+      value={contextValue}
     >{children}</Context.Provider>
   );
 }

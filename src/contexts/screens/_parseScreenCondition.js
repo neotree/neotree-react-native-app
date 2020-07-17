@@ -3,7 +3,7 @@ const sanitizeCondition = (condition = '') => condition
   .replace(new RegExp(' or ', 'gi'), ' || ')
   .replace(new RegExp(' = ', 'gi'), ' == ');
 
-export const _parseScreenCondition = (_condition = '', opts = {}) => {
+export default function parseScreenCondition(_condition = '', opts = {}) {
   const { form, configuration } = opts;
 
   const parseConditionString = (s = '', key, value) => !s ? '' : s
@@ -49,12 +49,4 @@ export const _parseScreenCondition = (_condition = '', opts = {}) => {
   }
   
   return sanitizeCondition(condition);
-};
-
-export default function parseScreenCondition({ state: { form: f, configuration } }) { 
-  return (_condition = '', form) => {
-    let condition = form ? _parseScreenCondition(_condition, { form, configuration }) : _condition;
-    condition = _parseScreenCondition(condition, { form: f, configuration });
-    return condition;
-  }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { _parseScreenCondition } from '@/contexts/screens/_parseScreenCondition';
+import _parseScreenCondition from '@/contexts/screens/_parseScreenCondition';
 import { getDiagnoses } from '@/api/diagnoses';
 
 const Diagnosis = ({ form, scriptId }) => {

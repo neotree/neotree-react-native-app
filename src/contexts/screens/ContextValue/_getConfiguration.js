@@ -1,12 +1,14 @@
-import { getConfiguration } from '@/api/database/configuration';
+import * as api from '@/api/database/configuration';
 
-export default ({ setState }) => (payload, opts = {}) => {
+export default function getConfiguration(payload, opts = {}) {
+  const { setState } = this;
+
   setState({
     loadConfigurationError: null,
     loadingConfiguration: opts.showLoader !== false
   });
 
-  getConfiguration({ ...payload })
+  api.getConfiguration({ ...payload })
     .then(res => {
       setState({
         configuration: { ...(res.configuration || {}).data },
@@ -22,4 +24,4 @@ export default ({ setState }) => (payload, opts = {}) => {
         loadingConfiguration: false,
       });
     });
-};
+}
