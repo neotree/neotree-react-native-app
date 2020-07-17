@@ -6,17 +6,12 @@ import { useDiagnosesContext } from '@/contexts/diagnoses';
 // import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 import Context from './Context';
 
-import _canGoToNextScreen from './_canGoToNextScreen';
-import _canGoToPrevScreen from './_canGoToPrevScreen';
 import _getScreens from './_getScreens';
-import _goToScreen from './_goToScreen';
-import _goToNextScreen from './_goToNextScreen';
-import _goToPrevScreen from './_goToPrevScreen';
 import _parseScreenCondition from './_parseScreenCondition';
-import _getLastScreen from './_getLastScreen';
 import _canSave from './_canSave';
 import _saveForm from './_saveForm';
 import _getConfiguration from './_getConfiguration';
+import _screenNavigation from './screenNavigation';
 
 export default function Provider({ children }) {
   const router = useRouter();
@@ -52,16 +47,10 @@ export default function Provider({ children }) {
   }));
 
   const parseScreenCondition = _parseScreenCondition({ state });
-  const getLastScreen = _getLastScreen({ state, setState, parseScreenCondition, });
-  const isLastScreen = () => state.activeScreen && (state.activeScreen.id === getLastScreen().id);
-  const canSave = _canSave({ state, setState, isLastScreen });
-  const canGoToNextScreen = _canGoToNextScreen({ state, setState, isLastScreen });
-  const canGoToPrevScreen = _canGoToPrevScreen({ state, setState, router });
+  const screenNavigation = _screenNavigation({ state, setState, router, parseScreenCondition });
+  const canSave = _canSave({ state, setState, ...screenNavigation  });
   const getScreens = _getScreens({ state, setState, router });
   const getConfiguration = _getConfiguration({ state, setState, router });
-  const goToScreen = _goToScreen({ state, setState, router, parseScreenCondition, });
-  const goToNextScreen = _goToNextScreen({ state, setState, router, goToScreen, canGoToNextScreen });
-  const goToPrevScreen = _goToPrevScreen({ state, setState, router, goToScreen, canGoToPrevScreen });
 
   const saveForm = _saveForm({ diagnoses, state, setState, script, router });
 
@@ -116,15 +105,9 @@ export default function Provider({ children }) {
         setState,
         setForm,
         initialisePage,
-        canGoToNextScreen,
-        canGoToPrevScreen,
-        goToScreen,
-        goToNextScreen,
-        goToPrevScreen,
+        ...screenNavigation,
         getScreens,
         parseScreenCondition,
-        getLastScreen,
-        isLastScreen,
         canSave,
         saveForm,
       }}

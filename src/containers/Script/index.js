@@ -8,6 +8,7 @@ import scriptPageCopy from '@/constants/copy/scriptPage';
 import { Switch, Route } from 'react-router-native';
 import { View } from 'react-native';
 import Text from '@/components/Text';
+import useRouter from '@/utils/useRouter';
 
 import Screens from './Screens';
 import PreviewForm from './PreviewForm';
@@ -17,10 +18,17 @@ import NextBtn from './NextBtn';
 import SaveBtn from './SaveBtn';
 
 const Script = () => {
+  const { history, location } = useRouter();
+ 
   const {
     initialisePage,
     state: { script, scriptInitialised, loadingScript }
   } = useScriptContext();
+
+  React.useEffect(() => {
+    history.entries = [];
+    history.push(location.pathname);
+  }, []);
 
   if (!scriptInitialised || loadingScript) {
     return (
