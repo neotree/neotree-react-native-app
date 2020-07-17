@@ -66,7 +66,8 @@ const HeaderComponent = () => {
         </Left>
 
         <Body>
-          <Title>{script.data.title}{activeScreen ? ` > ${activeScreen.data.title}` : null}</Title>
+          <Title>{activeScreen ? activeScreen.data.title : null}</Title>
+          <Text style={{ fontSize: 10, color: '#ddd' }}>{script.data.title}</Text>
         </Body>
 
         <Right style={{ maxWidth: 80 }}>
