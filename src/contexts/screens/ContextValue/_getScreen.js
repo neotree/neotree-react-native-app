@@ -1,7 +1,9 @@
-export default ({
-  state: { activeScreenIndex, activeScreen, screens },
-  parseScreenCondition,
-}) => (opts = {}) => {
+export default function getScreen(opts = {}) {
+  const {
+    state: { activeScreenIndex, activeScreen, screens },
+    parseScreenCondition,
+  } = this;
+
   const { index: i, direction: d } = opts;
   const direction = ['next', 'back'].includes(d) ? d : null;
   const index = i || activeScreenIndex;
@@ -41,4 +43,4 @@ export default ({
   };
 
   return getTargetScreen(index);
-};
+}

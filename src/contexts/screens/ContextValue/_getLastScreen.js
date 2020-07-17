@@ -1,7 +1,9 @@
-export default ({
-  parseScreenCondition,
-  state: { screens, activeScreen, }
-}) => () => { 
+export default function getLastScreen() { 
+  const {
+    parseScreenCondition,
+    state: { screens, activeScreen, }
+  } = this;
+
   if (!activeScreen) return false;
 
   const getScreenIndex = s => !s ? -1 : screens.map(s => s.id).indexOf(s.id);
@@ -31,4 +33,4 @@ export default ({
   };
 
   return getLastScreen(activeScreenIndex);
-};
+}

@@ -1,12 +1,14 @@
 import { saveSession } from '@/api/sessions';
 
-export default ({
-  setState,
-  script,
-  router,
-  diagnoses,
-  state: { form, activeScreen, start_time, screens }
-}) => (_payload = {}) => {
+export default function saveForm(_payload = {}) {
+  const {
+    setState,
+    script,
+    router,
+    diagnoses,
+    state: { form, activeScreen, start_time, screens }
+  } = this;
+
   const { completed, canceled, saveInBackground, ...payload } = _payload;
   return new Promise((resolve, reject) => {
     if (!saveInBackground) setState({ savingForm: true });
@@ -42,4 +44,4 @@ export default ({
       .then(rslts => done(null, rslts))
       .catch(done);
   });
-};
+}

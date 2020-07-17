@@ -1,7 +1,9 @@
-export default ({
-  getScreen,
-  router: { match: { params: { scriptId } } } 
-}) => (direction = 'next') => {
+export default function getScreenLink(direction = 'next') {
+  const {
+    getScreen,
+    router: { match: { params: { scriptId } } } 
+  } = this;
+  
   direction = ['next', 'back'].includes(direction) ? direction : null;
   let s = null;
   switch (direction) {
@@ -15,4 +17,4 @@ export default ({
           s = getScreen();
   }
   return !s ? '' : `/script/${scriptId}/screen/${s.screen.id}`;
-};
+}
