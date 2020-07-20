@@ -1,16 +1,19 @@
 import React from 'react';
-import Provider from './ContextProvider';
+import Context from './Context';
+import useContextValue from './ContextValue';
 
 export * from './Context';
 
-export { Provider };
-
 export function provideSessionsContext(Component) {
   return function sessionsContextProvider(props) {
+    const value = useContextValue();
+
+    React.useEffect(() => { value.getSessions(); }, []);
+
     return (
-      <Provider {...props}>
+      <Context.Provider value={value}>
         <Component {...props} />
-      </Provider>
+      </Context.Provider>
     );
   };
 }

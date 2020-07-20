@@ -10,9 +10,10 @@ export default class ContextValue {
 
   init = require('./_init').default.bind(this);
 
-  setState = s => this._setState(
-    typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
-  );
+  setState = s => this._setState(prevState => ({
+    ...prevState,
+    ...(typeof s === 'function' ? s(prevState) : s)
+  }));
 
   setForm = s => this._setState(prevState => ({
     ...prevState,

@@ -1,16 +1,17 @@
 import React from 'react';
-import Provider from './ContextProvider';
+import Context from './Context';
+import useContextValue from './ContextValue';
 
 export * from './Context';
 
-export { Provider };
-
 export function provideHomeContext(Component) {
   return function HomeContextProvider(props) {
+    const value = useContextValue(props);
+
     return (
-      <Provider {...props}>
+      <Context.Provider value={value}>
         <Component {...props} />
-      </Provider>
+      </Context.Provider>
     );
   };
 }

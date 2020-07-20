@@ -1,11 +1,13 @@
 import { getDiagnoses } from '@/api/diagnoses';
 
-export default ({
-  setState,
-  router: {
-    match: { params: { scriptId } }
-  }
-}) => (payload, opts = {}) => {
+export default function _getDiagnoses(payload, opts = {}) {
+  const {
+    setState,
+    router: {
+      match: { params: { scriptId } }
+    }
+  } = this;
+
   setState({
     loadDiagnosesError: null,
     loadingDiagnoses: opts.showLoader !== false,
@@ -26,4 +28,4 @@ export default ({
       diagnosesInitialised: true,
       loadingDiagnoses: false,
     }));
-};
+}

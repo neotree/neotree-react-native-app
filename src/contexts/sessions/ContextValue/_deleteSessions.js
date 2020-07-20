@@ -1,10 +1,12 @@
 import { deleteSessions } from '@/api/sessions';
 
-export default ({ setState, state: { sessions } }) => (ids = []) => {
+export default function _deleteSessions(ids = []) {
+  const { setState, state: { sessions } } = this;
+
   if (!(ids && ids.length)) return;
 
   setState({ deletingSessions: true, deleteSessionsError: null });
-  
+
   deleteSessions(ids.map(id => ({ id })))
     .then(() => {
       setState({
@@ -19,4 +21,4 @@ export default ({ setState, state: { sessions } }) => (ids = []) => {
       deleteSessionsError,
       deletingSessions: false
     }));
-};
+}

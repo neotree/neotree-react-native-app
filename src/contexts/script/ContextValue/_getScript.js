@@ -1,14 +1,16 @@
 import { getScript } from '@/api/scripts';
 
-export default ({
-  setState,
-  router: {
-    match: { params: { scriptId } }
-  }
-}) => (payload, opts = {}) => {
+export default function _getScripts(payload, opts = {}) {
+  const {
+    setState,
+    router: {
+      match: { params: { scriptId } }
+    }
+  } = this;
+
   setState({
     loadScriptError: null,
-    loadingScript: opts.showLoader !== false 
+    loadingScript: opts.showLoader !== false
   });
 
   getScript({ id: scriptId, ...payload })
@@ -25,4 +27,4 @@ export default ({
       scriptInitialised: true,
       loadingScript: false,
     }));
-};
+}

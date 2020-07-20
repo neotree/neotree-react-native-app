@@ -15,9 +15,11 @@ export default class ContextValue {
 
   init = require('./_init').default.bind(this);
 
-  getConfigKeys = require('./_getConfigKeys').default.bind(this);
+  getDiagnoses = require('./_getDiagnoses').default.bind(this);
 
-  getConfiguration = require('./_getConfiguration').default.bind(this);
-
-  saveConfiguration = require('./_saveConfiguration').default.bind(this);
+  initialisePage = (opts = {}) => {
+    if (opts.force || !this.state.diagnosesInitialised) {
+      this.getDiagnoses();
+    }
+  };
 }

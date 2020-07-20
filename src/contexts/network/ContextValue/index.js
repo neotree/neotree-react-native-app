@@ -1,20 +1,12 @@
-export default class ContextValue {
-  constructor({ 
-    state, 
-    setState, 
-    router,  
-  }) {
-    this.state = state;
-    this._setState = setState;
-    this.router = router;
-  };
+import React from 'react';
+import Value, { defaults } from './Value';
 
-  setState = s => this._setState(
-    typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
-  );
+export default props => {
+  const [state, setState] = React.useState(defaults.defaultState);
 
-  setForm = s => this._setState(prevState => ({
-    ...prevState,
-    form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
-  }));
-}
+  return new Value({
+    props,
+    state,
+    setState,
+  });
+};
