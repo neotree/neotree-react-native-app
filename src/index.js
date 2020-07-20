@@ -14,7 +14,6 @@ import Splash from '@/components/Splash';
 import OverlayLoader from '@/components/OverlayLoader';
 import NetworkStatusBar from '@/components/NetworkStatusBar';
 
-const Authentication = LazyPage(() => import('@/containers/Authentication'), { LoaderComponent: Splash });
 const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
 
 const NeoTreeApp = () => {
