@@ -1,18 +1,30 @@
 import React from 'react';
-import Provider from './ContextProvider';
+import Context from './Context';
+import { useDataContext } from '../data';
+import ContextValue, { defaults } from './ContextValue';
 
 export * from './Context';
 
 export { default as useOverlayLoaderState } from './_useOverlayLoaderState';
 
-export { Provider };
+export const provideAppContext = Component => function AppContextProvider(props) {
+  const dataContext = useDataContext();
 
-export function provideAppContext(Component) {
-  return function AppContextProvider(props) {
-    return (
-      <Provider {...props}>
-        <Component {...props} />
-      </Provider>
-    );
-  };
-}
+  const [state, setState] = React.useState(defaults.defaultState);
+  const value = new ContextValue({
+    props,
+    state,
+    setState,
+    dataContext,
+  });
+
+  React.useEffect(() => value.loadFonts(), []);
+
+  return (
+    <Context.Provider
+      value={value}
+    >
+      <Component {...props} />
+    </Context.Provider>
+  );
+};
