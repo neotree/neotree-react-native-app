@@ -1,16 +1,31 @@
 import React from 'react';
-import Provider from './ContextProvider';
+import Context from './Context';
+import useContextValue from './ContextValue';
+import useDataRefresherAfterSync from '../useDataRefresherAfterSync';
 
 export * from './Context';
 
-export { Provider };
-
 export function provideConfigKeysContext(Component) {
   return function ConfigKeysContextProvider(props) {
+    const value = useContextValue(props);
+
+    React.useEffect(() => {
+      value.getConfiguration();
+      value.getConfigKeys();
+    }, []);
+
+    useDataRefresherAfterSync('configKeys', () => {
+      value.getConfigKeys(null, { showLoader: false });
+    });
+
+    useDataRefresherAfterSync('app_data_sync', () => {
+      value.getConfigKeys(null, { showLoader: false });
+    });
+
     return (
-      <Provider {...props}>
+      <Context.Provider value={value}>
         <Component {...props} />
-      </Provider>
+      </Context.Provider>
     );
   };
 }

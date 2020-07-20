@@ -1,14 +1,14 @@
 import { getConfiguration } from '@/api/database/configuration';
 
-export default ({ setState }) => (payload, opts = {}) => {
-  setState({
+export default function _getConfiguration(payload, opts = {}) {
+  this.setState({
     loadConfigurationError: null,
     loadingConfiguration: opts.showLoader !== false
   });
 
   getConfiguration({ ...payload })
     .then(res => {
-      setState({
+      this.setState({
         configuration: { ...(res.configuration || {}).data },
         configKeysInitialised: true,
         loadConfigurationError: res.error,
@@ -16,10 +16,10 @@ export default ({ setState }) => (payload, opts = {}) => {
       });
     })
     .catch(e => {
-      setState({
+      this.setState({
         loadConfigurationError: e,
         configKeysInitialised: true,
         loadingConfiguration: false,
       });
     });
-};
+}
