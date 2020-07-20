@@ -1,9 +1,10 @@
 import { saveConfiguration } from '@/api/database/configuration';
 
-export default ({ state, setState }) => (payload, opts = {}) => {
+export default function _saveConfiguration(payload, opts = {}) {
+  const state = this.state;
   const configuration = { ...state.configuration, ...payload };
 
-  setState({
+  this.setState({
     configuration,
     saveConfigurationError: null,
     savingConfiguration: opts.showLoader !== false
@@ -11,17 +12,17 @@ export default ({ state, setState }) => (payload, opts = {}) => {
 
   saveConfiguration(configuration)
     .then(res => {
-      setState({
+      this.setState({
         configKeysInitialised: true,
         saveConfigurationError: res.error,
         savingConfiguration: false,
       });
     })
     .catch(e => {
-      setState({
+      this.setState({
         saveConfigurationError: e,
         configKeysInitialised: true,
         savingConfiguration: false,
       });
     });
-};
+}
