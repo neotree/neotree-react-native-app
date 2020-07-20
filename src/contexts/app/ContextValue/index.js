@@ -1,28 +1,15 @@
-import * as defaults from './_defaults';
+import React from 'react';
+import { useDataContext } from '../../data';
+import Value, { defaults } from './Value';
 
-export { defaults };
+export default props => {
+  const dataContext = useDataContext();
+  const [state, setState] = React.useState(defaults.defaultState);
 
-export default class ContextValue {
-  constructor(params) {
-    this.defaults = defaults;
-    this.init(params);
-  }
-
-  setState = s => this._setState(
-    typeof s === 'function' ? s : prevState => ({ ...prevState, ...s })
-  );
-
-  init = require('./_init').default.bind(this);
-
-  loadFonts = require('./_loadFonts').default.bind(this);
-
-  isAppReady = () => this.state.fontsLoaded && this.dataContext.dataIsReady;
-
-  getSplashScreenInfo = require('./_getSplashScreenInfo').default.bind(this);
-
-  displayOverlayLoader = () => Object.keys(this.state.overlayLoaderState)
-    .reduce((acc, key) => {
-      if (this.state.overlayLoaderState[key]) acc = true;
-      return acc;
-    }, false);
-}
+  return new Value({
+    props,
+    state,
+    setState,
+    dataContext,
+  });
+};
