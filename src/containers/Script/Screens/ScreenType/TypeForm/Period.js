@@ -22,7 +22,7 @@ const Period = ({ form, field, onChange, value, conditionMet, }) => {
   const [_value, set_value] = React.useState('');
 
   React.useEffect(() => {
-    if (calc.value) {    
+    if (calc && calc.value) {    
       const days = diffDays(new Date(), new Date(calc.value));
       const hrs = Math.round(diffHrs(new Date(), new Date(calc.value)) % (days ? days * 24 : 1));
   
