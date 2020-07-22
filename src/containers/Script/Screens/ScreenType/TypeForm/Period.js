@@ -16,8 +16,12 @@ const formatDate = d => {
 };
 
 const Period = ({ form, field, value, onChange, conditionMet, }) => {
-  const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
+  const [calcFrom, setCalcFrom] = React.useState(null);
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
+
+  React.useEffect(() => {
+    setCalcFrom(form.values.filter(v => `$${v.key}` === field.calculation)[0]);
+  }, [form]);
 
   React.useEffect(() => {
     if (calcFrom) {

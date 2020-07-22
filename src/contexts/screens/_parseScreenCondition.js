@@ -7,12 +7,12 @@ export default function parseScreenCondition(_condition = '', opts = {}) {
   const { form, configuration } = opts;
 
   const parseConditionString = (s = '', key, value) => !s ? '' : s
-  .split(`$${key} =`).join(`${value} =`)
-  .split(`$${key}=`).join(`${value} =`)
-  .split(`$${key} >`).join(`${value} >`)
-  .split(`$${key}>`).join(`${value} >`)
-  .split(`$${key} <`).join(`${value} <`)
-  .split(`$${key}<`).join(`${value} <`);
+    .split(`$${key} =`).join(`${value} =`)
+    .split(`$${key}=`).join(`${value} =`)
+    .split(`$${key} >`).join(`${value} >`)
+    .split(`$${key}>`).join(`${value} >`)
+    .split(`$${key} <`).join(`${value} <`)
+    .split(`$${key}<`).join(`${value} <`);
 
   const parseForm = (_condition = '', form) => {
     const values = form.reduce((acc, entry) => [...acc, ...entry.values], []);
@@ -20,12 +20,12 @@ export default function parseScreenCondition(_condition = '', opts = {}) {
       value = value || '';
       const t = dataType || type;
 
-      switch(t) {
+      switch (t) {
         case 'number':
           value = value || null;
           break;
         case 'boolean':
-          value = Boolean(value);
+          value = value === 'false' ? false : Boolean(value);
           break;
         default:
           value = JSON.stringify(value);
@@ -47,6 +47,6 @@ export default function parseScreenCondition(_condition = '', opts = {}) {
       return parseConditionString(acc, key, configuration[key] ? true : false);
     }, condition);
   }
-  
+
   return sanitizeCondition(condition);
 }
