@@ -2,12 +2,11 @@ import React from 'react';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext } from '@/contexts/screens';
 import { provideDiagnosesContext } from '@/contexts/diagnoses';
-import { Spinner } from 'native-base';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { Switch, Route } from 'react-router-native';
-import { View } from 'react-native';
 import Text from '@/components/Text';
+import OverlayLoader from '@/components/OverlayLoader';
 import useRouter from '@/utils/useRouter';
 
 import Screens from './Screens';
@@ -19,7 +18,7 @@ import SaveBtn from './SaveBtn';
 
 const Script = () => {
   const { history, location } = useRouter();
- 
+
   const {
     initialisePage,
     state: { script, scriptInitialised, loadingScript }
@@ -31,11 +30,7 @@ const Script = () => {
   }, []);
 
   if (!scriptInitialised || loadingScript) {
-    return (
-      <View style={{ alignItems: 'center', justifyContent: 'center', margin: 100 }}>
-        <Spinner color="blue" />
-      </View>
-    );
+    return <OverlayLoader display style={{ backgroundColor: 'transparent' }} />;
   }
 
   if (!script) {

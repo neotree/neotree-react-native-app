@@ -1,6 +1,6 @@
 export default function getScreen(opts = {}) {
   const {
-    state: { activeScreenIndex, activeScreen, screens },
+    state: { activeScreenIndex, screens },
     parseScreenCondition,
   } = this;
 
@@ -10,10 +10,10 @@ export default function getScreen(opts = {}) {
 
   const getTargetScreen = (i = index) => {
     const index = (() => {
-      switch(direction) {
-        case 'next': 
+      switch (direction) {
+        case 'next':
           return i + 1;
-        case 'back': 
+        case 'back':
           return i - 1;
         default:
           return i;
