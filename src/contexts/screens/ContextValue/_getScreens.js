@@ -1,7 +1,6 @@
 import * as api from '@/api/screens';
 
 export default function getScreens(payload, opts = {}) {
-  console.log(this.router);
   const {
     setState,
     router: {
