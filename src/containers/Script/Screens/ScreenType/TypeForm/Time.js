@@ -4,8 +4,8 @@ import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 
 const Time = ({ field, onChange: _onChange, value, conditionMet, }) => {
-  const onChange = (d, error) => _onChange(d, {
-    error,
+  const onChange = (d, opts) => _onChange(d, {
+    ...opts,
     valueText: d ? require('moment')(new Date(d)).format('HH:MM') : '',
   });
 

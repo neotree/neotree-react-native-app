@@ -54,7 +54,7 @@ const ScreenType = () => {
             break;
           case 'list':
             Component = List;
-          break;
+            break;
           default:
             // do nothing
         }
@@ -65,6 +65,7 @@ const ScreenType = () => {
         const { label, dataType } = (activeScreen.data.metadata || {});
         const screen = {
           title: activeScreen.data.title,
+          sectionTitle: activeScreen.data.sectionTitle,
           id: activeScreen.id,
           type: activeScreen.type,
           metadata: { label, dataType },
