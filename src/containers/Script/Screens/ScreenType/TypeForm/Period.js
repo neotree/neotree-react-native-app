@@ -4,15 +4,27 @@ import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 import moment from 'moment';
 
+const formatDate = d => {
+  if (!d) return '';
+  const now = moment();
+  const days = now.diff(new Date(d), 'days');
+  const hrs = now.diff(new Date(d), 'hours') - (days * 24);
+  const v = [];
+  if (days) v.push(`${days} day(s)`);
+  v.push(hrs ? `${hrs} hour(s)` : days ? '' : 'Less than an hour');
+  return v.filter(s => s).join(', ');
+};
+
 const Period = ({ form, field, value, onChange, conditionMet, }) => {
-  const [calcFrom, setCalcFrom] = React.useState(null);
+  const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   React.useEffect(() => {
-    const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
-    setCalcFrom(calcFrom);
-    if (calcFrom) setDate(calcFrom.value);
-  }, [form]);
+    if (calcFrom) {
+      setDate(calcFrom.value);
+      onChange(calcFrom.value, null, formatDate(calcFrom.value));
+    }
+  }, [calcFrom]);
 
   const onDateChange = (e, date) => {
     if (calcFrom) return;
@@ -34,17 +46,9 @@ const Period = ({ form, field, value, onChange, conditionMet, }) => {
         enabled={conditionMet}
         editable={!calcFrom}
         value={date}
-        placeholder={formCopy.SELECT_DATE}
+        placeholder={field.calculation || formCopy.SELECT_DATE}
         onChange={onDateChange}
-        formatDate={d => {
-          const now = moment();
-          const days = now.diff(new Date(d), 'days');
-          const hrs = now.diff(new Date(d), 'hours') - (days * 24);
-          const v = [];
-          if (days) v.push(`${days} day(s)`);
-          v.push(hrs ? `${hrs} hour(s)` : days ? '' : 'Less than an hour');
-          return v.filter(s => s).join(', ');
-        }}
+        formatDate={formatDate}
       >
         {field.label}{field.optional ? '' : ' *'}
       </DatePicker>
