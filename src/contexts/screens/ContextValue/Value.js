@@ -47,6 +47,8 @@ export default class ContextValue {
 
   parseScreenCondition = require('./_parseScreenCondition').default.bind(this);
 
+  getDiagnoses = require('./_getDiagnoses').default.bind(this);
+
   canSave = require('./_canSave').default.bind(this);
 
   saveForm = require('./_saveForm').default.bind(this);

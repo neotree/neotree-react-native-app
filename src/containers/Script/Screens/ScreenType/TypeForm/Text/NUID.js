@@ -59,13 +59,13 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
 
   React.useEffect(() => {
     const v = validateUID(_value).isValid ? _value : _defaultVal.uid;
-    if (v !== value) onChange(v);
+    if (v !== value) onChange(v, { error: null, valueText: v, });
   });
 
   React.useEffect(() => {
     const [_firstHalf, _lastHalf] = (value || '').split('-');
     setFirstHalf(_firstHalf || _defaultVal.firstHalf);
-    setLastHalf(_lastHalf || _defaultVal.lastHalf); 
+    setLastHalf(_lastHalf || _defaultVal.lastHalf);
   }, [value]);
 
   const disableLastHalf = !(conditionMet && firstHalfIsValid);

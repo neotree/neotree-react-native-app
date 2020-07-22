@@ -124,9 +124,10 @@ const Timer = ({ screen, value, onChange }) => {
                     setEntry({
                       values: [{
                         value,
+                        valueText: value,
                         label: metadata.label,
                         key: metadata.key,
-                        type: metadata.type || metadata.dataType, 
+                        type: metadata.type || metadata.dataType,
                         dataType: metadata.dataType,
                       }]
                     });

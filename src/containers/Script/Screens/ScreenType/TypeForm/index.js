@@ -114,7 +114,8 @@ const Form = ({ screen, value, context, onChange }) => {
 
                 const conditionMet = evaluateCondition(f);
 
-                const onChange = (v, error, valueText) => {
+                const onChange = (v, params = {}) => {
+                  const { error, valueText } = { ...params };
                   _onChange(i, { error, value: v, valueText });
                 };
 

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { ScrollView } from 'react-native';
 import { Tabs, Tab } from 'native-base';
 import Form from './Form';
-import Diagnosis from './Diagnosis';
+import Diagnoses from './Diagnoses';
 
 const PreviewSessionForm = ({ Wrapper, scrollable, ...props }) => {
   scrollable = scrollable !== false;
@@ -12,16 +12,18 @@ const PreviewSessionForm = ({ Wrapper, scrollable, ...props }) => {
 
   return (
     <>
-      <RootComponent>
-        <Tabs>
-          <Tab heading="Summary">
+      <Tabs>
+        <Tab heading="Summary">
+          <RootComponent>
             <Wrapper><Form {...props} /></Wrapper>
-          </Tab>
-          <Tab heading="Diagnosis">
-            <Wrapper><Diagnosis {...props} /></Wrapper>
-          </Tab>
-        </Tabs>        
-      </RootComponent>
+          </RootComponent>
+        </Tab>
+        <Tab heading="Diagnosis">
+          <RootComponent>
+            <Wrapper><Diagnoses {...props} /></Wrapper>
+          </RootComponent>
+        </Tab>
+      </Tabs>
     </>
   );
 };

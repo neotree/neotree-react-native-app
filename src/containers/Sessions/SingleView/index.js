@@ -15,13 +15,17 @@ const SingleView = () => {
 
   const session = sessions.filter(f => f.id.toString() === sessionId).map(s => s.data)[0];
   const form = session ? session.form : null;
-  const scriptId = session ? session.script.id : null;
+  const diagnoses = session ? session.diagnoses : [];
 
   return (
     <>
       <Header form={form} />
       <View style={[{ flex: 1 }]}>
-        <PreviewSessionForm scriptId={scriptId} Wrapper={Wrapper} form={form} />
+        <PreviewSessionForm
+          Wrapper={Wrapper}
+          form={form}
+          diagnoses={diagnoses}
+        />
       </View>
     </>
   );

@@ -67,7 +67,7 @@ const ScreenType = () => {
           title: activeScreen.data.title,
           id: activeScreen.id,
           type: activeScreen.type,
-          metadata: { label, dataType,  },
+          metadata: { label, dataType },
         };
 
         return !Component ? null : (
