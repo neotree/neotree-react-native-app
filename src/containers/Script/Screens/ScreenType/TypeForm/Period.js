@@ -15,23 +15,19 @@ const formatDate = d => {
   return v.filter(s => s).join(', ');
 };
 
-const Period = ({ form, field, value, onChange, conditionMet, }) => {
-  const [calcFrom, setCalcFrom] = React.useState(null);
+const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
+  const onChange = (d, error) => _onChange(d, {
+    error,
+    valueText: d ? formatDate(d) : null,
+  });
+  const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   React.useEffect(() => {
-    setCalcFrom(form.values.filter(v => `$${v.key}` === field.calculation)[0]);
-  }, [form]);
-
-  React.useEffect(() => {
-    if (calcFrom) {
-      setDate(calcFrom.value);
-      onChange(calcFrom.value, null, formatDate(calcFrom.value));
-    }
-  }, [calcFrom]);
+    if (calcFrom) onChange(calcFrom.value);
+  }, [calcFrom, value]);
 
   const onDateChange = (e, date) => {
-    if (calcFrom) return;
     setDate(date);
     onChange(date);
   };
@@ -49,9 +45,9 @@ const Period = ({ form, field, value, onChange, conditionMet, }) => {
       <DatePicker
         enabled={conditionMet}
         editable={!calcFrom}
-        value={date}
+        value={calcFrom ? value : date}
         placeholder={field.calculation || formCopy.SELECT_DATE}
-        onChange={onDateChange}
+        onChange={calcFrom ? (() => {}) : onDateChange}
         formatDate={formatDate}
       >
         {field.label}{field.optional ? '' : ' *'}

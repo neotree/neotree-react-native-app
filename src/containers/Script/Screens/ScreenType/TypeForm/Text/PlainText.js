@@ -23,7 +23,10 @@ const PlainText = ({ field, onChange, value, conditionMet, }) => {
             defaultValue={value || ''}
             onChange={e => {
               const value = e.nativeEvent.text;
-              onChange(value);
+              onChange(value, {
+                error,
+                valueText: value,
+              });
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}

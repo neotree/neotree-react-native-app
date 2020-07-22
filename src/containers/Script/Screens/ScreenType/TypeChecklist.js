@@ -1,9 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
-import { ListItem, Body } from 'native-base';
-import CheckBox from '@/components/CheckBox';
-import Text from '@/components/Text';
 import Select from '@/components/Select';
 
 const Checklist = ({ screen, value, onChange }) => {
@@ -19,7 +15,7 @@ const Checklist = ({ screen, value, onChange }) => {
     <>
       <Select
         variant="checkbox"
-        options={(metadata.items || []).map(item => ({ 
+        options={(metadata.items || []).map(item => ({
           label: item.label,
           value: item.key,
           disabled: (() => {
@@ -44,6 +40,7 @@ const Checklist = ({ screen, value, onChange }) => {
 
           const _entry = {
             value,
+            valueText: item.label,
             label: item.label,
             key: metadata.key || item.key,
             type: item.type,

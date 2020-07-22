@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
 import Text from '@/components/Text';
 import { List, ListItem, Body } from 'native-base';
 
@@ -17,7 +16,7 @@ const TypeList = ({ screen, onChange }) => {
         {metadata.items.map((item, i) => {
           const key = i;
           return (
-            <ListItem 
+            <ListItem
               key={key}
               noIndent
             >

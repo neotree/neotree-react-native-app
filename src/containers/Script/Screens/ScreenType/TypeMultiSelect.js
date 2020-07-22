@@ -16,7 +16,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
       <Select
         variant="checkbox"
         value={entry.values.map(e => e.value)}
-        options={(metadata.items || []).map(item => ({ 
+        options={(metadata.items || []).map(item => ({
           label: item.label,
           value: item.id,
           disabled: (() => {
@@ -38,6 +38,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
 
           const _entry = {
             value,
+            valueText: item.label,
             label: item.label,
             key: metadata.key || item.id,
             type: item.type,

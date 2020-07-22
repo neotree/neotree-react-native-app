@@ -1,6 +1,6 @@
 import React from 'react';
 import LazyPage from '@/components/LazyPage';
-import { Switch, Route } from "react-router-native";
+import { Switch, Route } from 'react-router-native';
 
 const Authentication = LazyPage(() => import('@/containers/Authentication'));
 const Home = LazyPage(() => import('@/containers/Home'));

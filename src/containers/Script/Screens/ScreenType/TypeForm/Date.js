@@ -3,7 +3,11 @@ import PropTypes from 'prop-types';
 import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 
-const FieldDate = ({ field, onChange, value, conditionMet, }) => {
+const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
+  const onChange = (d, error) => _onChange(d, {
+    error,
+    valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY') : '',
+  });
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   const onDateChange = (e, date) => {

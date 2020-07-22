@@ -7,12 +7,13 @@ const Entry = ({ label, values }) => { // eslint-disable-line
   return (
     <>
       <Text>{label}</Text>
-      {values.map(v => {
+      {values.map((v, i) => {
+        const key = i;
         return (
           <Text
-            key={v.key}
+            key={key}
             style={{ color: '#999' }}
-          >{v.text || v.valueText || v.label || v.value}</Text>
+          >{v.valueText || v.value || 'N/A'}</Text>
         );
       })}
       <Divider spacing={2} />

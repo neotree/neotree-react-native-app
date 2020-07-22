@@ -5,7 +5,6 @@ export default function saveForm(_payload = {}) {
     setState,
     script,
     router,
-    diagnoses,
     state: { form, activeScreen, start_time, screens }
   } = this;
 
@@ -28,6 +27,7 @@ export default function saveForm(_payload = {}) {
         canceled_at: canceled ? new Date().toString() : null,
         script,
         form,
+        diagnoses: this.getDiagnoses(),
         screens: screens.map(s => {
           const { fields, items } = { ...s.data.metadata };
           return {
