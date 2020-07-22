@@ -124,7 +124,7 @@ const Timer = ({ screen, value, onChange }) => {
                     setEntry({
                       values: [{
                         value,
-                        valueText: value,
+                        valueText: value * (metadata.multiplier || 1),
                         label: metadata.label,
                         key: metadata.key,
                         type: metadata.type || metadata.dataType,
