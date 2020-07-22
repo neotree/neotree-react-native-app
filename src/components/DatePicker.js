@@ -59,7 +59,11 @@ const DatePicker = ({
           }}
         >
           <Text
-            style={[styles.text, enabled ? null : styles.disabledText]}
+            style={[
+              styles.text,
+              enabled ? null : styles.disabledText,
+              value ? null : { color: '#ccc' },
+            ]}
           >
             {!value ? placeholder : (formatDate ?
               formatDate(value) : moment(value).format(mode === 'time' ? 'LT' : 'LL')

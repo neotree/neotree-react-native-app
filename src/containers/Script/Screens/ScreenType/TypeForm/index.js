@@ -16,7 +16,7 @@ import Time from './Time';
 const Form = ({ screen, value, context, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const { parseScreenCondition, state: { form } } = context;
+  const { parseScreenCondition, } = context;
 
   const fields = metadata.fields || [];
 
@@ -52,7 +52,7 @@ const Form = ({ screen, value, context, onChange }) => {
 
     if (f.condition) {
       conditionMet = false;
-      let condition = parseScreenCondition(f.condition, [entry]);
+      const condition = parseScreenCondition(f.condition, [entry]);
 
       try {
         conditionMet = eval(condition);
@@ -122,14 +122,14 @@ const Form = ({ screen, value, context, onChange }) => {
                   <FormItem
                     setCache={v => setCache(i, { value: v })}
                     conditionMet={conditionMet}
-                    value={entry.values[i].value} 
+                    value={entry.values[i].value}
                     valueCache={entryCache.values[i].value}
                     onChange={onChange}
                   >
                     <Component
                       field={f}
                       conditionMet={conditionMet}
-                      value={entry.values[i].value}                      
+                      value={entry.values[i].value}
                       onChange={onChange}
                       form={entry}
                     />
