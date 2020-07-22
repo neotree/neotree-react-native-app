@@ -6,7 +6,7 @@ import moment from 'moment';
 
 const Period = ({ form, field, value, onChange, conditionMet, }) => {
   const [calcFrom, setCalcFrom] = React.useState(null);
-  const [date, setDate] = React.useState(value);
+  const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   React.useEffect(() => {
     const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
@@ -21,9 +21,11 @@ const Period = ({ form, field, value, onChange, conditionMet, }) => {
   };
 
   React.useEffect(() => {
-    const v = value ? new Date(value).toString() : null;
-    const d = date ? new Date(date).toString() : null;
-    if (!calcFrom && (v !== d)) onChange(date);
+    if (!calcFrom) {
+      const v = value ? new Date(value).toString() : null;
+      const d = date ? new Date(date).toString() : null;
+      if (v !== d) onChange(date);
+    }
   });
 
   return (
