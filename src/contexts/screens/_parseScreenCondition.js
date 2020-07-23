@@ -16,13 +16,13 @@ export default function parseScreenCondition(_condition = '', opts = {}) {
 
   const parseForm = (_condition = '', form) => {
     const values = form.reduce((acc, entry) => [...acc, ...entry.values], []);
-    const chunks = values.map(({ value, type, key, dataType }) => {
+    const chunks = values.map(({ value, type, key, dataType, valueText }) => {
       value = value || '';
       const t = dataType || type;
 
       switch (t) {
         case 'number':
-          value = value || null;
+          value = valueText || null;
           break;
         case 'boolean':
           value = value === 'false' ? false : Boolean(value);
