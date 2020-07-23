@@ -2,6 +2,8 @@ import * as firebase from 'firebase';
 
 export * from './getAuthenticatedUser';
 
+export { default as saveUser } from './_saveUser';
+
 export const signOut = () => firebase.auth().signOut();
 
 export const signIn = (params = {}) => new Promise((resolve, reject) => {
