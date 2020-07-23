@@ -3,13 +3,11 @@ export default function init({
   setState,
   router,
   dataContext,
-  props,
 }) {
   this.state = state;
   this._setState = setState;
   this.router = router;
   this.dataContext = dataContext;
-  this.socket = props.socket;
 
   const {
     state: {
