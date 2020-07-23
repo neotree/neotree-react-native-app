@@ -7,13 +7,14 @@ import Header from './Header';
 const Wrapper = props => <Content {...props} />;
 
 const PreviewForm = () => {
-  const { state: { form } } = useScreensContext();
+  const { getDiagnoses, state: { form } } = useScreensContext();
 
   return (
     <>
       <Header form={form} />
       <PreviewSessionForm
         form={form}
+        diagnoses={getDiagnoses()}
         Wrapper={Wrapper}
       />
     </>

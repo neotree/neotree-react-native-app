@@ -2,11 +2,10 @@ import 'react-native-gesture-handler';
 import * as React from 'react';
 import * as firebase from 'firebase';
 import { NativeRouter, BackButton } from 'react-router-native';
-import Main from '@';
-
 import io from 'socket.io-client';
+import Main from '@';
 import apiConfig from '~/config/neotree-webeditor-api.json';
-import firebaseConfig from './config/firebase.config';
+import firebaseConfig from './config/firebase.config.json';
 
 const socket = io(apiConfig.host);
 firebase.initializeApp(firebaseConfig);

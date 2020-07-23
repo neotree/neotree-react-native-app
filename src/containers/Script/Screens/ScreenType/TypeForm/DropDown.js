@@ -35,7 +35,10 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
             placeholderIconColor="#007aff"
             style={{ width: undefined }}
             selectedValue={value}
-            onValueChange={v => onChange(v, null, !v ? null : opts.filter(o => o.value === v)[0].label)}
+            onValueChange={v => onChange(v, {
+              error: null,
+              valueText: !v ? null : opts.filter(o => o.value === v)[0].label,
+            })}
           >
             <Picker.Item label="" value="" />
             {opts.map(opt => (
