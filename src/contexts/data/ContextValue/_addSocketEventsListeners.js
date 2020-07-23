@@ -1,5 +1,7 @@
+import socket from '@/api/socket';
+
 export default function addSocketEventsListeners() {
-  const { socket, sync } = this;
+  const { sync } = this;
   // onAuthStateChanged(u => {
   //   sync({ name: 'authenticated_user', user: u });
   // });
