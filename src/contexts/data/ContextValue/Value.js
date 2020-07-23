@@ -21,6 +21,8 @@ export default class ContextValue {
 
   addSocketEventsListeners = require('./_addSocketEventsListeners').default.bind(this);
 
+  getAuthenticatedUser = require('./_getAuthenticatedUser').default.bind(this);
+
   isDataReady = () => {
     const {
       syncingData,
