@@ -12,7 +12,6 @@ export default function sync(e, callback) {
   this.setState({
     syncingData: true,
     ...(e ? { acceptedEvents: [...acceptedEvents, e.key] } : null),
-    // authenticatedUser: u,
   });
 
   const done = (syncError, syncRslts = {}) => {
@@ -23,8 +22,7 @@ export default function sync(e, callback) {
       lastDataSyncEvent: e,
       syncError,
       dataStatus: syncRslts.dataStatus,
-      authenticatedUser: syncRslts.authenticatedUser,
-      authenticatedUserInitialised: true,
+      ...(e && e.name === 'authenticated_user' ? { authenticatedUser: e.user } : null),
     });
   };
 

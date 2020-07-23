@@ -71,7 +71,7 @@ const AuthForm = () => {
               keyboardType="email-address"
               textContentType="username"
               returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current.focus()}
+              // onSubmitEditing={() => passwordInputRef.current.focus()}
               blurOnSubmit={false}
               value={form.email}
               onChangeText={v => onChange({ email: v })}
