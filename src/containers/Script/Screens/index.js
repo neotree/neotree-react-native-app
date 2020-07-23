@@ -4,9 +4,9 @@ import Divider from '@/components/Divider';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { View, ScrollView } from 'react-native';
-import { Spinner } from 'native-base';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
+import OverlayLoader from '@/components/OverlayLoader';
 import ScreenType from './ScreenType';
 
 const Screens = () => {
@@ -22,7 +22,7 @@ const Screens = () => {
   }, [activeScreen]);
 
   if (loadingScreens || !(screensInitialised && activeScreenInitialised)) {
-    return <Spinner color="blue" />;
+    return <OverlayLoader display style={{ backgroundColor: 'transparent' }} />;
   }
 
   if (!activeScreen) {
@@ -43,7 +43,7 @@ const Screens = () => {
             alignItems: 'center',
             flexDirection: 'row',
           }}
-          containerProps={{          
+          containerProps={{
             style: { backgroundColor: '#f5f5f5' },
           }}
         >
@@ -62,7 +62,7 @@ const Screens = () => {
         {!!activeScreen.data.contentText && (
           <>
             <Content
-              containerProps={{          
+              containerProps={{
                 style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
               }}
             >
@@ -71,7 +71,7 @@ const Screens = () => {
             <Divider border={false} />
           </>
         )}
-        
+
         <Content>
           <Divider border={false} />
           <ScreenType />

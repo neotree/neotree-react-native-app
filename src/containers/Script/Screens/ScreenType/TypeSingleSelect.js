@@ -1,16 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
-import { ListItem, Right, Left, Radio } from 'native-base';
-import Text from '@/components/Text';
 import Select from '@/components/Select';
 
 const SingleSelect = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
 
   const [entry, setEntry] = React.useState(value || { values: [] });
-
-  const _value = entry.values[0] ? entry.values[0].value : null;
 
   React.useEffect(() => {
     onChange(!entry.values.length ? undefined : entry);
@@ -21,7 +16,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
       <Select
         variant="radio"
         value={entry.values.map(e => e.value)}
-        options={(metadata.items || []).map(item => ({ 
+        options={(metadata.items || []).map(item => ({
           label: item.label,
           value: item.id,
         }))}
@@ -30,6 +25,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
           setEntry({
             values: [{
               value: item.id,
+              valueText: item.label,
               label: item.label,
               key: metadata.key,
               type: item.type,

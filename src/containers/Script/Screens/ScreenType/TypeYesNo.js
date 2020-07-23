@@ -1,8 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
-import { ListItem, Right, Left, Radio } from 'native-base';
-import Text from '@/components/Text';
 import Select from '@/components/Select';
 
 const YesNo = ({ screen, onChange, value }) => {
@@ -19,8 +16,6 @@ const YesNo = ({ screen, onChange, value }) => {
     { value: 'false', label: metadata.negativeLabel || 'No' },
   ];
 
-  const _value = entry.values[0] ? entry.values[0].value : null;
-
   return (
     <>
       <Select
@@ -31,6 +26,7 @@ const YesNo = ({ screen, onChange, value }) => {
           setEntry({
             values: [{
               value: opt.value,
+              valueText: opt.value === 'false' ? 'No' : 'Yes',
               key: metadata.key || opt.key,
               label: opt.label,
               type: metadata.dataType || opt.type,

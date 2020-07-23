@@ -17,22 +17,22 @@ const Progress = ({ screen, onChange }) => {
         {metadata.items.map((item, i) => {
           const key = i;
           return (
-            <View 
+            <View
               key={key}
-              style={{ 
-                alignItems: 'center', 
-                flexDirection: 'row', 
+              style={{
                 alignItems: 'center',
-                padding: 10, 
+                flexDirection: 'row',
+                padding: 10,
               }}
             >
               <View style={{ marginRight: 10 }}>
-                <Icon style={{ 
-                  fontSize: 40, 
-                  color: item.checked ? 'green' : '#ccc' 
-                }} 
-                name="checkmark-circle-outline"                   
-              />
+                <Icon
+                  style={{
+                    fontSize: 40,
+                    color: item.checked ? 'green' : '#ccc'
+                  }}
+                  name="checkmark-circle-outline"
+                />
               </View>
 
               <View style={{ flex: 1, }}>

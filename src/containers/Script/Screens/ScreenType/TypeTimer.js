@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Platform, Vibration } from 'react-native';
+import { View, Vibration } from 'react-native';
 import Divider from '@/components/Divider';
 import { Button, Input, Form, Item } from 'native-base';
 import formCopy from '@/constants/copy/form';
@@ -39,18 +39,21 @@ const styles = {
 };
 
 const Timer = ({ screen, value, onChange }) => {
+  const timoutRef = React.useRef(null);
   const metadata = screen.data.metadata || {};
+  const timerValue = Number(metadata.timerValue || 0);
 
-  const [timerIsRunning, setTimerIsRunning] = React.useState(false);
-  const [seconds, setSeconds] = React.useState(metadata.timerValue || 0);
+  const [countdown, setCountDown] = React.useState(0);
   const [formError, setFormError] = React.useState(null);
   const [entry, setEntry] = React.useState(value || { values: [] });
 
   const _value = entry.values[0] ? entry.values[0].value : null;
 
   React.useEffect(() => {
-    onChange(!entry.values.filter(v => v).length ? undefined : entry);
-  }, [entry]);
+    const v = formError ? undefined :
+      !entry.values.filter(v => v).length ? undefined : entry;
+    onChange(v);
+  }, [entry, formError]);
 
   React.useEffect(() => {
     if (_value) {
@@ -63,28 +66,16 @@ const Timer = ({ screen, value, onChange }) => {
   }, [_value]);
 
   React.useEffect(() => {
-    let timeOut = null;
-
-    if (timerIsRunning && (seconds > 0)) {
-      const s = seconds - 1;
-      timeOut = setTimeout(() => setSeconds(s), 1000);
-      if (s === 0) {
-        if (Platform.OS === 'ios') {
-          Vibration.vibrate(10 * 1000);
-        }
-        if (Platform.OS === 'android') {
-          Vibration.vibrate([1000], true);
-        }
-      }
+    if (countdown) {
+      const s = countdown - 1;
+      timoutRef.current = setTimeout(() => setCountDown(s), 1000);
+      if (s === 0) Vibration.vibrate((timerValue > 5 ? 5 : timerValue) * 1000);
     } else {
-      setSeconds(metadata.timerValue);
-      setTimerIsRunning(false);
+      setCountDown(0);
     }
+  }, [countdown, timerValue]);
 
-    return () => {
-      clearTimeout(timeOut);
-    };
-  }, [seconds, timerIsRunning]);
+  React.useEffect(() => () => clearTimeout(timoutRef.current), []);
 
   return (
     <>
@@ -95,14 +86,14 @@ const Timer = ({ screen, value, onChange }) => {
           <Text
             style={[styles.timer]}
           >
-            {`${`0${Math.floor(seconds / 60)}`.slice(-2)}:${`0${seconds % 60}`.slice(-2)}`}
+            {`${`0${Math.floor((countdown || timerValue) / 60)}`.slice(-2)}:${`0${(countdown || timerValue) % 60}`.slice(-2)}`}
           </Text>
           <Button
             block
             transparent
-            onPress={() => setTimerIsRunning(!timerIsRunning)}
+            onPress={() => setCountDown(timerValue)}
           >
-            <Text>{timerIsRunning ? formCopy.STOP_TIMER : formCopy.START_TIMER}</Text>
+            <Text>{countdown ? formCopy.STOP_TIMER : formCopy.START_TIMER}</Text>
           </Button>
         </View>
 
@@ -124,9 +115,10 @@ const Timer = ({ screen, value, onChange }) => {
                     setEntry({
                       values: [{
                         value,
+                        valueText: value * (metadata.multiplier || 1),
                         label: metadata.label,
                         key: metadata.key,
-                        type: metadata.type || metadata.dataType, 
+                        type: metadata.type || metadata.dataType,
                         dataType: metadata.dataType,
                       }]
                     });

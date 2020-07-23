@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Text from '@/components/Text';
 
 const FormItem = ({ onChange, setCache, value, valueCache, children, conditionMet }) => {
   React.useEffect(() => {

@@ -25,9 +25,12 @@ const DatePicker = ({
   onChange,
   placeholder,
   enabled,
+  formatDate,
+  editable,
   ...props
 }) => {
   enabled = enabled !== false;
+  editable = editable !== false;
   labelProps = { ...labelProps };
 
   const [show, setShow] = React.useState(false);
@@ -51,20 +54,26 @@ const DatePicker = ({
           error={error ? true : false}
           disabled={!enabled}
           onPress={e => {
-            setShow(!show);
+            if (editable) setShow(!show);
             if (labelProps.onPress) labelProps.onPress(e);
           }}
         >
           <Text
-            style={[styles.text, enabled ? null : styles.disabledText]}
+            style={[
+              styles.text,
+              enabled ? null : styles.disabledText,
+              value ? null : { color: '#ccc' },
+            ]}
           >
-            {value ? moment(value).format(mode === 'time' ? 'LT' : 'LL') : placeholder}
+            {!value ? placeholder : (formatDate ?
+              formatDate(value) : moment(value).format(mode === 'time' ? 'LT' : 'LL')
+            )}
           </Text>
           <Icon style={[enabled ? null : { color: '#ccc' }]} name="arrow-dropdown" />
         </Item>
       </Form>
 
-      {(enabled !== false) && show && (
+      {editable && (enabled !== false) && show && (
         <View style={{ flex: 1 }}>
           <DateTimePicker
             {...props}
@@ -96,6 +105,8 @@ DatePicker.propTypes = {
     PropTypes.object
   ]),
   onChange: PropTypes.func,
+  formatDate: PropTypes.func,
+  editable: PropTypes.bool,
 };
 
 export default DatePicker;

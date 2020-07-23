@@ -35,7 +35,7 @@ const NumberField = ({
                 if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
               }
               setError(err);
-              onChange(value, err);
+              onChange(value, { error: err, valueText: value });
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}

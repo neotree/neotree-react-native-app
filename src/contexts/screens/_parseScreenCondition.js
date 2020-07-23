@@ -3,29 +3,29 @@ const sanitizeCondition = (condition = '') => condition
   .replace(new RegExp(' or ', 'gi'), ' || ')
   .replace(new RegExp(' = ', 'gi'), ' == ');
 
-export const _parseScreenCondition = (_condition = '', opts = {}) => {
+export default function parseScreenCondition(_condition = '', opts = {}) {
   const { form, configuration } = opts;
 
   const parseConditionString = (s = '', key, value) => !s ? '' : s
-  .split(`$${key} =`).join(`${value} =`)
-  .split(`$${key}=`).join(`${value} =`)
-  .split(`$${key} >`).join(`${value} >`)
-  .split(`$${key}>`).join(`${value} >`)
-  .split(`$${key} <`).join(`${value} <`)
-  .split(`$${key}<`).join(`${value} <`);
+    .split(`$${key} =`).join(`${value} =`)
+    .split(`$${key}=`).join(`${value} =`)
+    .split(`$${key} >`).join(`${value} >`)
+    .split(`$${key}>`).join(`${value} >`)
+    .split(`$${key} <`).join(`${value} <`)
+    .split(`$${key}<`).join(`${value} <`);
 
   const parseForm = (_condition = '', form) => {
     const values = form.reduce((acc, entry) => [...acc, ...entry.values], []);
-    const chunks = values.map(({ value, type, key, dataType }) => {
+    const chunks = values.map(({ value, type, key, dataType, valueText }) => {
       value = value || '';
       const t = dataType || type;
 
-      switch(t) {
+      switch (t) {
         case 'number':
-          value = value || null;
+          value = valueText || null;
           break;
         case 'boolean':
-          value = Boolean(value);
+          value = value === 'false' ? false : Boolean(value);
           break;
         default:
           value = JSON.stringify(value);
@@ -47,14 +47,6 @@ export const _parseScreenCondition = (_condition = '', opts = {}) => {
       return parseConditionString(acc, key, configuration[key] ? true : false);
     }, condition);
   }
-  
-  return sanitizeCondition(condition);
-};
 
-export default function parseScreenCondition({ state: { form: f, configuration } }) { 
-  return (_condition = '', form) => {
-    let condition = form ? _parseScreenCondition(_condition, { form, configuration }) : _condition;
-    condition = _parseScreenCondition(condition, { form: f, configuration });
-    return condition;
-  }
+  return sanitizeCondition(condition);
 }
