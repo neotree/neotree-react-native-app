@@ -8,7 +8,7 @@ import {
   Title,
 } from 'native-base';
 import Text from '@/components/Text';
-import theme from '@/native-base-theme/variables/material';
+import theme from '@/native-base-theme/variables/commonColor';
 
 const Header = ({
   title,
