@@ -1,16 +1,29 @@
 import * as firebase from 'firebase';
+import insertAuthenticatedUser from '../database/_insertAuthenticatedUser';
 
 export * from './getAuthenticatedUser';
 
-export { default as saveUser } from './_saveUser';
-
-export const signOut = () => firebase.auth().signOut();
+export const signOut = () => new Promise((resolve, reject) => {
+  firebase
+    .auth()
+    .signOut()
+    .catch(reject)
+    .then(() => {
+      insertAuthenticatedUser(null)
+        .catch(reject)
+        .then(() => resolve());
+    });
+});
 
 export const signIn = (params = {}) => new Promise((resolve, reject) => {
   firebase.auth()
     .signInWithEmailAndPassword(params.email, params.password)
-    .then(resolve)
-    .catch(reject);
+    .catch(reject)
+    .then(u => {
+      insertAuthenticatedUser(u)
+        .catch(reject)
+        .then(() => resolve(u));
+    });
 });
 
 export const onAuthStateChanged = cb => firebase.auth()

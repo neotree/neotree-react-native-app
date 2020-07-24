@@ -17,7 +17,15 @@ export default class ContextValue {
 
   loadFonts = require('./_loadFonts').default.bind(this);
 
-  isAppReady = () => this.state.fontsLoaded && this.dataContext.dataIsReady;
+  initialiseApp = require('./_initialiseApp').default.bind(this);
+
+  initialiseData = require('./_initialiseData').default.bind(this);
+
+  signIn = require('./_signIn').default.bind(this);
+
+  signOut = require('./_signOut').default.bind(this);
+
+  isAppReady = () => this.state.fontsLoaded && this.dataIsReady;
 
   getSplashScreenInfo = require('./_getSplashScreenInfo').default.bind(this);
 
@@ -26,4 +34,24 @@ export default class ContextValue {
       if (this.state.overlayLoaderState[key]) acc = true;
       return acc;
     }, false);
+
+  sync = require('./_sync').default.bind(this);
+
+  addSocketEventsListeners = require('./_addSocketEventsListeners').default.bind(this);
+
+  getAuthenticatedUser = require('./_getAuthenticatedUser').default.bind(this);
+
+  isDataReady = () => {
+    const {
+      syncingData,
+      authenticatedUser,
+      dataStatus,
+      authenticatedUserInitialised
+    } = this.state;
+
+    return authenticatedUser ?
+      dataStatus ? dataStatus.data_initialised : false
+      :
+      syncingData ? false : authenticatedUserInitialised;
+  };
 }
