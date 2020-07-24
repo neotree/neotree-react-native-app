@@ -7,6 +7,8 @@ import { View, ScrollView } from 'react-native';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
 import OverlayLoader from '@/components/OverlayLoader';
+import bgColorStyles from '@/styles/bgColorStyles';
+import colorStyles from '@/styles/colorStyles';
 import ScreenType from './ScreenType';
 
 const Screens = () => {
@@ -43,15 +45,17 @@ const Screens = () => {
             alignItems: 'center',
             flexDirection: 'row',
           }}
-          containerProps={{
-            style: { backgroundColor: '#f5f5f5' },
-          }}
+          containerProps={bgColorStyles.primaryBg}
         >
           <View style={{ flex: 1 }}>
-            <Text>{activeScreen.data.actionText}</Text>
+            <Text style={[colorStyles.primaryColorContrastText]}>
+              {activeScreen.data.actionText}
+            </Text>
           </View>
           <View>
-            <Text>{activeScreen.data.step}</Text>
+            <Text style={[colorStyles.primaryColorContrastText]}>
+              {activeScreen.data.step}
+            </Text>
           </View>
         </Content>
       )}
@@ -66,7 +70,7 @@ const Screens = () => {
                 style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
               }}
             >
-              <Text>{activeScreen.data.contentText}</Text>
+              <Text style={[colorStyles.primaryColor]}>{activeScreen.data.contentText}</Text>
             </Content>
             <Divider border={false} />
           </>

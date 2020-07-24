@@ -5,6 +5,7 @@ import { useHistory } from 'react-router-native';
 import { Button, Icon, Drawer } from 'native-base';
 import * as Permissions from 'expo-permissions';
 import Header from '@/components/Header';
+import colorStyles from '@/styles/colorStyles';
 import Sidebar from './Sidebar';
 import Scripts from '../Scripts';
 
@@ -42,7 +43,7 @@ const Home = () => {
                   transparent
                   onPress={() => drawerRef.current._root.open()}
                 >
-                  <Icon name="menu" />
+                  <Icon style={[colorStyles.primaryColor]} name="menu" />
                 </Button>
               </>
             )}

@@ -8,6 +8,7 @@ import {
   Title,
 } from 'native-base';
 import Text from '@/components/Text';
+import theme from '@/native-base-theme/variables/material';
 
 const Header = ({
   title,
@@ -19,7 +20,11 @@ const Header = ({
 }) => {
   return (
     <>
-      <HeaderComponent {...props}>
+      <HeaderComponent
+        style={{ backgroundColor: '#fff' }}
+        androidStatusBarColor={theme.brandPrimary}
+        {...props}
+      >
         {!!leftActions && (
           <Left style={{ maxWidth: 50 }}>
             {leftActions}
@@ -27,8 +32,8 @@ const Header = ({
         )}
 
         <Body>
-          {!!title && <Title>{title}</Title>}
-          {!!subtitle && <Text style={{ fontSize: 10, color: '#ddd' }}>{subtitle}</Text>}
+          {!!title && <Title style={{ color: theme.brandPrimary }}>{title}</Title>}
+          {!!subtitle && <Text style={{ fontSize: 10, color: '#999' }}>{subtitle}</Text>}
           {children}
         </Body>
 

@@ -11,6 +11,7 @@ import Modal from '@/components/Modal';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import Header from '@/components/Header';
+import colorStyles from '@/styles/colorStyles';
 
 const HeaderComponent = () => {
   const history = useHistory();
@@ -62,7 +63,7 @@ const HeaderComponent = () => {
               to={backLink || currentLink}
               onPress={() => !backLink && cancelScript()}
             >
-              <Icon style={{ color: '#fff' }} name="arrow-back" />
+              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
             </Link>
           </>
         )}
@@ -73,7 +74,7 @@ const HeaderComponent = () => {
                 transparent
                 onPress={() => setOpenInfoModal(true)}
               >
-                <Icon name="information-circle-outline" />
+                <Icon style={[colorStyles.primaryColor]} name="information-circle-outline" />
               </Button>
             )}
 
@@ -90,7 +91,7 @@ const HeaderComponent = () => {
                 );
               }}
             >
-              <Icon name="more" />
+              <Icon style={[colorStyles.primaryColor]} name="more" />
             </Button>
           </>
         )}

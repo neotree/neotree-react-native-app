@@ -44,8 +44,8 @@ const NeoTreeApp = () => {
   return (
     <>
       <Root>
-        <StyleProvider style={getTheme(material)}>
-          <Container>
+        <Container>
+          <StyleProvider style={getTheme(material)}>
             <>
               <View style={{ flex: 1 }}>
                 <Containers />
@@ -53,10 +53,8 @@ const NeoTreeApp = () => {
               <NetworkStatusBar />
               <OverlayLoader display={displayOverlayLoader()} />
             </>
-
-            {/*<Debug />*/}
-          </Container>
-        </StyleProvider>
+          </StyleProvider>
+        </Container>
       </Root>
     </>
   );
