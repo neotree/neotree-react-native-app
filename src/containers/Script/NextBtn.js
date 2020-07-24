@@ -20,7 +20,7 @@ const NextBtn = () => {
           component={TouchableOpacity}
           style={[
             {
-              backgroundColor: theme.brandPrimary,
+              backgroundColor: theme.brandInfo,
               height: 50,
               width: 50,
               borderRadius: 25,

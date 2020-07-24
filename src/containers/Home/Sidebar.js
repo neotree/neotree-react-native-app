@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useHistory } from 'react-router-native';
 import Logo from '@/components/Logo';
-import theme from '@/native-base-theme/variables/material';
+import theme from '@/native-base-theme/variables/commonColor';
 import { Icon, List, ListItem, Left, Body } from 'native-base';
 import SignOutBtn from '@/components/SignOutBtn';
 import Text from '@/components/Text';

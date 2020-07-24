@@ -7,7 +7,7 @@ import Overlay from '@/components/Overlay';
 // import Debug from '@/components/Debug';
 import { Container, StyleProvider, Root } from 'native-base';
 import getTheme from '@/native-base-theme/components';
-import material from '@/native-base-theme/variables/material';
+import material from '@/native-base-theme/variables/commonColor';
 import { View } from 'react-native';
 import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
