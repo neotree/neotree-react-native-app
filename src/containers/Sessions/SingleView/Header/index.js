@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import { Button, Icon } from 'native-base';
 import Header from '@/components/Header';
+import colorStyles from '@/styles/colorStyles';
 import PrintSessionForm from '../../PrintSessionForm';
 
 const HeaderComponent = ({ form }) => {
@@ -26,7 +27,7 @@ const HeaderComponent = ({ form }) => {
               transparent
               onPress={() => goBack()}
             >
-              <Icon name="arrow-back" />
+              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
             </Button>
           </>
         )}
