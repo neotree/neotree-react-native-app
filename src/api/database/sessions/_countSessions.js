@@ -1,0 +1,29 @@
+import db from '../db';
+
+export default (options = {}) => new Promise((resolve, reject) => {
+  const { ..._where } = options || {};
+
+  const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
+    .join(',');
+
+  let q = 'select count(id) from sessions';
+  q = where ? `${q} where ${where}` : q;
+
+  db.transaction(
+    tx => {
+      tx.executeSql(
+        `${q};`.trim(),
+        null,
+        (tx, rslts) => resolve({
+          count: rslts.rows._array[0] ? rslts.rows._array[0]['count(id)'] : 0,
+        }),
+        (tx, e) => {
+          if (e) {
+            require('@/utils/logger')('ERROR: countSession', e);
+            reject(e);
+          }
+        }
+      );
+    }
+  );
+});
