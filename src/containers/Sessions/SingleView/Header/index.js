@@ -2,7 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
-import { Header, Body, Left, Title, Right, Button, Icon } from 'native-base';
+import { Button, Icon } from 'native-base';
+import Header from '@/components/Header';
+import colorStyles from '@/styles/colorStyles';
 import PrintSessionForm from '../../PrintSessionForm';
 
 const HeaderComponent = ({ form }) => {
@@ -17,24 +19,24 @@ const HeaderComponent = ({ form }) => {
 
   return (
     <>
-      <Header>
-        <Left style={{ maxWidth: 50 }}>
-          <Button
-            transparent
-            onPress={() => goBack()}
-          >
-            <Icon name="arrow-back" />
-          </Button>
-        </Left>
-
-        <Body>
-          <Title>Session details</Title>
-        </Body>
-
-        <Right>
-          <PrintSessionForm form={form} />
-        </Right>
-      </Header>
+      <Header
+        title="Session details"
+        leftActions={(
+          <>
+            <Button
+              transparent
+              onPress={() => goBack()}
+            >
+              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+            </Button>
+          </>
+        )}
+        rightActions={(
+          <>
+            <PrintSessionForm form={form} />
+          </>
+        )}
+      />
     </>
   );
 };

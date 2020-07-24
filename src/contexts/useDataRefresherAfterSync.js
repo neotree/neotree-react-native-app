@@ -1,8 +1,8 @@
 import React from 'react';
-import { useDataContext } from '@/contexts/data';
+import { useAppContext } from '@/contexts/app';
 
 export default function useDataRefresherAfterSync(eventType, cb) {
-  const { state: { lastDataSyncEvent }, setState: setDataContextState } = useDataContext();
+  const { state: { lastDataSyncEvent }, setState: setDataContextState } = useAppContext();
 
   const events = [
     `create_${eventType}`,

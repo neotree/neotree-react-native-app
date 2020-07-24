@@ -1,6 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-native';
 import { Button, Icon } from 'native-base';
+import colorStyles from '@/styles/colorStyles';
 
 const ExportLink = () => {
   const history = useHistory();
@@ -11,7 +12,7 @@ const ExportLink = () => {
         transparent
         onPress={() => history.push('/sessions/export')}
       >
-        <Icon name="save" />
+        <Icon style={[colorStyles.primaryColor]} name="save" />
       </Button>
     </>
   );
