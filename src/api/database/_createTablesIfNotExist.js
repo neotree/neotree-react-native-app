@@ -3,6 +3,7 @@ import db from './db';
 export default () => new Promise((resolve, reject) => {
   const dataStatusTable = [
     'id varchar primary key not null',
+    'uid_prefix varchar',
     'user_id varchar',
     'unique_key varchar',
     'device_id integer',
