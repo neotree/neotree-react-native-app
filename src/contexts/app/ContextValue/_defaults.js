@@ -1,4 +1,5 @@
 export const defaultState = {
+  uid_prefix: null,
   loadingDataStatus: false,
   dataStatus: null,
   syncingData: false,
