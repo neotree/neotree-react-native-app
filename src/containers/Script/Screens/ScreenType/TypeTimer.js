@@ -10,8 +10,7 @@ import colorStyles from '@/styles/colorStyles';
 const styles = {
   timerView: {
     backgroundColor: 'rgba(41, 128, 185,.2)',
-    padding: 10,
-    minHeight: 150,
+    minHeight: 300,
     textAlign: 'center',
     justifyContent: 'center',
   },
@@ -88,7 +87,7 @@ const Timer = ({ screen, value, onChange }) => {
               setCountDown(0);
             } else {
               setCountDown(timerValue);
-            }            
+            }
           }}
         >
           <View style={[styles.timerView]}>
