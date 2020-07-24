@@ -1,6 +1,7 @@
 import getRandomString from '@/utils/getRandomString';
 import NetInfo from '@react-native-community/netinfo';
 import getDeviceInfo from '@/utils/getDeviceInfo';
+import makeUID from '@/utils/makeUID';
 import db from '../db';
 import makeApiCall from '../../webeditor/makeApiCall';
 import updateDataStatus from './_updateDataStatus';
@@ -30,9 +31,11 @@ const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('createDataStatus');
 
   const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
+  const uid_prefix = makeUID().split('-')[0];
 
   const status = {
     id: 1,
+    uid_prefix,
     unique_key,
     createdAt: new Date().toString(),
     updatedAt: new Date().toString(),
