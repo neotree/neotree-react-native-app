@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { Input, Form, Item } from '@/components/Form';
 import Text from '@/components/Text';
-import makeUID from '@/utils/makeUID';
+import { useAppContext } from '@/contexts/app';
+import { useScriptContext } from '@/contexts/script';
 
 const validateUID = (value = '') => {
   const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
@@ -25,6 +26,13 @@ const validateUID = (value = '') => {
 };
 
 const NUID = ({ field, onChange, value, conditionMet, }) => {
+  const { state: { uid_prefix } } = useAppContext();
+  const { state: { sessionsCount } } = useScriptContext();
+
+  const makeUID = () => {
+    return `${uid_prefix}-${`000${sessionsCount + 1}`.slice(-4)}`;
+  };
+
   const firstHalfRef = React.useRef(null);
   const lastHalfRef = React.useRef(null);
 

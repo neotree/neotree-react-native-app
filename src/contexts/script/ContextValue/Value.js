@@ -17,9 +17,10 @@ export default class ContextValue {
 
   getScript = require('./_getScript').default.bind(this);
 
-  initialisePage = (opts = {}) => {
-    if (opts.force || !this.state.screensInitialised) {
-      this.getScript();
-    }
+  countSessions = require('./_countSessions').default.bind(this);
+
+  initialisePage = () => {
+    this.getScript();
+    this.countSessions();
   };
 }
