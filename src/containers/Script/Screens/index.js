@@ -48,14 +48,16 @@ const Screens = () => {
           containerProps={bgColorStyles.primaryBg}
         >
           <View style={{ flex: 1 }}>
-            <Text style={[colorStyles.primaryColorContrastText]}>
+            <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
               {activeScreen.data.actionText.replace(/^\s+|\s+$/g, '')}
             </Text>
           </View>
           <View>
-            <Text style={[colorStyles.primaryColorContrastText]}>
-              {activeScreen.data.step.replace(/^\s+|\s+$/g, '')}
-            </Text>
+            {!!activeScreen.data.step && (
+              <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+                {activeScreen.data.step.replace(/^\s+|\s+$/g, '')}
+              </Text>
+            )}
           </View>
         </Content>
       )}
