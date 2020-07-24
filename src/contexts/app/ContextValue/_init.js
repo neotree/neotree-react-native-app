@@ -2,19 +2,18 @@ export default function init({
   state,
   setState,
   router,
-  dataContext,
+  networkContext,
 }) {
   this.state = state;
   this._setState = setState;
   this.router = router;
-  this.dataContext = dataContext;
+  this.networkContext = networkContext;
+  this.dataIsReady = this.isDataReady();
 
   const {
-    state: {
-      authenticatedUser,
-      authenticatedUserInitialised
-    }
-  } = this.dataContext;
+    authenticatedUser,
+    authenticatedUserInitialised
+  } = this.state;
 
   this.authenticatedUser = authenticatedUser;
   this.authenticatedUserInitialised = authenticatedUserInitialised;
