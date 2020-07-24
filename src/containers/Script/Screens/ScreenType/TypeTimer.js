@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Vibration } from 'react-native';
+import { TouchableWithoutFeedback, View, Vibration } from 'react-native';
 import Divider from '@/components/Divider';
-import { Button, Input, Form, Item } from 'native-base';
+import { Input, Form, Item } from 'native-base';
 import formCopy from '@/constants/copy/form';
 import Text from '@/components/Text';
+import colorStyles from '@/styles/colorStyles';
 
 const styles = {
   timerView: {
@@ -80,22 +81,33 @@ const Timer = ({ screen, value, onChange }) => {
   return (
     <>
       <View>
-        <View
-          style={[styles.timerView]}
+        <TouchableWithoutFeedback
+          onPress={() => {
+            if (countdown) {
+              clearTimeout(timoutRef.current);
+              setCountDown(0);
+            } else {
+              setCountDown(timerValue);
+            }            
+          }}
         >
-          <Text
-            style={[styles.timer]}
-          >
-            {`${`0${Math.floor((countdown || timerValue) / 60)}`.slice(-2)}:${`0${(countdown || timerValue) % 60}`.slice(-2)}`}
-          </Text>
-          <Button
-            block
-            transparent
-            onPress={() => setCountDown(timerValue)}
-          >
-            <Text>{countdown ? formCopy.STOP_TIMER : formCopy.START_TIMER}</Text>
-          </Button>
-        </View>
+          <View style={[styles.timerView]}>
+            <Text
+              style={[colorStyles.primaryColor, styles.timer]}
+            >
+              {`${`0${Math.floor((countdown || timerValue) / 60)}`.slice(-2)}:${`0${(countdown || timerValue) % 60}`.slice(-2)}`}
+            </Text>
+
+            <Divider border={false} />
+
+            <Text
+              style={[
+                colorStyles.primaryColor,
+                { fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }
+              ]}
+            >{countdown ? formCopy.STOP_TIMER : formCopy.START_TIMER}</Text>
+          </View>
+        </TouchableWithoutFeedback>
 
         <Divider spacing={2} border={false} />
 
