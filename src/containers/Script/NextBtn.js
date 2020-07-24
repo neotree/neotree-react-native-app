@@ -29,6 +29,11 @@ const NextBtn = () => {
               position: 'absolute',
               right: 20,
               bottom: 20,
+              elevation: 24,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.5,
+              shadowRadius: 5,
             }
           ]}
         ><Icon style={{ color: '#fff' }} name="arrow-forward" /></Link>
