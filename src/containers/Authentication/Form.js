@@ -1,16 +1,14 @@
 import React from 'react';
 import copy from '@/constants/copy/auth';
-import { signIn, getRemoteAuthenticatedUser } from '@/api/auth';
 import { View } from 'react-native';
 import Divider from '@/components/Divider';
-import { useOverlayLoaderState } from '@/contexts/app';
-import { useDataContext } from '@/contexts/data';
+import { useOverlayLoaderState, useAppContext } from '@/contexts/app';
 import { Label, Form, Item, Input, Button } from 'native-base';
 import Text from '@/components/Text';
 import { useAuthenticationContext } from './Context';
 
 const AuthForm = () => {
-  const dataContext = useDataContext();
+  const { signIn } = useAppContext();
   const { state: { form, authenticating }, setState, setForm } = useAuthenticationContext();
 
   const emailInputRef = React.useRef(null);
@@ -30,24 +28,14 @@ const AuthForm = () => {
     setState({ authenticating: true });
     setError(null);
 
-    const done = (e) => {
-      if (!e) {
-        return getRemoteAuthenticatedUser()
-          .then(u => dataContext.sync({ name: 'authenticated_user', user: u }, () => {
-            setState({ authenticating: false });
-          }))
-          .catch(e => {
-            setError(e);
-            setState({ authenticating: false });
-          });
-      }
-      setError(e);
-      setState({ authenticating: false });
-    };
-
     signIn({ email: form.email, password: form.password })
-      .then(() => done(null))
-      .catch(done);
+      .then(() => {
+        setState({ authenticating: false });
+      })
+      .catch(e => {
+        setError(e);
+        setState({ authenticating: false });
+      });
   };
 
   return (
@@ -71,7 +59,7 @@ const AuthForm = () => {
               keyboardType="email-address"
               textContentType="username"
               returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current.focus()}
+              // onSubmitEditing={() => passwordInputRef.current.focus()}
               blurOnSubmit={false}
               value={form.email}
               onChangeText={v => onChange({ email: v })}

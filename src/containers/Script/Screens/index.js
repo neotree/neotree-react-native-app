@@ -7,6 +7,8 @@ import { View, ScrollView } from 'react-native';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
 import OverlayLoader from '@/components/OverlayLoader';
+import bgColorStyles from '@/styles/bgColorStyles';
+import colorStyles from '@/styles/colorStyles';
 import ScreenType from './ScreenType';
 
 const Screens = () => {
@@ -43,15 +45,19 @@ const Screens = () => {
             alignItems: 'center',
             flexDirection: 'row',
           }}
-          containerProps={{
-            style: { backgroundColor: '#f5f5f5' },
-          }}
+          containerProps={bgColorStyles.primaryBg}
         >
           <View style={{ flex: 1 }}>
-            <Text>{activeScreen.data.actionText}</Text>
+            <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+              {activeScreen.data.actionText.replace(/^\s+|\s+$/g, '')}
+            </Text>
           </View>
           <View>
-            <Text>{activeScreen.data.step}</Text>
+            {!!activeScreen.data.step && (
+              <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+                {activeScreen.data.step.replace(/^\s+|\s+$/g, '')}
+              </Text>
+            )}
           </View>
         </Content>
       )}
@@ -63,12 +69,16 @@ const Screens = () => {
           <>
             <Content
               containerProps={{
-                style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
+                style: {
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255, 255, 0,.2)'
+                },
               }}
             >
-              <Text>{activeScreen.data.contentText}</Text>
+              <Text style={[colorStyles.primaryColor]}>
+                {activeScreen.data.contentText.replace(/^\s+|\s+$/g, '')}
+              </Text>
             </Content>
-            <Divider border={false} />
           </>
         )}
 

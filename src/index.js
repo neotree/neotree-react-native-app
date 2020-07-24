@@ -1,5 +1,4 @@
 import React from 'react';
-import { provideDataContext } from '@/contexts/data';
 import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
@@ -7,7 +6,7 @@ import Overlay from '@/components/Overlay';
 // import Debug from '@/components/Debug';
 import { Container, StyleProvider, Root } from 'native-base';
 import getTheme from '@/native-base-theme/components';
-import material from '@/native-base-theme/variables/material';
+import material from '@/native-base-theme/variables/commonColor';
 import { View } from 'react-native';
 import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
@@ -44,8 +43,8 @@ const NeoTreeApp = () => {
   return (
     <>
       <Root>
-        <StyleProvider style={getTheme(material)}>
-          <Container>
+        <Container>
+          <StyleProvider style={getTheme(material)}>
             <>
               <View style={{ flex: 1 }}>
                 <Containers />
@@ -53,17 +52,13 @@ const NeoTreeApp = () => {
               <NetworkStatusBar />
               <OverlayLoader display={displayOverlayLoader()} />
             </>
-
-            {/*<Debug />*/}
-          </Container>
-        </StyleProvider>
+          </StyleProvider>
+        </Container>
       </Root>
     </>
   );
 };
 
 export default provideNetworkContext(
-  provideDataContext(
-    provideAppContext(NeoTreeApp)
-  )
+  provideAppContext(NeoTreeApp)
 );

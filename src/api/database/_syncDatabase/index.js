@@ -5,13 +5,13 @@ import { insertDiagnoses, deleteDiagnoses } from '../diagnoses';
 import { insertScripts, deleteScripts } from '../scripts';
 import { insertConfigKeys, deleteConfigKeys } from '../config_keys';
 
-import getAuthenticatedUser from './_getAuthenticatedUser';
 import { getScripts } from '../../webeditor/scripts';
 import { getConfigKeys } from '../../webeditor/config_keys';
 import { getScreens } from '../../webeditor/screens';
 import { getDiagnoses } from '../../webeditor/diagnoses';
 import { syncData as syncRemoteData } from '../../webeditor/syncData';
 import { getDataStatus, updateDataStatus } from '../data_status';
+import { getAuthenticatedUser } from '../../auth';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   Promise.all([
@@ -19,7 +19,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
 
     getDataStatus(),
 
-    getAuthenticatedUser(data),
+    getAuthenticatedUser(),
   ])
     .catch(e => {
       require('@/utils/logger')('ERROR: syncDatabase - NetInfo.fetch(), getDataStatus(), getAuthenticatedUser(data)', e);
@@ -29,7 +29,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
       const authenticatedUser = authenticated ? authenticated.user : null;
 
       const canSync = dataStatus && network.isInternetReachable && authenticatedUser;
-      
+
       const _updateDataStatus = () => updateDataStatus({
         data_initialised: true,
         last_sync_date: new Date().toString(),

@@ -2,6 +2,7 @@ import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
 import { useOverlayLoaderState } from '@/contexts/app';
 import { Button, Icon, ActionSheet } from 'native-base';
+import colorStyles from '@/styles/colorStyles';
 
 const DeleteBtn = () => {
   const { state: { sessions, deletingSessions }, deleteSessions } = useSessionsContext();
@@ -28,7 +29,7 @@ const DeleteBtn = () => {
           );
         }}
       >
-        <Icon name="trash" />
+        <Icon style={[colorStyles.primaryColor]} name="trash" />
       </Button>
     </>
   );

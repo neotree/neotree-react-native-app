@@ -2,14 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Alert, TouchableOpacity } from 'react-native';
 import { Text } from 'native-base';
-import { signOut } from '@/api/auth';
 import authCopy from '@/constants/copy/auth';
 import copy from '@/constants/copy';
-import { useDataContext } from '@/contexts/data';
-import { useOverlayLoaderState } from '@/contexts/app';
+import { useOverlayLoaderState, useAppContext } from '@/contexts/app';
 
 const SignOutBtn = ({ icon, style, ...props }) => {
-  const dataContext = useDataContext();
+  const { signOut } = useAppContext();
 
   const [signingOut, setSigningOut] = React.useState(false);
 
@@ -18,8 +16,9 @@ const SignOutBtn = ({ icon, style, ...props }) => {
   const logOut = () => {
     const onConfirm = () => {
       setSigningOut(true);
-      signOut();
-      dataContext.sync({ name: 'authenticated_user', user: null });
+      signOut()
+        .catch(() => setSigningOut(false))
+        .then(() => setSigningOut(false));
     };
     Alert.alert(
       authCopy.CONFIRM_SIGN_OUT_TITLE,
