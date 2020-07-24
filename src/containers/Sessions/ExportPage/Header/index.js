@@ -1,7 +1,8 @@
 import React from 'react';
 import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
-import { Header, Body, Left, Title, Right, Button, Icon } from 'native-base';
+import { Button, Icon } from 'native-base';
+import Header from '@/components/Header';
 
 const HeaderComponent = () => {
   const history = useHistory();
@@ -15,22 +16,19 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <Header>
-        <Left style={{ maxWidth: 50 }}>
-          <Button
-            transparent
-            onPress={() => goBack()}
-          >
-            <Icon name="arrow-back" />
-          </Button>
-        </Left>
-
-        <Body>
-          <Title>Export</Title>
-        </Body>
-
-        <Right />
-      </Header>
+      <Header
+        title="Export"
+        leftActions={(
+          <>
+            <Button
+              transparent
+              onPress={() => goBack()}
+            >
+              <Icon name="arrow-back" />
+            </Button>
+          </>
+        )}
+      />
     </>
   );
 };

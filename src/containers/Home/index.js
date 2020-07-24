@@ -2,8 +2,9 @@ import React from 'react';
 import { View } from 'react-native';
 import { provideHomeContext } from '@/contexts/home';
 import { useHistory } from 'react-router-native';
-import { Header, Left, Body, Button, Icon, Title, Drawer } from 'native-base';
+import { Button, Icon, Drawer } from 'native-base';
 import * as Permissions from 'expo-permissions';
+import Header from '@/components/Header';
 import Sidebar from './Sidebar';
 import Scripts from '../Scripts';
 
@@ -33,19 +34,19 @@ const Home = () => {
         content={<Sidebar />}
       >
         <View style={{ flex: 1, backgroundColor: '#f6f7f9', }}>
-          <Header>
-            <Left style={{ maxWidth: 50 }}>
-              <Button
-                transparent
-                onPress={() => drawerRef.current._root.open()}
-              >
-                <Icon name="menu" />
-              </Button>
-            </Left>
-            <Body>
-              <Title>Scripts</Title>
-            </Body>
-          </Header>
+          <Header
+            title="Scripts"
+            leftActions={(
+              <>
+                <Button
+                  transparent
+                  onPress={() => drawerRef.current._root.open()}
+                >
+                  <Icon name="menu" />
+                </Button>
+              </>
+            )}
+          />
 
           <Scripts />
         </View>
