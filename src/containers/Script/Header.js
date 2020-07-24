@@ -5,11 +5,12 @@ import { useHistory, useLocation, Link } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import copy from '@/constants/copy';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import { Header, Body, Title, Left, Button, Icon, Right, ActionSheet } from 'native-base';
+import { Button, Icon, ActionSheet } from 'native-base';
 import { Alert, TouchableOpacity } from 'react-native';
 import Modal from '@/components/Modal';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
+import Header from '@/components/Header';
 
 const HeaderComponent = () => {
   const history = useHistory();
@@ -50,66 +51,66 @@ const HeaderComponent = () => {
 
   return (
     <>
-      <Header>
-        <Left style={{ maxWidth: 50 }}>
-          <Link
-            transparent
-            component={TouchableOpacity}
-            to={backLink || currentLink}
-            onPress={() => !backLink && cancelScript()}
-          >
-            <Icon style={{ color: '#fff' }} name="arrow-back" />
-          </Link>
-        </Left>
+      <Header
+        title={activeScreen ? activeScreen.data.title : null}
+        subtitle={script.data.title}
+        leftActions={(
+          <>
+            <Link
+              transparent
+              component={TouchableOpacity}
+              to={backLink || currentLink}
+              onPress={() => !backLink && cancelScript()}
+            >
+              <Icon style={{ color: '#fff' }} name="arrow-back" />
+            </Link>
+          </>
+        )}
+        rightActions={(
+          <>
+            {activeScreen && !!activeScreen.data.infoText && (
+              <Button
+                transparent
+                onPress={() => setOpenInfoModal(true)}
+              >
+                <Icon name="information-circle-outline" />
+              </Button>
+            )}
 
-        <Body>
-          <Title>{activeScreen ? activeScreen.data.title : null}</Title>
-          <Text style={{ fontSize: 10, color: '#ddd' }}>{script.data.title}</Text>
-        </Body>
-
-        <Right style={{ maxWidth: 80 }}>
-          {activeScreen && !!activeScreen.data.infoText && (
             <Button
               transparent
-              onPress={() => setOpenInfoModal(true)}
+              onPress={() => {
+                ActionSheet.show(
+                  {
+                    options: ['Cancel Script?'],
+                    title: 'Action',
+                    // cancelButtonIndex: 1,
+                  },
+                  i => i === 0 && cancelScript()
+                );
+              }}
             >
-              <Icon name="information-circle-outline" />
+              <Icon name="more" />
             </Button>
-          )}
-
-          <Button
-            transparent
-            onPress={() => {
-              ActionSheet.show(
-                {
-                  options: ['Cancel Script?'],
-                  title: 'Action',
-                  // cancelButtonIndex: 1,
-                },
-                i => i === 0 && cancelScript()
-              );
-            }}
-          >
-            <Icon name="more" />
-          </Button>
-        </Right>
-      </Header>
+          </>
+        )}
+      />
 
       {!!activeScreen && (
-        <Modal 
-        open={openInfoModal}
-        onClose={() => setOpenInfoModal(false)}
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          // alignItems: 'center', 
-          // justifyContent: 'center' 
-        }}
-      >
-       <Text>Screen info</Text> 
-       <Divider border={false} />
-       <Text note>{activeScreen.data.infoText}</Text> 
-      </Modal>
+        <Modal
+          open={openInfoModal}
+          onClose={() => setOpenInfoModal(false)}
+          style={{
+            width: '100%',
+            height: '100%',
+            // alignItems: 'center',
+            // justifyContent: 'center'
+          }}
+        >
+          <Text>Screen info</Text>
+          <Divider border={false} />
+          <Text note>{activeScreen.data.infoText}</Text>
+        </Modal>
       )}
     </>
   );
