@@ -49,12 +49,12 @@ const Screens = () => {
         >
           <View style={{ flex: 1 }}>
             <Text style={[colorStyles.primaryColorContrastText]}>
-              {activeScreen.data.actionText}
+              {activeScreen.data.actionText.replace(/^\s+|\s+$/g, '')}
             </Text>
           </View>
           <View>
             <Text style={[colorStyles.primaryColorContrastText]}>
-              {activeScreen.data.step}
+              {activeScreen.data.step.replace(/^\s+|\s+$/g, '')}
             </Text>
           </View>
         </Content>
@@ -67,12 +67,16 @@ const Screens = () => {
           <>
             <Content
               containerProps={{
-                style: { backgroundColor: 'rgba(241, 196, 15,.2)' },
+                style: {
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255, 255, 0,.2)'
+                },
               }}
             >
-              <Text style={[colorStyles.primaryColor]}>{activeScreen.data.contentText}</Text>
+              <Text style={[colorStyles.primaryColor]}>
+                {activeScreen.data.contentText.replace(/^\s+|\s+$/g, '')}
+              </Text>
             </Content>
-            <Divider border={false} />
           </>
         )}
 
