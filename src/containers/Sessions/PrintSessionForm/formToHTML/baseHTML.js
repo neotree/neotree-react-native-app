@@ -13,19 +13,31 @@ export default html => `
       #headerSubtitle {
         color: #999;
       }
-      .form-table-wrapper {
-        
+      #content {
+        webkit-columns: 0px 2;
+        moz-columns: 0px 2;
+        ms-columns: 0px 2;
+        columns: 0px 2;
       }
-      .form-table-title {
+      .title {
         padding: 10px;
         background: #ccc;
         color: #000;
       }
-      .form-table {
-        width: 100%;
+      .row {
+        webkit-column-break-inside: avoid;
+        moz-column-break-inside: avoid;
+        ms-column-break-inside: avoid;
+        column-break-inside: avoid;
+        webkit-break-inside: avoid;
+        moz-break-inside: avoid;
+        ms-break-inside: avoid;
+        break-inside: avoid;
+        display: flex;
       }
-      .form-table td {
-        width: 50%;
+      .row:not(.title) > * {
+        flex: 0 0 50%;
+        padding: 5px;
       }
     </style>
   </header>
@@ -36,7 +48,7 @@ export default html => `
         <p id="headerSubtitle">Ministry of Health - National Admission Form</p>
       </div>
     </div>
-    <div>${html || ''}<div>
+    <div id="content">${html || ''}<div>
   </body>
 </html>
 `;
