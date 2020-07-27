@@ -6,7 +6,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
   const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
     .join(',');
 
-  let q = 'select * from logs';
+  let q = 'select * from stats';
   q = where ? `${q} where ${where}` : q;
 
   db.transaction(
@@ -15,11 +15,11 @@ export default (options = {}) => new Promise((resolve, reject) => {
         `${q} limit 1;`.trim(),
         null,
         (tx, rslts) => resolve({
-          log: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
+          stat: rslts.rows._array[0],
         }),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: getLog', e);
+            require('@/utils/logger')('ERROR: getStat', e);
             reject(e);
           }
         }
