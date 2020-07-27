@@ -19,11 +19,11 @@ const Checklist = ({ screen, value, onChange }) => {
           label: item.label,
           value: item.key,
           disabled: (() => {
-            const exclusiveChecked = entry.values.reduce((acc, item) => {
-              if (item.exclusive) acc = true;
+            const exclusive = entry.values.reduce((acc, item) => {
+              if (item.exclusive) acc = item.value;
               return acc;
-            }, false);
-            return item.exclusive ? false : exclusiveChecked;
+            }, null);
+            return exclusive ? exclusive !== item.key : false;
           })(),
         }))}
         value={entry.values.map(e => e.value)}
