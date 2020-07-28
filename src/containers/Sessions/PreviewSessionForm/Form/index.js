@@ -1,10 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { fieldsTypes } from '@/constants/screen';
-import moment from 'moment';
 import Entry from './Entry';
 
-const FormPreview = ({ form }) => {
+const FormPreview = ({ session: { data: { form } } }) => {
   return (
     <>
       {form.filter(({ values }) => values.length)
@@ -37,7 +35,7 @@ const FormPreview = ({ form }) => {
 };
 
 FormPreview.propTypes = {
-  form: PropTypes.array.isRequired,
+  session: PropTypes.object.isRequired,
 };
 
 export default FormPreview;

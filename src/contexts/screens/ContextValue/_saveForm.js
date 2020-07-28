@@ -1,3 +1,4 @@
+/* global alert */
 import { saveSession } from '@/api/sessions';
 
 export default function saveForm(_payload = {}) {
@@ -13,11 +14,15 @@ export default function saveForm(_payload = {}) {
   return new Promise((resolve, reject) => {
     if (!saveInBackground) setState({ savingForm: true });
 
-    const done = (err, rslts) => {
-      if (!saveInBackground) setState({ savingForm: false });
+    const done = (err, rslts = {}) => {
+      const session = rslts.session;
+      setState({ savingForm: false, session });
       if (err) return reject(err);
-      resolve(rslts);
-      if (completed) router.history.push(`/script/${script.id}/preview-form`);
+      resolve(session);
+      if (completed) {
+        if (!session) return alert('Oops, failed to retrieve saved session');
+        router.history.push(`/script/${script.id}/preview-form`);
+      }
     };
 
     saveScriptStats(stats => ({
