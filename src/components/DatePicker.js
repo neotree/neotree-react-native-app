@@ -27,6 +27,8 @@ const DatePicker = ({
   enabled,
   formatDate,
   editable,
+  maxDate,
+  minDate,
   ...props
 }) => {
   enabled = enabled !== false;
@@ -87,6 +89,8 @@ const DatePicker = ({
               setShow(Platform.OS === 'ios');
               if (onChange) onChange(e, date || value);
             }}
+            maximumDate={!maxDate ? null : maxDate === 'date_now' ? new Date() : new Date(maxDate)}
+            minimumDate={!minDate ? null : minDate === 'date_now' ? new Date() : new Date(minDate)}
           />
         </View>
       )}
