@@ -47,6 +47,7 @@ export default () => new Promise((resolve, reject) => {
   const sessionsTableColumns = [
     'id integer primary key not null',
     'script_id varchar',
+    'uid varchar',
     'data text',
     'completed boolean',
     'exported boolean',

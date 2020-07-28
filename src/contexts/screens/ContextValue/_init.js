@@ -2,7 +2,7 @@ export default function init({
   state,
   setState,
   router,
-  scriptContext: { saveScriptStats, state: { script, stats } },
+  scriptContext: { saveScriptStats, state: { script, stats, uid, } },
   diagnosesContext: { state: { diagnoses } },
 }) {
   this.state = state;
@@ -12,4 +12,5 @@ export default function init({
   this.scriptStats = stats;
   this.saveScriptStats = saveScriptStats;
   this.diagnoses = diagnoses;
+  this.uid = uid;
 }

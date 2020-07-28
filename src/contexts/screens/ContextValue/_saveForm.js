@@ -33,6 +33,8 @@ export default function saveForm(_payload = {}) {
 
     saveSession({
       ...payload,
+      uid: this.uid,
+      script_id: activeScreen.script_id,
       data: {
         started_at: start_time,
         completed_at: completed ? new Date().toString() : null,
@@ -51,7 +53,6 @@ export default function saveForm(_payload = {}) {
           };
         })
       },
-      script_id: activeScreen.script_id
     })
       .then(rslts => done(null, rslts))
       .catch(done);
