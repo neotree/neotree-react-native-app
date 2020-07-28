@@ -4,7 +4,7 @@ import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import ManagementCard from './ManagementCard';
 
-const Diagnoses = ({ diagnoses }) => {
+const Diagnoses = ({ session: { data: { diagnoses } } }) => {
   diagnoses = diagnoses || [];
 
   if (!diagnoses.length) return null;
@@ -51,7 +51,7 @@ const Diagnoses = ({ diagnoses }) => {
 };
 
 Diagnoses.propTypes = {
-  diagnoses: PropTypes.array.isRequired,
+  session: PropTypes.object.isRequired,
 };
 
 export default Diagnoses;

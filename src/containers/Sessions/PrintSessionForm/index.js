@@ -3,18 +3,18 @@ import PropTypes from 'prop-types';
 import Print from '@/components/Print';
 import formToHTML from './formToHTML';
 
-const PrintSessionForm = ({ form }) => {
+const PrintSessionForm = ({ session }) => {
   return (
     <>
       <Print
-        options={{ html: formToHTML(form) }}
+        options={{ html: formToHTML(session) }}
       />
     </>
   );
 };
 
 PrintSessionForm.propTypes = {
-  form: PropTypes.array.isRequired
+  session: PropTypes.object.isRequired
 };
 
 export default PrintSessionForm;

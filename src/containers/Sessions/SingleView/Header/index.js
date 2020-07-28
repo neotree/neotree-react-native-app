@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import PrintSessionForm from '../../PrintSessionForm';
 
-const HeaderComponent = ({ form }) => {
+const HeaderComponent = ({ session }) => {
   const history = useHistory();
 
   const goBack = () => {
@@ -33,7 +33,7 @@ const HeaderComponent = ({ form }) => {
         )}
         rightActions={(
           <>
-            <PrintSessionForm form={form} />
+            <PrintSessionForm session={session} />
           </>
         )}
       />
@@ -42,7 +42,7 @@ const HeaderComponent = ({ form }) => {
 };
 
 HeaderComponent.propTypes = {
-  form: PropTypes.array.isRequired
+  session: PropTypes.object.isRequired
 };
 
 export default HeaderComponent;
