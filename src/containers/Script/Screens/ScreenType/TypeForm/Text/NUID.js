@@ -26,20 +26,15 @@ const validateUID = (value = '') => {
 };
 
 const NUID = ({ field, onChange, value, conditionMet, }) => {
-  const { state: { uid_prefix } } = useAppContext();
-  const { state: { sessionsCount } } = useScriptContext();
-
-  const makeUID = () => {
-    return `${uid_prefix}-${`000${sessionsCount + 1}`.slice(-4)}`;
-  };
+  const { state: { uid } } = useScriptContext();
 
   const firstHalfRef = React.useRef(null);
   const lastHalfRef = React.useRef(null);
 
   const getDefault = () => {
-    const uid = field.defaultValue ? makeUID() : '';
-    const [firstHalf, lastHalf] = uid.split('-');
-    return { uid, firstHalf, lastHalf, };
+    const _uid = field.defaultValue ? (uid || '') : '';
+    const [firstHalf, lastHalf] = _uid.split('-');
+    return { uid: _uid, firstHalf, lastHalf, };
   };
 
   const [_defaultVal] = React.useState(getDefault());
@@ -59,10 +54,10 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   });
 
   React.useEffect(() => {
-    const [_firstHalf, _lastHalf] = (value || '').split('-');
+    const [_firstHalf, _lastHalf] = (value || uid || '').split('-');
     setFirstHalf(_firstHalf || _defaultVal.firstHalf);
     setLastHalf(_lastHalf || _defaultVal.lastHalf);
-  }, [value]);
+  }, [value, uid]);
 
   const disableLastHalf = !(conditionMet && firstHalfIsValid);
   const error = !(firstHalfIsValid && lastHalfIsValid && conditionMet) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);
