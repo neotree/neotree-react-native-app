@@ -14,7 +14,7 @@ import List from './TypeList';
 const ScreenType = () => {
   const context = useScreensContext();
 
-  const { state: { activeScreen, form, cachedForm, }, setState } = context;
+  const { state: { activeScreen, form, }, setState } = context;
 
   const [screenId, setScreenId] = React.useState(null);
 
@@ -35,13 +35,7 @@ const ScreenType = () => {
     };
   });
 
-  React.useEffect(() => {
-    setScreenId(activeScreen.id);
-
-    // get cached entry
-    const entry = cachedForm.filter(e => e.screen.id === activeScreen.id)[0];
-    if (entry) onEntry(entry);
-  }, [activeScreen]);
+  React.useEffect(() => { setScreenId(activeScreen.id); }, [activeScreen]);
 
   return (
     <>
