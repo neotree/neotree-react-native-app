@@ -22,6 +22,7 @@ const Form = ({ screen, value, context, onChange }) => {
 
   const defaultValue = fields.map(f => ({
     value: null,
+    valueText: null,
     label: f.label,
     key: f.key,
     type: f.type,

@@ -34,7 +34,7 @@ export default function getScreen(opts = {}) {
     let conditionMet = false;
 
     try {
-      conditionMet = eval(parseScreenCondition(condition, form.filter(e => e.screen.id !== screen.id)));
+      conditionMet = eval(parseScreenCondition(condition, form));
     } catch (e) {
       // do nothing
     }
