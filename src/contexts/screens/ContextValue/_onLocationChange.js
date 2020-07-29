@@ -3,21 +3,23 @@ export default function onLocationChange() {
   const { screensInitialised, } = this.state;
 
   if (screensInitialised) {
-    this.setState(({ screens, form, cachedForm, activeScreenIndex, }) => {
+    this.setState(({ screens, form, cachedForm, activeScreen, }) => {
       const targetScreenIndex = screenId ? screens.map(s => s.id.toString()).indexOf(screenId) : 0;
       const targetScreen = screens[targetScreenIndex];
+      const cachedEntry = !targetScreen ? null : cachedForm.filter(e => e.screen.id === targetScreen.id)[0];
 
       return {
         cachedForm: [
           ...cachedForm.filter(cachedEntry => !form.map(entry => entry.screen.id).includes(cachedEntry.screen.id)),
           ...form
         ],
+        form: [
+          ...form.filter(e => e.screen.id !== activeScreen.id)
+            .filter(entry => !(cachedEntry && cachedEntry.screen.id === entry.screen.id)),
+          ...(cachedEntry ? [cachedEntry] : []),
+        ],
         activeScreenIndex: targetScreenIndex,
         activeScreenInitialised: true,
-        form: form.reduce((acc, e, i) => {
-          if ((targetScreenIndex < activeScreenIndex) && (i === (form.length - 1))) return acc;
-          return [...acc, e];
-        }, []),
         activeScreen: !targetScreen ? null : {
           ...targetScreen,
           data: {
