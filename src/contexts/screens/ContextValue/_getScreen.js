@@ -1,6 +1,6 @@
 export default function getScreen(opts = {}) {
   const {
-    state: { activeScreenIndex, screens },
+    state: { activeScreenIndex, screens, form, },
     parseScreenCondition,
   } = this;
 
@@ -34,7 +34,7 @@ export default function getScreen(opts = {}) {
     let conditionMet = false;
 
     try {
-      conditionMet = eval(parseScreenCondition(condition));
+      conditionMet = eval(parseScreenCondition(condition, form.filter(e => e.screen.id !== screen.id)));
     } catch (e) {
       // do nothing
     }

@@ -1,8 +1,7 @@
 import _parseScreenCondition from '../_parseScreenCondition';
 
-export default function parseScreenCondition(_condition = '', form) { 
-  const { state: { form: f, configuration } } = this;
-  let condition = form ? _parseScreenCondition(_condition, { form, configuration }) : _condition;
-  condition = _parseScreenCondition(condition, { form: f, configuration });
+export default function parseScreenCondition(_condition = '', ...args) {
+  const { state: { configuration } } = this;
+  const condition = args.reduce((acc, form) => _parseScreenCondition(acc, { form, configuration }), _condition);
   return condition;
 }
