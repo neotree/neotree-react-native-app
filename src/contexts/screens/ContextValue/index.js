@@ -6,7 +6,8 @@ import Value, { defaults } from './Value';
 
 export default props => {
   const router = useRouter();
-  const { state: { script } } = useScriptContext();
+  const scriptContext = useScriptContext();
+  const diagnosesContext = useDiagnosesContext();
   const { state: { diagnoses } } = useDiagnosesContext();
 
   const [state, setState] = React.useState(defaults.defaultState);
@@ -16,7 +17,8 @@ export default props => {
     state,
     setState,
     router,
-    script,
     diagnoses,
+    scriptContext,
+    diagnosesContext,
   });
 };

@@ -16,6 +16,7 @@ export default function _countSessions(payload, opts = {}) {
   countSessions({ script_id: scriptId, ...payload })
     .then(res => {
       setState({
+        uid: `${this.uid_prefix}-${`000${res.count + 1}`.slice(-4)}`,
         sessionsCount: res.count,
         countSessionsError: res.error,
         countingSessions: false,

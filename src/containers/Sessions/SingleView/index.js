@@ -13,18 +13,15 @@ const SingleView = () => {
 
   const { state: { sessions } } = useSessionsContext();
 
-  const session = sessions.filter(f => f.id.toString() === sessionId).map(s => s.data)[0];
-  const form = session ? session.form : null;
-  const diagnoses = session ? session.diagnoses : [];
+  const session = sessions.filter(f => f.id.toString() === sessionId)[0];
 
   return (
     <>
-      <Header form={form} />
+      <Header session={session} />
       <View style={[{ flex: 1 }]}>
         <PreviewSessionForm
           Wrapper={Wrapper}
-          form={form}
-          diagnoses={diagnoses}
+          session={session}
         />
       </View>
     </>

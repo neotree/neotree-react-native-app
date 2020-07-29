@@ -17,10 +17,15 @@ export default class ContextValue {
 
   getScript = require('./_getScript').default.bind(this);
 
+  getScriptStats = require('./_getScriptStats').default.bind(this);
+
+  saveScriptStats = require('./_saveScriptStats').default.bind(this);
+
   countSessions = require('./_countSessions').default.bind(this);
 
   initialisePage = () => {
     this.getScript();
     this.countSessions();
+    this.getScriptStats();
   };
 }
