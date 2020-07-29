@@ -1,3 +1,4 @@
+/* global alert */
 import { saveSession } from '@/api/sessions';
 
 export default function saveForm(_payload = {}) {
@@ -5,6 +6,7 @@ export default function saveForm(_payload = {}) {
     setState,
     script,
     router,
+    saveScriptStats,
     state: { form, activeScreen, start_time, screens }
   } = this;
 
@@ -12,15 +14,27 @@ export default function saveForm(_payload = {}) {
   return new Promise((resolve, reject) => {
     if (!saveInBackground) setState({ savingForm: true });
 
-    const done = (err, rslts) => {
-      if (!saveInBackground) setState({ savingForm: false });
+    const done = (err, rslts = {}) => {
+      const session = rslts.session;
+      setState({ savingForm: false, session });
       if (err) return reject(err);
-      resolve(rslts);
-      if (completed) router.history.push(`/script/${script.id}/preview-form`);
+      resolve(session);
+      if (completed) {
+        if (!session) return alert('Oops, failed to retrieve saved session');
+        router.history.push(`/script/${script.id}/preview-form`);
+      }
     };
+
+    saveScriptStats(stats => ({
+      completed_sessions: stats.completed_sessions + (completed ? 1 : 0),
+      incompleted_sessions: stats.incompleted_sessions + (completed ? 0 : 1),
+      total_sessions: stats.total_sessions + 1,
+    }));
 
     saveSession({
       ...payload,
+      uid: this.uid,
+      script_id: activeScreen.script_id,
       data: {
         started_at: start_time,
         completed_at: completed ? new Date().toString() : null,
@@ -39,7 +53,6 @@ export default function saveForm(_payload = {}) {
           };
         })
       },
-      script_id: activeScreen.script_id
     })
       .then(rslts => done(null, rslts))
       .catch(done);

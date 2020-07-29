@@ -1,7 +1,7 @@
 import db from './db';
 
 export default () => new Promise((resolve, reject) => {
-  const dataStatusTable = [
+  const dataStatusTableColumns = [
     'id varchar primary key not null',
     'uid_prefix varchar',
     'user_id varchar',
@@ -47,6 +47,7 @@ export default () => new Promise((resolve, reject) => {
   const sessionsTableColumns = [
     'id integer primary key not null',
     'script_id varchar',
+    'uid varchar',
     'data text',
     'completed boolean',
     'exported boolean',
@@ -76,8 +77,16 @@ export default () => new Promise((resolve, reject) => {
     'updatedAt datetime'
   ].join(',');
 
+  const statsTableColumns = [
+    'id integer primary key autoincrement',
+    'script_id varchar',
+    'total_sessions integer',
+    'completed_sessions integer',
+    'incompleted_sessions integer',
+  ].join(',');
+
   const querys = [
-    `create table if not exists data_status (${dataStatusTable});`,
+    `create table if not exists data_status (${dataStatusTableColumns});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
     `create table if not exists diagnoses (${diagnosesTableColumns});`,
@@ -85,6 +94,7 @@ export default () => new Promise((resolve, reject) => {
     `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
     `create table if not exists config_keys (${config_keysTableColumns});`,
     `create table if not exists configuration (${configurationTableColumns});`,
+    `create table if not exists stats (${statsTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -111,6 +121,7 @@ export default () => new Promise((resolve, reject) => {
       authenticatedUserTable: rslts[5],
       config_keysTable: rslts[6],
       configurationTable: rslts[7],
+      statsTable: rslts[8],
     }))
     .catch(reject);
 });

@@ -6,7 +6,14 @@ import {
   deleteSessions as _deleteSessions,
 } from '../database/sessions';
 
-export const saveSession = (opts = {}) => _saveSession(opts);
+export const saveSession = (opts = {}) => new Promise((resolve, reject) => {
+  _saveSession(opts)
+    .then(({ insertId: id }) => _getSession({ id })
+      .then(resolve)
+      .then(reject)
+    )
+    .catch(reject);
+});
 
 export const getSession = (opts = {}) => _getSession(opts);
 

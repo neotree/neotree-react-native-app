@@ -1,25 +1,46 @@
-import parseForm from './parseForm';
+/* eslint-disable indent */
+import ucFirst from '@/utils/ucFirst';
 import baseHTML from './baseHTML';
 
-export default form => {
-  const entries = parseForm(form);
-  const tables = entries.map(({ data, screen }) => {
-    return `
-      <div class="form-table-wrapper">
-        <div class="form-table-title">
-          <strong>${screen.title}</strong>
-        </div>
-        <table class="form-table">
-          ${data.map(entry => `
-            <tr>
-              <td>${entry.label}</td>
-              <td>${entry.values.map(v => `<p>${v.text || v.valueText || v.label || v.value}</p>`).join('')}</td>
-            </tr>
-          `)}
-        </table>
-      </div>
-    `;
-  }).join('');
+export default session => {
+  const { form } = session.data;
+  const sections = [];
+  form.forEach(entry => {
+    const { screen: { sectionTitle } } = entry;
+    if (entry.values.length) {
+      const _sectionTitle = ucFirst(`${sectionTitle}`.toLowerCase());
+      let sectionIndex = sections.map(([section]) => section).indexOf(_sectionTitle);
+      if (sectionIndex < 0) {
+        sections.push([sectionTitle ? _sectionTitle : '', []]);
+        sectionIndex = sections.length - 1;
+      }
+      sections[sectionIndex][1].push(entry);
+    }
+  });
 
-  return baseHTML(tables);
+  const tables = sections
+    .filter(([, entries]) => entries.length)
+    .map(([sectionTitle, entries]) => {
+      entries = entries.filter(e => e.values.length);
+
+      return `
+        ${!sectionTitle ? '' : (`
+          <div class="title row">
+            <strong>${sectionTitle}</strong>
+          </div>
+        `)}
+
+        ${entries.filter(e => e.values.length)
+          .map(({ values, screen: { metadata: { label } } }) =>
+            values.map(v => `
+              <div  class="row">
+                <span>${label || v.label}</span>
+                <span>${v.valueText || 'N/A'}</span>
+              </div>
+            `).join('')
+          ).join('')}
+      `;
+    }).join('');
+
+  return baseHTML(tables, session);
 };

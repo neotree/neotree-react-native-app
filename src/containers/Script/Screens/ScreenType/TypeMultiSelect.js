@@ -20,11 +20,11 @@ const MultiSelect = ({ screen, value, onChange }) => {
           label: item.label,
           value: item.id,
           disabled: (() => {
-            const exclusiveChecked = entry.values.reduce((acc, item) => {
-              if (item.exclusive) acc = true;
+            const exclusive = entry.values.reduce((acc, item) => {
+              if (item.exclusive) acc = item.value;
               return acc;
-            }, false);
-            return item.exclusive ? false : exclusiveChecked;
+            }, null);
+            return exclusive ? exclusive !== item.id : false;
           })(),
         }))}
         onChange={(opt, i) => {

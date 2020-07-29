@@ -1,4 +1,5 @@
 import * as defaults from './_defaults';
+import { exportJSON, exportEXCEL, exportToApi } from './export';
 
 export { defaults };
 
@@ -19,7 +20,11 @@ export default class ContextValue {
 
   getSessions = require('./_getSessions').default.bind(this);
 
-  export = require('./export').default.bind(this);
+  exportJSON = exportJSON.bind(this);
+
+  exportEXCEL = exportEXCEL.bind(this);
+
+  exportToApi = exportToApi.bind(this);
 
   selectItems = ids => {
     ids = ids && ids.map ? ids : [ids];

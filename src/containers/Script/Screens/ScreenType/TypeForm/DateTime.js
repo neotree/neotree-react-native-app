@@ -51,6 +51,8 @@ const DateTime = ({ field, onChange: _onChange, value, conditionMet, }) => {
             value={date || null}
             placeholder={formCopy.SELECT_DATE}
             onChange={onDateChange}
+            maxDate={field.maxDate}
+            minDate={field.minDate}
           />
         </View>
 

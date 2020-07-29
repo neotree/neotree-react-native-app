@@ -6,16 +6,17 @@ export default (data = {}) => new Promise((resolve, reject) => {
     resolve(rslts);
   };
 
-  const columns = [data.id ? 'id' : '', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
+  const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
     .filter(c => c)
     .join(',');
 
-  const values = [data.id ? '?' : '', '?', '?', '?', '?', '?', '?']
+  const values = [data.id ? '?' : '', '?', '?', '?', '?', '?', '?', '?']
     .filter(c => c)
     .join(',');
 
   const params = [
     ...data.id ? [data.id] : [],
+    data.uid,
     data.script_id,
     JSON.stringify(data.data || '{}'),
     data.completed || false,
