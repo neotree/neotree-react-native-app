@@ -4,6 +4,7 @@ import {
   getSessions as _getSessions,
   countSessions as _countSessions,
   deleteSessions as _deleteSessions,
+  updateSessions as _updateSessions,
 } from '../database/sessions';
 
 export const saveSession = (opts = {}) => new Promise((resolve, reject) => {
@@ -22,3 +23,5 @@ export const getSessions = (opts = {}) => _getSessions(opts);
 export const deleteSessions = (opts = {}) => _deleteSessions(opts);
 
 export const countSessions = (opts = {}) => _countSessions(opts);
+
+export const updateSessions = (opts = {}) => _updateSessions(opts);

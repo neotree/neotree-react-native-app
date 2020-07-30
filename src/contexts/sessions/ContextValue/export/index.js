@@ -4,6 +4,8 @@ import * as Permissions from 'expo-permissions';
 import * as MediaLibrary from 'expo-media-library';
 import { Alert } from 'react-native';
 import { exportSession } from '@/api/export';
+import { updateSessions } from '@/api/sessions';
+import getJSON from './getJSON';
 
 const exportSuccessAlert = (msg = '') => {
   Alert.alert(
@@ -20,12 +22,13 @@ const exportSuccessAlert = (msg = '') => {
 };
 
 export function exportJSON() {
+  const { sessions } = this.state;
   const saveFile = async () => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status === 'granted') {
       this.setState({ exporting: true });
       const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-text.json`;
-      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: [] }), { encoding: FileSystem.EncodingType.UTF8 });
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: getJSON(sessions) }), { encoding: FileSystem.EncodingType.UTF8 });
       const asset = await MediaLibrary.createAssetAsync(fileUri);
       await MediaLibrary.createAlbumAsync('Download', asset, false);
       this.setState({ exporting: false });
@@ -69,43 +72,31 @@ export function exportEXCEL() {
 }
 
 export function exportToApi() {
-  const sessions = this.state.sessions.filter(s => !s.exported)
-    .map(s => {
-      const { script, form } = s.data;
-
-      return {
-        script: { id: script.id, title: script.data.title },
-        entries: form.reduce((acc, e) => {
-          return [
-            ...acc,
-            ...e.values.map(({ key, dataType, value, label, }) => ({
-              key,
-              type: dataType,
-              values: [{ value, label }],
-            }))
-          ];
-        }, []),
-      };
-    });
-
-  const postData = sessions.map(data => ({
-    uid: `${this.uid_prefix}-0001`,
-    scriptId: data.script.id,
-    data,
-  }));
+  const sessions = this.state.sessions.filter(s => !s.exported);
+  const postData = getJSON(sessions);
 
   this.setState({ exporting: true });
 
-  Promise.all(postData.filter((s, i) => i === 0).map(s => exportSession(s)))
-    .then(rslts => {
-      console.log('SUCCESS', rslts);
+  Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
+    exportSession(s)
+      .then(rslt => {
+        const id = sessions[i].id;
+        updateSessions({ exported: true }, { where: { id, }, })
+          .then(() => this.setState(({ sessions }) => ({
+            sessions: sessions.map(s => ({ ...s, exported: s.id === id ? true : s.exported }))
+          })));
+        resolve(rslt);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  })))
+    .then(() => {
+      this.setState({ exporting: false });
+      exportSuccessAlert('Export complete');
     })
-    .catch(e => {
-      console.log('ERROR', e);
+    .catch(() => {
+      this.setState({ exporting: false });
+      exportSuccessAlert('Export complete');
     });
-
-  setTimeout(() => {
-    this.setState({ exporting: false });
-    exportSuccessAlert('Export success');
-  }, 2000);
 }
