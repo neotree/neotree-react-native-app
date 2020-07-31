@@ -1,5 +1,4 @@
 import React from 'react';
-import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 import Overlay from '@/components/Overlay';
@@ -19,11 +18,14 @@ const NeoTreeApp = () => {
   const history = useHistory();
 
   const {
-    appIsReady,
-    splashScreen,
-    authenticatedUser,
+    isAppReady,
+    getSplashScreenInfo,
     displayOverlayLoader,
+    state: { authenticatedUser, },
   } = useAppContext();
+
+  const appIsReady = isAppReady();
+  const splashScreen = getSplashScreenInfo();
 
   React.useEffect(() => {
     if (appIsReady) {
@@ -59,6 +61,4 @@ const NeoTreeApp = () => {
   );
 };
 
-export default provideNetworkContext(
-  provideAppContext(NeoTreeApp)
-);
+export default provideAppContext(NeoTreeApp);

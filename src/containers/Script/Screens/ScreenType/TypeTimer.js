@@ -41,6 +41,7 @@ const styles = {
 const Timer = ({ screen, value, onChange }) => {
   const timoutRef = React.useRef(null);
   const metadata = screen.data.metadata || {};
+  const multiplier = metadata.multiplier || 1;
   const timerValue = Number(metadata.timerValue || 0);
 
   const [countdown, setCountDown] = React.useState(0);
@@ -57,10 +58,14 @@ const Timer = ({ screen, value, onChange }) => {
 
   React.useEffect(() => {
     if (_value) {
-      const v = Number(_value);
+      const v = parseFloat(_value * multiplier);
+      const max = parseFloat(metadata.maxValue);
+      const min = parseFloat(metadata.minValue);
+
       let e = null;
-      if (metadata.maxValue && (v > metadata.maxValue)) e = `Max value ${metadata.maxValue}`;
-      if (metadata.minValue && (v < metadata.minValue)) e = `Min value ${metadata.minValue}`;
+      if (!isNaN(max) && (v > max)) e = `Max value ${metadata.maxValue}`;
+      if (!isNaN(min) && (v < min)) e = `Min value ${min}`;
+      if (!isNaN(min) && !isNaN(max) && e) e = `The value must be greater than ${min} and lower than ${max}`;
       setFormError(e);
     }
   }, [_value]);
@@ -126,7 +131,7 @@ const Timer = ({ screen, value, onChange }) => {
                     setEntry({
                       values: [{
                         value,
-                        valueText: value * (metadata.multiplier || 1),
+                        valueText: value * multiplier,
                         label: metadata.label,
                         key: metadata.key,
                         type: metadata.type || metadata.dataType,
@@ -140,11 +145,11 @@ const Timer = ({ screen, value, onChange }) => {
             </Form>
           </View>
 
-          {!metadata.multiplier ? null : (
+          {!multiplier ? null : (
             <Text
               style={[styles.multiplier]}
             >
-              x {metadata.multiplier}
+              x {multiplier}
             </Text>
           )}
         </View>
@@ -167,7 +172,7 @@ const Timer = ({ screen, value, onChange }) => {
             <Text
               style={[styles.value]}
             >
-              {Number(_value) * Number(metadata.multiplier || 1)}
+              {Number(_value) * Number(multiplier)}
             </Text>
           </>
         )}
