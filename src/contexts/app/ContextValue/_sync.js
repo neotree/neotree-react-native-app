@@ -21,7 +21,6 @@ export default function sync(e, callback) {
         syncError,
         dataStatus: syncRslts.dataStatus,
         uid_prefix: syncRslts.dataStatus ? syncRslts.dataStatus.uid_prefix : null,
-        ...(e && e.name === 'authenticated_user' ? { authenticatedUser: e.user } : null),
       });
 
       if (syncError) {
