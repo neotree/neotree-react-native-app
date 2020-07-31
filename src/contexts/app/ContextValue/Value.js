@@ -3,9 +3,15 @@ import * as defaults from './_defaults';
 export { defaults };
 
 export default class ContextValue {
-  constructor(params) {
+  constructor({
+    state,
+    setState,
+    router,
+  }) {
     this.defaults = defaults;
-    require('./_init').default.bind(this)(params);
+    this.state = state;
+    this._setState = setState;
+    this.router = router;
   }
 
   setState = s => this._setState(prevState => ({
@@ -23,7 +29,10 @@ export default class ContextValue {
 
   signOut = require('./_signOut').default.bind(this);
 
-  isAppReady = () => this.state.networkState && this.state.fontsLoaded && this.dataIsReady;
+  isAppReady = () => {
+    const { networkState, fontsLoaded } = this.state;
+    return networkState && fontsLoaded && this.isDataReady();
+  };
 
   getSplashScreenInfo = require('./_getSplashScreenInfo').default.bind(this);
 

@@ -18,11 +18,14 @@ const NeoTreeApp = () => {
   const history = useHistory();
 
   const {
-    appIsReady,
-    splashScreen,
-    authenticatedUser,
+    isAppReady,
+    getSplashScreenInfo,
     displayOverlayLoader,
+    state: { authenticatedUser, },
   } = useAppContext();
+
+  const appIsReady = isAppReady();
+  const splashScreen = getSplashScreenInfo();
 
   React.useEffect(() => {
     if (appIsReady) {
