@@ -30,6 +30,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
               key: metadata.key,
               type: item.type,
               dataType: item.dataType,
+              confidential: item.confidential,
             }]
           });
         }}

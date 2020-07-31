@@ -18,6 +18,7 @@ const Checklist = ({ screen, value, onChange }) => {
         options={(metadata.items || []).map(item => ({
           label: item.label,
           value: item.key,
+          confidential: item.confidential,
           disabled: (() => {
             const exclusive = entry.values.reduce((acc, item) => {
               if (item.exclusive) acc = item.value;

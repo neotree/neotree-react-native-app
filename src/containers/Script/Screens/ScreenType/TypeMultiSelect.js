@@ -44,6 +44,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
             type: item.type,
             dataType: item.dataType,
             exclusive: item.exclusive,
+            confidential: item.confidential,
           };
 
           if (item.exclusive) {
