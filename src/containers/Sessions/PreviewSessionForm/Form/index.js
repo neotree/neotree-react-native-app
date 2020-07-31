@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Entry from './Entry';
 
+export { default as Header } from './Confidentials';
+
 const FormPreview = ({ session: { data: { form } } }) => {
   return (
     <>

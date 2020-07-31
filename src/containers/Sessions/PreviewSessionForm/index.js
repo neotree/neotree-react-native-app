@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ScrollView } from 'react-native';
 import { Tabs, Tab } from 'native-base';
-import Form from './Form';
+import Form, { Header } from './Form';
 import Diagnoses from './Diagnoses';
 
 const PreviewSessionForm = ({ Wrapper, scrollable, ...props }) => {
@@ -15,7 +15,10 @@ const PreviewSessionForm = ({ Wrapper, scrollable, ...props }) => {
       <Tabs>
         <Tab heading="Summary">
           <RootComponent>
-            <Wrapper><Form {...props} /></Wrapper>
+            <>
+              <Header />
+              <Wrapper><Form {...props} /></Wrapper>
+            </>
           </RootComponent>
         </Tab>
         <Tab heading="Diagnosis">
