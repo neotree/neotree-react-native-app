@@ -11,4 +11,8 @@ export const defaultState = {
   overlayLoaderState: {},
   networkState: null,
   networkStateInitialised: false,
+  fontsLoaded: null,
+  authenticatedUserInitialised: null,
+  authenticatedUser: null,
+  loadingAuthenticatedUser: null,
 };
