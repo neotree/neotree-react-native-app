@@ -11,4 +11,7 @@ export const defaultState = {
   loadScreensError: null,
   screensInitialised: false,
   activeScreenInitialised: false,
+  configKeysInitialised: false,
+  loadConfigurationError: null,
+  loadingConfiguration: false,
 };

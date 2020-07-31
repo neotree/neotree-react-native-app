@@ -4,4 +4,6 @@ export const defaultState = {
   loadingConfigKeys: false,
   loadConfigKeysError: null,
   configKeysInitialised: false,
+  loadConfigurationError: null,
+  loadingConfiguration: false,
 };
