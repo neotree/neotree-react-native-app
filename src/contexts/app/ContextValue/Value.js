@@ -23,7 +23,7 @@ export default class ContextValue {
 
   signOut = require('./_signOut').default.bind(this);
 
-  isAppReady = () => this.state.fontsLoaded && this.dataIsReady;
+  isAppReady = () => this.state.networkState && this.state.fontsLoaded && this.dataIsReady;
 
   getSplashScreenInfo = require('./_getSplashScreenInfo').default.bind(this);
 

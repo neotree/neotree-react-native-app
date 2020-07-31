@@ -2,12 +2,10 @@ export default function init({
   state,
   setState,
   router,
-  networkContext,
 }) {
   this.state = state;
   this._setState = setState;
   this.router = router;
-  this.networkContext = networkContext;
   this.dataIsReady = this.isDataReady();
 
   const {
