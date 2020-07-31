@@ -1,11 +1,11 @@
 import React from 'react';
-import { useNetworkContext } from '@/contexts/network';
+import { useAppContext } from '@/contexts/app';
 import { View } from 'react-native';
 import copy from '@/constants/copy';
 import { Text } from 'native-base';
 
 const NetworkStatusBar = () => {
-  const networkState = useNetworkContext();
+  const { state: { networkState } } = useAppContext();
 
   const [isOnline, setIsOnline] = React.useState(true);
   const [displayBar, setDisplayBar] = React.useState(false);

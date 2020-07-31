@@ -9,4 +9,10 @@ export const defaultState = {
   displaySplashScreen: false,
   splashScreenText: null,
   overlayLoaderState: {},
+  networkState: null,
+  networkStateInitialised: false,
+  fontsLoaded: null,
+  authenticatedUserInitialised: null,
+  authenticatedUser: null,
+  loadingAuthenticatedUser: null,
 };
