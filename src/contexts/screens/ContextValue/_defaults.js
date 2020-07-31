@@ -1,6 +1,7 @@
 export const defaultState = {
   start_time: new Date().toString(),
   form: [],
+  cachedForm: [],
   configuration: {},
   activeScreen: null,
   screenId: null,

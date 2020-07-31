@@ -22,7 +22,7 @@ export default function parseScreenCondition(_condition = '', opts = {}) {
 
       switch (t) {
         case 'number':
-          value = valueText || null;
+          value = valueText || value || null;
           break;
         case 'boolean':
           value = value === 'false' ? false : Boolean(value);

@@ -1,22 +1,35 @@
+/* global fetch */
+import queryString from 'query-string';
 import apiConfig from '~/config/neotree-nodeapi-api.json';
-import makeApiCall from '../makeApiCall';
 
 export default (url = '', opts = {}) => new Promise((resolve, reject) => {
   url = `${apiConfig.api_endpoint}${url}`;
-  makeApiCall(url, {
-    ...opts,
-    headers: {
-      ...opts.headers,
-      'x-api-key': apiConfig.api_key,
-    },
-  })
-    .catch(reject)
-    .then((res = {}) => {
-      const error = res.error || res.errors;
-      if (error) {
-        require('@/utils/logger')(`ERROR: makeApiCall: ${url}`, error.map ? error : [error]);
-        return reject(error.map ? error : [error]);
-      }
-      resolve(res);
+
+  const { body, method: m, ...reqOpts } = opts;
+  reqOpts.headers = { 'x-api-key': apiConfig.api_key, ...reqOpts.headers };
+  const method = (m || 'GET').toUpperCase();
+
+  if (method === 'GET') {
+    url = `${url}?${queryString.stringify(body || {})}`;
+  } else {
+    reqOpts.headers['Content-Type'] = 'application/json';
+    reqOpts.body = JSON.stringify({ ...body });
+  }
+
+  require('@/utils/logger')(`makeApiCall: ${url}: `, JSON.stringify(reqOpts));
+
+  return fetch(url, { method, ...reqOpts })
+    .then(res => new Promise((resolve, reject) => {
+      res.text()
+        .then(text => {
+          if (res.status === 200) return resolve(text);
+          reject(text);
+        })
+        .catch(reject);
+    }))
+    .then(res => resolve(res))
+    .catch(e => {
+      require('@/utils/logger')(`makeApiCall ERROR: ${url}: `, e);
+      reject(e);
     });
 });

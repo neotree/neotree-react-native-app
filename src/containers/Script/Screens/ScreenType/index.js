@@ -14,13 +14,28 @@ import List from './TypeList';
 const ScreenType = () => {
   const context = useScreensContext();
 
-  const { state: { activeScreen, form }, setState } = context;
+  const { state: { activeScreen, form, }, setState } = context;
 
   const [screenId, setScreenId] = React.useState(null);
 
-  React.useEffect(() => { setScreenId(activeScreen.id); }, [activeScreen]);
-
   const shouldDisplay = activeScreen.id === screenId;
+
+  const onEntry = entry => setState(prevState => {
+    const form = prevState.form;
+    const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
+    return {
+      ...prevState,
+      form: entry ?
+        formEntry ?
+          form.map(item => item.screen.id === activeScreen.id ? entry : item)
+          :
+          [...form, entry]
+        :
+        form.filter(item => item.screen.id !== activeScreen.id)
+    };
+  });
+
+  React.useEffect(() => { setScreenId(activeScreen.id); }, [activeScreen]);
 
   return (
     <>
@@ -76,20 +91,7 @@ const ScreenType = () => {
             screen={activeScreen}
             context={context}
             value={value || null}
-            onChange={entry => setState(prevState => {
-              const form = prevState.form;
-              const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
-              return {
-                ...prevState,
-                form: entry ?
-                  formEntry ?
-                    form.map(item => item.screen.id === activeScreen.id ? { ...entry, screen } : item)
-                    :
-                    [...form, { ...entry, screen }]
-                  :
-                  form.filter(item => item.screen.id !== activeScreen.id)
-              };
-            })}
+            onChange={entry => onEntry(entry ? { ...entry, screen } : undefined)}
           />
         );
       })()}

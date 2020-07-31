@@ -16,12 +16,13 @@ import Time from './Time';
 const Form = ({ screen, value, context, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const { parseScreenCondition, } = context;
+  const { parseScreenCondition, state: { form } } = context;
 
   const fields = metadata.fields || [];
 
   const defaultValue = fields.map(f => ({
     value: null,
+    valueText: null,
     label: f.label,
     key: f.key,
     type: f.type,
@@ -52,7 +53,7 @@ const Form = ({ screen, value, context, onChange }) => {
 
     if (f.condition) {
       conditionMet = false;
-      const condition = parseScreenCondition(f.condition, [entry]);
+      const condition = parseScreenCondition(f.condition, [entry], form);
 
       try {
         conditionMet = eval(condition);
