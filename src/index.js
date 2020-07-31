@@ -1,5 +1,4 @@
 import React from 'react';
-import { provideNetworkContext } from '@/contexts/network';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
 import Overlay from '@/components/Overlay';
@@ -59,6 +58,4 @@ const NeoTreeApp = () => {
   );
 };
 
-export default provideNetworkContext(
-  provideAppContext(NeoTreeApp)
-);
+export default provideAppContext(NeoTreeApp);
