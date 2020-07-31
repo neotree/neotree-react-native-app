@@ -27,6 +27,7 @@ const Form = ({ screen, value, context, onChange }) => {
     key: f.key,
     type: f.type,
     dataType: f.dataType,
+    confidential: f.confidential,
   }));
 
   const [entry, setEntry] = React.useState(value || { values: defaultValue });

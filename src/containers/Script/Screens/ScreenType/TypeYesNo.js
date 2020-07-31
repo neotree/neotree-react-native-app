@@ -26,6 +26,7 @@ const YesNo = ({ screen, onChange, value }) => {
           setEntry({
             values: [{
               value: opt.value,
+              confidential: metadata.confidential,
               valueText: opt.value === 'false' ? 'No' : 'Yes',
               key: metadata.key || opt.key,
               label: opt.label,
