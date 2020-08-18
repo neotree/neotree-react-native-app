@@ -22,8 +22,6 @@ export function provideConfigKeysContext(Component) {
       value.getConfigKeys(null, { showLoader: false });
     });
 
-    console.log(Object.keys(value.state));
-
     return (
       <Context.Provider value={value}>
         <Component {...props} />

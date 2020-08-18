@@ -3,9 +3,17 @@ import * as defaults from './_defaults';
 export { defaults };
 
 export default class ContextValue {
-  constructor(params) {
+  constructor({
+    state,
+    setState,
+    router,
+    appContext: { state: { uid_prefix } },
+  }) {
     this.defaults = defaults;
-    require('./_init').default.bind(this)(params);
+    this.state = state;
+    this._setState = setState;
+    this.router = router;
+    this.uid_prefix = uid_prefix;
   }
 
   setState = s => this._setState(prevState => ({
@@ -15,15 +23,10 @@ export default class ContextValue {
 
   getScript = require('./_getScript').default.bind(this);
 
-  getScriptStats = require('./_getScriptStats').default.bind(this);
-
-  saveScriptStats = require('./_saveScriptStats').default.bind(this);
-
-  countSessions = require('./_countSessions').default.bind(this);
+  getSessionsStats = require('./_getSessionsStats').default.bind(this);
 
   initialisePage = () => {
+    this.getSessionsStats();
     this.getScript();
-    this.countSessions();
-    this.getScriptStats();
   };
 }

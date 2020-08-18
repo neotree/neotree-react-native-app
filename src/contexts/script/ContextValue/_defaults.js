@@ -8,7 +8,6 @@ export const defaultState = {
   loadScriptError: null,
   countSessionsError: null,
   countingSessions: false,
-  stats: null,
   loadScriptStatsError: null,
   loadingScriptStats: false,
 };
