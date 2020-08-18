@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { Input, Form, Item } from '@/components/Form';
 import Text from '@/components/Text';
-import { useAppContext } from '@/contexts/app';
 import { useScriptContext } from '@/contexts/script';
 
 const validateUID = (value = '') => {

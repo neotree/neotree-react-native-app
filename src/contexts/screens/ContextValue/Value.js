@@ -3,9 +3,20 @@ import * as defaults from './_defaults';
 export { defaults };
 
 export default class ContextValue {
-  constructor(params) {
+  constructor({
+    state,
+    setState,
+    router,
+    scriptContext: { uid, state: { script, } },
+    diagnosesContext: { state: { diagnoses } },
+  }) {
     this.defaults = defaults;
-    require('./_init').default.bind(this)(params);
+    this.state = state;
+    this._setState = setState;
+    this.router = router;
+    this.script = script;
+    this.diagnoses = diagnoses;
+    this.uid = uid;
   }
 
   setState = s => this._setState(prevState => ({

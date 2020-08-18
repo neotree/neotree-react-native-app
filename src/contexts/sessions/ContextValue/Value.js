@@ -4,9 +4,17 @@ import { exportJSON, exportEXCEL, exportToApi } from './export';
 export { defaults };
 
 export default class ContextValue {
-  constructor(params) {
+  constructor({
+    state,
+    setState,
+    router,
+    appContext,
+  }) {
     this.defaults = defaults;
-    require('./_init').default.bind(this)(params);
+    this.state = state;
+    this._setState = setState;
+    this.router = router;
+    this.uid_prefix = appContext.state.uid_prefix;
   }
 
   setState = s => this._setState(prevState => ({
