@@ -4,36 +4,32 @@ import { View } from 'react-native';
 import Text from '@/components/Text';
 import Modal from '@/components/Modal';
 import { Button, Input, Item, Label } from 'native-base';
-// import { useAppContext } from '@/contexts/app';
-// import bcrypt from 'bcryptjs';
+import { useAppContext } from '@/contexts/app';
 
 const Confidentials = ({ onShowConfidential }) => {
-  // const { state: { adminpassword } } = useAppContext();
+  const { state: { adminpassword } } = useAppContext();
 
   const [openModal, setOpenModal] = React.useState(false);
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState(null);
+  const [showConfidentials, setShowConfidentials] = React.useState(false);
 
   const onSubmitForm = () => {
-    setError('Incorrect password');
-    if (onShowConfidential) onShowConfidential(false);
-    //Match password
-    // bcrypt.compare(
-    //   password,
-    //   adminpassword,
-    //   (err, isMatch) => {
-    //     if (err) return setError(err);
-    //
-    //     if (isMatch) return onShowConfidential && onShowConfidential(true);
-    //
-    //     setError('Incorrect password');
-    //   });
+    const passwordIsCorrect = password === adminpassword;
+    if (!passwordIsCorrect) {
+      setError('Incorrect password');
+    } else if (onShowConfidential) {
+      onShowConfidential(true);
+    }
+    setShowConfidentials(passwordIsCorrect);
   };
 
   React.useEffect(() => {
     setPassword('');
     setError(null);
   }, [openModal]);
+
+  if (showConfidentials) return null;
 
   return (
     <>

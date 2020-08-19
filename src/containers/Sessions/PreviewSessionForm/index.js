@@ -6,6 +6,8 @@ import Form, { Header } from './Form';
 import Diagnoses from './Diagnoses';
 
 const PreviewSessionForm = ({ Wrapper, scrollable, ...props }) => {
+  const [showConfidentials, setShowConfidentials] = React.useState(false);
+
   scrollable = scrollable !== false;
   Wrapper = Wrapper || React.Fragment;
   const RootComponent = scrollable ? ScrollView : React.Fragment;
@@ -16,8 +18,10 @@ const PreviewSessionForm = ({ Wrapper, scrollable, ...props }) => {
         <Tab heading="Summary">
           <RootComponent>
             <>
-              <Header />
-              <Wrapper><Form {...props} /></Wrapper>
+              <Header onShowConfidentials={setShowConfidentials} />
+              <Wrapper>
+                <Form {...props} showConfidentials={showConfidentials} />
+              </Wrapper>
             </>
           </RootComponent>
         </Tab>
