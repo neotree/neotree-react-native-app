@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { Input, Form, Item } from '@/components/Form';
 import Text from '@/components/Text';
-import { useAppContext } from '@/contexts/app';
 import { useScriptContext } from '@/contexts/script';
 
 const validateUID = (value = '') => {
@@ -34,7 +33,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   const getDefault = () => {
     const _uid = field.defaultValue ? (uid || '') : '';
     const [firstHalf, lastHalf] = _uid.split('-');
-    return { uid: _uid, firstHalf, lastHalf, };
+    return { uid: _uid, firstHalf: firstHalf || '', lastHalf: lastHalf || '', };
   };
 
   const [_defaultVal] = React.useState(getDefault());
@@ -54,10 +53,12 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
   });
 
   React.useEffect(() => {
-    const [_firstHalf, _lastHalf] = (value || uid || '').split('-');
-    setFirstHalf(_firstHalf || _defaultVal.firstHalf);
-    setLastHalf(_lastHalf || _defaultVal.lastHalf);
-  }, [value, uid]);
+    if (value) {
+      const [_firstHalf, _lastHalf] = (value || '').split('-');
+      setFirstHalf(_firstHalf || _defaultVal.firstHalf);
+      setLastHalf(_lastHalf || _defaultVal.lastHalf);
+    }
+  }, [value]);
 
   const disableLastHalf = !(conditionMet && firstHalfIsValid);
   const error = !(firstHalfIsValid && lastHalfIsValid && conditionMet) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);

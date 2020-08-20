@@ -136,6 +136,7 @@ const Timer = ({ screen, value, onChange }) => {
                         key: metadata.key,
                         type: metadata.type || metadata.dataType,
                         dataType: metadata.dataType,
+                        confidential: metadata.confidential,
                       }]
                     });
                   }}
