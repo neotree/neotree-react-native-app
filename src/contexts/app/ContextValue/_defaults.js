@@ -15,4 +15,5 @@ export const defaultState = {
   authenticatedUserInitialised: null,
   authenticatedUser: null,
   loadingAuthenticatedUser: null,
+  adminpassword: '1234',
 };

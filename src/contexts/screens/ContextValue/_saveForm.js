@@ -6,7 +6,6 @@ export default function saveForm(_payload = {}) {
     setState,
     script,
     router,
-    saveScriptStats,
     state: { form, activeScreen, start_time, screens }
   } = this;
 
@@ -24,12 +23,6 @@ export default function saveForm(_payload = {}) {
         router.history.push(`/script/${script.id}/preview-form`);
       }
     };
-
-    saveScriptStats(stats => ({
-      completed_sessions: stats.completed_sessions + (completed ? 1 : 0),
-      incompleted_sessions: stats.incompleted_sessions + (completed ? 0 : 1),
-      total_sessions: stats.total_sessions + 1,
-    }));
 
     saveSession({
       ...payload,

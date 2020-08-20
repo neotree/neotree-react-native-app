@@ -1,10 +1,13 @@
 import db from '../db';
+import { updateSessionsStats } from '../sessions_stats';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   const done = (err, rslts) => {
     if (err) return reject(err);
     resolve(rslts);
   };
+
+  const { data: { completed_at } } = data;
 
   const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
     .filter(c => c)
@@ -30,7 +33,10 @@ export default (data = {}) => new Promise((resolve, reject) => {
       tx.executeSql(
         `insert or replace into sessions (${columns}) values (${values});`,
         params,
-        (tx, rslts) => done(null, rslts),
+        (tx, rslts) => {
+          done(null, rslts);
+          updateSessionsStats(!!completed_at);
+        },
         (tx, e) => {
           if (e) {
             require('@/utils/logger')('ERROR: saveSession', e);

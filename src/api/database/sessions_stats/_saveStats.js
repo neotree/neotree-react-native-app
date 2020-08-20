@@ -12,12 +12,12 @@ export default (data = {}) => new Promise((resolve, reject) => {
   db.transaction(
     tx => {
       tx.executeSql(
-        `insert or replace into stats (${columns}) values (${values.map(() => '?').join(',')});`,
+        `insert or replace into sessions_stats (${columns}) values (${values.map(() => '?').join(',')});`,
         values,
         (tx, rslts) => done(null, rslts),
         (tx, e) => {
           if (e) {
-            require('@/utils/logger')('ERROR: saveStat', e);
+            require('@/utils/logger')('ERROR: saveStats', e);
             done(e);
           }
         }
