@@ -11,9 +11,11 @@ const Wrapper = props => <Content {...props} />;
 const SingleView = () => {
   const { sessionId } = useParams();
 
-  const { state: { sessions } } = useSessionsContext();
+  const { state: { sessions }, getJSON } = useSessionsContext();
 
   const session = sessions.filter(f => f.id.toString() === sessionId)[0];
+
+  getJSON(sessions);
 
   return (
     <>

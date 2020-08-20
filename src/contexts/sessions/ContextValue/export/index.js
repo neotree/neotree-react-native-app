@@ -7,6 +7,8 @@ import { exportSession } from '@/api/export';
 import { updateSessions } from '@/api/sessions';
 import getJSON from './getJSON';
 
+export { getJSON };
+
 const exportSuccessAlert = (msg = '') => {
   Alert.alert(
     '',

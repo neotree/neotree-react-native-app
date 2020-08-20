@@ -1,5 +1,5 @@
 import * as defaults from './_defaults';
-import { exportJSON, exportEXCEL, exportToApi } from './export';
+import { exportJSON, exportEXCEL, exportToApi, getJSON } from './export';
 
 export { defaults };
 
@@ -25,6 +25,8 @@ export default class ContextValue {
   deleteSessions = require('./_deleteSessions').default.bind(this);
 
   getSessions = require('./_getSessions').default.bind(this);
+
+  getJSON = getJSON.bind(this);
 
   exportJSON = exportJSON.bind(this);
 
