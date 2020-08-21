@@ -83,11 +83,14 @@ const HeaderComponent = () => {
               onPress={() => {
                 ActionSheet.show(
                   {
-                    options: ['Cancel Script?'],
-                    title: 'Action',
-                    // cancelButtonIndex: 1,
+                    options: ['Cancel Script?', 'Close'],
+                    // title: 'Action',
+                    cancelButtonIndex: 1,
                   },
-                  i => i === 0 && cancelScript()
+                  i => {
+                    if (i === 0) cancelScript();
+                    if (i === 1) setOpenInfoModal(false);
+                  }
                 );
               }}
             >
