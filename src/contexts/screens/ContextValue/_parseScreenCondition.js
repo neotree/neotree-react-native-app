@@ -3,20 +3,20 @@ const sanitizeCondition = (condition = '') => condition
   .replace(new RegExp(' or ', 'gi'), ' || ')
   .replace(new RegExp(' = ', 'gi'), ' == ');
 
-const parseConditionString = (s = '', key, value) => {
-  s = s.toLowerCase();
-  key = key.toLowerCase();
-  const _s = !s ? '' : s.replace(/\s\s+/g, ' ')
+const parseConditionString = (condition = '', _key = '', value) => {
+  const s = condition.toLowerCase();
+  const key = _key.toLowerCase();
+  return !s ? '' : s.replace(/\s\s+/g, ' ')
     .split(`$${key} =`).join(`${value} =`)
     .split(`$${key}=`).join(`${value} =`)
     .split(`$${key} >`).join(`${value} >`)
     .split(`$${key}>`).join(`${value} >`)
     .split(`$${key} <`).join(`${value} <`)
     .split(`$${key}<`).join(`${value} <`);
-  return _s;
 };
 
 export default function parseScreenCondition(_condition = '', entries = []) {
+  _condition = _condition.toString();
   entries = entries ? entries.map ? entries : [entries] : [];
 
   const { state: { form, configuration, } } = this;
@@ -28,7 +28,7 @@ export default function parseScreenCondition(_condition = '', entries = []) {
   }, form);
 
   let condition = _form.reduce((condition, { values }) => {
-    return values.reduce((condition, { value, type, key, dataType, valueText }) => {
+    const c = values.map(({ value, type, key, dataType, valueText }) => {
       value = value || '';
       const t = dataType || type;
 
@@ -44,7 +44,12 @@ export default function parseScreenCondition(_condition = '', entries = []) {
       }
 
       return parseConditionString(condition, key, value);
-    }, condition);
+    })
+      .filter(c => c !== condition)
+      .map(c => `(${c})`)
+      .join(' || ');
+
+    return c || condition;
   }, _condition);
 
   if (configuration) {
