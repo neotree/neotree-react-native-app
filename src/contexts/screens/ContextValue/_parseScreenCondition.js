@@ -4,6 +4,8 @@ const sanitizeCondition = (condition = '') => condition
   .replace(new RegExp(' = ', 'gi'), ' == ');
 
 const parseConditionString = (s = '', key, value) => {
+  s = s.toLowerCase();
+  key = key.toLowerCase();
   const _s = !s ? '' : s.replace(/\s\s+/g, ' ')
     .split(`$${key} =`).join(`${value} =`)
     .split(`$${key}=`).join(`${value} =`)
