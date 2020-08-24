@@ -1,6 +1,6 @@
 export default function getScreen(opts = {}) {
   const {
-    state: { activeScreenIndex, screens, form, },
+    state: { activeScreenIndex, screens, },
     parseScreenCondition,
   } = this;
 
@@ -34,7 +34,7 @@ export default function getScreen(opts = {}) {
     let conditionMet = false;
 
     try {
-      conditionMet = eval(parseScreenCondition(condition, form));
+      conditionMet = eval(parseScreenCondition(condition));
     } catch (e) {
       // do nothing
     }

@@ -16,7 +16,7 @@ import Time from './Time';
 const Form = ({ screen, value, context, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const { parseScreenCondition, state: { form } } = context;
+  const { parseScreenCondition, } = context;
 
   const fields = metadata.fields || [];
 
@@ -54,8 +54,7 @@ const Form = ({ screen, value, context, onChange }) => {
 
     if (f.condition) {
       conditionMet = false;
-      const condition = parseScreenCondition(f.condition, [entry], form);
-
+      const condition = parseScreenCondition(f.condition, [entry]);
       try {
         conditionMet = eval(condition);
       } catch (e) {
