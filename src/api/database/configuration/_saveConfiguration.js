@@ -5,7 +5,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
     tx => {
       tx.executeSql(
         'insert or replace into configuration (id, data, createdAt, updatedAt) values (?, ?, ?, ?);',
-        [1, JSON.stringify(data || {}), new Date().toString(), new Date().toString()],
+        [1, JSON.stringify(data || {}), new Date().toISOString(), new Date().toISOString()],
         (tx, rslts) => resolve(rslts),
         (tx, e) => {
           if (e) {

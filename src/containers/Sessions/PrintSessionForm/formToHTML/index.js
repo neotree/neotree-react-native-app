@@ -31,14 +31,22 @@ export default session => {
         `)}
 
         ${entries.filter(e => e.values.length)
-          .map(({ values, screen: { metadata: { label } } }) =>
-            values.map(v => `
-              <div  class="row">
-                <span>${label || v.label}</span>
-                <span>${v.valueText || 'N/A'}</span>
-              </div>
-            `).join('')
-          ).join('')}
+          .map(({ values, screen: { metadata: { label } } }) => {
+            return values.map(v => {
+              return `
+                <div  class="row">
+                  <span>${label || v.label}</span>
+                  <div>
+                    ${v.value && v.value.map ? 
+                      v.value.map(v => `<span>${v.valueText || 'N/A'}</span>`).join('<br />') 
+                      : 
+                      `<span>${v.valueText || 'N/A'}</span>`
+                    }
+                  </div>                  
+                </div>
+              `;
+            }).join('')
+          }).join('')}
       `;
     }).join('');
 

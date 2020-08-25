@@ -26,7 +26,11 @@ const ExportPage = () => {
       <Header />
 
       <Content containerProps={{ style: { flex: 1 } }}>
-        <Card style={{ padding: 20 }}>
+        <View 
+          style={{ 
+            padding: 20,
+          }}
+        >
           {opts.map(opt => (
             <ListItem
               key={opt.value}
@@ -59,7 +63,7 @@ const ExportPage = () => {
               <Text>Export</Text>
             </Button>
           </View>
-        </Card>
+        </View>
       </Content>
     </>
   );

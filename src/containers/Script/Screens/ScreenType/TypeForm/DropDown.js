@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Picker, Form, Icon, Item } from 'native-base';
 import Text from '@/components/Text';
+import DropDownInput from '@/components/DropDown';
 
 const DropDown = ({ field, onChange, value, conditionMet, }) => {
   const pickerRef = React.useRef(null);
@@ -17,7 +18,25 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
 
   return (
     <>
-      <Form>
+      <Text
+        style={[
+          error ? { color: '#b20008' } : {},
+          !conditionMet ? { color: '#999' } : {},
+        ]}
+      >{field.label}{field.optional ? '' : ' *'}</Text>
+
+      <DropDownInput
+        options={opts}
+        value={value}
+        disabled={!conditionMet}
+        title="Select an option"
+        onChange={v => onChange(v.value, {
+          error: null,
+          valueText: !v ? null : v.label,
+        })}
+      />
+
+      {/* <Form>
         <Text
           style={[
             error ? { color: '#b20008' } : {},
@@ -50,7 +69,7 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
             ))}
           </Picker>
         </Item>
-      </Form>
+      </Form> */}
     </>
   );
 };
