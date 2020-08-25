@@ -25,16 +25,39 @@ const exportSuccessAlert = (msg = '') => {
 
 export function exportJSON() {
   const { sessions } = this.state;
+  
+  const scripts = sessions.reduce((acc, { data: { script } }) => ({
+    ...acc,
+    [script.id]: script,
+  }), {});
+
   const saveFile = async () => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status === 'granted') {
-      this.setState({ exporting: true });
-      const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-text.json`;
-      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: getJSON(sessions) }), { encoding: FileSystem.EncodingType.UTF8 });
-      const asset = await MediaLibrary.createAssetAsync(fileUri);
-      await MediaLibrary.createAlbumAsync('Download', asset, false);
-      this.setState({ exporting: false });
-      exportSuccessAlert('File saved in Downloads folder');
+      this.setState({ exporting: true });      
+      
+      const json = getJSON(sessions).reduce((acc, e) => ({
+        ...acc,
+        [e.scriptId]: [...(acc[e.scriptId] || []), e],
+      }), {});
+
+      const done = () => {
+        this.setState({ exporting: false });
+        exportSuccessAlert('File saved in NeoTree folder');
+      };
+
+      Promise.all(Object.keys(json).map(scriptId => {
+        const scriptTitle = scripts[scriptId].data.title;
+        const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-${scriptTitle}.json`;
+        return new Promise((resolve) => {
+          (async () => {
+            await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: json[scriptId] }, null, 4), { encoding: FileSystem.EncodingType.UTF8 });
+            const asset = await MediaLibrary.createAssetAsync(fileUri);
+            await MediaLibrary.createAlbumAsync('NeoTree', asset, false);
+            resolve();
+          })();
+        });
+      })).then(done).catch(done);      
     }
   };
 
@@ -62,9 +85,9 @@ export function exportEXCEL() {
       const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-text.xlsx`;
       await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.UTF8 });
       const asset = await MediaLibrary.createAssetAsync(fileUri);
-      await MediaLibrary.createAlbumAsync('Download', asset, false);
+      await MediaLibrary.createAlbumAsync('NeoTree', asset, false);
       this.setState({ exporting: false });
-      exportSuccessAlert('File saved in Downloads folder');
+      exportSuccessAlert('File saved in NeoTree folder');
     }
   };
 

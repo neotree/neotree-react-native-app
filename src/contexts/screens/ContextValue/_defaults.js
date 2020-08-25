@@ -1,5 +1,5 @@
 export const defaultState = {
-  start_time: new Date().toString(),
+  start_time: new Date().toISOString(),
   form: [],
   cachedForm: [],
   configuration: {},

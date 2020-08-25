@@ -5,17 +5,22 @@ import Confidentials from './Confidentials';
 
 export { default as Header } from './Confidentials';
 
-const FormPreview = ({ Wrapper, session: { data: { form } } }) => {
+const FormPreview = ({ displayEverything, Wrapper, session: { data: { form }, ...s } }) => {
   Wrapper = Wrapper || React.Fragment;
-  const [showConfidential, setShowConfidential] = React.useState(false);
+  const [showConfidential, setShowConfidential] = React.useState(displayEverything === true);
 
   return (
     <>
-      <Confidentials onShowConfidential={setShowConfidential} />
+      {!showConfidential && <Confidentials onShowConfidential={setShowConfidential} />}
 
       <Wrapper>
         {form.filter(({ values }) => values.length)
           .map(({ screen, values }) => {
+            values = values.reduce((acc, e) => [
+              ...acc,
+              ...(e.value && e.value.map ? e.value : [e]),
+            ], []);
+            
             const metadata = screen.metadata;
 
             let entries = null;

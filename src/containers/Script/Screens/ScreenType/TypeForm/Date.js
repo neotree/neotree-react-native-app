@@ -16,8 +16,8 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
   };
 
   React.useEffect(() => {
-    const v = value ? new Date(value).toString() : null;
-    const d = date ? new Date(date).toString() : null;
+    const v = value ? new Date(value).toISOString() : null;
+    const d = date ? new Date(date).toISOString() : null;
     if (v !== d) onChange(date);
   });
 

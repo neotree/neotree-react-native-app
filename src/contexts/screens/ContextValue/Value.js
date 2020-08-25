@@ -7,7 +7,7 @@ export default class ContextValue {
     state,
     setState,
     router,
-    scriptContext: { uid, state: { script, } },
+    scriptContext: { state: { script, uid, } },
     diagnosesContext: { state: { diagnoses } },
   }) {
     this.defaults = defaults;
