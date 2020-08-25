@@ -5,6 +5,11 @@ export default form => {
   const entries = form
     .filter(({ values }) => values.length)
     .map(({ screen, values }) => {
+      values = values.reduce((acc, e) => [
+        ...acc,
+        ...(e.value && e.value.map ? e.value : [e]),
+      ], []);
+      
       const metadata = screen.metadata;
 
       let entries = null;

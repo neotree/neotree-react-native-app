@@ -28,6 +28,11 @@ export default function parseScreenCondition(_condition = '', entries = []) {
   }, form);
 
   let condition = _form.reduce((condition, { values }) => {
+    values = values.reduce((acc, e) => [
+      ...acc,
+      ...(e.value && e.value.map ? e.value : [e]),
+    ], []);
+    
     const c = values.map(({ value, type, key, dataType, valueText }) => {
       value = value || '';
       const t = dataType || type;
