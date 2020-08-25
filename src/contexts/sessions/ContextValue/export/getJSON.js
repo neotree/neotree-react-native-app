@@ -4,18 +4,6 @@ export default function exportToApi(_sessions = [], opts = {}) {
   const sessions = _sessions.map(s => {
     const { script, form } = s.data;
 
-    const keyValues = form.reduce((acc, e) => {
-      console.log(e.screen);
-      e.values.forEach(v => {
-        acc[v.key] = acc[v.key] || { values: [] };
-        acc[v.key].key = v.key;
-        acc[v.key].values.push(v);
-      });
-      return acc;
-    }, {});
-
-    console.log(Object.keys(keyValues).map(key => keyValues[key]));
-
     return {
       uid: s.uid,
       scriptId: script.id,
@@ -31,7 +19,10 @@ export default function exportToApi(_sessions = [], opts = {}) {
             ...e.values.map(({ key, dataType, value, label, }) => ({
               key,
               type: dataType,
-              values: [{ value, label }],
+              values: value && value.map ? 
+                value.map(({ value, label, }) => ({ value, label })) 
+                : 
+                [{ value, label }],
             }))
           ];
         }, []),

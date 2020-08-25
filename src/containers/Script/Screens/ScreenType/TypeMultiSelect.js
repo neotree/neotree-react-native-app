@@ -3,13 +3,20 @@ import PropTypes from 'prop-types';
 import Select from '@/components/Select';
 
 const MultiSelect = ({ screen, value, onChange }) => {
+  value = value ? value.values.reduce((acc, { value }) => ({ values: [...acc, ...value] }), []) : null;
   const metadata = screen.data.metadata || {};
 
   const [entry, setEntry] = React.useState(value || { values: [] });
 
   React.useEffect(() => {
-    onChange(!entry.values.length ? undefined : entry);
-  }, [entry]);
+    onChange(!entry.values.length ? undefined : {
+      values: [{
+        key: metadata.key,
+        type: metadata.dataType,
+        value: entry.values,
+      }],
+    });
+  }, [entry]);  
 
   return (
     <>
@@ -40,7 +47,7 @@ const MultiSelect = ({ screen, value, onChange }) => {
             value,
             valueText: item.label,
             label: item.label,
-            key: metadata.key || item.id,
+            key: item.id,
             type: item.type,
             dataType: item.dataType,
             exclusive: item.exclusive,

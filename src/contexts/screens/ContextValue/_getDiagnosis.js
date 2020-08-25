@@ -11,6 +11,4 @@ export default function getDiagnosis() {
     const { data: { expression } } = d;
     return expression;
   });
-
-  console.log(d);
 }
