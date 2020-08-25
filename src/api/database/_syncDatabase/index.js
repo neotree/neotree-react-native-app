@@ -32,8 +32,8 @@ export default (data = {}) => new Promise((resolve, reject) => {
 
       const _updateDataStatus = () => updateDataStatus({
         data_initialised: true,
-        last_sync_date: new Date().toString(),
-        updatedAt: new Date().toString(),
+        last_sync_date: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const done = (err, rslts, cb) => {

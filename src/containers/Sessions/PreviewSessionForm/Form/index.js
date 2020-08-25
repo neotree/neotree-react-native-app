@@ -5,7 +5,7 @@ import Confidentials from './Confidentials';
 
 export { default as Header } from './Confidentials';
 
-const FormPreview = ({ displayEverything, Wrapper, session: { data: { form } } }) => {
+const FormPreview = ({ displayEverything, Wrapper, session: { data: { form }, ...s } }) => {
   Wrapper = Wrapper || React.Fragment;
   const [showConfidential, setShowConfidential] = React.useState(displayEverything === true);
 

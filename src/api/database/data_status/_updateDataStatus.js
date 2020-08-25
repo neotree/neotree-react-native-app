@@ -3,7 +3,7 @@ import db from '../db';
 export default (data = {}, opts = {}) => new Promise((resolve, reject) => {
   const where = opts.where || {};
 
-  data = { updatedAt: new Date().toString(), ...data };
+  data = { updatedAt: new Date().toISOString(), ...data };
 
   const _where = Object.keys(where).map(key => `${key}=${JSON.stringify(where[key])}`)
     .join(',');

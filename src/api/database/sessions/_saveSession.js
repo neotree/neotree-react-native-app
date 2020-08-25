@@ -24,8 +24,8 @@ export default (data = {}) => new Promise((resolve, reject) => {
     JSON.stringify(data.data || '{}'),
     data.completed || false,
     data.exported || false,
-    data.createdAt || new Date().toString(),
-    data.updatedAt || new Date().toString(),
+    data.createdAt || new Date().toISOString(),
+    data.updatedAt || new Date().toISOString(),
   ];
 
   db.transaction(

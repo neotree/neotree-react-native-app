@@ -37,8 +37,8 @@ const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
     id: 1,
     uid_prefix,
     unique_key,
-    createdAt: new Date().toString(),
-    updatedAt: new Date().toString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     ...params
   };
 
