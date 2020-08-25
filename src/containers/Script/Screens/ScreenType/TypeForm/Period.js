@@ -34,8 +34,8 @@ const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
 
   React.useEffect(() => {
     if (!calcFrom) {
-      const v = value ? new Date(value).toString() : null;
-      const d = date ? new Date(date).toString() : null;
+      const v = value ? new Date(value).toISOString() : null;
+      const d = date ? new Date(date).toISOString() : null;
       if (v !== d) onChange(date);
     }
   });

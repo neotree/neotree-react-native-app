@@ -30,8 +30,8 @@ export default function saveForm(_payload = {}) {
       script_id: activeScreen.script_id,
       data: {
         started_at: start_time,
-        completed_at: completed ? new Date().toString() : null,
-        canceled_at: canceled ? new Date().toString() : null,
+        completed_at: completed ? new Date().toISOString() : null,
+        canceled_at: canceled ? new Date().toISOString() : null,
         script,
         form,
         diagnoses: this.getDiagnoses(),
