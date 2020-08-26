@@ -65,33 +65,55 @@ export function exportJSON() {
 }
 
 export function exportEXCEL() {
-  const data = [
-    { name: 'John', city: 'Seattle', },
-    { name: 'Mike', city: 'Los Angeles', },
-    { name: 'Zach', city: 'New York', }
-  ];
+  const { sessions } = this.state;
+  
+  const scripts = sessions.reduce((acc, { data: { script } }) => ({
+    ...acc,
+    [script.id]: script,
+  }), {});
+  
+  const json = getJSON(sessions).reduce((acc, e) => ({
+    ...acc,
+    [e.scriptId]: [...(acc[e.scriptId] || []), e],
+  }), {});
 
-  const ws = XLSX.utils.json_to_sheet(data);
+  const sheets = Object.keys(json).map(scriptId => {
+    const scriptTitle = scripts[scriptId].data.title;
+    const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-${scriptTitle}.xlsx`;
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Prova');
+    const data = json[scriptId].map(({ data }) => data.entries.reduce((acc, e) => ({
+      ...acc,
+      [e.key || 'N/A']: e.values.map(v => v.value || 'N/A').join(', ')
+    }), null)).filter(e => e);
 
-  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+    const ws = XLSX.utils.json_to_sheet(data);
 
-  const saveFile = async () => {
-    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-    if (status === 'granted') {
-      this.setState({ exporting: true });
-      const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-text.xlsx`;
-      await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.UTF8 });
-      const asset = await MediaLibrary.createAssetAsync(fileUri);
-      await MediaLibrary.createAlbumAsync('NeoTree', asset, false);
-      this.setState({ exporting: false });
-      exportSuccessAlert('File saved in NeoTree folder');
-    }
-  };
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, scriptTitle);
 
-  saveFile();
+    const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+
+    return [fileUri, wbout];
+  });
+
+  if (sheets.length) {
+    this.setState({ exporting: true });
+
+    sheets.map(([fileUri, wbout]) => {
+      const saveFile = async () => {
+        const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+        if (status === 'granted') {
+          await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+          const asset = await MediaLibrary.createAssetAsync(fileUri);
+          await MediaLibrary.createAlbumAsync('NeoTree', asset, false);
+          this.setState({ exporting: false });
+          exportSuccessAlert('File saved in NeoTree folder');
+        }
+      };
+    
+      saveFile();
+    });
+  }
 
   // writeFile(file, wbout, 'ascii').then(console.log).catch(console.log);
 }

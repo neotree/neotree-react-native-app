@@ -16,13 +16,13 @@ export default function exportToApi(_sessions = [], opts = {}) {
         .reduce((acc, e) => {
           return [
             ...acc,
-            ...e.values.map(({ key, dataType, value, label, }) => ({
+            ...e.values.map(({ key, dataType, value, label, valueText, }) => ({
               key,
               type: dataType,
               values: value && value.map ? 
-                value.map(({ value, label, }) => ({ value, label })) 
+                value.map(({ value, valueText, label, }) => ({ value: valueText || value, label })) 
                 : 
-                [{ value, label }],
+                [{ value: valueText || value, label }],
             }))
           ];
         }, []),
