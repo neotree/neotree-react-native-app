@@ -1,8 +1,8 @@
 import makeApiCall from './makeApiCall';
 
-export const exportSession = (_body = {}, reqOpts = {}) => {
-  const { scriptId, uid, ...body } = _body;
-  return makeApiCall(`/sessions?uid=${uid}&scriptId=${scriptId}`, {
+export const exportSession = (body = {}, reqOpts = {}) => {
+  const { script, uid, } = body;
+  return makeApiCall(`/sessions?uid=${uid}&scriptId=${script.id}`, {
     body,
     method: 'POST',
     ...reqOpts,
