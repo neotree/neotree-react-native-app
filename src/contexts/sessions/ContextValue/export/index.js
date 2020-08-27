@@ -38,7 +38,7 @@ export function exportJSON() {
       
       const json = getJSON(sessions).reduce((acc, e) => ({
         ...acc,
-        [e.scriptId]: [...(acc[e.scriptId] || []), e],
+        [e.script.id]: [...(acc[e.script.id] || []), e],
       }), {});
 
       const done = () => {
@@ -74,14 +74,14 @@ export function exportEXCEL() {
   
   const json = getJSON(sessions).reduce((acc, e) => ({
     ...acc,
-    [e.scriptId]: [...(acc[e.scriptId] || []), e],
+    [e.scrip.id]: [...(acc[e.script.id] || []), e],
   }), {});
 
   const sheets = Object.keys(json).map(scriptId => {
     const scriptTitle = scripts[scriptId].data.title;
     const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-${scriptTitle}.xlsx`;
 
-    const data = json[scriptId].map(({ data }) => data.entries.reduce((acc, e) => ({
+    const data = json[scriptId].map(e => e.entries.reduce((acc, e) => ({
       ...acc,
       [e.key || 'N/A']: e.values.map(v => v.value || 'N/A').join(', ')
     }), null)).filter(e => e);
@@ -125,7 +125,7 @@ export function exportToApi() {
   this.setState({ exporting: true });
 
   Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
-    exportSession(s)
+    exportSession()
       .then(rslt => {
         const id = sessions[i].id;
         updateSessions({ exported: true }, { where: { id, }, })

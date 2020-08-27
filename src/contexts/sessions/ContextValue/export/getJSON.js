@@ -6,7 +6,7 @@ export default function exportToApi(_sessions = [], opts = {}) {
 
     return {
       uid: s.uid,
-      scriptId: script.id,
+      scriptTitle: script.id,
       script: { id: script.id, title: script.data.title },
       entries: form
         .map(e => ({
@@ -29,9 +29,5 @@ export default function exportToApi(_sessions = [], opts = {}) {
     };
   });
 
-  return sessions.map(({ uid, scriptId, ...data }) => ({
-    uid,
-    scriptId,
-    data,
-  }));
+  return sessions;
 }
