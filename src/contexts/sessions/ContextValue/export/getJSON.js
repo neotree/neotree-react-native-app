@@ -16,9 +16,9 @@ export default function exportToApi(_sessions = [], opts = {}) {
         .reduce((acc, e) => {
           return [
             ...acc,
-            ...e.values.map(({ key, dataType, value, label, valueText, }) => ({
+            ...e.values.map(({ key, type, dataType, value, label, valueText, }) => ({
               key,
-              type: dataType,
+              type: dataType || type,
               values: value && value.map ? 
                 value.map(({ value, valueText, label, }) => ({ value: valueText || value, label })) 
                 : 
