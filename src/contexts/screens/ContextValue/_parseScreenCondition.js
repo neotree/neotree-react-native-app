@@ -27,13 +27,13 @@ export default function parseScreenCondition(_condition = '', entries = []) {
     return [...acc, e];
   }, form);
 
-  let condition = _form.reduce((condition, { values }) => {
+  let parsedCondition = _form.reduce((condition, { values }) => {
     values = values.reduce((acc, e) => [
       ...acc,
       ...(e.value && e.value.map ? e.value : [e]),
     ], []);
     
-    const c = values.map(({ value, type, key, dataType, valueText }) => {
+    const c = values.reduce((acc, { value, type, key, dataType, valueText }) => {
       value = value || '';
       const t = dataType || type;
 
@@ -48,20 +48,17 @@ export default function parseScreenCondition(_condition = '', entries = []) {
           value = JSON.stringify(value);
       }
 
-      return parseConditionString(condition, key, value);
-    })
-      .filter(c => c !== condition)
-      .map(c => `(${c})`)
-      .join(' || ');
+      return parseConditionString(acc, key, value);
+    }, condition);
 
     return c || condition;
   }, _condition);
 
   if (configuration) {
-    condition = Object.keys(configuration).reduce((acc, key) => {
+    parsedCondition = Object.keys(configuration).reduce((acc, key) => {
       return parseConditionString(acc, key, configuration[key] ? true : false);
-    }, condition);
+    }, parsedCondition);
   }
 
-  return sanitizeCondition(condition);
+  return sanitizeCondition(parsedCondition);
 }
