@@ -125,7 +125,7 @@ export function exportToApi() {
   this.setState({ exporting: true });
 
   Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
-    exportSession()
+    exportSession(s)
       .then(rslt => {
         const id = sessions[i].id;
         updateSessions({ exported: true }, { where: { id, }, })
