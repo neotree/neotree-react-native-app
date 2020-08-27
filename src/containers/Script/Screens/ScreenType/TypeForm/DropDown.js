@@ -35,41 +35,6 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
           valueText: !v ? null : v.label,
         })}
       />
-
-      {/* <Form>
-        <Text
-          style={[
-            error ? { color: '#b20008' } : {},
-            !conditionMet ? { color: '#999' } : {},
-          ]}
-        >{field.label}{field.optional ? '' : ' *'}</Text>
-        <Item regular>
-          <Picker
-            ref={pickerRef}
-            enabled={conditionMet}
-            mode="dialog"
-            iosIcon={<Icon name="arrow-down" />}
-            placeholder={field.label}
-            placeholderStyle={{ color: '#bfc6ea' }}
-            placeholderIconColor="#007aff"
-            style={{ width: undefined }}
-            selectedValue={value}
-            onValueChange={v => onChange(v, {
-              error: null,
-              valueText: !v ? null : opts.filter(o => o.value === v)[0].label,
-            })}
-          >
-            <Picker.Item label="" value="" />
-            {opts.map(opt => (
-              <Picker.Item
-                key={opt.value}
-                label={opt.label}
-                value={opt.value}
-              />
-            ))}
-          </Picker>
-        </Item>
-      </Form> */}
     </>
   );
 };
