@@ -32,7 +32,7 @@ export default function getScreen(opts = {}) {
     if (!condition) return target;
 
     let conditionMet = false;
-
+    
     try {
       conditionMet = eval(parseScreenCondition(condition));
     } catch (e) {

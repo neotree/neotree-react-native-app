@@ -12,7 +12,9 @@ const parseConditionString = (condition = '', _key = '', value) => {
     .split(`$${key} >`).join(`${value} >`)
     .split(`$${key}>`).join(`${value} >`)
     .split(`$${key} <`).join(`${value} <`)
-    .split(`$${key}<`).join(`${value} <`);
+    .split(`$${key}<`).join(`${value} <`)
+    .split(`$${key}!`).join(`${value} <`)
+    .split(`$${key} !`).join(`${value} <`);
 };
 
 export default function parseScreenCondition(_condition = '', entries = []) {
@@ -27,29 +29,44 @@ export default function parseScreenCondition(_condition = '', entries = []) {
     return [...acc, e];
   }, form);
 
-  let parsedCondition = _form.reduce((condition, { values }) => {
+  const parseValue = (condition, { value, type, key, dataType, valueText }) => {
+    value = value || '';
+    const t = dataType || type;
+
+    switch (t) {
+      case 'number':
+        value = valueText || value || null;
+        break;
+      case 'boolean':
+        value = value === 'false' ? false : Boolean(value);
+        break;
+      default:
+        value = JSON.stringify(value);
+    }
+
+    return parseConditionString(condition, key, value);
+  };
+
+  let parsedCondition = _form.reduce((condition, { screen, values }) => {
     values = values.reduce((acc, e) => [
       ...acc,
       ...(e.value && e.value.map ? e.value : [e]),
     ], []);
     
-    const c = values.reduce((acc, { value, type, key, dataType, valueText }) => {
-      value = value || '';
-      const t = dataType || type;
+    let c = values.reduce((acc, v) => parseValue(acc, v), condition); 
 
-      switch (t) {
-        case 'number':
-          value = valueText || value || null;
-          break;
-        case 'boolean':
-          value = value === 'false' ? false : Boolean(value);
-          break;
+    if (screen) {
+      switch (screen.type) {
+        case 'multi_select': 
+          c = values.map(v => parseValue(condition, v))
+            .filter(c => c !== condition)
+            .map(c => `(${c})`)
+            .join(' || ');
+
         default:
-          value = JSON.stringify(value);
+          // do nothing
       }
-
-      return parseConditionString(acc, key, value);
-    }, condition);
+    }
 
     return c || condition;
   }, _condition);
