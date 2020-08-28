@@ -29,7 +29,7 @@ const SingleSelect = ({ screen, value, onChange }) => {
               label: item.label,
               key: metadata.key,
               type: item.type,
-              dataType: item.dataType,
+              dataType: metadata.dataType,
               confidential: item.confidential,
             }]
           });
