@@ -1,4 +1,4 @@
-export default function exportToApi(_sessions = [], opts = {}) {
+export default function getJSON(_sessions = [], opts = {}) {
   const { showConfidential } = opts;
 
   const sessions = _sessions.map(s => {
@@ -14,16 +14,31 @@ export default function exportToApi(_sessions = [], opts = {}) {
           values: e.values.filter(v => v.confidential ? showConfidential : true)
         }))
         .reduce((acc, e) => {
+          const getVal = ({ value, dataType, type }) => {
+            const t = dataType || type;
+            switch (t) {
+              case 'number':
+                return Number(value) || null;
+              case 'boolean':
+                return value === 'false' ? false : Boolean(value);
+              default:
+                return value;
+            }
+          };
+
           return [
             ...acc,
-            ...e.values.map(({ key, type, dataType, value, label, valueText, }) => ({
-              key,
-              type: dataType || type,
-              values: value && value.map ? 
-                value.map(({ value, valueText, label, }) => ({ value: valueText || value, label })) 
-                : 
-                [{ value: valueText || value, label }],
-            }))
+            ...e.values.map(v => {
+              const { key, type, dataType, value, label, } = v;
+              return {
+                key,
+                type: dataType || type,
+                values: value && value.map ? 
+                  value.map(({ value, label, }) => ({ value, label })) 
+                  : 
+                  [{ value: getVal(v), label }],
+              };
+            })
           ];
         }, []),
     };
