@@ -28,8 +28,8 @@ const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
   }, [calcFrom, value]);
 
   const onDateChange = (e, date) => {
-    setDate(date);
-    onChange(date);
+    setDate(date.toISOString());
+    onChange(date.toISOString());
   };
 
   React.useEffect(() => {

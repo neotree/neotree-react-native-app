@@ -29,13 +29,13 @@ export default function parseScreenCondition(_condition = '', entries = []) {
     return [...acc, e];
   }, form);
 
-  const parseValue = (condition, { value, type, key, dataType, valueText }) => {
+  const parseValue = (condition, { value, type, key, dataType, }) => {
     value = value || '';
     const t = dataType || type;
 
     switch (t) {
       case 'number':
-        value = valueText || value || null;
+        value = value || null;
         break;
       case 'boolean':
         value = value === 'false' ? false : Boolean(value);
