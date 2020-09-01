@@ -10,4 +10,5 @@ export const defaultState = {
   countingSessions: false,
   loadScriptStatsError: null,
   loadingScriptStats: false,
+  diagnoses: [],
 };

@@ -8,24 +8,30 @@ export default function getScreens(payload, opts = {}) {
     }
   } = this;
 
-  setState({
-    loadScreensError: null,
-    loadingScreens: opts.showLoader !== false,
-    // screensInitialised: false
-  });
-
-  api.getScreens({ script_id: scriptId, ...payload })
-    .then(res => {
-      setState({
-        screens: res.screens || [],
-        screensInitialised: true,
-        loadScreensError: res.error,
-        loadingScreens: false,
+  return new Promise((resolve, reject) => {
+    setState({
+      loadScreensError: null,
+      loadingScreens: opts.showLoader !== false,
+      // screensInitialised: false
+    });
+  
+    api.getScreens({ script_id: scriptId, ...payload })
+      .then(res => {
+        setState({
+          screens: res.screens || [],
+          screensInitialised: true,
+          loadScreensError: res.error,
+          loadingScreens: false,
+        });
+        resolve(res);
+      })
+      .catch(e => {
+        setState({
+          loadScreensError: e,
+          screensInitialised: true,
+          loadingScreens: false,
+        });
+        reject(e);
       });
-    })
-    .catch(e => setState({
-      loadScreensError: e,
-      screensInitialised: true,
-      loadingScreens: false,
-    }));
+  });
 }

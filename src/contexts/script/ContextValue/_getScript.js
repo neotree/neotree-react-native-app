@@ -8,23 +8,29 @@ export default function _getScripts(payload, opts = {}) {
     }
   } = this;
 
-  setState({
-    loadScriptError: null,
-    loadingScript: opts.showLoader !== false
-  });
-
-  getScript({ id: scriptId, ...payload })
-    .then(res => {
-      setState({
-        script: res.script,
-        scriptInitialised: true,
-        loadScriptError: res.error,
-        loadingScript: false,
+  return new Promise((resolve, reject) => {
+    setState({
+      loadScriptError: null,
+      loadingScript: opts.showLoader !== false
+    });
+  
+    getScript({ id: scriptId, ...payload })
+      .then(res => {
+        setState({
+          script: res.script,
+          scriptInitialised: true,
+          loadScriptError: res.error,
+          loadingScript: false,
+        });
+        resolve(res);
+      })
+      .catch(e => {
+        setState({
+          loadScriptError: e,
+          scriptInitialised: true,
+          loadingScript: false,
+        });
+        reject(e);
       });
-    })
-    .catch(e => setState({
-      loadScriptError: e,
-      scriptInitialised: true,
-      loadingScript: false,
-    }));
+  });
 }
