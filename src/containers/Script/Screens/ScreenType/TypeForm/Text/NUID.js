@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { Input, Form, Item } from '@/components/Form';
 import Text from '@/components/Text';
-import { useScriptContext } from '@/contexts/script';
+import { useScreensContext } from '@/contexts/screens';
 
 const validateUID = (value = '') => {
   const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
@@ -25,8 +25,8 @@ const validateUID = (value = '') => {
 };
 
 const NUID = ({ field, onChange, value, conditionMet, }) => {
-  const { state: { uid } } = useScriptContext();
-
+  const { state: { uid } } = useScreensContext();
+ 
   const firstHalfRef = React.useRef(null);
   const lastHalfRef = React.useRef(null);
 

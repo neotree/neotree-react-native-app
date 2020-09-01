@@ -12,7 +12,7 @@ export function provideScreensContext(Component) {
     const { location, match: { params: { scriptId } } } = value.router;
 
     React.useEffect(() => value.onLocationChange(), [screensInitialised, location]);
-    React.useEffect(() => { value.initialisePage(); }, [scriptId]);
+    React.useEffect(() => { value.initialiseScreens(); }, [scriptId]);
 
     return (
       <Context.Provider value={value}>

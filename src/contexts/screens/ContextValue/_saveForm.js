@@ -6,7 +6,7 @@ export default function saveForm(_payload = {}) {
     setState,
     script,
     router,
-    state: { form, activeScreen, start_time, screens }
+    state: { form, activeScreen, start_time, screens, uid, },
   } = this;
 
   const { completed, canceled, saveInBackground, ...payload } = _payload;
@@ -26,7 +26,7 @@ export default function saveForm(_payload = {}) {
 
     saveSession({
       ...payload,
-      uid: this.uid,
+      uid,
       script_id: activeScreen.script_id,
       data: {
         started_at: start_time,

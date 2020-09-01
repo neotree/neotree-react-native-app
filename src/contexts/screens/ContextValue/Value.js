@@ -7,8 +7,8 @@ export default class ContextValue {
     state,
     setState,
     router,
-    scriptContext: { state: { script, uid, } },
-    diagnosesContext: { state: { diagnoses } },
+    scriptContext: { state: { script, diagnoses, } },
+    appContext: { state: { uid_prefix } },
   }) {
     this.defaults = defaults;
     this.state = state;
@@ -16,7 +16,7 @@ export default class ContextValue {
     this.router = router;
     this.script = script;
     this.diagnoses = diagnoses;
-    this.uid = uid;
+    this.uid_prefix = uid_prefix;
   }
 
   setState = s => this._setState(prevState => ({
@@ -28,11 +28,6 @@ export default class ContextValue {
     ...prevState,
     form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
   }));
-
-  initialisePage = () => {
-    this.getScreens();
-    this.getConfiguration();
-  };
 
   canGoToNextScreen = () => {
     if (!this.getScreenLink('next')) return false;
@@ -63,4 +58,8 @@ export default class ContextValue {
   saveForm = require('./_saveForm').default.bind(this);
 
   getConfiguration = require('./_getConfiguration').default.bind(this);
+
+  getSessionsStats = require('./_getSessionsStats').default.bind(this);
+
+  initialiseScreens = require('./_initialiseScreens').default.bind(this);
 }

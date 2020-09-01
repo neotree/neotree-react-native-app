@@ -7,13 +7,11 @@ export default class ContextValue {
     state,
     setState,
     router,
-    appContext: { state: { uid_prefix } },
   }) {
     this.defaults = defaults;
     this.state = state;
     this._setState = setState;
     this.router = router;
-    this.uid_prefix = uid_prefix;
   }
 
   setState = s => this._setState(prevState => ({
@@ -23,10 +21,7 @@ export default class ContextValue {
 
   getScript = require('./_getScript').default.bind(this);
 
-  getSessionsStats = require('./_getSessionsStats').default.bind(this);
+  getDiagnoses = require('./_getDiagnoses').default.bind(this);
 
-  initialisePage = () => {
-    this.getSessionsStats();
-    this.getScript();
-  };
+  initialiseScript = require('./_initialiseScript').default.bind(this);
 }
