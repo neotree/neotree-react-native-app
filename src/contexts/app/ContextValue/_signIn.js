@@ -13,7 +13,7 @@ export default function _signIn(form) {
       .catch(_reject)
       .then(u => {
         this.setState({ signingIn: false, authenticatedUser: u, });
-        this.sync();
+        this.initialiseApp();
         resolve(u);
       });
   });
