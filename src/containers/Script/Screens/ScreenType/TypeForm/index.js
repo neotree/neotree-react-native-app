@@ -55,6 +55,7 @@ const Form = ({ screen, value, context, onChange }) => {
     if (f.condition) {
       conditionMet = false;
       const condition = parseScreenCondition(f.condition, [entry]);
+      console.log(f.condition, condition);
       try {
         conditionMet = eval(condition);
       } catch (e) {
