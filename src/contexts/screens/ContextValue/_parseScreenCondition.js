@@ -13,8 +13,8 @@ const parseConditionString = (condition = '', _key = '', value) => {
     .split(`$${key}>`).join(`${value} >`)
     .split(`$${key} <`).join(`${value} <`)
     .split(`$${key}<`).join(`${value} <`)
-    .split(`$${key}!`).join(`${value} <`)
-    .split(`$${key} !`).join(`${value} <`);
+    .split(`$${key}!`).join(`${value} !`)
+    .split(`$${key} !`).join(`${value} !`);
 };
 
 export default function parseScreenCondition(_condition = '', entries = []) {
