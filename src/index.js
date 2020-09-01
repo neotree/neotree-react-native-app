@@ -18,46 +18,44 @@ const NeoTreeApp = () => {
   const history = useHistory();
 
   const {
-    isAppReady,
     getSplashScreenInfo,
     displayOverlayLoader,
-    state: { authenticatedUser, },
+    state: { authenticatedUser, appInitialised, },
   } = useAppContext();
 
-  const appIsReady = isAppReady();
   const splashScreen = getSplashScreenInfo();
 
   React.useEffect(() => {
-    if (appIsReady) {
+    if (appInitialised) {
       history.entries = [];
       history.push(authenticatedUser ? '/' : '/sign-in');
     }
-  }, [authenticatedUser, appIsReady]);
-
-  if (splashScreen.display) {
-    return (
-      <Overlay>
-        <Splash text={splashScreen.text} />
-      </Overlay>
-    );
-  }
+  }, [authenticatedUser, appInitialised]);
 
   return (
-    <>
-      <Root>
-        <Container>
-          <StyleProvider style={getTheme(material)}>
-            <>
-              <View style={{ flex: 1 }}>
-                <Containers />
-              </View>
-              <NetworkStatusBar />
-              <OverlayLoader display={displayOverlayLoader()} />
-            </>
-          </StyleProvider>
-        </Container>
-      </Root>
-    </>
+    <View style={{ flex: 1 }}>
+      {!!appInitialised && (
+        <Root>
+          <Container>
+            <StyleProvider style={getTheme(material)}>
+              <>
+                <View style={{ flex: 1 }}>
+                  <Containers />
+                </View>
+                <NetworkStatusBar />
+                <OverlayLoader display={displayOverlayLoader()} />
+              </>
+            </StyleProvider>
+          </Container>
+        </Root>
+      )}
+      
+      {!!splashScreen.display && (
+        <Overlay>
+          <Splash text={splashScreen.text} />
+        </Overlay>
+      )}
+    </View>
   );
 };
 

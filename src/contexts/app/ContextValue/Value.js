@@ -29,11 +29,6 @@ export default class ContextValue {
 
   signOut = require('./_signOut').default.bind(this);
 
-  isAppReady = () => {
-    const { networkState, fontsLoaded } = this.state;
-    return networkState && fontsLoaded && this.isDataReady();
-  };
-
   getSplashScreenInfo = require('./_getSplashScreenInfo').default.bind(this);
 
   displayOverlayLoader = () => Object.keys(this.state.overlayLoaderState)
