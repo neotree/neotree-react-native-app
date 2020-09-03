@@ -16,14 +16,14 @@ const Screens = () => {
 
   const {
     getScreens,
-    state: { activeScreen, screensInitialised, loadingScreens, activeScreenInitialised }
+    state: { activeScreen, screensInitialised, uid }
   } = useScreensContext();
 
   React.useEffect(() => {
     if (scrollViewRef.current) scrollViewRef.current.scrollTo({ y: 0, animated: true });
   }, [activeScreen]);
 
-  if (loadingScreens || !(screensInitialised && activeScreenInitialised)) {
+  if (!(screensInitialised && uid)) {
     return <OverlayLoader display style={{ backgroundColor: 'transparent' }} />;
   }
 

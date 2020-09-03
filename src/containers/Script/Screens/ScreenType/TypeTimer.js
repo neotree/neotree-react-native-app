@@ -47,8 +47,11 @@ const Timer = ({ screen, value, onChange }) => {
   const [countdown, setCountDown] = React.useState(0);
   const [formError, setFormError] = React.useState(null);
   const [entry, setEntry] = React.useState(value || { values: [] });
+  const [_value, setValue] = React.useState('');
 
-  const _value = entry.values[0] ? entry.values[0].value : null;
+  React.useEffect(() => { 
+    setValue(entry.values[0] ? `${parseFloat(entry.values[0].value / multiplier)}` : '');
+  }, [entry, value]);
 
   React.useEffect(() => {
     const v = formError ? undefined :
@@ -127,11 +130,13 @@ const Timer = ({ screen, value, onChange }) => {
                   value={_value || ''}
                   defaultValue={_value || ''}
                   onChange={e => {
-                    const value = e.nativeEvent.text;
+                    setValue(e.nativeEvent.text);
+                    const value = e.nativeEvent.text * multiplier;
+
                     setEntry({
                       values: [{
                         value,
-                        valueText: value * multiplier,
+                        valueText: value,
                         label: metadata.label,
                         key: metadata.key,
                         type: metadata.type || metadata.dataType,

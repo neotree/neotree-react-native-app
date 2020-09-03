@@ -25,7 +25,7 @@ const DateTime = ({ field, onChange: _onChange, value, conditionMet, }) => {
 
   const onDateChange = (e, date) => {
     setDate(date);
-    onChange(date);
+    onChange(date.toISOString());
   };
 
   React.useEffect(() => {

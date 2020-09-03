@@ -1,4 +1,4 @@
-export default function exportToApi(_sessions = [], opts = {}) {
+export default function getJSON(_sessions = [], opts = {}) {
   const { showConfidential } = opts;
 
   const sessions = _sessions.map(s => {
@@ -6,7 +6,7 @@ export default function exportToApi(_sessions = [], opts = {}) {
 
     return {
       uid: s.uid,
-      scriptId: script.id,
+      scriptTitle: script.id,
       script: { id: script.id, title: script.data.title },
       entries: form
         .map(e => ({
@@ -14,24 +14,35 @@ export default function exportToApi(_sessions = [], opts = {}) {
           values: e.values.filter(v => v.confidential ? showConfidential : true)
         }))
         .reduce((acc, e) => {
+          const getVal = ({ value, dataType, type }) => {
+            const t = dataType || type;
+            switch (t) {
+              case 'number':
+                return Number(value) || null;
+              case 'boolean':
+                return value === 'false' ? false : Boolean(value);
+              default:
+                return value;
+            }
+          };
+
           return [
             ...acc,
-            ...e.values.map(({ key, dataType, value, label, }) => ({
-              key,
-              type: dataType,
-              values: value && value.map ? 
-                value.map(({ value, label, }) => ({ value, label })) 
-                : 
-                [{ value, label }],
-            }))
+            ...e.values.map(v => {
+              const { key, type, dataType, value, label, valueLabel, } = v;
+              return {
+                key,
+                type: dataType || type,
+                values: value && value.map ? 
+                  value.map(({ value, label, valueLabel, }) => ({ value, label: valueLabel || label, })) 
+                  : 
+                  [{ value: getVal(v), label: valueLabel || label, }],
+              };
+            })
           ];
         }, []),
     };
   });
 
-  return sessions.map(({ uid, scriptId, ...data }) => ({
-    uid,
-    scriptId,
-    data,
-  }));
+  return sessions;
 }

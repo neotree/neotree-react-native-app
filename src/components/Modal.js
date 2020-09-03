@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Modal as RNModal, TouchableWithoutFeedback, StyleSheet } from 'react-native';
+import { View, Modal as RNModal, TouchableWithoutFeedback, StyleSheet, ScrollView } from 'react-native';
 
 const styles = StyleSheet.create({
     centeredView: {
@@ -55,12 +55,14 @@ export default function Modal({ open, onClose, modalProps, style, ...props }) {
                 ><View style={[styles.overlay]} /></TouchableWithoutFeedback>
                 <View style={styles.centeredView}>
                     <View 
-                    {...props} 
-                    style={[
-                        styles.modalView, 
-                        ...(style ? style.map ? style : [style] : [])
-                    ]} 
-                />
+                        // {...props} 
+                        style={[
+                            styles.modalView, 
+                            ...(style ? style.map ? style : [style] : [])
+                        ]} 
+                    >
+                        <ScrollView {...props} />
+                    </View>
                 </View>
             </RNModal>
         </>
