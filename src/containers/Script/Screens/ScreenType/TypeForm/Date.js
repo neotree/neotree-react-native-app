@@ -11,7 +11,7 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   const onDateChange = (e, date) => {
-    setDate(date.toISOString());
+    setDate(date);
     onChange(date.toISOString());
   };
 

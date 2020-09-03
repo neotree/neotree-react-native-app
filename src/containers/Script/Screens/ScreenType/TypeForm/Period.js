@@ -28,7 +28,7 @@ const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
   }, [calcFrom, value]);
 
   const onDateChange = (e, date) => {
-    setDate(date.toISOString());
+    setDate(date);
     onChange(date.toISOString());
   };
 
