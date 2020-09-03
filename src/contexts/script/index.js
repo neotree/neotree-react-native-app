@@ -9,7 +9,7 @@ export function provideScriptContext(Component) {
     const value = useContextValue(props);
     const { match: { params: { scriptId } } } = value.router;
 
-    React.useEffect(() => { value.initialisePage(); }, [scriptId]);
+    React.useEffect(() => { value.initialiseScript(); }, [scriptId]);
 
     return (
       <Context.Provider value={value}>

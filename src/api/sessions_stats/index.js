@@ -17,7 +17,7 @@ export const getStats = () => {
         if (rslts.stats) return resolve(rslts);
 
         _saveStats(defaultStat)
-          .then(() => resolve(defaultStat))
+          .then(() => resolve({ stats: defaultStat }))
           .catch(reject);
       })
       .catch(reject);
