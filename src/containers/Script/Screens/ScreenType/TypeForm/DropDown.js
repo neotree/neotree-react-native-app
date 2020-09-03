@@ -32,6 +32,7 @@ const DropDown = ({ field, onChange, value, conditionMet, }) => {
         title="Select an option"
         onChange={v => onChange(v.value, {
           error: null,
+          valueLabel: v.label,
           valueText: !v ? null : v.label,
         })}
       />
