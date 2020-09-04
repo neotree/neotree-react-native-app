@@ -2,7 +2,7 @@
 import ucFirst from '@/utils/ucFirst';
 import baseHTML from './baseHTML';
 
-export default session => {
+export default (session, showConfidential) => {
   const { form } = session.data;
   const sections = [];
   form.forEach(entry => {
@@ -32,7 +32,7 @@ export default session => {
 
         ${entries.filter(e => e.values.length)
           .map(({ values, screen: { metadata: { label } } }) => {
-            return values.map(v => {
+            return values.filter(e => e.confidential ? showConfidential : true).map(v => {
               return `
                 <div  class="row">
                   <span>${label || v.label}</span>
