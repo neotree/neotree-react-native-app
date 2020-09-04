@@ -30,7 +30,6 @@ const PreviewSessionForm = ({ scrollable, ...props }) => {
 
 PreviewSessionForm.propTypes = {
   scrollable: PropTypes.bool,
-  form: PropTypes.array.isRequired,
 };
 
 export default PreviewSessionForm;

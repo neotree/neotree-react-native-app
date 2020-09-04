@@ -18,7 +18,7 @@ const PreviewForm = () => {
         session={session}
         diagnoses={getDiagnoses()}
         Wrapper={Wrapper}
-        displayEverything
+        showConfidential
       />
     </>
   );

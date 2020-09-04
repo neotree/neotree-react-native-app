@@ -7,7 +7,7 @@ import PrintSessionForm from '@/containers/Sessions/PrintSessionForm';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 
-const HeaderComponent = ({ session }) => {
+const HeaderComponent = ({ session, showConfidential, }) => {
   const history = useHistory();
 
   const goBack = () => {
@@ -33,7 +33,7 @@ const HeaderComponent = ({ session }) => {
         )}
         rightActions={(
           <>
-            <PrintSessionForm session={session} />
+            <PrintSessionForm session={session} showConfidential={showConfidential} />
           </>
         )}
       />
@@ -42,7 +42,8 @@ const HeaderComponent = ({ session }) => {
 };
 
 HeaderComponent.propTypes = {
-  session: PropTypes.object.isRequired
+  session: PropTypes.object.isRequired,
+  showConfidential: PropTypes.bool,
 };
 
 export default HeaderComponent;
