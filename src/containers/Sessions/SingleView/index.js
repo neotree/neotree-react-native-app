@@ -11,19 +11,23 @@ const Wrapper = props => <Content {...props} />;
 const SingleView = () => {
   const { sessionId } = useParams();
 
-  const { state: { sessions }, getJSON } = useSessionsContext();
+  const { state: { sessions, showConfidential, }, setState, } = useSessionsContext();
 
   const session = sessions.filter(f => f.id.toString() === sessionId)[0];
 
-  getJSON(sessions);
+  React.useEffect(() => { 
+    return () => setState({ showConfidential: false }); 
+  }, []);
 
   return (
     <>
-      <Header session={session} />
+      <Header session={session} showConfidential={showConfidential} />
       <View style={[{ flex: 1 }]}>
         <PreviewSessionForm
           Wrapper={Wrapper}
           session={session}
+          onShowConfidential={() => setState({ showConfidential: true })}
+          showConfidential={showConfidential}
         />
       </View>
     </>
