@@ -11,7 +11,7 @@ const formatDate = d => {
   const hrs = now.diff(new Date(d), 'hours') - (days * 24);
   const v = [];
   if (days) v.push(`${days} day(s)`);
-  v.push(hrs ? `${hrs} hour(s)` : days ? '' : 'Less than an hour');
+  v.push(hrs ? `${hrs} hour(s)` : days ? '' : moment(d).fromNow().replace(' ago', ''));
   return v.filter(s => s).join(', ');
 };
 
@@ -19,6 +19,7 @@ const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
   const onChange = (d, error) => _onChange(d, {
     error,
     valueText: d ? formatDate(d) : null,
+    exportValue: d ? formatDate(d) : null,
   });
   const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);

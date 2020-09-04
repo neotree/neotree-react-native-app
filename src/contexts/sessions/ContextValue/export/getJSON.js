@@ -29,14 +29,14 @@ export default function getJSON(_sessions = [], opts = {}) {
           return [
             ...acc,
             ...e.values.map(v => {
-              const { key, type, dataType, value, label, valueLabel, } = v;
+              const { key, type, dataType, value, label, valueLabel, exportValue, } = v;
               return {
                 key,
                 type: dataType || type,
                 values: value && value.map ? 
-                  value.map(({ value, label, valueLabel, }) => ({ value, label: valueLabel || label, })) 
+                  value.map(({ value, label, valueLabel, exportValue, }) => ({ value: exportValue || value, label: valueLabel || label, })) 
                   : 
-                  [{ value: getVal(v), label: valueLabel || label, }],
+                  [{ value: exportValue || getVal(v), label: valueLabel || label, }],
               };
             })
           ];
