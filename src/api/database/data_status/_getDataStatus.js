@@ -1,10 +1,6 @@
 import getRandomString from '@/utils/getRandomString';
-import NetInfo from '@react-native-community/netinfo';
-import getDeviceInfo from '@/utils/getDeviceInfo';
 import makeUID from '@/utils/makeUID';
 import db from '../db';
-import makeApiCall from '../../webeditor/makeApiCall';
-import updateDataStatus from './_updateDataStatus';
 
 const _getDataStatus = () => new Promise((resolve, reject) => {
   db.transaction(
@@ -56,26 +52,7 @@ const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
         `insert or replace into data_status (${columns}) values (${values});`,
         Object.values(status),
         (tx, saveDataStatus) => {
-          NetInfo.fetch()
-            .catch(() => resolve(saveDataStatus))
-            .then(network => {
-              if (!network.isInternetReachable) return resolve(saveDataStatus);
-
-              makeApiCall('/register-device', {
-                method: 'POST',
-                body: { unique_key, details: JSON.stringify(getDeviceInfo()) }
-              })
-                .catch(() => resolve(saveDataStatus))
-                .then(saveDevice => {
-                  const device = saveDevice && saveDevice.device;
-                  if (device) {
-                    return updateDataStatus({ device_id: device ? device.id : null })
-                      .catch(() => resolve(saveDataStatus))
-                      .then(() => resolve(saveDataStatus));
-                  }
-                  resolve(saveDataStatus);
-                });
-            });
+          resolve(saveDataStatus);
         },
         (tx, e) => {
           if (e) {
@@ -90,33 +67,13 @@ const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
 
 const getDataStatus = () => new Promise((resolve, reject) => {
   _getDataStatus()
-    .catch(reject)
-    .then(dataStatus => {
-      const registerIfNotFound = () => {
-        createDataStatus()
-          .catch(reject)
-          .then(() => _getDataStatus().catch(reject).then(resolve));
-      };
-
-      if (dataStatus) {
-        NetInfo.fetch()
-          .catch(() => resolve(dataStatus))
-          .then(network => {
-            if (!network.isInternetReachable) return resolve(dataStatus);
-
-            makeApiCall('/get-device', { body: { unique_key: dataStatus.unique_key } })
-              .catch(() => resolve(dataStatus))
-              .then(device => {
-                if (device) return resolve(dataStatus);
-                registerIfNotFound(dataStatus);
-              });
-          });
-
-        return;
-      }
-
-      registerIfNotFound();
-    });
+    .then(ds => {
+      if (ds) return resolve(ds);
+      createDataStatus()          
+        .then(() => _getDataStatus().catch(reject).then(resolve))
+        .catch(reject);
+    })
+    .catch(reject);
 });
 
 export default () => getDataStatus();
