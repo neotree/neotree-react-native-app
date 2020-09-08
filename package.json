@@ -24,6 +24,7 @@
     "babel-eslint": "^10.1.0",
     "cli-color": "^2.0.0",
     "expo": "^37.0.0",
+    "expo-application": "~2.1.0",
     "expo-asset": "~8.1.4",
     "expo-constants": "~9.0.0",
     "expo-device": "~2.1.0",

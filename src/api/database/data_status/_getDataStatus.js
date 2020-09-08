@@ -1,6 +1,14 @@
+import { Platform } from 'react-native';
 import getRandomString from '@/utils/getRandomString';
-import makeUID from '@/utils/makeUID';
+import * as Application from 'expo-application';
 import db from '../db';
+
+const genUIDPrefix = () => new Promise((resolve, reject) => {
+  if (Platform.OS === 'android') return resolve(Application.androidId.substr(0,4).toUpperCase());
+  Application.getIosIdForVendorAsync()
+    .then(uid => resolve(uid.substr(0,4).toUpperCase()))
+    .catch(reject);
+});
 
 const _getDataStatus = () => new Promise((resolve, reject) => {
   db.transaction(
@@ -26,43 +34,49 @@ const _getDataStatus = () => new Promise((resolve, reject) => {
 const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('createDataStatus');
 
-  const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
-  const uid_prefix = makeUID().split('-')[0];
+  genUIDPrefix()
+    .then(uid_prefix => {
+      const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
 
-  const status = {
-    id: 1,
-    uid_prefix,
-    unique_key,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...params
-  };
+      const status = {
+        id: 1,
+        uid_prefix,
+        unique_key,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...params
+      };
 
-  const columns = Object.keys(status)
-    .filter(c => c)
-    .join(',');
+      const columns = Object.keys(status)
+        .filter(c => c)
+        .join(',');
 
-  const values = Object.keys(status).map(() => '?')
-    .filter(c => c)
-    .join(',');
+      const values = Object.keys(status).map(() => '?')
+        .filter(c => c)
+        .join(',');
 
-  db.transaction(
-    tx => {
-      tx.executeSql(
-        `insert or replace into data_status (${columns}) values (${values});`,
-        Object.values(status),
-        (tx, saveDataStatus) => {
-          resolve(saveDataStatus);
-        },
-        (tx, e) => {
-          if (e) {
-            require('@/utils/logger')('ERROR: createDataStatus', e);
-            reject(e);
-          }
+      db.transaction(
+        tx => {
+          tx.executeSql(
+            `insert or replace into data_status (${columns}) values (${values});`,
+            Object.values(status),
+            (tx, saveDataStatus) => {
+              resolve(saveDataStatus);
+            },
+            (tx, e) => {
+              if (e) {
+                require('@/utils/logger')('ERROR: createDataStatus', e);
+                reject(e);
+              }
+            }
+          );
         }
       );
-    }
-  );
+    })
+    .catch(e => {
+      require('@/utils/logger')('ERROR: genUIDPrefix', e);
+      reject(e);
+    });
 });
 
 const getDataStatus = () => new Promise((resolve, reject) => {
