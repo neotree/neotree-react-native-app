@@ -1,7 +1,7 @@
 import moment from 'moment';
 
 export default (html, session) => {
-  const { completed_at, canceled_at } = session.data;
+  const { completed_at, canceled_at, script, } = session.data;
   const creationDate = completed_at || canceled_at;
 
   return `
@@ -87,7 +87,7 @@ export default (html, session) => {
       <div id="header">
         <div id="headerImg">
           <h1 id="headerTitle">Neotree Neonatal Hospital Form</h1>
-          <p id="headerSubtitle">Ministry of Health - National Admission Form</p>
+          <p id="headerSubtitle">Ministry of Health - National ${script.data.type === 'discharge' ? 'Discharge' : 'Admission'} Form</p>
         </div>
       </div>
       <div id"content-wrap">
