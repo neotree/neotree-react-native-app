@@ -82,7 +82,6 @@ const Timer = ({ screen, value, onChange }) => {
         Vibration.vibrate((timerValue > 5 ? 5 : timerValue) * 1000);
         const play = (timeout = 0) => {
           timeout = timeout + 500;
-          console.log(timeout);
           playSound(require('~/assets/sounds/alarm.mp3'));
           if (timeout < 5000) setTimeout(() => play(timeout), 500);
         }
