@@ -6,6 +6,7 @@ import { Input, Form, Item } from 'native-base';
 import formCopy from '@/constants/copy/form';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
+import playSound from '@/utils/playSound';
 
 const styles = {
   timerView: {
@@ -77,7 +78,16 @@ const Timer = ({ screen, value, onChange }) => {
     if (countdown) {
       const s = countdown - 1;
       timoutRef.current = setTimeout(() => setCountDown(s), 1000);
-      if (s === 0) Vibration.vibrate((timerValue > 5 ? 5 : timerValue) * 1000);
+      if (s === 0) {
+        Vibration.vibrate((timerValue > 5 ? 5 : timerValue) * 1000);
+        const play = (timeout = 0) => {
+          timeout = timeout + 500;
+          console.log(timeout);
+          playSound(require('~/assets/sounds/alarm.mp3'));
+          if (timeout < 5000) setTimeout(() => play(timeout), 500);
+        }
+        play();
+      }
     } else {
       setCountDown(0);
     }
