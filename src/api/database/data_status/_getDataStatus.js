@@ -1,10 +1,14 @@
+import { Platform } from 'react-native';
 import getRandomString from '@/utils/getRandomString';
-import NetInfo from '@react-native-community/netinfo';
-import getDeviceInfo from '@/utils/getDeviceInfo';
-import makeUID from '@/utils/makeUID';
+import * as Application from 'expo-application';
 import db from '../db';
-import makeApiCall from '../../webeditor/makeApiCall';
-import updateDataStatus from './_updateDataStatus';
+
+const genUIDPrefix = () => new Promise((resolve, reject) => {
+  if (Platform.OS === 'android') return resolve(Application.androidId.substr(0,4).toUpperCase());
+  Application.getIosIdForVendorAsync()
+    .then(uid => resolve(uid.substr(0,4).toUpperCase()))
+    .catch(reject);
+});
 
 const _getDataStatus = () => new Promise((resolve, reject) => {
   db.transaction(
@@ -30,93 +34,60 @@ const _getDataStatus = () => new Promise((resolve, reject) => {
 const createDataStatus = (params = {}) => new Promise((resolve, reject) => {
   require('@/utils/logger')('createDataStatus');
 
-  const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
-  const uid_prefix = makeUID().split('-')[0];
+  genUIDPrefix()
+    .then(uid_prefix => {
+      const unique_key = `${getRandomString()}${getRandomString()}${getRandomString()}${getRandomString()}`;
 
-  const status = {
-    id: 1,
-    uid_prefix,
-    unique_key,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...params
-  };
+      const status = {
+        id: 1,
+        uid_prefix,
+        unique_key,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...params
+      };
 
-  const columns = Object.keys(status)
-    .filter(c => c)
-    .join(',');
+      const columns = Object.keys(status)
+        .filter(c => c)
+        .join(',');
 
-  const values = Object.keys(status).map(() => '?')
-    .filter(c => c)
-    .join(',');
+      const values = Object.keys(status).map(() => '?')
+        .filter(c => c)
+        .join(',');
 
-  db.transaction(
-    tx => {
-      tx.executeSql(
-        `insert or replace into data_status (${columns}) values (${values});`,
-        Object.values(status),
-        (tx, saveDataStatus) => {
-          NetInfo.fetch()
-            .catch(() => resolve(saveDataStatus))
-            .then(network => {
-              if (!network.isInternetReachable) return resolve(saveDataStatus);
-
-              makeApiCall('/register-device', {
-                method: 'POST',
-                body: { unique_key, details: JSON.stringify(getDeviceInfo()) }
-              })
-                .catch(() => resolve(saveDataStatus))
-                .then(saveDevice => {
-                  const device = saveDevice && saveDevice.device;
-                  if (device) {
-                    return updateDataStatus({ device_id: device ? device.id : null })
-                      .catch(() => resolve(saveDataStatus))
-                      .then(() => resolve(saveDataStatus));
-                  }
-                  resolve(saveDataStatus);
-                });
-            });
-        },
-        (tx, e) => {
-          if (e) {
-            require('@/utils/logger')('ERROR: createDataStatus', e);
-            reject(e);
-          }
+      db.transaction(
+        tx => {
+          tx.executeSql(
+            `insert or replace into data_status (${columns}) values (${values});`,
+            Object.values(status),
+            (tx, saveDataStatus) => {
+              resolve(saveDataStatus);
+            },
+            (tx, e) => {
+              if (e) {
+                require('@/utils/logger')('ERROR: createDataStatus', e);
+                reject(e);
+              }
+            }
+          );
         }
       );
-    }
-  );
+    })
+    .catch(e => {
+      require('@/utils/logger')('ERROR: genUIDPrefix', e);
+      reject(e);
+    });
 });
 
 const getDataStatus = () => new Promise((resolve, reject) => {
   _getDataStatus()
-    .catch(reject)
-    .then(dataStatus => {
-      const registerIfNotFound = () => {
-        createDataStatus()
-          .catch(reject)
-          .then(() => _getDataStatus().catch(reject).then(resolve));
-      };
-
-      if (dataStatus) {
-        NetInfo.fetch()
-          .catch(() => resolve(dataStatus))
-          .then(network => {
-            if (!network.isInternetReachable) return resolve(dataStatus);
-
-            makeApiCall('/get-device', { body: { unique_key: dataStatus.unique_key } })
-              .catch(() => resolve(dataStatus))
-              .then(device => {
-                if (device) return resolve(dataStatus);
-                registerIfNotFound(dataStatus);
-              });
-          });
-
-        return;
-      }
-
-      registerIfNotFound();
-    });
+    .then(ds => {
+      if (ds) return resolve(ds);
+      createDataStatus()          
+        .then(() => _getDataStatus().catch(reject).then(resolve))
+        .catch(reject);
+    })
+    .catch(reject);
 });
 
 export default () => getDataStatus();

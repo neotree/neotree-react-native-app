@@ -5,9 +5,12 @@ import * as MediaLibrary from 'expo-media-library';
 import { Alert } from 'react-native';
 import { exportSession } from '@/api/export';
 import { updateSessions } from '@/api/sessions';
+import moment from 'moment';
 import getJSON from './getJSON';
 
 export { getJSON };
+
+const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
 
 const exportSuccessAlert = (msg = '') => {
   Alert.alert(
@@ -48,7 +51,7 @@ export function exportJSON() {
 
       Promise.all(Object.keys(json).map(scriptId => {
         const scriptTitle = scripts[scriptId].data.title;
-        const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-${scriptTitle}.json`;
+        const fileUri = `${FileSystem.documentDirectory}${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.json`;
         return new Promise((resolve) => {
           (async () => {
             await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: json[scriptId] }, null, 4), { encoding: FileSystem.EncodingType.UTF8 });
@@ -74,12 +77,12 @@ export function exportEXCEL() {
   
   const json = getJSON(sessions).reduce((acc, e) => ({
     ...acc,
-    [e.scrip.id]: [...(acc[e.script.id] || []), e],
+    [e.script.id]: [...(acc[e.script.id] || []), e],
   }), {});
 
   const sheets = Object.keys(json).map(scriptId => {
     const scriptTitle = scripts[scriptId].data.title;
-    const fileUri = `${FileSystem.documentDirectory}${new Date().getTime()}-${scriptTitle}.xlsx`;
+    const fileUri = `${FileSystem.documentDirectory}${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.xlsx`;
 
     const data = json[scriptId].map(e => e.entries.reduce((acc, e) => ({
       ...acc,
