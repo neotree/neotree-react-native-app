@@ -9,6 +9,9 @@ export default (html, session) => {
   <html>
     <header>
       <style>
+        body {
+          font-size: 12px;
+        }
         #header {
           text-align: center;
         }
@@ -26,7 +29,7 @@ export default (html, session) => {
           columns: 0px 2;
         }
         .title {
-          padding: 10px;
+          padding: 5px;
           background: #ccc;
           color: #000;
         }
