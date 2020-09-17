@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import Print from '@/components/Print';
 import formToHTML from './formToHTML';
 
-const PrintSessionForm = ({ session, showConfidential, x }) => {
-  console.log(x);
+const PrintSessionForm = ({ session, showConfidential, }) => {
   return (
     <>
       <Print
