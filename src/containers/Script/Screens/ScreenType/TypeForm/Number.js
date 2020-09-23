@@ -39,7 +39,7 @@ const NumberField = ({
                   err = `Min value ${field.minValue}`;
                 } else if (field.format && (decimals.length > Number(field.format))) {
                   err = `Number should have only ${field.format} decimal places.`;
-                } else if (value.indexOf('.') > -1) {
+                } else if (!field.format && value.indexOf('.') > -1) {
                   err = 'Decimal places not allowed.'
                 }
               }
