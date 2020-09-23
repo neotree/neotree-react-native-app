@@ -11,8 +11,6 @@ const NumberField = ({
 }) => {
   const [error, setError] = React.useState(null);
 
-  console.log(field);
-
   return (
     <>
       <Form>
