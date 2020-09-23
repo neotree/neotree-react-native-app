@@ -41,8 +41,6 @@ const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
     }
   });
 
-  console.log(field);
-
   return (
     <>
       <DatePicker
