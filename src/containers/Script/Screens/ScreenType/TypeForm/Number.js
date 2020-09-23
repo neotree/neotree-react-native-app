@@ -11,6 +11,8 @@ const NumberField = ({
 }) => {
   const [error, setError] = React.useState(null);
 
+  console.log(field);
+
   return (
     <>
       <Form>
@@ -30,9 +32,18 @@ const NumberField = ({
               let err = null;
               if (value) {
                 const v = Number(value);
-                if (isNaN(v)) err = 'Input is not a number';
-                if (field.maxValue && (v > field.maxValue)) err = `Max value ${field.maxValue}`;
-                if (field.minValue && (v < field.minValue)) err = `Min value ${field.minValue}`;
+                const decimals = value.split('.').filter((n, i) => i > 0).join('');
+                if (isNaN(v)) {
+                  err = 'Input is not a number';
+                } else if (field.maxValue && (v > field.maxValue)) {
+                  err = `Max value ${field.maxValue}`;
+                } else if (field.minValue && (v < field.minValue)) {
+                  err = `Min value ${field.minValue}`;
+                } else if (field.format && (decimals.length > Number(field.format))) {
+                  err = `Number should have only ${field.format} decimal places.`;
+                } else if (value.indexOf('.') > -1) {
+                  err = 'Decimal places not allowed.'
+                }
               }
               setError(err);
               onChange(value, { error: err, valueText: value });
