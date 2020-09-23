@@ -1,9 +1,9 @@
 import db from '../db';
 
 const query = s => new Promise((resolve, reject) => {
-  const columns = ['id', 'data', 'createdAt', 'updatedAt'].join(',');
+  const columns = ['id', 'data', 'position', 'createdAt', 'updatedAt'].join(',');
 
-  const values = ['?', '?', '?', '?'].join(',');
+  const values = ['?', '?', '?', '?', '?'].join(',');
 
   db.transaction(
     tx => {
@@ -12,6 +12,7 @@ const query = s => new Promise((resolve, reject) => {
         [
           s.id,
           JSON.stringify(s.data || {}),
+          s.position,
           s.createdAt,
           s.updatedAt
         ],
