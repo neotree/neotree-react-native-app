@@ -41,13 +41,15 @@ const Period = ({ form, field, value, onChange: _onChange, conditionMet, }) => {
     }
   });
 
+  console.log(field);
+
   return (
     <>
       <DatePicker
         enabled={conditionMet}
         editable={!calcFrom}
         value={calcFrom ? value : date}
-        placeholder={field.calculation || formCopy.SELECT_DATE}
+        placeholder="Select" // {field.calculation || formCopy.SELECT_DATE}
         onChange={calcFrom ? (() => {}) : onDateChange}
         formatDate={formatDate}
       >
