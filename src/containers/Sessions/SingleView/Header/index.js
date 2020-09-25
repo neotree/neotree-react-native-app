@@ -2,9 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
-import { Button, Icon } from 'native-base';
+import { Icon } from 'native-base';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
+import { TouchableOpacity } from 'react-native';
 import PrintSessionForm from '../../PrintSessionForm';
 
 const HeaderComponent = ({ session, showConfidential, }) => {
@@ -23,12 +24,11 @@ const HeaderComponent = ({ session, showConfidential, }) => {
         title="Session details"
         leftActions={(
           <>
-            <Button
-              transparent
+            <TouchableOpacity
               onPress={() => goBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
-            </Button>
+            </TouchableOpacity>
           </>
         )}
         rightActions={(

@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import * as ExpoPrint from 'expo-print';
-import { Button, Icon } from 'native-base';
+import { Icon } from 'native-base';
 import colorStyles from '@/styles/colorStyles';
+import { TouchableOpacity } from 'react-native';
 
 const Print = ({ options }) => {
   const [, setPrinting] = React.useState(false);
@@ -20,10 +21,9 @@ const Print = ({ options }) => {
 
   return (
     <>
-      <Button
-        transparent
+      <TouchableOpacity
         onPress={() => print()}
-      ><Icon style={[colorStyles.primaryColor]} name="print" /></Button>
+      ><Icon style={[colorStyles.primaryColor]} name="print" /></TouchableOpacity>
     </>
   );
 };
