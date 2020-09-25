@@ -1,8 +1,9 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
 import { useOverlayLoaderState } from '@/contexts/app';
-import { Button, Icon, ActionSheet } from 'native-base';
+import { Icon, ActionSheet } from 'native-base';
 import colorStyles from '@/styles/colorStyles';
+import { TouchableOpacity, Platform } from 'react-native';
 
 const DeleteBtn = () => {
   const { state: { sessions, deletingSessions }, deleteSessions } = useSessionsContext();
@@ -11,12 +12,15 @@ const DeleteBtn = () => {
 
   return (
     <>
-      <Button
-        transparent
+      <TouchableOpacity
         onPress={() => {
           ActionSheet.show(
             {
-              options: ['Incomplete sessions', 'ALL sessions', 'Cancel'],
+              options: [
+                'Incomplete sessions', 
+                'ALL sessions', 
+                Platform.OS === 'ios' ? 'Cancel' : null
+              ].filter(o => o),
               title: 'Permanantly delete',
               cancelButtonIndex: 2,
             },
@@ -30,7 +34,7 @@ const DeleteBtn = () => {
         }}
       >
         <Icon style={[colorStyles.primaryColor]} name="trash" />
-      </Button>
+      </TouchableOpacity>
     </>
   );
 };
