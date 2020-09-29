@@ -16,7 +16,7 @@ const Screens = () => {
 
   const {
     getScreens,
-    state: { activeScreen, screensInitialised, uid }
+    state: { activeScreen, screensInitialised, uid, form }
   } = useScreensContext();
 
   React.useEffect(() => {

@@ -40,7 +40,7 @@ const FormPreview = ({
                 break;
               default:
                 entries = [{
-                  label: metadata.label,
+                  label: screen.sectionTitle || metadata.label,
                   values,
                 }];
             }
