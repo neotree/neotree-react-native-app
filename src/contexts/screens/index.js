@@ -1,15 +1,81 @@
 import React from 'react';
-import Context from './Context';
-import useContextValue from './ContextValue';
+import useRouter from '@/utils/useRouter';
+import { useAppContext } from '@/contexts/app';
+import { useScriptContext } from '@/contexts/script';
+import * as defaults from './_defaults';
 
-export * from './Context';
+export const Context = React.createContext(null);
+
+export const useScreensContext = () => React.useContext(Context);
 
 export function provideScreensContext(Component) {
   return function ScreensContextProvider(props) {
-    const value = useContextValue(props);
+    const router = useRouter();
+    const { state: { uid_prefix } } = useAppContext();
+    const { state: { script, diagnoses, } } = useScriptContext();
+    const [state, setState] = React.useState(defaults.defaultState);
+    const { screensInitialised } = state;
+    const { location, match: { params: { scriptId } } } = router;
 
-    const { screensInitialised } = value.state;
-    const { location, match: { params: { scriptId } } } = value.router;
+    const value = new (class ContextValue {
+      constructor() {
+        this.defaults = defaults;
+        this.state = state;
+        this._setState = setState;
+        this.router = router;
+        this.script = script;
+        this.diagnoses = diagnoses;
+        this.uid_prefix = uid_prefix;
+      }
+    
+      setState = s => this._setState(prevState => ({
+        ...prevState,
+        ...(typeof s === 'function' ? s(prevState) : s)
+      }));
+    
+      setForm = s => this._setState(prevState => ({
+        ...prevState,
+        form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
+      }));
+    
+      canGoToNextScreen = () => {
+        if (!this.getScreenLink('next')) return false;
+        if (!this.state.form.filter(({ screen }) => screen.id === this.state.activeScreen.id)[0]) return false;
+        return true;
+      };
+    
+      onLocationChange = require('./_onLocationChange').default.bind(this);
+    
+      canGoToPrevScreen = () => !!this.getScreenLink('back');
+    
+      isLastScreen = () => this.state.activeScreen && (this.state.activeScreen.id === this.getLastScreen().id);
+    
+      getScreen = require('./_getScreen').default.bind(this);
+    
+      getScreenLink = require('./_getScreenLink').default.bind(this);
+    
+      getLastScreen = require('./_getLastScreen').default.bind(this);
+    
+      getScreens = require('./_getScreens').default.bind(this);
+    
+      parseScreenCondition = require('./_parseScreenCondition').default.bind(this);
+    
+      getDiagnoses = require('./_getDiagnoses').default.bind(this);
+    
+      canSave = require('./_canSave').default.bind(this);
+    
+      saveForm = require('./_saveForm').default.bind(this);
+    
+      getConfiguration = require('./_getConfiguration').default.bind(this);
+    
+      getSessionsStats = require('./_getSessionsStats').default.bind(this);
+    
+      createSessionSummary = require('./_createSessionSummary').default.bind(this);
+
+      goToSummary = require('./_goToSummary').default.bind(this);
+
+      initialiseScreens = require('./_initialiseScreens').default.bind(this);
+    })();
 
     React.useEffect(() => value.onLocationChange(), [screensInitialised, location]);
     React.useEffect(() => { value.initialiseScreens(); }, [scriptId]);

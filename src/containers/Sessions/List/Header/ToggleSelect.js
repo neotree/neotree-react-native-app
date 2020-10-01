@@ -1,18 +1,18 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
-import { Button, Icon } from 'native-base';
+import { Icon } from 'native-base';
+import { TouchableOpacity } from 'react-native';
 
 const ToggleSelect = () => {
   const { setState, state: { canSelectItems } } = useSessionsContext();
 
   return (
     <>
-      <Button
-        transparent
+      <TouchableOpacity
         onPress={() => setState({ canSelectItems: !canSelectItems })}
       >
         <Icon name="checkbox" />
-      </Button>
+      </TouchableOpacity>
     </>
   );
 };

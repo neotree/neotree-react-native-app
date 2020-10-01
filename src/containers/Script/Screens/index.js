@@ -16,7 +16,7 @@ const Screens = () => {
 
   const {
     getScreens,
-    state: { activeScreen, screensInitialised, uid }
+    state: { activeScreen, screensInitialised, uid, form }
   } = useScreensContext();
 
   React.useEffect(() => {
@@ -62,9 +62,7 @@ const Screens = () => {
         </Content>
       )}
 
-      <ScrollView
-        ref={scrollViewRef}
-      >
+      <ScreenType>
         {!!activeScreen.data.contentText && (
           <>
             <Content
@@ -82,11 +80,8 @@ const Screens = () => {
           </>
         )}
 
-        <Content>
-          <Divider border={false} />
-          <ScreenType />
-        </Content>
-      </ScrollView>
+        <Divider border={false} />
+      </ScreenType>
     </>
   );
 };

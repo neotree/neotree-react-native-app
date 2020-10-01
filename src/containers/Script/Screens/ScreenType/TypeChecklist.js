@@ -1,6 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Select from '@/components/Select';
+import { View, TouchableOpacity, } from 'react-native';
+import Divider from '@/components/Divider';
+import Text from '@/components/Text';
+import { Card, CardItem, Body, Radio, } from 'native-base';
 
 const Checklist = ({ screen, value, onChange }) => {
   const metadata = screen.data.metadata || {};
@@ -11,34 +14,23 @@ const Checklist = ({ screen, value, onChange }) => {
     onChange(!entry.values.length ? undefined : entry);
   }, [entry]);
 
+  const items = metadata.items || [];
+
   return (
     <>
-      <Select
-        variant="checkbox"
-        options={(metadata.items || []).map(item => ({
-          label: item.label,
-          value: item.key,
-          confidential: item.confidential,
-          disabled: (() => {
-            const exclusive = entry.values.reduce((acc, item) => {
-              if (item.exclusive) acc = item.value;
-              return acc;
-            }, null);
-            return exclusive ? exclusive !== item.key : false;
-          })(),
-        }))}
-        value={entry.values.map(e => e.value)}
-        onChange={(item, i) => {
-          item = (metadata.items || [])[i];
+      {items.map((item, i) => {
+        const key = `${i}`;
+        const selected = entry.values.map(e => e.value).includes(item.key);
 
-          const checked = entry.values.map(s => s.value).indexOf(item.key) > -1;
+        const _onChange = (selectValue) => { 
+          if (selectValue === selected) return;
 
           const value = item.key;
-          const _checked = !checked;
+          const _selected = !selected;
           const exclusives = metadata.items
             .filter(item => item.exclusive)
             .map(item => item.key);
-
+      
           const _entry = {
             value,
             valueText: item.label,
@@ -48,12 +40,12 @@ const Checklist = ({ screen, value, onChange }) => {
             dataType: item.dataType,
             exclusive: item.exclusive,
           };
-
+      
           if (item.exclusive) {
             setEntry(entry => {
               return {
                 ...entry,
-                values: _checked ? [_entry] : []
+                values: _selected ? [_entry] : []
               };
             });
           } else {
@@ -61,7 +53,7 @@ const Checklist = ({ screen, value, onChange }) => {
               return {
                 ...entry,
                 values: (
-                  _checked ?
+                  _selected ?
                     [...entry.values, _entry]
                     :
                     entry.values.filter(s => s.value !== value)
@@ -69,8 +61,41 @@ const Checklist = ({ screen, value, onChange }) => {
               };
             });
           }
-        }}
-      />
+        };
+
+        return (
+          <React.Fragment key={key}>
+            <Card>
+              <CardItem>
+                <Body>
+                  <Text>{item.label}</Text>
+                  <View 
+                    style={{ flexDirection: 'row', justifyContent: 'flex-end', flex: 1, width: '100%', }}
+                  >
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20, }}
+                      onPress={() => _onChange(true)}
+                    >
+                      <Radio selected={selected} />
+                      <Text style={{ marginLeft: 5 }}>Yes</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', }}
+                      onPress={() => _onChange(false)}
+                    >
+                      <Radio selected={!selected} />
+                      <Text style={{ marginLeft: 5 }}>No</Text>
+                    </TouchableOpacity>
+                  </View>
+                </Body>
+              </CardItem>
+            </Card>
+
+            <Divider border={false} />
+          </React.Fragment>
+        );
+      })}
     </>
   );
 };

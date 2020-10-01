@@ -1,7 +1,6 @@
 import React from 'react';
 import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext } from '@/contexts/screens';
-import { provideDiagnosesContext } from '@/contexts/diagnoses';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
 import { Switch, Route } from 'react-router-native';
@@ -13,8 +12,6 @@ import Screens from './Screens';
 import PreviewForm from './PreviewForm';
 
 import Header from './Header';
-import NextBtn from './NextBtn';
-import SaveBtn from './SaveBtn';
 
 const Script = () => {
   const { history, location } = useRouter();
@@ -59,10 +56,6 @@ const Script = () => {
               <Header />
 
               <Screens />
-
-              <NextBtn />
-
-              <SaveBtn />
             </>
           )}
         />
@@ -72,7 +65,5 @@ const Script = () => {
 };
 
 export default provideScriptContext(
-  provideDiagnosesContext(
-    provideScreensContext(Script)
-  )
+  provideScreensContext(Script)
 );
