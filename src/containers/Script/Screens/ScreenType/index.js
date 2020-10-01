@@ -15,7 +15,7 @@ import Checklist from './TypeChecklist';
 import List from './TypeList';
 
 import ScreenContainer from './_Container';
-import NextBtn from './NextBtn';
+import NextBtn from './_NextBtn';
 
 const ScreenType = ({ children }) => {
   const context = useScreensContext();
@@ -89,7 +89,6 @@ const ScreenType = ({ children }) => {
 
         if (!shouldDisplay) Component = null;
 
-        // const value = form.filter(item => item.screen.id === activeScreen.id)[0];
         const { label, dataType } = (activeScreen.data.metadata || {});
         const screen = {
           title: activeScreen.data.title,

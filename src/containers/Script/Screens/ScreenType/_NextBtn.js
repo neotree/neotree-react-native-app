@@ -1,29 +1,25 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { useScreensContext } from '@/contexts/screens';
-import { Icon, Button } from 'native-base';
-import { Link } from 'react-router-native';
+import { Icon } from 'native-base';
 import { TouchableOpacity } from 'react-native';
 import theme from '@/native-base-theme/variables/commonColor';
 
-const NextBtn = () => {
+const NextBtn = ({ onNext, }) => {
   const {
     goToSummary,
     canSave,
-    getScreenLink,
+    goToScreen,
   } = useScreensContext();
-  const Btn = canSave() ? Button : Link;
-  const btnProps = canSave() ? {
-    onPress: () => goToSummary(),
-  } : {
-    replace: true,
-    to: getScreenLink('next'),
-    component: TouchableOpacity,
-  };
 
   return (
     <>
-      <Btn
-        {...btnProps}
+      <TouchableOpacity
+        onPress={() => {
+          if (canSave()) return goToSummary();
+          goToScreen('next');
+          if (onNext) onNext();
+        }}
         style={[
           {
             backgroundColor: theme.brandInfo,
@@ -42,9 +38,13 @@ const NextBtn = () => {
             shadowRadius: 5,
           }
         ]}
-      ><Icon style={{ color: '#fff' }} name="arrow-forward" /></Btn>
+      ><Icon style={{ color: '#fff' }} name="arrow-forward" /></TouchableOpacity>
     </>
   );
+};
+
+NextBtn.propTypes = {
+  onNext: PropTypes.func,
 };
 
 export default NextBtn;

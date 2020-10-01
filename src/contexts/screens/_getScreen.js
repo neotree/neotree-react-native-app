@@ -6,9 +6,10 @@ export default function getScreen(opts = {}) {
 
   const { index: i, direction: d } = opts;
   const direction = ['next', 'back'].includes(d) ? d : null;
-  const index = i || activeScreenIndex;
 
-  const getTargetScreen = (i = index) => {
+  if (!isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
+
+  const getTargetScreen = (i = activeScreenIndex) => {
     const index = (() => {
       switch (direction) {
         case 'next':
@@ -21,10 +22,10 @@ export default function getScreen(opts = {}) {
     })();
 
     const screen = screens[index];
-
+    
     if (!screen) return null;
 
-    if (!direction) return screen;
+    if (!direction) return { screen, index, };
 
     const target = { screen, index };
     const condition = screen.data.condition;
@@ -42,5 +43,5 @@ export default function getScreen(opts = {}) {
     return conditionMet ? target : getTargetScreen(index);
   };
 
-  return getTargetScreen(index);
+  return getTargetScreen();
 }
