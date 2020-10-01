@@ -12,7 +12,6 @@ import Screens from './Screens';
 import PreviewForm from './PreviewForm';
 
 import Header from './Header';
-import NextBtn from './NextBtn';
 
 const Script = () => {
   const { history, location } = useRouter();
@@ -57,8 +56,6 @@ const Script = () => {
               <Header />
 
               <Screens />
-
-              <NextBtn />
             </>
           )}
         />
