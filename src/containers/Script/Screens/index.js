@@ -62,9 +62,7 @@ const Screens = () => {
         </Content>
       )}
 
-      <ScrollView
-        ref={scrollViewRef}
-      >
+      <ScreenType>
         {!!activeScreen.data.contentText && (
           <>
             <Content
@@ -82,11 +80,8 @@ const Screens = () => {
           </>
         )}
 
-        <Content>
-          <Divider border={false} />
-          <ScreenType />
-        </Content>
-      </ScrollView>
+        <Divider border={false} />
+      </ScreenType>
     </>
   );
 };
