@@ -1,11 +1,12 @@
 import React from 'react';
 import { useHistory } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
-import { Button, Icon } from 'native-base';
+import { Icon } from 'native-base';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import ExportLink from './ExportLink';
 import DeleteBtn from './DeleteBtn';
+import { TouchableOpacity, View } from 'react-native';
 
 const HeaderComponent = () => {
   const history = useHistory();
@@ -23,17 +24,17 @@ const HeaderComponent = () => {
         title="Session history"
         leftActions={(
           <>
-            <Button
-              transparent
+            <TouchableOpacity
               onPress={() => goBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
-            </Button>
+            </TouchableOpacity>
           </>
         )}
         rightActions={(
           <>
             <ExportLink />
+            <View style={{ margin: 10 }} />
             <DeleteBtn />
           </>
         )}

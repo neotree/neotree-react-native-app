@@ -11,6 +11,8 @@ export default (html, session) => {
       <style>
         body {
           font-size: 12px;
+          margin: 0;
+          padding: 0;
         }
         #header {
           text-align: center;
@@ -59,7 +61,7 @@ export default (html, session) => {
 
         @page {
           size: A4;
-          margin: 11mm 17mm 17mm 17mm;
+          margin: 11mm 0mm 17mm 0mm;
         }
 
         @media print {

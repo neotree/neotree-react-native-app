@@ -5,8 +5,8 @@ import { useHistory, useLocation, Link } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import copy from '@/constants/copy';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import { Button, Icon, ActionSheet } from 'native-base';
-import { Alert, TouchableOpacity } from 'react-native';
+import { Icon, ActionSheet } from 'native-base';
+import { Alert, TouchableOpacity, Platform, } from 'react-native';
 import Modal from '@/components/Modal';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
@@ -70,21 +70,25 @@ const HeaderComponent = () => {
         rightActions={(
           <>
             {activeScreen && !!activeScreen.data.infoText && (
-              <Button
-                transparent
-                onPress={() => setOpenInfoModal(true)}
-              >
-                <Icon style={[colorStyles.primaryColor]} name="information-circle-outline" />
-              </Button>
+              <>
+                <TouchableOpacity
+                  onPress={() => setOpenInfoModal(true)}
+                >
+                  <Icon style={[colorStyles.primaryColor]} name="information-circle-outline" />
+                </TouchableOpacity>
+              </>
             )}
 
-            <Button
-              transparent
+            <TouchableOpacity
+              style={{ padding: 10 }}
               onPress={() => {
                 ActionSheet.show(
                   {
-                    options: ['Cancel Script?', 'Close'],
-                    // title: 'Action',
+                    options: [
+                      'Cancel Script?', 
+                      Platform.OS === 'ios' ? 'Close' : null
+                    ].filter(o => o),
+                    title: 'Action',
                     cancelButtonIndex: 1,
                   },
                   i => {
@@ -95,7 +99,7 @@ const HeaderComponent = () => {
               }}
             >
               <Icon style={[colorStyles.primaryColor]} name="more" />
-            </Button>
+            </TouchableOpacity>
           </>
         )}
       />

@@ -1,5 +1,8 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { useScreensContext } from '@/contexts/screens';
+import { View } from 'react-native';
+import Content from '@/components/Content';
 
 import YesNo from './TypeYesNo';
 import MultiSelect from './TypeMultiSelect';
@@ -11,31 +14,41 @@ import Timer from './TypeTimer';
 import Checklist from './TypeChecklist';
 import List from './TypeList';
 
-const ScreenType = () => {
+import ScreenContainer from './_Container';
+import NextBtn from './NextBtn';
+
+const ScreenType = ({ children }) => {
   const context = useScreensContext();
 
-  const { state: { activeScreen, form, }, setState } = context;
+  const { canSave, state: { activeScreen, form, }, setState } = context;
 
   const [screenId, setScreenId] = React.useState(null);
+  const [value, setValue] = React.useState(null);
 
   const shouldDisplay = activeScreen.id === screenId;
 
-  const onEntry = entry => setState(prevState => {
-    const form = prevState.form;
-    const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
-    return {
-      ...prevState,
-      form: entry ?
-        formEntry ?
-          form.map(item => item.screen.id === activeScreen.id ? entry : item)
+  const onEntry = entry => {
+    setValue(entry);
+    setState(prevState => {
+      const form = prevState.form;
+      const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
+      return {
+        ...prevState,
+        form: entry ?
+          formEntry ?
+            form.map(item => item.screen.id === activeScreen.id ? entry : item)
+            :
+            [...form, entry]
           :
-          [...form, entry]
-        :
-        form.filter(item => item.screen.id !== activeScreen.id)
-    };
-  });
+          form.filter(item => item.screen.id !== activeScreen.id)
+      };
+    });
+  };
 
-  React.useEffect(() => { setScreenId(activeScreen.id); }, [activeScreen]);
+  React.useEffect(() => { 
+    setScreenId(activeScreen.id); 
+    setValue(form.filter(item => item.screen.id === activeScreen.id)[0]);
+  }, [activeScreen]);
 
   return (
     <>
@@ -76,7 +89,7 @@ const ScreenType = () => {
 
         if (!shouldDisplay) Component = null;
 
-        const value = form.filter(item => item.screen.id === activeScreen.id)[0];
+        // const value = form.filter(item => item.screen.id === activeScreen.id)[0];
         const { label, dataType } = (activeScreen.data.metadata || {});
         const screen = {
           title: activeScreen.data.title,
@@ -87,16 +100,30 @@ const ScreenType = () => {
         };
 
         return !Component ? null : (
-          <Component
-            screen={activeScreen}
-            context={context}
-            value={value || null}
-            onChange={entry => onEntry(entry ? { ...entry, screen } : undefined)}
-          />
+          <View style={{ flex: 1, }}>
+            <ScreenContainer>
+              {children}
+              
+              <Content>
+                <Component
+                  screen={activeScreen}
+                  context={context}
+                  value={value || null}
+                  onChange={entry => onEntry(entry ? { ...entry, screen } : undefined)}
+                />
+              </Content>
+            </ScreenContainer>
+
+            {!!(value || canSave()) && <NextBtn />}
+          </View>
         );
       })()}
     </>
   );
+};
+
+ScreenType.propTypes = {
+  children: PropTypes.node,
 };
 
 export default ScreenType;
