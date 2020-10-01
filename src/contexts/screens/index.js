@@ -38,21 +38,11 @@ export function provideScreensContext(Component) {
         form: { ...prevState.form, ...typeof s === 'function' ? s(prevState.form) : s }
       }));
     
-      canGoToNextScreen = () => {
-        if (!this.getScreenLink('next')) return false;
-        if (!this.state.form.filter(({ screen }) => screen.id === this.state.activeScreen.id)[0]) return false;
-        return true;
-      };
-    
       onLocationChange = require('./_onLocationChange').default.bind(this);
-    
-      canGoToPrevScreen = () => !!this.getScreenLink('back');
     
       isLastScreen = () => this.state.activeScreen && (this.state.activeScreen.id === this.getLastScreen().id);
     
       getScreen = require('./_getScreen').default.bind(this);
-    
-      getScreenLink = require('./_getScreenLink').default.bind(this);
     
       getLastScreen = require('./_getLastScreen').default.bind(this);
     
@@ -74,10 +64,13 @@ export function provideScreensContext(Component) {
 
       goToSummary = require('./_goToSummary').default.bind(this);
 
+      goToScreen = require('./_goToScreen').default.bind(this);
+
       initialiseScreens = require('./_initialiseScreens').default.bind(this);
     })();
 
-    React.useEffect(() => value.onLocationChange(), [screensInitialised, location]);
+    // React.useEffect(() => value.onLocationChange(), [screensInitialised, location]);
+    React.useEffect(() => value.goToScreen('initial'), [screensInitialised]);
     React.useEffect(() => { value.initialiseScreens(); }, [scriptId]);
 
     return (
