@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useScreensContext } from '@/contexts/screens';
 import { View } from 'react-native';
 import Content from '@/components/Content';
+import OverlayLoader from '@/components/OverlayLoader';
 
 import YesNo from './TypeYesNo';
 import MultiSelect from './TypeMultiSelect';
@@ -98,7 +99,7 @@ const ScreenType = ({ children }) => {
           metadata: { label, dataType },
         };
 
-        return !Component ? null : (
+        return !Component ? <OverlayLoader display style={{ backgroundColor: 'transparent' }} /> : (
           <View style={{ flex: 1, }}>
             <ScreenContainer>
               {children}
