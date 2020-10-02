@@ -9,7 +9,7 @@ import Content from '@/components/Content';
 import OverlayLoader from '@/components/OverlayLoader';
 import bgColorStyles from '@/styles/bgColorStyles';
 import colorStyles from '@/styles/colorStyles';
-import ScreenType from './ScreenType';
+import ActiveScreen from './ActiveScreen';
 
 const Screens = () => {
   const scrollViewRef = React.useRef(null);
@@ -62,7 +62,7 @@ const Screens = () => {
         </Content>
       )}
 
-      <ScreenType>
+      <ActiveScreen>
         {!!activeScreen.data.contentText && (
           <>
             <Content
@@ -81,7 +81,7 @@ const Screens = () => {
         )}
 
         <Divider border={false} />
-      </ScreenType>
+      </ActiveScreen>
     </>
   );
 };

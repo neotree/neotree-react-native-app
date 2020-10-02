@@ -18,7 +18,7 @@ import List from './TypeList';
 import ScreenContainer from './_Container';
 import NextBtn from './_NextBtn';
 
-const ScreenType = ({ children }) => {
+const ActiveScreen = ({ children }) => {
   const context = useScreensContext();
 
   const { canSave, state: { activeScreen, form, }, setState } = context;
@@ -122,8 +122,8 @@ const ScreenType = ({ children }) => {
   );
 };
 
-ScreenType.propTypes = {
+ActiveScreen.propTypes = {
   children: PropTypes.node,
 };
 
-export default ScreenType;
+export default ActiveScreen;
