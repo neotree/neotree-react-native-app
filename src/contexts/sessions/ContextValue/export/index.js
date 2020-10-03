@@ -3,10 +3,12 @@ import * as FileSystem from 'expo-file-system';
 import * as Permissions from 'expo-permissions';
 import * as MediaLibrary from 'expo-media-library';
 import { Alert } from 'react-native';
-import { exportSession } from '@/api/export';
+import { exportSession,authenticateEhrApi } from '@/api/export';
 import { updateSessions } from '@/api/sessions';
+import { insertEhrSession} from '@/api/ehr_session'
 import moment from 'moment';
 import getJSON from './getJSON';
+import ehrConfig from '~/config/ehr-api.json';
 
 export { getJSON };
 
@@ -122,6 +124,7 @@ export function exportEXCEL() {
 }
 
 export function exportToApi() {
+  console.log(this.state.sessions.filter(s=>!s.exported));
   const sessions = this.state.sessions.filter(s => !s.exported);
   const postData = getJSON(sessions);
 
@@ -148,5 +151,32 @@ export function exportToApi() {
     .catch(() => {
       this.setState({ exporting: false });
       exportSuccessAlert('Export complete');
+    });
+}
+
+export function exportToEhr() {
+  const sessions = this.state.sessions.filter(s => !s.exported && s.data.script.data.title.includes('EHR'));
+
+const postData = getJSON(sessions);
+  const {username,password,rememberMe} = ehrConfig;
+  const body = {username:username,password:password,rememberMe:rememberMe}
+ return new Promise((resolve, reject) => {
+
+    authenticateEhrApi(body)
+    .then((result) => {
+      if(result && !result.ehr_session){
+        const token = JSON.parse(result)
+        if(token && token.id_token){
+        insertEhrSession(token.id_token)
+        }
+      } 
+
+     resolve(result); 
+    }).catch((e=>{
+      reject(e)    
+    }))   
+    })
+    .catch((e) => {
+      reject(e);
     });
 }

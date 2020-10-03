@@ -83,6 +83,11 @@ export default () => new Promise((resolve, reject) => {
     'completed_sessions integer',
     'incompleted_sessions integer',
   ].join(',');
+  const ehr_session_keyTableColumns = [
+    'id integer primary key autoincrement',
+    'session_key varchar',
+    'createdAt datetime',
+  ].join(',');
 
   const querys = [
     `create table if not exists data_status (${dataStatusTableColumns});`,
@@ -94,6 +99,7 @@ export default () => new Promise((resolve, reject) => {
     `create table if not exists config_keys (${config_keysTableColumns});`,
     `create table if not exists configuration (${configurationTableColumns});`,
     `create table if not exists sessions_stats (${sessions_statsTableColumns});`,
+    `create table if not exists ehr_session (${ehr_session_keyTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -121,6 +127,7 @@ export default () => new Promise((resolve, reject) => {
       config_keysTable: rslts[6],
       configurationTable: rslts[7],
       sessions_statsTable: rslts[8],
+      ehr_sessionTable: rslts[9]
     }))
     .catch(reject);
 });

@@ -1,4 +1,6 @@
 import makeApiCall from './makeApiCall';
+import makeEHRApiCall from './makeEHRApiCall';
+import { getEhrSession} from '@/api/ehr_session'
 
 export const exportSession = (body = {}, reqOpts = {}) => {
   const { script, uid, } = body;
@@ -8,3 +10,60 @@ export const exportSession = (body = {}, reqOpts = {}) => {
     ...reqOpts,
   });
 };
+export const exportPersonRegToEHR = (body = {}, reqOpts = {}) => {
+ 
+  return makeEHRApiCall(`/people`, {
+    body,
+    method: 'POST',
+    ...reqOpts,
+  });
+};
+
+export const exportDemographicsToEHR = (body = {}, reqOpts = {}) => {
+ const {personId} = body;
+  return makeEHRApiCall(`/people/${personId}`, {
+    body,
+    method: 'POST',
+    ...reqOpts,
+  });
+};
+
+
+export const authenticateEhrApi = async(body = {}, reqOpts = {}) => {
+
+ const localToken = await getEhrSession({});
+  if(localToken && localToken.ehr_session && localToken.ehr_session.session_key ){
+   try{ 
+  const jwt = JSON.parse(atob(localToken.ehr_session.session_key.split('.')[1]));
+
+  if(jwt && jwt.exp){
+   const expiry =  jwt.exp * 1000;
+   if (!isValidJWT(expiry)){
+   return localToken
+   }else{
+    return makeEHRApiCall(`/authenticate`, {
+      body,
+      method: 'POST',
+      ...reqOpts,
+    });
+   }
+  }
+}catch(e){
+  return makeEHRApiCall(`/authenticate`, {
+    body,
+    method: 'POST',
+    ...reqOpts,
+  });
+}
+}
+  
+
+};
+
+export const isValidJWT = (expiry)=>{
+  if (!expiry) {
+    return false;
+}
+return Date.now() > expiry;
+
+}
