@@ -11,6 +11,7 @@ import LazyPage from '@/components/LazyPage';
 import Splash from '@/components/Splash';
 import OverlayLoader from '@/components/OverlayLoader';
 import NetworkStatusBar from '@/components/NetworkStatusBar';
+import {decode, encode} from 'base-64'
 
 const Containers = LazyPage(() => import('@/containers'), { LoaderComponent: Splash });
 
@@ -24,6 +25,14 @@ const NeoTreeApp = () => {
   } = useAppContext();
 
   const splashScreen = getSplashScreenInfo();
+
+  if (!global.btoa) {
+    global.btoa = encode;
+    }
+
+  if (!global.atob) {
+    global.atob = decode;
+    }
 
   React.useEffect(() => {
     if (appInitialised) {

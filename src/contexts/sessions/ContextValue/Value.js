@@ -1,5 +1,5 @@
 import * as defaults from './_defaults';
-import { exportJSON, exportEXCEL, exportToApi, getJSON } from './export';
+import { exportJSON, exportEXCEL, exportToApi, getJSON,exportToEhr } from './export';
 
 export { defaults };
 
@@ -33,6 +33,7 @@ export default class ContextValue {
   exportEXCEL = exportEXCEL.bind(this);
 
   exportToApi = exportToApi.bind(this);
+  exportToEhr = exportToEhr.bind(this);
 
   selectItems = ids => {
     ids = ids && ids.map ? ids : [ids];

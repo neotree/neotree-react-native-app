@@ -9,7 +9,7 @@ import Divider from '@/components/Divider';
 import Header from './Header';
 
 const ExportPage = () => {
-  const { exportJSON, exportEXCEL, exportToApi, state: { exporting } } = useSessionsContext();
+  const { exportJSON, exportEXCEL, exportToApi,exportToEhr, state: { exporting } } = useSessionsContext();
 
   const [format, setFormat] = React.useState('excel');
 
@@ -17,6 +17,7 @@ const ExportPage = () => {
     { label: 'Excel Spreadsheet', value: 'excel' },
     { label: 'JSON', value: 'json' },
     { label: 'JSONAPI', value: 'jsonapi' },
+    { label: 'EHR', value: 'ehr' },
   ];
 
   useOverlayLoaderState('exporting_sessions', exporting);
@@ -58,6 +59,7 @@ const ExportPage = () => {
                 if (format === 'excel') return exportEXCEL();
                 if (format === 'json') return exportJSON();
                 if (format === 'jsonapi') return exportToApi();
+                if (format === 'ehr') return exportToEhr();
               }}
             >
               <Text>Export</Text>

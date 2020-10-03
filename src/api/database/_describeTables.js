@@ -11,6 +11,7 @@ export default () => new Promise((resolve, reject) => {
     'select sql from sqlite_master where name = "config_keys";',
     'select sql from sqlite_master where name = "configuration";',
     'select sql from sqlite_master where name = "stats";',
+    'select sql from sqlite_master where name = "ehr_session";',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -38,6 +39,7 @@ export default () => new Promise((resolve, reject) => {
       config_keysTable: rslts[6],
       configurationTable: rslts[7],
       statsTable: rslts[8],
+      ehr_sessionTable: rslts[9],
     }))
     .catch(reject);
 });
