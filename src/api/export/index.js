@@ -11,7 +11,7 @@ export const exportSession = (body = {}, reqOpts = {}) => {
   });
 };
 export const exportPersonRegToEHR = (body = {}, reqOpts = {}) => {
- 
+  
   return makeEHRApiCall(`/people`, {
     body,
     method: 'POST',
@@ -23,10 +23,18 @@ export const exportDemographicsToEHR = (body = {}, reqOpts = {}) => {
  const {personId} = body;
   return makeEHRApiCall(`/people/${personId}`, {
     body,
-    method: 'POST',
+    method: 'PUT',
     ...reqOpts,
   });
 };
+export const exportPatientAdmissionToEHR = (body = {}, reqOpts = {}) => {
+   return makeEHRApiCall(`/patients/in-patient-admission`, {
+     body,
+     method: 'POST',
+     ...reqOpts,
+   });
+ };
+ 
 
 
 export const authenticateEhrApi = async(body = {}, reqOpts = {}) => {
@@ -40,23 +48,31 @@ export const authenticateEhrApi = async(body = {}, reqOpts = {}) => {
    const expiry =  jwt.exp * 1000;
    if (!isValidJWT(expiry)){
    return localToken
-   }else{
-    return makeEHRApiCall(`/authenticate`, {
+   }
+  }
+  }catch(e){
+    try{
+   return makeEHRApiCall(`/authenticate`, {
+     body,
+     method: 'POST',
+     ...reqOpts,
+   });
+  }catch(e){
+
+   }
+    }
+  }
+  else{
+  try{
+          return makeEHRApiCall(`/authenticate`, {
       body,
       method: 'POST',
       ...reqOpts,
     });
-   }
-  }
-}catch(e){
-  return makeEHRApiCall(`/authenticate`, {
-    body,
-    method: 'POST',
-    ...reqOpts,
-  });
-}
-}
+   }catch(e){
   
+  }
+  }  
 
 };
 

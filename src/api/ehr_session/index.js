@@ -7,7 +7,6 @@ export const insertEhrSession = (opts = '') => new Promise((resolve, reject) => 
   _insertEhrSession(opts)
     .then(resolve)
     .catch(e=>{
-      console.log("**--INSERT**",e)
     });
 });
 
