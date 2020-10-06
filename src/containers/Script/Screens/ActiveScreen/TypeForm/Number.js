@@ -51,7 +51,7 @@ const NumberField = ({
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}
-            keyboardType="numeric"
+            keyboardType={maxDecimals ? 'decimal-pad' : 'number-pad'}
           />
         </Item>
       </Form>
