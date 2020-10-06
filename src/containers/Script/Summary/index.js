@@ -35,7 +35,7 @@ const Summary = () => {
         onPress={() => {
           setSaving(true);
           setTimeout(() => {
-            const save = saveForm({ completed: true, }, session)
+            const save = () => saveForm({ completed: true, }, session)
               .then(() => history.push('/'))
               .catch(() => {
                 setSaving(false);
