@@ -2,23 +2,19 @@ import React from 'react';
 import PreviewSessionForm from '@/containers/Sessions/PreviewSessionForm';
 import { useScreensContext } from '@/contexts/screens';
 import Content from '@/components/Content';
+import OverlayLoader from '@/components/OverlayLoader';
 import { Icon } from 'native-base';
-import { TouchableOpacity } from 'react-native';
-import { useOverlayLoaderState } from '@/contexts/app';
+import { TouchableOpacity, Alert, } from 'react-native';
+import { useHistory } from 'react-router-native';
 import theme from '@/native-base-theme/variables/commonColor';
 import Header from './Header';
 
 const Wrapper = props => <Content {...props} />;
 
 const Summary = () => {
-  const { 
-    getDiagnoses, 
-    saveForm,
-    createSessionSummary,
-    state: { savingForm } 
-  } = useScreensContext();
-
-  useOverlayLoaderState('savingForm', savingForm);
+  const history = useHistory();
+  const { saveForm, createSessionSummary, } = useScreensContext();
+  const [saving, setSaving] = React.useState(false);
 
   const session = createSessionSummary({ completed: true, });
 
@@ -30,13 +26,39 @@ const Summary = () => {
       
       <PreviewSessionForm
         session={session}
-        diagnoses={getDiagnoses()}
+        diagnoses={session.data.diagnoses}
         Wrapper={Wrapper}
         showConfidential
       />
 
       <TouchableOpacity
-        onPress={() => saveForm({ completed: true, })}
+        onPress={() => {
+          setSaving(true);
+          setTimeout(() => {
+            const save = () => saveForm({ completed: true, }, session)
+              .then(() => history.push('/'))
+              .catch(() => {
+                setSaving(false);
+                Alert.alert(
+                  '',
+                  'Failed to save session',
+                  [
+                    {
+                      text: 'Try again',
+                      onPress: () => save(),
+                    },
+                    {
+                      text: 'Cancel',
+                      onPress: () => {},
+                    }
+                  ],
+                  { cancelable: true }
+                );
+              });
+            
+            save();
+          }, 0);
+        }}
         style={[
           {
             backgroundColor: theme.brandInfo,
@@ -56,6 +78,8 @@ const Summary = () => {
           }
         ]}
       ><Icon style={{ color: '#fff' }} name="save" /></TouchableOpacity>
+
+      <OverlayLoader display={saving} />
     </>
   );
 };
