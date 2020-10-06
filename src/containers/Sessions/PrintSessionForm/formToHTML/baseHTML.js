@@ -10,12 +10,13 @@ export default (html, session) => {
     <header>
       <style>
         body {
-          font-size: 12px;
+          font-size: 10px;
           margin: 0;
           padding: 0;
         }
         #header {
           text-align: center;
+          margin-bottom: 15px;
         }
         #headerTitle {
           margin: 0;
@@ -23,6 +24,8 @@ export default (html, session) => {
         }
         #headerSubtitle {
           color: #999;
+          margin: 0;
+          padding: 0;
         }
         #content {
           webkit-columns: 0px 2;
@@ -61,7 +64,7 @@ export default (html, session) => {
 
         @page {
           size: A4;
-          margin: 11mm 0mm 17mm 0mm;
+          margin: 11mm 0;
         }
 
         @media print {
@@ -91,7 +94,7 @@ export default (html, session) => {
     <body>
       <div id="header">
         <div id="headerImg">
-          <h1 id="headerTitle">Neotree Neonatal Hospital Form</h1>
+          <h4 id="headerTitle">Neotree Neonatal Hospital Form</h4>
           <p id="headerSubtitle">Ministry of Health - National ${script.data.type === 'discharge' ? 'Discharge' : 'Admission'} Form</p>
         </div>
       </div>
