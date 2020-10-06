@@ -1,10 +1,19 @@
 export default function createSessionSummary(_payload = {}) {
   const {
     script,
-    state: { form, activeScreen, start_time, screens, uid, },
+    state: { form, activeScreen, start_time, screens, },
   } = this;
 
   const { completed, canceled, saveInBackground, ...payload } = _payload;
+
+  const uid = form.reduce((acc, { values }) => {
+    const uid = values.reduce((acc, { key, value }) => {
+      if (`${key}`.match(/uid/gi)) return value;
+      return acc;
+    }, null);
+
+    return uid || acc;
+  }, null);
 
   const sessionSummary = {
     ...payload,
