@@ -8,7 +8,7 @@ export default (url = '', opts = {}) => new Promise((resolve, reject) => {
   const {body, method: m, ...reqOpts} = opts;  
   if(!url.includes('/authenticate')){
   const {jwtToken } = opts;  
-  reqOpts.headers = { Authorization: 'Bearer'+jwtToken, ...reqOpts.headers };
+  reqOpts.headers = { Authorization: `Bearer ${jwtToken}`, ...reqOpts.headers };
   }
   else{
     reqOpts.headers = {...reqOpts.headers};
@@ -21,7 +21,7 @@ export default (url = '', opts = {}) => new Promise((resolve, reject) => {
     .then(res => new Promise((resolve, reject) => {
       res.text()
         .then(text => {
-          if (res.status === 200) 
+          if (res.status === 200|| res.status === 201) 
           {
             return resolve(text);
           }   
