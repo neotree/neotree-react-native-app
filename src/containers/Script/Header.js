@@ -15,7 +15,6 @@ import colorStyles from '@/styles/colorStyles';
 
 const HeaderComponent = () => {
   const history = useHistory();
-  const { pathname: currentLink } = useLocation();
   const { state: { script } } = useScriptContext();
   const { goToScreen, saveForm, state: { activeScreen, activeScreenIndex, } } = useScreensContext();
 
@@ -32,7 +31,7 @@ const HeaderComponent = () => {
         {
           text: copy.ALERT_OK,
           onPress: () => {
-            saveForm({ canceled: true, saveInBackground: true, });
+            saveForm({ canceled: true, });
             history.push('/');
           }
         }
@@ -71,6 +70,7 @@ const HeaderComponent = () => {
               <>
                 <TouchableOpacity
                   onPress={() => setOpenInfoModal(true)}
+                  style={{ padding: 10 }}
                 >
                   <Icon style={[colorStyles.primaryColor]} name="information-circle-outline" />
                 </TouchableOpacity>
