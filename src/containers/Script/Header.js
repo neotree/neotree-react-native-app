@@ -17,8 +17,7 @@ const HeaderComponent = () => {
   const history = useHistory();
   const { pathname: currentLink } = useLocation();
   const { state: { script } } = useScriptContext();
-  const { getScreenLink, saveForm, state: { activeScreen } } = useScreensContext();
-  const backLink = getScreenLink('back');
+  const { goToScreen, saveForm, state: { activeScreen, activeScreenIndex, } } = useScreensContext();
 
   const cancelScript = () => {
     Alert.alert(
@@ -43,9 +42,8 @@ const HeaderComponent = () => {
   };
 
   useBackButton(() => {
-    history.entries = [];
-    history.push(backLink || currentLink);
-    if (!backLink) cancelScript();
+    if (activeScreenIndex < 1) return cancelScript();
+    goToScreen('back');
   });
 
   const [openInfoModal, setOpenInfoModal] = React.useState(false);
@@ -57,14 +55,14 @@ const HeaderComponent = () => {
         subtitle={script.data.title}
         leftActions={(
           <>
-            <Link
-              transparent
-              component={TouchableOpacity}
-              to={backLink || currentLink}
-              onPress={() => !backLink && cancelScript()}
+            <TouchableOpacity
+              onPress={() => {
+                if (activeScreenIndex < 1) return cancelScript();
+                goToScreen('back');
+              }}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
-            </Link>
+            </TouchableOpacity>
           </>
         )}
         rightActions={(

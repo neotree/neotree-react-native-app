@@ -10,14 +10,17 @@ import Header from './Header';
 
 const Wrapper = props => <Content {...props} />;
 
-const PreviewForm = () => {
+const Summary = () => {
   const { 
     getDiagnoses, 
     saveForm,
-    state: { sessionSummary: session, savingForm } 
+    createSessionSummary,
+    state: { savingForm } 
   } = useScreensContext();
 
   useOverlayLoaderState('savingForm', savingForm);
+
+  const session = createSessionSummary({ completed: true, });
 
   if (!session) return null;
 
@@ -57,4 +60,4 @@ const PreviewForm = () => {
   );
 };
 
-export default PreviewForm;
+export default Summary;
