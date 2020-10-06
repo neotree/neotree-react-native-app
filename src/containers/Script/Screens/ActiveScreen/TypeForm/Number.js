@@ -28,6 +28,7 @@ const NumberField = ({
             editable={conditionMet}
             value={value || ''}
             defaultValue={value || ''}
+            autoCapitalize="none"
             onChange={e => {
               const value = e.nativeEvent.text;
               let err = null;
@@ -51,7 +52,7 @@ const NumberField = ({
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}
-            keyboardType={maxDecimals ? 'decimal-pad' : 'number-pad'}
+            keyboardType={maxDecimals ? 'decimal-pad' : 'numeric'}
           />
         </Item>
       </Form>
