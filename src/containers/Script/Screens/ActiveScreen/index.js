@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useScreensContext } from '@/contexts/screens';
 import { View } from 'react-native';
 import Content from '@/components/Content';
+import OverlayLoader from '@/components/OverlayLoader';
 
 import YesNo from './TypeYesNo';
 import MultiSelect from './TypeMultiSelect';
@@ -15,9 +16,9 @@ import Checklist from './TypeChecklist';
 import List from './TypeList';
 
 import ScreenContainer from './_Container';
-import NextBtn from './NextBtn';
+import NextBtn from './_NextBtn';
 
-const ScreenType = ({ children }) => {
+const ActiveScreen = ({ children }) => {
   const context = useScreensContext();
 
   const { canSave, state: { activeScreen, form, }, setState } = context;
@@ -89,7 +90,6 @@ const ScreenType = ({ children }) => {
 
         if (!shouldDisplay) Component = null;
 
-        // const value = form.filter(item => item.screen.id === activeScreen.id)[0];
         const { label, dataType } = (activeScreen.data.metadata || {});
         const screen = {
           title: activeScreen.data.title,
@@ -99,7 +99,7 @@ const ScreenType = ({ children }) => {
           metadata: { label, dataType },
         };
 
-        return !Component ? null : (
+        return !Component ? <OverlayLoader display style={{ backgroundColor: 'transparent' }} /> : (
           <View style={{ flex: 1, }}>
             <ScreenContainer>
               {children}
@@ -122,8 +122,8 @@ const ScreenType = ({ children }) => {
   );
 };
 
-ScreenType.propTypes = {
+ActiveScreen.propTypes = {
   children: PropTypes.node,
 };
 
-export default ScreenType;
+export default ActiveScreen;

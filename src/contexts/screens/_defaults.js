@@ -6,7 +6,7 @@ export const defaultState = {
   activeScreen: null,
   screenId: null,
   screens: [],
-  activeScreenIndex: null,
+  activeScreenIndex: 0,
   loadingScreens: false,
   loadScreensError: null,
   screensInitialised: false,

@@ -11,6 +11,9 @@ const NumberField = ({
 }) => {
   const [error, setError] = React.useState(null);
 
+  let maxDecimals = 0;
+  if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '').length;
+
   return (
     <>
       <Form>
@@ -37,9 +40,9 @@ const NumberField = ({
                   err = `Max value ${field.maxValue}`;
                 } else if (field.minValue && (v < field.minValue)) {
                   err = `Min value ${field.minValue}`;
-                } else if (field.format && (decimals.length > Number(field.format))) {
-                  err = `Number should have only ${field.format} decimal places.`;
-                } else if (!field.format && value.indexOf('.') > -1) {
+                } else if (maxDecimals && (decimals.length > maxDecimals)) {
+                  err = `Number should have only ${maxDecimals} decimal places.`;
+                } else if (!maxDecimals && value.indexOf('.') > -1) {
                   err = 'Decimal places not allowed.'
                 }
               }
@@ -48,7 +51,7 @@ const NumberField = ({
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}
-            keyboardType="numeric"
+            keyboardType={maxDecimals ? 'decimal-pad' : 'number-pad'}
           />
         </Item>
       </Form>

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Overlay from '@/components/Overlay';
 import { Spinner } from 'native-base';
+import theme from '@/native-base-theme/variables/commonColor';
 
 const OverlayLoader = ({ display, style, ...props }) => {
   if (!display) return null;
@@ -15,7 +16,7 @@ const OverlayLoader = ({ display, style, ...props }) => {
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
-        <Spinner color="blue" />
+        <Spinner color={theme.brandInfo} />
       </Overlay>
     </>
   );

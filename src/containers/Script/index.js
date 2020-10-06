@@ -3,18 +3,19 @@ import { provideScriptContext, useScriptContext } from '@/contexts/script';
 import { provideScreensContext } from '@/contexts/screens';
 import PageRefresher from '@/components/PageRefresher';
 import scriptPageCopy from '@/constants/copy/scriptPage';
-import { Switch, Route } from 'react-router-native';
 import Text from '@/components/Text';
 import OverlayLoader from '@/components/OverlayLoader';
 import useRouter from '@/utils/useRouter';
+import queryString from 'query-string';
 
 import Screens from './Screens';
-import PreviewForm from './PreviewForm';
+import Summary from './Summary';
 
 import Header from './Header';
 
 const Script = () => {
-  const { history, location } = useRouter();
+  const { history, location, } = useRouter();
+  const { displaySummary, } = queryString.parse(location.search);
 
   const {
     initialisePage,
@@ -44,22 +45,12 @@ const Script = () => {
 
   return (
     <>
-      <Switch>
-        <Route
-          path="/script/:scriptId/preview-form"
-          component={PreviewForm}
-        />
-
-        <Route
-          render={() => (
-            <>
-              <Header />
-
-              <Screens />
-            </>
-          )}
-        />
-      </Switch>
+      {displaySummary === 'yes' ? <Summary /> : (
+        <>
+          <Header />
+          <Screens />
+        </>
+      )}
     </>
   );
 };

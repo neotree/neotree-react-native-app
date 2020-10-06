@@ -15,6 +15,7 @@ const Checklist = ({ screen, value, onChange }) => {
   }, [entry]);
 
   const items = metadata.items || [];
+  const exclusiveItems = items.filter(item => item.exclusive).map(item => item.key);
 
   return (
     <>
@@ -23,14 +24,7 @@ const Checklist = ({ screen, value, onChange }) => {
         const selected = entry.values.map(e => e.value).includes(item.key);
 
         const _onChange = (selectValue) => { 
-          if (selectValue === selected) return;
-
           const value = item.key;
-          const _selected = !selected;
-          const exclusives = metadata.items
-            .filter(item => item.exclusive)
-            .map(item => item.key);
-      
           const _entry = {
             value,
             valueText: item.label,
@@ -40,27 +34,20 @@ const Checklist = ({ screen, value, onChange }) => {
             dataType: item.dataType,
             exclusive: item.exclusive,
           };
-      
-          if (item.exclusive) {
-            setEntry(entry => {
-              return {
-                ...entry,
-                values: _selected ? [_entry] : []
-              };
-            });
-          } else {
-            setEntry(entry => {
-              return {
-                ...entry,
-                values: (
-                  _selected ?
-                    [...entry.values, _entry]
-                    :
-                    entry.values.filter(s => s.value !== value)
-                ).filter(s => exclusives.indexOf(s.value) < 0)
-              };
-            });
+
+          if (!selectValue) {
+            return setEntry(entry => ({
+              ...entry,
+              values: entry.values.filter(s => s.value !== value)
+            }));
           }
+
+          if (item.exclusive) return setEntry(entry => ({ ...entry, values: [_entry] }));
+
+          setEntry(entry => ({ 
+            ...entry, 
+            values: [...entry.values, _entry].filter(e => !e.exclusive) 
+          }));
         };
 
         return (
@@ -73,7 +60,7 @@ const Checklist = ({ screen, value, onChange }) => {
                     style={{ flexDirection: 'row', justifyContent: 'flex-end', flex: 1, width: '100%', }}
                   >
                     <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 20, }}
+                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, }}
                       onPress={() => _onChange(true)}
                     >
                       <Radio selected={selected} />
@@ -81,7 +68,7 @@ const Checklist = ({ screen, value, onChange }) => {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={{ flexDirection: 'row', alignItems: 'center', }}
+                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, }}
                       onPress={() => _onChange(false)}
                     >
                       <Radio selected={!selected} />
