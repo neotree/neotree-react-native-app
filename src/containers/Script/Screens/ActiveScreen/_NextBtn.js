@@ -28,13 +28,13 @@ const NextBtn = ({ onNext, }) => {
     <>
       <TouchableOpacity
         onPress={() => {
+          if (onNext) onNext();
           if (canSave()) {
             setDisplayLoader(true);
             setTimeout(() => goToSummary(), 0);
             return;
           };
-          goToScreen('next');
-          if (onNext) onNext();
+          goToScreen('next');          
         }}
         style={[
           {

@@ -51,6 +51,8 @@ const ActiveScreen = ({ children }) => {
     setValue(form.filter(item => item.screen.id === activeScreen.id)[0]);
   }, [activeScreen]);
 
+  if (!shouldDisplay) return <OverlayLoader display style={{ backgroundColor: 'transparent' }} />;
+
   return (
     <>
       {(() => {
@@ -99,7 +101,7 @@ const ActiveScreen = ({ children }) => {
           metadata: { label, dataType },
         };
 
-        return !Component ? <OverlayLoader display style={{ backgroundColor: 'transparent' }} /> : (
+        return !Component ? null : (
           <View style={{ flex: 1, }}>
             <ScreenContainer>
               {children}
