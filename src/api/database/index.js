@@ -1,5 +1,7 @@
 export * from './data_status';
 
+export { default as sync } from './_sync';
+
 export { default as createTablesIfNotExist } from './_createTablesIfNotExist';
 
 export { default as syncDatabase } from './_syncDatabase';
