@@ -9,6 +9,7 @@ export default () => new Promise((resolve, reject) => {
     'device_id integer',
     'data_initialised boolean',
     'last_sync_date datetime',
+    'total_sessions_recorded integer',
     'createdAt datetime',
     'updatedAt datetime',
   ].join(',');
