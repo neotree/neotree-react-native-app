@@ -4,8 +4,6 @@ export { default as sync } from './_sync';
 
 export { default as createTablesIfNotExist } from './_createTablesIfNotExist';
 
-export { default as syncDatabase } from './_syncDatabase';
-
 export { default as dropTables } from './_dropTables';
 
 export { default as resetTables } from './_resetTables';

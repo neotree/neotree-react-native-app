@@ -1,14 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
+import { View, Modal } from 'react-native';
 import Logo from '@/components/Logo';
 import Divider from '@/components/Divider';
 import { Text } from 'native-base';
 import constants from '@/constants';
-
+ 
 const Splash = ({ text, children }) => {
   return (
-    <>
+    <Modal transparent open>
       <View
         style={[{
           flex: 1,
@@ -46,7 +46,7 @@ const Splash = ({ text, children }) => {
           {children}
         </View>
       </View>
-    </>
+    </Modal>
   );
 };
 
