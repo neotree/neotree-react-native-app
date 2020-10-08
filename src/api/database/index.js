@@ -1,8 +1,8 @@
 export * from './data_status';
 
-export { default as createTablesIfNotExist } from './_createTablesIfNotExist';
+export { default as sync } from './_sync';
 
-export { default as syncDatabase } from './_syncDatabase';
+export { default as createTablesIfNotExist } from './_createTablesIfNotExist';
 
 export { default as dropTables } from './_dropTables';
 
