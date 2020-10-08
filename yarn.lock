@@ -5664,6 +5664,11 @@ expo-pwa@0.0.8:
     glob "7.1.2"
     update-check "1.5.3"
 
+expo-sharing@~8.1.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/expo-sharing/-/expo-sharing-8.1.0.tgz#7ca2c62221555b48f6fb837230e85042f529a14d"
+  integrity sha512-hHSBnie7VxSVirSx4mi+ciPzWYlWOxmdjAVDKd3cwmt6msl8vu3pUGC0I8ZjnSWXACRLEVAOBHtoKPYQpeFY4A==
+
 expo-sqlite@~8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/expo-sqlite/-/expo-sqlite-8.1.0.tgz#858eb28e1143db281de8a49c99b4a953a81d0834"

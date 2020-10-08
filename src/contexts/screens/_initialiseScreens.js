@@ -1,14 +1,19 @@
+import { getUID } from '@/api/uid';
+
 export default function initialiseScreens () {
     this.setState({ screensInitialised: false, initialisingScreens: true });
 
-    const done = () => this.setState({ 
-        screensInitialised: true, 
-        initialisingScreens: false 
-    });
+    const done = (e, rslts) => {
+        this.setState({ 
+            screensInitialised: true, 
+            initialisingScreens: false,
+            ...(e ? null : { uid: rslts[0], }), 
+        });
+    }
     
     Promise.all([
+        getUID(),
         this.getScreens(),
-        this.getSessionsStats(),
         this.getConfiguration(),
-    ]).then(done).catch(done);
+    ]).then(rslts => done(null, rslts)).catch(done);
 }

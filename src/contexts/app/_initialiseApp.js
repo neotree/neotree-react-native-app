@@ -1,12 +1,13 @@
 export default function _initialiseApp() {
-  this.addSocketEventsListeners();
+  (async () => {
+    this.setState({ appInitialised: false, initialisingApp: true, });
 
-  this.setState({ appInitialised: false, initialisingApp: true, })
+    this.addSocketEventsListeners();
 
-  const done = () => this.setState({ appInitialised: true, initialisingApp: false, });
+    try { await this.loadFonts(); } catch (e) { /* Do nothing */ }
 
-  Promise.all([
-    this.loadFonts(),
-    this.initialiseData(),
-  ]).then(done).catch(done);
+    try { await this.sync(); } catch (e) { /* Do nothing */ }
+
+    this.setState({ appInitialised: true, initialisingApp: false, });
+  })();
 }

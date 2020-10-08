@@ -11,11 +11,10 @@ export const useScreensContext = () => React.useContext(Context);
 export function provideScreensContext(Component) {
   return function ScreensContextProvider(props) {
     const router = useRouter();
-    const { state: { uid_prefix } } = useAppContext();
     const { state: { script, diagnoses, } } = useScriptContext();
     const [state, setState] = React.useState(defaults.defaultState);
     const { screensInitialised } = state;
-    const { location, match: { params: { scriptId } } } = router;
+    const { match: { params: { scriptId } } } = router;
 
     const value = new (class ContextValue {
       constructor() {
@@ -25,7 +24,6 @@ export function provideScreensContext(Component) {
         this.router = router;
         this.script = script;
         this.diagnoses = diagnoses;
-        this.uid_prefix = uid_prefix;
       }
     
       setState = s => this._setState(prevState => ({
@@ -57,8 +55,6 @@ export function provideScreensContext(Component) {
       saveForm = require('./_saveForm').default.bind(this);
     
       getConfiguration = require('./_getConfiguration').default.bind(this);
-    
-      getSessionsStats = require('./_getSessionsStats').default.bind(this);
     
       createSessionSummary = require('./_createSessionSummary').default.bind(this);
 
