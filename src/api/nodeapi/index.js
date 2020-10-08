@@ -8,3 +8,11 @@ export const exportSession = (body = {}, reqOpts = {}) => {
     ...reqOpts,
   });
 };
+
+export const countSessionsWithUidPrefix = (body = {}, reqOpts = {}) => {
+  return makeApiCall(`/sessions/count-by-uid-prefix`, {
+    body,
+    method: 'GET',
+    ...reqOpts,
+  });
+};

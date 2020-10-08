@@ -1,4 +1,4 @@
-import { syncDatabase } from '@/api/database';
+import { sync as syncDatabase } from '@/api/database';
 
 export default function sync(e, callback) {
   return new Promise((resolve, reject) => {
@@ -19,20 +19,19 @@ export default function sync(e, callback) {
         syncingData: false,
         lastDataSyncEvent: e,
         syncError,
-        dataStatus: syncRslts.dataStatus,
-        uid_prefix: syncRslts.dataStatus ? syncRslts.dataStatus.uid_prefix : null,
+        ...syncRslts,
       });
+
+      if (callback) callback(syncError, syncRslts);
 
       if (syncError) {
         reject(syncError);
       } else {
         resolve(syncRslts);
-      }
-
-      if (callback) callback(syncError, syncRslts);
+      }      
     };
 
-    syncDatabase({ event: e })
+    syncDatabase({ syncEvent: e })
       .then(rslts => done(null, rslts))
       .catch(done);
   });

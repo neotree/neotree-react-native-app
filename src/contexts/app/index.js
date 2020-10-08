@@ -27,8 +27,6 @@ export const provideAppContext = Component => function AppContextProvider(props)
   
     initialiseApp = require('./_initialiseApp').default.bind(this);
   
-    initialiseData = require('./_initialiseData').default.bind(this);
-  
     signIn = require('./_signIn').default.bind(this);
   
     signOut = require('./_signOut').default.bind(this);
@@ -46,9 +44,9 @@ export const provideAppContext = Component => function AppContextProvider(props)
     isDataReady = require('./_isDataReady').default.bind(this);
   })();
 
-  const { sync, setState, state: { authenticatedUser, networkState, } } = value;
+  const { sync, initialiseApp, setState, state: { networkState, } } = value;
 
-  React.useEffect(() => value.initialiseApp(), []);
+  React.useEffect(() => initialiseApp(), []);
 
   React.useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(s => setState({
@@ -58,7 +56,7 @@ export const provideAppContext = Component => function AppContextProvider(props)
     return () => unsubscribe();
   }, []);
 
-  React.useEffect(() => { if (authenticatedUser) sync(); }, [networkState]);
+  React.useEffect(() => { sync(); }, [networkState]);
 
   return (
     <Context.Provider

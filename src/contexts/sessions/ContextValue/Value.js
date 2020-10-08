@@ -14,7 +14,6 @@ export default class ContextValue {
     this.state = state;
     this._setState = setState;
     this.router = router;
-    this.uid_prefix = appContext.state.uid_prefix;
   }
 
   setState = s => this._setState(prevState => ({

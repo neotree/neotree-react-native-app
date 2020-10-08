@@ -1,4 +1,3 @@
-/* global fetch */
 import NetInfo from '@react-native-community/netinfo';
 
 import createTablesIfNotExist from './_createTablesIfNotExist';
@@ -9,6 +8,8 @@ import { getConfigKeys } from '../webeditor/config_keys';
 import { getScreens } from '../webeditor/screens';
 import { getDiagnoses } from '../webeditor/diagnoses';
 import { syncData as syncRemoteData } from '../webeditor/syncData';
+
+import { countSessionsWithUidPrefix } from '../nodeapi';
 
 import { insertScreens, deleteScreens } from './screens';
 import { insertDiagnoses, deleteDiagnoses } from './diagnoses';
@@ -64,15 +65,10 @@ export default function sync(opts = {}) {
       if (!dataStatus.data_initialised) {
         // count exported sessions associated with this device's UID_PREFIX (dataStatus.uid_prefix)
         let countedSessionsUsingUidPrefix = 0;
-        const apiConfig = require('~/config/neotree-nodeapi-api.json');
-        try {
-          countedSessionsUsingUidPrefix = await fetch(`${apiConfig.api_endpoint}/sessions/count-by-uid-prefix?uid_prefix=${dataStatus.uid_prefix}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': apiConfig.api_key, },
-          });
-          countedSessionsUsingUidPrefix = await countedSessionsUsingUidPrefix.json();
-          dataStatus.total_sessions_recorded = Number(countedSessionsUsingUidPrefix.count || 0);
+        try { 
+          countedSessionsUsingUidPrefix = await countSessionsWithUidPrefix({ uid_prefix: dataStatus.uid_prefix }); 
         } catch (e) { return reject(e); }
+        dataStatus.total_sessions_recorded = Number(countedSessionsUsingUidPrefix || 0);
 
         // download scripts
         try { 

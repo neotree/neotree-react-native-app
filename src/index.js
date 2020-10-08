@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppContext, provideAppContext } from '@/contexts/app';
 import { useHistory } from 'react-router-native';
-import Overlay from '@/components/Overlay';
 // import Debug from '@/components/Debug';
 import { Container, StyleProvider, Root } from 'native-base';
 import getTheme from '@/native-base-theme/components';
@@ -50,11 +49,7 @@ const NeoTreeApp = () => {
         </Root>
       )}
       
-      {!!splashScreen.display && (
-        <Overlay>
-          <Splash text={splashScreen.text} />
-        </Overlay>
-      )}
+      {!!splashScreen.display && <Splash text={splashScreen.text} />}
     </View>
   );
 };
