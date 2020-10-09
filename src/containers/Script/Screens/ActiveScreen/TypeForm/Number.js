@@ -29,6 +29,7 @@ const NumberField = ({
             value={value || ''}
             defaultValue={value || ''}
             autoCapitalize="none"
+            autoCorrect={false}
             onChange={e => {
               const value = e.nativeEvent.text;
               let err = null;
@@ -45,6 +46,8 @@ const NumberField = ({
                   err = `Number should have only ${maxDecimals} decimal places.`;
                 } else if (!maxDecimals && value.indexOf('.') > -1) {
                   err = 'Decimal places not allowed.'
+                } else if (value.indexOf(' ') > -1) {
+                  err = 'No spaces allowed'
                 }
               }
               setError(err);
