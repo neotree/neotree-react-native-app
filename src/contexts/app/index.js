@@ -1,5 +1,6 @@
 import React from 'react';
 import NetInfo from '@react-native-community/netinfo';
+import useRouter from '@/utils/useRouter';
 import Context from './Context';
 import * as defaults from './_defaults';
 
@@ -9,14 +10,18 @@ export { default as useOverlayLoaderState } from './_useOverlayLoaderState';
 
 export const provideAppContext = Component => function AppContextProvider(props) {
   const [state, _setState] = React.useState(defaults.defaultState);
+  const router = useRouter();
 
   const value = new (class ContextValue {
-    constructor() {
-      this.state = state;
-      this._setState = _setState;
-      this.defaults = defaults;
-      this.props = props;
-    }
+    state = state;
+
+    _setState = _setState;
+
+    defaults = defaults;
+
+    props = props;
+    
+    router = router;
 
     setState = s => this._setState(prevState => ({
       ...prevState,
