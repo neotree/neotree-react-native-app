@@ -89,6 +89,13 @@ export default () => new Promise((resolve, reject) => {
     'createdAt datetime',
   ].join(',');
 
+  const ehr_neotree_keyTableColumns = [
+    'id integer primary key autoincrement',
+    'ehr_personId varchar',
+    'neotree_id varchar',
+    'source varchar'
+  ]
+
   const querys = [
     `create table if not exists data_status (${dataStatusTableColumns});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
@@ -100,6 +107,7 @@ export default () => new Promise((resolve, reject) => {
     `create table if not exists configuration (${configurationTableColumns});`,
     `create table if not exists sessions_stats (${sessions_statsTableColumns});`,
     `create table if not exists ehr_session (${ehr_session_keyTableColumns});`,
+    `create table if not exists ehr_neotree (${ehr_neotree_keyTableColumns});`,
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(
@@ -127,7 +135,8 @@ export default () => new Promise((resolve, reject) => {
       config_keysTable: rslts[6],
       configurationTable: rslts[7],
       sessions_statsTable: rslts[8],
-      ehr_sessionTable: rslts[9]
+      ehr_sessionTable: rslts[9],
+      ehr_neotreeTable: rslts[10]
     }))
     .catch(reject);
 });

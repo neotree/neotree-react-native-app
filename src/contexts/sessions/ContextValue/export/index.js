@@ -9,7 +9,9 @@ import {
   exportDemographicsToEHR,
   exportPatientAdmissionToEHR,
 } from "@/api/export";
+import {importPerson} from "@/api/import" 
 import { updateSessions } from "@/api/sessions";
+import { insertEhrNeotree, getEhrNeotree } from "@/api/ehr_neotree";
 import moment from "moment";
 import getJSON from "./getJSON";
 import getValueFromKey from "./getValueFromKey";
@@ -214,7 +216,7 @@ export function exportToEhr() {
       postData.map((s, i) =>
         new Promise(async (resolve, reject) => {
           const item = postData[i] ? postData[i].entries : null;
-
+      
           if (item && item != null) {
             const firstname = getValueFromKey(item, "firstname");
             const lastname = getValueFromKey(item, "lastname");
@@ -254,58 +256,120 @@ export function exportToEhr() {
             const admissionDTO = { wardId: wardId };
 
             const token = await getJWTToken();
+            console.log("######---Token---",token)
             exportPersonRegToEHR(personRegistrationDTO, { jwtToken: token })
               .then((rslt) => {
                 const result = JSON.parse(rslt);
-                exportDemographicsToEHR(
-                  { ...updatePersonDTO, personId: result.id },
-                  { jwtToken: token }
-                )
+                const neotree_id = sessions[i].id;
+                const opts = {
+                  ehr_personId: result.id,
+                  neotree_id: neotree_id,
+                  source: "neotree",
+                };
+
+                insertEhrNeotree(opts)
                   .then(() => {
-                    exportPatientAdmissionToEHR(
-                      { ...admissionDTO, personId: result.id },
+                    getEhrNeotree({}).then((res=>{
+                     const queryResult = `{  personId
+                      lastname
+                      firstname
+                      fullname
+                      sex
+                      birthdate
+                      infant
+                      education{
+                        id,
+                        name
+                      }
+                      occupation{
+                        id,
+                        name
+                      }
+                      marital{
+                        id,
+                        name
+                      }
+                      religion{
+                        id,
+                        name
+                      }
+                      nationality{
+                        id,
+                        name
+                      }
+                      denomination{
+                        id,
+                        name
+                      }
+                      countryOfBirth{
+                        id,
+                        name
+                      }
+                    }}`
+                    importPerson(queryResult,res.ehr_personId)
+                    }))
+                    exportDemographicsToEHR(
+                      { ...updatePersonDTO, personId: result.id },
                       { jwtToken: token }
                     )
                       .then(() => {
-                        const id = sessions[i].id;
-                        updateSessions(
-                          { exported: true },
-                          { where: { id } }
-                        ).then(() =>
-                          this.setState(({ sessions }) => ({
-                            sessions: sessions.map((s) => ({
-                              ...s,
-                              exported: s.id === id ? true : s.exported,
-                            })),
-                          }))
-                        );
+                        exportPatientAdmissionToEHR(
+                          { ...admissionDTO, personId: result.id },
+                          { jwtToken: token }
+                        )
+                          .then(() => {
+                            const id = sessions[i].id;
+                            updateSessions(
+                              { exported: true },
+                              { where: { id } }
+                            ).then(() =>
+                              this.setState(({ sessions }) => ({
+                                sessions: sessions.map((s) => ({
+                                  ...s,
+                                  exported: s.id === id ? true : s.exported,
+                                })),
+                              }))
+                            );
+                          })
+                          .then(() => {
+                            this.setState({ exporting: false });
+                            exportSuccessAlert("Export complete");
+                          });
                       })
-                      .then(() => {
-                        this.setState({ exporting: false });
-                        exportSuccessAlert("Export complete");
-                      })
+
                       .catch((e) => {
                         this.setState({ exporting: false });
+                        console.log("==w1",e)
                         exportSuccessAlert("Something Wicked Happened!!");
                       });
                   })
                   .catch((e) => {
                     this.setState({ exporting: false });
+                    console.log("==w2",e)
                     exportSuccessAlert("Eomething Wicket Happened 2");
                   });
               })
               .catch((e) => {
                 this.setState({ exporting: false });
+                console.log("==w3",e)
                 exportSuccessAlert("Eomething Wicket Happened 3");
               });
           } else {
             this.setState({ exporting: false });
+            console.log("==wde1",e)
             exportSuccessAlert("No Data To Export!!");
           }
-        }).catch((e) => {
-          this.setState({ exporting: false });
-          exportSuccessAlert("Eomething Wicket Happened 4");
         })
+          .catch((e) => {
+            this.setState({ exporting: false });
+            console.log("==w4",e)
+            exportSuccessAlert("Eomething Wicket Happened 4");
+          })
+          .catch((e) => {
+            this.setState({ exporting: false });
+            console.log("==w5",e)
+            exportSuccessAlert("Eomething Wicket Happened 5");
+          })
       )
     );
   });
