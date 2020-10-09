@@ -2,24 +2,18 @@ import { sync as syncDatabase } from '@/api/database';
 
 export default function sync(e, callback) {
   return new Promise((resolve, reject) => {
-    const { acceptedEvents } = this.state;
+    const { authenticatedUser } = this.state;
 
-    if (e) {
-      if (acceptedEvents.indexOf(e.key) > -1) return;
-      require('@/utils/logger')('socket event', JSON.stringify(e));
-    }
+    if (e) require('@/utils/logger')('socket event', JSON.stringify(e));
 
-    this.setState({
-      syncingData: true,
-      ...(e ? { acceptedEvents: [...acceptedEvents, e.key] } : null),
-    });
+    this.setState({ syncingData: true, });
 
     const done = (syncError, syncRslts = {}) => {
       this.setState({
         syncingData: false,
         lastDataSyncEvent: e,
         syncError,
-        ...syncRslts,
+        ...(authenticatedUser ? null : { authenticatedUser: syncRslts.authenticatedUser, }),
       });
 
       if (callback) callback(syncError, syncRslts);
@@ -31,7 +25,7 @@ export default function sync(e, callback) {
       }      
     };
 
-    syncDatabase({ syncEvent: e })
+    syncDatabase({ socketEvent: e })
       .then(rslts => done(null, rslts))
       .catch(done);
   });
