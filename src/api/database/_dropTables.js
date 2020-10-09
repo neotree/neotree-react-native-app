@@ -12,6 +12,7 @@ export default () => new Promise((resolve, reject) => {
     'drop table if exists configuration;',
     'drop table if exists stats;',
     'drop table if exists ehr_session;',
+    'drop table if exists ehr_neotree;',
   ].map(q => new Promise((resolve, reject) => {
     db.transaction(
       tx => tx.executeSql(

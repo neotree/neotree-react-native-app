@@ -1,5 +1,6 @@
 import ehrConfig from '~/config/ehr-api.json';
 import { authenticateEhrApi } from '@/api/export';
+import {insertEhrSession} from '@/api/ehr_session';
 export default  function getJWTToken() {
   const {username,password,rememberMe} = ehrConfig;
   const body = {username:username,password:password,rememberMe:rememberMe}
@@ -14,8 +15,12 @@ export default  function getJWTToken() {
         })
         }
       } 
-     console.log("&&&&777777---",result.ehr_session.session_key)
-      return result.ehr_session.session_key;
+      if(result.ehr_session){
+       return result.ehr_session.session_key;
+      } else{
+        const token = JSON.parse(result)
+        return token.id_token;
+      }
 }).catch((e)=>{
   console.log('UUUUUUUU---',e)
 })
