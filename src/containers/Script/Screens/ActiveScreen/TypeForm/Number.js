@@ -36,7 +36,9 @@ const NumberField = ({
               if (value) {
                 const v = Number(value);
                 const decimals = value.split('.').filter((n, i) => i > 0).join('');
-                if (isNaN(v)) {
+                if (value.indexOf(' ') > -1) {
+                  err = 'No spaces allowed'
+                } else if (isNaN(v)) {
                   err = 'Input is not a number';
                 } else if (field.maxValue && (v > field.maxValue)) {
                   err = `Max value ${field.maxValue}`;
@@ -46,8 +48,6 @@ const NumberField = ({
                   err = `Number should have only ${maxDecimals} decimal places.`;
                 } else if (!maxDecimals && value.indexOf('.') > -1) {
                   err = 'Decimal places not allowed.'
-                } else if (value.indexOf(' ') > -1) {
-                  err = 'No spaces allowed'
                 }
               }
               setError(err);
@@ -55,7 +55,7 @@ const NumberField = ({
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}
-            keyboardType={maxDecimals ? 'decimal-pad' : 'numeric'}
+            // keyboardType={maxDecimals ? 'decimal-pad' : 'numeric'}
           />
         </Item>
       </Form>
