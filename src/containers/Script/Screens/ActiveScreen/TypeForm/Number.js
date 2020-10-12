@@ -29,13 +29,16 @@ const NumberField = ({
             value={value || ''}
             defaultValue={value || ''}
             autoCapitalize="none"
+            autoCorrect={false}
             onChange={e => {
               const value = e.nativeEvent.text;
               let err = null;
               if (value) {
                 const v = Number(value);
                 const decimals = value.split('.').filter((n, i) => i > 0).join('');
-                if (isNaN(v)) {
+                if (value.indexOf(' ') > -1) {
+                  err = 'No spaces allowed'
+                } else if (isNaN(v)) {
                   err = 'Input is not a number';
                 } else if (field.maxValue && (v > field.maxValue)) {
                   err = `Max value ${field.maxValue}`;
@@ -52,7 +55,7 @@ const NumberField = ({
             }}
             // placeholder={field.label}
             // label={`${field.label}${field.optional ? '' : ' *'}`}
-            keyboardType={maxDecimals ? 'decimal-pad' : 'numeric'}
+            // keyboardType={maxDecimals ? 'decimal-pad' : 'numeric'}
           />
         </Item>
       </Form>

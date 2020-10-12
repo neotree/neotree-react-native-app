@@ -1,6 +1,5 @@
 import React from 'react';
 import useRouter from '@/utils/useRouter';
-import { useAppContext } from '@/contexts/app';
 import { useScriptContext } from '@/contexts/script';
 import * as defaults from './_defaults';
 
