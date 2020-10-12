@@ -58,7 +58,7 @@ const DropDown = ({
   return (
     <>
       <TouchableWithoutFeedback
-        onPress={() => setOpen(true)}
+        onPress={() => !disabled && setOpen(true)}
       >
         <View
           style={[

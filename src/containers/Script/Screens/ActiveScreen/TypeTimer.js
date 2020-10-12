@@ -51,7 +51,7 @@ const Timer = ({ screen, value, onChange }) => {
   const [_value, setValue] = React.useState('');
 
   React.useEffect(() => { 
-    if (entry.values[0] && entry.values[0].value.value) {
+    if (entry.values[0] && entry.values[0].value) {
       setValue(`${parseFloat(entry.values[0].value / multiplier)}`);
     }
   }, [entry, value]);
