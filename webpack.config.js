@@ -19,8 +19,6 @@ module.exports = async function (env, argv) {
     config.optimization.minimize = false;
   }
 
-  console.log(config.resolve.alias);
-
   // Finally return the new config for the CLI to use.
   return config;
 };
