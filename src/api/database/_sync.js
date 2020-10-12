@@ -104,7 +104,7 @@ export default function sync(opts = {}) {
         if ((socketEvent.name === 'create_scripts') || (socketEvent.name === 'update_scripts')) {
           // download scripts
           try { 
-            const { scripts } = await getScripts(socketEvent.scripts.map(s => s.id)); 
+            const { scripts } = await getScripts({ id: socketEvent.scripts.map(s => s.id) }); 
             try { await insertScripts(scripts); } catch (e) { /* Do nothing */}
           } catch (e) { /* Do nothing */}
         }
@@ -112,7 +112,7 @@ export default function sync(opts = {}) {
         if ((socketEvent.name === 'create_screens') || (socketEvent.name === 'update_screens')) {
           // download screens
           try { 
-            const { screens } = await getScreens(socketEvent.screens.map(s => s.id)); 
+            const { screens } = await getScreens({ id: socketEvent.screens.map(s => s.id) }); 
             try { await insertScreens(screens); } catch (e) { /* Do nothing */}
           } catch (e) { /* Do nothing */}
         }
@@ -120,7 +120,7 @@ export default function sync(opts = {}) {
         if ((socketEvent.name === 'create_diagnoses') || (socketEvent.name === 'update_diagnoses')) {
           // download diagnoses
           try { 
-            const { diagnoses } = await getDiagnoses(socketEvent.diagnoses.map(s => s.id)); 
+            const { diagnoses } = await getDiagnoses({ id: socketEvent.diagnoses.map(s => s.id) }); 
             try { await insertDiagnoses(diagnoses); } catch (e) { /* Do nothing */}
           } catch (e) { /* Do nothing */}
         }
@@ -128,30 +128,32 @@ export default function sync(opts = {}) {
         if ((socketEvent.name === 'create_config_keys') || (socketEvent.name === 'update_config_keys')) {
           // download config keys
           try { 
-            const { config_keys } = await getConfigKeys(socketEvent.config_keys.map(s => s.id)); 
+            const { config_keys } = await getConfigKeys({ id: socketEvent.config_keys.map(s => s.id) }); 
             try { await insertConfigKeys(config_keys); } catch (e) { /* Do nothing */}
           } catch (e) { /* Do nothing */}
         }
 
-        if (socketEvent.scripts.length && (eventName === 'delete_scripts')) {
+        if (socketEvent.scripts && socketEvent.scripts.length && (socketEvent.name === 'delete_scripts')) {
           // download scripts
           try { await deleteScripts(socketEvent.scripts.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */}
         }
 
-        if (socketEvent.screens.length && (eventName === 'delete_screens')) {
+        if (socketEvent.screens && socketEvent.screens.length && (socketEvent.name === 'delete_screens')) {
           // download screens
           try { await deleteScreens(socketEvent.screens.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */}
         }
 
-        if (socketEvent.diagnoses.length && (eventName === 'delete_diagnoses')) {
+        if (socketEvent.diagnoses && socketEvent.diagnoses.length && (socketEvent.name === 'delete_diagnoses')) {
           // download diagnoses
           try { await deleteDiagnoses(socketEvent.diagnoses.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */}
         }
 
-        if (socketEvent.config_keys.length && (eventName === 'delete_config_keys')) {
+        if (socketEvent.config_keys && socketEvent.config_keys.length && (socketEvent.name === 'delete_config_keys')) {
           // download config keys
           try { await deleteConfigKeys(socketEvent.config_keys.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */}
         }
+
+        console.log(socketEvent);
 
         return done();
       }
