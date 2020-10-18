@@ -7,12 +7,15 @@ import firebaseConfig from './config/firebase.config.json';
 
 firebase.initializeApp(firebaseConfig);
 
+
 const App = () => {
   return (
     <>
       <NativeRouter>
         <BackButton>
+      
           <Main />
+        
         </BackButton>
       </NativeRouter>
     </>

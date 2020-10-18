@@ -5,13 +5,15 @@ export default (data = {}, opts = {}) => new Promise((resolve, reject) => {
 
   data = { updatedAt: new Date().toISOString(), ...data };
 
+
   const _where = Object.keys(where).map(key => `${key}=${JSON.stringify(where[key])}`)
     .join(',');
+  
 
   const set = Object.keys(data)
     .map(key => `${key}=?`)
     .join(',');
-
+    console.log("&&-DATA--",set)
   db.transaction(
     tx => {
       tx.executeSql(
