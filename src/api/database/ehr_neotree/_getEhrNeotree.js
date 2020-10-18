@@ -15,7 +15,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
         `${q} limit 1;`.trim(),
         null,
         (tx, rslts) => resolve({
-          ehr_neotree: rslts.rows._array[0]
+          ehr_neotree: rslts.rows._array
         }),
         (tx, e) => {
           if (e) {

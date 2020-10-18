@@ -1,5 +1,6 @@
 import * as defaults from './_defaults';
 import { exportJSON, exportEXCEL, exportToApi, getJSON,exportToEhr } from './export';
+import {importFromEhr} from './data-import'
 
 export { defaults };
 
@@ -34,6 +35,7 @@ export default class ContextValue {
 
   exportToApi = exportToApi.bind(this);
   exportToEhr = exportToEhr.bind(this);
+  importFromEhr = importFromEhr.bind(this)
 
   selectItems = ids => {
     ids = ids && ids.map ? ids : [ids];

@@ -9,7 +9,7 @@ import Divider from '@/components/Divider';
 import Header from './Header';
 
 const ExportPage = () => {
-  const { exportJSON, exportEXCEL, exportToApi,exportToEhr, state: { exporting } } = useSessionsContext();
+  const { exportJSON, exportEXCEL, exportToApi,exportToEhr,importFromEhr, state: { exporting } } = useSessionsContext();
 
   const [format, setFormat] = React.useState('excel');
 
@@ -64,7 +64,17 @@ const ExportPage = () => {
             >
               <Text>Export</Text>
             </Button>
+            <Divider border={false} spacing={2} />
+            <Button
+              disabled={format != 'ehr' }
+              onPress={() => {
+               return importFromEhr()
+              }}
+            >
+              <Text>Import</Text>
+            </Button>
           </View>
+          
         </View>
       </Content>
     </>

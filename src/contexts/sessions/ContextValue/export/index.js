@@ -9,9 +9,8 @@ import {
   exportDemographicsToEHR,
   exportPatientAdmissionToEHR,
 } from "@/api/export";
-import {importPerson} from "@/api/import" 
 import { updateSessions } from "@/api/sessions";
-import { insertEhrNeotree, getEhrNeotree } from "@/api/ehr_neotree";
+import { insertEhrNeotree} from "@/api/ehr_neotree";
 import moment from "moment";
 import getJSON from "./getJSON";
 import getValueFromKey from "./getValueFromKey";
@@ -256,7 +255,6 @@ export function exportToEhr() {
             const admissionDTO = { wardId: wardId };
 
             const token = await getJWTToken();
-            console.log("######---Token---",token)
             exportPersonRegToEHR(personRegistrationDTO, { jwtToken: token })
               .then((rslt) => {
                 const result = JSON.parse(rslt);
@@ -269,45 +267,6 @@ export function exportToEhr() {
 
                 insertEhrNeotree(opts)
                   .then(() => {
-                    getEhrNeotree({}).then((res=>{
-                     const queryResult = `{  personId
-                      lastname
-                      firstname
-                      fullname
-                      sex
-                      birthdate
-                      infant
-                      education{
-                        id,
-                        name
-                      }
-                      occupation{
-                        id,
-                        name
-                      }
-                      marital{
-                        id,
-                        name
-                      }
-                      religion{
-                        id,
-                        name
-                      }
-                      nationality{
-                        id,
-                        name
-                      }
-                      denomination{
-                        id,
-                        name
-                      }
-                      countryOfBirth{
-                        id,
-                        name
-                      }
-                    }}`
-                    importPerson(queryResult,res.ehr_personId)
-                    }))
                     exportDemographicsToEHR(
                       { ...updatePersonDTO, personId: result.id },
                       { jwtToken: token }
@@ -354,7 +313,8 @@ export function exportToEhr() {
                 console.log("==w3",e)
                 exportSuccessAlert("Eomething Wicket Happened 3");
               });
-          } else {
+           } 
+           else {
             this.setState({ exporting: false });
             console.log("==wde1",e)
             exportSuccessAlert("No Data To Export!!");
@@ -370,7 +330,6 @@ export function exportToEhr() {
             console.log("==w5",e)
             exportSuccessAlert("Eomething Wicket Happened 5");
           })
-      )
-    );
-  });
-}
+          ))
+        })
+      }

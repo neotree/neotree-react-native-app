@@ -1,5 +1,4 @@
 /* global fetch */
-import queryString from 'query-string';
 import apiConfig from '~/config/ehr-api.json';
 
 export default (url = '', opts = {}) => new Promise((resolve, reject) => {
