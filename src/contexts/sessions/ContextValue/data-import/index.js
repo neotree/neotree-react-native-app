@@ -1,7 +1,6 @@
 import { Alert } from "react-native";
 import { importPerson } from "@/api/data-import";
 import { updateEhrSessions, getSessions } from "@/api/sessions";
-import getJSON from "../export/getJSON";
 import mapEhrValuesToNeotreeKeys from "../export/mapEhrValuesToNeotreeKeys";
 import { getEhrNeotree } from "@/api/ehr_neotree";
 
@@ -45,8 +44,8 @@ export async function importFromEhr() {
       personIds.map((p, i) => {
         importPerson(p)
           .then(async (r) => {
+         
             const imported =  mapEhrValuesToNeotreeKeys(r.data.person);
-            console.log("----IMPORTED--",imported)
             this.setState({ exporting: false });
             const ehrNeotree = await getEhrNeotree({ ehr_personId: p });
             
@@ -67,15 +66,18 @@ export async function importFromEhr() {
                 ? session.data.form.map((f) => {
                     const values = [];
                     f.values.map((v) => {
-                      imported.map((i) => {
-                        if (v.key === i.key) {
-                          values.push({ ...v, ...i });
+                      const val=  imported.find((item) => item.key === v.key)
+                     
+                        if (val) {
+                       values.push({...v,...val})
+                        }else{
+                          values.push({...v})
                         }
-                      });
                     });
                     return values;
                   })
                 : [];
+        
             updateEhrSessions({
               ...session,
               data: {
