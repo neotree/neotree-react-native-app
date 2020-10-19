@@ -95,7 +95,7 @@ export async function importFromEhr() {
             })
               .then(async() => {
                 const updatedSessions = await getSessions({});
-                this.setState({ sessions: updatedSessions });
+                this.setState({ sessions:updatedSessions.sessions?updatedSessions.sessions:[]});
                 exportSuccessAlert("Data Imported Successfully");
               })
               .catch((e) => {
@@ -105,7 +105,6 @@ export async function importFromEhr() {
           })
           .catch((e) => {
             this.setState({ exporting: false });
-            console.log("%%===ERROR-",e)
             exportSuccessAlert("SOMETHING WICKED HAPPENED2!!");
           });
       })

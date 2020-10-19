@@ -15,6 +15,7 @@ export const importPerson = (personId = "") =>
                  sex
                  birthdate
                  infant
+                 selfIdentifiedGender
                  education{
                    id,
                    name

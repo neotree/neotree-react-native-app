@@ -4,20 +4,20 @@ import _getSessions from './_getSessions'
 export default  (data = {}) => new Promise((resolve, reject) => {
   const done = (err, rslts) => {
     if (err) return reject(err);
-
-     return resolve(rslts);
+    resolve(rslts);
 
   };
 
   const id = data.id;
-  const param = JSON.stringify(data.data || '{}');
-
+  const params = [JSON.stringify(data.data || '{}')];
+  console.log("@@@@@-ID--",id)
   db.transaction(
     tx => {
       tx.executeSql(
         `update sessions set data =? where id = ${id};`,
-        param,
+        params,
         (tx, rslts) => {
+          console.log("@@@@@-QR--",rslts)
           done(null, rslts);
         },
         (tx, e) => {
