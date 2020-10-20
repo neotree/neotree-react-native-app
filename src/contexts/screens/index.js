@@ -46,6 +46,16 @@ export function provideScreensContext(Component) {
       getScreens = require('./_getScreens').default.bind(this);
     
       parseScreenCondition = require('./_parseScreenCondition').default.bind(this);
+
+      evaluateScreenCondition = (condition, defaultEval = false) => {
+        let conditionMet = defaultEval;
+        try {
+          conditionMet = eval(condition);
+        } catch (e) {
+          // do nothing
+        }
+        return conditionMet;
+      };
     
       getDiagnoses = require('./_getDiagnoses').default.bind(this);
     

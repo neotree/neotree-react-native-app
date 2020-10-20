@@ -1,12 +1,17 @@
-const sanitizeCondition = (condition = '') => condition
-  .replace(new RegExp(' and ', 'gi'), ' && ')
-  .replace(new RegExp(' or ', 'gi'), ' || ')
-  .replace(new RegExp(' = ', 'gi'), ' == ');
+const sanitizeCondition = (condition = '') => {
+  let sanitized = condition
+    .replace(new RegExp(' and ', 'gi'), ' && ')
+    .replace(new RegExp(' or ', 'gi'), ' || ')
+    .replace(new RegExp(' = ', 'gi'), ' == ');
+  sanitized = sanitized.split(' ')
+    .map(s => s[0] === '$' ? `'${s}'` : s).join(' ');
+  return sanitized;
+};
 
 const parseConditionString = (condition = '', _key = '', value) => {
-  const s = condition.toLowerCase();
-  const key = _key.toLowerCase();
-  return !s ? '' : s.replace(/\s\s+/g, ' ')
+  const s = (condition || '').toLowerCase().split('$').join(' $');
+  const key = (_key || '').toLowerCase();
+  const parsed = s.replace(/\s\s+/g, ' ')
     .split(`$${key} =`).join(`${value} =`)
     .split(`$${key}=`).join(`${value} =`)
     .split(`$${key} >`).join(`${value} >`)
@@ -15,10 +20,11 @@ const parseConditionString = (condition = '', _key = '', value) => {
     .split(`$${key}<`).join(`${value} <`)
     .split(`$${key}!`).join(`${value} !`)
     .split(`$${key} !`).join(`${value} !`);
+  return parsed;
 };
 
 export default function parseScreenCondition(_condition = '', entries = []) {
-  _condition = _condition.toString();
+  _condition = (_condition || '').toString();
   entries = entries ? entries.map ? entries : [entries] : [];
 
   const { state: { form, configuration, } } = this;
@@ -56,13 +62,12 @@ export default function parseScreenCondition(_condition = '', entries = []) {
     let c = values.reduce((acc, v) => parseValue(acc, v), condition); 
 
     if (screen) {
+      let chunks = [];
       switch (screen.type) {
-        case 'multi_select': 
-          c = values.map(v => parseValue(condition, v))
-            .filter(c => c !== condition)
-            .map(c => `(${c})`)
-            .join(' || ');
-
+        case 'multi_select':
+          chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+          c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
+          break;
         default:
           // do nothing
       }

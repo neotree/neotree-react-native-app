@@ -6,13 +6,7 @@ export default function getDiagnoses() {
     const symptoms = s || [];
 
     const evaluate = condition => {
-      let conditionMet = false;
-      try {
-        conditionMet = eval(this.parseScreenCondition(condition));
-      } catch (e) {
-        // do nothing
-      }
-      return conditionMet;
+      return this.evaluateScreenCondition(this.parseScreenCondition(condition)); // conditionMet
     };
 
     const _symptoms = symptoms.filter(s => evaluate(s.expression));

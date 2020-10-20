@@ -156,7 +156,7 @@ const Timer = ({ screen, value, onChange }) => {
                       }]
                     });
                   }}
-                  keyboardType="numeric"
+                  // keyboardType="numeric"
                 />
               </Item>
             </Form>

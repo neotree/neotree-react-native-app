@@ -16,7 +16,7 @@ import Time from './Time';
 const Form = ({ screen, value, context, onChange }) => {
   const metadata = screen.data.metadata || {};
 
-  const { parseScreenCondition, } = context;
+  const { parseScreenCondition, evaluateScreenCondition, } = context;
 
   const fields = metadata.fields || [];
 
@@ -51,18 +51,8 @@ const Form = ({ screen, value, context, onChange }) => {
 
   const evaluateCondition = f => {
     let conditionMet = true;
-
-    if (f.condition) {
-      conditionMet = false;
-      const condition = parseScreenCondition(f.condition, [entry]);
-      try {
-        conditionMet = eval(condition);
-      } catch (e) {
-        // do nothing
-      }
-    }
-
-    return conditionMet;
+    if (f.condition) conditionMet = evaluateScreenCondition(parseScreenCondition(f.condition, [entry]));
+    return conditionMet
   };
 
   React.useEffect(() => {

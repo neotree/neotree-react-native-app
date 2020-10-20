@@ -10,9 +10,7 @@ export default (html, session) => {
     <header>
       <style>
         body {
-          font-size: 10px;
-          margin: 0;
-          padding: 0;
+          font-size: 8px;
         }
         #header {
           text-align: center;
