@@ -1,6 +1,5 @@
 export default function getLastScreen() {
   const {
-    parseScreenCondition,
     state: { screens, activeScreen, form, }
   } = this;
 
@@ -16,12 +15,7 @@ export default function getLastScreen() {
     let next = screens[nextIndex];
 
     if (next && next.data.condition) {
-      let conditionMet = false;
-      try {
-        conditionMet = eval(parseScreenCondition(next.data.condition, form.filter(e => e.screen.id !== next.id)));
-      } catch (e) {
-        // do nothing
-      }
+      const conditionMet = this.evaluateScreenCondition(this.parseScreenCondition(next.data.condition, form.filter(e => e.screen.id !== next.id)));
       if (!conditionMet) {
         const nextNextIndex = nextIndex + 1;
         next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex);

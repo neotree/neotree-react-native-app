@@ -32,15 +32,7 @@ export default function getScreen(opts = {}) {
 
     if (!condition) return target;
 
-    let conditionMet = false;
-    
-    try {
-      conditionMet = eval(parseScreenCondition(condition));
-    } catch (e) {
-      // do nothing
-    }
-
-    return conditionMet ? target : getTargetScreen(index);
+    return this.evaluateScreenCondition(parseScreenCondition(condition)) ? target : getTargetScreen(index);
   };
 
   return getTargetScreen();
