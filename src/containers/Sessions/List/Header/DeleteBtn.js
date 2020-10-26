@@ -1,14 +1,12 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
-import { useOverlayLoaderState } from '@/contexts/app';
+import OverlayLoader from '@/components/OverlayLoader';
 import { Icon, ActionSheet } from 'native-base';
 import colorStyles from '@/styles/colorStyles';
 import { TouchableOpacity, Platform } from 'react-native';
 
 const DeleteBtn = () => {
   const { state: { sessions, deletingSessions }, deleteSessions } = useSessionsContext();
-
-  useOverlayLoaderState('delete_sessions', deletingSessions);
 
   return (
     <>
@@ -35,6 +33,8 @@ const DeleteBtn = () => {
       >
         <Icon style={[colorStyles.primaryColor]} name="trash" />
       </TouchableOpacity>
+
+      <OverlayLoader display={deletingSessions} />
     </>
   );
 };

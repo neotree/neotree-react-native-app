@@ -25,8 +25,8 @@ const Containers = () => {
         <Route exact path="/" render={renderRouteComponent(Home)} />
         <Route exact path="/sign-in" render={renderRouteComponent(Authentication, { isLoginPage: true, })} />
         <Route exact path="/script/:scriptId" render={renderRouteComponent(Script)} />
-        <Route exact path="/script/:scriptId/preview-form" render={renderRouteComponent(Script)} />
-        <Route exact path="/script/:scriptId/screen/:screenId" render={renderRouteComponent(Script)} />
+        {/*<Route exact path="/script/:scriptId/preview-form" render={renderRouteComponent(Script)} />*/}
+        {/*<Route exact path="/script/:scriptId/screen/:screenId" render={renderRouteComponent(Script)} />*/}
         <Route exact path="/configuration" render={renderRouteComponent(Configuration)} />
         <Route path="/sessions" render={renderRouteComponent(Sessions)} />
       </Switch>

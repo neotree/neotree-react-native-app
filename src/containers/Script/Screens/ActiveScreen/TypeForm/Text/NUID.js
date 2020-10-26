@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import { Input, Form, Item } from '@/components/Form';
 import Text from '@/components/Text';
-import { useScreensContext } from '@/contexts/screens';
 
 const validateUID = (value = '') => {
   const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
@@ -24,9 +23,16 @@ const validateUID = (value = '') => {
   };
 };
 
-const NUID = ({ field, onChange, value, conditionMet, }) => {
-  const { state: { uid } } = useScreensContext();
- 
+const NUID = ({
+  dataStatus,
+  field,
+  onChange,
+  value,
+  conditionMet,
+}) => {
+  const { uid_prefix, total_sessions_recorded, } = dataStatus;
+  const uid = `${uid_prefix}-${`000${total_sessions_recorded + 1}`.slice(-4)}`;
+
   const firstHalfRef = React.useRef(null);
   const lastHalfRef = React.useRef(null);
 
@@ -159,6 +165,7 @@ const NUID = ({ field, onChange, value, conditionMet, }) => {
 
 NUID.propTypes = {
   field: PropTypes.object.isRequired,
+  dataStatus: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.any,
   conditionMet: PropTypes.bool,

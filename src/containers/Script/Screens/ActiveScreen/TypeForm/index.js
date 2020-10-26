@@ -4,19 +4,24 @@ import { View } from 'react-native';
 import Divider from '@/components/Divider';
 import { fieldsTypes } from '@/constants/screen';
 
-import FormItem from './_FormItem';
-import Number from './Number';
-import Date from './Date';
-import DateTime from './DateTime';
+import Number from './_Number';
+import Date from './_Date';
+import _DateTime from './_DateTime';
 import Text from './Text';
-import DropDown from './DropDown';
-import Period from './Period';
-import Time from './Time';
+import DropDown from './_DropDown';
+import Period from './_Period';
+import Time from './_Time';
+import FormItem from './FormItem';
 
-const Form = ({ screen, value, context, onChange }) => {
+const TypeForm = props => {
+  const {
+    screen,
+    entry: value,
+    parseCondition,
+    evaluateCondition,
+    setEntry: onChange
+  } = props;
   const metadata = screen.data.metadata || {};
-
-  const { parseScreenCondition, evaluateScreenCondition, } = context;
 
   const fields = metadata.fields || [];
 
@@ -30,8 +35,8 @@ const Form = ({ screen, value, context, onChange }) => {
     confidential: f.confidential,
   }));
 
-  const [entry, setEntry] = React.useState(value || { values: defaultValue });
-  const [entryCache, setEntryCache] = React.useState(value || { values: defaultValue });
+  const [entry, setEntry] = React.useState({ values: defaultValue, ...value });
+  const [entryCache, setEntryCache] = React.useState({ values: defaultValue, ...value });
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
     ...prevState,
@@ -49,16 +54,16 @@ const Form = ({ screen, value, context, onChange }) => {
     })
   }));
 
-  const evaluateCondition = f => {
+  const evaluateFieldCondition = f => {
     let conditionMet = true;
-    if (f.condition) conditionMet = evaluateScreenCondition(parseScreenCondition(f.condition, [entry]));
+    if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [entry]));
     return conditionMet
   };
 
   React.useEffect(() => {
     const completed = entry.values.reduce((acc, { value }, i) => {
       const field = fields[i];
-      const conditionMet = evaluateCondition(fields[i]);
+      const conditionMet = evaluateFieldCondition(fields[i]);
       if (conditionMet && !field.optional && !value) return false;
       // if (!(field.condition && field.optional && value)) acc = false;
       return acc;
@@ -85,7 +90,7 @@ const Form = ({ screen, value, context, onChange }) => {
                     Component = Date;
                     break;
                   case fieldsTypes.DATETIME:
-                    Component = DateTime;
+                    Component = _DateTime;
                     break;
                   case fieldsTypes.DROPDOWN:
                     Component = DropDown;
@@ -100,10 +105,10 @@ const Form = ({ screen, value, context, onChange }) => {
                     Component = Time;
                     break;
                   default:
-                    // do nothing
+                  // do nothing
                 }
 
-                const conditionMet = evaluateCondition(f);
+                const conditionMet = evaluateFieldCondition(f);
 
                 const onChange = (v, params = {}) => {
                   _onChange(i, { value: v, ...params });
@@ -111,6 +116,7 @@ const Form = ({ screen, value, context, onChange }) => {
 
                 return !Component ? null : (
                   <FormItem
+                    {...props}
                     setCache={v => setCache(i, { value: v })}
                     conditionMet={conditionMet}
                     value={entry.values[i].value}
@@ -118,6 +124,7 @@ const Form = ({ screen, value, context, onChange }) => {
                     onChange={onChange}
                   >
                     <Component
+                      {...props}
                       field={f}
                       conditionMet={conditionMet}
                       value={entry.values[i].value}
@@ -137,11 +144,12 @@ const Form = ({ screen, value, context, onChange }) => {
   );
 };
 
-Form.propTypes = {
+TypeForm.propTypes = {
   screen: PropTypes.object,
-  context: PropTypes.object.isRequired,
-  value: PropTypes.any,
-  onChange: PropTypes.func.isRequired,
+  entry: PropTypes.object,
+  setEntry: PropTypes.func.isRequired,
+  evaluateCondition: PropTypes.func.isRequired,
+  parseCondition: PropTypes.func.isRequired,
 };
 
-export default Form;
+export default TypeForm;
