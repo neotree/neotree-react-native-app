@@ -22,9 +22,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
         `${q};`.trim(),
         null,
         (tx, rslts) => {
-          resolve({
-            sessions: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
-          });
+          resolve(rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         },
         (tx, e) => {
           if (e) {

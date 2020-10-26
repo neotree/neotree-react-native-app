@@ -1,22 +1,34 @@
 import React from 'react';
-import { useAppContext } from '@/contexts/app';
 import { View } from 'react-native';
 import copy from '@/constants/copy';
 import { Text } from 'native-base';
+import NetInfo from '@react-native-community/netinfo';
 
 const NetworkStatusBar = () => {
-  const { state: { networkState } } = useAppContext();
-
   const [isOnline, setIsOnline] = React.useState(true);
   const [displayBar, setDisplayBar] = React.useState(false);
 
   React.useEffect(() => {
-    if (networkState) {
-      const isOnline = networkState.isInternetReachable;
-      setIsOnline(isOnline);
-      setDisplayBar(!isOnline);
-    }
-  }, [networkState]);
+    let unsubscribe;
+
+    (async () => {
+      const networkStatusHandler = networkState => {
+        if (!networkState) return;
+        const isOnline = networkState.isInternetReachable;
+        setIsOnline(isOnline);
+        setDisplayBar(!isOnline);
+      };
+
+      try {
+        const neworkState = await NetInfo.fetch();
+        networkStatusHandler(neworkState);
+      } catch (e) { /* Do nothing */ }
+
+      unsubscribe = NetInfo.addEventListener(networkStatusHandler);
+    })();
+
+    return () => unsubscribe();
+  }, []);
 
   React.useEffect(() => {
     let timeOut = null;

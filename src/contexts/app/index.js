@@ -51,17 +51,17 @@ export const provideAppContext = Component => function AppContextProvider(props)
 
   const { sync, initialiseApp, setState, state: { networkState, } } = value;
 
-  React.useEffect(() => initialiseApp(), []);
-
-  React.useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(s => setState({
-      networkState: s,
-      networkStateInitialised: true, 
-    }));
-    return () => unsubscribe();
-  }, []);
-
-  React.useEffect(() => { sync(); }, [networkState]);
+  // React.useEffect(() => initialiseApp(), []);
+  //
+  // React.useEffect(() => {
+  //   const unsubscribe = NetInfo.addEventListener(s => setState({
+  //     networkState: s,
+  //     networkStateInitialised: true,
+  //   }));
+  //   return () => unsubscribe();
+  // }, []);
+  //
+  // React.useEffect(() => { sync(); }, [networkState]);
 
   return (
     <Context.Provider

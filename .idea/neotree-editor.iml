@@ -8,5 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="creds" />
+    <orderEntry type="module" module-name="piket-app" />
   </component>
 </module>
