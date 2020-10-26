@@ -12,7 +12,7 @@ const deleteSession = (_where = {}) => new Promise((resolve, reject) => {
       tx.executeSql(
         `${q};`.trim(),
         null,
-        (tx, rslts) => resolve({ rslts }),
+        (tx, rslts) => resolve(rslts),
         (tx, e) => {
           if (e) {
             require('@/utils/logger')('ERROR: deleteConfigKey', e);

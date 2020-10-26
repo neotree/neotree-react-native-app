@@ -1,14 +1,12 @@
 import React from 'react';
-import { View } from 'react-native';
-import { provideHomeContext } from '@/contexts/home';
+import { View, TouchableOpacity } from 'react-native';
 import { useHistory } from 'react-router-native';
 import { Icon, Drawer } from 'native-base';
 import * as Permissions from 'expo-permissions';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
-import { TouchableOpacity } from 'react-native';
+import Scripts from '@/components/Scripts';
 import Sidebar from './Sidebar';
-import Scripts from '../Scripts';
 
 const Home = () => {
   const drawerRef = React.useRef(null);
@@ -48,7 +46,6 @@ const Home = () => {
               </>
             )}
           />
-
           <Scripts />
         </View>
       </Drawer>
@@ -56,4 +53,4 @@ const Home = () => {
   );
 };
 
-export default provideHomeContext(Home);
+export default Home;
