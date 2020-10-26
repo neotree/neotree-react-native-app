@@ -19,7 +19,7 @@ import TypeYesNo from './_TypeYesNo';
 import TypeManagement from './TypeManagement';
 
 const ActiveScreen = props => {
-  const { screen, setEntry, removeEntry, } = props;
+  const { screen, setEntry, removeEntry, hidden, } = props;
 
   return (
     <>
@@ -48,84 +48,86 @@ const ActiveScreen = props => {
         </Content>
       )}
 
-      <ScrollView>
-        {!!screen.data.contentText && (
-          <>
-            <Content
-              containerProps={{
-                style: {
-                  justifyContent: 'center',
-                  backgroundColor: 'rgba(255, 255, 0,.2)'
-                },
-              }}
-            >
-              <Text style={[colorStyles.primaryColor]}>
-                {screen.data.contentText.replace(/^\s+|\s+$/g, '')}
-              </Text>
-            </Content>
-
-            <Divider border={false} />
-          </>
-        )}
-
-        {(() => {
-          let Component = null;
-
-          switch (screen.type) {
-            case 'yesno':
-              Component = TypeYesNo;
-              break;
-            case 'checklist':
-              Component = TypeChecklist;
-              break;
-            case 'multi_select':
-              Component = TypeMultiSelect;
-              break;
-            case 'single_select':
-              Component = TypeSingleSelect;
-              break;
-            case 'form':
-              Component = TypeForm;
-              break;
-            case 'timer':
-              Component = TypeTimer;
-              break;
-            case 'progress':
-              Component = TypeProgress;
-              break;
-            case 'management':
-              Component = TypeManagement;
-              break;
-            case 'list':
-              Component = TypeList;
-              break;
-            default:
-            // do nothing
-          }
-
-          return !Component ? null : (
-            <Content>
-              <Component
-                {...props}
-                setEntry={e => {
-                  const { label, dataType } = (screen.data.metadata || {});
-                  if (!e) return removeEntry(screen.screen_id);
-                  setEntry({
-                    screen: {
-                      title: screen.data.title,
-                      sectionTitle: screen.data.sectionTitle,
-                      id: screen.screen_id,
-                      type: screen.type,
-                      metadata: { label, dataType },
-                    },
-                    ...e,
-                  })
+      {hidden ? null : (
+        <ScrollView>
+          {!!screen.data.contentText && (
+            <>
+              <Content
+                containerProps={{
+                  style: {
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(255, 255, 0,.2)'
+                  },
                 }}
-              />
-            </Content>
-          );
-        })()}
-      </ScrollView>
+              >
+                <Text style={[colorStyles.primaryColor]}>
+                  {screen.data.contentText.replace(/^\s+|\s+$/g, '')}
+                </Text>
+              </Content>
+
+              <Divider border={false} />
+            </>
+          )}
+
+          {(() => {
+            let Component = null;
+
+            switch (screen.type) {
+              case 'yesno':
+                Component = TypeYesNo;
+                break;
+              case 'checklist':
+                Component = TypeChecklist;
+                break;
+              case 'multi_select':
+                Component = TypeMultiSelect;
+                break;
+              case 'single_select':
+                Component = TypeSingleSelect;
+                break;
+              case 'form':
+                Component = TypeForm;
+                break;
+              case 'timer':
+                Component = TypeTimer;
+                break;
+              case 'progress':
+                Component = TypeProgress;
+                break;
+              case 'management':
+                Component = TypeManagement;
+                break;
+              case 'list':
+                Component = TypeList;
+                break;
+              default:
+              // do nothing
+            }
+
+            return !Component ? null : (
+              <Content>
+                <Component
+                  {...props}
+                  setEntry={e => {
+                    const { label, dataType } = (screen.data.metadata || {});
+                    if (!e) return removeEntry(screen.screen_id);
+                    setEntry({
+                      screen: {
+                        title: screen.data.title,
+                        sectionTitle: screen.data.sectionTitle,
+                        id: screen.screen_id,
+                        type: screen.type,
+                        metadata: { label, dataType },
+                      },
+                      ...e,
+                    })
+                  }}
+                />
+              </Content>
+            );
+          })()}
+        </ScrollView>
+      )}
     </>
   );
 };
@@ -135,6 +137,7 @@ ActiveScreen.propTypes = {
   screen: PropTypes.object.isRequired,
   setEntry: PropTypes.func.isRequired,
   removeEntry: PropTypes.func.isRequired,
+  hidden: PropTypes.bool,
 };
 
 export default ActiveScreen;
