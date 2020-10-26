@@ -4,10 +4,9 @@ import { View } from 'react-native';
 import Text from '@/components/Text';
 import Modal from '@/components/Modal';
 import { Button, Input, Item, Label } from 'native-base';
-import { useAppContext } from '@/contexts/app';
 
 const Confidentials = ({ onShowConfidential }) => {
-  const { state: { adminpassword } } = useAppContext();
+  const adminpassword = '1234';
 
   const [openModal, setOpenModal] = React.useState(false);
   const [password, setPassword] = React.useState('');

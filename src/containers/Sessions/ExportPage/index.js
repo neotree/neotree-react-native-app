@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSessionsContext } from '@/contexts/sessions';
-import { useOverlayLoaderState } from '@/contexts/app';
 import { ListItem, Right, Left, Radio, Button, Card, } from 'native-base';
 import { View } from 'react-native';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Divider from '@/components/Divider';
+import OverlayLoader from '@/components/OverlayLoader';
 import Header from './Header';
 
 const ExportPage = () => {
@@ -18,8 +18,6 @@ const ExportPage = () => {
     { label: 'JSON', value: 'json' },
     { label: 'JSONAPI', value: 'jsonapi' },
   ];
-
-  useOverlayLoaderState('exporting_sessions', exporting);
 
   return (
     <>
@@ -65,6 +63,8 @@ const ExportPage = () => {
           </View>
         </View>
       </Content>
+
+      <OverlayLoader display={exporting} />
     </>
   );
 };

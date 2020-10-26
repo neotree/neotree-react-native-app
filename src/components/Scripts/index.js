@@ -29,7 +29,7 @@ const Scripts = () => {
               style: 'cancel'
             },
           ]
-        )
+        );
       }
       setLoadingScripts(false);
     })();

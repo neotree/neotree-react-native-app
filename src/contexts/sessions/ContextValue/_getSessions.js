@@ -5,7 +5,7 @@ export default function _getSessions() {
   getSessions()
     .then(res => {
       this.setState({
-        sessions: res.sessions,
+        sessions: res || [],
         loadingSessions: false,
         loadSessionsError: null
       });

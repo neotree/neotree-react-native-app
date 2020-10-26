@@ -9,9 +9,8 @@ export default function _getConfigKeys(payload, opts = {}) {
   getConfigKeys({ ...payload })
     .then(res => {
       this.setState({
-        config_keys: res.config_keys || [],
+        config_keys: res || [],
         configKeysInitialised: true,
-        loadConfigKeysError: res.error,
         loadingConfigKeys: false,
       });
     })
