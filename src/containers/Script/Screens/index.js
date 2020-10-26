@@ -14,7 +14,13 @@ const Screens = props => {
   const location = useLocation();
 
   const { screens, script, configuration, diagnoses, } = props;
-  const [activeScreen, setActiveScreen] = React.useState(null);
+  const [activeScreen, _setActiveScreen] = React.useState(null);
+  const [hideActiveScreen, setHideActiveScreen] = React.useState(false);
+  const setActiveScreen = s => {
+    setHideActiveScreen(true);
+    setTimeout(() => setHideActiveScreen(false), 0);
+    _setActiveScreen(s);
+  };
 
   const [startTime] = React.useState(new Date().toISOString());
   const [summary, setSummary] = React.useState(null);
@@ -88,6 +94,7 @@ const Screens = props => {
       ) : (
         <ActiveScreen
           {...props}
+          hidden={hideActiveScreen}
           saveSession={saveSession}
           screen={activeScreen}
           activeScreenIndex={activeScreenIndex}
