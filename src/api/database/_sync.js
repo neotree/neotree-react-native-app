@@ -12,7 +12,6 @@ import { getDataStatus, updateDataStatus } from './data_status';
 
 export default function sync(opts = {}) {
   const { socketEvent, deviceRegistration } = opts;
-
   return new Promise((resolve, reject) => {
     (async () => {
       let authenticatedUser = null;
@@ -87,7 +86,7 @@ export default function sync(opts = {}) {
 
       /***********  if syncing from a socket event **********/
       if (socketEvent) {
-        if ((socketEvent.name === 'create_scripts') || (socketEvent.name === 'update_scripts')) {
+        if (['create_scripts', 'update_scripts'].includes(socketEvent.name)) {
           // download scripts
           try { 
             const { scripts } = await webeditorApi.getScripts({ script_id: socketEvent.scripts.map(s => s.scriptId) });
@@ -95,7 +94,7 @@ export default function sync(opts = {}) {
           } catch (e) { /* Do nothing */ }
         }
 
-        if ((socketEvent.name === 'create_screens') || (socketEvent.name === 'update_screens')) {
+        if (['create_screens', 'update_screens'].includes(socketEvent.name)) {
           // download screens
           try { 
             const { screens } = await webeditorApi.getScreens({ screen_id: socketEvent.screens.map(s => s.screenId) });
@@ -103,7 +102,7 @@ export default function sync(opts = {}) {
           } catch (e) { /* Do nothing */ }
         }
 
-        if ((socketEvent.name === 'create_diagnoses') || (socketEvent.name === 'update_diagnoses')) {
+        if (['create_diagnoses', 'update_diagnoses'].includes(socketEvent.name)) {
           // download diagnoses
           try { 
             const { diagnoses } = await webeditorApi.getDiagnoses({ diagnosis_id: socketEvent.diagnoses.map(s => s.diagnosisId) });
@@ -111,10 +110,10 @@ export default function sync(opts = {}) {
           } catch (e) { /* Do nothing */ }
         }
 
-        if ((socketEvent.name === 'create_config_keys') || (socketEvent.name === 'update_config_keys')) {
+        if (['create_config_keys', 'update_config_keys'].includes(socketEvent.name)) {
           // download config keys
           try { 
-            const { config_keys } = await webeditorApi.getConfigKeys({ config_key_id: socketEvent.config_keys.map(s => s.configKeyId) });
+            const { config_keys } = await webeditorApi.getConfigKeys({ config_key_id: socketEvent.configKeys.map(s => s.configKeyId) });
             try { await insertConfigKeys(config_keys); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
@@ -134,9 +133,9 @@ export default function sync(opts = {}) {
           try { await deleteDiagnoses(socketEvent.diagnoses.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
         }
 
-        if (socketEvent.config_keys && socketEvent.config_keys.length && (socketEvent.name === 'delete_config_keys')) {
+        if (socketEvent.configKeys && socketEvent.configKeys.length && (socketEvent.name === 'delete_config_keys')) {
           // download config keys
-          try { await deleteConfigKeys(socketEvent.config_keys.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
+          try { await deleteConfigKeys(socketEvent.configKeys.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
         }
 
         return done();

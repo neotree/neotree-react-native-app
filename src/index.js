@@ -12,6 +12,7 @@ import Splash from './components/Splash';
 import NetworkStatusBar from './components/NetworkStatusBar';
 import * as api from './api';
 import AppContext from './AppContext';
+import addSocketEventsListeners from './_addSocketEventsListeners';
 
 const Containers = LazyPage(() => import('./containers'), { LoaderComponent: Splash });
 
@@ -23,6 +24,7 @@ const NeoTreeApp = () => {
     dataStatus: null,
     deviceRegistration: null,
     appIsReady: false,
+    lastSocketEvent: null,
   });
   const setState = partialState => _setState(prev => ({
     ...prev,
@@ -48,14 +50,19 @@ const NeoTreeApp = () => {
   });
 
   React.useEffect(() => {
-    const setError = (errType, e) => {
-      console.log(errType, e);
-      setState(({ errors }) => ({
-        errors: [...errors, `${errType}: ${e.message || e.msg || JSON.stringify(e)}`]
-      }));
-    };
+    addSocketEventsListeners(async e => {
+      try { await sync({ socketEvent: e }); } catch (e) { /* Do nothing */ }
+      setState({ lastSocketEvent: e });
+    });
 
     (async () => {
+      const setError = (errType, e) => {
+        console.log(errType, e);
+        setState(({ errors }) => ({
+          errors: [...errors, `${errType}: ${e.message || e.msg || JSON.stringify(e)}`]
+        }));
+      };
+
       let neworkState = null;
       try { neworkState = await NetInfo.fetch(); } catch (e) { return setError('Get network state', e); }
 
