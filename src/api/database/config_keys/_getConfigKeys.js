@@ -21,9 +21,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
       tx.executeSql(
         `${q};`.trim(),
         null,
-        (tx, rslts) => resolve({
-          config_keys: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
-        }),
+        (tx, rslts) => resolve(rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))),
         (tx, e) => {
           if (e) {
             require('@/utils/logger')('ERROR: getConfigKeys', e);

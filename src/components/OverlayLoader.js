@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Overlay from '@/components/Overlay';
 import { Spinner } from 'native-base';
 import theme from '@/native-base-theme/variables/commonColor';
 import { Modal, View, } from 'react-native';
 
-const OverlayLoader = ({ display, style, ...props }) => {
+const OverlayLoader = ({ display, style, transparent, ...props }) => {
   if (!display) return null;
 
   return (
@@ -13,7 +12,7 @@ const OverlayLoader = ({ display, style, ...props }) => {
       <View
         {...props}
         style={[
-          { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,.5)', },
+          { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: `rgba(0,0,0,${transparent ? 0 : 0.5})`, },
           ...(style ? style.map ? style : [style] : [])
         ]}
       >
@@ -25,6 +24,7 @@ const OverlayLoader = ({ display, style, ...props }) => {
 
 OverlayLoader.propTypes = {
   display: PropTypes.bool,
+  transparent: PropTypes.bool,
   style: PropTypes.oneOfType([
     PropTypes.array,
     PropTypes.object,

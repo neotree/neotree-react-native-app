@@ -14,9 +14,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
       tx.executeSql(
         `${q};`.trim(),
         null,
-        (tx, rslts) => resolve({
-          count: rslts.rows._array[0] ? rslts.rows._array[0]['count(id)'] : 0,
-        }),
+        (tx, rslts) => resolve(rslts.rows._array[0] ? rslts.rows._array[0]['count(id)'] : 0,),
         (tx, e) => {
           if (e) {
             require('@/utils/logger')('ERROR: countSession', e);

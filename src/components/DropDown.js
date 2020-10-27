@@ -29,7 +29,7 @@ const styles = {
   },
   title: {
     fontWeight: 'bold',
-    fontSize: 25,
+    fontSize: 20,
   },
   option: {
     display: 'flex',

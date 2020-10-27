@@ -1,60 +1,130 @@
 import React from 'react';
-import { provideScriptContext, useScriptContext } from '@/contexts/script';
-import { provideScreensContext } from '@/contexts/screens';
-import PageRefresher from '@/components/PageRefresher';
-import scriptPageCopy from '@/constants/copy/scriptPage';
-import Text from '@/components/Text';
+import * as api from '@/api';
+import { useParams, useHistory, useLocation, } from 'react-router-native';
+import { View, Alert, } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
-import useRouter from '@/utils/useRouter';
-import queryString from 'query-string';
-
+import { useAppContext } from '@/AppContext';
 import Screens from './Screens';
-import Summary from './Summary';
-
-import Header from './Header';
 
 const Script = () => {
-  const { history, location, } = useRouter();
-  const { displaySummary, } = queryString.parse(location.search);
+  const { state: { authenticatedUser, dataStatus: _dataStatus } } = useAppContext();
 
-  const {
-    initialisePage,
-    state: { script, scriptInitialised, loadingScript }
-  } = useScriptContext();
+  const { scriptId } = useParams();
+  const history = useHistory();
+  const location = useLocation();
+
+  const [dataStatus, setDataStatus] = React.useState(_dataStatus);
+  const [configuration, setConfiguration] = React.useState(null);
+
+  const [script, setScript] = React.useState(null);
+  const [loadingScript, setLoadingScript] = React.useState(false);
+
+  const [screens, setScreens] = React.useState([]);
+  const [loadingScreens, setLoadingScreens] = React.useState(false);
+
+  const [diagnoses, setDiagnoses] = React.useState([]);
 
   React.useEffect(() => {
     history.entries = [];
     history.push(location.pathname);
   }, []);
 
-  if (!scriptInitialised || loadingScript) {
-    return <OverlayLoader display style={{ backgroundColor: 'transparent' }} />;
-  }
+  const getScript = React.useCallback(() => new Promise((resolve, reject) => {
+    (async () => {
+      setLoadingScript(true);
+      try {
+        const script = await api.getScript({ script_id: scriptId });
+        setScript(script);
+        resolve(script);
+      } catch (e) {
+        Alert.alert(
+          'Failed to load script',
+          e.message || e.msg || JSON.stringify(e),
+          [
+            {
+              text: 'Try again',
+              onPress: getScript,
+            },
+            {
+              text: 'Exit',
+              onPress: () => history.push('/'),
+              style: 'cancel'
+            },
+          ]
+        );
+        reject(e);
+      }
+      setLoadingScript(false);
+    })();
+  }), []);
 
-  if (!script) {
-    return (
-      <PageRefresher
-        onRefresh={() => initialisePage({ force: true })}
-      >
-        <Text style={{ color: '#999' }}>
-          {scriptPageCopy.LOAD_SCRIPT_FAILURE_MESSAGE}
-        </Text>
-      </PageRefresher>
-    );
-  }
+  const getScreens = React.useCallback(() => new Promise((resolve, reject) => {
+    (async () => {
+      setLoadingScreens(true);
+      try {
+        const screens = await api.getScreens({ script_id: scriptId });
+        setScreens(screens || []);
+        resolve(screens || []);
+      } catch (e) {
+        Alert.alert(
+          'Failed to load screens',
+          e.message || e.msg || JSON.stringify(e),
+          [
+            {
+              text: 'Try again',
+              onPress: getScreens,
+            },
+            {
+              text: 'Exit',
+              onPress: () => history.push('/'),
+              style: 'cancel'
+            },
+          ]
+        );
+        reject(e);
+      }
+      setLoadingScreens(false);
+    })();
+  }), []);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const dataStatus = await api.getDataStatus();
+        setDataStatus(dataStatus);
+      } catch (e) { /* Do nothing */ }
+
+      try {
+        const config = await api.getConfiguration();
+        setConfiguration(config ? config.data : {});
+      } catch (e) { /* Do nothing */ }
+
+      try { await getScript(); } catch (e) { /* Do nothing */ }
+
+      try { await getScreens(); } catch (e) { /* Do nothing */ }
+
+      api.getDiagnoses().then(d => setDiagnoses(d || [])).catch(() => { /*Do nothing*/ });
+    })();
+  }, []);
+
+  if (loadingScript || loadingScreens) return <OverlayLoader display transparent />;
+
+  if (!script) return null;
 
   return (
     <>
-      {displaySummary === 'yes' ? <Summary /> : (
-        <>
-          <Header />
-          <Screens />
-        </>
-      )}
+      <View style={{ flex: 1 }}>
+        <Screens
+          dataStatus={dataStatus}
+          script={script}
+          screens={screens}
+          diagnoses={diagnoses}
+          authenticatedUser={authenticatedUser}
+          configuration={configuration}
+        />
+      </View>
     </>
   );
 };
 
-export default provideScriptContext(
-  provideScreensContext(Script)
-);
+export default Script;

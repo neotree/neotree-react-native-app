@@ -14,9 +14,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
       tx.executeSql(
         `${q} limit 1;`.trim(),
         null,
-        (tx, rslts) => resolve({
-          script: rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
-        }),
+        (tx, rslts) => resolve(rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]),
         (tx, e) => {
           if (e) {
             require('@/utils/logger')('ERROR: getScript', e);

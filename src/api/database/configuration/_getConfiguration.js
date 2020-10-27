@@ -21,18 +21,16 @@ export default (options = {}) => new Promise((resolve, reject) => {
             ...rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
           };
           getConfigKeys()
-            .catch(() => resolve({ configuration: c }))
-            .then(({ config_keys }) => {
-              resolve({ 
-                configuration: {
-                  ...c,
-                  data: config_keys.reduce((acc, { data: { configKey } }) => ({
-                    ...acc,
-                    [configKey]: acc[configKey] ? true : false,
-                  }), c.data)
-                }
+            .then(config_keys => {
+              resolve({
+                ...c,
+                data: config_keys.reduce((acc, { data: { configKey } }) => ({
+                  ...acc,
+                  [configKey]: acc[configKey] ? true : false,
+                }), c.data)
               });
-            });
+            })
+            .catch(() => resolve(c));
         },
         (tx, e) => {
           if (e) {

@@ -1,131 +1,143 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useScreensContext } from '@/contexts/screens';
-import { View } from 'react-native';
+import Divider from '@/components/Divider';
+import { ScrollView, View, } from 'react-native';
+import bgColorStyles from '@/styles/bgColorStyles';
+import colorStyles from '@/styles/colorStyles';
+import Text from '@/components/Text';
 import Content from '@/components/Content';
-import OverlayLoader from '@/components/OverlayLoader';
+import Header from './Header';
 
-import YesNo from './TypeYesNo';
-import MultiSelect from './TypeMultiSelect';
-import Form from './TypeForm';
-import Management from './TypeManagement';
-import Progress from './TypeProgress';
-import SingleSelect from './TypeSingleSelect';
-import Timer from './TypeTimer';
-import Checklist from './TypeChecklist';
-import List from './TypeList';
+import TypeForm from './TypeForm';
+import TypeChecklist from './_TypeChecklist';
+import TypeList from './_TypeList';
+import TypeMultiSelect from './_TypeMultiSelect';
+import TypeProgress from './_TypeProgress';
+import TypeSingleSelect from './_TypeSingleSelect';
+import TypeTimer from './_TypeTimer';
+import TypeYesNo from './_TypeYesNo';
+import TypeManagement from './TypeManagement';
 
-import ScreenContainer from './_Container';
-import NextBtn from './_NextBtn';
-
-const ActiveScreen = ({ children }) => {
-  const context = useScreensContext();
-
-  const { canSave, state: { activeScreen, form, }, setState } = context;
-
-  const [screenId, setScreenId] = React.useState(null);
-  const [value, setValue] = React.useState(null);
-
-  const shouldDisplay = activeScreen.id === screenId;
-
-  const onEntry = entry => {
-    setValue(entry);
-    setState(prevState => {
-      const form = prevState.form;
-      const formEntry = form.filter(item => item.screen.id === activeScreen.id)[0];
-      return {
-        ...prevState,
-        form: entry ?
-          formEntry ?
-            form.map(item => item.screen.id === activeScreen.id ? entry : item)
-            :
-            [...form, entry]
-          :
-          form.filter(item => item.screen.id !== activeScreen.id)
-      };
-    });
-  };
-
-  React.useEffect(() => { 
-    setScreenId(activeScreen.id); 
-    setValue(form.filter(item => item.screen.id === activeScreen.id)[0]);
-  }, [activeScreen]);
-
-  if (!shouldDisplay) return <OverlayLoader display style={{ backgroundColor: 'transparent' }} />;
+const ActiveScreen = props => {
+  const { screen, setEntry, removeEntry, hidden, } = props;
 
   return (
     <>
-      {(() => {
-        let Component = null;
+      <Header {...props} />
 
-        switch (activeScreen.type) {
-          case 'yesno':
-            Component = YesNo;
-            break;
-          case 'checklist':
-            Component = Checklist;
-            break;
-          case 'multi_select':
-            Component = MultiSelect;
-            break;
-          case 'single_select':
-            Component = SingleSelect;
-            break;
-          case 'form':
-            Component = Form;
-            break;
-          case 'timer':
-            Component = Timer;
-            break;
-          case 'progress':
-            Component = Progress;
-            break;
-          case 'management':
-            Component = Management;
-            break;
-          case 'list':
-            Component = List;
-            break;
-          default:
-            // do nothing
-        }
-
-        if (!shouldDisplay) Component = null;
-
-        const { label, dataType } = (activeScreen.data.metadata || {});
-        const screen = {
-          title: activeScreen.data.title,
-          sectionTitle: activeScreen.data.sectionTitle,
-          id: activeScreen.id,
-          type: activeScreen.type,
-          metadata: { label, dataType },
-        };
-
-        return !Component ? null : (
-          <View style={{ flex: 1, }}>
-            <ScreenContainer>
-              {children}
-              
-              <Content>
-                <Component
-                  screen={activeScreen}
-                  context={context}
-                  value={value || null}
-                  onChange={entry => onEntry(entry ? { ...entry, screen } : undefined)}
-                />
-              </Content>
-            </ScreenContainer>
-
-            {!!(value || canSave()) && <NextBtn />}
+      {!!screen.data.actionText && (
+        <Content
+          style={{
+            alignItems: 'center',
+            flexDirection: 'row',
+          }}
+          containerProps={bgColorStyles.primaryBg}
+        >
+          <View style={{ flex: 1 }}>
+            <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+              {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
+            </Text>
           </View>
-        );
-      })()}
+          <View>
+            {!!screen.data.step && (
+              <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+                {screen.data.step.replace(/^\s+|\s+$/g, '')}
+              </Text>
+            )}
+          </View>
+        </Content>
+      )}
+
+      <ScrollView>
+        {!!screen.data.contentText && (
+          <>
+            <Content
+              containerProps={{
+                style: {
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255, 255, 0,.2)'
+                },
+              }}
+            >
+              <Text style={[colorStyles.primaryColor]}>
+                {screen.data.contentText.replace(/^\s+|\s+$/g, '')}
+              </Text>
+            </Content>
+
+            <Divider border={false} />
+          </>
+        )}
+
+        {(() => {
+          let Component = null;
+
+          switch (screen.type) {
+            case 'yesno':
+              Component = TypeYesNo;
+              break;
+            case 'checklist':
+              Component = TypeChecklist;
+              break;
+            case 'multi_select':
+              Component = TypeMultiSelect;
+              break;
+            case 'single_select':
+              Component = TypeSingleSelect;
+              break;
+            case 'form':
+              Component = TypeForm;
+              break;
+            case 'timer':
+              Component = TypeTimer;
+              break;
+            case 'progress':
+              Component = TypeProgress;
+              break;
+            case 'management':
+              Component = TypeManagement;
+              break;
+            case 'list':
+              Component = TypeList;
+              break;
+            default:
+            // do nothing
+          }
+
+          Component = hidden ? null : Component;
+
+          return !Component ? null : (
+            <Content>
+              <Component
+                {...props}
+                setEntry={e => {
+                  const { label, dataType } = (screen.data.metadata || {});
+                  if (!e) return removeEntry(screen.screen_id);
+                  setEntry({
+                    screen: {
+                      title: screen.data.title,
+                      sectionTitle: screen.data.sectionTitle,
+                      id: screen.screen_id,
+                      type: screen.type,
+                      metadata: { label, dataType },
+                    },
+                    ...e,
+                  })
+                }}
+              />
+            </Content>
+          );
+        })()}
+      </ScrollView>
     </>
   );
 };
 
 ActiveScreen.propTypes = {
-  children: PropTypes.node,
+  entries: PropTypes.array.isRequired,
+  screen: PropTypes.object.isRequired,
+  setEntry: PropTypes.func.isRequired,
+  removeEntry: PropTypes.func.isRequired,
+  hidden: PropTypes.bool,
 };
 
 export default ActiveScreen;
