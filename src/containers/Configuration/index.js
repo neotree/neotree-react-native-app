@@ -8,6 +8,7 @@ import Text from '@/components/Text';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
+import { useSocketEventEffect } from '@/AppContext';
 
 const Configuration = () => {
   const history = useHistory();
@@ -25,9 +26,11 @@ const Configuration = () => {
 
   useBackButton(() => { goBack(); }, []);
 
-  const getConfigKeys = () => new Promise((resolve, reject) => {
+  const getConfigKeys = (opts = {}) => new Promise((resolve, reject) => {
+    const { loader } = opts;
+
     (async () => {
-      setLoadingConfigKeys(true);
+      setLoadingConfigKeys((loader === undefined) || loader);
       try {
         const keys = await api.getConfigKeys();
         setConfigKeys(keys || []);
@@ -78,6 +81,12 @@ const Configuration = () => {
       }
       setSavingConfiguration(false);
     })();
+  });
+
+  useSocketEventEffect(e => {
+    if (['delete_config_keys', 'update_config_keys', 'create_config_keys'].includes(e.name)) {
+      getConfigKeys({ loader: false, });
+    }
   });
 
   React.useEffect(() => {
