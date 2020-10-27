@@ -2,34 +2,30 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Alert, TouchableOpacity } from 'react-native';
 import { Text } from 'native-base';
-import authCopy from '@/constants/copy/auth';
-import copy from '@/constants/copy';
-import { useOverlayLoaderState, useAppContext } from '@/contexts/app';
+import OverlayLoader from '@/components/OverlayLoader';
+import { useAppContext } from '@/AppContext';
 
 const SignOutBtn = ({ icon, style, ...props }) => {
   const { signOut } = useAppContext();
-
   const [signingOut, setSigningOut] = React.useState(false);
 
-  useOverlayLoaderState('sign_out', signingOut);
-
   const logOut = () => {
-    const onConfirm = () => {
+    const onConfirm = async () => {
       setSigningOut(true);
-      signOut()
-        .catch(() => setSigningOut(false))
-        .then(() => setSigningOut(false));
+      try { await signOut(); } catch (e) { /*Do nothing*/ }
+      setSigningOut(false);
     };
+
     Alert.alert(
-      authCopy.CONFIRM_SIGN_OUT_TITLE,
-      authCopy.CONFIRM_SIGN_OUT_MESSAGE,
+      'Sign out',
+      "Are you sure you want to sign out? You'll need internet connection to sign back in.",
       [
         {
-          text: copy.ALERT_CANCEL,
+          text: 'Cancel',
           onPress: () => {},
           style: 'cancel'
         },
-        { text: copy.ALERT_OK, onPress: () => onConfirm() }
+        { text: 'Ok', onPress: () => onConfirm() }
       ],
       { cancelable: false }
     );
@@ -57,6 +53,8 @@ const SignOutBtn = ({ icon, style, ...props }) => {
           <Text>Logout</Text>
         </>
       </TouchableOpacity>
+
+      <OverlayLoader display={signingOut} />
     </>
   );
 };

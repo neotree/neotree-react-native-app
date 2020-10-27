@@ -1,9 +1,9 @@
 import db from '../db';
 
 const query = s => new Promise((resolve, reject) => {
-  const columns = ['id', 'data', 'position', 'createdAt', 'updatedAt'].join(',');
+  const columns = ['id', 'script_id', 'data', 'position', 'createdAt', 'updatedAt'].join(',');
 
-  const values = ['?', '?', '?', '?', '?'].join(',');
+  const values = ['?', '?', '?', '?', '?', '?'].join(',');
 
   db.transaction(
     tx => {
@@ -11,6 +11,7 @@ const query = s => new Promise((resolve, reject) => {
         `insert or replace into scripts (${columns}) values (${values});`,
         [
           s.id,
+          s.script_id,
           JSON.stringify(s.data || {}),
           s.position,
           s.createdAt,

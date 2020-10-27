@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Section from './Section';
 
-const Management = ({ screen, onChange }) => {
+const Management = ({ screen, setEntry: onChange, }) => {
   const metadata = screen.data.metadata || {};
 
   React.useEffect(() => {
@@ -37,8 +37,8 @@ const Management = ({ screen, onChange }) => {
 
 Management.propTypes = {
   screen: PropTypes.object,
-  // value: PropTypes.any,
-  onChange: PropTypes.func.isRequired,
+  // entry: PropTypes.obbject,
+  setEntry: PropTypes.func.isRequired,
 };
 
 export default Management;
