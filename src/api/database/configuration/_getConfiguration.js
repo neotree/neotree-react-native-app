@@ -21,7 +21,7 @@ export default (options = {}) => new Promise((resolve, reject) => {
             ...rslts.rows._array.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
           };
           getConfigKeys()
-            .then(({ config_keys }) => {
+            .then(config_keys => {
               resolve({
                 ...c,
                 data: config_keys.reduce((acc, { data: { configKey } }) => ({
