@@ -6,8 +6,8 @@ export default function getJSON(_sessions = [], opts = {}) {
 
     return {
       uid: s.uid,
-      scriptTitle: script.id,
-      script: { id: script.id, title: script.data.title },
+      scriptTitle: script.script_id,
+      script: { id: script.script_id, title: script.data.title },
       entries: form
         .map(e => ({
           ...e,
