@@ -21,7 +21,7 @@ const Summary = ({ summary, clearSummary, }) => {
         leftActions={(
           <>
             <TouchableOpacity
-              transparent
+              style={{ padding: 10 }}
               onPress={() => clearSummary()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />

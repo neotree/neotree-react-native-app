@@ -10,6 +10,7 @@ const ExportLink = () => {
   return (
     <>
       <TouchableOpacity
+        style={{ paddingHorizontal: 5 }}
         onPress={() => history.push('/sessions/export')}
       >
         <Icon style={[colorStyles.primaryColor]} name="save" />

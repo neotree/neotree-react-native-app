@@ -9,6 +9,7 @@ const ToggleSelect = () => {
   return (
     <>
       <TouchableOpacity
+        style={{ paddingHorizontal: 5 }}
         onPress={() => setState({ canSelectItems: !canSelectItems })}
       >
         <Icon name="checkbox" />

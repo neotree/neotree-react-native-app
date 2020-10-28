@@ -25,6 +25,7 @@ const HeaderComponent = ({ session, showConfidential, }) => {
         leftActions={(
           <>
             <TouchableOpacity
+              style={{ padding: 10 }}
               onPress={() => goBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
