@@ -11,6 +11,7 @@ const DeleteBtn = () => {
   return (
     <>
       <TouchableOpacity
+        style={{ paddingHorizontal: 5 }}
         onPress={() => {
           ActionSheet.show(
             {

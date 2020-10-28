@@ -23,7 +23,7 @@ const HeaderComponent = () => {
         leftActions={(
           <>
             <TouchableOpacity
-              transparent
+              style={{ padding: 10 }}
               onPress={() => goBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />

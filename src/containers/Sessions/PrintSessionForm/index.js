@@ -40,6 +40,7 @@ const PrintSessionForm = ({ session, showConfidential, }) => {
   return (
     <>
       <TouchableOpacity
+        style={{ paddingHorizontal: 5 }}
         onPress={() => print()}
       ><Icon style={[colorStyles.primaryColor]} name="print" /></TouchableOpacity>
     </>
