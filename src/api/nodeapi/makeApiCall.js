@@ -1,6 +1,7 @@
-/* global fetch */
+/* global fetch, __DEV__ */
 import queryString from 'query-string';
-import apiConfig from '~/config/neotree-nodeapi-api.json';
+
+const apiConfig = __DEV__ ? require('~/config/neotree-nodeapi-api.json') : require('~/config/prod-neotree-nodeapi-api.json');
 
 export default (url = '', opts = {}) => new Promise((resolve, reject) => {
   url = `${apiConfig.api_endpoint}${url}`;
