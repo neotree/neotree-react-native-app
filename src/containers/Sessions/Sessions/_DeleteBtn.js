@@ -2,23 +2,54 @@ import React from 'react';
 import OverlayLoader from '@/components/OverlayLoader';
 import { Icon, ActionSheet } from 'native-base';
 import colorStyles from '@/styles/colorStyles';
-import { TouchableOpacity, Platform } from 'react-native';
-import PropTypes from 'prop-types';
+import { TouchableOpacity, Platform, Alert } from 'react-native';
+import * as api from '@/api';
+import { useSessionsContext } from '../SessionsContext';
 
-const DeleteBtn = ({ sessions, setSessions }) => {
+const DeleteBtn = () => {
+  const {
+    sessions,
+    getSessions,
+  } = useSessionsContext();
+
   const [deletingSessions, setDeletingSessions] = React.useState(false);
 
-  const deleteSessions = async (sessions) => new Promise((resolve, reject) => {
-    console.log(sessions);
-    (async () => {
-      setDeletingSessions(true);
-      setTimeout(() => setDeletingSessions(false), 50);
-    })();
+  const deleteSessions = async (ids = []) => new Promise((resolve, reject) => {
+    if (ids.length) {
+      (async () => {
+        setDeletingSessions(true);
+        try {
+          await api.deleteSessions(ids);
+          await getSessions();
+          resolve();
+        } catch (e) {
+          Alert.alert(
+            'ERROR',
+            e.message || e.msg || JSON.stringify(e),
+            [
+              {
+                text: 'Try again',
+                type: 'cancel',
+                onPress: () => deleteSessions(ids),
+              },
+              {
+                text: 'Cancel',
+                type: 'cancel',
+                onPress: () => {},
+              }
+            ]
+          );
+          reject(e);
+        }
+        setDeletingSessions(false);
+      })();
+    }
   });
 
   return (
     <>
       <TouchableOpacity
+        style={{ paddingHorizontal: 10 }}
         onPress={() => {
           ActionSheet.show(
             {
@@ -45,11 +76,6 @@ const DeleteBtn = ({ sessions, setSessions }) => {
       <OverlayLoader display={deletingSessions} />
     </>
   );
-};
-
-DeleteBtn.propTypes = {
-  sessions: PropTypes.array.isRequired,
-  setSessions: PropTypes.func.isRequired,
 };
 
 export default DeleteBtn;

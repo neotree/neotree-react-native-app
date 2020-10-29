@@ -24,12 +24,12 @@ const deleteSession = (_where = {}) => new Promise((resolve, reject) => {
   );
 });
 
-export default (params = []) => new Promise((resolve, reject) => {
-  params = params || [];
+export default (ids = []) => new Promise((resolve, reject) => {
+  ids = ids || [];
 
-  if (!params.map) params = [params];
+  if (!ids.map) ids = [ids];
 
-  Promise.all(params.map(where => deleteSession(where)))
+  Promise.all(ids.map(id => ({ id })).map(where => deleteSession(where)))
     .catch(reject)
     .then(resolve);
 });

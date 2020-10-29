@@ -1,10 +1,8 @@
 import React from 'react';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, View } from 'react-native';
-import * as Application from 'expo-application';
+import { View, Alert, BackHandler, } from 'react-native';
 import { Container, StyleProvider, Root } from 'native-base';
-import NetInfo from '@react-native-community/netinfo';
 import getTheme from './native-base-theme/components';
 import material from './native-base-theme/variables/commonColor';
 import LazyPage from './components/LazyPage';
@@ -56,25 +54,19 @@ const NeoTreeApp = () => {
     });
 
     (async () => {
-      const setError = (errType, e) => {
-        console.log(errType, e);
-        setState(({ errors }) => ({
-          errors: [...errors, `${errType}: ${e.message || e.msg || JSON.stringify(e)}`]
-        }));
+      const alertError = (errType, e) => {
+        Alert.alert(
+          'ERROR',
+          `${errType}: ${e.message || e.msg || JSON.stringify(e)}`,
+          [
+            {
+              text: 'Exit app',
+              type: 'cancel',
+              onPress: () => BackHandler.exitApp(),
+            }
+          ]
+        );
       };
-
-      let neworkState = null;
-      try { neworkState = await NetInfo.fetch(); } catch (e) { return setError('Get network state', e); }
-
-      let deviceId = null;
-      try {
-        deviceId = await new Promise((resolve, reject) => {
-          if (Platform.OS === 'android') return resolve(Application.androidId);
-          Application.getIosIdForVendorAsync()
-            .then(uid => resolve(uid))
-            .catch(reject);
-        });
-      } catch (e) { setError('Load device id', e); }
 
       try {
         await Font.loadAsync({
@@ -83,20 +75,13 @@ const NeoTreeApp = () => {
           ...Ionicons.font,
         });
         setState({ fontsLoaded: true, });
-      } catch (e) { setError('Load fonts error', e); }
+      } catch (e) { return alertError('Load fonts error', e); }
 
-      let deviceRegistration = null;
-      if (neworkState && neworkState.isInternetReachable) {
-        try {
-          deviceRegistration = await api.webeditor.getDeviceRegistration({ deviceId });
-          deviceRegistration = deviceRegistration.device;
-          setState({ deviceRegistration });
-        } catch (e) {
-          setError('Get device registration error', e);
-        }
+      try {
+        await sync();
+      } catch (e) {
+        return alertError('Sync error', e);
       }
-
-      try { await sync({ deviceRegistration }); } catch (e) { setError('Sync error', e); }
 
       setState({ appIsReady: true });
     })();

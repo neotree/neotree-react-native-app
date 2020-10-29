@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { Link, useHistory } from 'react-router-native';
 import { Body, Card, CardItem, Icon } from 'native-base';
@@ -11,13 +10,14 @@ import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import colorStyles from '@/styles/colorStyles';
 import DeleteBtn from './_DeleteBtn';
+import { useSessionsContext } from '../SessionsContext';
 
-const Sessions = props => {
+const Sessions = () => {
   const {
     sessions,
     getSessions,
     loadingSessions,
-  } = props;
+  } = useSessionsContext();
 
   const history = useHistory();
 
@@ -35,6 +35,7 @@ const Sessions = props => {
         leftActions={(
           <>
             <TouchableOpacity
+              style={{ padding: 10 }}
               onPress={() => goBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
@@ -44,14 +45,13 @@ const Sessions = props => {
         rightActions={(
           <>
             <TouchableOpacity
+              style={{ paddingHorizontal: 10 }}
               onPress={() => history.push('/sessions/export')}
             >
               <Icon style={[colorStyles.primaryColor]} name="save" />
             </TouchableOpacity>
 
-            <View style={{ margin: 10 }} />
-
-            <DeleteBtn {...props} />
+            <DeleteBtn />
           </>
         )}
       />
@@ -106,12 +106,6 @@ const Sessions = props => {
       </View>
     </>
   );
-};
-
-Sessions.propTypes = {
-  sessions: PropTypes.array.isRequired,
-  getSessions: PropTypes.func.isRequired,
-  loadingSessions: PropTypes.bool.isRequired,
 };
 
 export default Sessions;
