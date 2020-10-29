@@ -39,6 +39,7 @@ const Home = () => {
             leftActions={(
               <>
                 <TouchableOpacity
+                  style={{ paddingHorizontal: 5 }}
                   onPress={() => drawerRef.current._root.open()}
                 >
                   <Icon style={[colorStyles.primaryColor]} name="menu" />

@@ -18,15 +18,10 @@ export const getLocalAuthenticatedUser = () => new Promise((resolve, reject) => 
 
           const details = (() => {
             if (!user) return null;
-
-            try {
-              return JSON.parse(user.details);
-            } catch (e) {
-              return null;
-            }
+            try { return JSON.parse(user.details); } catch (e) { return null; }
           })();
 
-          resolve({ user: details });
+          resolve(details);
         },
         (tx, e) => {
           if (e) {

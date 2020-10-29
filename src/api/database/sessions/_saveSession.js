@@ -1,5 +1,6 @@
 import db from '../db';
 import { getDataStatus, updateDataStatus } from '../data_status';
+import sync from '../_sync';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   (async () => {
@@ -42,7 +43,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
               updateDataStatus({ 
                 ...dataStatus, 
                 total_sessions_recorded: dataStatus.total_sessions_recorded + 1,
-              });
+              }).then(() => sync()).catch(() => { /**/ });
             }
             done(null, rslts);
           },

@@ -42,11 +42,13 @@ const ScreenHeader = ({
     );
   };
 
-  useBackButton(() => {
+  const onBack = () => {
     if (activeScreenIndex < 1) return cancelScript();
     const prev = getScreen({ direction: 'back' });
     setActiveScreen(prev ? prev.screen : null);
-  });
+  }
+
+  useBackButton(() => { onBack(); });
 
   const [openInfoModal, setOpenInfoModal] = React.useState(false);
 
@@ -58,11 +60,8 @@ const ScreenHeader = ({
         leftActions={(
           <>
             <TouchableOpacity
-              onPress={() => {
-                if (activeScreenIndex < 1) return cancelScript();
-                const prev = getScreen('back');
-                setActiveScreen(prev ? prev.screen : null);
-              }}
+              style={{ padding: 10 }}
+              onPress={() => onBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>

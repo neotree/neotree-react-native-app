@@ -50,7 +50,7 @@ const NUID = ({
   const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
 
   React.useEffect(() => {
-    if (firstHalf.length === 4) lastHalfRef.current._root.focus();
+    // if (firstHalf.length === 4) lastHalfRef.current._root.focus();
   }, [firstHalf]);
 
   React.useEffect(() => {
