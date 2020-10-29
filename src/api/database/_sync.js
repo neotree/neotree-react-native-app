@@ -1,4 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
+import { Platform } from 'react-native';
+import * as Application from 'expo-application';
 
 import createTablesIfNotExist from './_createTablesIfNotExist';
 import getAuthenticatedUser from './_getAuthenticatedUser';
@@ -11,12 +13,14 @@ import { insertConfigKeys, deleteConfigKeys } from './config_keys';
 import { getDataStatus, updateDataStatus } from './data_status';
 
 export default function sync(opts = {}) {
-  const { socketEvent, deviceRegistration } = opts;
+  const { socketEvent } = opts;
   return new Promise((resolve, reject) => {
     (async () => {
       let authenticatedUser = null;
       let dataStatus = null;
       let neworkState = null;
+      let deviceId = null;
+      let deviceRegistration = null;
 
       const done = async (e, data) => {
         await updateDataStatus({
@@ -25,23 +29,62 @@ export default function sync(opts = {}) {
           updatedAt: new Date().toISOString(),
         });
         if (e) return reject(e);
-        resolve({ ...data, authenticatedUser, dataStatus, });
+        resolve({
+          ...data,
+          authenticatedUser,
+          dataStatus,
+          deviceId,
+          deviceRegistration,
+        });
       };
 
       // get network status
-      try { neworkState = await NetInfo.fetch(); } catch (e) { return reject(e); }
+      try {
+        neworkState = await NetInfo.fetch();
+      } catch (e) {
+        return reject(new Error(`Error loading network info: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
 
       // create tables if they don't exist
-      try { await createTablesIfNotExist(); } catch (e) { return reject(e); }
+      try {
+        await createTablesIfNotExist();
+      } catch (e) {
+        return reject(new Error(`Error creating tables: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
+
+      // get device id
+      try {
+        deviceId = await new Promise((resolve, reject) => {
+          if (Platform.OS === 'android') return resolve(Application.androidId);
+          Application.getIosIdForVendorAsync()
+            .then(uid => resolve(uid))
+            .catch(reject);
+        });
+      } catch (e) {
+        return reject(new Error(`Error loading device id: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
+
+      // get device registration
+      try {
+        const { device } = await webeditorApi.getDeviceRegistration({ deviceId });
+        deviceRegistration = device;
+      } catch (e) {
+        return reject(new Error(`Error loading device registration: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
 
       // get data status
-      try { dataStatus = await getDataStatus(deviceRegistration); } catch (e) { return reject(e); }
+      try {
+        dataStatus = await getDataStatus(deviceRegistration);
+      } catch (e) {
+        return reject(new Error(`Error loading data status: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
 
       // get authenticated user
-      try { 
-        const { user } = await getAuthenticatedUser(); 
-        authenticatedUser = user;
-      } catch (e) { return reject(e); }
+      try {
+        authenticatedUser = await getAuthenticatedUser();
+      } catch (e) {
+        return reject(new Error(`Error loading authenticated user: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
 
       // Don't proceed if there's no internet
       if (!neworkState.isInternetReachable) return done();

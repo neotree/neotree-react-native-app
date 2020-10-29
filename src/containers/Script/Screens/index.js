@@ -123,7 +123,7 @@ const Screens = props => {
             if (summary) {
               setSavingSession(true);
               try {
-                await saveSession();
+                await saveSession({ completed: true });
                 history.push('/');
               } catch (e) {
                 Alert.alert(
