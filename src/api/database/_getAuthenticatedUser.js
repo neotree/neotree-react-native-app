@@ -1,4 +1,4 @@
-import db from '../database/db';
+import db from './db';
 
 export default () => new Promise((resolve, reject) => {
   db.transaction(
@@ -11,15 +11,10 @@ export default () => new Promise((resolve, reject) => {
 
           const details = (() => {
             if (!user) return null;
-
-            try {
-              return JSON.parse(user.details);
-            } catch (e) {
-              return null;
-            }
+            try { return JSON.parse(user.details); } catch (e) { return null; }
           })();
 
-          resolve({ user: details });
+          resolve(details);
         },
         (tx, e) => {
           if (e) {
