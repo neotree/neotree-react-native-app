@@ -53,12 +53,12 @@ https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
 
 ## Scripts
 
-######DEV
+**DEV**
 * `yarn install` - install dependencies
 * `yarn android` - run android app
 * `yarn ios` - run ios
 
-######Builds
+**Builds**
 * `npm run build-dev-android` - Builds Neotree (DEV) apk - staging build
 * `npm run build-dev-ios` - Neotree (DEV) ios build - staging build
 * `npm run build-prod-android` - Builds Neotree apk - production build
