@@ -1,7 +1,9 @@
-/* global fetch, __DEV__ */
+/* global fetch */
+import constants from '@/constants';
 import queryString from 'query-string';
 
-const apiConfig = __DEV__ ? require('~/config/neotree-nodeapi-api.json') : require('~/config/prod-neotree-nodeapi-api.json');
+const isProd = constants.BUILD_TYPE === 'production';
+const apiConfig = isProd ? require('~/config/prod-neotree-nodeapi-api.json') : require('~/config/neotree-nodeapi-api.json');
 
 export default (url = '', opts = {}) => new Promise((resolve, reject) => {
   url = `${apiConfig.api_endpoint}${url}`;
