@@ -1,8 +1,11 @@
 import { Dimensions } from 'react-native';
+import Constants from 'expo-constants';
 
 const { width, height } = Dimensions.get('window');
 
 export default {
+  ...Constants.manifest.extra,
+
   APP_TITLE: 'NeoTree',
 
   SCREEN_HEIGHT: height,

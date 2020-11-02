@@ -10,11 +10,11 @@ export default (html, session) => {
     <header>
       <style>
         body {
-          font-size: 10px;
+          font-size: 14px;
         }
         #header {
           text-align: center;
-          margin-bottom: 15px;
+          margin-bottom: 10px;
         }
         #headerTitle {
           margin: 0;
@@ -32,7 +32,7 @@ export default (html, session) => {
           columns: 0px 2;
         }
         .title {
-          padding: 5px;
+          padding: 3px;
           background: #ccc;
           color: #000;
         }
@@ -49,7 +49,7 @@ export default (html, session) => {
         }
         .row:not(.title) > * {
           flex: 0 0 50%;
-          padding: 5px;
+          padding: 3px;
         }
 
         footer {

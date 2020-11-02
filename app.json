@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "NeoTree (DEV)",
+    "name": "NeoTree",
     "slug": "neotree",
     "platforms": [
       "ios",
       "android",
       "web"
     ],
-    "version": "0.4.40-DEV",
+    "version": "0.4.40",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",

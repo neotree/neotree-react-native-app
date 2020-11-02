@@ -1,7 +1,8 @@
-/* global __DEV__ */
+import constants from '@/constants';
 import makeApiCall from '../makeApiCall';
 
-const apiConfig = __DEV__ ? require('~/config/neotree-webeditor-api.json') : require('~/config/prod-neotree-webeditor-api.json');
+const isProd = constants.BUILD_TYPE === 'production';
+const apiConfig = isProd ? require('~/config/prod-neotree-webeditor-api.json') : require('~/config/neotree-webeditor-api.json');
 
 export default (url = '', opts = {}) => new Promise((resolve, reject) => {
   url = `${apiConfig.api_endpoint}${url}`;
