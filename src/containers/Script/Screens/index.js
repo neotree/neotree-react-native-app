@@ -24,6 +24,7 @@ const Screens = props => {
 
   const [startTime] = React.useState(new Date().toISOString());
   const [summary, setSummary] = React.useState(null);
+  const [displayLoader, setDisplayLoader] = React.useState(false);
   const [savingSession, setSavingSession] = React.useState(false);
 
   const [entries, setEntries] = React.useState([]);
@@ -118,6 +119,7 @@ const Screens = props => {
       {activeScreenEntry && (
         <Fab
           onPress={async () => {
+            setDisplayLoader(true);
             const lastScreen = getLastScreen();
 
             if (summary) {
@@ -143,12 +145,11 @@ const Screens = props => {
                   ]
                 );
               }
-              return setSavingSession(false);
-            }
-
-            if (activeScreen.screen_id === lastScreen.screen_id) {
+              setSavingSession(false);
+            } else if (activeScreen.screen_id === lastScreen.screen_id) {
               const summary = createSessionSummary({ completed: true, });
               setSummary(summary);
+              setDisplayLoader(false);
             } else {
               const next = getScreen({ direction: 'next' });
               const nextScreen = next ? next.screen : null;
@@ -167,9 +168,12 @@ const Screens = props => {
               }
               setActiveScreen(nextScreen);
             }
+            setDisplayLoader(false);
           }}
         ><Icon style={{ color: '#fff' }} name={summary ? 'save' : 'arrow-forward'} /></Fab>
       )}
+
+      <OverlayLoader display={displayLoader} />
     </>
   );
 };
