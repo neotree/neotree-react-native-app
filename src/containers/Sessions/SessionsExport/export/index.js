@@ -142,19 +142,23 @@ export function exportToApi(_sessions = []) {
       const sessions = _sessions.filter(s => !s.exported);
       const postData = getJSON(sessions);
 
-      try {
-        await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
-          (async () => {
-            // try { await api.exportSession(s); } catch (e) { return reject(e); }
+      if (postData.length) {
+        try {
+          await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
+            (async () => {
+              try { await api.exportSession(s); } catch (e) { return reject(e); }
 
-            const id = sessions[i].id;
+              const id = sessions[i].id;
 
-            try { await api.updateSessions({ exported: true }, { where: { id, }, }); } catch (e) { return reject(e); }
+              try { await api.updateSessions({ exported: true }, { where: { id, }, }); } catch (e) { return reject(e); }
 
-            resolve();
-          })();
-        })));
-      } catch (e) { reject(e); }
+              resolve();
+            })();
+          })));
+        } catch (e) { reject(e); }
+
+        try { await exportJSON(_sessions); } catch (e) { /* Do nothing */ }
+      }
 
       resolve();
     })();
