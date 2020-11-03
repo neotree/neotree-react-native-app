@@ -143,6 +143,8 @@ export function exportToApi(_sessions = []) {
       const postData = getJSON(sessions);
 
       if (postData.length) {
+        try { await exportJSON(sessions); } catch (e) { /* Do nothing */ }
+        
         try {
           await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
             (async () => {
@@ -156,8 +158,6 @@ export function exportToApi(_sessions = []) {
             })();
           })));
         } catch (e) { reject(e); }
-
-        try { await exportJSON(_sessions); } catch (e) { /* Do nothing */ }
       }
 
       resolve();
