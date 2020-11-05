@@ -80,7 +80,12 @@ const Screens = props => {
     script,
     startTime,
   });
-  const saveSession = params => api.saveSession(createSessionSummary(params));
+  const saveSession = params => new Promise((resolve, reject) => {
+    const summary = createSessionSummary(params);
+    api.saveSession(summary)
+      .then(() => resolve(summary))
+      .catch(reject);
+  });
 
   if (savingSession) return <OverlayLoader display />;
 
@@ -122,11 +127,11 @@ const Screens = props => {
             setDisplayLoader(true);
             const lastScreen = getLastScreen();
 
-            if (summary) {
+            if (activeScreen.screen_id === lastScreen.screen_id) {
               setSavingSession(true);
               try {
-                await saveSession({ completed: true });
-                history.push('/');
+                const summary = await saveSession({ completed: true });
+                setSummary(summary);
               } catch (e) {
                 Alert.alert(
                   'ERROR',
@@ -146,10 +151,6 @@ const Screens = props => {
                 );
               }
               setSavingSession(false);
-            } else if (activeScreen.screen_id === lastScreen.screen_id) {
-              const summary = createSessionSummary({ completed: true, });
-              setSummary(summary);
-              setDisplayLoader(false);
             } else {
               const next = getScreen({ direction: 'next' });
               const nextScreen = next ? next.screen : null;
@@ -170,7 +171,7 @@ const Screens = props => {
             }
             setDisplayLoader(false);
           }}
-        ><Icon style={{ color: '#fff' }} name={summary ? 'save' : 'arrow-forward'} /></Fab>
+        ><Icon style={{ color: '#fff' }} name={summary ? 'checkmark' : 'arrow-forward'} /></Fab>
       )}
 
       <OverlayLoader display={displayLoader} />
