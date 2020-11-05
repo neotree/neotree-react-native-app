@@ -52,6 +52,19 @@ export default function sync(opts = {}) {
         return reject(new Error(`Error creating tables: ${e.message || e.msg || JSON.stringify(e)}`));
       }
 
+      // Don't proceed if there's no internet
+      if (!neworkState.isInternetReachable) return done();
+
+      // get authenticated user
+      try {
+        authenticatedUser = await getAuthenticatedUser();
+      } catch (e) {
+        return reject(new Error(`Error loading authenticated user: ${e.message || e.msg || JSON.stringify(e)}`));
+      }
+
+      // Don't proceed if not authenticated
+      if (!authenticatedUser) return done();
+
       // get device id
       try {
         deviceId = await new Promise((resolve, reject) => {
@@ -68,9 +81,7 @@ export default function sync(opts = {}) {
       try {
         const { device } = await webeditorApi.getDeviceRegistration({ deviceId });
         deviceRegistration = device;
-      } catch (e) {
-        return reject(new Error(`Error loading device registration: ${e.message || e.msg || JSON.stringify(e)}`));
-      }
+      } catch (e) { /* Do nothing */ }
 
       // get data status
       try {
@@ -79,18 +90,8 @@ export default function sync(opts = {}) {
         return reject(new Error(`Error loading data status: ${e.message || e.msg || JSON.stringify(e)}`));
       }
 
-      // get authenticated user
-      try {
-        authenticatedUser = await getAuthenticatedUser();
-      } catch (e) {
-        return reject(new Error(`Error loading authenticated user: ${e.message || e.msg || JSON.stringify(e)}`));
-      }
-
-      // Don't proceed if there's no internet
-      if (!neworkState.isInternetReachable) return done();
-
-      // Don't proceed if not authenticated
-      if (!authenticatedUser) return done();
+      // if data registration was unsuccessfull
+      if (!dataStatus.uid_prefix) return reject(new Error('Failed to register and create device hash'));
 
       /********************************************************************************************************************************** 
        ****************************************************** DOWNLOADING DATA **********************************************************
@@ -184,9 +185,11 @@ export default function sync(opts = {}) {
         return done();
       }
 
-      /*********** download data if something changed on the server after the last sync date ********/
-
       if (!dataStatus.last_sync_date) return done();
+
+      /**********************************************************************************************************************************
+       ********************************************* DOWNLOADING DATA ON SOCKET EVENT ***************************************************
+       **********************************************************************************************************************************/
 
       try { 
         const { scripts, screens, config_keys, diagnoses } = await webeditorApi.syncData({

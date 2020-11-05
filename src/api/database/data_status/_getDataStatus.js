@@ -64,7 +64,7 @@ export default function getDataStatus(deviceRegistration) {
       let ds = null;
       try { ds = await _getDataStatus(); } catch (e) { return reject(e); }
 
-      if (ds) return resolve(ds);
+      if (ds && ds.uid_prefix) return resolve(ds);
 
       try {
         await createDataStatus(!deviceRegistration ? null : {

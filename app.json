@@ -7,7 +7,7 @@
       "android",
       "web"
     ],
-    "version": "0.4.41",
+    "version": "0.4.42",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -24,11 +24,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.yourappname",
+      "bundleIdentifier": "org.neotree.neotreeapp",
       "buildNumber": "1.0.0"
     },
     "android": {
-      "package": "com.yourcompany.yourappname",
+      "package": "org.neotree.neotreeapp",
       "versionCode": 1
     }
   }
