@@ -8,11 +8,14 @@ import PrintSessionForm from '@/containers/Sessions/PrintSessionForm';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import useBackButton from '@/utils/useBackButton';
+import { useHistory } from 'react-router-native';
 
 const Wrapper = props => <Content {...props} />;
 
-const Summary = ({ summary, clearSummary, }) => {
-  useBackButton(() => { clearSummary(); });
+const Summary = ({ summary, }) => {
+  const history = useHistory();
+
+  useBackButton(() => { history.push('/'); });
 
   return (
     <>
@@ -22,7 +25,7 @@ const Summary = ({ summary, clearSummary, }) => {
           <>
             <TouchableOpacity
               style={{ padding: 10 }}
-              onPress={() => clearSummary()}
+              onPress={() => history.push('/')}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
@@ -47,7 +50,7 @@ const Summary = ({ summary, clearSummary, }) => {
 
 Summary.propTypes = {
   summary: PropTypes.object.isRequired,
-  clearSummary: PropTypes.func.isRequired
+  // clearSummary: PropTypes.func.isRequired
 };
 
 export default Summary;
