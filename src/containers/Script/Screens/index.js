@@ -124,6 +124,8 @@ const Screens = props => {
       {activeScreenEntry && (
         <Fab
           onPress={async () => {
+            if (summary) return history.push('/');
+
             setDisplayLoader(true);
             const lastScreen = getLastScreen();
 
