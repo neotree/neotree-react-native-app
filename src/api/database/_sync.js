@@ -52,18 +52,12 @@ export default function sync(opts = {}) {
         return reject(new Error(`Error creating tables: ${e.message || e.msg || JSON.stringify(e)}`));
       }
 
-      // Don't proceed if there's no internet
-      if (!neworkState.isInternetReachable) return done();
-
       // get authenticated user
       try {
         authenticatedUser = await getAuthenticatedUser();
       } catch (e) {
         return reject(new Error(`Error loading authenticated user: ${e.message || e.msg || JSON.stringify(e)}`));
       }
-
-      // Don't proceed if not authenticated
-      if (!authenticatedUser) return done();
 
       // get device id
       try {
@@ -76,6 +70,12 @@ export default function sync(opts = {}) {
       } catch (e) {
         return reject(new Error(`Error loading device id: ${e.message || e.msg || JSON.stringify(e)}`));
       }
+
+      // Don't proceed if there's no internet
+      if (!neworkState.isInternetReachable) return done();
+
+      // Don't proceed if not authenticated
+      if (!authenticatedUser) return done();
 
       // get device registration
       try {
