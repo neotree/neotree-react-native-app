@@ -75,7 +75,7 @@ const Sessions = () => {
                           <View style={[{ flex: 1 }]}>
                             <Text style={{ color: '#999' }}>Creation date</Text>
                             <Text>
-                              {moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:MM')}
+                              {moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:mm')}
                             </Text>
                           </View>
 
@@ -83,7 +83,7 @@ const Sessions = () => {
                             <Text style={{ color: '#999' }}>Completion date</Text>
                             <Text>
                               {item.data.completed_at ?
-                                moment(new Date(item.data.completed_at)).format('DD MMM, YYYY HH:MM')
+                                moment(new Date(item.data.completed_at)).format('DD MMM, YYYY HH:mm')
                                 :
                                 'N/A'}
                             </Text>
