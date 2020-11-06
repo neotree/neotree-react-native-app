@@ -28,7 +28,7 @@ const Form = ({ screen, form }) => {
                     text = value.value ? moment(value.value).format('DD MMM, YYYY') : 'N/A';
                     break;
                   case fieldsTypes.DATETIME:
-                    text = value.value ? moment(value.value).format('DD MMM, YYYY HH:MM') : 'N/A';
+                    text = value.value ? moment(value.value).format('DD MMM, YYYY HH:mm') : 'N/A';
                     break;
                   case fieldsTypes.DROPDOWN:
                     text = value.value;
@@ -40,7 +40,7 @@ const Form = ({ screen, form }) => {
                     text = value.value;
                     break;
                   case fieldsTypes.TIME:
-                    text = value.value ? moment(value.value).format('HH:MM') : 'N/A';
+                    text = value.value ? moment(value.value).format('HH:mm') : 'N/A';
                     break;
                   default:
                     // do nothing
