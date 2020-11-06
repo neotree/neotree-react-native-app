@@ -68,7 +68,7 @@ export default form => {
                 text = value ? moment(value).format('DD MMM, YYYY') : 'N/A';
                 break;
               case fieldsTypes.DATETIME:
-                text = value ? moment(value).format('DD MMM, YYYY HH:MM') : 'N/A';
+                text = value ? moment(value).format('DD MMM, YYYY HH:mm') : 'N/A';
                 break;
               case fieldsTypes.DROPDOWN:
                 text = valueText || value;
@@ -80,7 +80,7 @@ export default form => {
                 // do nothing
                 break;
               case fieldsTypes.TIME:
-                text = value ? moment(value).format('HH:MM') : 'N/A';
+                text = value ? moment(value).format('HH:mm') : 'N/A';
                 break;
               default:
                 // do nothing
