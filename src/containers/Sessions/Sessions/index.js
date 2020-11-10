@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, FlatList, TouchableOpacity } from 'react-native';
+import { View, FlatList, TouchableOpacity, Platform, Alert } from 'react-native';
 import { Link, useHistory } from 'react-router-native';
-import { Body, Card, CardItem, Icon } from 'native-base';
+import { ActionSheet, Body, Card, CardItem, Icon } from 'native-base';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import moment from 'moment';
@@ -9,7 +9,8 @@ import Content from '@/components/Content';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import colorStyles from '@/styles/colorStyles';
-import DeleteBtn from './_DeleteBtn';
+import OverlayLoader from '@/components/OverlayLoader';
+import * as api from '@/api';
 import { useSessionsContext } from '../SessionsContext';
 
 const Sessions = () => {
@@ -27,6 +28,40 @@ const Sessions = () => {
   };
 
   useBackButton(() => { goBack(); }, []);
+
+  const [deletingSessions, setDeletingSessions] = React.useState(false);
+
+  const deleteSessions = async (ids = []) => new Promise((resolve, reject) => {
+    if (ids.length) {
+      (async () => {
+        setDeletingSessions(true);
+        try {
+          await api.deleteSessions(ids);
+          await getSessions();
+          resolve();
+        } catch (e) {
+          Alert.alert(
+            'ERROR',
+            e.message || e.msg || JSON.stringify(e),
+            [
+              {
+                text: 'Try again',
+                type: 'cancel',
+                onPress: () => deleteSessions(ids),
+              },
+              {
+                text: 'Cancel',
+                type: 'cancel',
+                onPress: () => {},
+              }
+            ]
+          );
+          reject(e);
+        }
+        setDeletingSessions(false);
+      })();
+    }
+  });
 
   return (
     <>
@@ -51,7 +86,30 @@ const Sessions = () => {
               <Icon style={[colorStyles.primaryColor]} name="save" />
             </TouchableOpacity>
 
-            <DeleteBtn />
+            <TouchableOpacity
+              style={{ paddingHorizontal: 10 }}
+              onPress={() => {
+                ActionSheet.show(
+                  {
+                    options: [
+                      'Incomplete sessions',
+                      'ALL sessions',
+                      Platform.OS === 'ios' ? 'Cancel' : null
+                    ].filter(o => o),
+                    title: 'Permanantly delete',
+                    cancelButtonIndex: 2,
+                  },
+                  i => {
+                    const incompleted = sessions.filter(s => !s.data.completed_at)
+                      .map(s => s.id);
+                    const all = sessions.map(s => s.id);
+                    if (i < 2) deleteSessions(i === 0 ? incompleted : all);
+                  }
+                );
+              }}
+            >
+              <Icon style={[colorStyles.primaryColor]} name="trash" />
+            </TouchableOpacity>
           </>
         )}
       />
@@ -67,6 +125,25 @@ const Sessions = () => {
                 <Link
                   to={`/sessions/session/${item.id}`}
                   style={[{ flex: 1 }]}
+                  component={TouchableOpacity}
+                  onLongPress={() => {
+                    Alert.alert(
+                      'Delete session',
+                      'Do you want to delete this session?',
+                      [
+                        {
+                          text: 'No',
+                          type: 'cancel',
+                          onPress: () => {},
+                        },
+                        {
+                          text: 'Yes',
+                          type: 'cancel',
+                          onPress: () => deleteSessions([item.id]),
+                        }
+                      ]
+                    );
+                  }}
                 >
                   <Card>
                     <CardItem>
@@ -104,6 +181,8 @@ const Sessions = () => {
           keyExtractor={item => `${item.id}`}
         />
       </View>
+
+      <OverlayLoader display={deletingSessions} />
     </>
   );
 };
