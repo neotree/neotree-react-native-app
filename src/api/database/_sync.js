@@ -134,7 +134,6 @@ export default function sync(opts = {}) {
           // download scripts
           try { 
             const { scripts } = await webeditorApi.getScripts({ script_id: JSON.stringify(socketEvent.scripts.map(s => s.scriptId)) });
-            console.log('scripts', scripts);
             try { await insertScripts(scripts); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
@@ -143,7 +142,6 @@ export default function sync(opts = {}) {
           // download screens
           try { 
             const { screens } = await webeditorApi.getScreens({ screen_id: JSON.stringify(socketEvent.screens.map(s => s.screenId)) });
-            console.log('screens', screens);
             try { await insertScreens(screens); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
