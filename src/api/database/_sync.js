@@ -133,7 +133,7 @@ export default function sync(opts = {}) {
         if (['create_scripts', 'update_scripts'].includes(socketEvent.name)) {
           // download scripts
           try { 
-            const { scripts } = await webeditorApi.getScripts({ script_id: socketEvent.scripts.map(s => s.scriptId) });
+            const { scripts } = await webeditorApi.getScripts({ script_id: JSON.stringify(socketEvent.scripts.map(s => s.scriptId)) });
             try { await insertScripts(scripts); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
@@ -141,7 +141,7 @@ export default function sync(opts = {}) {
         if (['create_screens', 'update_screens'].includes(socketEvent.name)) {
           // download screens
           try { 
-            const { screens } = await webeditorApi.getScreens({ screen_id: socketEvent.screens.map(s => s.screenId) });
+            const { screens } = await webeditorApi.getScreens({ screen_id: JSON.stringify(socketEvent.screens.map(s => s.screenId)) });
             try { await insertScreens(screens); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
@@ -149,7 +149,7 @@ export default function sync(opts = {}) {
         if (['create_diagnoses', 'update_diagnoses'].includes(socketEvent.name)) {
           // download diagnoses
           try { 
-            const { diagnoses } = await webeditorApi.getDiagnoses({ diagnosis_id: socketEvent.diagnoses.map(s => s.diagnosisId) });
+            const { diagnoses } = await webeditorApi.getDiagnoses({ diagnosis_id: JSON.stringify(socketEvent.diagnoses.map(s => s.diagnosisId)) });
             try { await insertDiagnoses(diagnoses); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
@@ -157,29 +157,33 @@ export default function sync(opts = {}) {
         if (['create_config_keys', 'update_config_keys'].includes(socketEvent.name)) {
           // download config keys
           try { 
-            const { config_keys } = await webeditorApi.getConfigKeys({ config_key_id: socketEvent.configKeys.map(s => s.configKeyId) });
+            const { config_keys } = await webeditorApi.getConfigKeys({ config_key_id: JSON.stringify(socketEvent.configKeys.map(s => s.configKeyId)) });
             try { await insertConfigKeys(config_keys); } catch (e) { /* Do nothing */ }
           } catch (e) { /* Do nothing */ }
         }
 
         if (socketEvent.scripts && socketEvent.scripts.length && (socketEvent.name === 'delete_scripts')) {
           // download scripts
-          try { await deleteScripts(socketEvent.scripts.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
+          try {
+            await deleteScripts(socketEvent.scripts.map(s => ({ script_id: s.scriptId })));
+            await deleteScreens(socketEvent.scripts.map(s => ({ script_id: s.scriptId })));
+            await deleteDiagnoses(socketEvent.scripts.map(s => ({ script_id: s.scriptId })));
+          } catch (e) { /* Do nothing */ }
         }
 
         if (socketEvent.screens && socketEvent.screens.length && (socketEvent.name === 'delete_screens')) {
           // download screens
-          try { await deleteScreens(socketEvent.screens.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
+          try { await deleteScreens(socketEvent.screens.map(s => ({ id: s.screenId }))); } catch (e) { /* Do nothing */ }
         }
 
         if (socketEvent.diagnoses && socketEvent.diagnoses.length && (socketEvent.name === 'delete_diagnoses')) {
           // download diagnoses
-          try { await deleteDiagnoses(socketEvent.diagnoses.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
+          try { await deleteDiagnoses(socketEvent.diagnoses.map(s => ({ id: s.diagnosisId }))); } catch (e) { /* Do nothing */ }
         }
 
         if (socketEvent.configKeys && socketEvent.configKeys.length && (socketEvent.name === 'delete_config_keys')) {
           // download config keys
-          try { await deleteConfigKeys(socketEvent.configKeys.map(s => ({ id: s.id }))); } catch (e) { /* Do nothing */ }
+          try { await deleteConfigKeys(socketEvent.configKeys.map(s => ({ id: s.congigKeyId }))); } catch (e) { /* Do nothing */ }
         }
 
         return done();
@@ -198,16 +202,16 @@ export default function sync(opts = {}) {
           lastSyncDate: dataStatus.last_sync_date,
         });
 
-        const merge = (dataset1 = [], dataset2 = []) => [...dataset1, ...dataset2]
+        const merge = (dataset1 = [], dataset2 = [], idName) => [...dataset1, ...dataset2]
           .reduce((acc, item) => {
-            return acc.map(item => item.id).indexOf(item.id) >= 0 ?
+            return acc.map(item => item[idName]).indexOf(item[idName]) >= 0 ?
               acc : [...acc, item];
           }, []);
 
-        const scriptsToInsert = merge(scripts.lastUpdated, scripts.lastCreated);
-        const screensToInsert = merge(screens.lastUpdated, screens.lastCreated);
-        const diagnosesToInsert = merge(diagnoses.lastUpdated, diagnoses.lastCreated);
-        const keysToInsert = merge(config_keys.lastUpdated, config_keys.lastCreated);
+        const scriptsToInsert = merge(scripts.lastUpdated, scripts.lastCreated, 'scriptId');
+        const screensToInsert = merge(screens.lastUpdated, screens.lastCreated, 'screenId');
+        const diagnosesToInsert = merge(diagnoses.lastUpdated, diagnoses.lastCreated, 'diagnosisId');
+        const keysToInsert = merge(config_keys.lastUpdated, config_keys.lastCreated, 'congigKeyId');
 
         // save updated/new scripts
         if (scriptsToInsert.length) { 
