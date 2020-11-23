@@ -11,6 +11,8 @@ export default (html, session) => {
       <style>
         body {
           font-size: 14px;
+          padding-left: 20px;
+          padding-right: 20px;
         }
         #header {
           text-align: center;
