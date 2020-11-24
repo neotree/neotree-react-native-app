@@ -96,6 +96,7 @@ const Screens = props => {
           {...props}
           summary={summary}
           clearSummary={() => setSummary(null)}
+          createSessionSummary={createSessionSummary}
         />
       ) : (
         <ActiveScreen

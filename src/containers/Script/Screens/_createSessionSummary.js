@@ -7,6 +7,11 @@ export default ({
   evaluateCondition,
   diagnoses,
 }) => function createSessionSummary(_payload = {}) {
+  diagnoses = (diagnoses || []).reduce((acc, d) => {
+    if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
+    return [...acc, d];
+  }, []);
+
   const { completed, canceled, ...payload } = _payload;
 
   const uid = form.reduce((acc, { values }) => {
@@ -18,6 +23,30 @@ export default ({
     return uid || acc;
   }, null);
 
+  const diagnosesRslts = (() => {
+    return (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
+      return expression || (symptoms || []).length;
+    }).map(d => {
+      const { data: { symptoms: s, expression } } = d;
+      const symptoms = s || [];
+
+      const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+      const riskSignCount = _symptoms.reduce((acc, s) => {
+        if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
+        if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
+        return acc;
+      }, { riskCount: 0, signCount: 0 });
+
+      const conditionMet = evaluateCondition(parseCondition(expression, [{
+        values: [
+          { key: 'riskCount', value: riskSignCount.riskCount, },
+          { key: 'signCount', value: riskSignCount.signCount, },
+        ],
+      }]));
+      return conditionMet ? { ...d, data: { ...d.data, symptoms: _symptoms } } : null;
+    }).filter(d => d);
+  })();
+
   const sessionSummary = {
     ...payload,
     uid,
@@ -28,22 +57,7 @@ export default ({
       canceled_at: canceled ? new Date().toISOString() : null,
       script,
       form,
-      diagnoses: (() => {
-        return (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
-          return expression || (symptoms || []).length;
-        }).map(d => {
-          const { data: { symptoms: s, expression } } = d;
-          const symptoms = s || [];
-
-          const evaluate = condition => {
-            return evaluateCondition(parseCondition(condition)); // conditionMet
-          };
-
-          const _symptoms = symptoms.filter(s => evaluate(s.expression));
-          const conditionMet = _symptoms.length || evaluate(expression);
-          return conditionMet ? { ...d, data: { ...d.data, symptoms: _symptoms } } : null;
-        }).filter(d => d);
-      })(),
+      diagnoses: diagnosesRslts,
     },
   };
 
