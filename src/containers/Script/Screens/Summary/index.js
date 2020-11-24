@@ -12,10 +12,12 @@ import { useHistory } from 'react-router-native';
 
 const Wrapper = props => <Content {...props} />;
 
-const Summary = ({ summary, }) => {
+const Summary = ({ summary, createSessionSummary }) => {
   const history = useHistory();
 
   useBackButton(() => { history.push('/'); });
+
+  createSessionSummary();
 
   return (
     <>
