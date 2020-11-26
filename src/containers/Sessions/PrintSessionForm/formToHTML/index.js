@@ -38,9 +38,9 @@ export default (session, showConfidential) => {
                   <span>${label || v.label}</span>
                   <div>
                     ${v.value && v.value.map ? 
-                      v.value.map(v => `<span>${v.valueText || 'N/A'}</span>`).join('<br />') 
+                      v.value.map(v => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />') 
                       : 
-                      `<span>${v.valueText || 'N/A'}</span>`
+                      `<span>${v.valueText || v.value || 'N/A'}</span>`
                     }
                   </div>                  
                 </div>
