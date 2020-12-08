@@ -12,9 +12,11 @@ import colorStyles from '@/styles/colorStyles';
 import OverlayLoader from '@/components/OverlayLoader';
 import * as api from '@/api';
 import { useSessionsContext } from '../SessionsContext';
+import Filter from './Filter';
 
 const Sessions = () => {
   const {
+    filters,
     sessions,
     getSessions,
     loadingSessions,
@@ -79,14 +81,18 @@ const Sessions = () => {
         )}
         rightActions={(
           <>
+            <Filter />
+
             <TouchableOpacity
+              disabled={!sessions.length}
               style={{ paddingHorizontal: 10 }}
               onPress={() => history.push('/sessions/export')}
             >
-              <Icon style={[colorStyles.primaryColor]} name="save" />
+              <Icon style={[sessions.length ? colorStyles.primaryColor : { color: '#ccc' }]} name="save" />
             </TouchableOpacity>
 
             <TouchableOpacity
+              disabled={!sessions.length}
               style={{ paddingHorizontal: 10 }}
               onPress={() => {
                 ActionSheet.show(
@@ -108,7 +114,7 @@ const Sessions = () => {
                 );
               }}
             >
-              <Icon style={[colorStyles.primaryColor]} name="trash" />
+              <Icon style={[sessions.length ? colorStyles.primaryColor : { color: '#ccc' }]} name="trash" />
             </TouchableOpacity>
           </>
         )}
@@ -119,6 +125,19 @@ const Sessions = () => {
           data={sessions}
           onRefresh={getSessions}
           refreshing={loadingSessions}
+          ListHeaderComponent={() => (
+            <Content>
+              {!!filters.minDate && <Text style={{ color: '#999', fontSize: 15 }}>Min date: {moment(filters.minDate).format('LL')}</Text>}
+              {!!filters.maxDate && <Text style={{ color: '#999', fontSize: 15 }}>Min date: {moment(filters.maxDate).format('LL')}</Text>}
+            </Content>
+          )}
+          ListEmptyComponent={() => (
+            <Content>
+              <View style={{ paddingVertical: 25 }}>
+                <Text style={{ textAlign: 'center', color: '#999' }}>No sessions to display</Text>
+              </View>
+            </Content>
+          )}
           renderItem={({ item }) => (
             <View style={{ flex: 1 }}>
               <Content>
