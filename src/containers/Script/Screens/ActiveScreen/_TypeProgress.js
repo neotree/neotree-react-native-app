@@ -12,10 +12,12 @@ const TypeProgress = ({ screen, setEntry: onChange }) => {
     onChange({ values: [] });
   }, []);
 
+  const items = metadata.items || [];
+
   return (
     <>
       <View>
-        {metadata.items.map((item, i) => {
+        {items.map((item, i) => {
           const key = i;
           return (
             <View
@@ -50,7 +52,7 @@ const TypeProgress = ({ screen, setEntry: onChange }) => {
                   />
                 </View>
 
-                {i < (metadata.items.length - 1) && (
+                {i < (items.length - 1) && (
                   <View
                     style={{
                       width: 2,
