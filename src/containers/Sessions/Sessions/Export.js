@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Modal, View, ScrollView, Alert } from 'react-native';
 import { Icon, Left, ListItem, Radio, Right } from 'native-base';
 import { useHistory } from 'react-router-native';
+import moment from 'moment';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
 import DatePicker from '@/components/DatePicker';
@@ -120,7 +121,7 @@ const Export = () => {
                     <TouchableOpacity
                       disabled={!canExport}
                       onPress={() => history
-                        .push(`/sessions/export?exportType=${exportType}&minDate=${minDate || ''}&maxDate=${maxDate || ''}`)}
+                        .push(`/sessions/export?exportType=${exportType}&minDate=${minDate ? moment(minDate).format('YYYY-MM-DD') : ''}&maxDate=${maxDate ? moment(maxDate).format('YYYY-MM-DD') : ''}`)}
                     >
                       <Text style={[!canExport ? { color: '#ccc' } : colorStyles.primaryColor, { fontWeight: 'bold' }]}>EXPORT</Text>
                     </TouchableOpacity>

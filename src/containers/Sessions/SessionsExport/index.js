@@ -54,9 +54,6 @@ const ExportPage = () => {
           sessions = dbSessions
             .filter(s => !minDate ? true : getParsedDate(s.data.started_at) >= getParsedDate(minDate))
             .filter(s => !maxDate ? true : getParsedDate(s.data.started_at) <= getParsedDate(maxDate));
-          console.log(dbSessions
-            // .filter(s => !minDate ? true : getParsedDate(s.data.started_at) >= getParsedDate(minDate))
-            .filter(s => !maxDate ? true : getParsedDate(s.data.started_at) <= getParsedDate(maxDate)));
         }
         break;
       default:
