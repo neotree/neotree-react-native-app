@@ -1,5 +1,6 @@
 import React from 'react';
-import { useHistory } from 'react-router-native';
+import moment from 'moment';
+import { useHistory, useLocation } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
@@ -9,6 +10,7 @@ import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Divider from '@/components/Divider';
 import OverlayLoader from '@/components/OverlayLoader';
+import queryString from 'query-string';
 import { useSessionsContext } from '../SessionsContext';
 import exportData from './export';
 
@@ -20,9 +22,12 @@ const opts = [
 
 const ExportPage = () => {
   const history = useHistory();
-  const { sessions, getSessions, loadingSessions, } = useSessionsContext();
+  const location = useLocation();
+  const { dbSessions, getSessions, loadingSessions, } = useSessionsContext();
   const [format, setFormat] = React.useState('excel');
   const [exporting, setExporting] = React.useState(false);
+
+  const { exportType, minDate, maxDate } = queryString.parse(location.search);
 
   const goBack = () => {
     history.entries = [];
@@ -32,6 +37,28 @@ const ExportPage = () => {
   useBackButton(() => { goBack(); }, []);
 
   const _export = async () => {
+    let sessions = dbSessions;
+    const getParsedDate = d => {
+      d = moment(d).format('YYYY-MM-DD');
+      return new Date(d).getTime();
+    };
+    switch (exportType) {
+      case 'completed':
+        sessions = dbSessions.filter(s => s.data.completed_at);
+        break;
+      case 'incomplete':
+        sessions = dbSessions.filter(s => !s.data.completed_at);
+        break;
+      case 'date_range':
+        if (minDate || maxDate) {
+          sessions = dbSessions
+            .filter(s => !minDate ? true : getParsedDate(s.data.started_at) >= getParsedDate(minDate))
+            .filter(s => !maxDate ? true : getParsedDate(s.data.started_at) <= getParsedDate(maxDate));
+        }
+        break;
+      default:
+      // do nothing
+    }
     setExporting(true);
     try {
       await exportData(format, sessions);

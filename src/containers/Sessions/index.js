@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert, View } from 'react-native';
+import moment from 'moment';
 import { Switch, Route, useHistory, } from 'react-router-native';
 import LazyPage from '@/components/LazyPage';
 import * as api from '@/api';
@@ -12,7 +13,26 @@ const SessionsExport = LazyPage(() => import('./SessionsExport'));
 const SessionsPage = () => {
   const history = useHistory();
   const [sessions, setSessions] = React.useState([]);
+  const [dbSessions, setDBSessions] = React.useState([]);
   const [loadingSessions, setLoadingSessions] = React.useState(false);
+  const [filters, setFilters] = React.useState({});
+
+  const getFilteredSessions = (sessions = dbSessions, _filters = filters) => {
+    const filters = _filters;
+    let _sessions = [...sessions];
+    const getParsedDate = d => {
+      d = moment(d).format('YYYY-MM-DD');
+      return new Date(d).getTime();
+    };
+
+    if (filters.minDate) {
+      _sessions = sessions.filter(s => getParsedDate(s.data.started_at) >= getParsedDate(filters.minDate));
+    }
+    if (filters.maxDate) {
+      _sessions = sessions.filter(s => getParsedDate(s.data.started_at) <= getParsedDate(filters.maxDate));
+    }
+    return _sessions;
+  };
 
   const getSessions = (opts = {}) => new Promise((resolve, reject) => {
     const { loader } = opts;
@@ -21,7 +41,8 @@ const SessionsPage = () => {
       setLoadingSessions((loader === undefined) || loader);
       try {
         const sessions = await api.getSessions();
-        setSessions(sessions || []);
+        setDBSessions(sessions || []);
+        setSessions(getFilteredSessions(sessions || []));
         resolve(sessions || []);
       } catch (e) {
         Alert.alert(
@@ -51,6 +72,13 @@ const SessionsPage = () => {
     <SessionsContext.Provider
       value={{
         sessions,
+        filters,
+        filterSessions: f => {
+          setFilters(filters => ({ ...filters, ...f }));
+          setSessions(getFilteredSessions(dbSessions, f));
+        },
+        clearFilters: () => setFilters({}),
+        dbSessions,
         setSessions,
         getSessions,
         loadingSessions,
