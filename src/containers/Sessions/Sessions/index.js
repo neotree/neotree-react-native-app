@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, FlatList, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Link, useHistory } from 'react-router-native';
-import { ActionSheet, Body, Card, CardItem, Icon } from 'native-base';
+import { Body, Card, CardItem, Icon } from 'native-base';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import moment from 'moment';
@@ -12,9 +12,13 @@ import colorStyles from '@/styles/colorStyles';
 import OverlayLoader from '@/components/OverlayLoader';
 import * as api from '@/api';
 import { useSessionsContext } from '../SessionsContext';
+import Filter from './Filter';
+import Export from './Export';
+import Delete from './Delete';
 
 const Sessions = () => {
   const {
+    filters,
     sessions,
     getSessions,
     loadingSessions,
@@ -79,37 +83,11 @@ const Sessions = () => {
         )}
         rightActions={(
           <>
-            <TouchableOpacity
-              style={{ paddingHorizontal: 10 }}
-              onPress={() => history.push('/sessions/export')}
-            >
-              <Icon style={[colorStyles.primaryColor]} name="save" />
-            </TouchableOpacity>
+            <Filter />
 
-            <TouchableOpacity
-              style={{ paddingHorizontal: 10 }}
-              onPress={() => {
-                ActionSheet.show(
-                  {
-                    options: [
-                      'Incomplete sessions',
-                      'ALL sessions',
-                      Platform.OS === 'ios' ? 'Cancel' : null
-                    ].filter(o => o),
-                    title: 'Permanantly delete',
-                    cancelButtonIndex: 2,
-                  },
-                  i => {
-                    const incompleted = sessions.filter(s => !s.data.completed_at)
-                      .map(s => s.id);
-                    const all = sessions.map(s => s.id);
-                    if (i < 2) deleteSessions(i === 0 ? incompleted : all);
-                  }
-                );
-              }}
-            >
-              <Icon style={[colorStyles.primaryColor]} name="trash" />
-            </TouchableOpacity>
+            <Export />
+
+            <Delete />
           </>
         )}
       />
@@ -119,6 +97,19 @@ const Sessions = () => {
           data={sessions}
           onRefresh={getSessions}
           refreshing={loadingSessions}
+          ListHeaderComponent={() => (
+            <Content>
+              {!!filters.minDate && <Text style={{ color: '#999', fontSize: 15 }}>Min date: {moment(filters.minDate).format('LL')}</Text>}
+              {!!filters.maxDate && <Text style={{ color: '#999', fontSize: 15 }}>Min date: {moment(filters.maxDate).format('LL')}</Text>}
+            </Content>
+          )}
+          ListEmptyComponent={() => (
+            <Content>
+              <View style={{ paddingVertical: 25 }}>
+                <Text style={{ textAlign: 'center', color: '#999' }}>No sessions to display</Text>
+              </View>
+            </Content>
+          )}
           renderItem={({ item }) => (
             <View style={{ flex: 1 }}>
               <Content>
