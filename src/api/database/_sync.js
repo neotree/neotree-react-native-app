@@ -8,7 +8,7 @@ import * as webeditorApi from '../webeditor';
 
 import { insertScreens, deleteScreens } from './screens';
 import { insertDiagnoses, deleteDiagnoses } from './diagnoses';
-import { insertScripts, deleteScripts } from './scripts';
+import { insertScripts, deleteScripts, getScripts } from './scripts';
 import { insertConfigKeys, deleteConfigKeys } from './config_keys';
 import { getDataStatus, updateDataStatus } from './data_status';
 
@@ -192,8 +192,17 @@ export default function sync(opts = {}) {
       if (!dataStatus.last_sync_date) return done();
 
       /**********************************************************************************************************************************
-       ********************************************* DOWNLOADING DATA ON SOCKET EVENT ***************************************************
+       ********************************************* NORMAL SYNC (On opening the app) ***************************************************
        **********************************************************************************************************************************/
+
+      // this block is temporary, until I figure out why's it that sometimes scripts do not delete
+      try {
+        const { scripts: remoteScripts } = await webeditorApi.getScripts();
+        let scripts = await getScripts();
+        scripts = (scripts || []).filter(s => !(remoteScripts || []).map(s => s.id).includes(s.id)).map(s => s.id);
+        if (scripts.length) await deleteScripts(scripts.map(id => ({ id })));
+      } catch (e) { /* Do nothing */ }
+      // end temporary block
 
       try { 
         const { scripts, screens, config_keys, diagnoses } = await webeditorApi.syncData({
