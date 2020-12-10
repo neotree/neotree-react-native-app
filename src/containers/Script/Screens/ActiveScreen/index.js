@@ -34,7 +34,7 @@ const ActiveScreen = props => {
           containerProps={bgColorStyles.primaryBg}
         >
           <View style={{ flex: 1 }}>
-            <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+            <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
               {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
             </Text>
           </View>
