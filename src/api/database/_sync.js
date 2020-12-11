@@ -199,8 +199,8 @@ export default function sync(opts = {}) {
       try {
         const { scripts: remoteScripts } = await webeditorApi.getScripts();
         let scripts = await getScripts();
-        scripts = (scripts || []).filter(s => !(remoteScripts || []).map(s => s.id).includes(s.id)).map(s => s.id);
-        if (scripts.length) await deleteScripts(scripts.map(id => ({ id })));
+        scripts = (scripts || []).filter(s => !(remoteScripts || []).map(s => s.script_id).includes(s.script_id)).map(s => s.script_id);
+        if (scripts.length) await deleteScripts(scripts.map(script_id => ({ script_id })));
       } catch (e) { /* Do nothing */ }
       // end temporary block
 
