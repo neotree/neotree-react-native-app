@@ -1,3 +1,5 @@
+import constants from '@/constants';
+
 export default function getJSON(_sessions = [], opts = {}) {
   const { showConfidential } = opts;
 
@@ -6,6 +8,7 @@ export default function getJSON(_sessions = [], opts = {}) {
 
     return {
       uid: s.uid,
+      appVersion: constants.APP_VERSION,
       scriptTitle: script.script_id,
       script: { id: script.script_id, title: script.data.title },
       entries: form

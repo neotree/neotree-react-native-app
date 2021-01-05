@@ -5,6 +5,7 @@ const { width, height } = Dimensions.get('window');
 
 export default {
   ...Constants.manifest.extra,
+  APP_VERSION: Constants.manifest.version,
 
   APP_TITLE: 'NeoTree',
 
