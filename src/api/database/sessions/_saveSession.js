@@ -39,9 +39,10 @@ export default (data = {}) => new Promise((resolve, reject) => {
           `insert or replace into sessions (${columns}) values (${values});`,
           params,
           (tx, rslts) => {
-            if (data.uid && dataStatus && (dataStatus.uid_prefix === data.uid.substr(0, 4))) {
-              updateDataStatus({ 
-                ...dataStatus, 
+            // if (data.uid && dataStatus && (dataStatus.uid_prefix === data.uid.substr(0, 4))) {
+            if (dataStatus) {
+              updateDataStatus({
+                ...dataStatus,
                 total_sessions_recorded: dataStatus.total_sessions_recorded + 1,
               }).then(() => sync()).catch(() => { /**/ });
             }

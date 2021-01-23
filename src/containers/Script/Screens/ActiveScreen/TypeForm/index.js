@@ -21,6 +21,7 @@ const TypeForm = props => {
     evaluateCondition,
     setEntry: onChange
   } = props;
+
   const metadata = screen.data.metadata || {};
 
   const fields = metadata.fields || [];

@@ -1,9 +1,9 @@
 import db from '../db';
 
 const query = s => new Promise((resolve, reject) => {
-  const columns = ['id', 'data', 'createdAt', 'updatedAt'].join(',');
+  const columns = ['id', 'config_key_id', 'data', 'createdAt', 'updatedAt'].join(',');
 
-  const values = ['?', '?', '?', '?'].join(',');
+  const values = ['?', '?', '?', '?', '?'].join(',');
 
   db.transaction(
     tx => {
@@ -11,6 +11,7 @@ const query = s => new Promise((resolve, reject) => {
         `insert or replace into config_keys (${columns}) values (${values});`,
         [
           s.id,
+          s.config_key_id,
           JSON.stringify(s.data || {}),
           s.createdAt,
           s.updatedAt
