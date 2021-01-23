@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
-import apiConfig from '~/config/neotree-webeditor-api.json';
+import { CONFIG } from '@/constants';
 
-const socket = io(apiConfig.host);
+const socket = io(CONFIG.webeditorConfig.host);
 
 export default socket;

@@ -83,10 +83,8 @@ const Configuration = () => {
     })();
   });
 
-  useSocketEventEffect(e => {
-    if (['delete_config_keys', 'update_config_keys', 'create_config_keys'].includes(e.name)) {
-      getConfigKeys({ loader: false, });
-    }
+  useSocketEventEffect(() => {
+    getConfigKeys({ loader: false, });
   });
 
   React.useEffect(() => {
