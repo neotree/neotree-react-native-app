@@ -5,9 +5,7 @@ import { NativeRouter, BackButton } from 'react-router-native';
 import Constants from 'expo-constants';
 import Main from '@';
 
-const isProd = Constants.manifest.extra.BUILD_TYPE === 'production';
-const firebaseConfig = isProd ? require('~/config/prod-firebase.config.json') : require('~/config/firebase.config.json');
-
+const firebaseConfig = Constants.manifest.extra.firebaseConfig;
 firebase.initializeApp(firebaseConfig);
 
 const App = () => {

@@ -1,4 +1,22 @@
-const BUILD_TYPE = process.env.BUILD_TYPE || 'development';
+const BUILD_TYPE = process.env.BUILD_TYPE;
+
+const appConfig = (() => {
+  const config = { BUILD_TYPE };
+  try {
+    if (BUILD_TYPE) {
+      config.firebaseConfig = require(`./config/firebase.${BUILD_TYPE}.json`); // eslint-disable-line
+      config.nodeapiConfig = require(`./config/nodeapi.${BUILD_TYPE}.json`); // eslint-disable-line
+      config.webeditorConfig = require(`./config/webeditor.${BUILD_TYPE}.json`); // eslint-disable-line 
+    } else {
+      config.firebaseConfig = require('./config/firebase.json');
+      config.nodeapiConfig = require('./config/nodeapi.json');
+      config.webeditorConfig = require('./config/webeditor.json');
+    }
+  } catch (e) {
+    return { LOAD_CONFIG_FILE_ERROR: e.message };
+  }
+  return config;
+})();
 
 export default ({ config }) => ({
   ...config,
@@ -13,5 +31,5 @@ export default ({ config }) => ({
     version: `${config.version}-PROD`,
   } : null),
 
-  extra: { ...config.extra, BUILD_TYPE },
+  extra: { ...config.extra, ...appConfig },
 });
