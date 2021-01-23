@@ -3,8 +3,11 @@ import Constants from 'expo-constants';
 
 const { width, height } = Dimensions.get('window');
 
+export const CONFIG = Constants.manifest.extra;
+
 export default {
   ...Constants.manifest.extra,
+  APP_VERSION: Constants.manifest.version,
 
   APP_TITLE: 'NeoTree',
 

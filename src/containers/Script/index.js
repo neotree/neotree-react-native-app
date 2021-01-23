@@ -62,8 +62,26 @@ const Script = () => {
     (async () => {
       setLoadingScreens(true);
       try {
-        const screens = await api.getScreens({ script_id: scriptId });
-        setScreens(screens || []);
+        let screens = await api.getScreens({ script_id: scriptId });
+        screens = screens || [];
+        if (!screens.length) {
+          Alert.alert(
+            'No screens found',
+            'Script does not have screens',
+            [
+              {
+                text: 'Try again',
+                onPress: getScreens,
+              },
+              {
+                text: 'Exit',
+                onPress: () => history.push('/'),
+                style: 'cancel'
+              },
+            ]
+          );
+        }
+        setScreens(screens);
         resolve(screens || []);
       } catch (e) {
         Alert.alert(

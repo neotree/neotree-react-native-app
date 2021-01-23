@@ -43,10 +43,8 @@ const Scripts = () => {
 
   React.useEffect(() => { getScripts(); }, []);
 
-  useSocketEventEffect(e => {
-    if (['delete_scripts', 'update_scripts', 'create_scripts'].includes(e.name)) {
-      getScripts({ loader: false, });
-    }
+  useSocketEventEffect(() => {
+    getScripts({ loader: false, });
   });
 
   return (
