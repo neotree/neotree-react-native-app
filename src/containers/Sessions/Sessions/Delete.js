@@ -65,6 +65,18 @@ const Delete = () => {
         }
         setDeletingSessions(false);
       })();
+    } else {
+      Alert.alert(
+        'ERROR',
+        'No sessions to delete',
+        [
+          {
+            text: 'Ok',
+            type: 'cancel',
+            onPress: () => { setOpen(false); },
+          }
+        ]
+      );
     }
   });
 
