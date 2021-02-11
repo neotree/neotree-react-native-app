@@ -10,36 +10,36 @@ const Select = ({ options, value, variant, onChange, }) => {
 
   return (
     <>
-    {options.map((o, i) => {
-      const key = i;
-      const isSelected = value.indexOf(o.value) > -1;
+      {options.map((o, i) => {
+        const key = i;
+        const isSelected = value.indexOf(o.value) > -1;
 
-      return (
-        <View key={key} style={{ marginBottom: 10 }}>
-          <TouchableWithoutFeedback          
-            onPress={() => !o.disabled && onChange(o, i)}          
-          >
-            <Card transparent={o.disabled}>
-              <CardItem style={[
+        return (
+          <View key={key} style={{ marginBottom: 10 }}>
+            <TouchableWithoutFeedback          
+              onPress={() => !o.disabled && onChange(o, i)}
+            >
+              <Card transparent={o.disabled}>
+                <CardItem style={[
                   !isSelected ? null : { backgroundColor: theme.brandPrimary },
                   !o.disabled ? null : { backgroundColor: '#f5f5f5' },
                 ]}
-              >
-                <Body>
-                  <Text
-                    style={[
-                      { fontSize: 20, padding: 5 },
-                      !isSelected ? null : { color: '#fff' },
-                      !o.disabled ? null : { color: '#999' },
-                    ]}
-                  >{o.label}</Text>
-                </Body>
-              </CardItem>
-            </Card>
-          </TouchableWithoutFeedback>
-        </View>
-      )
-    })}
+                >
+                  <Body style={{ alignItems: 'center', }}>
+                    <Text
+                      style={[
+                        { fontSize: 20, padding: 5 },
+                        !isSelected ? null : { color: '#fff' },
+                        !o.disabled ? null : { color: '#999' },
+                      ]}
+                    >{o.label}</Text>
+                  </Body>
+                </CardItem>
+              </Card>
+            </TouchableWithoutFeedback>
+          </View>
+        );
+      })}
     </>
   );
 };
@@ -53,7 +53,7 @@ Select.propTypes = {
       PropTypes.string,
       PropTypes.number,
     ]).isRequired,
-      label: PropTypes.oneOfType([
+    label: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
     ]).isRequired,
