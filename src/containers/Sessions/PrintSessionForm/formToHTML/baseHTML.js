@@ -35,8 +35,7 @@ export default (html, session) => {
         }
         .title {
           padding: 3px;
-          background: #ccc;
-          color: #000;
+          border: 1px solid #000;
         }
         .row {
           webkit-column-break-inside: avoid;
