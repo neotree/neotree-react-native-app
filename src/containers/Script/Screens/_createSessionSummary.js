@@ -24,7 +24,7 @@ export default ({
   }, null);
 
   const diagnosesRslts = (() => {
-    return (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
+    const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
       return expression || (symptoms || []).length;
     }).map(d => {
       const { data: { symptoms: s, expression } } = d;
@@ -45,6 +45,8 @@ export default ({
       }]));
       return conditionMet ? { ...d, data: { ...d.data, symptoms: _symptoms } } : null;
     }).filter(d => d);
+
+    return rslts;
   })();
 
   const sessionSummary = {

@@ -58,7 +58,7 @@ const TypeForm = props => {
   const evaluateFieldCondition = f => {
     let conditionMet = true;
     if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [entry]));
-    return conditionMet
+    return conditionMet;
   };
 
   React.useEffect(() => {
