@@ -121,7 +121,7 @@ const Script = () => {
 
       try { await getScreens(); } catch (e) { /* Do nothing */ }
 
-      api.getDiagnoses().then(d => setDiagnoses(d || [])).catch(() => { /*Do nothing*/ });
+      api.getDiagnoses({ script_id: scriptId }).then(d => setDiagnoses(d || [])).catch(() => { /*Do nothing*/ });
     })();
   }, []);
 

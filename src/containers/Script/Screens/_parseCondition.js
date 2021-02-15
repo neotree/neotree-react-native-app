@@ -36,18 +36,18 @@ export default ({ configuration, entries: form }) => function parseCondition(_co
   }, form);
 
   const parseValue = (condition, { value, type, key, dataType, }) => {
-    value = value === null ? null : (value || '');
+    value = ((value === null) || (value === undefined)) ? 'no value' : value;
     const t = dataType || type;
 
     switch (t) {
-      case 'number':
-        value = value || JSON.stringify('null'); // null;
-        break;
+      // case 'number':
+      //   value = value || null;
+      //   break;
       case 'boolean':
         value = value === 'false' ? false : Boolean(value);
         break;
       default:
-        value = "''";
+        value = JSON.stringify(value);
     }
 
     return parseConditionString(condition, key, value);

@@ -1,6 +1,14 @@
 import db from './db';
 
 export default () => new Promise((resolve, reject) => {
+  const appInfoTableColumns = [
+    'id varchar primary key not null',
+    'version integer',
+    'last_sync_date datetime',
+    'createdAt datetime',
+    'updatedAt datetime',
+  ].join(',');
+
   const dataStatusTableColumns = [
     'id varchar primary key not null',
     'uid_prefix varchar',
@@ -79,6 +87,7 @@ export default () => new Promise((resolve, reject) => {
   ].join(',');
 
   const querys = [
+    `create table if not exists app_info (${appInfoTableColumns});`,
     `create table if not exists data_status (${dataStatusTableColumns});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
@@ -105,14 +114,15 @@ export default () => new Promise((resolve, reject) => {
 
   Promise.all(querys)
     .then(rslts => resolve({
-      dataStatusTable: rslts[0],
-      scriptsTable: rslts[1],
-      screensTable: rslts[2],
-      diagnosesTable: rslts[3],
-      sessionsTable: rslts[4],
-      authenticatedUserTable: rslts[5],
-      config_keysTable: rslts[6],
-      configurationTable: rslts[7],
+      appInfoTable: rslts[0],
+      dataStatusTable: rslts[1],
+      scriptsTable: rslts[2],
+      screensTable: rslts[3],
+      diagnosesTable: rslts[4],
+      sessionsTable: rslts[5],
+      authenticatedUserTable: rslts[6],
+      config_keysTable: rslts[7],
+      configurationTable: rslts[8],
     }))
     .catch(reject);
 });
