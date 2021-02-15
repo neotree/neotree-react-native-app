@@ -57,7 +57,15 @@ const TypeForm = props => {
 
   const evaluateFieldCondition = f => {
     let conditionMet = true;
-    if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [entry]));
+    if (f.condition) {
+      conditionMet = evaluateCondition(parseCondition(f.condition, [{
+        ...entry,
+        values: entry.values.map(v => ({
+          ...v,
+          value: (v.type === 'number' ? (v.value || 0) : v.value),
+        }))
+      }]));
+    }
     return conditionMet
   };
 
