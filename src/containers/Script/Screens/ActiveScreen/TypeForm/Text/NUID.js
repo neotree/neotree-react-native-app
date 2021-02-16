@@ -54,7 +54,7 @@ const NUID = ({
   }, [firstHalf]);
 
   React.useEffect(() => {
-    const v = validateUID(_value).isValid ? _value : _defaultVal.uid;
+    const v = validateUID(_value).isValid ? _value : (value || _defaultVal.uid);
     if (v !== value) onChange(v, { error: null, valueText: v, });
   });
 
