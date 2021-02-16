@@ -5,6 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as api from '@/api';
 import moment from 'moment';
 import getJSON from './getJSON';
+import toNewJsonFormat from './toNewJsonFormat';
 
 export { getJSON };
 
@@ -36,7 +37,7 @@ export function exportJSON(sessions = []) {
         ...acc,
         [e.script.id]: [...(acc[e.script.id] || []), e],
       }), {});
-
+      
       const directory = FileSystem.documentDirectory;
 
       try {
@@ -46,7 +47,10 @@ export function exportJSON(sessions = []) {
           return new Promise((resolve) => {
             (async () => {
               try {
-                await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: json[scriptId] }, null, 4), { encoding: FileSystem.EncodingType.UTF8 });
+                const formatedJson = json[scriptId].map(f => {
+                  return toNewJsonFormat(f);
+                });
+                await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: formatedJson }, null, 4), { encoding: FileSystem.EncodingType.UTF8 });
               } catch (e) { return reject(e); }
 
               let asset = null;
@@ -148,7 +152,10 @@ export function exportToApi(_sessions = []) {
         try {
           await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
             (async () => {
-              try { await api.exportSession(s); } catch (e) { return reject(e); }
+              try { 
+                const formatted = await toNewJsonFormat(s);
+                await api.exportSession(formatted); 
+              } catch (e) { return reject(e); }
 
               const id = sessions[i].id;
 
