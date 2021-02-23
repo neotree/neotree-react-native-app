@@ -93,7 +93,7 @@ export default (html, session) => {
     <body>
       <div id="header">
         <div id="headerImg">
-          <h3 id="headerTitle">Neotree Neonatal Hospital Form</h3>
+          <h3 id="headerTitle">${script.data.printTitle || script.data.title}</h3>
           <p id="headerSubtitle">Ministry of Health - National ${script.data.type === 'discharge' ? 'Discharge' : 'Admission'} Form</p>
         </div>
       </div>
