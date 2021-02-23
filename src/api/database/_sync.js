@@ -11,7 +11,6 @@ import { insertDiagnoses, deleteDiagnoses } from './diagnoses';
 import { insertScripts, deleteScripts } from './scripts';
 import { insertConfigKeys, deleteConfigKeys } from './config_keys';
 import { getDataStatus, updateDataStatus } from './data_status';
-import { getAppInfo } from './app_info';
 
 export default function sync() {
   return new Promise((resolve, reject) => {
@@ -21,8 +20,6 @@ export default function sync() {
       let neworkState = null;
       let deviceId = null;
       let deviceRegistration = null;
-      let appInfoLocal = null;
-      let appInfoRemote = null;
 
       const done = async (e, data) => {
         await updateDataStatus({
@@ -78,18 +75,11 @@ export default function sync() {
       // Don't proceed if not authenticated
       if (!authenticatedUser) return done();
 
-      try {
-        appInfoLocal = await getAppInfo();
-      } catch (e) { /* DO NOTHING */ }
-
       // get device registration
       try {
-        const { device, appInfo } = await webeditorApi.getDeviceRegistration({ deviceId });
+        const { device } = await webeditorApi.getDeviceRegistration({ deviceId });
         deviceRegistration = device;
-        appInfoRemote = appInfo;
       } catch (e) { console.log('errors', e); /* Do nothing */ }
-
-      console.log(appInfoLocal, appInfoRemote);
 
       // get data status
       try {

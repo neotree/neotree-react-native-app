@@ -10,6 +10,8 @@ export * from './nodeapi';
 
 export { webeditor };
 
+export { default as AppData } from './AppData';
+
 export const getScriptsFields = () => new Promise((resolve, reject) => {
   (async () => {
     try {
