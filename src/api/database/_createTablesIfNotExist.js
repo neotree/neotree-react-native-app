@@ -1,10 +1,15 @@
 import db from './db';
 
 export default () => new Promise((resolve, reject) => {
-  const appInfoTableColumns = [
-    'id varchar primary key not null',
-    'version integer',
+  const applicationTableColumns = [
+    'id integer primary key not null',
+    'version varchar not null',
+    'device_id varchar not null',
+    'uid_prefix varchar not null',
+    'mode varchar not null',
     'last_sync_date datetime',
+    'total_sessions_recorded integer',
+    'webeditor_info text',
     'createdAt datetime',
     'updatedAt datetime',
   ].join(',');
@@ -87,7 +92,7 @@ export default () => new Promise((resolve, reject) => {
   ].join(',');
 
   const querys = [
-    `create table if not exists app_info (${appInfoTableColumns});`,
+    `create table if not exists application (${applicationTableColumns});`,
     `create table if not exists data_status (${dataStatusTableColumns});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
@@ -114,7 +119,7 @@ export default () => new Promise((resolve, reject) => {
 
   Promise.all(querys)
     .then(rslts => resolve({
-      appInfoTable: rslts[0],
+      applicationTable: rslts[0],
       dataStatusTable: rslts[1],
       scriptsTable: rslts[2],
       screensTable: rslts[3],

@@ -78,6 +78,8 @@ const NeoTreeApp = () => {
       } catch (e) { return alertError('Load fonts error', e); }
 
       try {
+        const rslts = await new api.AppData().initlialise();
+        console.log(rslts.application);
         await sync();
       } catch (e) {
         return alertError('Sync error', e);
