@@ -23,7 +23,7 @@ const opts = [
 const ExportPage = () => {
   const history = useHistory();
   const location = useLocation();
-  const { dbSessions, getSessions, loadingSessions, } = useSessionsContext();
+  const { dbSessions, getSessions, loadingSessions, scriptsFields } = useSessionsContext();
   const [format, setFormat] = React.useState('excel');
   const [exporting, setExporting] = React.useState(false);
 
@@ -61,7 +61,7 @@ const ExportPage = () => {
     }
     setExporting(true);
     try {
-      await exportData(format, sessions);
+      await exportData({ format, sessions, scriptsFields });
       if (format === 'jsonapi') await getSessions();
       Alert.alert(
         '',

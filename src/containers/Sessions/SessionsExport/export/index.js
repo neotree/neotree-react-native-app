@@ -20,7 +20,9 @@ const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
   })();
 });
 
-export function exportJSON(sessions = []) {
+export function exportJSON(opts = {}) {
+  const sessions = opts.sessions || [];
+
   return new Promise((resolve, reject) => {
     (async () => {
       try {
@@ -73,7 +75,10 @@ export function exportJSON(sessions = []) {
   });
 }
 
-export function exportEXCEL(sessions = []) {
+export function exportEXCEL(opts = {}) {
+  const sessions = opts.sessions || [];
+  const scriptsFields = { ...opts.scriptsFields };
+
   return new Promise((resolve, reject) => {
     (async () => {
       const scripts = sessions.reduce((acc, { data: { script } }) => ({
@@ -92,10 +97,15 @@ export function exportEXCEL(sessions = []) {
         const scriptTitle = scripts[scriptId].data.title;
         const fileUri = `${directory}${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.xlsx`;
 
-        const data = json[scriptId].map(e => e.entries.reduce((acc, e) => ({
-          ...acc,
-          [e.key || 'N/A']: e.values.map(v => v.value || 'N/A').join(', ')
-        }), null)).filter(e => e);
+        const keys = !scriptsFields[scriptId] ? [] : scriptsFields[scriptId].reduce((acc, { keys }) => [...acc, ...keys], []);
+
+        const data = json[scriptId].map(e => {
+          const values = e.entries.reduce((acc, e) => ({
+            ...acc,
+            [e.key || 'N/A']: e.values.map(v => v.value || 'N/A').join(', ')
+          }), null);
+          return !values ? null : keys.reduce((acc, key) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
+        }).filter(e => e);
 
         const ws = XLSX.utils.json_to_sheet(data);
 
@@ -140,7 +150,9 @@ export function exportEXCEL(sessions = []) {
   });
 }
 
-export function exportToApi(_sessions = []) {
+export function exportToApi(opts = {}) {
+  const _sessions = opts.sessions || [];
+
   return new Promise((resolve, reject) => {
     (async () => {
       const sessions = _sessions.filter(s => !s.exported);
@@ -172,14 +184,16 @@ export function exportToApi(_sessions = []) {
   });
 }
 
-export default function exportData(exportType, sessions = []) {
-  switch (exportType) {
+export default function exportData(opts = {}) {
+  const { format, sessions, scriptsFields } = opts;
+
+  switch (format) {
     case 'jsonapi':
-      return exportToApi(sessions);
+      return exportToApi({ sessions });
     case 'excel':
-      return exportEXCEL(sessions);
+      return exportEXCEL({ sessions, scriptsFields });
     case 'json':
-      return exportJSON(sessions);
+      return exportJSON({ sessions });
     default:
       return new Promise((resolve, reject) => reject(new Error('Unknown export format')));
   }
