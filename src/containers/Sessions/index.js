@@ -16,6 +16,7 @@ const SessionsPage = () => {
   const [dbSessions, setDBSessions] = React.useState([]);
   const [loadingSessions, setLoadingSessions] = React.useState(false);
   const [filters, setFilters] = React.useState({});
+  const [scriptsFields, setScriptsFields] = React.useState({});
 
   const getFilteredSessions = (sessions = dbSessions, _filters = filters) => {
     const filters = _filters;
@@ -66,7 +67,15 @@ const SessionsPage = () => {
     })();
   });
 
-  React.useEffect(() => { getSessions(); }, []);
+  React.useEffect(() => {
+    getSessions();
+    (async () => {
+      try {
+        const fields = await api.getScriptsFields();
+        setScriptsFields(fields);
+      } catch (e) { console.log(e); /* DO NOTHING */ }
+    })();
+  }, []);
   
   return (
     <SessionsContext.Provider
@@ -81,6 +90,7 @@ const SessionsPage = () => {
         dbSessions,
         setSessions,
         getSessions,
+        scriptsFields,
         loadingSessions,
       }}
     >
