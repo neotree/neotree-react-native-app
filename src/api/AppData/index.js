@@ -10,6 +10,7 @@ import { deleteScripts, insertScripts } from '../database/scripts';
 import { deleteScreens, insertScreens } from '../database/screens';
 import { deleteDiagnoses, insertDiagnoses } from '../database/diagnoses';
 import { deleteConfigKeys, insertConfigKeys } from '../database/config_keys';
+import { updateDeviceRegistration } from '../webeditor';
 
 const APP_VERSION = Constants.manifest.version;
 
@@ -130,6 +131,13 @@ export default class AppData {
                 `delete from ${table} where 1;`
               )));
             }
+          }
+
+          if (webEditor.device.details.scripts_count !== application.total_sessions_recorded) {
+            const scripts_count = Math.max(...[application.total_sessions_recorded, webEditor.device.details.scripts_count]);
+            const { device } = await updateDeviceRegistration({ deviceId: application.device_id, details: { scripts_count } });
+            webEditor.device = device;
+            application.total_sessions_recorded = scripts_count;
           }
 
           if (shouldSync) {

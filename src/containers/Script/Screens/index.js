@@ -87,13 +87,15 @@ const Screens = props => {
   });
 
   const saveSession = params => new Promise((resolve, reject) => {
+    setDisplayLoader(true);
     const summary = createSessionSummary(params);
     (async () => {
       try {
         const { application } = await api.saveSession(summary);
-        setAppState({ application });
+        setAppState(s => ({ application: { ...s.application, ...application } }));
         resolve(summary);
       } catch (e) { reject(e); }
+      setDisplayLoader(false);
     })();
   });
 
@@ -142,6 +144,7 @@ const Screens = props => {
 
             if (activeScreen.screen_id === lastScreen.screen_id) {
               setSavingSession(true);
+              setDisplayLoader(false);
               try {
                 const summary = await saveSession({ completed: true });
                 setSummary(summary);
@@ -198,7 +201,6 @@ Screens.propTypes = {
   script: PropTypes.object.isRequired,
   dataStatus: PropTypes.object.isRequired,
   configuration: PropTypes.object,
-  authenticatedUser: PropTypes.object.isRequired,
 };
 
 export default Screens;

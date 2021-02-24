@@ -3,17 +3,13 @@ import * as api from '@/api';
 import { useParams, useHistory, useLocation, } from 'react-router-native';
 import { View, Alert, } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
-import { useAppContext } from '@/AppContext';
 import Screens from './Screens';
 
 const Script = () => {
-  const { state: { authenticatedUser, dataStatus: _dataStatus } } = useAppContext();
-
   const { scriptId } = useParams();
   const history = useHistory();
   const location = useLocation();
 
-  const [dataStatus, setDataStatus] = React.useState(_dataStatus);
   const [configuration, setConfiguration] = React.useState(null);
 
   const [script, setScript] = React.useState(null);
@@ -108,11 +104,6 @@ const Script = () => {
   React.useEffect(() => {
     (async () => {
       try {
-        const dataStatus = await api.getDataStatus();
-        setDataStatus(dataStatus);
-      } catch (e) { /* Do nothing */ }
-
-      try {
         const config = await api.getConfiguration();
         setConfiguration(config ? config.data : {});
       } catch (e) { /* Do nothing */ }
@@ -133,11 +124,9 @@ const Script = () => {
     <>
       <View style={{ flex: 1 }}>
         <Screens
-          dataStatus={dataStatus}
           script={script}
           screens={screens}
           diagnoses={diagnoses}
-          authenticatedUser={authenticatedUser}
           configuration={configuration}
         />
       </View>

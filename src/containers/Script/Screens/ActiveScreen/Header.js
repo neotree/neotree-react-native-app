@@ -33,8 +33,10 @@ const ScreenHeader = ({
         {
           text: 'Ok',
           onPress: () => {
-            saveSession({ canceled: true, });
-            history.push('/');
+            (async () => {
+              await saveSession({ canceled: true, });
+              history.push('/');
+            })();
           }
         }
       ],
