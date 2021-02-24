@@ -21,7 +21,6 @@ const NeoTreeApp = () => {
     errors: [],
     fontsLoaded: false,
     authenticatedUser: null,
-    dataStatus: null,
     deviceRegistration: null,
     appIsReady: false,
     lastSocketEvent: null,
@@ -116,7 +115,10 @@ const NeoTreeApp = () => {
     >
       {switchingMode || !appIsReady ? (
         <Splash
-          text={switchingMode ? `Changing to ${switchingMode} mode, this may take a while...` : 'Syncing data, this may take a while...'}
+          text={switchingMode ?
+            `${switchingMode === 'development' ? 'Entering' : 'Leaving'} development mode, this may take a while...`
+            :
+            'Syncing data, this may take a while...'}
         >
           <ActivityIndicator size={25} color="#999" />
         </Splash>

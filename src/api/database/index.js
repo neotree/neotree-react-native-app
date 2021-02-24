@@ -1,5 +1,3 @@
-export * from './data_status';
-
 export * from './scripts';
 
 export * from './screens';
@@ -11,8 +9,6 @@ export * from './diagnoses';
 export * from './config_keys';
 
 export * from './configuration';
-
-export { default as sync } from './_sync';
 
 export { default as createTablesIfNotExist } from './_createTablesIfNotExist';
 
