@@ -1,13 +1,8 @@
-import db, { dbTransaction } from '../db';
+import { dbTransaction } from '../db';
 import { updateDeviceRegistration } from '../../webeditor';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   (async () => {
-    const done = (err, rslts) => {
-      if (err) return reject(err);
-      resolve(rslts);
-    };
-  
     const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
       .filter(c => c)
       .join(',');
@@ -52,8 +47,9 @@ export default (data = {}) => new Promise((resolve, reject) => {
 
       application = await dbTransaction('select * from application where id=1;');
       application = application[0];
+      if (application) application.webeditor_info = JSON.parse(application.webeditor_info || '{}');
 
-      await updateDeviceRegistration({ deviceId: application.device_id, details: { scripts_count } });
+      updateDeviceRegistration({ deviceId: application.device_id, details: { scripts_count } });
     } catch (e) { /* DO NOTHING */ }
 
     resolve({ application });
