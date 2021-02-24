@@ -1,18 +1,12 @@
-import db from '../db';
-import { getDataStatus, updateDataStatus } from '../data_status';
-import sync from '../_sync';
+import db, { dbTransaction } from '../db';
+import { updateDeviceRegistration } from '../../webeditor';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   (async () => {
-    let dataStatus = null;
-    try { dataStatus = await getDataStatus(); } catch (e) { /* Do nothing */}
-
     const done = (err, rslts) => {
       if (err) return reject(err);
       resolve(rslts);
     };
-  
-    const { data: { completed_at } } = data;
   
     const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
       .filter(c => c)
@@ -32,30 +26,36 @@ export default (data = {}) => new Promise((resolve, reject) => {
       data.createdAt || new Date().toISOString(),
       data.updatedAt || new Date().toISOString(),
     ];
-  
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          `insert or replace into sessions (${columns}) values (${values});`,
-          params,
-          (tx, rslts) => {
-            // if (data.uid && dataStatus && (dataStatus.uid_prefix === data.uid.substr(0, 4))) {
-            if (dataStatus) {
-              updateDataStatus({
-                ...dataStatus,
-                total_sessions_recorded: dataStatus.total_sessions_recorded + 1,
-              }).then(() => sync()).catch(() => { /**/ });
-            }
-            done(null, rslts);
-          },
-          (tx, e) => {
-            if (e) {
-              require('@/utils/logger')('ERROR: saveSession', e);
-              reject(e);
-            }
-          }
-        );
-      }
-    );
+
+    try {
+      await dbTransaction(
+        `insert or replace into sessions (${columns}) values (${values});`,
+        params,
+      );
+    } catch (e) { return reject(e); }
+
+    let application = null;
+    try {
+      application = await dbTransaction('select * from application where id=1;');
+      application = application[0];
+
+      const scripts_count = application.total_sessions_recorded + 1;
+      const _application = {
+        ...application,
+        total_sessions_recorded: scripts_count,
+      };
+
+      await dbTransaction(
+        `insert or replace into application (${Object.keys(_application).join(',')}) values (${Object.keys(_application).map(() => '?').join(',')});`,
+        Object.values(_application)
+      );
+
+      application = await dbTransaction('select * from application where id=1;');
+      application = application[0];
+
+      await updateDeviceRegistration({ deviceId: application.device_id, details: { scripts_count } });
+    } catch (e) { /* DO NOTHING */ }
+
+    resolve({ application });
   })();
 });
