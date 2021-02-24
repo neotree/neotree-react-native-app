@@ -7,4 +7,14 @@ export default function addSocketEventsListeners(listener) {
     name: 'data_updated',
     ...data
   }));
+
+  socket.on('data_published', data => onEvent({
+    name: 'data_published',
+    ...data
+  }));
+
+  socket.on('changes_discarded', data => onEvent({
+    name: 'changes_discarded',
+    ...data
+  }));
 }
