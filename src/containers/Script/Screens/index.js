@@ -6,10 +6,12 @@ import Fab from '@/components/Fab';
 import OverlayLoader from '@/components/OverlayLoader';
 import { useHistory, useLocation } from 'react-router-native';
 import * as api from '@/api';
+import { useAppContext } from '@/AppContext';
 import ActiveScreen from './ActiveScreen';
 import Summary from './Summary';
 
 const Screens = props => {
+  const { setState: setAppState, } = useAppContext();
   const history = useHistory();
   const location = useLocation();
 
@@ -58,12 +60,14 @@ const Screens = props => {
   const activeScreenEntry = entries.filter(e => e.screen.id === activeScreen.screen_id)[0];
   const parseCondition = require('./_parseCondition').default({ entries, configuration });
   const evaluateCondition = require('./_evaluateCondition').default;
+
   const getScreen = require('./_getScreen').default({
     screens,
     activeScreenIndex,
     parseCondition,
     evaluateCondition,
   });
+
   const getLastScreen = require('./_getLastScreen').default({
     screens,
     activeScreen,
@@ -71,6 +75,7 @@ const Screens = props => {
     evaluateCondition,
     entries
   });
+
   const createSessionSummary = require('./_createSessionSummary').default({
     activeScreen,
     parseCondition,
@@ -80,11 +85,16 @@ const Screens = props => {
     script,
     startTime,
   });
+
   const saveSession = params => new Promise((resolve, reject) => {
     const summary = createSessionSummary(params);
-    api.saveSession(summary)
-      .then(() => resolve(summary))
-      .catch(reject);
+    (async () => {
+      try {
+        const { application } = await api.saveSession(summary);
+        setAppState({ application });
+        resolve(summary);
+      } catch (e) { reject(e); }
+    })();
   });
 
   if (savingSession) return <OverlayLoader display />;

@@ -1,5 +1,11 @@
 import makeApiCall from './makeApiCall';
 
+export const updateDeviceRegistration = (body = {}, reqOpts = {}) => makeApiCall('/update-device-registration', {
+  body,
+  method: 'POST',
+  ...reqOpts,
+});
+
 export const getDeviceRegistration = (body = {}, reqOpts = {}) => makeApiCall('/get-device-registration', {
   body,
   ...reqOpts,

@@ -16,14 +16,15 @@ export default (url = '', opts = {}) => {
   require('@/utils/logger')(`makeApiCall: ${url}: `, JSON.stringify(reqOpts));
 
   return new Promise((resolve, reject) => {
-    fetch(url, { method, ...reqOpts })
-      .then(res => {
-        return res.json();
-      })
-      .then(res => resolve(res))
-      .catch(e => {
+    (async () => {
+      try {
+        const res = await fetch(url, { method, ...reqOpts });
+        const json = await res.json();
+        resolve(json);
+      } catch (e) {
         require('@/utils/logger')(`makeApiCall ERROR: ${url}: `, e);
         reject(e);
-      });
+      }
+    })();
   });
 };
