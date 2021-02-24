@@ -6,8 +6,10 @@ import theme from '@/native-base-theme/variables/commonColor';
 import { Icon, List, ListItem, Left, Body } from 'native-base';
 import SignOutBtn from '@/components/SignOutBtn';
 import Text from '@/components/Text';
+import { useAppContext } from '@/AppContext';
 
 const Sidebar = () => {
+  const { switchMode, state: { application } } = useAppContext();
   const history = useHistory();
 
   return (
@@ -56,12 +58,26 @@ const Sidebar = () => {
                 </ListItem>
               );
             })}
+
             <ListItem avatar style={{ padding: 10 }}>
               <Left>
                 <Icon style={{ color: '#999' }} name="log-out" />
               </Left>
               <Body style={{ borderColor: 'transparent' }}>
                 <SignOutBtn />
+              </Body>
+            </ListItem>
+
+            <ListItem
+              avatar
+              style={{ padding: 10 }}
+              onPress={() => switchMode(application.mode === 'development' ? 'production' : 'development')}
+            >
+              <Left>
+                <Icon style={{ color: application.mode === 'development' ? theme.buttonPrimaryBg : '#999' }} name="laptop" />
+              </Left>
+              <Body style={{ borderColor: 'transparent' }}>
+                <Text style={{ color: application.mode === 'development' ? theme.buttonPrimaryBg : '#999' }}>Development</Text>
               </Body>
             </ListItem>
           </List>

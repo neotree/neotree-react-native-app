@@ -6,9 +6,12 @@ import * as Permissions from 'expo-permissions';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import Scripts from '@/components/Scripts';
+import { useAppContext } from '@/AppContext';
 import Sidebar from './Sidebar';
 
 const Home = () => {
+  const { state: { application } } = useAppContext();
+
   const drawerRef = React.useRef(null);
 
   const history = useHistory();
@@ -35,7 +38,7 @@ const Home = () => {
       >
         <View style={{ flex: 1, backgroundColor: '#f6f7f9', }}>
           <Header
-            title="Scripts"
+            title={`Scripts v${application.webeditor_info.version}`}
             leftActions={(
               <>
                 <TouchableOpacity

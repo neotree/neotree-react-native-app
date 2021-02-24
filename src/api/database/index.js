@@ -1,5 +1,3 @@
-export * from './app_info';
-
 export * from './data_status';
 
 export * from './scripts';

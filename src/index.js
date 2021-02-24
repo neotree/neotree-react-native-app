@@ -15,6 +15,8 @@ import addSocketEventsListeners from './_addSocketEventsListeners';
 const Containers = LazyPage(() => import('./containers'), { LoaderComponent: Splash });
 
 const NeoTreeApp = () => {
+  const appDataRef = React.useRef(new api.AppData());
+
   const [state, _setState] = React.useState({
     errors: [],
     fontsLoaded: false,
@@ -32,9 +34,9 @@ const NeoTreeApp = () => {
   const sync = opts => new Promise((resolve, reject) => {
     (async () => {
       try {
-        const dataState = await api.sync(opts);
-        setState({ ...dataState });
-        resolve(dataState)
+        const syncRslts = await appDataRef.current.sync(opts);
+        setState(syncRslts);
+        resolve(syncRslts)
       } catch (e) { reject(e); }
     })();
   });
@@ -49,7 +51,7 @@ const NeoTreeApp = () => {
 
   React.useEffect(() => {
     addSocketEventsListeners(async e => {
-      try { await sync({ socketEvent: e }); } catch (e) { /* Do nothing */ }
+      try { await sync(); } catch (e) { /* Do nothing */ }
       setState({ lastSocketEvent: e });
     });
 
@@ -78,8 +80,9 @@ const NeoTreeApp = () => {
       } catch (e) { return alertError('Load fonts error', e); }
 
       try {
-        const rslts = await new api.AppData().initlialise();
-        console.log(rslts.application);
+        const initDataRslts = await appDataRef.current.initlialise();
+        setState(initDataRslts);
+
         await sync();
       } catch (e) {
         return alertError('Sync error', e);
@@ -89,13 +92,33 @@ const NeoTreeApp = () => {
     })();
   }, []);
 
-  const { appIsReady } = state;
+  const { appIsReady, switchingMode, application } = state;
 
   return (
     <AppContext.Provider
-      value={{ state, setState, sync, signOut, }}
+      value={{
+        state,
+        setState,
+        sync,
+        signOut,
+        switchMode: mode => new Promise((resolve, reject) => {
+          if (application.mode === mode) return resolve({ success: true });
+          (async () => {
+            setState({ switchingMode: mode });
+            try {
+              await sync({ mode });
+              resolve({ success: true });
+            } catch (e) { reject(e); }
+            setState({ switchingMode: null });
+          })();
+        })
+      }}
     >
-      {!appIsReady ? <Splash text="Syncing data, this may take a while..." /> : (
+      {switchingMode || !appIsReady ? (
+        <Splash
+          text={switchingMode ? `Changing to ${switchingMode} mode, this may take a while...` : 'Syncing data, this may take a while...'}
+        />
+      ) : (
         <View style={{ flex: 1 }}>
           <Root>
             <Container>
