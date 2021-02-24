@@ -14,19 +14,6 @@ export default () => new Promise((resolve, reject) => {
     'updatedAt datetime',
   ].join(',');
 
-  const dataStatusTableColumns = [
-    'id varchar primary key not null',
-    'uid_prefix varchar',
-    'user_id varchar',
-    'unique_key varchar',
-    'device_id integer',
-    'data_initialised boolean',
-    'last_sync_date datetime',
-    'total_sessions_recorded integer',
-    'createdAt datetime',
-    'updatedAt datetime',
-  ].join(',');
-
   const scriptsTableColumns = [
     'id varchar primary key not null',
     'script_id varchar',
@@ -93,7 +80,6 @@ export default () => new Promise((resolve, reject) => {
 
   const querys = [
     `create table if not exists application (${applicationTableColumns});`,
-    `create table if not exists data_status (${dataStatusTableColumns});`,
     `create table if not exists scripts (${scriptsTableColumns});`,
     `create table if not exists screens (${screensTableColumns});`,
     `create table if not exists diagnoses (${diagnosesTableColumns});`,
@@ -120,14 +106,13 @@ export default () => new Promise((resolve, reject) => {
   Promise.all(querys)
     .then(rslts => resolve({
       applicationTable: rslts[0],
-      dataStatusTable: rslts[1],
-      scriptsTable: rslts[2],
-      screensTable: rslts[3],
-      diagnosesTable: rslts[4],
-      sessionsTable: rslts[5],
-      authenticatedUserTable: rslts[6],
-      config_keysTable: rslts[7],
-      configurationTable: rslts[8],
+      scriptsTable: rslts[1],
+      screensTable: rslts[2],
+      diagnosesTable: rslts[3],
+      sessionsTable: rslts[4],
+      authenticatedUserTable: rslts[5],
+      config_keysTable: rslts[6],
+      configurationTable: rslts[7],
     }))
     .catch(reject);
 });

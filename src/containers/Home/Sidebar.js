@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, View, Alert } from 'react-native';
 import { useHistory } from 'react-router-native';
 import Logo from '@/components/Logo';
 import theme from '@/native-base-theme/variables/commonColor';
@@ -71,7 +71,22 @@ const Sidebar = () => {
             <ListItem
               avatar
               style={{ padding: 10 }}
-              onPress={() => switchMode(application.mode === 'development' ? 'production' : 'development')}
+              onPress={() => {
+                const mode = application.mode === 'development' ? 'production' : 'development';
+                Alert.alert(
+                  'Switch mode',
+                  `Are you sure you want to ${application.mode === 'development' ? 'leave' : 'enter'} development mode?`,
+                  [
+                    {
+                      text: 'Cancel',
+                      onPress: () => {},
+                      style: 'cancel'
+                    },
+                    { text: 'Ok', onPress: () => switchMode(mode) }
+                  ],
+                  { cancelable: false }
+                );
+              }}
             >
               <Left>
                 <Icon style={{ color: application.mode === 'development' ? theme.buttonPrimaryBg : '#999' }} name="laptop" />

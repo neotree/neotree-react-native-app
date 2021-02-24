@@ -37,10 +37,10 @@ const Authentication = () => {
 
     setSyncingData(true);
 
-    try { await sync(); } catch (e) { return done(e); }
+    try { await sync({ force: true }); } catch (e) { return done(e); }
   };
 
-  if (syncingData) return <Splash text="Syncing data, this may take a while..." />;
+  if (syncingData) return <Splash text="Syncing data, this may take a while..."><ActivityIndicator size={25} color="#999" /></Splash>;
 
   return (
     <>
