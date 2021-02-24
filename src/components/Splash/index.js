@@ -39,7 +39,7 @@ const Splash = ({ text, children }) => {
           {!text ? null : (
             <>
               <Divider border={false} />
-              <Text style={{ color: '#999' }}>{text}</Text>
+              <Text style={{ color: '#999', fontSize: 12, paddingHorizontal: 20 }}>{text}</Text>
               <Divider border={false} />
             </>
           )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Alert, BackHandler, } from 'react-native';
+import { View, Alert, BackHandler, ActivityIndicator } from 'react-native';
 import { Container, StyleProvider, Root } from 'native-base';
 import getTheme from './native-base-theme/components';
 import material from './native-base-theme/variables/commonColor';
@@ -117,7 +117,9 @@ const NeoTreeApp = () => {
       {switchingMode || !appIsReady ? (
         <Splash
           text={switchingMode ? `Changing to ${switchingMode} mode, this may take a while...` : 'Syncing data, this may take a while...'}
-        />
+        >
+          <ActivityIndicator size={25} color="#999" />
+        </Splash>
       ) : (
         <View style={{ flex: 1 }}>
           <Root>
