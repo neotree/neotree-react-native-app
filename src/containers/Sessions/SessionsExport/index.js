@@ -12,6 +12,7 @@ import Divider from '@/components/Divider';
 import OverlayLoader from '@/components/OverlayLoader';
 import queryString from 'query-string';
 import { useSessionsContext } from '../SessionsContext';
+import { useAppContext } from '@/AppContext';
 import exportData from './export';
 
 const opts = [
@@ -23,6 +24,7 @@ const opts = [
 const ExportPage = () => {
   const history = useHistory();
   const location = useLocation();
+  const { state: { application } } = useAppContext();
   const { dbSessions, getSessions, loadingSessions, scriptsFields } = useSessionsContext();
   const [format, setFormat] = React.useState('excel');
   const [exporting, setExporting] = React.useState(false);
@@ -61,7 +63,7 @@ const ExportPage = () => {
     }
     setExporting(true);
     try {
-      await exportData({ format, sessions, scriptsFields });
+      await exportData({ format, sessions, scriptsFields, application, });
       if (format === 'jsonapi') await getSessions();
       Alert.alert(
         '',
