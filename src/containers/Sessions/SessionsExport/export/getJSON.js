@@ -1,14 +1,15 @@
 import constants from '@/constants';
 
-export default function getJSON(_sessions = [], opts = {}) {
-  const { showConfidential } = opts;
+export default function getJSON(opts = {}) {
+  const { showConfidential, sessions: _sessions, application } = opts;
 
-  const sessions = _sessions.map((s) => {
+  const sessions = (_sessions || []).map((s) => {
     const { script, form } = s.data;
 
     const data = {
       uid: s.uid,
       appVersion: constants.APP_VERSION,
+      scriptVersion: application.webeditor_info.version,
       scriptTitle: script.script_id,
       script: { id: script.script_id, title: script.data.title },
       entries: form

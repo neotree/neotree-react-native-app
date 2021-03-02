@@ -35,7 +35,7 @@ export function exportJSON(opts = {}) {
         [script.script_id]: script,
       }), {});
 
-      const json = getJSON(sessions).reduce((acc, e) => ({
+      const json = getJSON({ ...opts, sessions }).reduce((acc, e) => ({
         ...acc,
         [e.script.id]: [...(acc[e.script.id] || []), e],
       }), {});
@@ -86,7 +86,7 @@ export function exportEXCEL(opts = {}) {
         [script.script_id]: script,
       }), {});
 
-      const json = getJSON(sessions).reduce((acc, e) => ({
+      const json = getJSON({ ...opts, ...sessions }).reduce((acc, e) => ({
         ...acc,
         [e.script.id]: [...(acc[e.script.id] || []), e],
       }), {});
@@ -156,7 +156,7 @@ export function exportToApi(opts = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       const sessions = _sessions.filter(s => !s.exported);
-      const postData = getJSON(sessions);
+      const postData = getJSON({ ...opts, sessions });
 
       if (postData.length) {
         try { await exportJSON(sessions); } catch (e) { /* Do nothing */ }
@@ -185,15 +185,15 @@ export function exportToApi(opts = {}) {
 }
 
 export default function exportData(opts = {}) {
-  const { format, sessions, scriptsFields } = opts;
+  const { format } = opts;
 
   switch (format) {
     case 'jsonapi':
-      return exportToApi({ sessions });
+      return exportToApi(opts);
     case 'excel':
-      return exportEXCEL({ sessions, scriptsFields });
+      return exportEXCEL(opts);
     case 'json':
-      return exportJSON({ sessions });
+      return exportJSON(opts);
     default:
       return new Promise((resolve, reject) => reject(new Error('Unknown export format')));
   }
