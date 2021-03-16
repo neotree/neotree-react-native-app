@@ -1,17 +1,10 @@
-const BUILD_TYPE = process.env.BUILD_TYPE;
+const BUILD_TYPE = process.env.BUILD_TYPE || 'development';
 
 const appConfig = (() => {
-  const config = { BUILD_TYPE };
+  let config = { BUILD_TYPE };
   try {
-    if (BUILD_TYPE) {
-      config.firebaseConfig = require(`./config/firebase.${BUILD_TYPE}.json`); // eslint-disable-line
-      config.nodeapiConfig = require(`./config/nodeapi.${BUILD_TYPE}.json`); // eslint-disable-line
-      config.webeditorConfig = require(`./config/webeditor.${BUILD_TYPE}.json`); // eslint-disable-line 
-    } else {
-      config.firebaseConfig = require('./config/firebase.json');
-      config.nodeapiConfig = require('./config/nodeapi.json');
-      config.webeditorConfig = require('./config/webeditor.json');
-    }
+    config.firebaseConfig = require(`./config/firebase.${BUILD_TYPE}.json`); // eslint-disable-line
+    config = { ...config, ...require(`./config/config.${BUILD_TYPE}.json`) } // eslint-disable-line
   } catch (e) {
     return { LOAD_CONFIG_FILE_ERROR: e.message };
   }
@@ -21,10 +14,10 @@ const appConfig = (() => {
 export default ({ config }) => ({
   ...config,
 
-  ...(BUILD_TYPE === 'development' ? {
-    version: `${config.version}-DEV`,
-    name: `${config.name} (DEV)`,
-    slug: `${config.slug}-dev`,
+  ...(BUILD_TYPE === 'stage' ? {
+    version: `${config.version}-STAGE`,
+    name: `${config.name} (STAGE)`,
+    slug: `${config.slug}-stage`,
   } : null),
 
   ...(BUILD_TYPE === 'production' ? {

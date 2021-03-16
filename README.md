@@ -26,14 +26,40 @@ https://reactnative.dev/docs/environment-setup
 4. Download API Key
 
 ### NODE API (for data exports)
-`neotree-nodeapi-api.json`
+`config.<build_type>.json`
 
 ```javascript
 {
-  "host": "nodeapi host url (eg. example.com)",
-  "endpoint": "endpoint used by the app to post data(eg. example.com)",
-  "api_key": "api key here",
+  "countries": [
+    "zimbabwe",
+    "malawi"
+  ],
+  "zimbabwe": {
+    "webeditor": {
+      "host":"<web editor host>",
+      "api_endpoint":"<web editor api endpoint>",
+      "api_key":"<web editor api key>"
+    },
+    "nodeapi": {
+      "host":"<nodeapi host>",
+      "api_endpoint":"<nodeapi api endpoint>",
+      "api_key":"<nodeapi api key>"
+    }
+  },
+  "malawi": {
+    "webeditor": {
+      "host":"<web editor host>",
+      "api_endpoint":"<web editor api endpoint>",
+      "api_key":"<web editor api key>"
+    },
+    "nodeapi": {
+      "host":"<nodeapi host>",
+      "api_endpoint":"<nodeapi api endpoint>",
+      "api_key":"<nodeapi api key>"
+    }
+  }
 }
+
 ```
 
 ### Firebase
@@ -44,9 +70,14 @@ https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
 **Place the config files into `<project folder>/config`**
 
 ```
-  <project folder>/config/neotree-webeditor-api.json
-  <project folder>/config/neotree-nodeapi-api.json
-  <project folder>/config/firebase.config.json
+  <project folder>/config/config.development.json
+  <project folder>/config/firebase.development.json
+
+  <project folder>/config/config.stage.json
+  <project folder>/config/firebase.stage.json
+
+  <project folder>/config/config.production.json
+  <project folder>/config/firebase.production.json
 ```
 
 ***
