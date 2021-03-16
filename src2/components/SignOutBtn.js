@@ -4,15 +4,19 @@ import { View, Alert, TouchableOpacity } from 'react-native';
 import { Text } from 'native-base';
 import OverlayLoader from '@/components/OverlayLoader';
 import { useAppContext } from '@/AppContext';
+import * as api from '@/api';
 
 const SignOutBtn = ({ icon, style, ...props }) => {
-  const { signOut } = useAppContext();
+  const { setState: setAppState } = useAppContext();
   const [signingOut, setSigningOut] = React.useState(false);
 
   const logOut = () => {
     const onConfirm = async () => {
       setSigningOut(true);
-      try { await signOut(); } catch (e) { /*Do nothing*/ }
+      try {
+        await api.signOut();
+        setAppState({ authenticatedUser: null });
+      } catch (e) { /*Do nothing*/ }
       setSigningOut(false);
     };
 

@@ -1,143 +1,54 @@
 import React from 'react';
-import * as Font from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Alert, BackHandler, ActivityIndicator } from 'react-native';
-import { Container, StyleProvider, Root } from 'native-base';
-import getTheme from './native-base-theme/components';
-import material from './native-base-theme/variables/commonColor';
-import LazyPage from './components/LazyPage';
-import Splash from './components/Splash';
-import NetworkStatusBar from './components/NetworkStatusBar';
+import DisplayError from '@/components/DisplayError';
+import Splash from '@/components/Splash';
 import * as api from './api';
+import Containers from './containers';
+import { provideTheme } from './Theme';
 import AppContext from './AppContext';
-import addSocketEventsListeners from './_addSocketEventsListeners';
 
-const Containers = LazyPage(() => import('./containers'), { LoaderComponent: Splash });
+const defaultAppState = {
+  fatalError: null,
+  initialisingApp: false,
+  authenticatedUser: null,
+  location: null,
+};
 
-const NeoTreeApp = () => {
-  const appDataRef = React.useRef(new api.AppData());
+function NeotreeApp() {
+  const [state, _setState] = React.useState(defaultAppState);
+  const setState = s => _setState(prev => ({ ...prev, ...(typeof s === 'function' ? s(prev) : s) }));
 
-  const [state, _setState] = React.useState({
-    errors: [],
-    fontsLoaded: false,
-    authenticatedUser: null,
-    deviceRegistration: null,
-    appIsReady: false,
-    lastSocketEvent: null,
-  });
-  const setState = partialState => _setState(prev => ({
-    ...prev,
-    ...(typeof partialState === 'function' ? partialState(prev) : partialState),
-  }));
-
-  const sync = opts => new Promise((resolve, reject) => {
+  /*
+  * initialiseDatabase: creates database if not exists
+  */
+  const initialiseApp = React.useCallback(() => {
     (async () => {
+      setState({ ...defaultAppState, initialisingApp: true, });
       try {
-        const syncRslts = await appDataRef.current.sync(opts);
-        setState(syncRslts);
-        resolve(syncRslts)
-      } catch (e) { reject(e); }
-    })();
-  });
+        await api.initialiseDatabase();
+        const authenticatedUser = await api.getAuthenticatedUser();
+        const location = await api.getLocation();
 
-  const signOut = () => new Promise((resolve, reject) => {
-    (async () => {
-      try { await api.signOut(); } catch (e) { return reject(e); }
-      resolve();
-      setState({ authenticatedUser: null });
-    })();
-  });
-
-  React.useEffect(() => {
-    addSocketEventsListeners(async e => {
-      try { await sync(); } catch (e) { /* Do nothing */ }
-      setState({ lastSocketEvent: e });
-    });
-
-    (async () => {
-      const alertError = (errType, e) => {
-        Alert.alert(
-          'ERROR',
-          `${errType}: ${e.message || e.msg || JSON.stringify(e)}`,
-          [
-            {
-              text: 'Exit app',
-              type: 'cancel',
-              onPress: () => BackHandler.exitApp(),
-            }
-          ]
-        );
-      };
-
-      try {
-        await Font.loadAsync({
-          Roboto: require('native-base/Fonts/Roboto.ttf'),
-          Roboto_medium: require('native-base/Fonts/Roboto_medium.ttf'),
-          ...Ionicons.font,
-        });
-        setState({ fontsLoaded: true, });
-      } catch (e) { return alertError('Load fonts error', e); }
-
-      try {
-        const initDataRslts = await appDataRef.current.initlialise();
-        setState(initDataRslts);
-
-        await sync();
-      } catch (e) {
-        return alertError('Sync error', e);
-      }
-
-      setState({ appIsReady: true });
+        setState({ authenticatedUser, location });
+      } catch (e) { setState({ fatalError: e.message }); }
+      setState({ initialisingApp: false });
     })();
   }, []);
 
-  const { appIsReady, switchingMode, application } = state;
+  React.useEffect(() => { initialiseApp(); }, []);
+
+  const { fatalError, initialisingApp } = state;
+
+  if (fatalError) return <DisplayError error={fatalError} onRefresh={initialiseApp} />;
+
+  if (initialisingApp) return <Splash />;
 
   return (
     <AppContext.Provider
-      value={{
-        state,
-        setState,
-        sync,
-        signOut,
-        switchMode: mode => new Promise((resolve, reject) => {
-          if (application.mode === mode) return resolve({ success: true });
-          (async () => {
-            setState({ switchingMode: mode });
-            try {
-              await sync({ mode });
-              resolve({ success: true });
-            } catch (e) { reject(e); }
-            setState({ switchingMode: null });
-          })();
-        })
-      }}
+      value={{ state, setState, initialiseApp }}
     >
-      {switchingMode || !appIsReady ? (
-        <Splash
-          text={switchingMode ?
-            `${switchingMode === 'development' ? 'Entering' : 'Leaving'} development mode, this may take a while...`
-            :
-            'Syncing data, this may take a while...'}
-        >
-          <ActivityIndicator size={25} color="#999" />
-        </Splash>
-      ) : (
-        <View style={{ flex: 1 }}>
-          <Root>
-            <Container>
-              <StyleProvider style={getTheme(material)}>
-                <>
-                  <Containers />
-                  <NetworkStatusBar />
-                </>
-              </StyleProvider>
-            </Container>
-          </Root>
-        </View>
-      )}
+      <Containers />
     </AppContext.Provider>
   );
-};
+}
 
-export default NeoTreeApp;
+export default provideTheme(NeotreeApp);

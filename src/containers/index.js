@@ -1,37 +1,59 @@
 import React from 'react';
-import LazyPage from '@/components/LazyPage';
-import { Switch, Route, Redirect } from 'react-router-native';
-import { useAppContext } from '../AppContext';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createStackNavigator } from '@react-navigation/stack';
+import LazComponent from '@/components/LazyComponent';
+import * as SCREENS from '@/constants/SCREENS';
+import { useAppContext } from '@/AppContext';
 
-const Authentication = LazyPage(() => import('@/containers/Authentication'));
-const Home = LazyPage(() => import('@/containers/Home'));
-const Sessions = LazyPage(() => import('@/containers/Sessions'));
-const Script = LazyPage(() => import('@/containers/Script'));
-const Configuration = LazyPage(() => import('@/containers/Configuration'));
+const Authentication = LazComponent(() => import('./Authentication'));
+const Location = LazComponent(() => import('./Location'));
+const Scripts = LazComponent(() => import('./Scripts'));
+const Script = LazComponent(() => import('./Script'));
+const Configuration = LazComponent(() => import('./Configuration'));
+const Sessions = LazComponent(() => import('./Sessions'));
 
-const Containers = () => {
-  const { state: { authenticatedUser } } = useAppContext();
+const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
 
-  const renderRouteComponent = (Component, opts = {}) => params => {
-    const { isLoginPage } = opts;
-    if (authenticatedUser && isLoginPage) return <Redirect to="/" />;
-    if (!authenticatedUser && !isLoginPage) return <Redirect to="/sign-in" />;
-    return <Component {...params} />;
-  };
+function Home() {
+  return (
+    <>
+      <Drawer.Navigator initialRouteName="Scripts">
+        <Drawer.Screen name={SCREENS.SCRIPTS.name} component={Scripts} />
+        <Drawer.Screen name={SCREENS.CONFIGURATION.name} component={Configuration} />
+        <Drawer.Screen name={SCREENS.SESSIONS.name} component={Sessions} />
+      </Drawer.Navigator>
+    </>
+  );
+}
+
+function Containers() {
+  const { state: { authenticatedUser, location } } = useAppContext();
+
+  if (!authenticatedUser) return <Authentication />;
+
+  if (!location) return <Location />;
 
   return (
     <>
-      <Switch>
-        <Route exact path="/" render={renderRouteComponent(Home)} />
-        <Route exact path="/sign-in" render={renderRouteComponent(Authentication, { isLoginPage: true, })} />
-        <Route exact path="/script/:scriptId" render={renderRouteComponent(Script)} />
-        {/*<Route exact path="/script/:scriptId/preview-form" render={renderRouteComponent(Script)} />*/}
-        {/*<Route exact path="/script/:scriptId/screen/:screenId" render={renderRouteComponent(Script)} />*/}
-        <Route exact path="/configuration" render={renderRouteComponent(Configuration)} />
-        <Route path="/sessions" render={renderRouteComponent(Sessions)} />
-      </Switch>
+      <Stack.Navigator
+        initialRouteName="Home"
+        // mode="card"
+        // headerMode="none"
+        // screenOptions={{
+        //   headerShown: false,
+        //   cardStyle: { backgroundColor: '#fff' },
+        // }}
+      >
+        <Stack.Screen
+          name={SCREENS.HOME.name}
+          component={Home}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name={SCREENS.SCRIPT.name} component={Script} />
+      </Stack.Navigator>
     </>
   );
-};
+}
 
 export default Containers;

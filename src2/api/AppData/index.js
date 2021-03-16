@@ -15,16 +15,6 @@ import { updateDeviceRegistration } from '../webeditor';
 const APP_VERSION = Constants.manifest.version;
 
 export default class AppData {
-  constructor() {
-    this.current_process = null;
-    this.onprocess = null;
-  }
-
-  changeProcess = process => {
-    this.current_process = process;
-    if (this.onprocess) this.onprocess(process);
-  };
-
   getApplication = () => new Promise((resolve, reject) => {
     (async () => {
       try {
@@ -36,6 +26,16 @@ export default class AppData {
     })();
   });
 
+  getLocation = () => new Promise((resolve, reject) => {
+    (async () => {
+      try {
+        let location = await dbTransaction('select * from location where id=1;');
+        location = location[0];
+        resolve(location);
+      } catch (e) { reject(e); }
+    })();
+  });
+
   initlialise = () => new Promise((resolve, reject) => {
     (async () => {
       let application = null;
@@ -43,9 +43,18 @@ export default class AppData {
       let webEditor = null;
       let networkState = null;
       let authenticatedUser = null;
+      let location = null;
 
       try {
+        await createTablesIfNotExist();
+
         networkState = await NetInfo.fetch();
+
+        authenticatedUser = await getAuthenticatedUser();
+
+        location = await this.getLocation();
+
+        if (!location) return resolve({ authenticatedUser, dataInitialised: false, });
 
         deviceId = await new Promise((resolve, reject) => {
           if (Platform.OS === 'android') return resolve(Application.androidId);
@@ -55,17 +64,9 @@ export default class AppData {
         });
 
         if (networkState.isInternetReachable) {
-          this.changeProcess('load_webeditor_info');
           webEditor = await webeditorApi.getDeviceRegistration({ deviceId });
         }
 
-        this.changeProcess('initialise_tables');
-        await createTablesIfNotExist();
-
-        this.changeProcess('load_authenticated_user');
-        authenticatedUser = await getAuthenticatedUser();
-
-        this.changeProcess('load_application_info');
         application = await this.getApplication();
 
         if (!application) {
@@ -92,7 +93,7 @@ export default class AppData {
         }
       } catch (e) { return reject(e); }
 
-      resolve({ application, authenticatedUser, });
+      resolve({ application, authenticatedUser, location, dataInitialised: true, });
     })();
   });
 
@@ -104,11 +105,16 @@ export default class AppData {
       let networkState = null;
       let authenticatedUser = null;
       let webEditor = null;
+      let location = null;
 
       try {
         networkState = await NetInfo.fetch();
 
         authenticatedUser = await getAuthenticatedUser();
+
+        location = await this.getLocation();
+
+        if (!location) return resolve({ authenticatedUser, dataInitialised: false, });
 
         application = await this.getApplication();
       } catch (e) { return reject(e); }

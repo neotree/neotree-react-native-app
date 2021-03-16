@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabase('db.db');
+export const db = SQLite.openDatabase('db.db');
 
 export const dbTransaction = (q, data = null) => new Promise((resolve, reject) => {
   db.transaction(
