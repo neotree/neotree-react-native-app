@@ -1,12 +1,11 @@
 import * as webeditorApi from './webeditor';
-import { getApplication } from './_application';
+import { getApplication, saveApplication } from './_application';
 import { dbTransaction } from './database/db';
 import { updateDeviceRegistration } from './webeditor';
 import { deleteScripts, insertScripts } from './database/scripts';
 import { deleteScreens, insertScreens } from './database/screens';
 import { deleteDiagnoses, insertDiagnoses } from './database/diagnoses';
 import { deleteConfigKeys, insertConfigKeys } from './database/config_keys';
-import { saveLocation } from './_location';
 
 export default function sync(opts = {}) {
   const { force: forceSync, mode } = opts;
@@ -21,7 +20,7 @@ export default function sync(opts = {}) {
 
         webEditor = await webeditorApi.getDeviceRegistration({ deviceId: application.device_id });
 
-        let shouldSync = forceSync || (
+        let shouldSync = forceSync || !application.last_sync_date || (
           (application.mode === 'development' ? true : webEditor.info.version !== application.webeditor_info.version)
         );
 
@@ -92,7 +91,7 @@ export default function sync(opts = {}) {
             } catch (e) { /* Do nothing */ }
           } catch (e) { return reject(e); }
 
-          await saveLocation({
+          await saveApplication({
             ...application,
             mode: mode || application.mode,
             last_sync_date: new Date().toISOString(),

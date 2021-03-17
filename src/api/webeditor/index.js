@@ -12,7 +12,7 @@ export const getDeviceRegistration = (body = {}, reqOpts = {}) => makeApiCall.ge
   ...reqOpts,
 });
 
-export const syncData = (body = {}, reqOpts = {}) => makeApiCall.post('/sync-data', {
+export const syncData = (body = {}, reqOpts = {}) => makeApiCall.get('/sync-data', {
   body,
   ...reqOpts,
 });

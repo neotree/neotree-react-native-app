@@ -1,13 +1,11 @@
 import React from 'react';
 import { useAppContext } from '@/AppContext';
-import { useTheme } from '@/Theme';
 import * as NativeBase from 'native-base';
-import Content from '@/components/Content';
+import NativeBaseContent from '@/components/NativeBaseContent';
 import { Image, View, StatusBar, ActivityIndicator } from 'react-native';
 import * as api from '@/api';
 
 function Authentication() {
-  const theme = useTheme();
   const { initialiseApp } = useAppContext();
 
   const emailInputRef = React.useRef(null);
@@ -36,7 +34,7 @@ function Authentication() {
     <>
       <StatusBar translucent backgroundColor="#fff" barStyle="dark-content" />
 
-      <Content
+      <NativeBaseContent
         contentContainerStyle={{ flex: 1, justifyContent: 'center', }}
       >
         <View style={{ alignItems: 'center' }}>
@@ -87,7 +85,7 @@ function Authentication() {
           <>
             <View style={{ marginVertical: 5 }} />
             <NativeBase.Text
-              style={{ color: theme.palette.error.main, textAlign: 'center' }}
+              style={{ color: '#b20008', textAlign: 'center' }}
             >
               {error}
             </NativeBase.Text>
@@ -102,9 +100,9 @@ function Authentication() {
           onPress={() => signIn()}
         >
           <NativeBase.Text>Sign in</NativeBase.Text>
-          {signingIn && <ActivityIndicator size="small" color={theme.palette.primary.main} />}
+          {signingIn && <ActivityIndicator size="small" color="blue" />}
         </NativeBase.Button>
-      </Content>
+      </NativeBaseContent>
     </>
   );
 }

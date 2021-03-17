@@ -12,7 +12,7 @@ export const getLocation = () => new Promise((resolve, reject) => {
 export const saveLocation = (params = {}) => new Promise((resolve, reject) => {
   (async () => {
     try {
-      const location = { id: 1, ...params };
+      const location = { ...params, id: 1 };
 
       await dbTransaction(
         `insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
