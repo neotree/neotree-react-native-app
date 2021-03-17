@@ -11,6 +11,7 @@ const defaultAppState = {
   initialisingApp: false,
   authenticatedUser: null,
   location: null,
+  application: null,
 };
 
 function NeotreeApp() {
@@ -27,8 +28,12 @@ function NeotreeApp() {
         await api.initialiseDatabase();
         const authenticatedUser = await api.getAuthenticatedUser();
         const location = await api.getLocation();
-
-        setState({ authenticatedUser, location });
+        let application = null;
+        if (location && authenticatedUser) {
+          await api.sync();
+          application = await api.getApplication();
+        }
+        setState({ authenticatedUser, location, application });
       } catch (e) { setState({ fatalError: e.message }); }
       setState({ initialisingApp: false });
     })();
