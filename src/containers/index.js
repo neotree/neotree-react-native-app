@@ -1,64 +1,14 @@
 import React from 'react';
-import { Image, View } from 'react-native';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
-import LazComponent from '@/components/LazyComponent';
-import Logo from '@/components/Logo';
+import LazyPage from '@/components/LazyPage';
+import { NativeRouter, BackButton, Switch, Route } from 'react-router-native';
 import { useAppContext } from '@/AppContext';
-import theme from '~/native-base-theme/variables/commonColor';
 
-const Authentication = LazComponent(() => import('./Authentication'));
-const Location = LazComponent(() => import('./Location'));
-const Scripts = LazComponent(() => import('./Scripts'));
-const Script = LazComponent(() => import('./Script'));
-const Configuration = LazComponent(() => import('./Configuration'));
-const Sessions = LazComponent(() => import('./Sessions'));
-
-const Stack = createStackNavigator();
-const Drawer = createDrawerNavigator();
-
-function Home() {
-  return (
-    <>
-      <Drawer.Navigator
-        initialRouteName="Scripts"
-        drawerStyle={{ margin: 0, padding: 0, }}
-        drawerContent={props => {
-          const { navigation: { navigate } } = props; // eslint-disable-line
-          return (
-            <DrawerContentScrollView
-              {...props}
-            >
-              <View
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: 0,
-                  height: 200,
-                  backgroundColor: theme.buttonPrimaryBg,
-                  padding: 0,
-                  position: 'absolute',
-                  top: 0,
-                  width: '100%'
-                }}
-              ><Logo /></View>
-
-              <View style={{ height: 200, marginBottom: 10, }} />
-
-              <DrawerItemList {...props} />
-              <DrawerItem label="Configuration" onPress={() => navigate('Configuration')} />
-              <DrawerItem label="Sessions history" onPress={() => navigate('Sessions')} />
-              <DrawerItem label="Sign out" onPress={() => alert('Link to help')} />
-            </DrawerContentScrollView>
-          );
-        }}
-      >
-        <Drawer.Screen name="Scripts" component={Scripts} />
-      </Drawer.Navigator>
-    </>
-  );
-}
+const Authentication = LazyPage(() => import('./Authentication'));
+const Location = LazyPage(() => import('./Location'));
+const Home = LazyPage(() => import('@/containers/Home'));
+const Sessions = LazyPage(() => import('@/containers/Sessions'));
+const Script = LazyPage(() => import('@/containers/Script'));
+const Configuration = LazyPage(() => import('@/containers/Configuration'));
 
 function Containers() {
   const { state: { authenticatedUser, location } } = useAppContext();
@@ -69,24 +19,18 @@ function Containers() {
 
   return (
     <>
-      <Stack.Navigator
-        initialRouteName="Home"
-        // mode="card"
-        // headerMode="none"
-        // screenOptions={{
-        //   headerShown: false,
-        //   cardStyle: { backgroundColor: '#fff' },
-        // }}
-      >
-        <Stack.Screen
-          name="Home"
-          component={Home}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="Configuration" component={Configuration} />
-        <Stack.Screen name="Sessions" component={Sessions} />
-        <Stack.Screen name="Script" component={Script} />
-      </Stack.Navigator>
+      <NativeRouter>
+        <BackButton>
+          <Switch>
+            <Route exact path="/" component={Home} />
+            <Route exact path="/script/:scriptId" component={Script} />
+            {/*<Route exact path="/script/:scriptId/preview-form" render={renderRouteComponent(Script)} />*/}
+            {/*<Route exact path="/script/:scriptId/screen/:screenId" render={Script} />*/}
+            <Route exact path="/configuration" component={Configuration} />
+            <Route path="/sessions" component={Sessions} />
+          </Switch>
+        </BackButton>
+      </NativeRouter>
     </>
   );
 }

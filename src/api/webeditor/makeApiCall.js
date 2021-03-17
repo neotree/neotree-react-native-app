@@ -9,6 +9,7 @@ const config = Constants.manifest.extra;
 const makeApiCall = (endpoint, params = {}) => new Promise((resolve, reject) => {
   const { country: _country, body, ...opts } = params;
 
+  let url = '';
   let country = _country;
 
   (async () => {
@@ -24,7 +25,7 @@ const makeApiCall = (endpoint, params = {}) => new Promise((resolve, reject) => 
       const apiConfig = country ? config[country].webeditor : null;
       if (!apiConfig) throw new Error(`Api config for ${country} not found`);
 
-      let url = `${apiConfig.api_endpoint}${endpoint}`;
+      url = `${apiConfig.api_endpoint}${endpoint}`;
       const reqOpts = {
         ...opts,
         headers: {
@@ -39,19 +40,15 @@ const makeApiCall = (endpoint, params = {}) => new Promise((resolve, reject) => 
         reqOpts.headers['Content-Type'] = 'application/json';
         reqOpts.body = JSON.stringify({ ...body });
       }
-      console.log(`makeApiCall: ${url}: `, JSON.stringify(reqOpts));
+      console.log(`makeApiCall [${reqOpts.method}]: ${url}`);
 
       let res = await fetch(url, reqOpts);
       res = await res.json();
 
-      if (res.errors || res.error) {
-        const error = (res.error ? [res.error] : res.errors).map(e => e.message || e.msg || e).join('\n');
-        console.log(`makeApiCall ERROR: ${url}: `, error);
-        throw new Error(error);
-      }
+      if (res.errors || res.error) throw new Error((res.error ? [res.error] : res.errors).map(e => e.message || e.msg || e).join('\n'));
 
       resolve(res);
-    } catch (e) { reject(e); }
+    } catch (e) { console.log(`makeApiCall ERROR: ${url}: `, e); reject(e); }
   })();
 });
 

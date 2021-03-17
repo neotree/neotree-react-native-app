@@ -26,6 +26,7 @@ export const saveApplication = (params = {}) => new Promise((resolve, reject) =>
         version: APP_VERSION,
         updatedAt: new Date().toISOString(),
       };
+
       await dbTransaction(
         `insert or replace into application (${Object.keys(application).join(',')}) values (${Object.keys(application).map(() => '?').join(',')});`,
         Object.values(application)
