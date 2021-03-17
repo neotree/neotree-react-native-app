@@ -20,7 +20,11 @@ const _getApplication = () => new Promise((resolve, reject) => {
 export const saveApplication = (params = {}) => new Promise((resolve, reject) => {
   (async () => {
     try {
+      const getApplicationRslt = await dbTransaction('select * from application where id=1;');
+      const _application = getApplicationRslt[0];
+
       let application = {
+        ..._application,
         ...params,
         id: 1,
         version: APP_VERSION,

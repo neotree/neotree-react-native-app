@@ -5,7 +5,7 @@ import Splash from '@/components/Splash';
 import * as api from './api';
 import Containers from './containers';
 import AppContext from './AppContext';
-import addSocketEventsListeners from './_addSocketEventsListeners';
+import { addSocketEventsListeners, connectSocket } from './socket';
 
 const defaultAppState = {
   fatalError: null,
@@ -13,6 +13,7 @@ const defaultAppState = {
   authenticatedUser: null,
   location: null,
   application: null,
+  displaySplash: false,
 };
 
 function NeotreeApp() {
@@ -42,13 +43,13 @@ function NeotreeApp() {
 
   React.useEffect(() => { initialiseApp(); }, []);
 
-  const { fatalError, initialisingApp, location } = state;
+  const { fatalError, initialisingApp, location, displaySplash } = state;
 
   React.useEffect(() => {
     (async () => {
       if (location) {
         try {
-          await api.connectSocket(location);
+          await connectSocket(location.country);
           addSocketEventsListeners(async e => {
             try { await api.sync(); } catch (e) { /* Do nothing */ }
             setState({ lastSocketEvent: e });
@@ -56,11 +57,11 @@ function NeotreeApp() {
         } catch (e) { /*DO nothing*/ }
       }
     })();
-  }, []);
+  }, [location]);
 
   if (fatalError) return <DisplayError error={fatalError} onRefresh={initialiseApp} />;
 
-  if (initialisingApp) return <Splash><ActivityIndicator size={25} color="#999" /></Splash>;
+  if (initialisingApp || displaySplash) return <Splash><ActivityIndicator size={25} color="#999" /></Splash>;
 
   return (
     <AppContext.Provider
