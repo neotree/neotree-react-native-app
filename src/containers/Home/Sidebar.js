@@ -7,9 +7,11 @@ import { Icon, List, ListItem, Left, Body } from 'native-base';
 import SignOutBtn from '@/components/SignOutBtn';
 import Text from '@/components/Text';
 import { useAppContext } from '@/AppContext';
+import * as api from '@/api';
+import { saveApplication } from '../../api';
 
 const Sidebar = () => {
-  const { switchMode, state: { application } } = useAppContext();
+  const { setState: setAppState, state: { application } } = useAppContext();
   const history = useHistory();
 
   return (
@@ -82,7 +84,20 @@ const Sidebar = () => {
                       onPress: () => {},
                       style: 'cancel'
                     },
-                    { text: 'Ok', onPress: () => switchMode(mode) }
+                    {
+                      text: 'Ok',
+                      onPress: () => {
+                        (async () => {
+                          setAppState({ displaySplash: true, });
+                          try {
+                            const application = await saveApplication({ mode });
+                            await api.sync({ force: true });
+                            setAppState({ application });
+                          } catch (e) { alert(e.message); } // eslint-disable-line
+                          setAppState({ displaySplash: false });
+                        })();
+                      }
+                    }
                   ],
                   { cancelable: false }
                 );

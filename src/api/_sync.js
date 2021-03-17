@@ -91,14 +91,12 @@ export default function sync(opts = {}) {
             } catch (e) { /* Do nothing */ }
           } catch (e) { return reject(e); }
 
-          await saveApplication({
+          application = await saveApplication({
             ...application,
             mode: mode || application.mode,
             last_sync_date: new Date().toISOString(),
             webeditor_info: JSON.stringify(webEditor.info),
           });
-
-          application = await this.getApplication();
         }
       } catch (e) { return reject(e); }
 
