@@ -6,6 +6,7 @@ export default ({
   script,
   evaluateCondition,
   diagnoses,
+  appState: { application, location },
 }) => function createSessionSummary(_payload = {}) {
   diagnoses = (diagnoses || []).reduce((acc, d) => {
     if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
@@ -54,6 +55,9 @@ export default ({
     uid,
     script_id: activeScreen.script_id,
     data: {
+      app_mode: application.mode,
+      country: location.country,
+      hospital_id: location.hospital,
       started_at: start_time,
       completed_at: completed ? new Date().toISOString() : null,
       canceled_at: canceled ? new Date().toISOString() : null,

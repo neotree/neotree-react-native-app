@@ -1,46 +1,31 @@
 import io from 'socket.io-client';
-import Constants from 'expo-constants';
-import { getLocation } from '@/api';
+import config from '@/constants/config';
 
-const config = Constants.manifest.extra;
+const sockets = config.countries.reduce((acc, country) => {
+  const host = config[country] ? config[country].webeditor.host : null;
+  return { ...acc, ...(host ? { [country]: io(host) } : null) };
+}, {});
 
-const _socket = [];
+export function addSocketEventsListeners(country, listener) {
+  const socket = sockets[country];
+  if (socket) {
+    const onEvent = e => setTimeout(() => listener && listener(e), 0);
 
-export const connectSocket = country => new Promise((resolve, reject) => {
-  try {
-    const location = getLocation();
-    if (!location) throw new Error('Location not set');
+    socket.on('data_updated', data => onEvent({
+      name: 'data_updated',
+      ...data
+    }));
 
-    country = country || location.country;
+    socket.on('data_published', data => onEvent({
+      name: 'data_published',
+      ...data
+    }));
 
-    const host = config[location.country] ? config[location.country].webeditor.host : null;
-    if (!host) throw new Error('Api configuration not found');
-
-    _socket[0] = (io(host));
-
-    resolve(_socket[0]);
-  } catch (e) { reject(e); }
-});
-
-export const socket = _socket[0];
-
-export function addSocketEventsListeners(listener) {
-  const onEvent = e => setTimeout(() => listener && listener(e), 0);
-
-  socket.on('data_updated', data => onEvent({
-    name: 'data_updated',
-    ...data
-  }));
-
-  socket.on('data_published', data => onEvent({
-    name: 'data_published',
-    ...data
-  }));
-
-  socket.on('changes_discarded', data => onEvent({
-    name: 'changes_discarded',
-    ...data
-  }));
+    socket.on('changes_discarded', data => onEvent({
+      name: 'changes_discarded',
+      ...data
+    }));
+  }
 }
 
-export default socket;
+export default sockets;
