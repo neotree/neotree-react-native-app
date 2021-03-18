@@ -104,10 +104,10 @@ const Sidebar = () => {
               }}
             >
               <Left>
-                <Icon style={{ color: application.mode === 'development' ? theme.buttonPrimaryBg : '#999' }} name="laptop" />
+                <Icon style={{ color: '#999' }} name="laptop" />
               </Left>
               <Body style={{ borderColor: 'transparent' }}>
-                <Text style={{ color: application.mode === 'development' ? theme.buttonPrimaryBg : '#999' }}>Development</Text>
+                <Text>{application.mode === 'development' ? 'Live' : 'Development'}</Text>
               </Body>
             </ListItem>
           </List>
