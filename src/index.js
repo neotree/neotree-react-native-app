@@ -5,7 +5,7 @@ import Splash from '@/components/Splash';
 import * as api from './api';
 import Containers from './containers';
 import AppContext from './AppContext';
-import { addSocketEventsListeners, connectSocket } from './socket';
+import { addSocketEventsListeners } from './socket';
 
 const defaultAppState = {
   fatalError: null,
@@ -49,8 +49,7 @@ function NeotreeApp() {
     (async () => {
       if (location) {
         try {
-          await connectSocket(location.country);
-          addSocketEventsListeners(async e => {
+          addSocketEventsListeners(location.country, async e => {
             try { await api.sync(); } catch (e) { /* Do nothing */ }
             setState({ lastSocketEvent: e });
           });

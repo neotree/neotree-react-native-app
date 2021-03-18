@@ -1,10 +1,8 @@
 /* global fetch */
 import NetInfo from '@react-native-community/netinfo';
-import Constants from 'expo-constants';
 import queryString from 'query-string';
+import config from '@/constants/config';
 import { getLocation } from '../_location';
-
-const config = Constants.manifest.extra;
 
 const makeApiCall = (endpoint, params = {}) => new Promise((resolve, reject) => {
   const { country: _country, body, ...opts } = params;

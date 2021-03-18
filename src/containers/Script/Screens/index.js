@@ -11,7 +11,7 @@ import ActiveScreen from './ActiveScreen';
 import Summary from './Summary';
 
 const Screens = props => {
-  const { setState: setAppState, } = useAppContext();
+  const { setState: setAppState, state: appState } = useAppContext();
   const history = useHistory();
   const location = useLocation();
 
@@ -77,6 +77,7 @@ const Screens = props => {
   });
 
   const createSessionSummary = require('./_createSessionSummary').default({
+    appState,
     activeScreen,
     parseCondition,
     evaluateCondition,

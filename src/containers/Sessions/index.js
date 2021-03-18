@@ -18,6 +18,8 @@ const SessionsPage = () => {
   const [filters, setFilters] = React.useState({});
   const [scriptsFields, setScriptsFields] = React.useState({});
 
+  console.log(sessions);
+
   const getFilteredSessions = (sessions = dbSessions, _filters = filters) => {
     const filters = _filters;
     let _sessions = [...sessions];

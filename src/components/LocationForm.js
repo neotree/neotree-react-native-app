@@ -1,12 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Constants from 'expo-constants';
-import { H1, Form, Picker, Spinner, Button, Text } from 'native-base';
-import { ActivityIndicator, View, } from 'react-native';
+import { H1, Form, Spinner, Button, Text } from 'native-base';
+import { ActivityIndicator, View, Picker } from 'react-native';
 import ucFirst from '@/utils/ucFirst';
 import * as api from '@/api';
+import config from '@/constants/config';
 
-const { countries } = Constants.manifest.extra;
+const { countries } = config;
 
 function LocationForm({ onSetLocation }) {
   const [hospitals, setHospitals] = React.useState({});
@@ -67,9 +68,7 @@ function LocationForm({ onSetLocation }) {
           ))}
         </Picker>
 
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center' }}
-        >
+        <View>
           <Picker
             note
             enabled={_hospitals.length > 0}
@@ -84,7 +83,7 @@ function LocationForm({ onSetLocation }) {
           </Picker>
 
           {!_hospitals.length && loadingHospitals && (
-            <View style={{ marginLef: 10, position: 'absolute', right: 35 }}>
+            <View style={{ marginLef: 10, position: 'absolute', right: 35, top: -15 }}>
               <Spinner size={20} color="#999" />
             </View>
           )}
