@@ -15,9 +15,9 @@ export default ({ config }) => ({
   ...config,
 
   ...(BUILD_TYPE === 'stage' ? {
-    version: `${config.version}-STAGE`,
-    name: `${config.name} (STAGE)`,
-    slug: `${config.slug}-stage`,
+    version: `${config.version}-DEV`,
+    name: `${config.name} (DEV)`,
+    slug: `${config.slug}-dev`,
   } : null),
 
   ...(BUILD_TYPE === 'production' ? {

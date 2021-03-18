@@ -1,11 +1,12 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
 import DisplayError from '@/components/DisplayError';
 import Splash from '@/components/Splash';
 import * as api from './api';
 import Containers from './containers';
 import AppContext from './AppContext';
 import { addSocketEventsListeners } from './socket';
+import { applicationId } from 'expo-application';
 
 const defaultAppState = {
   fatalError: null,
@@ -43,7 +44,7 @@ function NeotreeApp() {
 
   React.useEffect(() => { initialiseApp(); }, []);
 
-  const { fatalError, initialisingApp, location, displaySplash } = state;
+  const { fatalError, initialisingApp, location, displaySplash, application } = state;
 
   React.useEffect(() => {
     (async () => {
@@ -66,7 +67,15 @@ function NeotreeApp() {
     <AppContext.Provider
       value={{ state, setState, initialiseApp }}
     >
-      <Containers />
+      <View style={{ flex: 1 }}>
+        <Containers />
+      </View>
+
+      {application && (application.mode === 'development') && (
+        <View style={{ padding: 5, backgroundColor: '#ccc' }}>
+          <Text style={{ fontSize: 12, color: '#555', textAlign: 'center' }}>You're in development mode</Text>
+        </View>
+      )}
     </AppContext.Provider>
   );
 }
