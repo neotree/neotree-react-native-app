@@ -25,7 +25,7 @@ https://reactnative.dev/docs/environment-setup
 3. Generate API Key
 4. Download API Key
 
-### NODE API (for data exports)
+### CONFIG FILES
 `config.<build_type>.json`
 
 ```javascript
@@ -90,7 +90,7 @@ https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
 * `yarn ios` - run ios
 
 **Builds**
-* `npm run build-dev-android` - Builds Neotree (DEV) apk - staging build
-* `npm run build-dev-ios` - Neotree (DEV) ios build - staging build
+* `npm run build-stage-android` - Builds Neotree (DEV) apk - staging build
+* `npm run build-stage-ios` - Neotree (DEV) ios build - staging build
 * `npm run build-prod-android` - Builds Neotree apk - production build
 * `npm run build-prod-ios` - Neotree ios build - production build

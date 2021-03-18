@@ -11,8 +11,8 @@
     "eject": "expo eject",
     "test": "jest --watchAll",
     "build:stage-android": "cross-env BUILD_TYPE=stage expo build:android -t apk",
-    "build:prod-android": "cross-env BUILD_TYPE=production expo build:android -t apk",
     "build:stage-ios": "cross-env BUILD_TYPE=stage expo build:ios",
+    "build:prod-android": "cross-env BUILD_TYPE=production expo build:android -t apk",
     "build:prod-ios": "cross-env BUILD_TYPE=production expo build:ios"
   },
   "jest": {
