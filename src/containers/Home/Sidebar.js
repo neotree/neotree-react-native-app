@@ -91,7 +91,7 @@ const Sidebar = () => {
                           setAppState({ displaySplash: true, });
                           try {
                             const application = await saveApplication({ mode });
-                            await api.sync({ force: true });
+                            await api.sync({ force: true, resetData: true });
                             setAppState({ application });
                           } catch (e) { alert(e.message); } // eslint-disable-line
                           setAppState({ displaySplash: false });
