@@ -31,9 +31,13 @@ function NeotreeApp() {
         await api.initialiseDatabase();
         const authenticatedUser = await api.getAuthenticatedUser();
         const location = await api.getLocation();
-        let application = null;
+        let application = await api.getApplication();
         if (location && authenticatedUser) {
-          try { await api.sync(); } catch (e) { /**/ }
+          try {
+            await api.sync();
+          } catch (e) {
+            if (!application.last_sync_date) setState({ fatalError: e.message });
+          }
           application = await api.getApplication();
         }
         setState({ authenticatedUser, location, application });

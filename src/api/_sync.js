@@ -8,7 +8,7 @@ import { deleteDiagnoses, insertDiagnoses } from './database/diagnoses';
 import { deleteConfigKeys, insertConfigKeys } from './database/config_keys';
 
 export default function sync(opts = {}) {
-  const { force: forceSync, mode } = opts;
+  const { force: forceSync, resetData } = opts;
 
   return new Promise((resolve, reject) => {
     (async () => {
@@ -24,16 +24,13 @@ export default function sync(opts = {}) {
           (application.mode === 'development' ? true : webEditor.info.version !== application.webeditor_info.version)
         );
 
-        const lastSyncDate = (((mode || application.mode) === 'development') ||
-          (webEditor.info.version !== application.webeditor_info.version)) ? application.last_sync_date : null;
+        const lastSyncDate = resetData ? null : application.last_sync_date;
 
-        if (mode && (mode !== application.mode)) {
+        if (resetData) {
           shouldSync = true;
-          if (mode === 'production') {
-            await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
-              `delete from ${table} where 1;`
-            )));
-          }
+          await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
+            `delete from ${table} where 1;`
+          )));
         }
 
         if (webEditor.device.details.scripts_count !== application.total_sessions_recorded) {
@@ -57,6 +54,8 @@ export default function sync(opts = {}) {
             } = await webeditorApi.syncData({
               deviceId: application.device_id,
               lastSyncDate,
+              mode: application.mode || 'production',
+              scriptsCount: application.total_sessions_recorded,
             });
 
             // save updated/new scripts
@@ -93,7 +92,6 @@ export default function sync(opts = {}) {
 
           application = await saveApplication({
             ...application,
-            mode: mode || application.mode,
             last_sync_date: new Date().toISOString(),
             webeditor_info: JSON.stringify(webEditor.info),
           });
