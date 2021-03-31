@@ -22,7 +22,7 @@ function DisplayError({ onRefresh, error }) {
             onPress={() => onRefresh()}
             component={TouchableOpacity}
           >
-            <NativeBase.Icon style={{ fontSize: 80, color: theme.palette.disabled }} name="refresh" />
+            <NativeBase.Icon style={{ fontSize: 80, color: '#999' }} name="refresh" />
           </NativeBase.Button>
         )}
       </NativeBase.Content>

@@ -2,10 +2,10 @@ import * as webeditorApi from './webeditor';
 import { getApplication, saveApplication } from './_application';
 import { dbTransaction } from './database/db';
 import { updateDeviceRegistration } from './webeditor';
-import { deleteScripts, insertScripts } from './database/scripts';
-import { deleteScreens, insertScreens } from './database/screens';
-import { deleteDiagnoses, insertDiagnoses } from './database/diagnoses';
-import { deleteConfigKeys, insertConfigKeys } from './database/config_keys';
+import { deleteScripts, saveScripts } from './_scripts';
+import { deleteScreens, saveScreens } from './_screens';
+import { deleteDiagnoses, saveDiagnoses } from './_diagnoses';
+import { deleteConfigKeys, saveConfigKeys } from './_configKeys';
 
 export default function sync(opts = {}) {
   const { force: forceSync, resetData } = opts;
@@ -60,22 +60,22 @@ export default function sync(opts = {}) {
 
             // save updated/new scripts
             if (scripts.length) {
-              try { await insertScripts(scripts); } catch (e) { /* Do nothing */ }
+              try { await saveScripts(scripts); } catch (e) { /* Do nothing */ }
             }
 
             // save updated/new screens
             if (screens.length) {
-              try { await insertScreens(screens); } catch (e) { /* Do nothing */ }
+              try { await saveScreens(screens); } catch (e) { /* Do nothing */ }
             }
 
             // save updated/new diagnoses
             if (diagnoses.length) {
-              try { await insertDiagnoses(diagnoses); } catch (e) { /* Do nothing */ }
+              try { await saveDiagnoses(diagnoses); } catch (e) { /* Do nothing */ }
             }
 
             // save updated/new config keys
             if (configKeys.length) {
-              try { await insertConfigKeys(configKeys); } catch (e) { /* Do nothing */ }
+              try { await saveConfigKeys(configKeys); } catch (e) { /* Do nothing */ }
             }
 
             try {

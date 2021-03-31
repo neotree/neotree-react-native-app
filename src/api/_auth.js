@@ -5,7 +5,7 @@ import { dbTransaction } from './database/db';
 export const getAuthenticatedUser = () => new Promise((resolve, reject) => {
   (async () => {
     try {
-      const rows = await dbTransaction('select * from authenticated_user;');
+      const rows = await dbTransaction('select * from authenticated_user;', null, 'main');
       const user = rows[0];
 
       const details = (() => {
@@ -27,7 +27,8 @@ export const signIn = (params = {}) => new Promise((resolve, reject) => {
       const user = await firebase.auth().signInWithEmailAndPassword(params.email, params.password);
       await dbTransaction(
         'insert or replace into authenticated_user (id, details) values (?, ?);',
-        [1, JSON.stringify(user)]
+        [1, JSON.stringify(user)],
+        'main'
       );
 
       const authenticatedUser = await getAuthenticatedUser();
@@ -45,7 +46,8 @@ export const signOut = () => new Promise((resolve, reject) => {
       await firebase.auth().signOut();
       await dbTransaction(
         'insert or replace into authenticated_user (id, details) values (?, ?);',
-        [1, null]
+        [1, null],
+        'main'
       );
 
       resolve(null);
