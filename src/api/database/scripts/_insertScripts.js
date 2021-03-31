@@ -2,7 +2,6 @@ import db from '../db';
 
 const query = s => new Promise((resolve, reject) => {
   const columns = ['id', 'script_id', 'data', 'position', 'createdAt', 'updatedAt'].join(',');
-
   const values = ['?', '?', '?', '?', '?', '?'].join(',');
 
   db.transaction(

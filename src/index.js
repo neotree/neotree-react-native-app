@@ -6,7 +6,6 @@ import * as api from './api';
 import Containers from './containers';
 import AppContext from './AppContext';
 import { addSocketEventsListeners } from './socket';
-import { applicationId } from 'expo-application';
 
 const defaultAppState = {
   fatalError: null,
@@ -31,8 +30,9 @@ function NeotreeApp() {
         await api.initialiseDatabase();
         const authenticatedUser = await api.getAuthenticatedUser();
         const location = await api.getLocation();
-        let application = await api.getApplication();
+        let application = null;
         if (location && authenticatedUser) {
+          application = await api.getApplication();
           try {
             await api.sync();
           } catch (e) {

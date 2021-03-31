@@ -10,4 +10,16 @@ export * from './webeditor';
 
 export * from './nodeapi';
 
+export * from './_scripts';
+
+export * from './_screens';
+
+export * from './_sessions';
+
+export * from './_diagnoses';
+
+export * from './_configKeys';
+
+export * from './_configuration';
+
 export { default as sync } from './_sync';

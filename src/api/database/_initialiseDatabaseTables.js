@@ -1,4 +1,7 @@
+import config from '@/constants/config';
 import { dbTransaction } from './db';
+
+const { countries } = config;
 
 export default () => new Promise((resolve, reject) => {
   const applicationTableColumns = [
@@ -84,19 +87,22 @@ export default () => new Promise((resolve, reject) => {
     'hospital varchar',
   ].join(',');
 
-  const querys = [
-    `create table if not exists application (${applicationTableColumns});`,
-    `create table if not exists scripts (${scriptsTableColumns});`,
-    `create table if not exists screens (${screensTableColumns});`,
-    `create table if not exists diagnoses (${diagnosesTableColumns});`,
-    `create table if not exists sessions (${sessionsTableColumns});`,
-    `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
-    `create table if not exists config_keys (${config_keysTableColumns});`,
-    `create table if not exists configuration (${configurationTableColumns});`,
-    `create table if not exists location (${locationTableColumns});`,
-  ].map(q => dbTransaction(q));
+  const queries = ['main', ...countries].reduce((acc, dbName) => [
+    ...acc,
+    ...[
+      `create table if not exists application (${applicationTableColumns});`,
+      `create table if not exists scripts (${scriptsTableColumns});`,
+      `create table if not exists screens (${screensTableColumns});`,
+      `create table if not exists diagnoses (${diagnosesTableColumns});`,
+      `create table if not exists sessions (${sessionsTableColumns});`,
+      `create table if not exists authenticated_user (${authenticatedUserTableColumns});`,
+      `create table if not exists config_keys (${config_keysTableColumns});`,
+      `create table if not exists configuration (${configurationTableColumns});`,
+      `create table if not exists location (${locationTableColumns});`,
+    ].map(q => dbTransaction(q, null, dbName))
+  ], []);
 
-  Promise.all(querys)
+  Promise.all(queries)
     .then(rslts => resolve(rslts))
     .catch(reject);
 });
