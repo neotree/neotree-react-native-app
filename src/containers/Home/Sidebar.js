@@ -41,6 +41,7 @@ const Sidebar = () => {
 
           <List>
             {[
+              { icon: 'pin', label: 'Change hospital', link: '/location' },
               { icon: 'settings', label: 'Configuration', link: '/configuration' },
               { icon: 'folder-open', label: 'History', link: '/sessions' },
             ].map(opt => {

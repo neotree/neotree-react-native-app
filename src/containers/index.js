@@ -27,6 +27,7 @@ function Containers() {
             {/*<Route exact path="/script/:scriptId/preview-form" render={renderRouteComponent(Script)} />*/}
             {/*<Route exact path="/script/:scriptId/screen/:screenId" render={Script} />*/}
             <Route exact path="/configuration" component={Configuration} />
+            <Route exact path="/location" component={Location} />
             <Route path="/sessions" component={Sessions} />
           </Switch>
         </BackButton>
