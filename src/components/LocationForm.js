@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Constants from 'expo-constants';
-import { H1, Form, Spinner, Button, Text } from 'native-base';
+import { Form, Spinner, Button, Text } from 'native-base';
 import { ActivityIndicator, View, Picker } from 'react-native';
 import ucFirst from '@/utils/ucFirst';
 import * as api from '@/api';
@@ -9,7 +8,7 @@ import config from '@/constants/config';
 
 const { countries } = config;
 
-function LocationForm({ onSetLocation }) {
+function LocationForm({ onSetLocation, location }) {
   const [hospitals, setHospitals] = React.useState({});
   const [country, setCountry] = React.useState('');
   const [hospital, setHospital] = React.useState('');
@@ -45,10 +44,16 @@ function LocationForm({ onSetLocation }) {
     })();
   }, []);
 
+  React.useEffect(() => {
+    if (location) {
+      setCountry(location.country || '');
+      setHospital(location.hospital ? Number(location.hospital) : '');
+      getHospitals(location.country);
+    }
+  }, [location]);
+
   return (
     <>
-      <H1 style={{ textAlign: 'center' }}>Set location</H1>
-
       <View style={{ marginVertical: 25 }} />
 
       <Form>
@@ -113,7 +118,8 @@ function LocationForm({ onSetLocation }) {
 }
 
 LocationForm.propTypes = {
-  onSetLocation: PropTypes.func
+  onSetLocation: PropTypes.func,
+  location: PropTypes.object,
 };
 
 export default LocationForm;

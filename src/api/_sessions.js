@@ -31,7 +31,7 @@ export const getSession = (options = {}) => new Promise((resolve, reject) => {
   })();
 });
 
-export const updateSession = (data = {}, opts = {}) => new Promise((resolve, reject) => {
+export const updateSessions = (data = {}, opts = {}) => new Promise((resolve, reject) => {
   (async () => {
     try {
       const where = opts.where || {};
