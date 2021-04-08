@@ -39,6 +39,7 @@ const Screens = props => {
     const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
     return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
   });
+  const getCachedEntry = s => !s ? null : cachedEntries.filter(e => e.screen.id === s.screen_id)[0];
 
   const getScreenIndex = screenId => !screenId ? -1 : screens.map(s => s.screen_id).indexOf(screenId);
 
@@ -118,7 +119,10 @@ const Screens = props => {
           saveSession={saveSession}
           screen={activeScreen}
           activeScreenIndex={activeScreenIndex}
-          setActiveScreen={(s = activeScreen) => setActiveScreen(s)}
+          setActiveScreen={(s = activeScreen) => {
+            setEntry(getCachedEntry(s));
+            setActiveScreen(s);
+          }}
           entries={entries}
           entry={activeScreenEntry}
           cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.screen_id)[0]}
@@ -184,6 +188,7 @@ const Screens = props => {
                   ]
                 );
               }
+              setEntry(getCachedEntry(nextScreen));
               setActiveScreen(nextScreen);
             }
             setDisplayLoader(false);

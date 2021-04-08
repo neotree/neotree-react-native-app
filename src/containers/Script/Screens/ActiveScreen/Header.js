@@ -17,6 +17,7 @@ const ScreenHeader = ({
   getScreen,
   saveSession,
   setActiveScreen,
+  removeEntry,
 }) => {
   const history = useHistory();
 
@@ -47,6 +48,7 @@ const ScreenHeader = ({
   const onBack = () => {
     if (activeScreenIndex < 1) return cancelScript();
     const prev = getScreen({ direction: 'back' });
+    removeEntry(screen.screen_id);
     setActiveScreen(prev ? prev.screen : null);
   }
 
@@ -134,6 +136,7 @@ ScreenHeader.propTypes = {
   getScreen: PropTypes.func.isRequired,
   saveSession: PropTypes.func.isRequired,
   setActiveScreen: PropTypes.func.isRequired,
+  removeEntry: PropTypes.func.isRequired,
 };
 
 export default ScreenHeader;
