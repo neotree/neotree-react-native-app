@@ -55,7 +55,9 @@ function NeotreeApp() {
       if (location) {
         try {
           addSocketEventsListeners(location.country, async e => {
-            try { await api.sync(); } catch (e) { /* Do nothing */ }
+            try {
+              await api.sync({ resetData: ['data_published', 'changes_discarded'].includes(e.name) });
+            } catch (e) { /* Do nothing */ }
             setState({ lastSocketEvent: e });
           });
         } catch (e) { /*DO nothing*/ }
