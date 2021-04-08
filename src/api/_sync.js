@@ -20,18 +20,11 @@ export default function sync(opts = {}) {
 
         webEditor = await webeditorApi.getDeviceRegistration({ deviceId: application.device_id });
 
-        let shouldSync = forceSync || !application.last_sync_date || (
+        const shouldSync = forceSync || resetData || !application.last_sync_date || (
           (application.mode === 'development' ? true : webEditor.info.version !== application.webeditor_info.version)
         );
 
         const lastSyncDate = resetData ? null : application.last_sync_date;
-
-        if (resetData) {
-          shouldSync = true;
-          await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
-            `delete from ${table} where 1;`
-          )));
-        }
 
         if (webEditor.device.details.scripts_count !== application.total_sessions_recorded) {
           const scripts_count = Math.max(...[application.total_sessions_recorded, webEditor.device.details.scripts_count]);
@@ -57,6 +50,12 @@ export default function sync(opts = {}) {
               mode: application.mode || 'production',
               scriptsCount: application.total_sessions_recorded,
             });
+
+            if (resetData) {
+              await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
+                `delete from ${table} where 1;`
+              )));
+            }
 
             // save updated/new scripts
             if (scripts.length) {

@@ -14,6 +14,7 @@ import queryString from 'query-string';
 import { useSessionsContext } from '../SessionsContext';
 import { useAppContext } from '@/AppContext';
 import exportData from './export';
+import * as Permissions from 'expo-permissions';
 
 const opts = [
   { label: 'Excel Spreadsheet', value: 'excel' },
@@ -30,6 +31,37 @@ const ExportPage = () => {
   const [exporting, setExporting] = React.useState(false);
 
   const { exportType, minDate, maxDate } = queryString.parse(location.search);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permission denied',
+            'Permission to write files to disk is not granted, you will not be able to export files.',
+            [
+              {
+                text: 'Ok',
+                type: 'cancel',
+              }
+            ]
+          );
+        }
+      } catch (e) {
+        Alert.alert(
+          'Error',
+          e.message,
+          [
+            {
+              text: 'Ok',
+              type: 'cancel',
+            }
+          ]
+        );
+      }
+    })();
+  }, []);
 
   const goBack = () => {
     history.entries = [];
