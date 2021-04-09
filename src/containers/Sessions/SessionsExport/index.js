@@ -6,15 +6,15 @@ import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import { ListItem, Right, Left, Radio, Button, Icon, } from 'native-base';
 import { View, TouchableOpacity, Alert } from 'react-native';
+import * as Permissions from 'expo-permissions';
+import OverlayLoader from '@/components/OverlayLoader';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Divider from '@/components/Divider';
-import OverlayLoader from '@/components/OverlayLoader';
 import queryString from 'query-string';
 import { useSessionsContext } from '../SessionsContext';
 import { useAppContext } from '@/AppContext';
 import exportData from './export';
-import * as Permissions from 'expo-permissions';
 
 const opts = [
   { label: 'Excel Spreadsheet', value: 'excel' },
@@ -29,6 +29,7 @@ const ExportPage = () => {
   const { dbSessions, getSessions, loadingSessions, scriptsFields } = useSessionsContext();
   const [format, setFormat] = React.useState('excel');
   const [exporting, setExporting] = React.useState(false);
+  const [pageInitialised, setPageInitialised] = React.useState(false);
 
   const { exportType, minDate, maxDate } = queryString.parse(location.search);
 
@@ -60,6 +61,7 @@ const ExportPage = () => {
           ]
         );
       }
+      setPageInitialised(true);
     })();
   }, []);
 
@@ -126,6 +128,8 @@ const ExportPage = () => {
     }
     setExporting(false);
   };
+
+  if (!pageInitialised) return <OverlayLoader display transparent />;
 
   return (
     <>
