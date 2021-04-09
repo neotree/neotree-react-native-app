@@ -127,20 +127,13 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
   })();
 });
 
-export const deleteSessions = (params = []) => new Promise((resolve, reject) => {
+export const deleteSessions = (ids = []) => new Promise((resolve, reject) => {
   (async () => {
     try {
-      params = params || [];
-      if (!params.map) params = [params];
+      ids = ids || [];
+      if (!ids.map) ids = [ids];
 
-      const res = await Promise.all(params.map(_where => {
-        const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-          .join(',');
-        let q = 'delete from sessions';
-        q = where ? `${q} where ${where}` : q;
-
-        return dbTransaction(`${q};`.trim());
-      }));
+      const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
       resolve(res);
     } catch (e) { reject(e); }
   })();
