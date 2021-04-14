@@ -45,6 +45,7 @@
     "expo-sharing": "^8.1.0",
     "expo-sqlite": "^8.1.0",
     "expo-web-browser": "^8.2.1",
+    "expr-eval": "^2.0.2",
     "firebase": "^7.9.0",
     "moment": "^2.29.1",
     "native-base": "^2.15.2",
