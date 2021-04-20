@@ -3,12 +3,15 @@ import * as api from '@/api';
 import { useParams, useHistory, useLocation, } from 'react-router-native';
 import { View, Alert, } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
+import { provideContext, useContext } from './Context';
 import Screens from './Screens';
 
 const Script = () => {
   const { scriptId } = useParams();
   const history = useHistory();
   const location = useLocation();
+
+  const { setState } = useContext();
 
   const [configuration, setConfiguration] = React.useState(null);
 
@@ -31,6 +34,7 @@ const Script = () => {
       try {
         const script = await api.getScript({ script_id: scriptId });
         setScript(script);
+        setState({ script });
         resolve(script);
       } catch (e) {
         Alert.alert(
@@ -78,6 +82,7 @@ const Script = () => {
           );
         }
         setScreens(screens);
+        setState(screens);
         resolve(screens || []);
       } catch (e) {
         Alert.alert(
@@ -108,11 +113,14 @@ const Script = () => {
         setConfiguration(config ? config.data : {});
       } catch (e) { /* Do nothing */ }
 
-      try { await getScript(); } catch (e) { /* Do nothing */ }
-
-      try { await getScreens(); } catch (e) { /* Do nothing */ }
-
-      api.getDiagnoses({ script_id: scriptId }).then(d => setDiagnoses(d || [])).catch(() => { /*Do nothing*/ });
+      try {
+        await getScript();
+        await getScreens();
+        let diagnoses = await api.getDiagnoses({ script_id: scriptId });
+        diagnoses = diagnoses || [];
+        setDiagnoses(diagnoses);
+        setState({ diagnoses });
+      } catch (e) { /* Do nothing */ }
     })();
   }, []);
 
@@ -134,4 +142,4 @@ const Script = () => {
   );
 };
 
-export default Script;
+export default provideContext(Script);

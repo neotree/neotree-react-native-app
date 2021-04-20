@@ -9,6 +9,7 @@ import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const ScreenHeader = ({
   screen,
@@ -103,7 +104,12 @@ const ScreenHeader = ({
                 );
               }}
             >
-              <Icon style={[colorStyles.primaryColor]} name="more" />
+              <MaterialIcons
+                name="more-vert"
+                size={24}
+                color="black"
+                style={[colorStyles.primaryColor]}
+              />
             </TouchableOpacity>
           </>
         )}
