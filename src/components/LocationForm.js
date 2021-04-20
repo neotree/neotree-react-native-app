@@ -83,7 +83,7 @@ function LocationForm({ onSetLocation, location }) {
           >
             <Picker.Item value="" label="Select hospital" />
             {_hospitals.map(h => (
-              <Picker.Item key={h.id} label={ucFirst(h.name)} value={h.id} />
+              <Picker.Item key={h.hospital_id} label={ucFirst(h.name)} value={h.hospital_id} />
             ))}
           </Picker>
 
