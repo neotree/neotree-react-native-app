@@ -6,11 +6,14 @@ import Fab from '@/components/Fab';
 import OverlayLoader from '@/components/OverlayLoader';
 import { useHistory, useLocation } from 'react-router-native';
 import * as api from '@/api';
+import { useContext as useScriptContext } from '../Context';
 import { useAppContext } from '@/AppContext';
 import ActiveScreen from './ActiveScreen';
 import Summary from './Summary';
 
 const Screens = props => {
+  const { state: { hideFloatingButton } } = useScriptContext();
+
   const { setState: setAppState, state: appState } = useAppContext();
   const history = useHistory();
   const location = useLocation();
@@ -139,7 +142,7 @@ const Screens = props => {
         />
       )}
 
-      {activeScreenEntry && (
+      {!hideFloatingButton && activeScreenEntry && (
         <Fab
           onPress={async () => {
             if (summary) return history.push('/');
@@ -151,7 +154,7 @@ const Screens = props => {
               setSavingSession(true);
               setDisplayLoader(false);
               try {
-                const summary = await saveSession({ completed: true });
+                const summary = createSessionSummary({ completed: true }); // await saveSession({ completed: true });
                 setSummary(summary);
               } catch (e) {
                 Alert.alert(

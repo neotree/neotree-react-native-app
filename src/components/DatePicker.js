@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform, View } from 'react-native';
 import moment from 'moment';
 import { Form, Item, Text, Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const styles = {
   errorText: { color: '#b20008' },
@@ -71,7 +72,12 @@ const DatePicker = ({
               formatDate(value) : moment(value).format(mode === 'time' ? 'LT' : 'LL')
             )}
           </Text>
-          <Icon style={[enabled ? null : { color: '#ccc' }]} name="arrow-dropdown" />
+          <MaterialIcons
+            name="arrow-drop-down"
+            size={24}
+            color="black"
+            style={[enabled ? null : { color: '#ccc' }]}
+          />
         </Item>
       </Form>
 

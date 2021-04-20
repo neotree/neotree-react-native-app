@@ -6,6 +6,7 @@ import Modal from '@/components/Modal';
 import _spacing from '@/utils/spacing';
 import { Icon, ListItem, Radio, Right, Left } from 'native-base';
 import Divider from '@/components/Divider';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const styles = {
   inputBox: {
@@ -77,12 +78,14 @@ const DropDown = ({
 
           <View style={[{ marginLeft: 'auto' }]} />
 
-          <Icon 
+          <MaterialIcons
+            name="arrow-drop-down"
+            size={24}
+            color="black"
             style={[
               styles.text,
               disabled ? styles.textDisabled : null,
             ]}
-            name="arrow-dropdown" 
           />
         </View>        
       </TouchableWithoutFeedback>

@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ScrollView } from 'react-native';
 import { Tabs, Tab } from 'native-base';
-import Form from './Form';
+import Summary from './Summary';
 import Diagnoses from './Diagnoses';
 
-const PreviewSessionForm = ({ scrollable, ...props }) => {
+const FormAndDiagnosesSummary = ({ scrollable, ...props }) => {
   scrollable = scrollable !== false;
   const RootComponent = scrollable ? ScrollView : React.Fragment;
 
@@ -14,10 +14,10 @@ const PreviewSessionForm = ({ scrollable, ...props }) => {
       <Tabs>
         <Tab heading="Summary">
           <RootComponent>
-            <Form {...props} />
+            <Summary {...props} />
           </RootComponent>
         </Tab>
-        
+
         <Tab heading="Diagnosis">
           <RootComponent>
             <Diagnoses {...props} />
@@ -28,8 +28,8 @@ const PreviewSessionForm = ({ scrollable, ...props }) => {
   );
 };
 
-PreviewSessionForm.propTypes = {
+FormAndDiagnosesSummary.propTypes = {
   scrollable: PropTypes.bool,
 };
 
-export default PreviewSessionForm;
+export default FormAndDiagnosesSummary;
