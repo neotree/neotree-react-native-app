@@ -158,9 +158,9 @@ export function exportToApi(opts = {}) {
       const sessions = _sessions.filter(s => !s.exported);
       const postData = getJSON({ ...opts, sessions });
 
-      if (postData.length) {
-        try { await exportJSON(sessions); } catch (e) { /* Do nothing */ }
+      try { await exportJSON(opts); } catch (e) { /* Do nothing */ }
 
+      if (postData.length) {
         try {
           await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
             (async () => {
