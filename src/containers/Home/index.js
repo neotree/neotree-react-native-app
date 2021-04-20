@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { useHistory } from 'react-router-native';
-import { Icon, Drawer } from 'native-base';
+import { Drawer } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import * as Permissions from 'expo-permissions';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
@@ -45,7 +46,7 @@ const Home = () => {
                   style={{ paddingHorizontal: 5 }}
                   onPress={() => drawerRef.current._root.open()}
                 >
-                  <Icon style={[colorStyles.primaryColor]} name="menu" />
+                  <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="menu" />
                 </TouchableOpacity>
               </>
             )}

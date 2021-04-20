@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import PreviewSessionForm from '@/containers/Sessions/PreviewSessionForm';
 import Content from '@/components/Content';
-import { Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import PrintSessionForm from '@/containers/Sessions/PrintSessionForm';
 import Header from '@/components/Header';
@@ -29,7 +29,7 @@ const Summary = ({ summary, createSessionSummary }) => {
               style={{ padding: 10 }}
               onPress={() => history.push('/')}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}

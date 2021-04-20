@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Picker, Form, Icon, Item } from 'native-base';
 import Text from '@/components/Text';
 import DropDownInput from '@/components/DropDown';
 

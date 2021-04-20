@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View, TouchableWithoutFeedback, TouchableOpacity, } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import Text from '@/components/Text';
 import Modal from '@/components/Modal';
-import _spacing from '@/utils/spacing';
-import { Icon, ListItem, Radio, Right, Left } from 'native-base';
+import { Radio } from 'native-base';
 import Divider from '@/components/Divider';
 
 const styles = {
@@ -77,12 +77,14 @@ const DropDown = ({
 
           <View style={[{ marginLeft: 'auto' }]} />
 
-          <Icon 
+          <MaterialIcons
+            color="black"
+            size={24}
             style={[
               styles.text,
               disabled ? styles.textDisabled : null,
             ]}
-            name="arrow-dropdown" 
+            name="arrow-drop-down"
           />
         </View>        
       </TouchableWithoutFeedback>

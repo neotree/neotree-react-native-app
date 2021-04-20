@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Modal, View, ScrollView, Alert } from 'react-native';
-import { Icon, Left, ListItem, Radio, Right } from 'native-base';
+import { Left, ListItem, Radio, Right } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useHistory } from 'react-router-native';
 import moment from 'moment';
 import Text from '@/components/Text';
@@ -40,7 +41,7 @@ const Export = () => {
         style={{ paddingHorizontal: 10 }}
         onPress={() => setOpen(true)}
       >
-        <Icon style={[dbSessions.length ? colorStyles.primaryColor : { color: '#ccc' }]} name="save" />
+        <MaterialIcons size={24} color="black" style={[dbSessions.length ? colorStyles.primaryColor : { color: '#ccc' }]} name="save" />
       </TouchableOpacity>
 
       <Modal

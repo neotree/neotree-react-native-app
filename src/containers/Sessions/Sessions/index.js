@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { Link, useHistory } from 'react-router-native';
-import { Body, Card, CardItem, Icon } from 'native-base';
+import { Body, Card, CardItem } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import moment from 'moment';
@@ -77,7 +78,7 @@ const Sessions = () => {
               style={{ padding: 10 }}
               onPress={() => goBack()}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons color="black" size={24} style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}
