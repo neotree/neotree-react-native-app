@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Platform, TouchableOpacity } from 'react-native';
-import { ActionSheet, Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
+import { ActionSheet } from 'native-base';
 import { useHistory, } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import Modal from '@/components/Modal';
@@ -67,7 +68,7 @@ const ScreenHeader = ({
               style={{ padding: 10 }}
               onPress={() => onBack()}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}
@@ -79,7 +80,7 @@ const ScreenHeader = ({
                   onPress={() => setOpenInfoModal(true)}
                   style={{ padding: 10 }}
                 >
-                  <Icon style={[colorStyles.primaryColor]} name="information-circle-outline" />
+                  <MaterialIcons color="black" size={24} style={[colorStyles.primaryColor]} name="info-outline" />
                 </TouchableOpacity>
               </>
             )}
@@ -103,7 +104,7 @@ const ScreenHeader = ({
                 );
               }}
             >
-              <Icon style={[colorStyles.primaryColor]} name="more" />
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="more-vert" />
             </TouchableOpacity>
           </>
         )}

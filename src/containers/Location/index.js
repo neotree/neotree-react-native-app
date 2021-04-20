@@ -4,7 +4,8 @@ import NativeBaseContent from '@/components/NativeBaseContent';
 import Form from '@/components/LocationForm';
 import { useAppContext } from '@/AppContext';
 import Header from '@/components/Header';
-import { H1, Icon } from 'native-base';
+import { H1 } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import colorStyles from '@/styles/colorStyles';
 import { useHistory } from 'react-router-native';
 
@@ -30,7 +31,7 @@ function Location() {
                 style={{ padding: 10 }}
                 onPress={() => goBack()}
               >
-                <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+                <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
               </TouchableOpacity>
             </>
           )}

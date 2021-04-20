@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Modal, View, ScrollView } from 'react-native';
-import { Button, Icon } from 'native-base';
+import { Button } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
 import DatePicker from '@/components/DatePicker';
@@ -44,7 +45,7 @@ const Filter = () => {
                   style={{ padding: 10 }}
                   onPress={() => setOpen(false)}
                 >
-                  <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+                  <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
                 </TouchableOpacity>
               </>
             )}

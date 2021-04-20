@@ -1,8 +1,9 @@
 import React from 'react';
 import * as api from '@/api';
 import { View, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useHistory } from 'react-router-native';
-import { ListItem, Left, Right, Switch, Icon } from 'native-base';
+import { ListItem, Left, Right, Switch } from 'native-base';
 import Content from '@/components/Content';
 import Text from '@/components/Text';
 import useBackButton from '@/utils/useBackButton';
@@ -110,7 +111,7 @@ const Configuration = () => {
               style={{ padding: 10 }}
               onPress={() => goBack()}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}
