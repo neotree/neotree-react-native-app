@@ -26,6 +26,7 @@
     "@react-navigation/drawer": "^5.12.4",
     "@react-navigation/native": "^5.9.3",
     "@react-navigation/stack": "^5.14.3",
+    "array-move": "^3.0.1",
     "babel-eslint": "^10.1.0",
     "cli-color": "^2.0.0",
     "cross-env": "^7.0.3",

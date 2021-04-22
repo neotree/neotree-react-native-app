@@ -19,7 +19,7 @@ const Diagnoses = ({ Wrapper, session: { data: { diagnoses } } }) => {
         {diagnoses.map(d => {
           return (
             <React.Fragment key={`diagnosis-${d.id}`}>
-              <Text>- {d.data.name}</Text>
+              <Text>- {d.name}</Text>
               <Divider border={false} spacing={2} />
             </React.Fragment>
           );
@@ -32,18 +32,18 @@ const Diagnoses = ({ Wrapper, session: { data: { diagnoses } } }) => {
           return (
             <React.Fragment key={`mgt-${d.id}`}>
               <ManagementCard
-                text={d.data.text1}
-                image={d.data.image1}
+                text={d.text1}
+                image={d.image1}
               />
 
               <ManagementCard
-                text={d.data.text2}
-                image={d.data.image2}
+                text={d.text2}
+                image={d.image2}
               />
 
               <ManagementCard
-                text={d.data.text3}
-                image={d.data.image3}
+                text={d.text3}
+                image={d.image3}
               />
             </React.Fragment>
           );

@@ -1,14 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Icon, Button, Input, H3 } from 'native-base';
-import { TouchableOpacity, View, FlatList } from 'react-native';
+import { TouchableOpacity, View, FlatList, Alert } from 'react-native';
+import arrayMove from 'array-move';
 import Header from '@/components/Header';
 import Content from '@/components/Content';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
 import bgColorStyles from '@/styles/bgColorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useContext as useScriptContext } from '../../../Context';
+import useBackButton from '@/utils/useBackButton';
 import Diagnosis from './Diagnosis';
 import FloatingButton from './FloatingButton';
 
@@ -22,8 +23,7 @@ const defaultForm = {
 };
 
 const Diagnoses = props => {
-  const { summary } = props;
-  const scriptContext = useScriptContext();
+  const { summary, clearSummary } = props;
 
   const [diagnoses, setDiagnoses] = React.useState([]);
   const [showDiagnosisInput, setShowDiagnosisInput] = React.useState(false);
@@ -31,29 +31,59 @@ const Diagnoses = props => {
 
   React.useEffect(() => {
     setDiagnoses(summary.data.diagnoses.map(d => ({
-      id: d.id,
-      ...d.data,
+      ...d,
       suggested: true,
     })));
   }, []);
 
-  React.useEffect(() => { scriptContext.setState({ hideFloatingButton: false, }); }, []);
+  const goBack = () => {
+    Alert.alert(
+      'Discard changes',
+      'You will lose diagoses changes made. Are you sure?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel'
+        },
+        {
+          text: 'Ok',
+          onPress: () => clearSummary()
+        }
+      ],
+      { cancelable: false }
+    );
+  };
+
+  useBackButton(() => { goBack(); });
 
   const renderDiagnoses = (diagnoses, opts = {}) => (
     <FlatList
       data={diagnoses}
-      renderItem={({ item }) => {
+      renderItem={({ item, index }) => {
         const renderCard = d => {
           const card = (
             <View style={{ marginVertical: 15, flexDirection: 'row' }}>
               <Text style={[{ flex: 1 }, opts.color ? { color: opts.color } : {}]}>{item.name}</Text>
               {opts.sortable !== false && (
                 <>
-                  <Button
-                    transparent
-                  >
-                    <MaterialIcons size={24} color="black" name="arrow-up" />
-                  </Button>
+                  {index !== 0 && (
+                    <Button
+                      transparent
+                      onPress={() => setDiagnoses(diagnoses => arrayMove(diagnoses, index, index - 1))}
+                    >
+                      <MaterialIcons size={24} color="black" name="arrow-upward" />
+                    </Button>
+                  )}
+
+                  {index < (diagnoses.length - 1) && (
+                    <Button
+                      transparent
+                      onPress={() => setDiagnoses(diagnoses => arrayMove(diagnoses, index, index + 1))}
+                    >
+                      <MaterialIcons size={24} color="black" name="arrow-downward" />
+                    </Button>
+                  )}
                 </>
               )}
             </View>
@@ -87,7 +117,7 @@ const Diagnoses = props => {
           <>
             <TouchableOpacity
               style={{ padding: 10 }}
-              onPress={() => {}}
+              onPress={() => goBack()}
             >
               <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
@@ -183,14 +213,14 @@ const Diagnoses = props => {
         )}
       </Content>
 
-      <FloatingButton {...props} />
+      <FloatingButton {...props} diagnoses={diagnoses} />
     </>
   );
 };
 
 Diagnoses.propTypes = {
   summary: PropTypes.object.isRequired,
-  // clearSummary: PropTypes.func.isRequired
+  clearSummary: PropTypes.func.isRequired
 };
 
 export default Diagnoses;

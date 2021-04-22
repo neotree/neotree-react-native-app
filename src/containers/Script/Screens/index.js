@@ -23,6 +23,7 @@ const Screens = props => {
 
   const [startTime] = React.useState(new Date().toISOString());
   const [summary, setSummary] = React.useState(null);
+  const [savedSession, setSavedSession] = React.useState(null);
   const [displayLoader, setDisplayLoader] = React.useState(false);
 
   const [entries, setEntries] = React.useState([]);
@@ -91,6 +92,7 @@ const Screens = props => {
       try {
         const { application } = await api.saveSession(summary);
         setAppState(s => ({ application: { ...s.application, ...application } }));
+        setSavedSession(summary);
         resolve(summary);
       } catch (e) { reject(e); }
       setDisplayLoader(false);
@@ -124,6 +126,7 @@ const Screens = props => {
       evaluateCondition={evaluateCondition}
       activeScreenEntry={activeScreenEntry}
       summary={summary}
+      savedSession={savedSession}
       activeScreen={activeScreen}
       createSessionSummary={createSessionSummary}
       setSummary={setSummary}
@@ -144,7 +147,6 @@ Screens.propTypes = {
   screens: PropTypes.array.isRequired,
   diagnoses: PropTypes.array.isRequired,
   script: PropTypes.object.isRequired,
-  dataStatus: PropTypes.object.isRequired,
   configuration: PropTypes.object,
 };
 
