@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { TouchableOpacity, Modal, View, Text, ScrollView } from 'react-native';
-import { H3, Button } from 'native-base';
+import { H3, Button, Input, Label, Item, } from 'native-base';
 import Header from '@/components/Header';
 import Content from '@/components/Content';
 import colorStyles from '@/styles/colorStyles';
@@ -15,23 +15,33 @@ export default function Diagnosis({
   diagnosis,
 }) {
   const [openModal, setOpenModal] = React.useState(false);
-  
-  // const instrunctions = [
-  //   { text: diagnosis.text1, image: diagnosis.image1 },
-  //   { text: diagnosis.text2, image: diagnosis.image2 },
-  //   { text: diagnosis.text3, image: diagnosis.image3 }
-  // ].filter(item => item.text || item.image);
+  const [form, _setForm] = React.useState(diagnosis);
+  const setForm = s => _setForm(prev => ({ ...prev, ...(typeof s === 'function' ? s(prev) : s) }));
 
   const instrunctions = [
-    { text: diagnosis.text1, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } },
-    { text: diagnosis.text2, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } },
-    { text: diagnosis.text3, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } }
+    { text: diagnosis.text1, image: diagnosis.image1 },
+    { text: diagnosis.text2, image: diagnosis.image2 },
+    { text: diagnosis.text3, image: diagnosis.image3 }
   ].filter(item => item.text || item.image);
+
+  // const instrunctions = [
+  //   { text: diagnosis.text1, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } },
+  //   { text: diagnosis.text2, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } },
+  //   { text: diagnosis.text3, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } }
+  // ].filter(item => item.text || item.image);
+
+  const onClose = () => {
+    setDiagnosis(form);
+    setOpenModal(false);
+  };
 
   return (
     <>
       <TouchableOpacity
-        onPress={() => setOpenModal(true)}
+        onPress={() => {
+          setForm(diagnosis);
+          setOpenModal(true);
+        }}
       >
         {children}
       </TouchableOpacity>
@@ -40,7 +50,7 @@ export default function Diagnosis({
         visible={openModal}
         transparent={false}
         animationType="slide"
-        onRequestClose={() => setOpenModal(false)}
+        onRequestClose={() => onClose()}
       >
         <Header
           title="Suggested diagnoses"
@@ -48,7 +58,7 @@ export default function Diagnosis({
             <>
               <TouchableOpacity
                 style={{ padding: 10 }}
-                onPress={() => setOpenModal(false)}
+                onPress={() => onClose()}
               >
                 <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
               </TouchableOpacity>
@@ -73,26 +83,50 @@ export default function Diagnosis({
         <View style={{ flex: 1 }}>
           <ScrollView>
             <Content>
-              <H3>Do you agree with this diagnosis?</H3>
-              <View style={{ flexDirection: 'row', marginBottom: 25 }}>
-                <View style={{ flex: 1, marginRight: 10 }}>
-                  <Button block>
-                    <Text style={{ color: '#fff' }}>Yes</Text>
-                  </Button>
-                </View>
-
-                <View style={{ flex: 1, marginRight: 10 }}>
-                  <Button block>
-                    <Text style={{ color: '#fff' }}>No</Text>
-                  </Button>
-                </View>
-
-                <View style={{ flex: 1, marginRight: 10 }}>
-                  <Button block>
-                    <Text style={{ color: '#fff' }}>Maybe</Text>
-                  </Button>
-                </View>
+              <H3 style={{ marginBottom: 10 }}>Do you agree with this diagnosis?</H3>
+              <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+                {[
+                  {
+                    label: 'Yes',
+                  },
+                  {
+                    label: 'No',
+                  },
+                  {
+                    label: 'Maybe',
+                  }
+                ].map(({ label, ...btnProps }) => {
+                  const selected = form.how_agree === label;
+                  return (
+                    <View key={`follow_${label}`} style={{ minWidth: 70, marginRight: 10 }}>
+                      <Button
+                        {...btnProps}
+                        block
+                        onPress={() => setForm({
+                          how_agree: label,
+                          hcw_reason_given: label === 'No' ? form.hcw_reason_given : null,
+                        })}
+                        style={selected ? {} : { backgroundColor: '#fff' }}
+                      >
+                        <Text style={{ color: selected ? '#fff' : '#999' }}>{label}</Text>
+                      </Button>
+                    </View>
+                  );
+                })}
               </View>
+
+              {form.how_agree === 'No' && (
+                <Item floatingLabel>
+                  <Label>Can you explain why not?</Label>
+                  <Input
+                    value={form.hcw_reason_given}
+                    onChangeText={v => setForm({ hcw_reason_given: v })}
+                  />
+                </Item>
+              )}
+
+              <View style={{ marginBottom: 10 }} />
+
               {instrunctions.map(({ image, text }, i) => {
                 const key = `${i}`;
                 return (
@@ -110,6 +144,37 @@ export default function Diagnosis({
               })}
             </Content>
           </ScrollView>
+
+          <Content>
+            <H3 style={{ marginBottom: 10 }}>Do you folow the above instructions?</H3>
+            <View style={{ flexDirection: 'row', marginBottom: 25 }}>
+              {[
+                {
+                  label: 'Yes',
+                },
+                {
+                  label: 'No',
+                },
+                {
+                  label: 'Partially',
+                }
+              ].map(({ label, ...btnProps }) => {
+                const selected = form.hcw_follow_instructions === label;
+                return (
+                  <View key={`follow_${label}`} style={{ minWidth: 70, marginRight: 10 }}>
+                    <Button
+                      {...btnProps}
+                      block
+                      onPress={() => setForm({ hcw_follow_instructions: label })}
+                      style={selected ? {} : { backgroundColor: '#fff' }}
+                    >
+                      <Text style={{ color: selected ? '#fff' : '#999' }}>{label}</Text>
+                    </Button>
+                  </View>
+                );
+              })}
+            </View>
+          </Content>
         </View>
       </Modal>
     </>
@@ -119,5 +184,5 @@ export default function Diagnosis({
 Diagnosis.propTypes = {
   children: PropTypes.node,
   setDiagnosis: PropTypes.func.isRequired,
-  diagnosis: PropTypes.bool.isRequired,
+  diagnosis: PropTypes.object.isRequired,
 };
