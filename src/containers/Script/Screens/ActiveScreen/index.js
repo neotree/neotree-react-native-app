@@ -7,6 +7,7 @@ import colorStyles from '@/styles/colorStyles';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Header from './Header';
+import FloatingButton from './FloatingButton';
 
 import TypeForm from './TypeForm';
 import TypeChecklist from './_TypeChecklist';
@@ -128,6 +129,8 @@ const ActiveScreen = props => {
           );
         })()}
       </ScrollView>
+
+      <FloatingButton {...props} />
     </>
   );
 };

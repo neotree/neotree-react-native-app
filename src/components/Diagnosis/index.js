@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { H3 } from 'native-base';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import ManagementCard from './ManagementCard';
@@ -9,7 +10,7 @@ export default function Diagnosis({
 }) {
   return (
     <>
-      <Text>- {diagnosis.name}</Text>
+      <H3>{diagnosis.name}</H3>
 
       <Divider border={false} spacing={2} />
 
