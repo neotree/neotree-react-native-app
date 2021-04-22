@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 import Fab from '@/components/Fab';
 import OverlayLoader from '@/components/OverlayLoader';
@@ -196,7 +196,7 @@ const Screens = props => {
             }
             setDisplayLoader(false);
           }}
-        ><Icon style={{ color: '#fff' }} name={summary ? 'checkmark' : 'arrow-forward'} /></Fab>
+        ><MaterialIcons size={24} color="black" style={{ color: '#fff' }} name={summary ? 'check' : 'arrow-forward'} /></Fab>
       )}
 
       <OverlayLoader display={displayLoader} />

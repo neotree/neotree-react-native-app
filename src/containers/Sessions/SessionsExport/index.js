@@ -4,7 +4,8 @@ import { useHistory, useLocation } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
-import { ListItem, Right, Left, Radio, Button, Icon, } from 'native-base';
+import { ListItem, Right, Left, Radio, Button, } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import { View, TouchableOpacity, Alert } from 'react-native';
 import * as Permissions from 'expo-permissions';
 import OverlayLoader from '@/components/OverlayLoader';
@@ -141,7 +142,7 @@ const ExportPage = () => {
               style={{ paddingHorizontal: 10 }}
               onPress={() => goBack()}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}

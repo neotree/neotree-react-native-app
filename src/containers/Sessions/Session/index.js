@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import Content from '@/components/Content';
 import { useParams, useHistory } from 'react-router-native';
-import { Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import useBackButton from '@/utils/useBackButton';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
@@ -35,7 +35,7 @@ const Session = () => {
               style={{ paddingHorizontal: 10 }}
               onPress={() => goBack()}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons color="black" size={24} style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}
