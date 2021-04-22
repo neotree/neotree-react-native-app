@@ -12,7 +12,14 @@ import { useContext as useScriptContext } from '../../../Context';
 import Diagnosis from './Diagnosis';
 import FloatingButton from './FloatingButton';
 
-const defaultForm = { name: '', suggested: false, priority: 1, };
+const defaultForm = {
+  name: '',
+  suggested: false,
+  priority: null,
+  how_agree: null,
+  hcw_follow_instructions: null,
+  hcw_reason_given: null,
+};
 
 const Diagnoses = props => {
   const { summary } = props;
@@ -31,6 +38,46 @@ const Diagnoses = props => {
   }, []);
 
   React.useEffect(() => { scriptContext.setState({ hideFloatingButton: false, }); }, []);
+
+  const renderDiagnoses = (diagnoses, opts = {}) => (
+    <FlatList
+      data={diagnoses}
+      renderItem={({ item }) => {
+        const renderCard = d => {
+          const card = (
+            <View style={{ marginVertical: 15, flexDirection: 'row' }}>
+              <Text style={[{ flex: 1 }, opts.color ? { color: opts.color } : {}]}>{item.name}</Text>
+              {opts.sortable !== false && (
+                <>
+                  <Button
+                    transparent
+                  >
+                    <MaterialIcons size={24} color="black" name="arrow-up" />
+                  </Button>
+                </>
+              )}
+            </View>
+          );
+
+          if (!d.suggested) return card;
+
+          return (
+            <Diagnosis
+              setDiagnosis={s => setDiagnoses(diagnoses => diagnoses.map(d => {
+                if (d.id !== item.id) return d;
+                return { ...d, ...s };
+              }))}
+              diagnosis={d}
+            >{card}</Diagnosis>
+          );
+        };
+        return renderCard(item);
+      }}
+      keyExtractor={(item, i) => `${item.id || item.name}${i}`}
+    />
+  );
+
+  const rejectedDiagnoses = diagnoses.filter(d => d.how_agree === 'No');
 
   return (
     <>
@@ -71,32 +118,7 @@ const Diagnoses = props => {
           </>
         ) : (
           <>
-            <FlatList
-              data={diagnoses}
-              renderItem={({ item }) => {
-                const renderCard = d => {
-                  const card = (
-                    <View style={{ marginVertical: 15 }}>
-                      <H3>{item.name}</H3>
-                    </View>
-                  );
-
-                  if (!d.suggested) return card;
-
-                  return (
-                    <Diagnosis
-                      setDiagnosis={s => setDiagnoses(diagnoses => diagnoses.map(d => {
-                        if (d.id !== item.id) return d;
-                        return { ...d, ...s };
-                      }))}
-                      diagnosis={d}
-                    >{card}</Diagnosis>
-                  );
-                };
-                return renderCard(item);
-              }}
-              keyExtractor={(item, i) => `${item.id || item.name}${i}`}
-            />
+            {renderDiagnoses(diagnoses.filter(d => d.how_agree !== 'No'))}
           </>
         )}
 
@@ -139,6 +161,26 @@ const Diagnoses = props => {
             </Button>
           )}
         </View>
+
+        {!!rejectedDiagnoses.length && (
+          <>
+            <H3
+              style={{
+                marginTop: 25,
+                marginBottom: 10,
+                paddingVertical: 10,
+                borderTopColor: '#ccc',
+                borderTopWidth: 1,
+                borderBottomColor: '#ccc',
+                borderBottomWidth: 1,
+                textTransform: 'uppercase',
+                color: '#ccc',
+              }}
+            >Rejected diagnoses</H3>
+
+            {renderDiagnoses(diagnoses.filter(d => d.how_agree === 'No'), { color: '#999', sortable: false, })}
+          </>
+        )}
       </Content>
 
       <FloatingButton {...props} />
