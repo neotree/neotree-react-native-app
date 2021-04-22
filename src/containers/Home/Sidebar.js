@@ -3,7 +3,8 @@ import { ScrollView, View, Alert } from 'react-native';
 import { useHistory } from 'react-router-native';
 import Logo from '@/components/Logo';
 import theme from '~/native-base-theme/variables/commonColor';
-import { Icon, List, ListItem, Left, Body } from 'native-base';
+import { List, ListItem, Left, Body } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import SignOutBtn from '@/components/SignOutBtn';
 import Text from '@/components/Text';
 import { useAppContext } from '@/AppContext';
@@ -41,7 +42,7 @@ const Sidebar = () => {
 
           <List>
             {[
-              { icon: 'pin', label: 'Change hospital', link: '/location' },
+              { icon: 'location-pin', label: 'Change hospital', link: '/location' },
               { icon: 'settings', label: 'Configuration', link: '/configuration' },
               { icon: 'folder-open', label: 'History', link: '/sessions' },
             ].map(opt => {
@@ -53,7 +54,7 @@ const Sidebar = () => {
                   style={{ padding: 10 }}
                 >
                   <Left>
-                    <Icon style={{ color: '#999' }} name={opt.icon} />
+                    <MaterialIcons size={24} color="black" style={{ color: '#999' }} name={opt.icon} />
                   </Left>
                   <Body style={{ borderColor: 'transparent' }}>
                     <Text>{opt.label}</Text>
@@ -64,7 +65,7 @@ const Sidebar = () => {
 
             <ListItem avatar style={{ padding: 10 }}>
               <Left>
-                <Icon style={{ color: '#999' }} name="log-out" />
+                <MaterialIcons size={24} color="black" style={{ color: '#999' }} name="logout" />
               </Left>
               <Body style={{ borderColor: 'transparent' }}>
                 <SignOutBtn />
@@ -105,7 +106,7 @@ const Sidebar = () => {
               }}
             >
               <Left>
-                <Icon style={{ color: '#999' }} name="laptop" />
+                <MaterialIcons size={24} color="black" style={{ color: '#999' }} name="laptop" />
               </Left>
               <Body style={{ borderColor: 'transparent' }}>
                 <Text>{application.mode === 'development' ? 'Live' : 'Development'}</Text>

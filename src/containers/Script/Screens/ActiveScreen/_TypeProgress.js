@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Text from '@/components/Text';
-import { Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import theme from '~/native-base-theme/variables/commonColor';
 
 const TypeProgress = ({ screen, setEntry: onChange }) => {
@@ -43,12 +43,14 @@ const TypeProgress = ({ screen, setEntry: onChange }) => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon
+                  <MaterialIcons
+                    size={24}
+                    color="black"
                     style={{
                       fontSize: 30,
                       color: item.checked ? 'green' : '#ccc'
                     }}
-                    name="checkmark"
+                    name="check"
                   />
                 </View>
 

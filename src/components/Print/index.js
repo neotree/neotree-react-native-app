@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import * as ExpoPrint from 'expo-print';
-import { Icon } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import colorStyles from '@/styles/colorStyles';
 import { TouchableOpacity } from 'react-native';
 
@@ -23,7 +23,7 @@ const Print = ({ options }) => {
     <>
       <TouchableOpacity
         onPress={() => print()}
-      ><Icon style={[colorStyles.primaryColor]} name="print" /></TouchableOpacity>
+      ><MaterialIcons color="black" size={24} style={[colorStyles.primaryColor]} name="print" /></TouchableOpacity>
     </>
   );
 };

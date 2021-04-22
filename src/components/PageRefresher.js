@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Divider from '@/components/Divider';
-import { Button, Icon } from 'native-base';
+import { Button } from 'native-base';
 import { View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const PageRefresher = ({ onRefresh, children }) => {
   return (
@@ -22,7 +23,7 @@ const PageRefresher = ({ onRefresh, children }) => {
           onPress={onRefresh}
           transparent
         >
-          <Icon name="refresh" size={40} color="#ddd" />
+          <MaterialIcons name="refresh" size={40} color="#ddd" />
         </Button>
       </View>
     </>

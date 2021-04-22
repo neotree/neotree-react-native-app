@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Modal, View, ScrollView, Alert } from 'react-native';
-import { Icon, Left, ListItem, Radio, Right } from 'native-base';
+import { Left, ListItem, Radio, Right } from 'native-base';
+import { MaterialIcons } from '@expo/vector-icons';
 import moment from 'moment';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
@@ -89,7 +90,7 @@ const Delete = () => {
         style={{ paddingHorizontal: 10 }}
         onPress={() => setOpen(true)}
       >
-        <Icon style={[dbSessions.length ? colorStyles.primaryColor : { color: '#ccc' }]} name="trash" />
+        <MaterialIcons size={24} color="black" style={[dbSessions.length ? colorStyles.primaryColor : { color: '#ccc' }]} name="delete" />
       </TouchableOpacity>
 
       <Modal
