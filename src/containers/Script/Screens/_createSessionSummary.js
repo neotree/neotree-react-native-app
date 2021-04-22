@@ -13,7 +13,7 @@ export default ({
     return [...acc, d];
   }, []);
 
-  const { completed, canceled, ...payload } = _payload;
+  const { completed, canceled, diagnoses: parsedDiagnoses, ...payload } = _payload;
 
   const uid = form.reduce((acc, { values }) => {
     const uid = values.reduce((acc, { key, value }) => {
@@ -24,7 +24,7 @@ export default ({
     return uid || acc;
   }, null);
 
-  const diagnosesRslts = (() => {
+  const diagnosesRslts = parsedDiagnoses || (() => {
     const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
       return expression || (symptoms || []).length;
     }).map(d => {
@@ -44,7 +44,7 @@ export default ({
           { key: 'signCount', value: riskSignCount.signCount, },
         ],
       }]));
-      return conditionMet ? { ...d, data: { ...d.data, symptoms: _symptoms } } : null;
+      return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
     }).filter(d => d);
 
     return rslts;

@@ -1,16 +1,21 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Diagnoses from './Diagnoses';
 import Summary from './Summary';
 
 const SummaryPage = props => {
+  const { savedSession } = props;
   const [diagnoses, setDiagnoses] = React.useState([]);
-  const [session, setSession] = React.useState(null);
 
-  const _props = { ...props, session, setSession, diagnoses, setDiagnoses, };
+  const _props = { ...props, diagnoses, setDiagnoses, };
 
-  if (!session) return <Diagnoses {..._props} />;
+  if (!savedSession) return <Diagnoses {..._props} />;
 
   return <Summary {..._props} />;
+};
+
+SummaryPage.propTypes = {
+  savedSession: PropTypes.object,
 };
 
 export default SummaryPage;
