@@ -10,7 +10,6 @@ import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
-import { MaterialIcons } from '@expo/vector-icons';
 
 const ScreenHeader = ({
   screen,

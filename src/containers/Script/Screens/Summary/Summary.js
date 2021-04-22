@@ -8,6 +8,7 @@ import colorStyles from '@/styles/colorStyles';
 import useBackButton from '@/utils/useBackButton';
 import { useHistory } from 'react-router-native';
 import { FormAndDiagnosesSummary, Print } from '@/components/Session';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const Wrapper = props => <Content {...props} />;
 
@@ -25,7 +26,7 @@ const Summary = ({ summary }) => {
               style={{ padding: 10 }}
               onPress={() => history.push('/')}
             >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
           </>
         )}

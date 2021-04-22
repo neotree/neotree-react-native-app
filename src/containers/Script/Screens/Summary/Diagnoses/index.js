@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Icon, Button, Input, Card, CardItem, Body } from 'native-base';
+import { Icon, Button, Input, H3 } from 'native-base';
 import { TouchableOpacity, View, FlatList } from 'react-native';
 import Header from '@/components/Header';
 import Content from '@/components/Content';
@@ -10,10 +10,12 @@ import bgColorStyles from '@/styles/bgColorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useContext as useScriptContext } from '../../../Context';
 import Diagnosis from './Diagnosis';
+import FloatingButton from './FloatingButton';
 
 const defaultForm = { name: '', suggested: false, priority: 1, };
 
-const Diagnoses = ({ summary }) => {
+const Diagnoses = props => {
+  const { summary } = props;
   const scriptContext = useScriptContext();
 
   const [diagnoses, setDiagnoses] = React.useState([]);
@@ -74,13 +76,9 @@ const Diagnoses = ({ summary }) => {
               renderItem={({ item }) => {
                 const renderCard = d => {
                   const card = (
-                    <Card>
-                      <CardItem>
-                        <Body>
-                          <Text>{item.name}</Text>
-                        </Body>
-                      </CardItem>
-                    </Card>
+                    <View style={{ marginVertical: 15 }}>
+                      <H3>{item.name}</H3>
+                    </View>
                   );
 
                   if (!d.suggested) return card;
@@ -142,6 +140,8 @@ const Diagnoses = ({ summary }) => {
           )}
         </View>
       </Content>
+
+      <FloatingButton {...props} />
     </>
   );
 };

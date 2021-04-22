@@ -6,7 +6,6 @@ import Text from '@/components/Text';
 import Modal from '@/components/Modal';
 import { Radio } from 'native-base';
 import Divider from '@/components/Divider';
-import { MaterialIcons } from '@expo/vector-icons';
 
 const styles = {
   inputBox: {
