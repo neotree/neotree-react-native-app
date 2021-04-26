@@ -176,6 +176,7 @@ const Screens = props => {
               const next = getScreen({ direction: 'next' });
               const nextScreen = next ? next.screen : null;
               if (!nextScreen) {
+                setDisplayLoader(false);
                 return Alert.alert(
                   'ERROR',
                   'Failed to load next screen. Screen condition might be invalid',
@@ -183,6 +184,11 @@ const Screens = props => {
                     {
                       text: 'Exit',
                       onPress: () => history.push('/'),
+                      style: 'cancel'
+                    },
+                    {
+                      text: 'Ok',
+                      onPress: () => {},
                       style: 'cancel'
                     },
                   ]
