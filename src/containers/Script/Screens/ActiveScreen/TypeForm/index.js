@@ -71,6 +71,7 @@ const TypeForm = props => {
     }, true);
 
     const hasErrors = entry.values.filter(v => v.error).length;
+    console.log(hasErrors);
 
     onChange(hasErrors || !completed ? undefined : entry);
   }, [entry]);

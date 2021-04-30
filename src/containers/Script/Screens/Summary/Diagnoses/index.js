@@ -30,9 +30,11 @@ const Diagnoses = props => {
   const [form, setForm] = React.useState(defaultForm);
 
   React.useEffect(() => {
-    setDiagnoses(summary.data.diagnoses.map(d => ({
+    setDiagnoses(summary.data.diagnoses.map((d, i) => ({
+      ...defaultForm,
       ...d,
       suggested: true,
+      priority: i + 1,
     })));
   }, []);
 
@@ -62,6 +64,11 @@ const Diagnoses = props => {
       data={diagnoses}
       renderItem={({ item, index }) => {
         const renderCard = d => {
+          const moveDiagnoses = (from, to) => setDiagnoses(diagnoses => arrayMove(diagnoses, from, to).map((d, i) => ({
+            ...d,
+            priority: i + 1,
+          })));
+
           const card = (
             <View style={{ marginVertical: 15, flexDirection: 'row' }}>
               <Text style={[{ flex: 1 }, opts.color ? { color: opts.color } : {}]}>{item.name}</Text>
@@ -70,7 +77,7 @@ const Diagnoses = props => {
                   {index !== 0 && (
                     <Button
                       transparent
-                      onPress={() => setDiagnoses(diagnoses => arrayMove(diagnoses, index, index - 1))}
+                      onPress={() => moveDiagnoses(index, index - 1)}
                     >
                       <MaterialIcons size={24} color="black" name="arrow-upward" />
                     </Button>
@@ -79,7 +86,7 @@ const Diagnoses = props => {
                   {index < (diagnoses.length - 1) && (
                     <Button
                       transparent
-                      onPress={() => setDiagnoses(diagnoses => arrayMove(diagnoses, index, index + 1))}
+                      onPress={() => moveDiagnoses(index, index + 1)}
                     >
                       <MaterialIcons size={24} color="black" name="arrow-downward" />
                     </Button>
@@ -167,7 +174,7 @@ const Diagnoses = props => {
                 block={false}
                 transparent
                 onPress={() => {
-                  if (form.name) setDiagnoses(d => [...d, form]);
+                  if (form.name) setDiagnoses(d => [...d, { ...form, priority: diagnoses.length }]);
                   setForm(defaultForm);
                   setShowDiagnosisInput(false);
                 }}
@@ -213,7 +220,7 @@ const Diagnoses = props => {
         )}
       </Content>
 
-      <FloatingButton {...props} diagnoses={diagnoses} />
+      {showDiagnosisInput ? null : <FloatingButton {...props} diagnoses={diagnoses} />}
     </>
   );
 };
