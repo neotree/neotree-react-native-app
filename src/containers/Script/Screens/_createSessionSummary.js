@@ -24,7 +24,7 @@ export default ({
     return uid || acc;
   }, null);
 
-  const diagnosesRslts = parsedDiagnoses || (() => {
+  const diagnosesRslts = !completed ? [] : parsedDiagnoses || (() => {
     const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
       return expression || (symptoms || []).length;
     }).map(d => {

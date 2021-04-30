@@ -146,7 +146,7 @@ export default function Diagnosis({
           </ScrollView>
 
           <Content>
-            <H3 style={{ marginBottom: 10 }}>Do you folow the above instructions?</H3>
+            <H3 style={{ marginBottom: 10 }}>Did you folow the above instructions?</H3>
             <View style={{ flexDirection: 'row', marginBottom: 25 }}>
               {[
                 {
