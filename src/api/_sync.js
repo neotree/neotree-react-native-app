@@ -91,6 +91,7 @@ export default function sync(opts = {}) {
 
           application = await saveApplication({
             ...application,
+            uid_prefix: webEditor.device.device_hash,
             last_sync_date: new Date().toISOString(),
             webeditor_info: JSON.stringify(webEditor.info),
           });
