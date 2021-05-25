@@ -14,6 +14,12 @@ const appConfig = (() => {
 export default ({ config }) => ({
   ...config,
 
+  ...(BUILD_TYPE === 'demo' ? {
+    version: `${config.version}-DEMO`,
+    name: `${config.name} (DEMO)`,
+    slug: `${config.slug}-demo`,
+  } : null),
+
   ...(BUILD_TYPE === 'stage' ? {
     version: `${config.version}-DEV`,
     name: `${config.name} (DEV)`,
