@@ -174,7 +174,7 @@ const Diagnoses = props => {
                 block={false}
                 transparent
                 onPress={() => {
-                  if (form.name) setDiagnoses(d => [...d, { ...form, priority: diagnoses.length }]);
+                  if (form.name) setDiagnoses(d => [...d, { ...form, how_agree: 'Yes', priority: diagnoses.length }]);
                   setForm(defaultForm);
                   setShowDiagnosisInput(false);
                 }}

@@ -16,7 +16,7 @@ const Diagnoses = ({ Wrapper, session: { data: { diagnoses } } }) => {
         <Text variant="h3">Diagnoses</Text>
         <Divider border={false} />
 
-        {diagnoses.map(d => {
+        {diagnoses.filter(d => d.how_agree === 'Yes').map(d => {
           return (
             <React.Fragment key={`diagnosis-${d.id}`}>
               <Text>- {d.name}</Text>

@@ -8,6 +8,7 @@ import colorStyles from '@/styles/colorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
 import bgColorStyles from '@/styles/bgColorStyles';
 import Image from '@/components/Image';
+import Fab from '@/components/Fab';
 
 export default function Diagnosis({
   children,
@@ -175,6 +176,10 @@ export default function Diagnosis({
               })}
             </View>
           </Content>
+
+          <Fab onPress={() => onClose()}>
+            <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
+          </Fab>
         </View>
       </Modal>
     </>
