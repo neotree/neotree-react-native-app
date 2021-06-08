@@ -20,10 +20,11 @@ export default () => new Promise((resolve, reject) => {
   const scriptsTableColumns = [
     'id varchar primary key not null',
     'script_id varchar',
+    'type varchar',
     'position integer',
     'data text',
     'createdAt datetime',
-    'updatedAt datetime'
+    'updatedAt datetime',
   ].join(',');
 
   const screensTableColumns = [
@@ -34,7 +35,7 @@ export default () => new Promise((resolve, reject) => {
     'type varchar',
     'data text',
     'createdAt datetime',
-    'updatedAt datetime'
+    'updatedAt datetime',
   ].join(',');
 
   const diagnosesTableColumns = [
@@ -45,24 +46,35 @@ export default () => new Promise((resolve, reject) => {
     'type varchar',
     'data text',
     'createdAt datetime',
-    'updatedAt datetime'
+    'updatedAt datetime',
   ].join(',');
 
   const sessionsTableColumns = [
     'id integer primary key not null',
+    'session_id integer',
     'script_id varchar',
+    'type varchar',
     'uid varchar',
     'data text',
     'completed boolean',
     'exported boolean',
     'createdAt datetime',
-    'updatedAt datetime'
+    'updatedAt datetime',
+  ].join(',');
+
+  const exportsTableColumns = [
+    'id integer primary key not null',
+    'session_id integer not null',
+    'uid varchar',
+    'scriptid varchar',
+    'data text',
+    'ingested_at datetime',
   ].join(',');
 
   const authenticatedUserTableColumns = [
     'id integer primary key not null',
     'authenticated boolean',
-    'details text'
+    'details text',
   ].join(',');
 
   const config_keysTableColumns = [
@@ -71,14 +83,14 @@ export default () => new Promise((resolve, reject) => {
     'position integer',
     'data text',
     'createdAt datetime',
-    'updatedAt datetime'
+    'updatedAt datetime',
   ].join(',');
 
   const configurationTableColumns = [
     'id varchar primary key not null',
     'data text',
     'createdAt datetime',
-    'updatedAt datetime'
+    'updatedAt datetime',
   ].join(',');
 
   const locationTableColumns = [
@@ -99,6 +111,7 @@ export default () => new Promise((resolve, reject) => {
       `create table if not exists config_keys (${config_keysTableColumns});`,
       `create table if not exists configuration (${configurationTableColumns});`,
       `create table if not exists location (${locationTableColumns});`,
+      `create table if not exists exports (${exportsTableColumns});`,
     ].map(q => dbTransaction(q, null, dbName))
   ], []);
 

@@ -47,12 +47,14 @@ export const saveScripts = (data = []) => new Promise((resolve, reject) => {
       if (!data.length) return resolve(null);
 
       const res = await Promise.all(data.map(s => {
-        const columns = ['id', 'script_id', 'data', 'position', 'createdAt', 'updatedAt'].join(',');
-        const values = ['?', '?', '?', '?', '?', '?'].join(',');
+        s.data = { ...s.data };
+        const columns = ['id', 'script_id', 'type', 'data', 'position', 'createdAt', 'updatedAt'].join(',');
+        const values = ['?', '?', '?', '?', '?', '?', '?'].join(',');
         return dbTransaction(`insert or replace into scripts (${columns}) values (${values});`, [
           s.id,
           s.script_id,
-          JSON.stringify(s.data || {}),
+          s.type || s.data.type,
+          JSON.stringify(s.data),
           s.position,
           s.createdAt,
           s.updatedAt

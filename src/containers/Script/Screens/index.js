@@ -211,7 +211,6 @@ Screens.propTypes = {
   screens: PropTypes.array.isRequired,
   diagnoses: PropTypes.array.isRequired,
   script: PropTypes.object.isRequired,
-  dataStatus: PropTypes.object.isRequired,
   configuration: PropTypes.object,
 };
 

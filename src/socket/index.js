@@ -1,30 +1,48 @@
 import io from 'socket.io-client';
 import config from '@/constants/config';
+import * as api from '../api';
 
 const sockets = config.countries.reduce((acc, country) => {
-  const host = config[country] ? config[country].webeditor.host : null;
-  return { ...acc, ...(host ? { [country]: io(host) } : null) };
+  const webEditorHost = config[country] ? config[country].webeditor.host : null;
+  const nodeApiHost = config[country] ? config[country].nodeapi.host : null;
+  return {
+    ...acc,
+    ...(webEditorHost ? { [`${country}WebEditor`]: io(webEditorHost) } : null),
+    ...(nodeApiHost ? { [`${country}NodeApi`]: io(nodeApiHost) } : null),
+  };
 }, {});
 
 export function addSocketEventsListeners(country, listener) {
-  const socket = sockets[country];
-  if (socket) {
-    const onEvent = e => setTimeout(() => listener && listener(e), 0);
+  const onEvent = e => setTimeout(() => listener && listener(e), 0);
 
-    socket.on('data_updated', data => onEvent({
+  const webeditorSocket = sockets[`${country}WebEditor`];
+  const nodeApiSocket = sockets[`${country}NodeApi`];
+
+  if (webeditorSocket) {
+    webeditorSocket.on('data_updated', data => onEvent({
       name: 'data_updated',
       ...data
     }));
 
-    socket.on('data_published', data => onEvent({
+    webeditorSocket.on('data_published', data => onEvent({
       name: 'data_published',
       ...data
     }));
 
-    socket.on('changes_discarded', data => onEvent({
+    webeditorSocket.on('changes_discarded', data => onEvent({
       name: 'changes_discarded',
       ...data
     }));
+  }
+
+  if (nodeApiSocket) {
+    nodeApiSocket.on('sessions_exported', data => {
+      api.getExportedSessions().then(() => {}).catch(() => {}); // these will load all the exported sessions that are not on this device
+      onEvent({
+        name: 'sessions_exported',
+        ...data
+      });
+    });
   }
 }
 

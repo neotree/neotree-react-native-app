@@ -4,6 +4,7 @@ import { useParams, useHistory, useLocation, } from 'react-router-native';
 import { View, Alert, } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
 import Screens from './Screens';
+import InitialiseDischargeForm from './InitialiseDischargeForm';
 
 const Script = () => {
   const { scriptId } = useParams();
@@ -19,6 +20,8 @@ const Script = () => {
   const [loadingScreens, setLoadingScreens] = React.useState(false);
 
   const [diagnoses, setDiagnoses] = React.useState([]);
+
+  const [autoFill, setAutoFill] = React.useState({ uid: null, session: null });
 
   React.useEffect(() => {
     history.entries = [];
@@ -128,8 +131,13 @@ const Script = () => {
           screens={screens}
           diagnoses={diagnoses}
           configuration={configuration}
+          autoFill={autoFill}
         />
       </View>
+
+      {(script.type === 'discharge') && (
+        <InitialiseDischargeForm onClose={(uid, session) => setAutoFill({ uid, session })} />
+      )}
     </>
   );
 };
