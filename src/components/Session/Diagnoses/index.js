@@ -16,14 +16,19 @@ const Diagnoses = ({ Wrapper, session: { data: { diagnoses } } }) => {
         <Text variant="h3">Diagnoses</Text>
         <Divider border={false} />
 
-        {diagnoses.filter(d => d.how_agree === 'Yes').map(d => {
-          return (
-            <React.Fragment key={`diagnosis-${d.id}`}>
-              <Text>- {d.name}</Text>
-              <Divider border={false} spacing={2} />
-            </React.Fragment>
-          );
-        })}
+        {diagnoses
+          .filter(d =>
+            (d.how_agree === 'Yes') ||
+            ((d.how_agree === 'Maybe') && (d.hcw_follow_instructions === 'Yes'))
+          )
+          .map(d => {
+            return (
+              <React.Fragment key={`diagnosis-${d.id}`}>
+                <Text>- {d.name}</Text>
+                <Divider border={false} spacing={2} />
+              </React.Fragment>
+            );
+          })}
 
         <Text variant="h3">Management</Text>
         <Divider border={false} />
