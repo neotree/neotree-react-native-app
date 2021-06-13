@@ -2,6 +2,8 @@
 
 App designed for managing neonatal patients in low resource settings, providing a digital admission form for real time data collection and a platform for neonatal training.
 
+Note that this project is part of the overall [Neotree System](https://github.com/neotree/neotree), an open source technology platform for supporting health care workers provide neonatal care in low resource settings. For more information see the [main repo](https://github.com/neotree/neotree) .
+
 ## Enviroment Setup
 
 https://reactnative.dev/docs/environment-setup
