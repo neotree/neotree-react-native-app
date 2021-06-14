@@ -5,7 +5,7 @@ import Confidentials from './Confidentials';
 
 export { default as Header } from './Confidentials';
 
-const FormPreview = ({ 
+const SessionSummary = ({
   showConfidential, 
   onShowConfidential,
   Wrapper, 
@@ -55,13 +55,15 @@ const FormPreview = ({
   );
 };
 
-FormPreview.propTypes = {
+SessionSummary.propTypes = {
   session: PropTypes.object.isRequired,
   showConfidentials: PropTypes.bool,
+  showConfidential: PropTypes.bool,
+  onShowConfidential: PropTypes.func,
   Wrapper: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.object
   ]),
 };
 
-export default FormPreview;
+export default SessionSummary;

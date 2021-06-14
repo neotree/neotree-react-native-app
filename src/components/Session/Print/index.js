@@ -3,12 +3,10 @@ import PropTypes from 'prop-types';
 import * as ExpoPrint from 'expo-print';
 import { MaterialIcons } from '@expo/vector-icons';
 import colorStyles from '@/styles/colorStyles';
-import { TouchableOpacity, Platform } from 'react-native';
-import * as MediaLibrary from "expo-media-library";
-import * as Sharing from "expo-sharing";
+import { TouchableOpacity } from 'react-native';
 import formToHTML from './formToHTML';
 
-const PrintSessionForm = ({ session, showConfidential, }) => {
+const PrintSession = ({ session, showConfidential, }) => {
   const [, setPrinting] = React.useState(false);
   const [, setPrintingError] = React.useState(false);
 
@@ -47,9 +45,9 @@ const PrintSessionForm = ({ session, showConfidential, }) => {
   );
 };
 
-PrintSessionForm.propTypes = {
+PrintSession.propTypes = {
   session: PropTypes.object.isRequired,
   showConfidential: PropTypes.bool,
 };
 
-export default PrintSessionForm;
+export default PrintSession;
