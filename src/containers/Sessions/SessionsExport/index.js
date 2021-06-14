@@ -110,7 +110,9 @@ const ExportPage = () => {
           }
         ]
       );
+      setExporting(false);
     } catch (e) {
+      setExporting(false);
       Alert.alert(
         'Failed to export data',
         e.message || e.msg || JSON.stringify(e),
@@ -127,7 +129,6 @@ const ExportPage = () => {
         ]
       );
     }
-    setExporting(false);
   };
 
   if (!pageInitialised) return <OverlayLoader display transparent />;

@@ -1,8 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Alert } from 'react-native';
-import Fab from '@/components/Fab';
 import OverlayLoader from '@/components/OverlayLoader';
 import { useHistory, useLocation } from 'react-router-native';
 import * as api from '@/api';
@@ -26,8 +23,8 @@ const Screens = props => {
 
   const [startTime] = React.useState(new Date().toISOString());
   const [summary, setSummary] = React.useState(null);
+  const [savedSession, setSavedSession] = React.useState(null);
   const [displayLoader, setDisplayLoader] = React.useState(false);
-  const [savingSession, setSavingSession] = React.useState(false);
 
   const [entries, setEntries] = React.useState([]);
   const [cachedEntries, setCachedEntries] = React.useState([]);
@@ -95,113 +92,52 @@ const Screens = props => {
       try {
         const { application } = await api.saveSession(summary);
         setAppState(s => ({ application: { ...s.application, ...application } }));
+        setSavedSession(summary);
         resolve(summary);
       } catch (e) { reject(e); }
       setDisplayLoader(false);
     })();
   });
 
-  if (savingSession) return <OverlayLoader display />;
+  const renderComponent = Component => (
+    <Component
+      {...props}
+      getLastScreen={getLastScreen}
+      hidden={hideActiveScreen}
+      saveSession={saveSession}
+      screen={activeScreen}
+      activeScreenIndex={activeScreenIndex}
+      setActiveScreen={(s = activeScreen) => {
+        setEntry(getCachedEntry(s));
+        setActiveScreen(s);
+      }}
+      entries={entries}
+      entry={activeScreenEntry}
+      cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.screen_id)[0]}
+      setEntry={setEntry}
+      setCacheEntry={setCacheEntry}
+      removeEntry={screenId => {
+        setCacheEntry(entries.filter(e => e.screen.id === screenId)[0]);
+        setEntries(entries => entries.filter(e => e.screen.id !== screenId));
+      }}
+      getScreenIndex={getScreenIndex}
+      getScreen={getScreen}
+      parseCondition={parseCondition}
+      evaluateCondition={evaluateCondition}
+      activeScreenEntry={activeScreenEntry}
+      summary={summary}
+      savedSession={savedSession}
+      activeScreen={activeScreen}
+      createSessionSummary={createSessionSummary}
+      setSummary={setSummary}
+      getCachedEntry={getCachedEntry}
+      clearSummary={() => setSummary(null)}
+    />
+  );
 
   return (
     <>
-      {summary ? (
-        <Summary
-          {...props}
-          summary={summary}
-          clearSummary={() => setSummary(null)}
-          createSessionSummary={createSessionSummary}
-        />
-      ) : (
-        <ActiveScreen
-          {...props}
-          hidden={hideActiveScreen}
-          saveSession={saveSession}
-          screen={activeScreen}
-          activeScreenIndex={activeScreenIndex}
-          setActiveScreen={(s = activeScreen) => {
-            setEntry(getCachedEntry(s));
-            setActiveScreen(s);
-          }}
-          entries={entries}
-          entry={activeScreenEntry}
-          cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.screen_id)[0]}
-          setEntry={setEntry}
-          setCacheEntry={setCacheEntry}
-          removeEntry={screenId => {
-            setCacheEntry(entries.filter(e => e.screen.id === screenId)[0]);
-            setEntries(entries => entries.filter(e => e.screen.id !== screenId));
-          }}
-          getScreenIndex={getScreenIndex}
-          getScreen={getScreen}
-          parseCondition={parseCondition}
-          evaluateCondition={evaluateCondition}
-        />
-      )}
-
-      {activeScreenEntry && (
-        <Fab
-          onPress={async () => {
-            if (summary) return history.push('/');
-
-            setDisplayLoader(true);
-            const lastScreen = getLastScreen();
-
-            if (activeScreen.screen_id === lastScreen.screen_id) {
-              setSavingSession(true);
-              setDisplayLoader(false);
-              try {
-                const summary = await saveSession({ completed: true });
-                setSummary(summary);
-              } catch (e) {
-                Alert.alert(
-                  'ERROR',
-                  'Failed to save session',
-                  [
-                    {
-                      text: 'Close',
-                      onPress: () => {},
-                      style: 'cancel'
-                    },
-                    {
-                      text: 'Exit',
-                      onPress: () => history.push('/'),
-                      style: 'cancel'
-                    },
-                  ]
-                );
-              }
-              setSavingSession(false);
-            } else {
-              const next = getScreen({ direction: 'next' });
-              const nextScreen = next ? next.screen : null;
-              if (!nextScreen) {
-                setDisplayLoader(false);
-                return Alert.alert(
-                  'ERROR',
-                  'Failed to load next screen. Screen condition might be invalid',
-                  [
-                    {
-                      text: 'Exit',
-                      onPress: () => history.push('/'),
-                      style: 'cancel'
-                    },
-                    {
-                      text: 'Ok',
-                      onPress: () => {},
-                      style: 'cancel'
-                    },
-                  ]
-                );
-              }
-              setEntry(getCachedEntry(nextScreen));
-              setActiveScreen(nextScreen);
-            }
-            setDisplayLoader(false);
-          }}
-        ><MaterialIcons size={24} color="black" style={{ color: '#fff' }} name={summary ? 'check' : 'arrow-forward'} /></Fab>
-      )}
-
+      {summary ? renderComponent(Summary) : renderComponent(ActiveScreen)}
       <OverlayLoader display={displayLoader} />
     </>
   );
