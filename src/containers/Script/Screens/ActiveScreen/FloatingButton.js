@@ -31,7 +31,7 @@ export default function FloatingButton({
             setDisplayLoader(true);
             const lastScreen = getLastScreen();
 
-            if (activeScreen.screen_id === lastScreen.screen_id) {
+            if (activeScreen.id === lastScreen.id) {
               setDisplayLoader(false);
               try {
                 const summary = createSessionSummary({ completed: true }); // await saveSession({ completed: true });
