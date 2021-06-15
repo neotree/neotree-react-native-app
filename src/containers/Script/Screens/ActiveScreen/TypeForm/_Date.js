@@ -8,9 +8,10 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
     ...opts,
     valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY') : '',
   });
-  const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
+  const _date = value ? new Date(value) : null;
+  const [date, setDate] = React.useState(field.defaultValue ? _date || new Date() : _date);
 
-  const onDateChange = (e, date) => {
+  const onDateChange = (date) => {
     setDate(date);
     onChange(date.toISOString());
   };
@@ -18,7 +19,13 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
   React.useEffect(() => {
     const v = value ? new Date(value).toISOString() : null;
     const d = date ? new Date(date).toISOString() : null;
-    if (v !== d) onChange(date);
+    if (v !== d) {
+      if (d) {
+        onChange(date);
+      } else {
+        onDateChange(new Date(value));
+      }
+    }
   });
 
   return (
@@ -27,7 +34,7 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
         enabled={conditionMet}
         value={date || null}
         placeholder={formCopy.SELECT_DATE}
-        onChange={onDateChange}
+        onChange={(e, d) => onDateChange(d)}
         maxDate={field.maxDate}
         minDate={field.minDate}
       >
