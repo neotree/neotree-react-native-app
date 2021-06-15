@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Divider from '@/components/Divider';
 import { fieldsTypes } from '@/constants/screen';
+import { useContext } from '../../../Context';
 
 import Number from './_Number';
 import Date from './_Date';
@@ -14,6 +15,8 @@ import Time from './_Time';
 import FormItem from './FormItem';
 
 const TypeForm = props => {
+  const { state: { autoFill } } = useContext();
+
   const {
     screen,
     entry: value,
@@ -36,7 +39,7 @@ const TypeForm = props => {
     confidential: f.confidential,
   }));
 
-  const [entry, setEntry] = React.useState({ values: defaultValue, ...value });
+  const [entry, setEntry] = React.useState({ autoFill: true, values: defaultValue, ...value });
   const [entryCache, setEntryCache] = React.useState({ values: defaultValue, ...value });
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
@@ -74,6 +77,28 @@ const TypeForm = props => {
 
     onChange(hasErrors || !completed ? undefined : entry);
   }, [entry]);
+
+  const autoFillFields = React.useCallback(() => {
+    if (autoFill.session && entry.autoFill) {
+      const values = [];
+      fields.forEach(f => {
+        const conditionMet = evaluateFieldCondition(f);
+        const autoFillObj = autoFill.session.data.entries[f.key];
+        let autoFillVal = null;
+        if (conditionMet && autoFillObj) {
+          autoFillVal = autoFillObj.values.value[0];
+          values.push({ value: autoFillVal });
+        }
+      });
+      setEntry(prev => ({
+        ...prev,
+        values: prev.values.map((v, i) => ({ ...v, ...values[i] })),
+        autoFill: false,
+      }));
+    }
+  }, [autoFill, fields, entry]);
+
+  React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
   return (
     <>

@@ -18,7 +18,6 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
         setLoading(true);
         try {
           session = await api.getExportedSessionByUID(uid);
-          console.log(session);
         } catch (e) { /**/ console.log(e); }
       }
       setLoading(false);
