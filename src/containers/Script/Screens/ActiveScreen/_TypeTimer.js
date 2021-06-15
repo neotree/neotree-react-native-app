@@ -7,6 +7,7 @@ import formCopy from '@/constants/copy/form';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
 import playSound from '@/utils/playSound';
+import { useContext } from '../../Context';
 
 const styles = {
   timerView: {
@@ -40,6 +41,8 @@ const styles = {
 };
 
 const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
+  const { state: { autoFill } } = useContext();
+
   const timoutRef = React.useRef(null);
   const metadata = screen.data.metadata || {};
   const multiplier = metadata.multiplier || 1;
@@ -47,8 +50,23 @@ const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
 
   const [countdown, setCountDown] = React.useState(0);
   const [formError, setFormError] = React.useState(null);
-  const [entry, setEntry] = React.useState(value || { values: [] });
   const [_value, setValue] = React.useState('');
+  const [entry, _setEntry] = React.useState(value || { autoFill: true, values: [] });
+  const setEntry = (data = {}) => {
+    const { values, ...e } = data;
+    _setEntry(prev => ({
+      ...prev,
+      ...e,
+      values: [{
+        label: metadata.label,
+        key: metadata.key,
+        type: metadata.type || metadata.dataType,
+        dataType: metadata.dataType,
+        confidential: metadata.confidential,
+        ...values,
+      }]
+    }));
+  };
 
   React.useEffect(() => {
     if (entry.values[0] && entry.values[0].value) {
@@ -95,6 +113,22 @@ const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
   }, [countdown, timerValue]);
 
   React.useEffect(() => () => clearTimeout(timoutRef.current), []);
+
+  const autoFillFields = React.useCallback(() => {
+    if (autoFill.session && entry.autoFill) {
+      const autoFillObj = autoFill.session.data.entries[metadata.key];
+      let autoFillVal = null;
+      if (autoFillObj) {
+        autoFillVal = autoFillObj.values.value[0];
+      }
+      setEntry({
+        values: { value: autoFillVal, valueText: autoFillVal, },
+        autoFill: false,
+      });
+    }
+  }, [autoFill, metadata, entry]);
+
+  React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
   return (
     <>
@@ -143,18 +177,7 @@ const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
                   onChange={e => {
                     setValue(e.nativeEvent.text);
                     const value = e.nativeEvent.text * multiplier;
-
-                    setEntry({
-                      values: [{
-                        value,
-                        valueText: value,
-                        label: metadata.label,
-                        key: metadata.key,
-                        type: metadata.type || metadata.dataType,
-                        dataType: metadata.dataType,
-                        confidential: metadata.confidential,
-                      }]
-                    });
+                    setEntry({ values: { value, valueText: value, } });
                   }}
                   keyboardType="numeric"
                 />

@@ -40,7 +40,7 @@ const TypeForm = props => {
   }));
 
   const [entry, setEntry] = React.useState({ autoFill: true, values: defaultValue, ...value });
-  const [entryCache, setEntryCache] = React.useState({ values: defaultValue, ...value });
+  const [entryCache, setEntryCache] = React.useState({ autoFill: false, values: defaultValue, ...value });
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
     ...prevState,
@@ -74,31 +74,30 @@ const TypeForm = props => {
     }, true);
 
     const hasErrors = entry.values.filter(v => v.error).length;
-
     onChange(hasErrors || !completed ? undefined : entry);
   }, [entry]);
 
-  const autoFillFields = React.useCallback(() => {
-    if (autoFill.session && entry.autoFill) {
-      const values = [];
-      fields.forEach(f => {
-        const conditionMet = evaluateFieldCondition(f);
-        const autoFillObj = autoFill.session.data.entries[f.key];
-        let autoFillVal = null;
-        if (conditionMet && autoFillObj) {
-          autoFillVal = autoFillObj.values.value[0];
-          values.push({ value: autoFillVal });
-        }
-      });
-      setEntry(prev => ({
-        ...prev,
-        values: prev.values.map((v, i) => ({ ...v, ...values[i] })),
-        autoFill: false,
-      }));
+  React.useEffect(() => {
+    // setEntry(null)
+    if (autoFill.session) {
+      const _setEntry = prev => {
+        return !prev.autoFill ? prev : {
+          ...prev,
+          autoFill: false,
+          values: prev.values.map(f => {
+            const autoFillObj = autoFill.session.data.entries[f.key];
+            let autoFillVal = null;
+            if (autoFillObj) {
+              autoFillVal = autoFillObj.values.value[0];
+            }
+            return { ...f, value: autoFillVal };
+          }),
+        };
+      };
+      setEntry(_setEntry);
+      setEntryCache(_setEntry);
     }
-  }, [autoFill, fields, entry]);
-
-  React.useEffect(() => { autoFillFields(); }, [autoFill]);
+  }, [autoFill]);
 
   return (
     <>
@@ -140,12 +139,14 @@ const TypeForm = props => {
                   _onChange(i, { value: v, ...params });
                 };
 
+                const value = entry.values[i].value;
+
                 return !Component ? null : (
                   <FormItem
                     {...props}
                     setCache={v => setCache(i, { value: v })}
                     conditionMet={conditionMet}
-                    value={entry.values[i].value}
+                    value={value}
                     valueCache={entryCache.values[i].value}
                     onChange={onChange}
                   >
@@ -153,7 +154,7 @@ const TypeForm = props => {
                       {...props}
                       field={f}
                       conditionMet={conditionMet}
-                      value={entry.values[i].value}
+                      value={value}
                       onChange={onChange}
                       form={entry}
                     />

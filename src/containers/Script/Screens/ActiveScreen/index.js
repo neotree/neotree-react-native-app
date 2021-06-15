@@ -112,12 +112,13 @@ const ActiveScreen = props => {
                 {...props}
                 setEntry={e => {
                   const { label, dataType } = (screen.data.metadata || {});
-                  if (!e) return removeEntry(screen.screen_id);
+                  if (!e) return removeEntry(screen.id);
                   setEntry({
                     screen: {
                       title: screen.data.title,
                       sectionTitle: screen.data.sectionTitle,
-                      id: screen.screen_id,
+                      id: screen.id,
+                      screen_id: screen.screen_id,
                       type: screen.type,
                       metadata: { label, dataType },
                     },

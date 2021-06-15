@@ -36,9 +36,9 @@ const Screens = props => {
     const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
     return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
   });
-  const getCachedEntry = s => !s ? null : cachedEntries.filter(e => e.screen.id === s.screen_id)[0];
+  const getCachedEntry = s => !s ? null : cachedEntries.filter(e => e.screen.id === s.id)[0];
 
-  const getScreenIndex = screenId => !screenId ? -1 : screens.map(s => s.screen_id).indexOf(screenId);
+  const getScreenIndex = screenId => !screenId ? -1 : screens.map(s => s.id).indexOf(screenId);
 
   React.useEffect(() => { setActiveScreen(screens[0]); }, []);
 
@@ -54,8 +54,8 @@ const Screens = props => {
 
   if (!activeScreen) return null;
 
-  const activeScreenIndex = getScreenIndex(activeScreen.screen_id);
-  const activeScreenEntry = entries.filter(e => e.screen.id === activeScreen.screen_id)[0];
+  const activeScreenIndex = getScreenIndex(activeScreen.id);
+  const activeScreenEntry = entries.filter(e => e.screen.id === activeScreen.id)[0];
   const parseCondition = require('./_parseCondition').default({ entries, configuration });
   const evaluateCondition = require('./_evaluateCondition').default;
 
@@ -113,7 +113,7 @@ const Screens = props => {
       }}
       entries={entries}
       entry={activeScreenEntry}
-      cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.screen_id)[0]}
+      cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.id)[0]}
       setEntry={setEntry}
       setCacheEntry={setCacheEntry}
       removeEntry={screenId => {
