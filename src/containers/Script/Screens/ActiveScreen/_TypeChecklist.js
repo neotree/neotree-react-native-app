@@ -4,7 +4,7 @@ import { View, TouchableOpacity, } from 'react-native';
 import Divider from '@/components/Divider';
 import Text from '@/components/Text';
 import { Card, CardItem, Body, Radio, } from 'native-base';
-import {useContext} from '../../Context'
+import { useContext } from '../../Context';
 
 const TypeChecklist = ({ screen, entry: value, setEntry: onChange }) => {
   const metadata = screen.data.metadata || {};
@@ -14,24 +14,31 @@ const TypeChecklist = ({ screen, entry: value, setEntry: onChange }) => {
 
   const autoFillFields = React.useCallback(() => {
     if (autoFill.session) {
-      const keys = metadata.items.map(i=>{
-        return i.key
+      const keys = metadata.items.map(i => {
+        return i.key;
       });
       const entries = autoFill.session.data.entries;
-      const autoFillObj = Object.keys(entries).filter(k=>keys.includes(k)).map(k=>{
-      const newEntry = entries[k];
-          return{
-            key: k,
-            dataType: newEntry.type?newEntry.type:null,
-            exclusive: newEntry.exclusive?newEntry.exclusive:null,
-            label: newEntry.values.label[0],
-            value: newEntry.values.value[0],
-            valueText: newEntry.values.label[0]
-          };
-      })
+      const autoFillObj = Object.keys(entries).filter(k => keys.includes(k)).map(k => {
+        const newEntry = entries[k];
+        return {
+          key: k,
+          dataType: newEntry.type ? newEntry.type : null,
+          exclusive: newEntry.exclusive ? newEntry.exclusive : null,
+          label: newEntry.values.label[0],
+          value: newEntry.values.value[0],
+          valueText: newEntry.values.label[0]
+        };
+      });
 
       setEntry({
-        values: autoFillObj.map(o=>{return {key:o.key,value:o.key,valueText:o.valueText,exclusive:o.exclusive,label:o.label,dataType:o.dataType}}),
+        values: autoFillObj.map(o => ({
+          key: o.key,
+          value: o.key,
+          valueText: o.valueText,
+          exclusive: o.exclusive,
+          label: o.label,
+          dataType: o.dataType
+        })),
         autoFill: false,
       });
     }
@@ -42,11 +49,9 @@ const TypeChecklist = ({ screen, entry: value, setEntry: onChange }) => {
   React.useEffect(() => {
     onChange(!entry.values.length ? undefined : entry);
   }, [entry]);
-
  
   const items = metadata.items || [];
   const exclusiveItems = items.filter(item => item.exclusive).map(item => item.key);
-
 
   return (
     <>
