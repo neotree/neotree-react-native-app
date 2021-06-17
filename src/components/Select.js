@@ -7,13 +7,12 @@ import theme from '~/native-base-theme/variables/commonColor';
 const Select = ({ options, value, variant, onChange, }) => {
   variant = variant || 'checkbox';
   value = value ? value.map ? value : [value] : [];
-
+ 
   return (
     <>
       {options.map((o, i) => {
         const key = i;
         const isSelected = value.indexOf(o.value) > -1;
-
         return (
           <View key={key} style={{ marginBottom: 10 }}>
             <TouchableWithoutFeedback          

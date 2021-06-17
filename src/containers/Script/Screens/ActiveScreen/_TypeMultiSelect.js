@@ -1,12 +1,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select from '@/components/Select';
+import {useContext} from '../../Context'
 
 const TypeMultiSelect = ({ entry: _entry, screen, setEntry: onChange }) => {
   const value = _entry ? _entry.values.reduce((acc, { value }) => ({ values: [...acc, ...value] }), []) : null;
   const metadata = screen.data.metadata || {};
 
   const [entry, setEntry] = React.useState(value || { values: [] });
+
+  const { state: { autoFill } } = useContext();
+ 
+  const autoFillFields = React.useCallback(() => {
+    if (autoFill.session) {
+     
+    const entries = autoFill.session.data.entries[metadata.key];
+    if(entries){
+    const autoFillObj = entries.values
+        
+      setEntry({
+        values: autoFillObj.value.map(v=>{return {value: v,label:autoFillObj.label[autoFillObj.value.indexOf(v)],
+          key:metadata.key,type:metadata.dataType?metadata.dataType:null,valueText:autoFillObj.label[autoFillObj.value.indexOf(v)],
+          confidential:autoFillObj.confidential?autoFillObj.confidential:false }}),
+        autoFill: false,
+      });
+     }
+  }}, [autoFill, metadata, entry]);
+
+
+  React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
   React.useEffect(() => {
     onChange(!entry.values.length ? undefined : {
