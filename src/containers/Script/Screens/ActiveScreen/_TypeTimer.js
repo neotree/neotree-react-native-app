@@ -40,7 +40,7 @@ const styles = {
   }
 };
 
-const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
+const TypeTimer = ({ canAutoFill, screen, entry: value, setEntry: onChange }) => {
   const { state: { autoFill } } = useContext();
 
   const timoutRef = React.useRef(null);
@@ -51,7 +51,7 @@ const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
   const [countdown, setCountDown] = React.useState(0);
   const [formError, setFormError] = React.useState(null);
   const [_value, setValue] = React.useState('');
-  const [entry, _setEntry] = React.useState(value || { autoFill: true, values: [] });
+  const [entry, _setEntry] = React.useState(value || { values: [] });
   const setEntry = (data = {}) => {
     const { values, ...e } = data;
     _setEntry(prev => ({
@@ -115,18 +115,17 @@ const TypeTimer = ({ screen, entry: value, setEntry: onChange }) => {
   React.useEffect(() => () => clearTimeout(timoutRef.current), []);
 
   const autoFillFields = React.useCallback(() => {
-    if (autoFill.session && entry.autoFill) {
+    if (autoFill.session && canAutoFill) {
       const autoFillObj = autoFill.session.data.entries[metadata.key];
       let autoFillVal = null;
       if (autoFillObj) {
-        autoFillVal = autoFillObj.values.value[0];
+        autoFillVal = autoFillObj.values.value[0] ;
       }
       setEntry({
         values: { value: autoFillVal, valueText: autoFillVal, },
-        autoFill: false,
       });
     }
-  }, [autoFill, metadata, entry]);
+  }, [canAutoFill, autoFill, metadata, entry]);
 
   React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
@@ -225,6 +224,7 @@ TypeTimer.propTypes = {
   screen: PropTypes.object,
   entry: PropTypes.object,
   setEntry: PropTypes.func.isRequired,
+  canAutoFill: PropTypes.bool,
 };
 
 export default TypeTimer;

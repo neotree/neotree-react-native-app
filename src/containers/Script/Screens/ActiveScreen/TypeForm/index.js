@@ -19,6 +19,7 @@ const TypeForm = props => {
 
   const {
     screen,
+    canAutoFill,
     entry: value,
     parseCondition,
     evaluateCondition,
@@ -39,8 +40,8 @@ const TypeForm = props => {
     confidential: f.confidential,
   }));
 
-  const [entry, setEntry] = React.useState({ autoFill: true, values: defaultValue, ...value });
-  const [entryCache, setEntryCache] = React.useState({ autoFill: false, values: defaultValue, ...value });
+  const [entry, setEntry] = React.useState({ values: defaultValue, ...value });
+  const [entryCache, setEntryCache] = React.useState({ values: defaultValue, ...value });
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
     ...prevState,
@@ -79,11 +80,10 @@ const TypeForm = props => {
 
   React.useEffect(() => {
     // setEntry(null)
-    if (autoFill.session) {
+    if (canAutoFill && autoFill.session) {
       const _setEntry = prev => {
-        return !prev.autoFill ? prev : {
+        return {
           ...prev,
-          autoFill: false,
           values: prev.values.map(f => {
             const autoFillObj = autoFill.session.data.entries[f.key];
             let autoFillVal = null;
@@ -97,7 +97,7 @@ const TypeForm = props => {
       setEntry(_setEntry);
       setEntryCache(_setEntry);
     }
-  }, [autoFill]);
+  }, [canAutoFill, autoFill]);
 
   return (
     <>
@@ -177,6 +177,7 @@ TypeForm.propTypes = {
   setEntry: PropTypes.func.isRequired,
   evaluateCondition: PropTypes.func.isRequired,
   parseCondition: PropTypes.func.isRequired,
+  canAutoFill: PropTypes.bool,
 };
 
 export default TypeForm;

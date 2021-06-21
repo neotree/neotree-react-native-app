@@ -14,15 +14,22 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
   const onClose = React.useCallback(() => {
     (async () => {
       let session = null;
+      let autoFill = null;
       if (uid) {
         setLoading(true);
         try {
           session = await api.getExportedSessionByUID(uid);
+          if (session) {
+            autoFill = Object.keys(session.data.entries).reduce((acc, key) => {
+              const { values } = session.data.entries[key];
+              return { ...acc, [key]: values.value };
+            }, {});
+          }
         } catch (e) { /**/ console.log(e); }
       }
       setLoading(false);
       setOpenModal(false);
-      _onClose(uid, session);
+      _onClose({ uid, session, values: autoFill, });
     })();
   }, [uid]);
 

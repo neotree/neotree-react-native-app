@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Select from '@/components/Select';
 import { useContext } from '../../Context';
 
-const TypeMultiSelect = ({ entry: _entry, screen, setEntry: onChange }) => {
+const TypeMultiSelect = ({ canAutoFill, entry: _entry, screen, setEntry: onChange }) => {
   const value = _entry ? _entry.values.reduce((acc, { value }) => ({ values: [...acc, ...value] }), []) : null;
   const metadata = screen.data.metadata || {};
 
@@ -12,7 +12,7 @@ const TypeMultiSelect = ({ entry: _entry, screen, setEntry: onChange }) => {
   const { state: { autoFill } } = useContext();
  
   const autoFillFields = React.useCallback(() => {
-    if (autoFill.session) {
+    if (canAutoFill && autoFill.session) {
       const entries = autoFill.session.data.entries[metadata.key];
       if (entries) {
         const autoFillObj = entries.values;
@@ -31,7 +31,7 @@ const TypeMultiSelect = ({ entry: _entry, screen, setEntry: onChange }) => {
         });
       }
     } 
-  }, [autoFill, metadata, entry]);
+  }, [canAutoFill, autoFill, metadata, entry]);
 
   React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
@@ -111,6 +111,7 @@ TypeMultiSelect.propTypes = {
   entry: PropTypes.object,
   screen: PropTypes.object.isRequired,
   setEntry: PropTypes.func.isRequired,
+  canAutoFill: PropTypes.bool,
 };
 
 export default TypeMultiSelect;

@@ -140,7 +140,7 @@ const Script = () => {
       </View>
 
       {(state.script.type === 'discharge') && (
-        <InitialiseDischargeForm onClose={(uid, session) => setState({ autoFill: { uid, session } })} />
+        <InitialiseDischargeForm onClose={autoFill => setState({ autoFill })} />
       )}
     </Context.Provider>
   );
