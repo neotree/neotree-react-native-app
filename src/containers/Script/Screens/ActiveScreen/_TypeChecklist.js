@@ -6,14 +6,14 @@ import Text from '@/components/Text';
 import { Card, CardItem, Body, Radio, } from 'native-base';
 import { useContext } from '../../Context';
 
-const TypeChecklist = ({ screen, entry: value, setEntry: onChange }) => {
+const TypeChecklist = ({ canAutoFill, screen, entry: value, setEntry: onChange }) => {
   const metadata = screen.data.metadata || {};
 
   const { state: { autoFill } } = useContext();
   const [entry, setEntry] = React.useState(value || { values: [] });
 
   const autoFillFields = React.useCallback(() => {
-    if (autoFill.session) {
+    if (canAutoFill && autoFill.session) {
       const keys = metadata.items.map(i => {
         return i.key;
       });
@@ -42,7 +42,7 @@ const TypeChecklist = ({ screen, entry: value, setEntry: onChange }) => {
         autoFill: false,
       });
     }
-  }, [autoFill, metadata, entry]);
+  }, [canAutoFill, autoFill, metadata, entry]);
  
   React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
@@ -127,6 +127,7 @@ TypeChecklist.propTypes = {
   screen: PropTypes.object,
   entry: PropTypes.object,
   setEntry: PropTypes.func.isRequired,
+  canAutoFill: PropTypes.bool,
 };
 
 export default TypeChecklist;
