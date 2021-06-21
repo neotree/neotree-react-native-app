@@ -30,8 +30,7 @@ export const getExportedSessionByUID = uid => new Promise((resolve, reject) => {
 export const getExportedSessions = () => new Promise((resolve, reject) => {
   (async () => {
     try {
-      const res = await dbTransaction('select max(ingested_at) as last_ingested_at from exports;');
-      const { last_ingested_at } = res[0];
+      const [{ last_ingested_at }] = await dbTransaction('select max(ingested_at) as last_ingested_at from exports;');
 
       const rslts = await makeApiCall.get('/last-ingested-sessions', {
         body: { last_ingested_at }
@@ -53,6 +52,13 @@ export const getExportedSessions = () => new Promise((resolve, reject) => {
           Object.values(data)
         );
       }));
+
+      const [{ last_ingested_at: maxDate }] = await dbTransaction('select max(ingested_at) as last_ingested_at from exports;');
+      const lastTwoWeeks = new Date(maxDate);
+      const pastDate = lastTwoWeeks.getDate() - 14;
+      lastTwoWeeks.setDate(pastDate);
+
+      await dbTransaction('delete from exports where ingested_at < ?;', [lastTwoWeeks.toISOString()]);
 
       resolve();
     } catch (e) { console.log('error', e); reject(e); }
