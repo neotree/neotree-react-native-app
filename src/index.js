@@ -27,7 +27,9 @@ function NeotreeApp() {
     (async () => {
       setState({ ...defaultAppState, initialisingApp: true, });
 
-      api.getExportedSessions().then(() => {}).catch(() => {}); // these will load all the exported sessions that are not on this device
+      api.getExportedSessions().then(() => {}).catch(() => {}); // this will load all the exported sessions that are not on this device
+
+      api.exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
 
       try {
         await api.initialiseDatabase();

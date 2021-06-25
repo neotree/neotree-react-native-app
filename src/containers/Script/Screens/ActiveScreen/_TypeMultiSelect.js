@@ -21,7 +21,7 @@ const TypeMultiSelect = ({ canAutoFill, entry: _entry, screen, setEntry: onChang
           values: autoFillObj.value.map(v => {
             return {
               value: v,
-              label: autoFillObj.label[autoFillObj.value.indexOf(v)],
+              label: autoFillObj.label[autoFillObj.label.indexOf(v)],
               key: metadata.key,
               type: metadata.dataType ? metadata.dataType : null,
               valueText: autoFillObj.label[autoFillObj.value.indexOf(v)],
