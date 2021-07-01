@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { View } from 'react-native';
 import Divider from '@/components/Divider';
 import { fieldsTypes } from '@/constants/screen';
+import { useContext } from '../../../Context';
 
 import Number from './_Number';
 import Date from './_Date';
@@ -14,8 +15,11 @@ import Time from './_Time';
 import FormItem from './FormItem';
 
 const TypeForm = props => {
+  const { state: { autoFill } } = useContext();
+
   const {
     screen,
+    canAutoFill,
     entry: value,
     parseCondition,
     evaluateCondition,
@@ -71,9 +75,29 @@ const TypeForm = props => {
     }, true);
 
     const hasErrors = entry.values.filter(v => v.error).length;
-
     onChange(hasErrors || !completed ? undefined : entry);
   }, [entry]);
+
+  React.useEffect(() => {
+    // setEntry(null)
+    if (canAutoFill && autoFill.session) {
+      const _setEntry = prev => {
+        return {
+          ...prev,
+          values: prev.values.map(f => {
+            const autoFillObj = autoFill.session.data.entries[f.key];
+            let autoFillVal = null;
+            if (autoFillObj) {
+              autoFillVal = autoFillObj.values.value[0];
+            }
+            return { ...f, value: autoFillVal };
+          }),
+        };
+      };
+      setEntry(_setEntry);
+      setEntryCache(_setEntry);
+    }
+  }, [canAutoFill, autoFill]);
 
   return (
     <>
@@ -115,12 +139,14 @@ const TypeForm = props => {
                   _onChange(i, { value: v, ...params });
                 };
 
+                const value = entry.values[i].value;
+
                 return !Component ? null : (
                   <FormItem
                     {...props}
                     setCache={v => setCache(i, { value: v })}
                     conditionMet={conditionMet}
-                    value={entry.values[i].value}
+                    value={value}
                     valueCache={entryCache.values[i].value}
                     onChange={onChange}
                   >
@@ -128,7 +154,7 @@ const TypeForm = props => {
                       {...props}
                       field={f}
                       conditionMet={conditionMet}
-                      value={entry.values[i].value}
+                      value={value}
                       onChange={onChange}
                       form={entry}
                     />
@@ -151,6 +177,7 @@ TypeForm.propTypes = {
   setEntry: PropTypes.func.isRequired,
   evaluateCondition: PropTypes.func.isRequired,
   parseCondition: PropTypes.func.isRequired,
+  canAutoFill: PropTypes.bool,
 };
 
 export default TypeForm;

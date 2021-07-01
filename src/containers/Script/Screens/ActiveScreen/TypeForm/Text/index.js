@@ -4,24 +4,23 @@ import PlainText from './PlainText';
 import NUID from './NUID';
 
 const FieldText = props => {
-  const { autoFill, value, onChange, conditionMet } = props;
-  const [defaultValue, setDefaultValue] = React.useState(autoFill.uid);
-  const { field } = props;
+  const { autoFill, value, onChange, conditionMet, field } = props;
+  // const [defaultValue, setDefaultValue] = React.useState(autoFill.uid);
   const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') ||
     field.key.match(new RegExp('neotree', 'gi'));
-
-  React.useEffect(() => setDefaultValue(autoFill.uid), [autoFill]);
+  //
+  // React.useEffect(() => setDefaultValue(autoFill.uid), [autoFill]);
 
   return (
     <>
       {isNeotreeID ? (
         <NUID
           {...props}
-          value={conditionMet ? value || defaultValue : null}
-          onChange={(...args) => {
-            if (defaultValue) setDefaultValue(null);
-            onChange(...args);
-          }}
+          // value={conditionMet ? value || defaultValue : null}
+          // onChange={(...args) => {
+          //   if (defaultValue) setDefaultValue(null);
+          //   onChange(...args);
+          // }}
         />
       ) : <PlainText {...props} />}
     </>

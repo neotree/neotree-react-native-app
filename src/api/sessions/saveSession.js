@@ -1,17 +1,17 @@
-import { dbTransaction } from '../db';
-import { updateDeviceRegistration } from '../../webeditor';
-import exportSessions from '../../sessions/exportSessions';
+import { dbTransaction } from '../database';
+import { updateDeviceRegistration } from '../webeditor';
+import exportSessions from './exportSessions';
 
 export default (data = {}) => new Promise((resolve, reject) => {
   (async () => {
     const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
       .filter(c => c)
       .join(',');
-  
+
     const values = [data.id ? '?' : '', '?', '?', '?', '?', '?', '?', '?']
       .filter(c => c)
       .join(',');
-  
+
     const params = [
       ...data.id ? [data.id] : [],
       data.uid,
