@@ -28,18 +28,26 @@ const Screens = props => {
   const [summary, setSummary] = React.useState(null);
   const [displayLoader, setDisplayLoader] = React.useState(false);
   const [savingSession, setSavingSession] = React.useState(false);
+  const [screensWithNoAutoFill, _setScreensWithNoAutoFill] = React.useState({});
+  const setScreensWithNoAutoFill = s => _setScreensWithNoAutoFill(prev => ({ ...prev, ...s }));
 
   const [entries, setEntries] = React.useState([]);
   const [cachedEntries, setCachedEntries] = React.useState([]);
-  const setEntry = entry => !entry ? null : setEntries(entries => {
-    const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
-    return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
-  });
   const setCacheEntry = entry => !entry ? null : setCachedEntries(entries => {
     const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
     return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
   });
-  const getCachedEntry = s => !s ? null : cachedEntries.filter(e => e.screen.id === s.screen_id)[0];
+  const getCachedEntry = s => !s ? null : cachedEntries.filter(e => e.screen.id === s.id)[0];
+  const setEntry = entry => {
+    if (entry) {
+      setScreensWithNoAutoFill({ [entry.screen.id]: true });
+      setEntries(entries => {
+        const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
+        return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
+      });
+      setCacheEntry(entry);
+    }
+  };
 
   const getScreenIndex = screenId => !screenId ? -1 : screens.map(s => s.screen_id).indexOf(screenId);
 
@@ -108,6 +116,8 @@ const Screens = props => {
       {summary ? (
         <Summary
           {...props}
+          screensWithNoAutoFill={screensWithNoAutoFill}
+          setScreensWithNoAutoFill={setScreensWithNoAutoFill}
           summary={summary}
           clearSummary={() => setSummary(null)}
           createSessionSummary={createSessionSummary}
@@ -115,6 +125,8 @@ const Screens = props => {
       ) : (
         <ActiveScreen
           {...props}
+          screensWithNoAutoFill={screensWithNoAutoFill}
+          setScreensWithNoAutoFill={setScreensWithNoAutoFill}
           hidden={hideActiveScreen}
           saveSession={saveSession}
           screen={activeScreen}
