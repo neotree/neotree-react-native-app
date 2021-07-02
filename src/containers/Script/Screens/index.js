@@ -49,7 +49,7 @@ const Screens = props => {
     }
   };
 
-  const getScreenIndex = screenId => !screenId ? -1 : screens.map(s => s.screen_id).indexOf(screenId);
+  const getScreenIndex = screenId => !screenId ? -1 : screens.map(s => s.id).indexOf(screenId);
 
   React.useEffect(() => { setActiveScreen(screens[0]); }, []);
 
@@ -65,8 +65,8 @@ const Screens = props => {
 
   if (!activeScreen) return null;
 
-  const activeScreenIndex = getScreenIndex(activeScreen.screen_id);
-  const activeScreenEntry = entries.filter(e => e.screen.id === activeScreen.screen_id)[0];
+  const activeScreenIndex = getScreenIndex(activeScreen.id);
+  const activeScreenEntry = entries.filter(e => e.screen.id === activeScreen.id)[0];
   const parseCondition = require('./_parseCondition').default({ entries, configuration });
   const evaluateCondition = require('./_evaluateCondition').default;
 
@@ -116,8 +116,6 @@ const Screens = props => {
       {summary ? (
         <Summary
           {...props}
-          screensWithNoAutoFill={screensWithNoAutoFill}
-          setScreensWithNoAutoFill={setScreensWithNoAutoFill}
           summary={summary}
           clearSummary={() => setSummary(null)}
           createSessionSummary={createSessionSummary}
@@ -137,7 +135,7 @@ const Screens = props => {
           }}
           entries={entries}
           entry={activeScreenEntry}
-          cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.screen_id)[0]}
+          cachedEntry={cachedEntries.filter(e => e.screen.id === activeScreen.id)[0]}
           setEntry={setEntry}
           setCacheEntry={setCacheEntry}
           removeEntry={screenId => {
@@ -159,7 +157,7 @@ const Screens = props => {
             setDisplayLoader(true);
             const lastScreen = getLastScreen();
 
-            if (activeScreen.screen_id === lastScreen.screen_id) {
+            if (activeScreen.id === lastScreen.id) {
               setSavingSession(true);
               setDisplayLoader(false);
               try {
