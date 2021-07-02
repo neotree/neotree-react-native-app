@@ -7,7 +7,9 @@ export default () => new Promise((resolve, reject) => {
   (async () => {
     try {
       let sessions = await dbTransaction('select * from sessions where exported != ?;', [true]);
-      sessions = sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}'), }));
+      sessions = sessions
+        .map(s => ({ ...s, data: JSON.parse(s.data || '{}'), }))
+        .filter(s => s.data.completed_at);
       if (sessions.length) {
         const postData = await convertSessionsToExportable(sessions);
         try {
