@@ -5,7 +5,6 @@ import * as MediaLibrary from 'expo-media-library';
 import * as api from '@/api';
 import moment from 'moment';
 import getJSON from './getJSON';
-import toNewJsonFormat from './toNewJsonFormat';
 
 export { getJSON };
 
@@ -20,8 +19,9 @@ const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
   })();
 });
 
-export function exportJSON(opts = {}) {
-  const sessions = opts.sessions || [];
+export function exportJSON(_opts = {}) {
+  const { sessions, ...opts } = _opts;
+  const directory = FileSystem.documentDirectory;
 
   return new Promise((resolve, reject) => {
     (async () => {
@@ -30,29 +30,25 @@ export function exportJSON(opts = {}) {
         if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
       } catch (e) { return reject(e); }
 
-      const scripts = sessions.reduce((acc, { data: { script } }) => ({
-        ...acc,
-        [script.script_id]: script,
-      }), {});
-
-      const json = getJSON({ ...opts, sessions }).reduce((acc, e) => ({
-        ...acc,
-        [e.script.id]: [...(acc[e.script.id] || []), e],
-      }), {});
-      
-      const directory = FileSystem.documentDirectory;
-
       try {
+        const scripts = sessions.reduce((acc, { data: { script } }) => ({
+          ...acc,
+          [script.script_id]: script,
+        }), {});
+
+        const parsedSessions = await api.convertSessionsToExportable(sessions, opts);
+        const json = parsedSessions.reduce((acc, e) => ({
+          ...acc,
+          [e.script.id]: [...(acc[e.script.id] || []), e],
+        }), {});
+
         await Promise.all(Object.keys(json).map(scriptId => {
           const scriptTitle = scripts[scriptId].data.title;
           const fileUri = `${directory}${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.json`;
           return new Promise((resolve) => {
             (async () => {
               try {
-                const formatedJson = json[scriptId].map(f => {
-                  return toNewJsonFormat(f);
-                });
-                await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: formatedJson }, null, 4), { encoding: FileSystem.EncodingType.UTF8 });
+                await FileSystem.writeAsStringAsync(fileUri, JSON.stringify({ sessions: json[scriptId] }, null, 4), { encoding: FileSystem.EncodingType.UTF8 });
               } catch (e) { return reject(e); }
 
               let asset = null;
@@ -86,7 +82,8 @@ export function exportEXCEL(opts = {}) {
         [script.script_id]: script,
       }), {});
 
-      const json = getJSON({ ...opts, ...sessions }).reduce((acc, e) => ({
+      const parsedSessions = await api.convertSessionsToExportable(sessions, opts);
+      const json = parsedSessions.reduce((acc, e) => ({
         ...acc,
         [e.script.id]: [...(acc[e.script.id] || []), e],
       }), {});
@@ -100,10 +97,13 @@ export function exportEXCEL(opts = {}) {
         const keys = !scriptsFields[scriptId] ? [] : scriptsFields[scriptId].reduce((acc, { keys }) => [...acc, ...keys], []);
 
         const data = json[scriptId].map(e => {
-          const values = e.entries.reduce((acc, e) => ({
-            ...acc,
-            [e.key || 'N/A']: e.values.map(v => v.value || 'N/A').join(', ')
-          }), null);
+          const values = Object.keys(e.entries).reduce((acc, entryKey) => {
+            const entry = e.entries[entryKey];
+            return {
+              ...acc,
+              [entryKey || 'N/A']: entry.values.value.join(', ')
+            };
+          }, null);
           return !values ? null : keys.reduce((acc, key) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
         }).filter(e => e);
 
@@ -156,7 +156,7 @@ export function exportToApi(opts = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       const sessions = _sessions.filter(s => !s.exported);
-      const postData = getJSON({ ...opts, sessions });
+      const postData = await api.convertSessionsToExportable(sessions, opts);
 
       try { await exportJSON(opts); } catch (e) { /* Do nothing */ }
 
@@ -164,15 +164,9 @@ export function exportToApi(opts = {}) {
         try {
           await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
             (async () => {
-              try { 
-                const formatted = await toNewJsonFormat(s);
-                await api.exportSession(formatted); 
+              try {
+                await api.exportSession(s);
               } catch (e) { return reject(e); }
-
-              const id = sessions[i].id;
-
-              try { await api.updateSessions({ exported: true }, { where: { id, }, }); } catch (e) { return reject(e); }
-
               resolve();
             })();
           })));
