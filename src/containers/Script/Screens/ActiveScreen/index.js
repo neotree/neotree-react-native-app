@@ -19,7 +19,7 @@ import TypeYesNo from './_TypeYesNo';
 import TypeManagement from './TypeManagement';
 
 const ActiveScreen = props => {
-  const { screen, setEntry, removeEntry, hidden, } = props;
+  const { screen, setEntry, removeEntry, hidden, screensWithNoAutoFill, } = props;
 
   return (
     <>
@@ -109,14 +109,16 @@ const ActiveScreen = props => {
             <Content>
               <Component
                 {...props}
+                canAutoFill={!screensWithNoAutoFill[screen.id]}
                 setEntry={e => {
                   const { label, dataType } = (screen.data.metadata || {});
-                  if (!e) return removeEntry(screen.screen_id);
+                  if (!e) return removeEntry(screen.id);
                   setEntry({
                     screen: {
                       title: screen.data.title,
                       sectionTitle: screen.data.sectionTitle,
-                      id: screen.screen_id,
+                      id: screen.id,
+                      screen_id: screen.screen_id,
                       type: screen.type,
                       metadata: { label, dataType },
                     },
@@ -138,6 +140,7 @@ ActiveScreen.propTypes = {
   setEntry: PropTypes.func.isRequired,
   removeEntry: PropTypes.func.isRequired,
   hidden: PropTypes.bool,
+  screensWithNoAutoFill: PropTypes.object,
 };
 
 export default ActiveScreen;

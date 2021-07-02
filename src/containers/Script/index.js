@@ -3,22 +3,27 @@ import * as api from '@/api';
 import { useParams, useHistory, useLocation, } from 'react-router-native';
 import { View, Alert, } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
+import Context from './Context';
 import Screens from './Screens';
+import InitialiseDischargeForm from './InitialiseDischargeForm';
 
 const Script = () => {
   const { scriptId } = useParams();
   const history = useHistory();
   const location = useLocation();
 
-  const [configuration, setConfiguration] = React.useState(null);
+  const [state, _setState] = React.useState({
+    script: null,
+    screens: [],
+    diagnoses: [],
+    configuration: null,
+    autoFill: { uid: null, session: null },
+    hideFloatingButton: false,
+  });
+  const setState = s => _setState(prev => ({ ...prev, ...(typeof s === 'function' ? s(prev) : s) }));
 
-  const [script, setScript] = React.useState(null);
   const [loadingScript, setLoadingScript] = React.useState(false);
-
-  const [screens, setScreens] = React.useState([]);
   const [loadingScreens, setLoadingScreens] = React.useState(false);
-
-  const [diagnoses, setDiagnoses] = React.useState([]);
 
   React.useEffect(() => {
     history.entries = [];
@@ -30,7 +35,7 @@ const Script = () => {
       setLoadingScript(true);
       try {
         const script = await api.getScript({ script_id: scriptId });
-        setScript(script);
+        setState({ script });
         resolve(script);
       } catch (e) {
         Alert.alert(
@@ -77,7 +82,7 @@ const Script = () => {
             ]
           );
         }
-        setScreens(screens);
+        setState({ screens });
         resolve(screens || []);
       } catch (e) {
         Alert.alert(
@@ -105,32 +110,39 @@ const Script = () => {
     (async () => {
       try {
         const config = await api.getConfiguration();
-        setConfiguration(config ? config.data : {});
+        setState({ configuration: config ? config.data : {} });
       } catch (e) { /* Do nothing */ }
 
-      try { await getScript(); } catch (e) { /* Do nothing */ }
-
-      try { await getScreens(); } catch (e) { /* Do nothing */ }
-
-      api.getDiagnoses({ script_id: scriptId }).then(d => setDiagnoses(d || [])).catch(() => { /*Do nothing*/ });
+      try {
+        await getScript();
+        await getScreens();
+        let diagnoses = await api.getDiagnoses({ script_id: scriptId });
+        diagnoses = diagnoses || [];
+        setState({ diagnoses });
+      } catch (e) { /* Do nothing */ }
     })();
   }, []);
 
   if (loadingScript || loadingScreens) return <OverlayLoader display transparent />;
 
-  if (!script) return null;
+  if (!state.script) return null;
 
   return (
-    <>
+    <Context.Provider value={{ state, setState, }}>
       <View style={{ flex: 1 }}>
         <Screens
-          script={script}
-          screens={screens}
-          diagnoses={diagnoses}
-          configuration={configuration}
+          script={state.script}
+          screens={state.screens}
+          diagnoses={state.diagnoses}
+          configuration={state.configuration}
+          autoFill={state.autoFill}
         />
       </View>
-    </>
+
+      {(state.script.type === 'discharge') && (
+        <InitialiseDischargeForm onClose={autoFill => setState({ autoFill })} />
+      )}
+    </Context.Provider>
   );
 };
 

@@ -49,7 +49,7 @@ const ScreenHeader = ({
   const onBack = () => {
     if (activeScreenIndex < 1) return cancelScript();
     const prev = getScreen({ direction: 'back' });
-    removeEntry(screen.screen_id);
+    removeEntry(screen.id);
     setActiveScreen(prev ? prev.screen : null);
   }
 
