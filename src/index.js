@@ -26,6 +26,11 @@ function NeotreeApp() {
   const initialiseApp = React.useCallback(() => {
     (async () => {
       setState({ ...defaultAppState, initialisingApp: true, });
+
+      api.getExportedSessions().then(() => {}).catch(() => {}); // this will load all the exported sessions that are not on this device
+
+      api.exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
+
       try {
         await api.initialiseDatabase();
         const authenticatedUser = await api.getAuthenticatedUser();
