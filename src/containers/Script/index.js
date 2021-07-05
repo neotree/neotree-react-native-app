@@ -17,6 +17,7 @@ const Script = () => {
     screens: [],
     diagnoses: [],
     configuration: null,
+    autoFillInitialised: false,
     autoFill: { uid: null, session: null },
     hideFloatingButton: false,
   });
@@ -123,7 +124,7 @@ const Script = () => {
     })();
   }, []);
 
-  if (loadingScript || loadingScreens) return <OverlayLoader display transparent />;
+  if (loadingScript || loadingScreens || state.refreshPage) return <OverlayLoader display transparent />;
 
   if (!state.script) return null;
 
@@ -139,8 +140,19 @@ const Script = () => {
         />
       </View>
 
-      {(state.script.type === 'discharge') && (
-        <InitialiseDischargeForm onClose={autoFill => setState({ autoFill })} />
+      {(state.script.type === 'discharge') && !state.autoFillInitialised && (
+        <InitialiseDischargeForm
+          onClose={autoFill => {
+            if (!autoFill.session) {
+              setState({ autoFillInitialised: true });
+            } else {
+              setState({ refreshPage: true, autoFillInitialised: true, });
+              setTimeout(() => {
+                setState({ autoFill, refreshPage: false, });
+              }, 0);
+            }
+          }}
+        />
       )}
     </Context.Provider>
   );
