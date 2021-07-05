@@ -91,9 +91,9 @@ const TypeForm = props => {
             if (autoFillObj) {
               autoFillVal = autoFillObj.values.value[0];
               if (autoFillVal) {
-                if ((autoFillObj.type === 'date') || (autoFillObj.type === 'datetime') || (autoFillObj.type === 'time')) {
-                  autoFillVal = new Date(autoFillVal);
-                }
+                // if ((autoFillObj.type === 'date') || (autoFillObj.type === 'datetime') || (autoFillObj.type === 'time')) {
+                //   autoFillVal = new Date(autoFillVal);
+                // }
                 if (autoFillObj.type === 'number') autoFillVal = `${autoFillVal}`;
               }
             }
