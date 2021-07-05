@@ -6,7 +6,7 @@ import { fieldsTypes } from '@/constants/screen';
 import { useContext } from '../../../Context';
 
 import Number from './_Number';
-import Date from './_Date';
+import _Date from './_Date';
 import _DateTime from './_DateTime';
 import Text from './Text';
 import DropDown from './_DropDown';
@@ -42,6 +42,7 @@ const TypeForm = props => {
 
   const [entry, setEntry] = React.useState({ values: defaultValue, ...value });
   const [entryCache, setEntryCache] = React.useState({ values: defaultValue, ...value });
+  const [formIsReady, setFormIsReady] = React.useState(false);
 
   const _onChange = (index, newVal) => setEntry(prevState => ({
     ...prevState,
@@ -89,6 +90,12 @@ const TypeForm = props => {
             let autoFillVal = null;
             if (autoFillObj) {
               autoFillVal = autoFillObj.values.value[0];
+              if (autoFillVal) {
+                if ((autoFillObj.type === 'date') || (autoFillObj.type === 'datetime') || (autoFillObj.type === 'time')) {
+                  autoFillVal = new Date(autoFillVal);
+                }
+                if (autoFillObj.type === 'number') autoFillVal = `${autoFillVal}`;
+              }
             }
             return { ...f, value: autoFillVal };
           }),
@@ -97,7 +104,10 @@ const TypeForm = props => {
       setEntry(_setEntry);
       setEntryCache(_setEntry);
     }
+    setFormIsReady(true);
   }, [canAutoFill, autoFill]);
+
+  if (!formIsReady) return null;
 
   return (
     <>
@@ -112,7 +122,7 @@ const TypeForm = props => {
                     Component = Number;
                     break;
                   case fieldsTypes.DATE:
-                    Component = Date;
+                    Component = _Date;
                     break;
                   case fieldsTypes.DATETIME:
                     Component = _DateTime;
