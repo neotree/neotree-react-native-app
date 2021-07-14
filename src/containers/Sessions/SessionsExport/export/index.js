@@ -167,11 +167,6 @@ export function exportToApi(opts = {}) {
               try {
                 await api.exportSession(s);
               } catch (e) { return reject(e); }
-
-              const id = sessions[i].id;
-
-              try { await api.updateSessions({ exported: true }, { where: { id, }, }); } catch (e) { return reject(e); }
-
               resolve();
             })();
           })));
