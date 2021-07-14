@@ -6,7 +6,7 @@ import { Alert } from 'react-native';
 import { useHistory } from 'react-router-native';
 import OverlayLoader from '@/components/OverlayLoader';
 
-export default function FloatingButton({ saveSession, diagnoses }) {
+export default function FinalActionButton({ saveSession, diagnoses }) {
   const history = useHistory();
   const [saving, setSaving] = React.useState(false);
 
@@ -52,7 +52,7 @@ export default function FloatingButton({ saveSession, diagnoses }) {
   );
 }
 
-FloatingButton.propTypes = {
+FinalActionButton.propTypes = {
   saveSession: PropTypes.func.isRequired,
   diagnoses: PropTypes.array.isRequired,
 };
