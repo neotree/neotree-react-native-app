@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const FormItem = ({ onChange, setCache, value, valueCache, children, conditionMet }) => {
+  const ref = React.useRef({ mounted: false });
+
   React.useEffect(() => {
     if (!conditionMet) {
       setCache(value);
@@ -10,6 +12,10 @@ const FormItem = ({ onChange, setCache, value, valueCache, children, conditionMe
       onChange(valueCache);
     }
   }, [conditionMet]);
+
+  React.useEffect(() => { ref.current.mounted = true; }, []);
+
+  if (!ref.current.mounted) return null;
 
   return (
     <>

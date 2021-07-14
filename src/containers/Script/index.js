@@ -19,11 +19,18 @@ const Script = () => {
     configuration: null,
     autoFill: { uid: null, session: null },
     hideFloatingButton: false,
+    autoFillInitialised: false,
   });
   const setState = s => _setState(prev => ({ ...prev, ...(typeof s === 'function' ? s(prev) : s) }));
 
   const [loadingScript, setLoadingScript] = React.useState(false);
   const [loadingScreens, setLoadingScreens] = React.useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const refreshPage = React.useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 50);
+  }, []);
 
   React.useEffect(() => {
     history.entries = [];
@@ -123,7 +130,7 @@ const Script = () => {
     })();
   }, []);
 
-  if (loadingScript || loadingScreens) return <OverlayLoader display transparent />;
+  if (loadingScript || loadingScreens || refreshing) return <OverlayLoader display transparent />;
 
   if (!state.script) return null;
 
@@ -139,8 +146,17 @@ const Script = () => {
         />
       </View>
 
-      {(state.script.type === 'discharge') && (
-        <InitialiseDischargeForm onClose={autoFill => setState({ autoFill })} />
+      {(state.script.type === 'discharge') && !state.autoFillInitialised && (
+        <InitialiseDischargeForm
+          onClose={autoFill => {
+            if (!autoFill.session) {
+              setState({ autoFillInitialised: true, });
+            } else {
+              refreshPage();
+              setState({ autoFill, autoFillInitialised: true, });
+            }
+          }}
+        />
       )}
     </Context.Provider>
   );

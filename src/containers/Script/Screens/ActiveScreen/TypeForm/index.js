@@ -79,7 +79,6 @@ const TypeForm = props => {
   }, [entry]);
 
   React.useEffect(() => {
-    // setEntry(null)
     if (canAutoFill && autoFill.session) {
       const _setEntry = prev => {
         return {
@@ -89,6 +88,12 @@ const TypeForm = props => {
             let autoFillVal = null;
             if (autoFillObj) {
               autoFillVal = autoFillObj.values.value[0];
+              if (autoFillVal) {
+                // if ((autoFillObj.type === 'date') || (autoFillObj.type === 'datetime') || (autoFillObj.type === 'time')) {
+                //   autoFillVal = new Date(autoFillVal);
+                // }
+                if (autoFillObj.type === 'number') autoFillVal = `${autoFillVal}`;
+              }
             }
             return { ...f, value: autoFillVal };
           }),
