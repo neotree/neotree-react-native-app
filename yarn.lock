@@ -3004,6 +3004,11 @@ adler-32@~1.2.0:
     exit-on-epipe "~1.0.1"
     printj "~1.1.0"
 
+advanced-react-native-sortable-list@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/advanced-react-native-sortable-list/-/advanced-react-native-sortable-list-1.1.1.tgz#3b001ce3b734214aef74c901bc22fd4aa60e9da0"
+  integrity sha512-9N8sJCr8OCi8r3RsKiB30X+mNt3vTV4MFR5gRZP1RlOEHUMRqSBKVHb+YAuFI5QPasMlnayXulGBkXeyHd/wAw==
+
 after@0.8.2:
   version "0.8.2"
   resolved "https://registry.npmjs.org/after/-/after-0.8.2.tgz"
@@ -11472,6 +11477,13 @@ react-native-screens@~2.15.2:
   version "2.15.2"
   resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-2.15.2.tgz#a449700e895b462937211ec72ed6f09652758f06"
   integrity sha512-CagNf2APXkVoRlF3Mugr264FbKbrBg9eXUkqhIPVeZB8EsdS8XPrnt99yj/pzmT+yJMBY0dGrjXT8+68WYh6YQ==
+
+react-native-sortable-list@^0.0.24:
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/react-native-sortable-list/-/react-native-sortable-list-0.0.24.tgz#b71e469fd34f77ec87d827a8a29b94f9e0197978"
+  integrity sha512-UomAYeTeTpkuPmcRcqFd3mzKioVaD/+yDAlsivKjBnQoV9aEBd2SNthoxaSsYWTwoadBOStthZj2vIXMMC3+XQ==
+  dependencies:
+    prop-types "^15.5.10"
 
 react-native-vector-icons@^7.0.0:
   version "7.1.0"

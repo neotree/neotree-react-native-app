@@ -25,16 +25,12 @@ export default function Diagnosis({
     { text: diagnosis.text3, image: diagnosis.image3 }
   ].filter(item => item.text || item.image);
 
-  // const instrunctions = [
-  //   { text: diagnosis.text1, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } },
-  //   { text: diagnosis.text2, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } },
-  //   { text: diagnosis.text3, image: { data: 'https://webeditor-dev.neotree.org/file/e0bc71a2-edf0-4759-a58c-b8753e15b6c8' } }
-  // ].filter(item => item.text || item.image);
-
   const onClose = () => {
     setDiagnosis(form);
     setOpenModal(false);
   };
+
+  const symptoms = diagnosis.symptoms || [];
 
   return (
     <>
@@ -84,7 +80,20 @@ export default function Diagnosis({
         <View style={{ flex: 1 }}>
           <ScrollView>
             <Content>
+              {!!symptoms.length && (
+                <>
+                  <Text style={[{ textTransform: 'uppercase' }]}>Symptoms</Text>
+                  {symptoms.map((s, i) => (
+                    <>
+                      <Text style={{ color: '#999' }}>{i + 1}. {s.name}</Text>
+                    </>
+                  ))}
+                  <View style={{ marginBottom: 10 }} />
+                </>
+              )}
+
               <H3 style={{ marginBottom: 10 }}>Do you agree with this diagnosis?</H3>
+
               <View style={{ flexDirection: 'row', marginBottom: 20 }}>
                 {[
                   {
