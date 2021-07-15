@@ -9,6 +9,7 @@ import colorStyles from '@/styles/colorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
 import SortableList from '@/components/SortableList';
 import Diagnosis from './Diagnosis';
+import AddDiagnosis from './AddDiagnosis';
 import setPageOptions from '../../../../setPageOptions';
 
 const Row = ({ data: item, setDiagnoses, options, index, diagnoses }) => {
@@ -135,45 +136,7 @@ const SelectDiagnoses = props => {
           </>
         )}
 
-        <View style={{ marginVertical: 10, flexDirection: 'row', alignItems: 'center' }}>
-          {showDiagnosisInput ? (
-            <>
-              <View style={{ flex: 1 }}>
-                <Input
-                  autoFocus
-                  value={form.name || ''}
-                  placeholder="Enter additional diagnosis"
-                  onChangeText={name => setForm({ name })}
-                />
-              </View>
-              <Button
-                block={false}
-                transparent
-                onPress={() => {
-                  if (form.name) setDiagnoses(d => [...d, { ...form, how_agree: 'Yes', priority: diagnoses.length }]);
-                  setForm(defaultDiagnosis);
-                  setShowDiagnosisInput(false);
-                }}
-              >
-                <MaterialIcons
-                  name="check"
-                  size={24}
-                  color="black"
-                  style={[colorStyles.primaryColor]}
-                />
-              </Button>
-            </>
-          ) : (
-            <Button
-              block={false}
-              onPress={() => {
-                setShowDiagnosisInput(true);
-              }}
-            >
-              <Text>Add diagnosis</Text>
-            </Button>
-          )}
-        </View>
+        <AddDiagnosis {...props} />
 
         {!!rejectedDiagnoses.length && (
           <>

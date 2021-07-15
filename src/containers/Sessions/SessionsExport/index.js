@@ -13,8 +13,8 @@ import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Divider from '@/components/Divider';
 import queryString from 'query-string';
-import { useSessionsContext } from '../SessionsContext';
 import { useAppContext } from '@/AppContext';
+import { useSessionsContext } from '../SessionsContext';
 import exportData from './export';
 
 const opts = [
