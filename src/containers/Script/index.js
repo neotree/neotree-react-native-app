@@ -13,6 +13,7 @@ const Script = () => {
   const location = useLocation();
 
   const [state, _setState] = React.useState({
+    pageOptions: null,
     script: null,
     screens: [],
     diagnoses: [],

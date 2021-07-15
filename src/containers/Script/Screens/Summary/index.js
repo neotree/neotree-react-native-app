@@ -1,21 +1,58 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Diagnoses from './Diagnoses';
-import Summary from './Summary';
+import Content from '@/components/Content';
+import { TouchableOpacity } from 'react-native';
+import Header from '@/components/Header';
+import colorStyles from '@/styles/colorStyles';
+import useBackButton from '@/utils/useBackButton';
+import { useHistory } from 'react-router-native';
+import { FormAndDiagnosesSummary, Print } from '@/components/Session';
+import { MaterialIcons } from '@expo/vector-icons';
+import Fab from '@/components/Fab';
 
-const SummaryPage = props => {
-  const { savedSession } = props;
-  const [diagnoses, setDiagnoses] = React.useState([]);
+const Wrapper = props => <Content {...props} />;
 
-  const _props = { ...props, diagnoses, setDiagnoses, };
+const Summary = ({ savedSession }) => {
+  const history = useHistory();
+  useBackButton(() => { history.push('/'); });
 
-  if (!savedSession) return <Diagnoses {..._props} />;
+  return (
+    <>
+      <Header
+        title="Summary"
+        leftActions={(
+          <>
+            <TouchableOpacity
+              style={{ padding: 10 }}
+              onPress={() => history.push('/')}
+            >
+              <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
+            </TouchableOpacity>
+          </>
+        )}
+        rightActions={(
+          <>
+            <Print session={savedSession} showConfidential />
+          </>
+        )}
+      />
 
-  return <Summary {..._props} />;
+      <FormAndDiagnosesSummary
+        session={savedSession}
+        Wrapper={Wrapper}
+        showConfidential
+      />
+
+      <Fab onPress={() => history.push('/')}>
+        <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="check" />
+      </Fab>
+    </>
+  );
 };
 
-SummaryPage.propTypes = {
-  savedSession: PropTypes.object,
+Summary.propTypes = {
+  savedSession: PropTypes.object.isRequired,
+  // clearSummary: PropTypes.func.isRequired
 };
 
-export default SummaryPage;
+export default Summary;

@@ -93,6 +93,12 @@ const Screens = props => {
     startTime,
   });
 
+  const getSuggestedDiagnoses = require('./_getSuggestedDiagnoses').default({
+    parseCondition,
+    evaluateCondition,
+    diagnoses,
+  });
+
   const saveSession = params => new Promise((resolve, reject) => {
     setDisplayLoader(true);
     const summary = createSessionSummary(params);
@@ -139,6 +145,7 @@ const Screens = props => {
       savedSession={savedSession}
       activeScreen={activeScreen}
       createSessionSummary={createSessionSummary}
+      getSuggestedDiagnoses={getSuggestedDiagnoses}
       setSummary={setSummary}
       getCachedEntry={getCachedEntry}
       clearSummary={() => setSummary(null)}

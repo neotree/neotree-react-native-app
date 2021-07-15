@@ -9,6 +9,7 @@ export const fieldsTypes = {
 };
 
 export const screenTypes = {
+  DIAGNOSIS: 'diagnosis',
   CHECKLIST: 'checklist',
   FORM: 'form',
   LIST: 'list',
