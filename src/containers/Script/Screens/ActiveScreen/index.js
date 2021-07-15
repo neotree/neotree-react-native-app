@@ -18,35 +18,42 @@ import TypeSingleSelect from './_TypeSingleSelect';
 import TypeTimer from './_TypeTimer';
 import TypeYesNo from './_TypeYesNo';
 import TypeManagement from './TypeManagement';
+import Diagnosis from './Diagnosis';
+import { useContext } from '../../Context';
 
 const ActiveScreen = props => {
+  const { state: { pageOptions } } = useContext();
   const { screen, setEntry, removeEntry, hidden, screensWithNoAutoFill, } = props;
 
   return (
     <>
       <Header {...props} />
 
-      {!!screen.data.actionText && (
-        <Content
-          style={{
-            alignItems: 'center',
-            flexDirection: 'row',
-          }}
-          containerProps={bgColorStyles.primaryBg}
-        >
-          <View style={{ flex: 1 }}>
-            <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
-              {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
-            </Text>
-          </View>
-          <View>
-            {!!screen.data.step && (
-              <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
-                {screen.data.step.replace(/^\s+|\s+$/g, '')}
-              </Text>
-            )}
-          </View>
-        </Content>
+      {pageOptions && pageOptions.hideActionText ? null : (
+        <>
+          {!!screen.data.actionText && (
+            <Content
+              style={{
+                alignItems: 'center',
+                flexDirection: 'row',
+              }}
+              containerProps={bgColorStyles.primaryBg}
+            >
+              <View style={{ flex: 1 }}>
+                <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
+                  {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
+                </Text>
+              </View>
+              <View>
+                {!!screen.data.step && (
+                  <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+                    {screen.data.step.replace(/^\s+|\s+$/g, '')}
+                  </Text>
+                )}
+              </View>
+            </Content>
+          )}
+        </>
       )}
 
       <ScrollView>
@@ -99,6 +106,9 @@ const ActiveScreen = props => {
               break;
             case 'list':
               Component = TypeList;
+              break;
+            case 'diagnosis':
+              Component = Diagnosis;
               break;
             default:
             // do nothing

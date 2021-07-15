@@ -1,18 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Icon, Button, Input, H3 } from 'native-base';
-import { TouchableOpacity, View, Alert } from 'react-native';
+import { Button, Input, H3 } from 'native-base';
+import { View, Alert } from 'react-native';
 import arrayMove from 'array-move';
-import Header from '@/components/Header';
 import Content from '@/components/Content';
 import Text from '@/components/Text';
 import colorStyles from '@/styles/colorStyles';
-import bgColorStyles from '@/styles/bgColorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
-import useBackButton from '@/utils/useBackButton';
 import SortableList from '@/components/SortableList';
 import Diagnosis from './Diagnosis';
-import FloatingButton from './FloatingButton';
+import setPageOptions from '../../../../setPageOptions';
 
 const Row = ({ data: item, setDiagnoses, options, index, diagnoses }) => {
   const renderCard = d => {
@@ -90,31 +87,14 @@ const Row = ({ data: item, setDiagnoses, options, index, diagnoses }) => {
 };
 
 const SelectDiagnoses = props => {
-  const { clearSummary, diagnoses, setDiagnoses, defaultForm } = props;
+  const { diagnoses, setDiagnoses, defaultDiagnosis, setSection } = props;
 
   const [showDiagnosisInput, setShowDiagnosisInput] = React.useState(false);
-  const [form, setForm] = React.useState(defaultForm);
+  const [form, setForm] = React.useState(defaultDiagnosis);
 
-  const goBack = () => {
-    Alert.alert(
-      'Discard changes',
-      'You will lose diagoses changes made. Are you sure?',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => {},
-          style: 'cancel'
-        },
-        {
-          text: 'Ok',
-          onPress: () => clearSummary()
-        }
-      ],
-      { cancelable: false }
-    );
-  };
-
-  useBackButton(() => { goBack(); });
+  setPageOptions({
+    onNext: next => diagnoses.length ? setSection('manage_selected') : next(),
+  }, [diagnoses]);
 
   const renderDiagnoses = (diagnoses, opts = {}) => {
     return (
@@ -142,34 +122,6 @@ const SelectDiagnoses = props => {
 
   return (
     <>
-      <Header
-        title="Suggested diagnoses"
-        leftActions={(
-          <>
-            <TouchableOpacity
-              style={{ padding: 10 }}
-              onPress={() => goBack()}
-            >
-              <Icon style={[colorStyles.primaryColor]} name="arrow-back" />
-            </TouchableOpacity>
-          </>
-        )}
-      />
-
-      <Content
-        style={{
-          alignItems: 'center',
-          flexDirection: 'row',
-        }}
-        containerProps={bgColorStyles.primaryBg}
-      >
-        <View style={{ flex: 1 }}>
-          <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
-            Please consider the following diagnoses
-          </Text>
-        </View>
-      </Content>
-
       <Content>
         {!diagnoses.length ? (
           <>
@@ -199,7 +151,7 @@ const SelectDiagnoses = props => {
                 transparent
                 onPress={() => {
                   if (form.name) setDiagnoses(d => [...d, { ...form, how_agree: 'Yes', priority: diagnoses.length }]);
-                  setForm(defaultForm);
+                  setForm(defaultDiagnosis);
                   setShowDiagnosisInput(false);
                 }}
               >
@@ -243,18 +195,15 @@ const SelectDiagnoses = props => {
           </>
         )}
       </Content>
-
-      {showDiagnosisInput ? null : <FloatingButton {...props} />}
     </>
   );
 };
 
 SelectDiagnoses.propTypes = {
-  summary: PropTypes.object.isRequired,
-  clearSummary: PropTypes.func.isRequired,
   diagnoses: PropTypes.array.isRequired,
   setDiagnoses: PropTypes.func.isRequired,
-  defaultForm: PropTypes.object.isRequired,
+  defaultDiagnosis: PropTypes.object.isRequired,
+  setSection: PropTypes.func.isRequired,
 };
 
 export default SelectDiagnoses;

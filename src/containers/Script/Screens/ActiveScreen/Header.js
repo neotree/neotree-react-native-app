@@ -10,6 +10,7 @@ import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
+import { useContext } from '../../Context';
 
 const ScreenHeader = ({
   screen,
@@ -20,6 +21,7 @@ const ScreenHeader = ({
   setActiveScreen,
   removeEntry,
 }) => {
+  const { state: { pageOptions } } = useContext();
   const history = useHistory();
 
   const cancelScript = () => {
@@ -47,10 +49,13 @@ const ScreenHeader = ({
   };
 
   const onBack = () => {
-    if (activeScreenIndex < 1) return cancelScript();
-    const prev = getScreen({ direction: 'back' });
-    removeEntry(screen.id);
-    setActiveScreen(prev ? prev.screen : null);
+    const goBack = () => {
+      if (activeScreenIndex < 1) return cancelScript();
+      const prev = getScreen({ direction: 'back' });
+      setActiveScreen(prev ? prev.screen : null);
+    };
+    if (pageOptions && pageOptions.onBack) return pageOptions.onBack(goBack);
+    goBack();
   };
 
   useBackButton(() => { onBack(); });
@@ -60,8 +65,8 @@ const ScreenHeader = ({
   return (
     <>
       <Header
-        title={screen.data.title}
-        subtitle={script.data.title}
+        title={(pageOptions && pageOptions.title) || screen.data.title}
+        subtitle={(pageOptions && pageOptions.subtitle) || script.data.title}
         leftActions={(
           <>
             <TouchableOpacity
