@@ -12,6 +12,7 @@ export default (sessions) => new Promise((resolve, reject) => {
         .filter(s => s.data.completed_at);
       if (sessions.length) {
         const postData = await convertSessionsToExportable(sessions);
+
         try {
           await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
             (async () => {

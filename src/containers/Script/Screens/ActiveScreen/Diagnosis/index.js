@@ -18,18 +18,19 @@ const defaultDiagnosis = {
 };
 
 const diagnosisToValue = d => ({
-  value: d.name,
   label: d.name,
   key: d.name,
-  type: 'diagnosis',
+  value: d.name,
   valueText: d.name,
-  data: d
+  type: 'diagnosis',
+  dataType: 'diagnosis',
+  diagnosis: d
 });
 
 const Diagnosis = props => {
   const { getSuggestedDiagnoses, setEntry, entry, } = props;
   const [screenIsReady, setScreenIsReady] = React.useState(false);
-  const [diagnoses, _setDiagnoses] = React.useState(entry ? entry.values.map(v => v.data) : []);
+  const [diagnoses, _setDiagnoses] = React.useState(entry ? entry.values.map(v => v.diagnosis) : []);
   const [section, setSection] = React.useState(entry && entry.values.length ? 'manage_selected' : 'select');
 
   const setDiagnoses = React.useCallback((diagnoses = []) => {
@@ -38,7 +39,24 @@ const Diagnosis = props => {
       _diagnoses = (typeof diagnoses === 'function') ? diagnoses(prev) : diagnoses;
       return _diagnoses;
     });
-    setEntry({ ...entry, values: _diagnoses.map(d => diagnosisToValue(d)), });
+    setEntry({
+      ...entry,
+      values: [
+        {
+          label: 'Primary Provisional Diagnosis',
+          key: 'Primary Provisional Diagnosis',
+          value: _diagnoses.filter(d => d.isPrimaryProvisionalDiagnosis)
+            .map(d => diagnosisToValue(d)),
+        },
+        {
+          label: 'Other Problems',
+          key: 'Other Problems',
+          value: _diagnoses
+            .filter(d => !d.isPrimaryProvisionalDiagnosis)
+            .map(d => diagnosisToValue(d)),
+        },
+      ].filter(({ value }) => value.length),
+    });
   }, [entry]);
 
   React.useEffect(() => {
