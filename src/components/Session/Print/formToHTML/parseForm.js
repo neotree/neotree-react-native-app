@@ -33,6 +33,12 @@ export default form => {
             values,
           }];
           break;
+        case 'diagnosis':
+          entries = [{
+            label: metadata.label,
+            values,
+          }];
+          break;
         case 'single_select':
           entries = [{
             label: metadata.label,

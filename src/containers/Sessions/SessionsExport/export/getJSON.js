@@ -5,11 +5,14 @@ export default function getJSON(opts = {}) {
   const { showConfidential, sessions: _sessions, application } = opts;
 
   const sessions = (_sessions || []).map((s) => {
-    const { script, app_mode, country, hospital_id } = s.data;
+    const { script, app_mode, country, hospital_id, started_at, completed_at, canceled_at } = s.data;
     const { entries, diagnoses } = convertSessionsToExportable([s], { showConfidential });
 
     const data = {
       uid: s.uid,
+      started_at,
+      completed_at,
+      canceled_at,
       appVersion: constants.APP_VERSION,
       scriptVersion: application.webeditor_info.version,
       scriptTitle: script.script_id,

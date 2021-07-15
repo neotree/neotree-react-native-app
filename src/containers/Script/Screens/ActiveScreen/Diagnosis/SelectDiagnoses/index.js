@@ -1,11 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input, H3 } from 'native-base';
+import { Button, H3 } from 'native-base';
 import { View, Alert } from 'react-native';
 import arrayMove from 'array-move';
 import Content from '@/components/Content';
 import Text from '@/components/Text';
-import colorStyles from '@/styles/colorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
 import SortableList from '@/components/SortableList';
 import Diagnosis from './Diagnosis';
@@ -89,9 +88,6 @@ const Row = ({ data: item, setDiagnoses, options, index, diagnoses }) => {
 
 const SelectDiagnoses = props => {
   const { diagnoses, setDiagnoses, defaultDiagnosis, setSection } = props;
-
-  const [showDiagnosisInput, setShowDiagnosisInput] = React.useState(false);
-  const [form, setForm] = React.useState(defaultDiagnosis);
 
   setPageOptions({
     onNext: next => diagnoses.length ? setSection('manage_selected') : next(),

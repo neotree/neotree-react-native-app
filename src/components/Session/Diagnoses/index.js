@@ -4,9 +4,13 @@ import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import ManagementCard from './ManagementCard';
 
-const Diagnoses = ({ Wrapper, session: { data: { diagnoses } } }) => {
+const Diagnoses = ({ Wrapper, session: { data: { form } } }) => {
   Wrapper = Wrapper || React.Fragment;
-  diagnoses = diagnoses || [];
+  const diagnosisScreenEntry = form.filter(e => e.screen.type === 'diagnosis')[0];
+  const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.reduce((acc, { value }) => [
+    ...acc,
+    ...value.map(v => v.diagnosis),
+  ], []);
 
   if (!diagnoses.length) return null;
 

@@ -10,7 +10,13 @@ export default function convertSessionsToExportable(_sessions = [], opts = {}) {
         const { showConfidential } = opts;
 
         const data = _sessions.map((s) => {
-          const { script, form, app_mode, diagnoses, country, hospital_id } = s.data;
+          const { script, form, app_mode, country, hospital_id, started_at, completed_at, canceled_at } = s.data;
+
+          const diagnosisScreenEntry = form.filter(e => e.screen.type === 'diagnosis')[0];
+          const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.reduce((acc, { value }) => [
+            ...acc,
+            ...value.map(v => v.diagnosis),
+          ], []);
 
           return {
             uid: s.uid,
@@ -18,6 +24,9 @@ export default function convertSessionsToExportable(_sessions = [], opts = {}) {
             scriptVersion: application.webeditor_info.version,
             scriptTitle: script.script_id,
             script: { id: script.script_id, title: script.data.title },
+            started_at,
+            completed_at,
+            canceled_at,
             app_mode,
             country,
             hospital_id,

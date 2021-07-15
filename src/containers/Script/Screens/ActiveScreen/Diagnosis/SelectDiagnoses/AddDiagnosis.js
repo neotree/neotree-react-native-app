@@ -27,6 +27,8 @@ export default function AddDiagnosis({
     .filter(item => item.exclusive)
     .filter(item => diagnoses.map(d => d.name).includes(item.label))[0];
 
+  if (!items.length) return null;
+
   return (
     <>
       <View style={{ flexDirection: 'row' }}>
@@ -107,7 +109,7 @@ export default function AddDiagnosis({
               })}
             </Content>
           </ScrollView>
-          
+
           <Fab onPress={() => onClose()}>
             <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
           </Fab>
