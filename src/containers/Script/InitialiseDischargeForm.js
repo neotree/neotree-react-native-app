@@ -10,11 +10,18 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
   const [openModal, setOpenModal] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [uid, setUID] = React.useState('');
+  const [data, setData] = React.useState({});
 
   const onClose = React.useCallback(() => {
+    setOpenModal(false);
+    _onClose({ uid, session: null, values: null, ...data });
+  }, [uid, data]);
+
+  const search = React.useCallback(() => {
     (async () => {
       let session = null;
       let autoFill = null;
+      setData(null);
       if (uid) {
         setLoading(true);
         try {
@@ -28,8 +35,7 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
         } catch (e) { /**/ console.log(e); }
       }
       setLoading(false);
-      setOpenModal(false);
-      _onClose({ uid, session, values: autoFill, });
+      setData({ uid, session, values: autoFill, });
     })();
   }, [uid]);
 
@@ -52,13 +58,36 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
         >
           <Content>
             <View style={{ backgroundColor: '#fff', padding: 10, }}>
-              <NeotreeIdInput
-                optional
-                label="Admission form UID"
-                value={uid}
-                onChange={uid => setUID(uid)}
-                disabled={loading}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <NeotreeIdInput
+                    optional
+                    label="Admission form UID"
+                    value={uid}
+                    onChange={uid => setUID(uid)}
+                    disabled={loading}
+                  />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 'auto', width: 60, justifyContent: 'center' }}>
+                  <Button
+                    transparent
+                    block={false}
+                    disabled={!uid || loading || (data && (data.uid === uid))}
+                    onPress={() => search()}
+                  >
+                    {loading ? <Spinner size={20} /> : <Icon name="search" />}
+                  </Button>
+                </View>
+              </View>
+
+              {!!data && (
+                <View style={{ margin: 10 }}>
+                  {(data && data.session) ?
+                    <Text style={{ color: '#16a085', textAlign: 'center' }}>{data.uid} - Match found</Text>
+                    :
+                    <Text style={{ color: '#b20008', textAlign: 'center' }}>{data ? `${data.uid} - ` : null}No match found</Text>}
+                </View>
+              )}
 
               <View
                 style={{
@@ -67,16 +96,15 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
                   marginTop: 10,
                 }}
               >
-
                 <Button
                   transparent
                   block={false}
                   disabled={loading}
-                  iconRight={loading}
+                  iconRight
                   onPress={() => onClose()}
                 >
                   <Text>Continue</Text>
-                  {loading ? <Spinner size={20} /> : <Icon name="arrow-forward" />}
+                  <Icon name="arrow-forward" />
                 </Button>
               </View>
             </View>
