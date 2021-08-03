@@ -22,6 +22,7 @@ const ScreenHeader = ({
   hideActionText,
   title,
   subtitle,
+  actionText,
 }) => {
   const { state: { pageOptions } } = useContext();
 
@@ -95,11 +96,11 @@ const ScreenHeader = ({
             >
               <View style={{ flex: 1 }}>
                 <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
-                  {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
+                  {actionText || screen.data.actionText.replace(/^\s+|\s+$/g, '')}
                 </Text>
               </View>
               <View>
-                {!!screen.data.step && (
+                {actionText ? null : !!screen.data.step && (
                   <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
                     {screen.data.step.replace(/^\s+|\s+$/g, '')}
                   </Text>
@@ -138,6 +139,7 @@ ScreenHeader.propTypes = {
   hideActionText: PropTypes.bool,
   title: PropTypes.string,
   subtitle: PropTypes.string,
+  actionText: PropTypes.string,
   headerProps: PropTypes.shape({
     title: PropTypes.string,
     subtitle: PropTypes.string,

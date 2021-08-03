@@ -1,11 +1,13 @@
 import React from 'react';
-import { Modal, View } from 'react-native';
+import { Alert, Modal, View } from 'react-native';
 import PropTypes from 'prop-types';
 import Fab from '@/components/Fab';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DiagnosisContext } from './Context';
 import SelectDiagnoses from './SelectDiagnoses';
 import ManageSelectedDiagnoses from './ManageSelectedDiagnoses';
+import FullDiagnosis from './FullDiagnosis';
+import { setPageOptions } from '../../../Context';
 
 const getDefaultDiagnosis = d => ({
   symptoms: [],
@@ -33,7 +35,9 @@ const diagnosisToEntryValue = d => ({
 });
 
 function Diagnosis(props) {
-  const { getSuggestedDiagnoses, entry, setEntry, goNext } = props;
+  setPageOptions({ hideFAB: true }, []);
+
+  const { getSuggestedDiagnoses, entry, setEntry, goNext, goBack, } = props;
   const [section, setSection] = React.useState('select');
   const [diagnosesEntry, setDiagnosesEntry] = React.useState({
     values: [],
@@ -47,23 +51,62 @@ function Diagnosis(props) {
   }, [entry]);
 
   const diagnoses = diagnosesEntry.values.map(v => v.diagnosis);
-  const acceptedDiagnoses = diagnoses.filter(d => d.how_agree);
+  const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');
 
-  const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState(acceptedDiagnoses.length ? acceptedDiagnoses.length - 1 : null);
-
-  const _goNext = () => {
-    if (section === 'select') {
-      if (!diagnoses.length) {
-        setEntry(diagnosesEntry);
-        setTimeout(() => goNext(), 10);
-      } else {
-        setSection('manage');
+  const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState(null);
+  
+  const _goBack = () => {
+    if (activeDiagnosisIndex === null) {
+      if (section === 'manage') setSection('select');
+      if (section === 'select') goBack();
+    } else {
+      const nextIndex = activeDiagnosisIndex - 1;
+      if (nextIndex < 0) {
+        setActiveDiagnosisIndex(null);
+      } else if (acceptedDiagnoses[nextIndex]) {
+        setActiveDiagnosisIndex(nextIndex);
       }
     }
+  };
 
-    if (section === 'manage') {
-      const activeIndex = activeDiagnosisIndex === null ? 0 : activeDiagnosisIndex + 1;
-      if (activeIndex < acceptedDiagnoses.length - 1) {
+  const _goNext = () => {
+    if (activeDiagnosisIndex === null) {
+      if (section === 'select') {
+        if (!diagnoses.length) {
+          Alert.alert(
+            'Warning',
+            'Continue without selecting diagnoses?',
+            [
+              {
+                text: 'No',
+                onPress: () => {},
+                style: 'cancel'
+              },
+              {
+                text: 'Yes',
+                onPress: () => {
+                  setEntry(diagnosesEntry);
+                  setTimeout(() => goNext(), 10);
+                },
+                style: 'cancel'
+              },
+            ]
+          );
+        } else {
+          setSection('manage');
+        }
+      }
+
+      if (section === 'manage') {
+        if (acceptedDiagnoses[0]) {
+          setActiveDiagnosisIndex(0);
+        } else {
+          goNext();
+        }
+      }
+    } else {
+      const activeIndex = activeDiagnosisIndex + 1;
+      if (activeIndex < acceptedDiagnoses.length) {
         setActiveDiagnosisIndex(activeIndex);
       } else {
         goNext();
@@ -79,13 +122,19 @@ function Diagnosis(props) {
         diagnosesEntry,
         setSection,
         setDiagnosesEntry,
+        diagnoses,
+        acceptedDiagnoses,
+        activeDiagnosisIndex,
+        setActiveDiagnosisIndex,
         getDefaultDiagnosis,
         diagnosisToEntryValue,
-        diagnoses,
-        setDiagnoses: (diagnoses = []) => setDiagnosesEntry({
-          values: diagnoses.map(d => diagnosisToEntryValue(d)),
-        }),
+        setDiagnoses: (diagnoses = []) => {
+          const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
+          setDiagnosesEntry({ values: entryValues, });
+          setEntry({ values: entryValues });
+        },
         goNext: _goNext,
+        goBack: _goBack,
       }}
     >
       <Modal
@@ -103,7 +152,7 @@ function Diagnosis(props) {
             backgroundColor: '#fff',
           }}
         >
-          {activeDiagnosisIndex !== null ? null : (
+          {activeDiagnosisIndex !== null ? <FullDiagnosis /> : (
             <>
               {section === 'select' && <SelectDiagnoses />}
               {section === 'manage' && <ManageSelectedDiagnoses />}
