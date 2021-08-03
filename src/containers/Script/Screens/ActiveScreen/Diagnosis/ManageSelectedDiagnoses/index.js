@@ -8,13 +8,13 @@ import Header from '../../Header';
 import { useDiagnosisContext } from '../Context';
 
 const ManageSelectedDiagnoses = () => {
-  const { props, setSection, diagnoses, setDiagnoses } = useDiagnosisContext();
+  const { props, diagnoses, setDiagnoses, goBack } = useDiagnosisContext();
 
   return (
     <>
       <Header
         {...props}
-        goBack={() => setSection('select')}
+        goBack={() => goBack()}
         hideActionText
         title="Manage diagnoses"
       />

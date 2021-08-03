@@ -12,6 +12,8 @@ export default function FloatingButton({
 }) {
   const { state: { pageOptions } } = useContext();
 
+  if (pageOptions && pageOptions.hideFAB) return null;
+
   return (
     <>
       {!!activeScreenEntry && (
