@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { TouchableOpacity, Modal, View, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { Button, Card, CardItem, Body } from 'native-base';
 import Header from '@/components/Header';
@@ -8,16 +9,13 @@ import colorStyles from '@/styles/colorStyles';
 import { MaterialIcons } from '@expo/vector-icons';
 import Fab from '@/components/Fab';
 import theme from '~/native-base-theme/variables/commonColor';
-import { useDiagnosisContext } from '../Context';
 
-export default function AddDiagnosis() {
-  const {
-    props: { screen },
-    setDiagnoses,
-    diagnoses,
-    getDefaultDiagnosis,
-  } = useDiagnosisContext();
-
+export default function AddDiagnosis({
+  screen,
+  setDiagnoses,
+  diagnoses,
+  defaultDiagnosis,
+}) {
   const [openModal, setOpenModal] = React.useState(false);
 
   const onClose = () => {
@@ -78,15 +76,14 @@ export default function AddDiagnosis() {
                     key={key}
                     onPress={() => {
                       if (exclusiveIsSelected && !isExclusive) return;
-                      setDiagnoses(isSelected ?
+                      setDiagnoses(diagnoses => isSelected ?
                         diagnoses.filter(d => d.name !== item.label)
                         :
                         [...diagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), {
-                          ...getDefaultDiagnosis({
-                            name: item.label,
-                            how_agree: 'Yes',
-                            priority: diagnoses.length,
-                          }),
+                          ...defaultDiagnosis,
+                          name: item.label,
+                          how_agree: 'Yes',
+                          priority: diagnoses.length,
                         }]);
                     }}
                   >
@@ -121,3 +118,10 @@ export default function AddDiagnosis() {
     </>
   );
 }
+
+AddDiagnosis.propTypes = {
+  screen: PropTypes.object.isRequired,
+  setDiagnoses: PropTypes.func.isRequired,
+  diagnoses: PropTypes.array.isRequired,
+  defaultDiagnosis: PropTypes.object.isRequired,
+};

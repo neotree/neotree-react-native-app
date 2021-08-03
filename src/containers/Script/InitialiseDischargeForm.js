@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Modal } from 'react-native';
+import { View, Modal, Alert } from 'react-native';
 import { Button, Text, Spinner, Icon } from 'native-base';
 import Content from '@/components/Content';
 import NeotreeIdInput from '@/components/NeotreeIdInput';
@@ -10,11 +10,33 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
   const [openModal, setOpenModal] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [uid, setUID] = React.useState('');
-  const [data, setData] = React.useState({});
+  const [data, setData] = React.useState(null);
 
   const onClose = React.useCallback(() => {
-    setOpenModal(false);
-    _onClose({ uid, session: null, values: null, ...data });
+    const close = () => {
+      setOpenModal(false);
+      _onClose({ uid, session: null, values: null, ...data });
+    };
+    if (!data) {
+      Alert.alert(
+        'Warning',
+        'Are you sure you want to continue without searching possible matches?',
+        [
+          {
+            text: 'No',
+            onPress: () => {},
+            style: 'cancel'
+          },
+          {
+            text: 'Yes',
+            onPress: () => close(),
+            style: 'cancel'
+          },
+        ]
+      );
+    } else {
+      close();
+    }
   }, [uid, data]);
 
   const search = React.useCallback(() => {

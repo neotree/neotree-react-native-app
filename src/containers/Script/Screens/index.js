@@ -1,11 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Alert } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
 import { useHistory, useLocation } from 'react-router-native';
 import * as api from '@/api';
 import { useAppContext } from '@/AppContext';
 import ActiveScreen from './ActiveScreen';
 import Summary from './Summary';
+import { useContext } from '../Context';
 
 const Screens = props => {
   const { setState: setAppState, state: appState } = useAppContext();
@@ -113,9 +115,99 @@ const Screens = props => {
     })();
   });
 
+  const { state: { pageOptions } } = useContext();
+
+  const cancelScript = () => {
+    Alert.alert(
+      'Cancel script',
+      'Are you sure you want to cancel script?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel'
+        },
+        {
+          text: 'Ok',
+          onPress: () => {
+            (async () => {
+              await saveSession({ canceled: true, });
+              history.push('/');
+            })();
+          }
+        }
+      ],
+      { cancelable: false }
+    );
+  };
+
+  const goBack = () => {
+    const goBack = () => {
+      if (activeScreenIndex < 1) return cancelScript();
+      const prev = getScreen({ direction: 'back' });
+      setActiveScreen(prev ? prev.screen : null);
+    };
+    if (pageOptions && pageOptions.onBack) return pageOptions.onBack(goBack);
+    goBack();
+  };
+
+  const goNext = async () => {
+    if (summary) return history.push('/');
+
+    setDisplayLoader(true);
+    const lastScreen = getLastScreen();
+
+    if (activeScreen.id === lastScreen.id) {
+      setDisplayLoader(false);
+      try {
+        const summary = await saveSession({ completed: true }); // createSessionSummary({ completed: true });
+        setSummary(summary);
+      } catch (e) {
+        Alert.alert(
+          'ERROR',
+          'Failed to save session',
+          [
+            {
+              text: 'Close',
+              onPress: () => {},
+              style: 'cancel'
+            },
+            {
+              text: 'Exit',
+              onPress: () => history.push('/'),
+              style: 'cancel'
+            },
+          ]
+        );
+      }
+    } else {
+      const next = getScreen({ direction: 'next' });
+      const nextScreen = next ? next.screen : null;
+      if (!nextScreen) {
+        return Alert.alert(
+          'ERROR',
+          'Failed to load next screen. Screen condition might be invalid',
+          [
+            {
+              text: 'Exit',
+              onPress: () => history.push('/'),
+              style: 'cancel'
+            },
+          ]
+        );
+      }
+      setEntry(getCachedEntry(nextScreen));
+      setActiveScreen(nextScreen);
+    }
+    setDisplayLoader(false);
+  };
+
   const renderComponent = Component => (
     <Component
       {...props}
+      goBack={goBack}
+      goNext={goNext}
+      cancelScript={cancelScript}
       screensWithNoAutoFill={screensWithNoAutoFill}
       setScreensWithNoAutoFill={setScreensWithNoAutoFill}
       getLastScreen={getLastScreen}

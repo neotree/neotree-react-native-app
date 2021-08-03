@@ -1,12 +1,13 @@
 import React from 'react';
+import { Modal, View } from 'react-native';
 import PropTypes from 'prop-types';
-import { View } from 'react-native';
-import { H3 } from 'native-base';
-import OverlayLoader from '@/components/OverlayLoader';
+import Fab from '@/components/Fab';
+import { MaterialIcons } from '@expo/vector-icons';
+import { DiagnosisContext } from './Context';
 import SelectDiagnoses from './SelectDiagnoses';
 import ManageSelectedDiagnoses from './ManageSelectedDiagnoses';
 
-const defaultDiagnosis = {
+const getDefaultDiagnosis = d => ({
   symptoms: [],
   name: '',
   suggested: false,
@@ -15,86 +16,117 @@ const defaultDiagnosis = {
   hcw_follow_instructions: null,
   hcw_reason_given: null,
   isPrimaryProvisionalDiagnosis: false,
-};
+  ...d,
+});
 
-const diagnosisToValue = d => ({
+const diagnosisToEntryValue = d => ({
   label: d.name,
   key: d.name,
   value: d.name,
   valueText: d.name,
   type: 'diagnosis',
   dataType: 'diagnosis',
-  diagnosis: d
+  diagnosis: {
+    ...getDefaultDiagnosis(),
+    ...d,
+  },
 });
 
-const Diagnosis = props => {
-  const { getSuggestedDiagnoses, setEntry, entry, } = props;
-  const [screenIsReady, setScreenIsReady] = React.useState(false);
-  const [diagnoses, _setDiagnoses] = React.useState(entry ? entry.values.map(v => v.diagnosis) : []);
-  const [section, setSection] = React.useState(entry && entry.values.length ? 'manage_selected' : 'select');
-
-  const setDiagnoses = React.useCallback((diagnoses = []) => {
-    let _diagnoses = [];
-    _setDiagnoses(prev => {
-      _diagnoses = (typeof diagnoses === 'function') ? diagnoses(prev) : diagnoses;
-      return _diagnoses;
-    });
-    setEntry({
-      ...entry,
-      values: [
-        {
-          label: 'Primary Provisional Diagnosis',
-          key: 'Primary Provisional Diagnosis',
-          value: _diagnoses.filter(d => d.isPrimaryProvisionalDiagnosis)
-            .map(d => diagnosisToValue(d)),
-        },
-        {
-          label: 'Other Problems',
-          key: 'Other Problems',
-          value: _diagnoses
-            .filter(d => !d.isPrimaryProvisionalDiagnosis)
-            .map(d => diagnosisToValue(d)),
-        },
-      ].filter(({ value }) => value.length),
-    });
-  }, [entry]);
+function Diagnosis(props) {
+  const { getSuggestedDiagnoses, entry, setEntry, goNext } = props;
+  const [section, setSection] = React.useState('select');
+  const [diagnosesEntry, setDiagnosesEntry] = React.useState({
+    values: [],
+  });
 
   React.useEffect(() => {
-    if (!entry) {
-      const diagnoses = getSuggestedDiagnoses();
-      setDiagnoses(diagnoses.map(d => ({
-        ...defaultDiagnosis,
-        ...d,
-      })));
-    }
-    setScreenIsReady(true);
+    setDiagnosesEntry({
+      values: getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d)),
+      ...entry
+    });
   }, [entry]);
 
-  if (!screenIsReady) return <OverlayLoader display transparent />;
+  const diagnoses = diagnosesEntry.values.map(v => v.diagnosis);
+  const acceptedDiagnoses = diagnoses.filter(d => d.how_agree);
 
-  const renderComponent = Component => (
-    <Component
-      {...props}
-      diagnoses={diagnoses}
-      setDiagnoses={setDiagnoses}
-      defaultDiagnosis={defaultDiagnosis}
-      setSection={setSection}
-      diagnosisToValue={diagnosisToValue}
-    />
-  );
+  const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState(acceptedDiagnoses.length ? acceptedDiagnoses.length - 1 : null);
+
+  const _goNext = () => {
+    if (section === 'select') {
+      if (!diagnoses.length) {
+        setEntry(diagnosesEntry);
+        setTimeout(() => goNext(), 10);
+      } else {
+        setSection('manage');
+      }
+    }
+
+    if (section === 'manage') {
+      const activeIndex = activeDiagnosisIndex === null ? 0 : activeDiagnosisIndex + 1;
+      if (activeIndex < acceptedDiagnoses.length - 1) {
+        setActiveDiagnosisIndex(activeIndex);
+      } else {
+        goNext();
+      }
+    }
+  };
 
   return (
-    <View>
-      {section === 'select' && renderComponent(SelectDiagnoses)}
-      {section === 'manage_selected' && renderComponent(ManageSelectedDiagnoses)}
-    </View>
+    <DiagnosisContext.Provider
+      value={{
+        props,
+        section,
+        diagnosesEntry,
+        setSection,
+        setDiagnosesEntry,
+        getDefaultDiagnosis,
+        diagnosisToEntryValue,
+        diagnoses,
+        setDiagnoses: (diagnoses = []) => setDiagnosesEntry({
+          values: diagnoses.map(d => diagnosisToEntryValue(d)),
+        }),
+        goNext: _goNext,
+      }}
+    >
+      <Modal
+        visible
+        transparent
+        onRequestClose={() => {
+          if (section === 'select') {
+            props.goBack();
+          }
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: '#fff',
+          }}
+        >
+          {activeDiagnosisIndex !== null ? null : (
+            <>
+              {section === 'select' && <SelectDiagnoses />}
+              {section === 'manage' && <ManageSelectedDiagnoses />}
+            </>
+          )}
+
+          <Fab
+            onPress={() => _goNext()}
+          >
+            <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
+          </Fab>
+        </View>
+      </Modal>
+    </DiagnosisContext.Provider>
   );
-};
+}
 
 Diagnosis.propTypes = {
+  goBack: PropTypes.func.isRequired,
+  getSuggestedDiagnoses: PropTypes.func.isRequired,
   entry: PropTypes.object,
   setEntry: PropTypes.func.isRequired,
-  getSuggestedDiagnoses: PropTypes.func.isRequired,
+  goNext: PropTypes.func.isRequired,
 };
 
 export default Diagnosis;
