@@ -26,7 +26,7 @@ export default function Diagnosis({
   ].filter(item => item.text || item.image);
 
   const onClose = () => {
-    setDiagnosis({ ...diagnosis, ...form });
+    setDiagnosis(form);
     setOpenModal(false);
   };
 
@@ -34,25 +34,14 @@ export default function Diagnosis({
 
   return (
     <>
-      {/*<TouchableOpacity*/}
-      {/*  onPress={() => {*/}
-      {/*    setForm(diagnosis);*/}
-      {/*    setOpenModal(true);*/}
-      {/*  }}*/}
-      {/*  disabled={false}*/}
-      {/*>*/}
-      {/*  {children}*/}
-      {/*</TouchableOpacity>*/}
-
-      <Button
-        transparent
+      <TouchableOpacity
         onPress={() => {
           setForm(diagnosis);
           setOpenModal(true);
         }}
       >
-        <MaterialIcons size={24} color="#999" name="more-vert" />
-      </Button>
+        {children}
+      </TouchableOpacity>
 
       <Modal
         visible={openModal}

@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Divider from '@/components/Divider';
-import { ScrollView, View, } from 'react-native';
-import bgColorStyles from '@/styles/bgColorStyles';
+import { ScrollView, } from 'react-native';
 import colorStyles from '@/styles/colorStyles';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
@@ -19,42 +18,13 @@ import TypeTimer from './_TypeTimer';
 import TypeYesNo from './_TypeYesNo';
 import TypeManagement from './TypeManagement';
 import Diagnosis from './Diagnosis';
-import { useContext } from '../../Context';
 
 const ActiveScreen = props => {
-  const { state: { pageOptions } } = useContext();
   const { screen, setEntry, removeEntry, hidden, screensWithNoAutoFill, } = props;
 
   return (
     <>
       <Header {...props} />
-
-      {pageOptions && pageOptions.hideActionText ? null : (
-        <>
-          {!!screen.data.actionText && (
-            <Content
-              style={{
-                alignItems: 'center',
-                flexDirection: 'row',
-              }}
-              containerProps={bgColorStyles.primaryBg}
-            >
-              <View style={{ flex: 1 }}>
-                <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
-                  {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
-                </Text>
-              </View>
-              <View>
-                {!!screen.data.step && (
-                  <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
-                    {screen.data.step.replace(/^\s+|\s+$/g, '')}
-                  </Text>
-                )}
-              </View>
-            </Content>
-          )}
-        </>
-      )}
 
       <ScrollView>
         {!!screen.data.contentText && (

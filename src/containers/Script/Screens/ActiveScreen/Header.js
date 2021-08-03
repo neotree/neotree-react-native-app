@@ -1,77 +1,44 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Alert, Platform, TouchableOpacity } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ActionSheet } from 'native-base';
-import { useHistory, } from 'react-router-native';
 import useBackButton from '@/utils/useBackButton';
 import Modal from '@/components/Modal';
 import Text from '@/components/Text';
 import Divider from '@/components/Divider';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
+import bgColorStyles from '@/styles/bgColorStyles';
+import Content from '@/components/Content';
 import { useContext } from '../../Context';
 
 const ScreenHeader = ({
   screen,
-  activeScreenIndex,
   script,
-  getScreen,
-  saveSession,
-  setActiveScreen,
-  removeEntry,
+  goBack,
+  cancelScript,
+  headerProps,
+  hideActionText,
+  title,
+  subtitle,
 }) => {
   const { state: { pageOptions } } = useContext();
-  const history = useHistory();
 
-  const cancelScript = () => {
-    Alert.alert(
-      'Cancel script',
-      'Are you sure you want to cancel script?',
-      [
-        {
-          text: 'Cancel',
-          onPress: () => {},
-          style: 'cancel'
-        },
-        {
-          text: 'Ok',
-          onPress: () => {
-            (async () => {
-              await saveSession({ canceled: true, });
-              history.push('/');
-            })();
-          }
-        }
-      ],
-      { cancelable: false }
-    );
-  };
-
-  const onBack = () => {
-    const goBack = () => {
-      if (activeScreenIndex < 1) return cancelScript();
-      const prev = getScreen({ direction: 'back' });
-      setActiveScreen(prev ? prev.screen : null);
-    };
-    if (pageOptions && pageOptions.onBack) return pageOptions.onBack(goBack);
-    goBack();
-  };
-
-  useBackButton(() => { onBack(); });
+  useBackButton(() => { goBack(); });
 
   const [openInfoModal, setOpenInfoModal] = React.useState(false);
 
   return (
     <>
       <Header
-        title={(pageOptions && pageOptions.title) || screen.data.title}
-        subtitle={(pageOptions && pageOptions.subtitle) || script.data.title}
+        title={title || (pageOptions && pageOptions.title) || screen.data.title}
+        subtitle={subtitle || (pageOptions && pageOptions.subtitle) || script.data.title}
         leftActions={(
           <>
             <TouchableOpacity
               style={{ padding: 10 }}
-              onPress={() => onBack()}
+              onPress={() => goBack()}
             >
               <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
             </TouchableOpacity>
@@ -113,7 +80,35 @@ const ScreenHeader = ({
             </TouchableOpacity>
           </>
         )}
+        {...headerProps}
       />
+
+      {hideActionText || (pageOptions && pageOptions.hideActionText) ? null : (
+        <>
+          {!!screen.data.actionText && (
+            <Content
+              style={{
+                alignItems: 'center',
+                flexDirection: 'row',
+              }}
+              containerProps={bgColorStyles.primaryBg}
+            >
+              <View style={{ flex: 1 }}>
+                <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
+                  {screen.data.actionText.replace(/^\s+|\s+$/g, '')}
+                </Text>
+              </View>
+              <View>
+                {!!screen.data.step && (
+                  <Text variant="caption" style={[colorStyles.primaryColorContrastText]}>
+                    {screen.data.step.replace(/^\s+|\s+$/g, '')}
+                  </Text>
+                )}
+              </View>
+            </Content>
+          )}
+        </>
+      )}
 
       {!!screen && (
         <Modal
@@ -137,12 +132,18 @@ const ScreenHeader = ({
 
 ScreenHeader.propTypes = {
   screen: PropTypes.object.isRequired,
-  activeScreenIndex: PropTypes.number.isRequired,
   script: PropTypes.object.isRequired,
-  getScreen: PropTypes.func.isRequired,
-  saveSession: PropTypes.func.isRequired,
-  setActiveScreen: PropTypes.func.isRequired,
-  removeEntry: PropTypes.func.isRequired,
+  goBack: PropTypes.func.isRequired,
+  cancelScript: PropTypes.func.isRequired,
+  hideActionText: PropTypes.bool,
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
+  headerProps: PropTypes.shape({
+    title: PropTypes.string,
+    subtitle: PropTypes.string,
+    leftActions: PropTypes.node,
+    rightActions: PropTypes.node,
+  }),
 };
 
 export default ScreenHeader;
