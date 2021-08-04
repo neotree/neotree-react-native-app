@@ -160,6 +160,7 @@ const TypeForm = props => {
                       field={f}
                       conditionMet={conditionMet}
                       value={value}
+                      valueObject={entry.values[i]}
                       onChange={onChange}
                       form={entry}
                     />
