@@ -9,6 +9,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import bgColorStyles from '@/styles/bgColorStyles';
 import Image from '@/components/Image';
 import Fab from '@/components/Fab';
+import theme from '~/native-base-theme/variables/commonColor';
 
 export default function Diagnosis({
   children,
@@ -51,7 +52,7 @@ export default function Diagnosis({
           setOpenModal(true);
         }}
       >
-        <MaterialIcons size={24} color="#999" name="more-vert" />
+        <MaterialIcons size={24} color={theme.brandPrimary} name="thumb-up" />
       </Button>
 
       <Modal

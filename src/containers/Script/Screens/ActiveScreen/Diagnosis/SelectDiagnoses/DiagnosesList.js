@@ -64,6 +64,16 @@ function DiagnosesList({ filter, title, subtitle, sortable }) {
 
                 <View style={{ marginLeft: 'auto' }} />
 
+                <Diagnosis
+                  setDiagnosis={s => setDiagnoses(diagnoses.map((d, i) => {
+                    if (i !== index) return d;
+                    return { ...d, ...s };
+                  }))}
+                  diagnosis={item}
+                />
+                
+                <View style={{ marginHorizontal: 5 }} />
+
                 <Button
                   transparent
                   onPress={() => {
@@ -88,16 +98,6 @@ function DiagnosesList({ filter, title, subtitle, sortable }) {
                 >
                   <MaterialIcons size={24} color="#999" name="delete" />
                 </Button>
-
-                <View style={{ marginHorizontal: 5 }} />
-
-                <Diagnosis
-                  setDiagnosis={s => setDiagnoses(diagnoses.map((d, i) => {
-                    if (i !== index) return d;
-                    return { ...d, ...s };
-                  }))}
-                  diagnosis={item}
-                />
 
                 {/*{sortable && (*/}
                 {/*  <>*/}
