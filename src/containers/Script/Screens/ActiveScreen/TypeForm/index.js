@@ -43,13 +43,15 @@ const TypeForm = props => {
   const [entry, setEntry] = React.useState({ values: defaultValue, ...value });
   const [entryCache, setEntryCache] = React.useState({ values: defaultValue, ...value });
 
-  const _onChange = (index, newVal) => setEntry(prevState => ({
-    ...prevState,
-    values: prevState.values.map((v, i) => {
-      if (i === index) return { ...v, ...newVal };
-      return v;
-    })
-  }));
+  const _onChange = (index, newVal) => {
+    setEntry(prevState => ({
+      ...prevState,
+      values: prevState.values.map((v, i) => {
+        if (i === index) return { ...v, ...newVal };
+        return v;
+      })
+    }));
+  };
 
   const setCache = (index, newVal) => setEntryCache(prevState => ({
     ...prevState,
@@ -141,7 +143,9 @@ const TypeForm = props => {
                 const conditionMet = evaluateFieldCondition(f);
 
                 const onChange = (v, params = {}) => {
-                  _onChange(i, { value: v, ...params });
+                  const value = { value: v, ...params };
+                  _onChange(i, value);
+                  setCache(i, value);
                 };
 
                 const value = entry.values[i].value;
