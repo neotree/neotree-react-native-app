@@ -7,7 +7,7 @@
       "android",
       "web"
     ],
-    "version": "0.4.74",
+    "version": "0.4.75",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
