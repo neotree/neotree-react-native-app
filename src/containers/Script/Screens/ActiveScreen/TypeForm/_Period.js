@@ -18,25 +18,31 @@ const formatDate = d => {
 };
 
 const _Period = ({ form, field, onChange: _onChange, conditionMet, valueObject, }) => {
-  const onChange = (d, error) => {
-    _onChange(d, {
-      error,
-      value: d ? ((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60)) : null,
-      valueText: d ? formatDate(d) : null,
-      exportValue: d ? formatDate(d) : null,
-    });
-  };
-
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [dateTimePickerMode, setDateTimePickerMode] = React.useState('date');
   const [date, setDate] = React.useState(null);
   const [dateNoTime, setDateNoTime] = React.useState(null);
+  const [calcFrom, setCalcFrom] = React.useState(null);
 
-  const calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
+  const onChange = React.useCallback((d) => {
+    const value = d ? (new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60) : null;
+    _onChange(value, {
+      error: null,
+      // value,
+      valueText: d ? formatDate(d) : null,
+      exportValue: d ? formatDate(d) : null,
+    });
+  }, []);
 
-  React.useEffect(() => { if (calcFrom) onChange(calcFrom.value); }, [calcFrom]);
+  React.useEffect(() => {
+    const _calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
+    if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
+      setCalcFrom(_calcFrom);
+      onChange(_calcFrom.value);
+    }
+  }, [form, calcFrom]);
 
-  React.useEffect(() => { if (!calcFrom && date) onChange(date); }, [calcFrom, date]);
+  React.useEffect(() => { onChange(date); }, [date]);
 
   return (
     <>
