@@ -16,13 +16,12 @@ export const countSessionsWithUidPrefix = (body = {}, reqOpts = {}) => {
   });
 };
 
-export const getExportedSessionByUID = uid => new Promise((resolve, reject) => {
+export const getExportedSessionsByUID = uid => new Promise((resolve, reject) => {
   (async () => {
     if (!uid) return reject(new Error('UID is required'));
     try {
-      const rows = await dbTransaction('select * from exports where uid=?;', [uid]);
-      const session = rows[0] || null;
-      resolve(!session ? null : { ...session, data: JSON.parse(session.data || '{}') });
+      const sessions = await dbTransaction('select * from exports where uid=?;', [uid]);
+      resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
     } catch (e) { console.log(e); reject(e); }
   })();
 });
