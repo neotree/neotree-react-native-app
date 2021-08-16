@@ -5,7 +5,7 @@ import config from '@/constants/config';
 import { getLocation } from '../_location';
 
 const makeApiCall = (endpoint, params = {}) => new Promise((resolve, reject) => {
-  const { country: _country, body, ...opts } = params;
+  const { country: _country, body, parseResponse, ...opts } = params;
 
   let url = '';
   let country = _country;
@@ -41,7 +41,8 @@ const makeApiCall = (endpoint, params = {}) => new Promise((resolve, reject) => 
       console.log(`makeApiCall [${reqOpts.method}]: ${url}`);
 
       const res = await fetch(url, reqOpts);
-      const text = await res.text();
+      const text = await parseResponse ? parseResponse(res) : res.text();
+
       if (res.status === 200) {
         resolve(text);
       } else {

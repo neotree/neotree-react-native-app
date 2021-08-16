@@ -19,8 +19,17 @@ export const countSessionsWithUidPrefix = (body = {}, reqOpts = {}) => {
 export const getExportedSessionsByUID = uid => new Promise((resolve, reject) => {
   (async () => {
     if (!uid) return reject(new Error('UID is required'));
+
     try {
-      const sessions = await dbTransaction('select * from exports where uid=?;', [uid]);
+      const { sessions } = await makeApiCall.get('/find-sessions-by-uid', {
+        body: { uid },
+        parseResponse: res => res.json(),
+      });
+      return resolve(sessions);
+    } catch (e) { /**/ }
+
+    try {
+      const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);
       resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
     } catch (e) { console.log(e); reject(e); }
   })();

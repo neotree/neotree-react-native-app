@@ -71,7 +71,7 @@ function DiagnosesList({ filter, title, subtitle, sortable }) {
                   }))}
                   diagnosis={item}
                 />
-                
+
                 <View style={{ marginHorizontal: 5 }} />
 
                 <Button
