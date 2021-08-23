@@ -10,7 +10,8 @@ const formatDate = d => {
   if (!d) return '';
   const now = moment();
   const days = now.diff(new Date(d), 'days');
-  const hrs = now.diff(new Date(d), 'hours') - (days * 24);
+  let hrs = now.diff(new Date(d), 'hours') - (days * 24);
+  if (hrs < 1) hrs = 1;
   const v = [];
   if (days) v.push(`${days} day(s)`);
   v.push(hrs ? `${hrs} hour(s)` : days ? '' : moment(d).fromNow().replace(' ago', ''));
@@ -25,7 +26,7 @@ const _Period = ({ form, field, onChange: _onChange, conditionMet, valueObject, 
   const [calcFrom, setCalcFrom] = React.useState(null);
 
   const onChange = React.useCallback((d) => {
-    const value = d ? (new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60) : null;
+    const value = d ? Math.ceil((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60)) : null;
     _onChange(value, {
       error: null,
       // value,

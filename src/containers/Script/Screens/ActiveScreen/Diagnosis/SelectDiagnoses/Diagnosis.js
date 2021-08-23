@@ -52,7 +52,12 @@ export default function Diagnosis({
           setOpenModal(true);
         }}
       >
-        <MaterialIcons size={24} color={theme.brandPrimary} name="thumb-up" />
+        <MaterialIcons
+          size={24}
+          color="#999"
+          // color={theme.brandPrimary}
+          name="thumb-up"
+        />
       </Button>
 
       <Modal
@@ -69,7 +74,12 @@ export default function Diagnosis({
                 style={{ padding: 10 }}
                 onPress={() => onClose()}
               >
-                <MaterialIcons size={24} color="black" style={[colorStyles.primaryColor]} name="arrow-back" />
+                <MaterialIcons
+                  size={24}
+                  color="black"
+                  style={[colorStyles.primaryColor]}
+                  name="arrow-back"
+                />
               </TouchableOpacity>
             </>
             )}
