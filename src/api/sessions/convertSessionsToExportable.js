@@ -13,10 +13,7 @@ export default function convertSessionsToExportable(_sessions = [], opts = {}) {
           const { script, form, app_mode, country, hospital_id, started_at, completed_at, canceled_at } = s.data;
 
           const diagnosisScreenEntry = form.filter(e => e.screen.type === 'diagnosis')[0];
-          const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.reduce((acc, { value }) => [
-            ...acc,
-            ...value.map(v => v.diagnosis),
-          ], []);
+          const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.map(v => v.diagnosis);
 
           return {
             uid: s.uid,
