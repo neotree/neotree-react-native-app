@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "neotree-app",
-    "slug": "neotree-app",
-    "version": "1.0.0",
+    "name": "Neotree",
+    "slug": "neotree",
+    "version": "0.4.75",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -19,16 +19,20 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "org.neotree.neotreeapp",
+      "buildNumber": "1.0.0"
     },
     "android": {
+      "package": "org.neotree.neotreeapp",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     }
   }
 }
