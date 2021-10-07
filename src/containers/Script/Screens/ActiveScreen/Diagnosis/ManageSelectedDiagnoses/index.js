@@ -29,6 +29,8 @@ const ManageSelectedDiagnoses = () => {
             }));
             const selected = d.isPrimaryProvisionalDiagnosis;
 
+            if (d.how_agree === 'No') return null;
+
             return (
               <React.Fragment key={key}>
                 <Card>

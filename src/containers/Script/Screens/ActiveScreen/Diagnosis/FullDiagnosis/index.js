@@ -33,6 +33,7 @@ export default function FullDiagnosis() {
       />
       <ScrollView>
         <Content>
+          {!!diagnosis.expressionMeaning && <Text style={{ marginBottom: 20 }}>{diagnosis.expressionMeaning}</Text>}
           {data.map((item, i) => {
             const key = `${i}`;
             return <ManagementCard key={key} {...item} />;
