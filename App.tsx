@@ -7,6 +7,7 @@ import useColorScheme from '@/hooks/useColorScheme';
 import { Navigation, LoginScreen } from '@/screens';
 import { AppContext } from '@/AppContext';
 import { useApi } from '@/hooks/useApi';
+import { TouchableOpacity, Text } from 'react-native';
 
 const theme = createTheme({});
 const darkTheme = createTheme({
@@ -25,7 +26,7 @@ export default function App() {
       initApi
     ] = useApi();
 
-    if (!isLoadingComplete) return null;
+    if (initialisingApi || !isLoadingComplete) return null;
 
     return (
         <SafeAreaProvider style={{ flex: 1 }}>
@@ -43,6 +44,9 @@ export default function App() {
                         return <Navigation colorScheme={colorScheme} />;
                     })()}
                 </ThemeProvider>
+                <TouchableOpacity>
+                    <Text onPress={() => initApi()}>Hello</Text>
+                </TouchableOpacity>
                 <StatusBar />
             </AppContext.Provider>
         </SafeAreaProvider>

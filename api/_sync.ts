@@ -7,7 +7,12 @@ import { deleteScreens, saveScreens } from './_screens';
 import { deleteDiagnoses, saveDiagnoses } from './_diagnoses';
 import { deleteConfigKeys, saveConfigKeys } from './_configKeys';
 
-export default function sync(opts = {}) {
+export type SyncOptions = {
+  force?: boolean;
+  resetData?: boolean;
+};
+
+export function sync(opts: SyncOptions = {}) {
   const { force: forceSync, resetData } = opts;
 
   return new Promise((resolve, reject) => {

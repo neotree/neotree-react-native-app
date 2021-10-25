@@ -3,10 +3,11 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { dbTransaction } from './db';
 import * as webeditorApi from './webeditor';
+import * as types from './types';
 
 const APP_VERSION = Constants.manifest.version;
 
-const _getApplication = () => new Promise((resolve, reject) => {
+const _getApplication = () => new Promise<types.Application>((resolve, reject) => {
   (async () => {
     try {
       const getApplicationRslt = await dbTransaction('select * from application where id=1;');
@@ -17,7 +18,7 @@ const _getApplication = () => new Promise((resolve, reject) => {
   })();
 });
 
-export const saveApplication = (params = {}) => new Promise((resolve, reject) => {
+export const saveApplication = (params = {}) => new Promise<types.Application>((resolve, reject) => {
   (async () => {
     try {
       const getApplicationRslt = await dbTransaction('select * from application where id=1;');
@@ -41,7 +42,7 @@ export const saveApplication = (params = {}) => new Promise((resolve, reject) =>
   })();
 });
 
-export const getApplication = () => new Promise((resolve, reject) => {
+export const getApplication = () => new Promise<types.Application>((resolve, reject) => {
   (async () => {
     try {
       let application = await _getApplication();

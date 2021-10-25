@@ -1,9 +1,8 @@
 import React from 'react';
 import * as api from '@/api';
-import { InitApiResults } from '@/types';
 
 export type UseApi = [
-    InitApiResults & {
+    api.InitApiResults & {
         initialising: boolean;
         initialised: boolean;
     },
@@ -13,15 +12,16 @@ export type UseApi = [
 export function useApi(): UseApi {
     const [initialising, setInitialising] = React.useState(true);
     const [initialised, setApiInitialised] = React.useState(false);
-    const [initResults, setInitResults] = React.useState<InitApiResults | null>(null);
+    const [initResults, setInitResults] = React.useState<api.InitApiResults | null>(null);
 
     const initApi = React.useCallback(() => {
         (async () => {
             setInitialising(true);
             try {
                 const res = await api.init();
+                console.log(res);
                 setInitResults(res);
-            } catch (e) { /* DO NOTHING */ }
+            } catch (e) { console.log('ERROR: ', e); /* DO NOTHING */ }
 
             setApiInitialised(true);
             setInitialising(false);

@@ -5,7 +5,7 @@ import { Location } from '../types';
 
 export * from './tables';
 
-const { countries } = ENV;
+const countries = ENV.countries.map(c => c.country_code);
 
 const mainDB = SQLite.openDatabase('db.db');
 

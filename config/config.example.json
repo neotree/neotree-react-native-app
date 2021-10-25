@@ -1,0 +1,18 @@
+{
+    "countries": [
+        {
+            "country_name": "",
+            "country_code": "",
+            "webeditor": {
+                "host":"",
+                "api_endpoint":"",
+                "api_key":""
+              },
+              "nodeapi": {
+                "host":"",
+                "api_endpoint":"",
+                "api_key":""
+              }
+        }
+    ]
+}
