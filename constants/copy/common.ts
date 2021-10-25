@@ -3,3 +3,4 @@ export const PLEASE_WAIT = 'Please wait...';
 export const HOME = 'Home';
 export const HISTORY = 'History';
 export const CONFIGURATION = 'Configuration';
+export const SCRIPT = 'Script';

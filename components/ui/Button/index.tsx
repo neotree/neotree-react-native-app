@@ -1,106 +1,93 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../theme';
-import { ButtonContext, ButtonProps, } from './Context';
-import { Text } from '../Text';
-import { shadow } from '../constants';
-
-export type { ButtonProps };
+import { Pressable, PressableProps, View } from 'react-native';
+import {  useTheme} from '../theme';
+import { ButtonContext, ButtonProps, defaultButtonContext, defaultButtonProps } from './Context';
+import { getTextColor, getColor } from '../utils/colors';
 
 export const Button = React.forwardRef((props: ButtonProps, ref) => {
-    const buttonRef = React.useRef(null);
-    React.useImperativeHandle(ref, () => buttonRef.current);
-
-    const theme = useTheme();
-
-    const { 
-        children,
-        fullWidth,
-        color,
-        variant,
-        style,
-        disabled,
-        disableElevation,
-        roundedCorners,
-        endIcon,
+    props = { ...defaultButtonProps, ...props };
+    const {
         startIcon,
-        align,
-        ...restProps 
+        endIcon,
+        style,
+        variant,
+        color,
+        children,
+        ..._props
     } = props;
 
-    const _color = disabled || color === 'disabled' ? theme.palette.action.disabledBackground : theme.palette[color]?.main;
-    const backgroundColor = variant === 'contained' ? _color : null;
-    const borderColor = ['outlined'].includes(variant) ? _color : null;
+    const theme = useTheme();
+    const btnRef = React.useRef<View>();
+    React.useImperativeHandle(ref, () => btnRef.current);
+
+    const _color = getColor(theme, color);
+    const textColor = (() => {
+        let textColor = theme.palette.text.primary;
+        if (color) textColor = _color || textColor;
+        if (variant === 'outlined') textColor = _color || textColor;
+        if (variant === 'contained') textColor = getTextColor(theme, `${color}ContrastText`) || textColor;
+        if (props.disabled) textColor = theme.palette.text.disabled;
+        return textColor;
+    })();
+
+    const renderIcon = React.useCallback((icon, type: 'start' | 'end') => !icon ? null : (
+        <View 
+            style={[
+                type === 'end' ? { paddingLeft: theme.spacing() } : {},
+                type === 'start' ? { paddingRight: theme.spacing() } : {},
+            ]}
+        >
+            {icon}
+        </View>
+    ), [endIcon, startIcon]);
 
     return (
-        <ButtonContext.Provider 
+        <ButtonContext.Provider
             value={{
-                ...props,
-                color: disabled ? 'disabled' : color,
+                ...defaultButtonContext,
+                props,
+                ref: btnRef,
+                textProps: {
+                    style: [
+                        theme.typography.button,
+                        { 
+                            color: textColor, 
+                        }
+                    ],
+                },
             }}
         >
-            <View
+            <Pressable
+                {..._props}
+                ref={btnRef}
                 style={[
-                    fullWidth ? {
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                    } : {
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                    }
+                    { 
+                        padding: theme.spacing(), 
+                        borderRadius: theme.borderRadius, 
+                        borderColor: 'transparent',
+                        borderWidth: 1, 
+                    },
+                    variant !== 'outlined' ? {} : {
+                        borderColor: props.disabled ? theme.palette.action.disabled : _color || theme.palette.divider,
+                    },
+                    variant !== 'contained' ? {} : {
+                        backgroundColor: props.disabled ? theme.palette.action.disabled : _color || theme.palette.divider,
+                        borderColor: props.disabled ? theme.palette.action.disabled : _color || theme.palette.divider,
+                    },
+                    // @ts-ignore
+                    style,
                 ]}
             >
-                <TouchableOpacity
-                    ref={buttonRef}
-                    disabled={disabled}
-                    style={[
-                        {
-                            borderWidth: 1,
-                            borderColor: borderColor || 'transparent',
-                            backgroundColor: backgroundColor || 'transparent',
-                            padding: theme.spacing(),
-                            paddingHorizontal: theme.spacing(2),
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            borderRadius: roundedCorners ? 5 : 0,
-                        },
-                        (!(disableElevation || disabled) && (variant === 'contained') && (color !== 'disabled')) ? shadow : {},
-                        /* @ts-ignore */
-                        style && style.map ? style : [style],
-                    ]}
-                    {...restProps}
-                >
-                    {!!startIcon && (
-                        <View
-                            style={{ marginRight: theme.spacing() }}
-                        >{startIcon}</View>
-                    )}
-
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {renderIcon(startIcon, 'start')}
                     <View 
-                        style={[
-                            fullWidth ? { flex: 1 } : {},
-                            { 
-                                alignItems: align === 'right' ? 'flex-end' : (align === 'center' ? 'center' : 'flex-start'  )
-                            },
-                        ]}
+                        // style={{ flex: 1 }}
                     >
-                        {typeof children === 'string' ? <Text>{children}</Text> : children}
+                        {children}
                     </View>
-
-                    {!!endIcon && (
-                        <View
-                            style={{ marginLeft: theme.spacing() }}
-                        >{endIcon}</View>
-                    )}
-                </TouchableOpacity>
-            </View>
+                    {renderIcon(endIcon, 'end')}
+                </View>
+            </Pressable>
         </ButtonContext.Provider>
     );
 });
-
-Button.defaultProps = {
-    fullWidth: true,
-    roundedCorners: true,
-    disableElevation: false,
-    align: 'left',
-};

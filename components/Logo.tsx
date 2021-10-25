@@ -21,7 +21,7 @@ export const Logo = React.forwardRef(({ style, size, colorScheme, ...props }: Lo
             ref={logoRef}
             style={[
                 {
-                    width: size === 'small' ? 50 : (size === 'large' ? 150 : 100),
+                    width: size === 'small' ? 80 : (size === 'large' ? 150 : 100),
                     height: undefined,
                     aspectRatio: 361/195
                 },

@@ -1,19 +1,29 @@
 import React from 'react';
-import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
-import { Color } from '../types';
+import { PressableProps, View } from 'react-native';
+import { TextProps } from '../Text';
 
-export type ButtonProps = TouchableOpacityProps & {
-    children?: React.ReactNode | string;
-    fullWidth?: boolean;
-    variant?: 'outlined' | 'contained' | 'default';
-    color?: Color;
-    disableElevation?: boolean;
-    roundedCorners?: boolean;
+export type ButtonProps = PressableProps & {
     endIcon?: React.ReactNode;
     startIcon?: React.ReactNode;
-    align?: 'left' | 'center' | 'right';
+    variant?: 'default' | 'outlined' | 'contained';
+    color?: 'default' | 'primary' | 'secondary';
 };
 
-export const ButtonContext = React.createContext<ButtonProps | null>(null);
+export const defaultButtonProps: ButtonProps = {
+    variant: 'default',
+    color: 'default',
+};
+
+export interface IButtonContext {
+    props: ButtonProps;
+    ref?: React.MutableRefObject<View>;
+    textProps?: TextProps;
+};
+
+export const defaultButtonContext = {
+    props: defaultButtonProps,
+};
+
+export const ButtonContext = React.createContext<IButtonContext>(null);
 
 export const useButtonContext = () => React.useContext(ButtonContext);

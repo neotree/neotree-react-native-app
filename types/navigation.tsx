@@ -14,9 +14,10 @@ declare global {
 }
 
 export type RootStackParamList = {
-  Root: NavigatorScreenParams<RootTabParamList> | undefined;
+  Root: NavigatorScreenParams<RootDrawerParamList> | undefined;
   Modal: undefined;
   NotFound: undefined;
+  Script: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> = NativeStackScreenProps<
@@ -24,14 +25,13 @@ export type RootStackScreenProps<Screen extends keyof RootStackParamList> = Nati
   Screen
 >;
 
-export type RootTabParamList = {
+export type RootDrawerParamList = {
   Home: undefined;
   Config: undefined;
-  Login: undefined;
   History: undefined;
 };
 
-export type RootTabScreenProps<Screen extends keyof RootTabParamList> = CompositeScreenProps<
-  DrawerScreenProps<RootTabParamList, Screen>,
+export type RootTabScreenProps<Screen extends keyof RootDrawerParamList> = CompositeScreenProps<
+  DrawerScreenProps<RootDrawerParamList, Screen>,
   NativeStackScreenProps<RootStackParamList>
 >;

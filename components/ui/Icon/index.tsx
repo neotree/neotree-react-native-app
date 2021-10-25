@@ -21,11 +21,11 @@ export const Icon = React.forwardRef(({ color, customColor, style, ...props }: I
     const btnContext = useButtonContext();
     color = color || 'primary';
     let _color = theme.palette.text[color];
-    if (btnContext && btnContext?.color) {
-        if (btnContext.variant === 'contained') {
-            _color = theme.palette[btnContext?.color]?.contrastText || theme.palette.text[btnContext?.color];
+    if (btnContext && btnContext?.props.color) {
+        if (btnContext.props.variant === 'contained') {
+            _color = theme.palette[btnContext?.props?.color]?.contrastText || theme.palette.text[btnContext?.props?.color];
         } else {
-            _color = theme.palette[btnContext?.color]?.main || theme.palette.text[btnContext?.color];
+            _color = theme.palette[btnContext?.props?.color]?.main || theme.palette.text[btnContext?.props?.color];
         }
     }
 
