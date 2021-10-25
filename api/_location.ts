@@ -5,6 +5,7 @@ export const getLocation = () => new Promise<Location | null>((resolve, reject) 
   (async () => {
     try {
       const rows = await dbTransaction<Location>('select * from location limit 1;', null, 'main');
+      console.log(rows);
       resolve(rows[0]);
     } catch (e) { reject(e); }
   })();

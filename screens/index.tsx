@@ -9,6 +9,7 @@ import { HomeScreen } from '@/screens/Home';
 import { HistoryScreen } from '@/screens/History';
 import { ScriptScreen } from '@/screens/Script';
 import { LoginScreen } from '@/screens/Login';
+import { LocationScreen } from '@/screens/Location';
 import { NotFoundScreen } from '@/screens/NotFound';
 import { RootStackParamList, RootDrawerParamList } from '@/types';
 import * as copy from '@/constants/copy/common';
@@ -24,6 +25,7 @@ export {
     ScriptScreen,
     LoginScreen,
     NotFoundScreen,
+    LocationScreen,
 };
 
 const linking: LinkingOptions<RootStackParamList> = {

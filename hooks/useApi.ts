@@ -19,9 +19,8 @@ export function useApi(): UseApi {
             setInitialising(true);
             try {
                 const res = await api.init();
-                console.log(res);
                 setInitResults(res);
-            } catch (e) { console.log('ERROR: ', e); /* DO NOTHING */ }
+            } catch (e) { setInitResults({ error: e }); }
 
             setApiInitialised(true);
             setInitialising(false);
