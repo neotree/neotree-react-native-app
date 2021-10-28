@@ -5,6 +5,7 @@ import Fab from '@/components/Fab';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DiagnosisContext } from './Context';
 import SelectDiagnoses from './SelectDiagnoses';
+import AgreeDisagree from './AgreeDisagree';
 import ManageSelectedDiagnoses from './ManageSelectedDiagnoses';
 import FullDiagnosis from './FullDiagnosis';
 import { setPageOptions } from '../../../Context';
@@ -42,6 +43,7 @@ function Diagnosis(props) {
   const [diagnosesEntry, setDiagnosesEntry] = React.useState({
     values: [],
   });
+  const [hcwDiagnoses, setHcwDiagnoses] = React.useState([]);
 
   React.useEffect(() => {
     setDiagnosesEntry({
@@ -57,7 +59,8 @@ function Diagnosis(props) {
   
   const _goBack = () => {
     if (activeDiagnosisIndex === null) {
-      if (section === 'manage') setSection('select');
+      if (section === 'manage') return setSection('agree_disagree');
+      if (section === 'agree_disagree') return setSection('select');
       if (section === 'select') goBack();
     } else {
       const nextIndex = activeDiagnosisIndex - 1;
@@ -72,6 +75,8 @@ function Diagnosis(props) {
   const _goNext = () => {
     if (activeDiagnosisIndex === null) {
       if (section === 'select') {
+        setSection('agree_disagree');
+      } else if (section === 'agree_disagree') {
         if (!diagnoses.length) {
           Alert.alert(
             'Warning',
@@ -128,6 +133,15 @@ function Diagnosis(props) {
         setActiveDiagnosisIndex,
         getDefaultDiagnosis,
         diagnosisToEntryValue,
+        hcwDiagnoses: hcwDiagnoses.map(d => d.diagnosis),
+        setHcwDiagnoses: (diagnoses = []) => {
+          const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
+          setHcwDiagnoses(entryValues);
+          const entries = [...entryValues, ...diagnosesEntry.values.filter(d => !diagnoses.map(d => d.name).includes(d.diagnosis.name))];
+          setDiagnosesEntry({ values: entries, });
+          setEntry({ values: entries });
+
+        },
         setDiagnoses: (diagnoses = []) => {
           const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
           setDiagnosesEntry({ values: entryValues, });
@@ -155,6 +169,7 @@ function Diagnosis(props) {
           {activeDiagnosisIndex !== null ? <FullDiagnosis /> : (
             <>
               {section === 'select' && <SelectDiagnoses />}
+              {section === 'agree_disagree' && <AgreeDisagree />}
               {section === 'manage' && <ManageSelectedDiagnoses />}
             </>
           )}
