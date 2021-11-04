@@ -147,8 +147,9 @@ const Script = () => {
         />
       </View>
 
-      {(state.script.type === 'discharge') && !state.autoFillInitialised && (
+      {['discharge', 'neolab'].includes(state.script.type) && !state.autoFillInitialised && (
         <InitialiseDischargeForm
+          type={state.script.type}
           onClose={autoFill => {
             if (!autoFill.session) {
               setState({ autoFillInitialised: true, });

@@ -119,6 +119,13 @@ function Diagnosis(props) {
     }
   };
 
+  const hideFAB = (() => {
+    if (section === 'agree_disagree') {
+      return !!diagnosesEntry.values.filter(v => v.diagnosis.how_agree === null).length;
+    }
+    return false;
+  })();
+
   return (
     <DiagnosisContext.Provider
       value={{
@@ -174,11 +181,13 @@ function Diagnosis(props) {
             </>
           )}
 
-          <Fab
-            onPress={() => _goNext()}
-          >
-            <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
-          </Fab>
+          {hideFAB ? null : (
+            <Fab
+              onPress={() => _goNext()}
+            >
+              <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
+            </Fab>
+          )}
         </View>
       </Modal>
     </DiagnosisContext.Provider>
