@@ -54,9 +54,8 @@ export default function Diagnosis({
       >
         <MaterialIcons
           size={24}
-          color="#999"
-          // color={theme.brandPrimary}
           name="thumb-up"
+          color={diagnosis.how_agree !== 'Yes' ? '#999' : theme.brandPrimary}
         />
       </Button>
 
