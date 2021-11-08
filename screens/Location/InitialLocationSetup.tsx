@@ -6,9 +6,7 @@ import * as copy from '@/constants/copy/locationScreen';
 import Form from './Form';
 import { useAppContext } from '@/AppContext';
 
-export * from './InitialLocationSetup';
-
-export function LocationScreen() {
+export function InitialLocationSetupScreen() {
     const { refreshApp } = useAppContext();
     const theme = useTheme();
 
@@ -22,9 +20,15 @@ export function LocationScreen() {
                     backgroundColor: theme.palette.background.paper,
                 }}
             >
-                <Content>
-                    <Text style={{ textAlign: 'center' }} variant="h5">{copy.SCREEN_TITLE}</Text>
-                    <Br />
+                <Content variant="outlined">
+                    <View style={{ alignItems: 'center' }}>
+                        <Logo size="large" />
+                        <Br />
+                        <Text variant="h5">{copy.SCREEN_TITLE}</Text>
+                    </View>
+
+                    <Br /><Br />
+
                     <Form onSetLocation={refreshApp} />
                 </Content>
             </ScrollView>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, PressableProps, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import {  useTheme} from '../theme';
 import { ButtonContext, ButtonProps, defaultButtonContext, defaultButtonProps } from './Context';
 import { getTextColor, getColor } from '../utils/colors';
@@ -17,7 +17,7 @@ export const Button = React.forwardRef((props: ButtonProps, ref) => {
     } = props;
 
     const theme = useTheme();
-    const btnRef = React.useRef<View>();
+    const btnRef = React.useRef<TouchableOpacity>();
     React.useImperativeHandle(ref, () => btnRef.current);
 
     const _color = getColor(theme, color);
@@ -57,7 +57,7 @@ export const Button = React.forwardRef((props: ButtonProps, ref) => {
                 },
             }}
         >
-            <Pressable
+            <TouchableOpacity
                 {..._props}
                 ref={btnRef}
                 style={[
@@ -71,8 +71,8 @@ export const Button = React.forwardRef((props: ButtonProps, ref) => {
                         borderColor: props.disabled ? theme.palette.action.disabled : _color || theme.palette.divider,
                     },
                     variant !== 'contained' ? {} : {
-                        backgroundColor: props.disabled ? theme.palette.action.disabled : _color || theme.palette.divider,
-                        borderColor: props.disabled ? theme.palette.action.disabled : _color || theme.palette.divider,
+                        backgroundColor: props.disabled ? theme.palette.action.disabledBackground : _color || theme.palette.divider,
+                        borderColor: props.disabled ? 'transparent' : _color || theme.palette.divider,
                     },
                     // @ts-ignore
                     style,
@@ -87,7 +87,7 @@ export const Button = React.forwardRef((props: ButtonProps, ref) => {
                     </View>
                     {renderIcon(endIcon, 'end')}
                 </View>
-            </Pressable>
+            </TouchableOpacity>
         </ButtonContext.Provider>
     );
 });

@@ -29,6 +29,7 @@ export type RootDrawerParamList = {
   Home: undefined;
   Config: undefined;
   History: undefined;
+  Location: undefined;
 };
 
 export type RootTabScreenProps<Screen extends keyof RootDrawerParamList> = CompositeScreenProps<

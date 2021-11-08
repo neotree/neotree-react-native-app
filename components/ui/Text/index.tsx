@@ -35,6 +35,7 @@ export const Text = React.forwardRef(({
                 style={[
                     theme.typography[variant],
                     { color: getTextColor(theme, color) },
+                    btnContext ? { textAlign: 'center' } : {},
                     btnContext?.textProps?.style,
                     style,
                 ]}

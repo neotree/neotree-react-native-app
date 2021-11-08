@@ -5,9 +5,10 @@ import { ThemeProvider, createTheme  } from '@/components/ui';
 import { ErrorBox  } from '@/components/ErrorBox';
 import useCachedResources from '@/hooks/useCachedResources';
 import useColorScheme from '@/hooks/useColorScheme';
-import { Navigation, LoginScreen, LocationScreen } from '@/screens';
+import { Navigation, LoginScreen, InitialLocationSetupScreen } from '@/screens';
 import { AppContext } from '@/AppContext';
 import { useApi } from '@/hooks/useApi';
+import { Splash } from './components/Splash';
 
 const theme = createTheme({});
 const darkTheme = createTheme({
@@ -28,8 +29,6 @@ export default function App() {
       initApi
     ] = useApi();
 
-    if (initialisingApi || !isLoadingComplete) return null;
-
     return (
         <SafeAreaProvider style={{ flex: 1 }}>
             <AppContext.Provider
@@ -41,9 +40,10 @@ export default function App() {
             >
                 <ThemeProvider theme={colorScheme === 'dark' ? darkTheme : theme}>
                     {(() => {
+                        if (initialisingApi || !isLoadingComplete) return <Splash loader />;
                         if (initError) return <ErrorBox error={initError.message} />
                         if (!authenticatedUser) return <LoginScreen />;
-                        if (!location) return <LocationScreen />;
+                        if (!location) return <InitialLocationSetupScreen />;
                         return <Navigation colorScheme={colorScheme} />;
                     })()}
                 </ThemeProvider>

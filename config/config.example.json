@@ -8,11 +8,11 @@
                 "api_endpoint":"",
                 "api_key":""
               },
-              "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
-              }
+            "nodeapi": {
+              "host":"",
+              "api_endpoint":"",
+              "api_key":""
+            }
         }
     ]
 }

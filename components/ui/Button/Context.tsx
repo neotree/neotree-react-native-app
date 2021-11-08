@@ -1,12 +1,13 @@
 import React from 'react';
-import { PressableProps, View } from 'react-native';
+import { TouchableOpacityProps, View } from 'react-native';
 import { TextProps } from '../Text';
 
-export type ButtonProps = PressableProps & {
+export type ButtonProps = TouchableOpacityProps & {
     endIcon?: React.ReactNode;
     startIcon?: React.ReactNode;
     variant?: 'default' | 'outlined' | 'contained';
     color?: 'default' | 'primary' | 'secondary';
+    children?: React.ReactNode;
 };
 
 export const defaultButtonProps: ButtonProps = {

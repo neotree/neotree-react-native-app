@@ -4,3 +4,6 @@ export const HOME = 'Home';
 export const HISTORY = 'History';
 export const CONFIGURATION = 'Configuration';
 export const SCRIPT = 'Script';
+export const LOCATION = 'Location';
+export const SAVE_ERROR = 'Failed to save';
+export const LOGOUT = 'Logout';

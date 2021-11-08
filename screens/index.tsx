@@ -1,22 +1,21 @@
 import React from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { NavigationContainer, DefaultTheme, DarkTheme, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ColorSchemeName, Platform } from 'react-native';
+import { ColorSchemeName, SafeAreaView } from 'react-native';
 import * as Linking from 'expo-linking';
 import { ConfigScreen } from '@/screens/Config';
 import { HomeScreen } from '@/screens/Home';
 import { HistoryScreen } from '@/screens/History';
 import { ScriptScreen } from '@/screens/Script';
 import { LoginScreen } from '@/screens/Login';
-import { LocationScreen } from '@/screens/Location';
+import { LocationScreen, InitialLocationSetupScreen } from '@/screens/Location';
 import { NotFoundScreen } from '@/screens/NotFound';
 import { RootStackParamList, RootDrawerParamList } from '@/types';
 import * as copy from '@/constants/copy/common';
 import { Logo } from '@/components/Logo';
-import { ArrowBack } from '@/components/ArrowBack';
 import { TabBarIcon } from '@/components/TabBarIcon';
-import { useTheme, Text  } from '@/components/ui';
+import { useTheme, Text, Divider, View, Button, Content  } from '@/components/ui';
 
 export {
     ConfigScreen,
@@ -26,6 +25,7 @@ export {
     LoginScreen,
     NotFoundScreen,
     LocationScreen,
+    InitialLocationSetupScreen,
 };
 
 const linking: LinkingOptions<RootStackParamList> = {
@@ -44,6 +44,16 @@ const linking: LinkingOptions<RootStackParamList> = {
                             HistoryScreen: 'History',
                         }
                     },
+                    Location: {
+                        screens: {
+                            LocationScreen: 'Location',
+                        }
+                    },
+                    Config: {
+                        screens: {
+                            ConfigScreen: 'Config',
+                        }
+                    },
                 }
             },
             NotFound: '*',
@@ -53,19 +63,51 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
 
+const DrawerContent = (props) => {
+    const theme = useTheme();
+    return (
+        <SafeAreaView style={{ flex: 1 }}>
+            <View
+                style={{ height: 150, alignItems: 'center', justifyContent: 'center' }}
+            >
+                <Logo />
+            </View>
+    
+            <DrawerContentScrollView {...props}>
+                <DrawerItemList {...props} />
+            </DrawerContentScrollView>
+
+            <Divider />
+
+            <Content 
+                pv={theme.spacing()} 
+                ph={theme.spacing()}
+            >
+                <Button 
+                    color="primary" 
+                    variant="contained"
+                >
+                    <Text>{copy.LOGOUT}</Text>
+                </Button>
+            </Content>
+        </SafeAreaView>
+    );
+}
+
 function DrawerNavigator() {
     return (
         <Drawer.Navigator
             initialRouteName="Home"
             screenOptions={{
-                headerTitleAlign: 'center',
+                headerTitleAlign: 'left',
             }}
+            drawerContent={props => <DrawerContent {...props} />}
         >
             <Drawer.Screen
                 name="Home"
                 component={HomeScreen}
                 options={({ navigation }) => ({
-                    headerTitle: () => <Logo size="small" />,
+                    headerTitle: copy.HOME,
                     drawerIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
                 })}
             />
@@ -83,6 +125,14 @@ function DrawerNavigator() {
                 options={({ navigation }) => ({
                     title: copy.CONFIGURATION,
                     drawerIcon: ({ color }) => <TabBarIcon name="settings" color={color} />,
+                })}
+            />
+            <Drawer.Screen
+                name="Location"
+                component={LocationScreen}
+                options={({ navigation }) => ({
+                    title: copy.LOCATION,
+                    drawerIcon: ({ color }) => <TabBarIcon name="location-pin" color={color} />,
                 })}
             />
         </Drawer.Navigator>
@@ -112,31 +162,25 @@ export function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
         >
             <Stack.Navigator
                 screenOptions={({ navigation }) => ({
-                    headerTitleAlign: 'center',
+                    headerTitleAlign: 'left',
                 })}
             >
                 <Stack.Screen 
                     name="Root" 
                     component={DrawerNavigator} 
                     options={{ 
-                        headerShown: false 
+                        headerShown: false,
                     }} 
                 />
 
                 <Stack.Group 
                     screenOptions={{ 
-                        presentation: 'fullScreenModal',
+                        presentation: 'card',
                     }}
                 >
                     <Stack.Screen 
                         name="Script" 
                         component={ScriptScreen} 
-                        options={({ navigation }) => ({
-                            headerLeft: () => {
-                                if (Platform.OS === 'ios') return <ArrowBack navigation={navigation} />;
-                                return null;
-                            },
-                        })}
                     />
                 </Stack.Group>
 
