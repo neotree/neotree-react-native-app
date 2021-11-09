@@ -4,3 +4,6 @@ export const LOAD_SCRIPT_ERR = 'Failed to load script';
 export const NO_SCREENS = 'No screens found';
 export const SCRIPT_NOT_FOUND = 'Script not found';
 export const SCREEN_INFO = 'Screen info';
+export const SELECT_TIME = 'Select time';
+export const SELECT_DATE = 'Select date';
+export const SELECT_DATE_AND_TIME = 'Select date and time';
