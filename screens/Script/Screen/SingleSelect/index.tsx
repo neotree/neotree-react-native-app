@@ -4,7 +4,7 @@ import { useTheme, Text, Br, View } from '@/components/ui';
 import { useScriptContext } from '../../Context';
 import { ScreenComponentProps } from '../types';
 
-export function MultiSelect(props: ScreenComponentProps) {
+export function SingleSelect(props: ScreenComponentProps) {
     const theme = useTheme();
     const { activeScreen } = useScriptContext();
 

@@ -15,7 +15,7 @@ export const Br = React.forwardRef(({ spacing, style, ...props }: BrProps, ref) 
         <View 
             ref={brRef}
             style={[
-                { marginVertical: theme.spacing(spacing) },
+                { marginBottom: theme.spacing(spacing) },
                 /* @ts-ignore */
                 style && style.map ? style : [style],
             ]}

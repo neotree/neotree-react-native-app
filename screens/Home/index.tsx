@@ -32,12 +32,9 @@ export function HomeScreen({ navigation }: RootTabScreenProps<'Home'>) {
                 renderItem={({ item }) => {
                     return (
                         <>
-                            <TouchableOpacity 
-                                onPress={() => navigation.navigate('Script', { script_id: item.script_id })}
+                            <View 
+                                variant="elevated"
                                 style={{
-                                    padding: theme.spacing(),
-                                    borderColor: theme.palette.divider,
-                                    borderWidth: 1,
                                     width: theme.layout.contentWidth,
                                     maxWidth: theme.layout.maxContentWidth,
                                     marginLeft: 'auto',
@@ -45,9 +42,14 @@ export function HomeScreen({ navigation }: RootTabScreenProps<'Home'>) {
                                     borderRadius: 5
                                 }}
                             >
-                                <Text>{item.data.title}</Text>
-                                {!!item.data.description && <Text color="disabled">{item.data.description}</Text>}
-                            </TouchableOpacity>
+                                <TouchableOpacity 
+                                    onPress={() => navigation.navigate('Script', { script_id: item.script_id })}
+                                    style={{ padding: theme.spacing(), }}
+                                >
+                                    <Text>{item.data.title}</Text>
+                                    {!!item.data.description && <Text color="disabled">{item.data.description}</Text>}
+                                </TouchableOpacity>
+                            </View>
                             <Br />
                         </>
                     )

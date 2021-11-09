@@ -73,6 +73,15 @@ export type Screen = {
     updatedAt: Date;
     deletedAt: Date;
     metadata: {	
+        title1?: string;
+        title2?: string;
+        title3?: string;
+        text1?: string;
+        text2?: string;
+        text3?: string;
+        image1?: { data: string; };
+        image2?: { data: string; };
+        image3?: { data: string; };
         confidential: boolean;
         dataType: string;
         key: string;

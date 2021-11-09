@@ -1,13 +1,13 @@
 import React from 'react';
 import { Text, Button, Br, View, useTheme, Content } from '@/components/ui';
+import { MaterialIcons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 import { OverlayLoader } from '@/components/OverlayLoader';
 import { RootStackScreenProps } from '@/types';
 import * as copy from '@/constants/copy/script';
 import { IScriptContext, ScriptContext } from './Context';
 import { useApiData } from './useApiData';
 import { Screen } from './Screen';
-import { MaterialIcons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
 
 export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script'>) {
     const theme = useTheme();
@@ -20,15 +20,39 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
     }, [script_id]);
 
     const getScreen: IScriptContext['getScreen'] = nextOrPrev => {
-        const currentScreenIndex = screens.map(s => s.id).indexOf(activeScreen.id);
+        const currentScreenIndex = screens.map(s => s.id).indexOf(activeScreen?.id);
         const screen = nextOrPrev === 'next' ? screens[currentScreenIndex + 1] : screens[currentScreenIndex - 1];
         return screen;
     };
+
+    const onBack = React.useCallback(() => {
+        const screen = getScreen('prev');
+        if (screen) {
+            navigateToScreen(screen.id);
+            return true;
+        }
+        return false;
+    }, [activeScreen, navigation]);
     
     React.useEffect(() => {
         if (activeScreen) {
             navigateToScreen(activeScreen.id);
             navigation.setOptions({
+                headerBackVisible: false,
+                headerLeft: ({ tintColor }) => {
+                    return (
+                        <TouchableOpacity
+                            style={{ marginRight: theme.spacing(), }}
+                            onPress={() => onBack()}
+                        >
+                            <MaterialIcons 
+                                name="arrow-back"
+                                color={tintColor}
+                                size={20}
+                            />
+                        </TouchableOpacity>
+                    );
+                },
                 headerTitle: () => (
                     <View>
                         <Text 
@@ -46,6 +70,11 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
             });
         }
     }, [activeScreen, script_id]);
+
+    React.useEffect(() => navigation.addListener('beforeRemove', e => {
+        e.preventDefault();
+        onBack();
+    }), [navigation, activeScreen]);
 
     if (!ready) return <OverlayLoader />;
 

@@ -13,6 +13,7 @@ import { Timer } from './Timer';
 import { YesNo } from './YesNo';
 import { useScriptContext } from '../Context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { SingleSelect } from './SingleSelect';
 
 export function Screen() {
     const theme = useTheme();
@@ -67,6 +68,9 @@ export function Screen() {
                             break;
                         case screenTypes.PROGRESS:
                             Component = Progress;
+                            break;
+                        case screenTypes.SINGLE_SELECT:
+                            Component = SingleSelect;
                             break;
                         case screenTypes.TIMER:
                             Component = Timer;

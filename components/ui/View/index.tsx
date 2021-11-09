@@ -2,7 +2,8 @@ import React from 'react';
 import { View as RNView,  ViewProps as RNViewProps } from 'react-native';
 import { useTheme } from '../theme';
 
-export type ViewProps = RNViewProps & React.PropsWithChildren<any> & {
+export type ViewProps = RNViewProps & {
+    children?: React.ReactNode;
     variant?: 'outlined' | 'elevated';
     pl?: string | number;
     pr?: string | number;
