@@ -7,3 +7,4 @@ export const SCRIPT = 'Script';
 export const LOCATION = 'Location';
 export const SAVE_ERROR = 'Failed to save';
 export const LOGOUT = 'Logout';
+export const RELOAD = 'Reload';

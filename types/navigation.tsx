@@ -17,7 +17,10 @@ export type RootStackParamList = {
   Root: NavigatorScreenParams<RootDrawerParamList> | undefined;
   Modal: undefined;
   NotFound: undefined;
-  Script: undefined;
+  Script: { 
+    script_id: string | number; 
+    screen_id?: string | number;
+  };
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> = NativeStackScreenProps<
