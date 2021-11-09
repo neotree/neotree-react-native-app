@@ -15,6 +15,8 @@ import { useScriptContext } from '../Context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SingleSelect } from './SingleSelect';
 
+export * from './Info';
+
 export function Screen() {
     const theme = useTheme();
     const { activeScreen, getScreen, navigateToScreen } = useScriptContext();
@@ -23,26 +25,30 @@ export function Screen() {
         <>
             {activeScreen.data.actionText && (
                 <View style={{ backgroundColor: theme.palette.info.main }}>
-                    <Content>
-                        <Text style={{ color: theme.palette.info.contrastText }}>{activeScreen.data.actionText}</Text>
+                    <Content style={{ flexDirection: 'row' }}>
+                        <Text style={{ color: theme.palette.info.contrastText, flex: 1, alignItems: 'center' }}>{activeScreen.data.actionText}</Text>
+                        {!!activeScreen.data.step && (
+                            <Text variant="caption" style={{ color: theme.palette.info.contrastText }}>
+                                {activeScreen.data.step.replace(/^\s+|\s+$/g, '')}
+                            </Text>
+                        )}
                     </Content>
                 </View>
+                
             )}
             <Text>{activeScreen.data.type}</Text>
 
             <ScrollView>
                 {!!activeScreen.data.contentText && (
-                    <>
-                        <Content
-                            style={{ justifyContent: 'center', backgroundColor: 'rgba(255, 255, 0,.2)' }}
-                        >
+                    <View style={{ backgroundColor: 'rgba(255, 255, 0,.2)' }}>
+                        <Content>
                             <Text color="info">
                                 {activeScreen.data.contentText.replace(/^\s+|\s+$/g, '')}
                             </Text>
                         </Content>
 
                         <Br />
-                    </>
+                    </View>
                 )}
 
                 {(() => {
@@ -103,7 +109,7 @@ export function Screen() {
                 }}
                 onPress={() => {
                     const s = getScreen('next');
-                    navigateToScreen(s.id);
+                    if (s) navigateToScreen(s.id);
                 }}
             >
                 <MaterialIcons 

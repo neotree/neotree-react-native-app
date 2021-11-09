@@ -7,7 +7,7 @@ import { RootStackScreenProps } from '@/types';
 import * as copy from '@/constants/copy/script';
 import { IScriptContext, ScriptContext } from './Context';
 import { useApiData } from './useApiData';
-import { Screen } from './Screen';
+import { Screen, ScreenInfo } from './Screen';
 
 export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script'>) {
     const theme = useTheme();
@@ -39,6 +39,7 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
             navigateToScreen(activeScreen.id);
             navigation.setOptions({
                 headerBackVisible: false,
+                headerRight: () => <ScreenInfo screen={activeScreen} />,
                 headerLeft: ({ tintColor }) => {
                     return (
                         <TouchableOpacity

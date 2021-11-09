@@ -31,30 +31,26 @@ export function Management(props: ScreenComponentProps) {
         <>
             {sections.map((s, i)=> (
                 <React.Fragment key={i}>
-                    <View variant="elevated">
-                        <TouchableOpacity 
-                            style={{ padding: theme.spacing(), }}
-                        >
-                            {!!s.title && (
-                                <>
-                                    <Text variant="subtitle1">{s.title}</Text>
-                                    <Br />
-                                </>
-                            )}
-                            {!!s.text && (
-                                <>
-                                    <Text>{s.text}</Text>
-                                    <Br />
-                                </>
-                            )}
-                            {!!s.image && (
-                                <Image
-                                    fullWidth
-                                    resizeMode="contain"
-                                    source={{ uri: s.image }}
-                                />
-                            )}
-                        </TouchableOpacity>
+                    <View variant="elevated" style={{ padding: theme.spacing(), }}>
+                        {!!s.title && (
+                            <>
+                                <Text variant="subtitle1">{s.title}</Text>
+                                <Br />
+                            </>
+                        )}
+                        {!!s.text && (
+                            <>
+                                <Text>{s.text}</Text>
+                                <Br />
+                            </>
+                        )}
+                        {!!s.image && (
+                            <Image
+                                fullWidth
+                                resizeMode="contain"
+                                source={{ uri: s.image }}
+                            />
+                        )}
                     </View>
                     <Br />
                 </React.Fragment>

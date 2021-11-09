@@ -178,6 +178,7 @@ export function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
                 <Stack.Group 
                     screenOptions={{ 
                         presentation: 'card',
+                        headerTitleAlign: 'left',
                     }}
                 >
                     <Stack.Screen 
