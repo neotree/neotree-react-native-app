@@ -5,6 +5,8 @@ export interface IScriptContext {
     script: ScriptData;
     screens: ScreenData[];
     activeScreen?: ScreenData;
+    navigateToScreen: (screen_id: string | number) => void;
+    getScreen: (nextOrPrev: 'next' | 'prev') => ScreenData;
 }
 
 export const ScriptContext = React.createContext<IScriptContext>(null);

@@ -3,7 +3,7 @@ import { Text, Button, Br, View, useTheme, Content } from '@/components/ui';
 import { OverlayLoader } from '@/components/OverlayLoader';
 import { RootStackScreenProps } from '@/types';
 import * as copy from '@/constants/copy/script';
-import { ScriptContext } from './Context';
+import { IScriptContext, ScriptContext } from './Context';
 import { useApiData } from './useApiData';
 import { Screen } from './Screen';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,10 +14,20 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
     const { params: { script_id, screen_id }, } = route;
     const [{ loadScreensError, loadScriptError, ready, screens, script, }, loadData] = useApiData({ script_id });
     const activeScreen = screens.filter(s => s.id === screen_id)[0] || screens[0];
+
+    const navigateToScreen = React.useCallback((screen_id: string | number) => {
+        navigation.navigate('Script', { script_id, screen_id });
+    }, [script_id]);
+
+    const getScreen: IScriptContext['getScreen'] = nextOrPrev => {
+        const currentScreenIndex = screens.map(s => s.id).indexOf(activeScreen.id);
+        const screen = nextOrPrev === 'next' ? screens[currentScreenIndex + 1] : screens[currentScreenIndex - 1];
+        return screen;
+    };
     
     React.useEffect(() => {
         if (activeScreen) {
-            navigation.navigate('Script', { script_id, screen_id: activeScreen.id });
+            navigateToScreen(activeScreen.id);
             navigation.setOptions({
                 headerTitle: () => (
                     <View>
@@ -27,7 +37,7 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
                             numberOfLines={1}
                         >{activeScreen.data.title}</Text>
                         <Text 
-                            variant="caption" 
+                            // variant="caption" 
                             color="textSecondary"
                             numberOfLines={1}
                         >{script.data.title}</Text>
@@ -88,6 +98,8 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
                 screens,
                 script,
                 activeScreen,
+                navigateToScreen,
+                getScreen,
             }}
         >
             <Screen />

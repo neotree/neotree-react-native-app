@@ -153,16 +153,16 @@ export const defaultTheme: Theme = {
         },
 
         primary: {
-            main: '#70a487', // '#2980b9',
-            dark: '#70a487',
-            light: '#70a487',
+            main: '#2980b9', // '#70a487',
+            dark: '#2980b9', // '#70a487',
+            light: '#2980b9', // '#70a487',
             contrastText: '#ffffff',
         },
 
         secondary: {
-            main: '#2b304a', // '#f39c12',
-            dark: '#2b304a',
-            light: '#2b304a',
+            main: '#f39c12', // '#2b304a',
+            dark: '#f39c12', // '#2b304a',
+            light: '#f39c12', // '#2b304a',
             contrastText: '#ffffff',
         },
 
