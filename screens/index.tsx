@@ -95,11 +95,13 @@ const DrawerContent = (props) => {
 }
 
 function DrawerNavigator() {
+    const theme = useTheme();
     return (
         <Drawer.Navigator
             initialRouteName="Home"
             screenOptions={{
                 headerTitleAlign: 'left',
+                headerTintColor: theme.palette.text.primary,
             }}
             drawerContent={props => <DrawerContent {...props} />}
         >

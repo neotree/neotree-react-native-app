@@ -45,28 +45,28 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
                 <Content>
                     {!!loadScriptError && (
                         <>
-                            <Text color="error">{`${copy.LOAD_SCRIPT_ERR}: ${loadScriptError}`}</Text>
+                            <Text style={{ textAlign: 'center' }} color="error">{`${copy.LOAD_SCRIPT_ERR}: ${loadScriptError}`}</Text>
                             <Br />
                         </>
                     )}
 
                     {!!loadScreensError && (
                         <>
-                            <Text color="error">{`${copy.LOAD_SCREENS_ERR}: ${loadScreensError}`}</Text>
+                            <Text style={{ textAlign: 'center' }} color="error">{`${copy.LOAD_SCREENS_ERR}: ${loadScreensError}`}</Text>
                             <Br />
                         </>
                     )}
 
                     {!script && (
                         <>
-                            <Text color="error">{`${copy.SCRIPT_NOT_FOUND}`}</Text>
+                            <Text style={{ textAlign: 'center' }} color="error">{`${copy.SCRIPT_NOT_FOUND}`}</Text>
                             <Br />
                         </>
                     )}
 
                     {script && !screens.length && (
                         <>
-                            <Text color="error">{`(${script.data.title}) ${copy.NO_SCREENS}`}</Text>
+                            <Text style={{ textAlign: 'center' }} color="error">{`(${script.data.title}) ${copy.NO_SCREENS}`}</Text>
                             <Br />
                         </>
                     )}
