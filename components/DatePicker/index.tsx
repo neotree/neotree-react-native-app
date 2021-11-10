@@ -10,6 +10,7 @@ export type DatePickerProps = {
     label?: string;
     onChange?: (value: Date) => void;
     value?: Date;
+    disabled?: boolean;
 };
 
 export function DatePicker({ 
@@ -17,6 +18,7 @@ export function DatePicker({
     label, 
     onChange,
     value, 
+    disabled,
 }: DatePickerProps) {
     mode = mode || 'date';
     label = label || '';
@@ -41,8 +43,16 @@ export function DatePicker({
 
     return (
         <>
-            <View variant="outlined">
+            <View 
+                variant="outlined"
+                style={[
+                    !disabled ? {} : {
+                        backgroundColor: theme.palette.action.disabledBackground,
+                    },
+                ]}
+            >
                 <TouchableOpacity
+                    disabled={disabled}
                     style={{ 
                         padding: theme.spacing(), 
                         alignItems: 'center', 
@@ -60,13 +70,13 @@ export function DatePicker({
                     <Text
                         numberOfLines={1}
                         style={{ flex: 1, marginRight: theme.spacing() }}
-                        color={'disabled'}
+                        color={(disabled || !value) ? 'disabled' : 'textPrimary'}
                     >{date ? moment(date).format('LLL') : label}</Text>
                     
                     <MaterialIcons
                         name="calendar-today"
                         size={20}
-                        color={theme.palette.text.secondary}
+                        color={disabled ? theme.palette.action.disabled : theme.palette.text.secondary}
                     />
                 </TouchableOpacity>
             </View>
