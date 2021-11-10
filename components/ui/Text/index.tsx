@@ -8,12 +8,14 @@ export type TextProps = RNTextProps & {
     children?: string;
     variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'subtitle1' | 'subtitle2' | 'body1' | 'body2' | 'button' | 'caption' | 'overline';
     color?: 'primary' | 'secondary' | 'info' | 'warning' | 'error' | 'success' | 'disabled' | 'textPrimary' | 'textSecondary';
+    customColor?: string;
 };
 
 export const Text = React.forwardRef(({
     variant,
     style,
     color,
+    customColor,
     ...props
 }: TextProps, ref) => {
     color = color || 'textPrimary';
@@ -34,7 +36,7 @@ export const Text = React.forwardRef(({
                 ref={textRef}
                 style={[
                     theme.typography[variant],
-                    { color: getTextColor(theme, color) },
+                    { color: customColor || getTextColor(theme, color) },
                     btnContext ? { textAlign: 'center' } : {},
                     btnContext?.textProps?.style,
                     style,

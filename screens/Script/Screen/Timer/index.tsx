@@ -83,9 +83,10 @@ export function Timer(props: ScreenComponentProps) {
                     <TextField
                         label={metadata.label}
                         variant="outlined"
-                        color={formError ? 'error' : 'primary'}
+                        color='primary'
                         value={_value || ''}
                         defaultValue={_value || ''}
+                        error={!!formError}
                         onChange={e => {
                             setValue(e.nativeEvent.text);
                             // const value = e.nativeEvent.text * multiplier;

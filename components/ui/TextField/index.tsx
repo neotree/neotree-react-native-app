@@ -56,7 +56,7 @@ export const TextField = React.forwardRef(({
                 {..._containerProps}
                 style={[
                     {
-                        borderColor: focused || (editable === false) ? _color : theme.palette.divider,
+                        borderColor: error || focused || (editable === false) ? _color : theme.palette.divider,
                         backgroundColor: editable === false ? _color : undefined,
                     },
                     variant === 'outlined' ? {
