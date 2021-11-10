@@ -1,7 +1,7 @@
 import { dbTransaction } from './db';
-import { QueryFilter, ConfigKeyRow, ConfigKeyData } from './types';
+import { QueryFilter, ConfigKeyRow, ConfigKey, ConfigKeyData } from './types';
 
-export const getConfigKeys = (options: QueryFilter = {}) => new Promise((resolve, reject) => {
+export const getConfigKeys = (options: QueryFilter = {}) => new Promise<ConfigKey[]>((resolve, reject) => {
   (async () => {
     try {
       const { order: _order, ..._where } = options || {};
@@ -20,7 +20,7 @@ export const getConfigKeys = (options: QueryFilter = {}) => new Promise((resolve
       q = order ? `${q} order by ${order}` : q;
 
       const rows = await dbTransaction<ConfigKeyRow>(`${q};`.trim(), null);
-      resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+      resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') as ConfigKeyData } as ConfigKey)));
     } catch (e) { reject(e); }
   })();
 });

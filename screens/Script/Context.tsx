@@ -1,12 +1,12 @@
 import React from 'react';
-import { ScriptData, ScreenData } from '@/api';
+import { Script, Screen } from '@/api';
 
 export interface IScriptContext {
-    script: ScriptData;
-    screens: ScreenData[];
-    activeScreen?: ScreenData;
+    script: Script;
+    screens: Screen[];
+    activeScreen?: Screen;
     navigateToScreen: (screen_id: string | number) => void;
-    getScreen: (nextOrPrev: 'next' | 'prev') => ScreenData;
+    getScreen: (nextOrPrev: 'next' | 'prev') => Screen;
 }
 
 export const ScriptContext = React.createContext<IScriptContext>(null);

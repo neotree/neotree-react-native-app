@@ -1,30 +1,30 @@
 import React from 'react';
-import { ScreenData, ScriptData, getScript, getScreens } from '@/api';
+import { Screen, Script, getScript, getScreens } from '@/api';
 
 export type UseApiData = [
     {
-        script: ScriptData;
-        screens: ScreenData[];
+        script: Script;
+        screens: Screen[];
         loadingScript: boolean;
         loadingScreens: boolean;
-        loadScreens: () => Promise<ScreenData[]>;
-        loadScript: () => Promise<ScriptData>;
+        loadScreens: () => Promise<Screen[]>;
+        loadScript: () => Promise<Script>;
         ready: boolean;
         error: string,
         loadScriptError: string,
         loadScreensError: string,
     },
-    () => Promise<{ screens: ScreenData[]; script: ScriptData; }>
+    () => Promise<{ screens: Screen[]; script: Script; }>
 ]
 
 export function useApiData({ script_id }: { script_id: string | number }): UseApiData {
     const [ready, setReady] = React.useState(false);
     const [error, setError] = React.useState('');
 
-    const [script, setScript] = React.useState<ScriptData>(null);
+    const [script, setScript] = React.useState<Script>(null);
     const [loadingScript, setLoadingScript] = React.useState(true);
     const [loadScriptError, setLoadScriptError] = React.useState('');
-    const loadScript = React.useCallback(() => new Promise<ScriptData>((resolve, reject) => {
+    const loadScript = React.useCallback(() => new Promise<Script>((resolve, reject) => {
         (async () => {
             setLoadingScript(true);
             try {
@@ -39,10 +39,10 @@ export function useApiData({ script_id }: { script_id: string | number }): UseAp
         })();
     }), [script_id]);
 
-    const [screens, setScreens] = React.useState<ScreenData[]>([]);
+    const [screens, setScreens] = React.useState<Screen[]>([]);
     const [loadingScreens, setLoadingScreens] = React.useState(true);
     const [loadScreensError, setLoadScreensError] = React.useState('');
-    const loadScreens = React.useCallback(() => new Promise<ScreenData[]>((resolve, reject) => {
+    const loadScreens = React.useCallback(() => new Promise<Screen[]>((resolve, reject) => {
         (async () => {
             setLoadingScreens(true);
             try {
@@ -57,7 +57,7 @@ export function useApiData({ script_id }: { script_id: string | number }): UseAp
         })();
     }), [script_id]);
 
-    const loadData = React.useCallback(() => new Promise<{ screens: ScreenData[]; script: ScriptData; }>((resolve, reject) => {
+    const loadData = React.useCallback(() => new Promise<{ screens: Screen[]; script: Script; }>((resolve, reject) => {
         (async () => {
             setReady(false);
             setError('');

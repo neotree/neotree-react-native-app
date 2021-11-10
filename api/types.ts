@@ -23,7 +23,7 @@ export type Application = {
     updatedAt: Date;
 };
 
-export type Script = {
+export type ScriptData = {
     description: string,
     id: number;
     position: number;
@@ -46,11 +46,11 @@ export type ScriptRow = {
     updatedAt: Date;
 };
 
-export type ScriptData = Omit<ScriptRow, 'data'> & {
-    data: Script;
+export type Script = Omit<ScriptRow, 'data'> & {
+    data: ScriptData;
 };
 
-export type Screen = {
+export type ScreenData = {
     actionText: string;
     contentText: string;
     epicId: string;
@@ -121,11 +121,11 @@ export type ScreenRow = {
     updatedAt: Date;
 };
 
-export type ScreenData = Omit<ScreenRow, 'data'> & {
-    data: Screen;
+export type Screen = Omit<ScreenRow, 'data'> & {
+    data: ScreenData;
 };
 
-export type Diagnosis = {
+export type DiagnosisData = {
     description: string;
     diagnosisId: string;
     expression: string;
@@ -165,8 +165,8 @@ export type DiagnosisRow = {
     updatedAt: Date;
 };
 
-export type DiagnosisData = Omit<DiagnosisRow, 'data'> & {
-    data: Diagnosis;
+export type Diagnosis = Omit<DiagnosisRow, 'data'> & {
+    data: DiagnosisData;
 };
 
 export type Session = {
@@ -226,7 +226,7 @@ export type AuthenticatedUserRow = {
     details: string;
 };
 
-export type ConfigKey = {
+export type ConfigKeyData = {
     configKey: string;
     configKeyId: string;
     label: string;
@@ -249,8 +249,8 @@ export type ConfigKeyRow = {
     updatedAt: Date;
 };
 
-export type ConfigKeyData = Omit<ConfigKeyRow, 'data'> & {
-    data: ConfigKey;
+export type ConfigKey = Omit<ConfigKeyRow, 'data'> & {
+    data: ConfigKeyData;
 };
 
 export type Configuration = {

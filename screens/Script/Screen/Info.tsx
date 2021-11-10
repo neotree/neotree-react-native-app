@@ -3,9 +3,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Content, useTheme, Text, Br, } from '@/components/ui';
 import * as copy from '@/constants/copy/script';
-import { ScreenData } from '@/types';
+import { Screen } from '@/types';
 
-export function ScreenInfo({ screen }: { screen: ScreenData; }) {
+export function ScreenInfo({ screen }: { screen: Screen; }) {
     const theme = useTheme();
 
     const [openModal, setOpenModal] = React.useState(false);

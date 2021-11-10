@@ -1,8 +1,8 @@
 import { dbTransaction } from './db';
 import { getScreens } from './_screens';
-import { ScriptData, ScriptRow, QueryFilter, ScriptFields } from './types';
+import { Script, ScriptRow, QueryFilter, ScriptFields } from './types';
 
-export const getScript = (options = {}) => new Promise<ScriptData>((resolve, reject) => {
+export const getScript = (options = {}) => new Promise<Script>((resolve, reject) => {
   (async () => {
     try {
       const { ..._where } = options || {};
@@ -17,7 +17,7 @@ export const getScript = (options = {}) => new Promise<ScriptData>((resolve, rej
   })();
 });
 
-export const getScripts = (options: QueryFilter = {}) => new Promise<ScriptData[]>((resolve, reject) => {
+export const getScripts = (options: QueryFilter = {}) => new Promise<Script[]>((resolve, reject) => {
   (async () => {
     try {
       const { order: _order, ..._where } = options || {};

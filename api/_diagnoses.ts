@@ -1,7 +1,8 @@
+import { DiagnosisData } from '@/types';
 import { dbTransaction } from './db';
-import { DiagnosisData, DiagnosisRow, QueryFilter, } from './types';
+import { Diagnosis, DiagnosisRow, QueryFilter, } from './types';
 
-export const getDiagnoses = (options: QueryFilter = {}) => new Promise((resolve, reject) => {
+export const getDiagnoses = (options: QueryFilter = {}) => new Promise<Diagnosis[]>((resolve, reject) => {
   (async () => {
     try {
       const { order: _order, ..._where } = options || {};
@@ -20,7 +21,7 @@ export const getDiagnoses = (options: QueryFilter = {}) => new Promise((resolve,
       q = order ? `${q} order by ${order}` : q;
 
       const rows = await dbTransaction<DiagnosisRow>(`${q};`.trim(), null);
-      resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+      resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') as DiagnosisData } as Diagnosis)));
     } catch (e) { reject(e); }
   })();
 });

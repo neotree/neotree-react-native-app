@@ -1,7 +1,7 @@
 import { dbTransaction } from './db';
 import { ScreenRow, Screen, ScreenData, QueryFilter, } from './types';
 
-export const getScreens = (options: QueryFilter = {}): Promise<ScreenData[]> => new Promise((resolve, reject) => {
+export const getScreens = (options: QueryFilter = {}): Promise<Screen[]> => new Promise((resolve, reject) => {
   (async () => {
     try {
       const { order: _order, ..._where } = options || {};
@@ -21,8 +21,8 @@ export const getScreens = (options: QueryFilter = {}): Promise<ScreenData[]> => 
 
       const rows = await dbTransaction<ScreenRow>(`${q};`.trim(), null);
       resolve(rows.map(s => {
-        const screen = { ...s, data: JSON.parse(s.data || '{}') as Screen };
-        return screen as ScreenData;
+        const screen = { ...s, data: JSON.parse(s.data || '{}') as ScreenData };
+        return screen as Screen;
       }));
     } catch (e) { reject(e); }
   })();
