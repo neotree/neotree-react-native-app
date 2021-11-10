@@ -1,14 +1,6 @@
 import React from 'react';
-import { Script, Screen } from '@/api';
+import * as types from './types';
 
-export interface IScriptContext {
-    script: Script;
-    screens: Screen[];
-    activeScreen?: Screen;
-    navigateToScreen: (screen_id: string | number) => void;
-    getScreen: (nextOrPrev: 'next' | 'prev') => Screen;
-}
-
-export const ScriptContext = React.createContext<IScriptContext>(null);
+export const ScriptContext = React.createContext<types.ScriptContext>(null);
 
 export const useScriptContext = () => React.useContext(ScriptContext);

@@ -267,7 +267,7 @@ export type ConfigKey = Omit<ConfigKeyRow, 'data'> & {
 
 export type Configuration = {
     id: number;
-    data: string;
+    data: { [configKeyId: string | number]: boolean; };
     createdAt: Date;
     updatedAt: Date;
 };

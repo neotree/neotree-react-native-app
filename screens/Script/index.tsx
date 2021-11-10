@@ -5,34 +5,25 @@ import { TouchableOpacity } from 'react-native';
 import { OverlayLoader } from '@/components/OverlayLoader';
 import { RootStackScreenProps } from '@/types';
 import * as copy from '@/constants/copy/script';
-import { IScriptContext, ScriptContext } from './Context';
-import { useApiData } from './useApiData';
+import { ScriptContext } from './Context';
 import { Screen, ScreenInfo } from './Screen';
+import { useScriptLogic } from './useScriptLogic';
 
 export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script'>) {
     const theme = useTheme();
     const { params: { script_id, screen_id }, } = route;
-    const [{ loadScreensError, loadScriptError, ready, screens, script, }, loadData] = useApiData({ script_id });
-    const activeScreen = screens.filter(s => s.id === screen_id)[0] || screens[0];
-
-    const navigateToScreen = React.useCallback((screen_id: string | number) => {
-        navigation.navigate('Script', { script_id, screen_id });
-    }, [script_id]);
-
-    const getScreen: IScriptContext['getScreen'] = nextOrPrev => {
-        const currentScreenIndex = screens.map(s => s.id).indexOf(activeScreen?.id);
-        const screen = nextOrPrev === 'next' ? screens[currentScreenIndex + 1] : screens[currentScreenIndex - 1];
-        return screen;
-    };
-
-    const onBack = React.useCallback(() => {
-        const screen = getScreen('prev');
-        if (screen) {
-            navigateToScreen(screen.id);
-            return true;
-        }
-        return false;
-    }, [activeScreen, navigation]);
+    const contextValue = useScriptLogic();
+    const { 
+        loadScreensError, 
+        loadScriptError, 
+        ready, 
+        screens, 
+        script, 
+        loadData, 
+        activeScreen,
+        navigateToScreen,
+        onBack,
+    } = contextValue;
     
     React.useEffect(() => {
         if (activeScreen) {
@@ -124,15 +115,9 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
 
     return (
         <ScriptContext.Provider
-            value={{
-                screens,
-                script,
-                activeScreen,
-                navigateToScreen,
-                getScreen,
-            }}
+            value={contextValue}
         >
-            <Screen />
+            {!!activeScreen && <Screen />}
         </ScriptContext.Provider>
     );
 };
