@@ -8,7 +8,7 @@ import { useScriptContext } from '../../../Context';
 import { ScreenFormFieldComponentProps } from '../../../types';
 import { MaterialIcons } from '@expo/vector-icons';
 
-export function DateTime(props: ScreenFormFieldComponentProps) {
+export function DateTime({ field }: ScreenFormFieldComponentProps) {
     const theme = useTheme();
     const { activeScreen } = useScriptContext();
 
@@ -18,6 +18,7 @@ export function DateTime(props: ScreenFormFieldComponentProps) {
 
     return (
         <>
+            <Text color={'textPrimary'}>{field.label}</Text>
             <View variant="outlined">
                 <TouchableOpacity
                     style={{ 
@@ -32,11 +33,13 @@ export function DateTime(props: ScreenFormFieldComponentProps) {
                     <Text
                         numberOfLines={1}
                         style={{ flex: 1, marginRight: theme.spacing() }}
+                        color={'disabled'}
                     >{date ? moment(date).format('LLL') : copy.SELECT_DATE_AND_TIME}</Text>
                     
                     <MaterialIcons
                         name="calendar-today"
                         size={20}
+                        color={theme.palette.text.secondary}
                     />
                 </TouchableOpacity>
             </View>

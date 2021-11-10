@@ -5,10 +5,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import * as copy from '@/constants/copy/script';
 import { useScriptContext } from '../../../Context';
-import { ScreenComponentProps } from '../../../types';
+import { ScreenFormFieldComponentProps } from '../../../types';
 import { MaterialIcons } from '@expo/vector-icons';
 
-export function Time(props: ScreenFormFieldComponentProps) {
+export function Time({ field }: ScreenFormFieldComponentProps) {
     const theme = useTheme();
     const { activeScreen } = useScriptContext();
 
@@ -17,6 +17,7 @@ export function Time(props: ScreenFormFieldComponentProps) {
 
     return (
         <>
+            <Text color={'textPrimary'}>{field.label}</Text>
             <View variant="outlined">
                 <TouchableOpacity
                     style={{ 
@@ -29,11 +30,13 @@ export function Time(props: ScreenFormFieldComponentProps) {
                     <Text
                         numberOfLines={1}
                         style={{ flex: 1, marginRight: theme.spacing() }}
+                        color={'disabled'}
                     >{date ? moment(date).format('HH:MM') : copy.SELECT_DATE_AND_TIME}</Text>
                     
                     <MaterialIcons
                         name="calendar-today"
                         size={20}
+                        color={theme.palette.text.secondary}
                     />
                 </TouchableOpacity>
             </View>

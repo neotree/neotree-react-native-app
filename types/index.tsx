@@ -1,3 +1,5 @@
+import { SocketEvent } from '@/api';
+
 export * from './navigation';
 export * from '@/api/types';
 
@@ -10,6 +12,7 @@ export interface InitApiResults {
 }
 
 export interface AppContext {
+    lastSocketEvent?: SocketEvent;
     authenticatedUser: AuthenticatedUser | null;
     colorScheme: 'light' | 'dark';
     refreshApp: () => void;

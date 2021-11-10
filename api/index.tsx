@@ -13,3 +13,4 @@ export * from './_scripts';
 export * from './_screens';
 export * from './_diagnoses';
 export * from './_configKeys';
+export * from './socket';

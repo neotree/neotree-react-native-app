@@ -68,7 +68,7 @@ export const getExportedSessions = () => new Promise((resolve, reject) => {
 
       await dbTransaction('delete from exports where ingested_at < ?;', [lastTwoWeeks.toISOString()]);
 
-      resolve();
+      resolve(null);
     } catch (e) { console.log('error', e); reject(e); }
   })();
 });

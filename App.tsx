@@ -25,6 +25,7 @@ export default function App() {
         authenticatedUser,
         initialised: apiInitialised,
         initialising: initialisingApi, 
+        lastSocketEvent,
       }, 
       initApi
     ] = useApi();
@@ -33,9 +34,10 @@ export default function App() {
         <SafeAreaProvider style={{ flex: 1 }}>
             <AppContext.Provider
                 value={{
-                  authenticatedUser,
-                  colorScheme,
-                  refreshApp: initApi,
+                    lastSocketEvent,
+                    authenticatedUser,
+                    colorScheme,
+                    refreshApp: initApi,
                 }}
             >
                 <ThemeProvider theme={colorScheme === 'dark' ? darkTheme : theme}>

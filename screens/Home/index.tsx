@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAppContext } from '@/AppContext';
 import { ScrollView, SafeAreaView, FlatList, TouchableOpacity } from 'react-native';
 import { Text, Content, Br, View, useTheme } from '@/components/ui';
 import { Script, getScripts } from '@/api';
@@ -6,6 +7,7 @@ import { RootTabScreenProps } from '../../types/navigation';
 
 export function HomeScreen({ navigation }: RootTabScreenProps<'Home'>) {
     const theme = useTheme();
+    const { lastSocketEvent } = useAppContext();
     const [scripts, setScripts] = React.useState<Script[]>([]);
     const [loadingScripts, setLoadingScripts] = React.useState(true);
 
@@ -19,7 +21,7 @@ export function HomeScreen({ navigation }: RootTabScreenProps<'Home'>) {
         })();
     }, []);
 
-    React.useEffect(() => { loadScripts(); }, []);
+    React.useEffect(() => { loadScripts(); }, [lastSocketEvent]);
 
     return (
         <SafeAreaView>

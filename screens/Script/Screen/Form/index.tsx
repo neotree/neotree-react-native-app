@@ -34,6 +34,9 @@ export function Form(props: ScreenComponentProps) {
                                     case fieldsTypes.TEXT:
                                         Component = FieldText;
                                         break;
+                                    case fieldsTypes.NUMBER:
+                                        Component = FieldText;
+                                        break;
                                     case fieldsTypes.TIME:
                                         Component = Time;
                                         break;
@@ -47,7 +50,10 @@ export function Form(props: ScreenComponentProps) {
                                         break;
                                 }
                                 return !Component ? null : (
-                                    <Component {...props} field={f} />
+                                    <>
+                                        <Br />
+                                        <Component {...props} field={f} />
+                                    </>
                                 );
                             })()}
                         </React.Fragment>
