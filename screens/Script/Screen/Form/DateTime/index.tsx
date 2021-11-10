@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import * as copy from '@/constants/copy/script';
 import { useScriptContext } from '../../../Context';
-import { ScreenComponentProps } from '../../types';
+import { ScreenComponentProps } from '../../../types';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export function DateTime(props: ScreenComponentProps) {

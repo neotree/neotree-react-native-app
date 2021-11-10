@@ -88,6 +88,8 @@ export type ScreenData = {
         label: string;
         negativeLabel: string;
         positiveLabel: string;
+        multiplier: number;
+        timerValue: string;
         items: ({
             confidential: boolean;
             dataType: string;

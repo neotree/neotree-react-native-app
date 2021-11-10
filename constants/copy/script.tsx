@@ -7,3 +7,5 @@ export const SCREEN_INFO = 'Screen info';
 export const SELECT_TIME = 'Select time';
 export const SELECT_DATE = 'Select date';
 export const SELECT_DATE_AND_TIME = 'Select date and time';
+export const START_TIMER = 'Tap to start';
+export const STOP_TIMER = 'Tap to stop';

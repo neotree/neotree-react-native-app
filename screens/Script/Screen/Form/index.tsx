@@ -9,7 +9,7 @@ import { FieldText } from './Text';
 import { Period } from './Period';
 import { Time } from './Time';
 import { useScriptContext } from '../../Context';
-import { ScreenComponentProps } from '../types';
+import { ScreenComponentProps } from '../../types';
 
 export function Form(props: ScreenComponentProps) {
     const theme = useTheme();

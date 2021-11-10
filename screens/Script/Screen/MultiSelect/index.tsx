@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { useTheme, Text, Br, View } from '@/components/ui';
 import { useScriptContext } from '../../Context';
-import { ScreenComponentProps } from '../types';
+import { ScreenComponentProps } from '../../types';
 
 export function MultiSelect(props: ScreenComponentProps) {
     const theme = useTheme();

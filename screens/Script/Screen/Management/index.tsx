@@ -3,7 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import { useTheme, Text, Br, View } from '@/components/ui';
 import { Image } from '@/components/Image';
 import { useScriptContext } from '../../Context';
-import { ScreenComponentProps } from '../types';
+import { ScreenComponentProps } from '../../types';
 
 export function Management(props: ScreenComponentProps) {
     const theme = useTheme();
