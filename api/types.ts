@@ -50,6 +50,51 @@ export type Script = Omit<ScriptRow, 'data'> & {
     data: ScriptData;
 };
 
+export type ScreenMetadataField = {
+    confidential: boolean;
+    dataType: string;
+    key: string;
+    label: string;
+    maxValue: string;
+    minValue: string;
+    optional: boolean;
+    position: number;
+    type: string;
+};
+
+export type ScreenMetadataItem = {
+    confidential: boolean;
+    dataType: string;
+    id: string;
+    label: string;
+    position: number;
+    exclusive: boolean;
+};
+
+export type ScreenMetadataImage = { data: string; };
+
+export type ScreenMetadata = {	
+    title1?: string;
+    title2?: string;
+    title3?: string;
+    text1?: string;
+    text2?: string;
+    text3?: string;
+    image1?: ScreenMetadataImage;
+    image2?: ScreenMetadataImage;
+    image3?: ScreenMetadataImage;
+    confidential: boolean;
+    dataType: string;
+    key: string;
+    label: string;
+    negativeLabel: string;
+    positiveLabel: string;
+    multiplier: number;
+    timerValue: string;
+    items: ScreenMetadataItem[];
+    fields: ScreenMetadataField[];
+};
+
 export type ScreenData = {
     actionText: string;
     contentText: string;
@@ -72,44 +117,7 @@ export type ScreenData = {
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date;
-    metadata: {	
-        title1?: string;
-        title2?: string;
-        title3?: string;
-        text1?: string;
-        text2?: string;
-        text3?: string;
-        image1?: { data: string; };
-        image2?: { data: string; };
-        image3?: { data: string; };
-        confidential: boolean;
-        dataType: string;
-        key: string;
-        label: string;
-        negativeLabel: string;
-        positiveLabel: string;
-        multiplier: number;
-        timerValue: string;
-        items: ({
-            confidential: boolean;
-            dataType: string;
-            id: string;
-            label: string;
-            position: number;
-            exclusive: boolean;
-        })[];
-        fields: ({
-            confidential: boolean;
-            dataType: string;
-            key: string;
-            label: string;
-            maxValue: string;
-            minValue: string;
-            optional: boolean;
-            position: number;
-            type: string;
-        })[];
-    };
+    metadata: ScreenMetadata;
 };
 
 export type ScreenRow = {

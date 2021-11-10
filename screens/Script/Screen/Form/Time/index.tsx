@@ -8,7 +8,7 @@ import { useScriptContext } from '../../../Context';
 import { ScreenComponentProps } from '../../../types';
 import { MaterialIcons } from '@expo/vector-icons';
 
-export function Time(props: ScreenComponentProps) {
+export function Time(props: ScreenFormFieldComponentProps) {
     const theme = useTheme();
     const { activeScreen } = useScriptContext();
 

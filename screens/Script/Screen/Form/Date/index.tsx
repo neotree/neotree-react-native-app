@@ -5,10 +5,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import moment from 'moment';
 import * as copy from '@/constants/copy/script';
 import { useScriptContext } from '../../../Context';
-import { ScreenComponentProps } from '../../../types';
+import { ScreenFormFieldComponentProps } from '../../../types';
 import { MaterialIcons } from '@expo/vector-icons';
 
-export function FieldDate(props: ScreenComponentProps) {
+export function FieldDate(props: ScreenFormFieldComponentProps) {
     const theme = useTheme();
     const { activeScreen } = useScriptContext();
 

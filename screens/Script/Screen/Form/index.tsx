@@ -9,7 +9,7 @@ import { FieldText } from './Text';
 import { Period } from './Period';
 import { Time } from './Time';
 import { useScriptContext } from '../../Context';
-import { ScreenComponentProps } from '../../types';
+import { ScreenComponentProps, ScreenFormFieldComponentProps } from '../../types';
 
 export function Form(props: ScreenComponentProps) {
     const theme = useTheme();
@@ -23,7 +23,7 @@ export function Form(props: ScreenComponentProps) {
                     return (
                         <React.Fragment key={i}>
                             {(() => {
-                                let Component = null;
+                                let Component: React.ComponentType<ScreenFormFieldComponentProps> = null;
                                 switch (f.type) {
                                     case fieldsTypes.DATE:
                                         Component = FieldDate;
@@ -47,7 +47,7 @@ export function Form(props: ScreenComponentProps) {
                                         break;
                                 }
                                 return !Component ? null : (
-                                    <Component />
+                                    <Component {...props} field={f} />
                                 );
                             })()}
                         </React.Fragment>
