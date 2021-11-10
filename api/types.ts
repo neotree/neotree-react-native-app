@@ -60,6 +60,8 @@ export type ScreenMetadataField = {
     optional: boolean;
     position: number;
     type: string;
+    values: string;
+    format: string;
 };
 
 export type ScreenMetadataItem = {

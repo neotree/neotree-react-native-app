@@ -9,3 +9,4 @@ export const SAVE_ERROR = 'Failed to save';
 export const LOGOUT = 'Logout';
 export const RELOAD = 'Reload';
 export const CLOSE = 'Close';
+export const SELECT = 'Select';

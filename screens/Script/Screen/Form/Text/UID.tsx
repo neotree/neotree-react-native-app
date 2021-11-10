@@ -9,7 +9,6 @@ export function UID({ field }: ScreenFormFieldComponentProps) {
 
     return (
         <>
-            <Text color={'textPrimary'}>{field.label}</Text>
             <View
                 style={{ flexDirection: 'row', alignItems: 'center' }}
             >

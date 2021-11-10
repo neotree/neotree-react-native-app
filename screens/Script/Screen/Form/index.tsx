@@ -8,6 +8,7 @@ import { DropDown } from './DropDown';
 import { FieldText } from './Text';
 import { Period } from './Period';
 import { Time } from './Time';
+import { FieldNumber } from './Number';
 import { useScriptContext } from '../../Context';
 import { ScreenComponentProps, ScreenFormFieldComponentProps } from '../../types';
 
@@ -35,7 +36,7 @@ export function Form(props: ScreenComponentProps) {
                                         Component = FieldText;
                                         break;
                                     case fieldsTypes.NUMBER:
-                                        Component = FieldText;
+                                        Component = FieldNumber;
                                         break;
                                     case fieldsTypes.TIME:
                                         Component = Time;
@@ -52,6 +53,7 @@ export function Form(props: ScreenComponentProps) {
                                 return !Component ? null : (
                                     <>
                                         <Br />
+                                        <Text color={'textPrimary'}>{f.label}</Text>
                                         <Component {...props} field={f} />
                                     </>
                                 );
