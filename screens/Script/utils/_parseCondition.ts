@@ -1,3 +1,6 @@
+import { Configuration } from '@/api';
+import { EntryScreen, EntryValue } from '../types';
+
 const sanitizeCondition = (condition = '') => {
     let sanitized = condition
         .replace(new RegExp(' and ', 'gi'), ' && ')
@@ -24,9 +27,8 @@ const parseConditionString = (condition = '', _key = '', value) => {
 };
 
 export type ParseConditionParams = {
-    entries?: any;
-    configuration?: any;
-    condition: string;
+    entries?: ({ values: Partial<EntryValue>[], screen?: EntryScreen, })[];
+    configuration?: Configuration;
 };
 
 export function parseCondition(condition: string, {
@@ -39,7 +41,7 @@ export function parseCondition(condition: string, {
 
     const _form = entries;
 
-    const parseValue = (condition, { value, type, key, dataType, }) => {
+    const parseValue = (condition, { value, type, key, dataType, }: Partial<EntryValue>) => {
         value = ((value === null) || (value === undefined)) ? 'no value' : value;
         const t = dataType || type;
 
@@ -60,22 +62,22 @@ export function parseCondition(condition: string, {
     let parsedCondition = _form.reduce((condition, { screen, values }) => {
         values = (values || []).filter(e => (e.value !== null) || (e.value !== undefined));
         values = values.reduce((acc, e) => [
-        ...acc,
-        ...(e.value && e.value.map ? e.value : [e]),
+            ...acc,
+            ...(e.value && e.value.map ? e.value : [e]),
         ], []);
 
         let c = values.reduce((acc, v) => parseValue(acc, v), condition);
 
         if (screen) {
-        let chunks = [];
-        switch (screen.type) {
-            case 'multi_select':
-            chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
-            c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
-            break;
-            default:
-            // do nothing
-        }
+            let chunks = [];
+            switch (screen.type) {
+                case 'multi_select':
+                chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+                c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
+                break;
+                default:
+                // do nothing
+            }
         }
 
         return c || condition;
@@ -88,4 +90,14 @@ export function parseCondition(condition: string, {
     }
 
     return sanitizeCondition(parsedCondition);
+};
+
+export function evaluateCondition(condition: string, defaultEval = false) {
+    let conditionMet = defaultEval;
+    try {
+        conditionMet = eval(condition);
+    } catch (e) {
+        // do nothing
+    }
+    return conditionMet;
 };

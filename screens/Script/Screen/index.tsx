@@ -36,7 +36,7 @@ export function Screen() {
                 </View>
                 
             )}
-            <Text>{activeScreen.data.type}</Text>
+            <Text>{`${activeScreen.id} - ${activeScreen.data.type}`}</Text>
 
             <ScrollView>
                 {!!activeScreen.data.contentText && (
@@ -108,8 +108,8 @@ export function Screen() {
                     justifyContent: 'center',
                 }}
                 onPress={() => {
-                    const s = getScreen('next');
-                    if (s) navigateToScreen(s.id);
+                    const res = getScreen('next');
+                    if (res?.screen) navigateToScreen(res.screen.id);
                 }}
             >
                 <MaterialIcons 

@@ -37,8 +37,29 @@ export type ScreenFormFieldComponentProps = ScreenComponentProps & {
     field: ScreenMetadataField
 };
 
-export type Entry = {
+export type EntryValue = {
+    value: any;
+    exportValue: any;
+    confidential: any;
+    valueText: string;
+    key: string;
+    label: string;
+    type: string;
+    dataType: string;
+};
 
+export type EntryScreen = {
+    title: string;
+    sectionTitle: string;
+    id: string | number;
+    screen_id: string | number;
+    type: string;
+    metadata: { label: string; dataType: string; };
+};
+
+export type Entry = {
+    values: EntryValue[];
+    screen: EntryScreen;
 };
 
 export type UseScriptLogic = ApiData & {
@@ -47,9 +68,10 @@ export type UseScriptLogic = ApiData & {
     cachedEntries: Entry[];
     onBack: () => void;
     navigateToScreen: (screen_id: string | number) => void;
-    getScreen: (nextOrPrev: 'next' | 'prev') => Screen;
+    getScreen: (nextOrPrev: 'next' | 'back') => { screen: Screen; index: number; };
     setEntry: (entry: Entry) => void;
     setCachedEntry: (entry: Entry) => void;
+    getSuggestedDiagnoses: () => Diagnosis[]
 };
 
 export type ScriptContext = UseScriptLogic & {

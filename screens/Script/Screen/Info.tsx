@@ -3,7 +3,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Content, useTheme, Text, Br, } from '@/components/ui';
 import * as copy from '@/constants/copy/script';
-import { Screen } from '@/types';
+import { Screen } from '@/api/types';
 
 export function ScreenInfo({ screen }: { screen: Screen; }) {
     const theme = useTheme();

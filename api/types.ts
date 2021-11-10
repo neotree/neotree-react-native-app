@@ -120,6 +120,7 @@ export type ScreenData = {
     updatedAt: Date;
     deletedAt: Date;
     metadata: ScreenMetadata;
+    condition: string;
 };
 
 export type ScreenRow = {
