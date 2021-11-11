@@ -1,19 +1,23 @@
 import { ScreenMetadataField } from '@/api/types';
-import { Script, Screen, Configuration, Diagnosis } from '@/api';
+import { Script, Screen, Configuration, Diagnosis, Application } from '@/api';
 
 export type LoadApiDataResults = { 
     screens: Screen[]; 
     script: Script; 
     configuration: Configuration; 
+    application: Application;
+    diagnoses: Diagnosis[];
 };
 
 export type ApiData = {
+    application: Application;
     script: Script;
     screens: Screen[];
     diagnoses: Diagnosis[];
     loadingScript: boolean;
     loadingScreens: boolean;
     loadingDiagnoses: boolean;
+    loadingApplication: boolean;
     ready: boolean;
     error: string;
     loadScriptError: string;
@@ -22,11 +26,13 @@ export type ApiData = {
     loadingConfiguration: boolean;
     loadConfigurationError: string;
     loadDiagnosesError: string;
+    loadApplicationError: string;
     loadScreens: () => Promise<Screen[]>;
     loadScript: () => Promise<Script>;
     loadConfiguration: () => Promise<Configuration>;
     loadDiagnoses: () => Promise<Diagnosis[]>;
     loadData: () => Promise<LoadApiDataResults>;
+    loadApplication: () => Promise<Application>;
 };
 
 export type ScreenComponentProps = {
@@ -62,16 +68,23 @@ export type Entry = {
     screen: EntryScreen;
 };
 
-export type UseScriptLogic = ApiData & {
-    activeScreen: Screen;
+export type UseEntriesLogic = {
+    removeEntry: (screenId: number | string) => void;
+    activeScreenEntry: Entry;
     entries: Entry[];
     cachedEntries: Entry[];
+    setEntry: (entry: Entry) => void;
+    setCachedEntry: (entry: Entry) => void;
+    screensWithNoAutoFill: { [screenId: string | number ]: boolean; };
+};
+
+export type UseScriptLogic = ApiData & UseEntriesLogic & {
+    activeScreen: Screen;
     onBack: () => void;
     navigateToScreen: (screen_id: string | number) => void;
     getScreen: (nextOrPrev: 'next' | 'back') => { screen: Screen; index: number; };
-    setEntry: (entry: Entry) => void;
-    setCachedEntry: (entry: Entry) => void;
-    getSuggestedDiagnoses: () => Diagnosis[]
+    getSuggestedDiagnoses: () => Diagnosis[];
+    getLastScreen: () => Screen;
 };
 
 export type ScriptContext = UseScriptLogic & {

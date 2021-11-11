@@ -1,10 +1,28 @@
 import React from 'react';
-import { Screen, Script, getScript, getScreens, Configuration, getConfiguration, Diagnosis, getDiagnoses } from '@/api';
+import { Screen, Script, getScript, getScreens, Configuration, getConfiguration, Diagnosis, getDiagnoses, Application, getApplication } from '@/api';
 import { ApiData  } from '../types';
 
 export function useApiData({ script_id }: { script_id: string | number }): ApiData {
     const [ready, setReady] = React.useState(false);
     const [error, setError] = React.useState('');
+
+    const [application, setApplication] = React.useState<Application>(null);
+    const [loadingApplication, setLoadingApplication] = React.useState(true);
+    const [loadApplicationError, setLoadApplicationError] = React.useState('');
+    const loadApplication = React.useCallback(() => new Promise<Application>((resolve, reject) => {
+        (async () => {
+            setLoadingApplication(true);
+            try {
+                const application = await getApplication();
+                resolve(application);
+                setApplication(application);
+            } catch (e) { 
+                setLoadApplicationError(e.message); 
+                reject(e); 
+            }
+            setLoadingApplication(false);
+        })();
+    }), []);
 
     const [script, setScript] = React.useState<Script>(null);
     const [loadingScript, setLoadingScript] = React.useState(true);
@@ -86,7 +104,9 @@ export function useApiData({ script_id }: { script_id: string | number }): ApiDa
                 const script = await loadScript();
                 const screens = await loadScreens();
                 const configuration = await loadConfiguration();
-                resolve({ script, screens, configuration, });
+                const diagnoses = await loadDiagnoses();
+                const application = await loadApplication();
+                resolve({ script, screens, configuration, diagnoses, application });
             } catch (e) { 
                 setError(e.message); 
                 reject(e); 
@@ -102,20 +122,24 @@ export function useApiData({ script_id }: { script_id: string | number }): ApiDa
         script,
         screens,
         diagnoses,
+        application,
         configuration,
         loadingScript,
         loadingScreens,
         loadingConfiguration,
         loadDiagnosesError,
+        loadingApplication,
+        loadingDiagnoses,
         error,
         loadScriptError,
         loadScreensError,
         loadConfigurationError,
-        loadingDiagnoses,
+        loadApplicationError,
         loadScreens,
         loadScript,
         loadConfiguration,
         loadDiagnoses,
         loadData,
+        loadApplication,
     };
 }

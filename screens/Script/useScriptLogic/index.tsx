@@ -1,11 +1,11 @@
 import React from 'react';
 import { RootStackParamList } from '@/types';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/core';
+import { Diagnosis, Screen } from '@/api';
 import { UseScriptLogic } from '../types';
 import { useApiData } from './_useApiData';
 import { useEntriesLogic } from './_useEntriesLogic';
 import { parseCondition as _parseCondition, evaluateCondition, ParseConditionParams } from '../utils';
-import { Diagnosis } from '@/api';
 
 export function useScriptLogic(): UseScriptLogic {
     const { params: { script_id, screen_id }, } = useRoute<RouteProp<RootStackParamList, 'Script'>>();
@@ -15,11 +15,11 @@ export function useScriptLogic(): UseScriptLogic {
     const { screens, configuration, diagnoses } = apiData;
     const activeScreen = screens.filter(s => s.id === screen_id)[0] || screens[0];
 
-    const entriesLogic = useEntriesLogic({ apiData, activeScreen, screen_id, });
+    const entriesLogic = useEntriesLogic({ apiData, activeScreen, screen_id, script_id, });
 
     const parseCondition = (condition: string, params: Partial<ParseConditionParams> = {}) => _parseCondition(condition, {
         configuration: { ...configuration, ...params.configuration },
-        entries: [...entriesLogic.entries, ...(params.entries ? params.entries : [])],
+        entries: params.entries || entriesLogic.entries,
     });
 
     function getSuggestedDiagnoses() {
@@ -62,6 +62,7 @@ export function useScriptLogic(): UseScriptLogic {
     };
 
     const navigateToScreen = React.useCallback((screen_id: string | number) => {
+        entriesLogic.setEntry(entriesLogic.cachedEntries.filter(e => e?.screen?.id === screen_id)[0]);
         navigation.navigate('Script', { script_id, screen_id });
     }, [script_id]);
 
@@ -95,42 +96,43 @@ export function useScriptLogic(): UseScriptLogic {
             return evaluateCondition(parseCondition(condition)) ? target : getTargetScreen(index);
         };
         
-        return getTargetScreen();
+        return getTargetScreen() as { screen: Screen; index: number; };
     };
 
     function getLastScreen() {
         if (!activeScreen) return null;
-      
+        
         const getScreenIndex = s => !s ? -1 : screens.map(s => s.id).indexOf(s.id);
         const activeScreenIndex = getScreenIndex(activeScreen);
-      
+        
         const getLastScreen = (currentIndex) => {
-          const _current = screens[currentIndex];
-      
-          const nextIndex = currentIndex + 1;
-          let next = screens[nextIndex];
-      
-          if (next && next.data.condition) {
+            const _current = screens[currentIndex];
+        
+            const nextIndex = currentIndex + 1;
+            let next = screens[nextIndex];
+        
+            if (next && next.data.condition) {
             const conditionMet = evaluateCondition(parseCondition(next.data.condition, {
                 entries: entriesLogic.entries.filter(e => e.screen.id !== next.id),
             }));
             if (!conditionMet) {
-              const nextNextIndex = nextIndex + 1;
-              next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex);
+                const nextNextIndex = nextIndex + 1;
+                next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex);
             }
-          }
-      
-          const lastIndex = getScreenIndex(next);
-          return lastIndex > -1 ? getLastScreen(lastIndex) : _current;
+            }
+        
+            const lastIndex = getScreenIndex(next);
+            return lastIndex > -1 ? getLastScreen(lastIndex) : _current;
         };
-      
-        return getLastScreen(activeScreenIndex);
-      };
+        
+        return getLastScreen(activeScreenIndex) as Screen;
+    };
 
     const onBack = React.useCallback(() => {
         const res = getScreen('back');
         if (res?.screen) {
             navigateToScreen(res.screen.id);
+            entriesLogic.removeEntry(res.screen.id);
         }
     }, [activeScreen, navigation]);
 
@@ -142,5 +144,6 @@ export function useScriptLogic(): UseScriptLogic {
         getScreen,
         onBack,
         getSuggestedDiagnoses,
+        getLastScreen,
     };
 }
