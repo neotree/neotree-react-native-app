@@ -55,6 +55,7 @@ export type EntryValue = {
     type?: string;
     dataType?: string;
     exclusive?: boolean;
+    error?: any;
 };
 
 export type EntryScreen = {
