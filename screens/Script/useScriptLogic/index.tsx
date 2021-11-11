@@ -10,6 +10,8 @@ import { parseCondition as _parseCondition, evaluateCondition, ParseConditionPar
 export function useScriptLogic(): UseScriptLogic {
     const { params: { script_id, screen_id }, } = useRoute<RouteProp<RootStackParamList, 'Script'>>();
     const navigation = useNavigation();
+    const [visitedScreens, setVisitedScreens] = React.useState<(number | string)[]>([]);
+    const [refresh, setRefresh] = React.useState(false);
 
     const apiData = useApiData({ script_id }); // load api data: script, screens, diagnoses & configuration
     const { screens, configuration, diagnoses } = apiData;
@@ -61,10 +63,11 @@ export function useScriptLogic(): UseScriptLogic {
         return diagnosesRslts;
     };
 
-    const navigateToScreen = React.useCallback((screen_id: string | number) => {
+    const navigateToScreen = (screen_id: string | number) => {
         entriesLogic.setEntry(entriesLogic.cachedEntries.filter(e => e?.screen?.id === screen_id)[0]);
         navigation.navigate('Script', { script_id, screen_id });
-    }, [script_id]);
+        setVisitedScreens(prev => [ ...prev.filter(id => id !== screen_id), screen_id, ]);
+    };
 
     function getScreen(nextOrPrev: 'next' | 'back', index?: number) {        
         if (!isNaN(Number(index))) return screens[index] ? { screen: screens[index], index } : null;
@@ -128,22 +131,34 @@ export function useScriptLogic(): UseScriptLogic {
         return getLastScreen(activeScreenIndex) as Screen;
     };
 
-    const onBack = React.useCallback(() => {
-        const res = getScreen('back');
+    const onNext = () => {
+        const res = getScreen('next');
         if (res?.screen) {
             navigateToScreen(res.screen.id);
-            entriesLogic.removeEntry(res.screen.id);
         }
-    }, [activeScreen, navigation]);
+    };
+
+    const onBack = () => {
+        if (visitedScreens.length > 1) {
+            entriesLogic.removeEntry(screen_id);
+            const prevID = visitedScreens[visitedScreens.length - 2];
+            setVisitedScreens(prev => prev.filter(id => id !== screen_id));
+            navigateToScreen(prevID);
+        }
+    };
 
     return {
         ...apiData,
         ...entriesLogic,
+        refresh,
         activeScreen,
+        setRefresh,
+        onNext,
         navigateToScreen,
         getScreen,
         onBack,
         getSuggestedDiagnoses,
         getLastScreen,
+        parseCondition,
     };
 }

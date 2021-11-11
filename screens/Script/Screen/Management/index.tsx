@@ -5,9 +5,11 @@ import { Image } from '@/components/Image';
 import { useScriptContext } from '../../Context';
 import { ScreenComponentProps } from '../../types';
 
-export function Management(props: ScreenComponentProps) {
+export function Management({ setEntry }: ScreenComponentProps) {
     const theme = useTheme();
     const { activeScreen } = useScriptContext();
+
+    React.useEffect(() => { setEntry({ values: [] }); }, []);
 
     const sections = [
         { 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { useTheme, Content, Br, Text } from '@/components/ui';
 import { screenTypes } from '@/constants/screen';
 import { Checklist } from './Checklist';
@@ -11,15 +11,23 @@ import { MultiSelect } from './MultiSelect';
 import { Progress } from './Progress';
 import { Timer } from './Timer';
 import { YesNo } from './YesNo';
-import { useScriptContext } from '../Context';
-import { MaterialIcons } from '@expo/vector-icons';
 import { SingleSelect } from './SingleSelect';
+import { Fab } from './Fab';
+import { useScriptContext } from '../Context';
+import { Entry, ScreenComponentProps } from '../types';
 
 export * from './Info';
 
 export function Screen() {
     const theme = useTheme();
-    const { activeScreen, getScreen, navigateToScreen } = useScriptContext();
+    const { 
+        activeScreen, 
+        activeScreenEntry, 
+        setEntry ,
+        removeEntry,
+        screensWithNoAutoFill,
+        onNext
+    } = useScriptContext();
     
     return (
         <>
@@ -52,7 +60,7 @@ export function Screen() {
                 )}
 
                 {(() => {
-                    let Component = null;
+                    let Component: React.ComponentType<ScreenComponentProps> = null;
                     switch (activeScreen.type) {
                         case screenTypes.CHECKLIST:
                             Component = Checklist;
@@ -89,35 +97,30 @@ export function Screen() {
                     }
                     return !Component ? null : (
                         <Content>
-                            <Component />
+                            <Component 
+                                canAutoFill={!screensWithNoAutoFill[activeScreen.id]}
+                                setEntry={(entry: Entry) => {
+                                    const { label, dataType } = (activeScreen.data.metadata || {});
+                                    if (!entry) return removeEntry(activeScreen.id);
+                                    setEntry({
+                                        screen: {
+                                            title: activeScreen.data.title,
+                                            sectionTitle: activeScreen.data.sectionTitle,
+                                            id: activeScreen.id,
+                                            screen_id: activeScreen.screen_id,
+                                            type: activeScreen.type,
+                                            metadata: { label, dataType },
+                                        },
+                                        ...entry,
+                                    });
+                                }}
+                            />
                         </Content>
                     );
                 })()}
             </ScrollView>
 
-            <TouchableOpacity
-                style={{
-                    backgroundColor: theme.palette.primary.main,
-                    width: 50,
-                    height: 50,
-                    borderRadius: 30,
-                    position: 'absolute',
-                    bottom: theme.spacing(2),
-                    right: theme.spacing(2),
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-                onPress={() => {
-                    const res = getScreen('next');
-                    if (res?.screen) navigateToScreen(res.screen.id);
-                }}
-            >
-                <MaterialIcons 
-                    color={theme.palette.primary.contrastText}
-                    size={30}
-                    name="arrow-forward"
-                />
-            </TouchableOpacity>
+            {!!activeScreenEntry && <Fab onPress={() => onNext()} />}
         </>
     );
 };

@@ -1,5 +1,6 @@
 import { ScreenMetadataField } from '@/api/types';
 import { Script, Screen, Configuration, Diagnosis, Application } from '@/api';
+import { parseCondition } from './utils';
 
 export type LoadApiDataResults = { 
     screens: Screen[]; 
@@ -36,7 +37,8 @@ export type ApiData = {
 };
 
 export type ScreenComponentProps = {
-    
+    setEntry: (entry?: Partial<Entry>) => void;
+    canAutoFill: boolean;
 };
 
 export type ScreenFormFieldComponentProps = ScreenComponentProps & {
@@ -45,13 +47,13 @@ export type ScreenFormFieldComponentProps = ScreenComponentProps & {
 
 export type EntryValue = {
     value: any;
-    exportValue: any;
-    confidential: any;
-    valueText: string;
+    exportValue?: any;
+    confidential?: any;
+    valueText?: string;
     key: string;
-    label: string;
-    type: string;
-    dataType: string;
+    label?: string;
+    type?: string;
+    dataType?: string;
 };
 
 export type EntryScreen = {
@@ -68,23 +70,34 @@ export type Entry = {
     screen: EntryScreen;
 };
 
+export type AutoFill = {
+    uid: string;
+    session?: any;
+};
+
 export type UseEntriesLogic = {
-    removeEntry: (screenId: number | string) => void;
     activeScreenEntry: Entry;
     entries: Entry[];
     cachedEntries: Entry[];
+    screensWithNoAutoFill: { [screenId: string | number ]: boolean; };
+    autoFill: AutoFill;
     setEntry: (entry: Entry) => void;
     setCachedEntry: (entry: Entry) => void;
-    screensWithNoAutoFill: { [screenId: string | number ]: boolean; };
+    setAutoFill: React.Dispatch<React.SetStateAction<AutoFill>>;
+    removeEntry: (screenId: number | string) => void;
 };
 
 export type UseScriptLogic = ApiData & UseEntriesLogic & {
+    refresh: boolean;
     activeScreen: Screen;
     onBack: () => void;
+    onNext: () => void;
     navigateToScreen: (screen_id: string | number) => void;
     getScreen: (nextOrPrev: 'next' | 'back') => { screen: Screen; index: number; };
     getSuggestedDiagnoses: () => Diagnosis[];
     getLastScreen: () => Screen;
+    parseCondition: typeof parseCondition;
+    setRefresh: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export type ScriptContext = UseScriptLogic & {

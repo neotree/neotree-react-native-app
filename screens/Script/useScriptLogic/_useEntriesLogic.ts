@@ -1,6 +1,6 @@
 import { Screen } from '@/api';
 import React from 'react';
-import { ApiData, Entry, UseEntriesLogic } from '../types';
+import { ApiData, AutoFill, Entry, UseEntriesLogic } from '../types';
 
 type UseEntriesParams = { 
     apiData: ApiData, 
@@ -19,6 +19,7 @@ export function useEntriesLogic({
 
     const [entries, setEntries] = React.useState<Entry[]>([]);
     const [cachedEntries, setCachedEntries] = React.useState<Entry[]>([]);
+    const [autoFill, setAutoFill] = React.useState<AutoFill>({ uid: null, session: null });
 
     React.useEffect(() => {
         setEntries([]);
@@ -47,6 +48,8 @@ export function useEntriesLogic({
     }
 
     return {
+        autoFill,
+        setAutoFill,
         removeEntry,
         entries,
         cachedEntries,
