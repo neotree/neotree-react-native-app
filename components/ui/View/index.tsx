@@ -48,9 +48,9 @@ export const View = React.forwardRef(({
                 ref={ViewRef}
                 style={[
                     theme.typography[variant],
+                    { borderRadius: theme.borderRadius, },
                     !variant ? {} : { 
                         backgroundColor: theme.palette.background.paper, 
-                        borderRadius: theme.borderRadius,
                     },
                     variant !== 'outlined' ? {} : {
                         borderWidth: 1,

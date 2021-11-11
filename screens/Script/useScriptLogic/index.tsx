@@ -8,6 +8,12 @@ import { useEntriesLogic } from './_useEntriesLogic';
 import { parseCondition as _parseCondition, evaluateCondition, ParseConditionParams } from '../utils';
 
 export function useScriptLogic(): UseScriptLogic {
+    const mounted = React.useRef(false);
+    React.useEffect(() => { 
+        mounted.current = true;
+        return () => mounted.current = false;
+    }, []);
+
     const { params: { script_id, screen_id }, } = useRoute<RouteProp<RootStackParamList, 'Script'>>();
     const navigation = useNavigation();
     const [visitedScreens, setVisitedScreens] = React.useState<(number | string)[]>([]);
@@ -64,9 +70,15 @@ export function useScriptLogic(): UseScriptLogic {
     };
 
     const navigateToScreen = (screen_id: string | number) => {
+        setRefresh(true);
         entriesLogic.setEntry(entriesLogic.cachedEntries.filter(e => e?.screen?.id === screen_id)[0]);
         navigation.navigate('Script', { script_id, screen_id });
         setVisitedScreens(prev => [ ...prev.filter(id => id !== screen_id), screen_id, ]);
+        setTimeout(() => {
+            if (mounted.current) {
+                setRefresh(false);
+            }
+        }, 0);
     };
 
     function getScreen(nextOrPrev: 'next' | 'back', index?: number) {        

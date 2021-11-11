@@ -22,12 +22,15 @@ export function Screen() {
     const theme = useTheme();
     const { 
         activeScreen, 
-        activeScreenEntry, 
+        activeScreenEntry,
+        refresh, 
         setEntry ,
         removeEntry,
         screensWithNoAutoFill,
         onNext
     } = useScriptContext();
+
+    // if (refresh) return null;
     
     return (
         <>

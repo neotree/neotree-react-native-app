@@ -12,7 +12,7 @@ export function YesNo({
     const { 
         autoFill,
         activeScreen, 
-        activeScreenEntry: value, 
+        activeScreenCachedEntry: value, 
     } = useScriptContext();
     const metadata =  { ...activeScreen.data.metadata };
 

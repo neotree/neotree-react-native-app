@@ -54,6 +54,7 @@ export type EntryValue = {
     label?: string;
     type?: string;
     dataType?: string;
+    exclusive?: boolean;
 };
 
 export type EntryScreen = {
@@ -68,6 +69,7 @@ export type EntryScreen = {
 export type Entry = {
     values: EntryValue[];
     screen: EntryScreen;
+    autoFill?: boolean;
 };
 
 export type AutoFill = {
@@ -77,6 +79,7 @@ export type AutoFill = {
 
 export type UseEntriesLogic = {
     activeScreenEntry: Entry;
+    activeScreenCachedEntry: Entry;
     entries: Entry[];
     cachedEntries: Entry[];
     screensWithNoAutoFill: { [screenId: string | number ]: boolean; };

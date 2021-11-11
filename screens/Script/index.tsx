@@ -23,7 +23,6 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
         activeScreen,
         navigateToScreen,
         onBack,
-        refresh,
     } = contextValue;
     
     React.useEffect(() => {
@@ -69,7 +68,7 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
         onBack();
     }), [navigation, activeScreen]);
 
-    if (!ready || refresh) return <OverlayLoader />;
+    if (!ready) return <OverlayLoader />;
 
     if (loadScreensError || loadScriptError || !screens.length) {
         return (

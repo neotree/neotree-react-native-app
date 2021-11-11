@@ -12,7 +12,7 @@ export function SingleSelect({
     const { 
         autoFill,
         activeScreen, 
-        activeScreenEntry: value, 
+        activeScreenCachedEntry: value, 
     } = useScriptContext();
     const metadata = { ...activeScreen.data.metadata };
     console.log(value);

@@ -56,6 +56,7 @@ export function useEntriesLogic({
         setEntry,
         setCachedEntry,
         screensWithNoAutoFill,
-        activeScreenEntry: cachedEntries.filter(e => e?.screen?.id === screen_id)[0],
+        activeScreenEntry: entries.filter(e => e?.screen?.id === screen_id)[0],
+        activeScreenCachedEntry: cachedEntries.filter(e => e?.screen?.id === screen_id)[0],
     };
 }
