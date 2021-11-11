@@ -95,6 +95,9 @@ export type ScreenMetadata = {
     timerValue: string;
     items: ScreenMetadataItem[];
     fields: ScreenMetadataField[];
+    maxValue?: string;
+    minValue?: string;
+    type?: string;
 };
 
 export type ScreenData = {

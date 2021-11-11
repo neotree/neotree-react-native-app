@@ -30,7 +30,7 @@ export function Screen() {
         onNext
     } = useScriptContext();
 
-    // if (refresh) return null;
+    if (refresh) return null;
     
     return (
         <>

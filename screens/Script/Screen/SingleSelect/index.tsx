@@ -15,7 +15,6 @@ export function SingleSelect({
         activeScreenCachedEntry: value, 
     } = useScriptContext();
     const metadata = { ...activeScreen.data.metadata };
-    console.log(value);
 
     const [entry, _setEntry] = React.useState<Partial<Entry>>(value || { values: [] });
     const setEntry = item => _setEntry({
