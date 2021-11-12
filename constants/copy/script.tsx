@@ -9,3 +9,5 @@ export const SELECT_DATE = 'Select date';
 export const SELECT_DATE_AND_TIME = 'Select date and time';
 export const START_TIMER = 'Tap to start';
 export const STOP_TIMER = 'Tap to stop';
+export const EXIT_SCRIPT_MODAL_TITLE = 'Cancel script';
+export const EXIT_SCRIPT_MODAL_MESSAGE = 'Are you sure you want to cancel script?';

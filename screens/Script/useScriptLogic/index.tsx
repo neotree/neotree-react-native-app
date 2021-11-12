@@ -1,5 +1,5 @@
 import React from 'react';
-import { BackHandler, Platform } from 'react-native';
+import { Alert, BackHandler, Platform } from 'react-native';
 import { RootStackParamList } from '@/types';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/core';
 import { Diagnosis, Screen } from '@/api';
@@ -7,6 +7,7 @@ import { UseScriptLogic } from '../types';
 import { useApiData } from './_useApiData';
 import { useEntriesLogic } from './_useEntriesLogic';
 import { parseCondition as _parseCondition, evaluateCondition, ParseConditionParams } from '../utils';
+import { EXIT_SCRIPT_MODAL_MESSAGE, EXIT_SCRIPT_MODAL_TITLE, YES, CANCEL } from '@/constants/copy/script';
 
 export function useScriptLogic(): UseScriptLogic {
     const mounted = React.useRef(false);
@@ -19,11 +20,12 @@ export function useScriptLogic(): UseScriptLogic {
     const navigation = useNavigation();
     const [visitedScreens, setVisitedScreens] = React.useState<(number | string)[]>([]);
     const [refresh, setRefresh] = React.useState(false);
-    const [shouldCancel, setShouldCancel] = React.useState(false);
+    const [shouldExit, setShouldExit] = React.useState(false);
 
     const apiData = useApiData({ script_id }); // load api data: script, screens, diagnoses & configuration
     const { screens, configuration, diagnoses } = apiData;
     const activeScreen = screens.filter(s => s.id === screen_id)[0] || screens[0];
+    const isFirstScreen = activeScreen?.id === screens[0]?.id;
 
     const entriesLogic = useEntriesLogic({ apiData, activeScreen, screen_id, script_id, });
 
@@ -152,27 +154,40 @@ export function useScriptLogic(): UseScriptLogic {
         }
     };
 
+    const exit = () => {
+        setShouldExit(true);
+        setTimeout(() => Alert.alert(
+            EXIT_SCRIPT_MODAL_TITLE,
+            EXIT_SCRIPT_MODAL_MESSAGE,
+            [
+                {
+                    text: CANCEL,
+                    style: 'cancel',
+                    onPress: () => setShouldExit(null),
+                },
+                {
+                    text: YES,
+                    onPress: () => navigation.navigate('Root'),
+                }
+            ]
+        ), 100);
+    };
+
     const onBack = () => {
-        const isFirstScreen = screen_id === screens[0]?.id;
-
         if (isFirstScreen) {
-            setShouldCancel(true);
-            setTimeout(() => navigation.navigate('Root'), 50);
-        };
-
-        if (visitedScreens.length > 1) {
+            exit();
+        } else {
             entriesLogic.removeEntry(screen_id);
             const prevID = visitedScreens[visitedScreens.length - 2];
             setVisitedScreens(prev => prev.filter(id => id !== screen_id));
             navigateToScreen(prevID);
         }
-
         return false;
     };
 
     React.useEffect(() => navigation.addListener('beforeRemove', e => {
-        if (!shouldCancel) e.preventDefault();
-    }), [navigation, activeScreen, shouldCancel]);
+        if (!(isFirstScreen && shouldExit)) e.preventDefault();
+    }), [navigation, isFirstScreen, shouldExit]);
 
     React.useEffect(() => {
         let backHandler = null;
@@ -180,14 +195,15 @@ export function useScriptLogic(): UseScriptLogic {
           backHandler = BackHandler.addEventListener('hardwareBackPress', onBack);
         }
         return () => { if (backHandler) backHandler.remove(); };
-    }, [navigation, activeScreen, shouldCancel]);
+    }, [navigation, activeScreen, shouldExit]);
 
     return {
         ...apiData,
         ...entriesLogic,
         refresh,
         activeScreen,
-        shouldCancel,
+        shouldExit,
+        exit,
         setRefresh,
         onNext,
         navigateToScreen,
@@ -196,6 +212,5 @@ export function useScriptLogic(): UseScriptLogic {
         getSuggestedDiagnoses,
         getLastScreen,
         parseCondition,
-        setShouldCancel,
     };
 }

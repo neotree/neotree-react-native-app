@@ -25,15 +25,17 @@ export function Period({
     const [date, setDate] = React.useState(null);
     const [calcFrom, setCalcFrom] = React.useState(null);
 
-    const onChange = React.useCallback((d) => {
-        const value = d ? Math.ceil((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60)) : null;
+    const onChange = d => {
+        const valueText = d ? formatDate(d) : null;
+        const exportValue = d ? formatDate(d) : null;
+        const value = d ? Math.ceil((new Date().getTime() - d.getTime()) / (1000 * 60 * 60)) : null; // FIX HERE...
         _onChange(value, {
             error: null,
             // value,
-            valueText: d ? formatDate(d) : null,
-            exportValue: d ? formatDate(d) : null,
+            valueText,
+            exportValue,
         });
-    }, []);
+    };
 
     React.useEffect(() => {
         const _calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
@@ -44,8 +46,6 @@ export function Period({
     }, [form, calcFrom]);
 
     React.useEffect(() => { onChange(date); }, [date]);
-
-    if (calcFrom) console.log(valueObject);
 
     return (
         <>

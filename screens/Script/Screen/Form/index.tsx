@@ -16,7 +16,6 @@ import { Field } from './Field';
 
 export function Form(props: ScreenComponentProps) {
     const { canAutoFill, setEntry: onChange, } = props;
-    const theme = useTheme();
     const { 
         activeScreen: screen, 
         autoFill,

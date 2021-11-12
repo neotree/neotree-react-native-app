@@ -10,3 +10,6 @@ export const LOGOUT = 'Logout';
 export const RELOAD = 'Reload';
 export const CLOSE = 'Close';
 export const SELECT = 'Select';
+export const YES = 'Yes';
+export const NO = 'No';
+export const CANCEL = 'Cancel';
