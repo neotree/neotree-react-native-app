@@ -62,6 +62,10 @@ export type ScreenMetadataField = {
     type: string;
     values: string;
     format: string;
+    calculation: string;
+    defaultValue: boolean;
+    maxDate: 'date_now';
+    minDate: 'date_now';
 };
 
 export type ScreenMetadataItem = {

@@ -1,15 +1,61 @@
 import React from 'react';
-import { useTheme } from '@/components/ui';
-import { useScriptContext } from '../../../Context';
+import moment from 'moment';
+import { DatePicker } from '@/components/DatePicker';
 import { ScreenFormFieldComponentProps } from '../../../types';
 
-export function Period(props: ScreenFormFieldComponentProps) {
-    const theme = useTheme();
-    const { activeScreen } = useScriptContext();
+const formatDate = d => {
+    if (!d) return '';
+    const now = moment();
+    const days = now.diff(new Date(d), 'days');
+    let hrs = now.diff(new Date(d), 'hours') - (days * 24);
+    if (hrs < 1) hrs = 1;
+    const v = [];
+    if (days) v.push(`${days} day(s)`);
+    v.push(hrs ? `${hrs} hour(s)` : days ? '' : moment(d).fromNow().replace(' ago', ''));
+    return v.filter(s => s).join(', ');
+  };
+
+export function Period({ 
+    form, 
+    field, 
+    onChange: _onChange, 
+    conditionMet, 
+    valueObject, 
+}: ScreenFormFieldComponentProps) {
+    const [date, setDate] = React.useState(null);
+    const [calcFrom, setCalcFrom] = React.useState(null);
+
+    const onChange = React.useCallback((d) => {
+        const value = d ? Math.ceil((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60)) : null;
+        _onChange(value, {
+        error: null,
+        // value,
+        valueText: d ? formatDate(d) : null,
+        exportValue: d ? formatDate(d) : null,
+        });
+    }, []);
+
+    React.useEffect(() => {
+        const _calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
+        if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
+            setCalcFrom(_calcFrom);
+            onChange(_calcFrom?.value);
+        }
+    }, [form, calcFrom]);
+
+    React.useEffect(() => { onChange(date); }, [date]);
 
     return (
         <>
-        
+            <DatePicker
+                mode="datetime"
+                value={date}
+                valueText={valueObject ? valueObject.valueText : ''}
+                onChange={selectedDate => {
+                    setDate(selectedDate);
+                }}
+                disabled={!!calcFrom || !conditionMet}
+            />
         </>
     );
 }

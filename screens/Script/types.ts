@@ -36,15 +36,6 @@ export type ApiData = {
     loadApplication: () => Promise<Application>;
 };
 
-export type ScreenComponentProps = {
-    setEntry: (entry?: Partial<Entry>) => void;
-    canAutoFill: boolean;
-};
-
-export type ScreenFormFieldComponentProps = ScreenComponentProps & {
-    field: ScreenMetadataField
-};
-
 export type EntryValue = {
     value: any;
     exportValue?: any;
@@ -107,3 +98,17 @@ export type UseScriptLogic = ApiData & UseEntriesLogic & {
 export type ScriptContext = UseScriptLogic & {
     
 }
+
+export type ScreenComponentProps = {
+    setEntry: (entry?: Partial<Entry>) => void;
+    canAutoFill: boolean;
+};
+
+export type ScreenFormFieldComponentProps = ScreenComponentProps & {
+    field: ScreenMetadataField;
+    conditionMet: boolean;
+    value: any;
+    valueObject: EntryValue;
+    form: Entry;
+    onChange: (value: any, params?: any) => void;
+};

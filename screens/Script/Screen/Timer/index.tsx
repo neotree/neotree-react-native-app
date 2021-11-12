@@ -154,6 +154,8 @@ export function Timer({
                           setEntry({ values: { value, valueText: value, } });
                         }}
                         keyboardType="numeric"
+                        helperText={formError}
+                        error={formError ? true : false}
                     />
                 </View>
                 {!!multiplier && <Text style={{ marginLeft: theme.spacing() }}>{` x ${multiplier}`}</Text>}

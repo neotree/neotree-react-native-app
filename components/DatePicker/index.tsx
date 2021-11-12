@@ -11,6 +11,9 @@ export type DatePickerProps = {
     onChange?: (value: Date) => void;
     value?: Date;
     disabled?: boolean;
+    valueText?: string;
+    maxDate?: 'date_now';
+    minDate?: 'date_now';
 };
 
 export function DatePicker({ 
@@ -19,6 +22,9 @@ export function DatePicker({
     onChange,
     value, 
     disabled,
+    valueText,
+    maxDate,
+    minDate,
 }: DatePickerProps) {
     mode = mode || 'date';
     label = label || '';
@@ -71,7 +77,7 @@ export function DatePicker({
                         numberOfLines={1}
                         style={{ flex: 1, marginRight: theme.spacing() }}
                         color={(disabled || !value) ? 'disabled' : 'textPrimary'}
-                    >{date ? moment(date).format('LLL') : label}</Text>
+                    >{date ? (valueText || moment(date).format('LLL')) : label}</Text>
                     
                     <MaterialIcons
                         name="calendar-today"
@@ -88,6 +94,8 @@ export function DatePicker({
                     mode="date"
                     is24Hour={true}
                     display="default"
+                    maximumDate={!maxDate ? null : maxDate === 'date_now' ? new Date() : new Date(maxDate)}
+                    minimumDate={!minDate ? null : minDate === 'date_now' ? new Date() : new Date(minDate)}
                     onChange={(e, selectedDate) => {
                         if (!selectedDate) return setShowDatePicker(false);
                         setDate(selectedDate);

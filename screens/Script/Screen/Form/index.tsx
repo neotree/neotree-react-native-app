@@ -12,6 +12,7 @@ import { FieldNumber } from './Number';
 import { useScriptContext } from '../../Context';
 import { ScreenComponentProps, ScreenFormFieldComponentProps } from '../../types';
 import { evaluateCondition } from '../../utils';
+import { Field } from './Field';
 
 export function Form(props: ScreenComponentProps) {
     const { canAutoFill, setEntry: onChange, } = props;
@@ -70,16 +71,16 @@ export function Form(props: ScreenComponentProps) {
     };
 
     React.useEffect(() => {
-    const completed = entry.values.reduce((acc, { value }, i) => {
-        const field = fields[i];
-        const conditionMet = evaluateFieldCondition(fields[i]);
-        if (conditionMet && !field.optional && !value) return false;
-        // if (!(field.condition && field.optional && value)) acc = false;
-        return acc;
-    }, true);
+        const completed = entry.values.reduce((acc, { value }, i) => {
+            const field = fields[i];
+            const conditionMet = evaluateFieldCondition(fields[i]);
+            if (conditionMet && !field.optional && !value) return false;
+            // if (!(field.condition && field.optional && value)) acc = false;
+            return acc;
+        }, true);
 
-    const hasErrors = entry.values.filter(v => v.error).length;
-    onChange(hasErrors || !completed ? undefined : entry);
+        const hasErrors = entry.values.filter(v => v.error).length;
+        onChange(hasErrors || !completed ? undefined : entry);
     }, [entry]);
 
     React.useEffect(() => {
@@ -141,15 +142,42 @@ export function Form(props: ScreenComponentProps) {
                                     default:
                                         break;
                                 }
+
+                                const conditionMet = evaluateFieldCondition(f);
+
+                                const onChange = (v, params?: any) => {
+                                    const value = { value: v, ...params };
+                                    _onChange(i, value);
+                                    setCache(i, value);
+                                };
+
+                                const value = entry.values[i].value;
+                                const valueObject = entry.values[i];
+
                                 return !Component ? null : (
-                                    <>
+                                    <Field
+                                        {...props}
+                                        field={f}
+                                        setCache={v => setCache(i, { value: v })}
+                                        conditionMet={conditionMet}
+                                        value={value}
+                                        valueCache={entryCache.values[i].value}
+                                        onChange={onChange}
+                                    >
                                         <Br />
-                                        <Text color={'textPrimary'}>{f.label}</Text>
+                                        <Text color={valueObject.error ? 'error' : 'textPrimary'}>
+                                            {`${f.label} ${f.optional ? '' : ' *'}`}
+                                        </Text>
                                         <Component 
                                             {...props} 
                                             field={f} 
+                                            conditionMet={conditionMet}
+                                            value={value}
+                                            valueObject={valueObject}
+                                            onChange={onChange}
+                                            form={entry}
                                         />
-                                    </>
+                                    </Field>
                                 );
                             })()}
                         </React.Fragment>

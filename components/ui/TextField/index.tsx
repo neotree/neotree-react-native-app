@@ -116,7 +116,7 @@ export const TextField = React.forwardRef(({
                 <Text
                     color={error ? 'error' : 'secondary'}
                     variant="caption"
-                >{label}</Text>
+                >{helperText}</Text>
             )}
         </>
     );
