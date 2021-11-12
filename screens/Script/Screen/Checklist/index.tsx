@@ -1,8 +1,7 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
 import { useTheme, Text, Br, View, Radio } from '@/components/ui';
 import { useScriptContext } from '../../Context';
-import { Entry, EntryValue, ScreenComponentProps } from '../../types';
+import { ScreenComponentProps } from '../../types';
 import { YES, NO } from '@/constants/copy/script';
 
 export function Checklist({
@@ -60,11 +59,6 @@ export function Checklist({
     React.useEffect(() => {
         onChange(!entry.values.length ? undefined : entry);
     }, [entry]);
-    
-    const items = metadata.items || [];
-    const exclusiveItems = items.filter(item => item.exclusive).map(item => item.key);
-
-    console.log(entry);
 
     return (
         <>

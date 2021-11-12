@@ -51,7 +51,7 @@ export function useApiData({ script_id }: { script_id: string | number }): ApiDa
             try {
                 const screens = await getScreens({ script_id: script_id as string });
                 resolve(screens);
-                setScreens(screens.filter(s => s.type === 'checklist'));
+                setScreens(screens);
             } catch (e) { 
                 setLoadScreensError(e.message); 
                 reject(e); 
