@@ -45,13 +45,16 @@ export function Period({
 
     React.useEffect(() => { onChange(date); }, [date]);
 
+    if (calcFrom) console.log(valueObject);
+
     return (
         <>
             <DatePicker
                 mode="datetime"
-                value={date}
+                value={valueObject?.value}
                 maxDate="date_now"
-                valueText={valueObject ? valueObject.valueText : ''}
+                valueText={valueObject?.valueText || ''}
+                placeholder={valueObject?.valueText || ''}
                 onChange={selectedDate => {
                     setDate(selectedDate);
                 }}

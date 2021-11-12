@@ -85,6 +85,7 @@ export type UseEntriesLogic = {
 export type UseScriptLogic = ApiData & UseEntriesLogic & {
     refresh: boolean;
     activeScreen: Screen;
+    shouldCancel: boolean;
     onBack: () => void;
     onNext: () => void;
     navigateToScreen: (screen_id: string | number) => void;
@@ -93,6 +94,7 @@ export type UseScriptLogic = ApiData & UseEntriesLogic & {
     getLastScreen: () => Screen;
     parseCondition: typeof parseCondition;
     setRefresh: React.Dispatch<React.SetStateAction<boolean>>;
+    setShouldCancel: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export type ScriptContext = UseScriptLogic & {

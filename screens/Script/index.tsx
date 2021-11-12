@@ -19,8 +19,8 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
         ready, 
         screens, 
         script, 
-        loadData, 
         activeScreen,
+        loadData, 
         navigateToScreen,
         onBack,
     } = contextValue;
@@ -62,11 +62,6 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
             });
         }
     }, [activeScreen, script_id]);
-
-    React.useEffect(() => navigation.addListener('beforeRemove', e => {
-        e.preventDefault();
-        onBack();
-    }), [navigation, activeScreen]);
 
     if (!ready) return <OverlayLoader />;
 

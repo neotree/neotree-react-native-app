@@ -14,6 +14,7 @@ export type DatePickerProps = {
     valueText?: string;
     maxDate?: 'date_now';
     minDate?: 'date_now';
+    placeholder?: string;
 };
 
 export function DatePicker({ 
@@ -25,6 +26,7 @@ export function DatePicker({
     valueText,
     maxDate,
     minDate,
+    placeholder,
 }: DatePickerProps) {
     mode = mode || 'date';
     label = label || '';
@@ -77,7 +79,7 @@ export function DatePicker({
                         numberOfLines={1}
                         style={{ flex: 1, marginRight: theme.spacing() }}
                         color={(disabled || !value) ? 'disabled' : 'textPrimary'}
-                    >{date ? (valueText || moment(date).format('LLL')) : label}</Text>
+                    >{date ? (valueText || moment(date).format('LLL')) : placeholder || label}</Text>
                     
                     <MaterialIcons
                         name="calendar-today"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { BackHandler, Platform } from 'react-native';
 import { RootStackParamList } from '@/types';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/core';
 import { Diagnosis, Screen } from '@/api';
@@ -18,6 +19,7 @@ export function useScriptLogic(): UseScriptLogic {
     const navigation = useNavigation();
     const [visitedScreens, setVisitedScreens] = React.useState<(number | string)[]>([]);
     const [refresh, setRefresh] = React.useState(false);
+    const [shouldCancel, setShouldCancel] = React.useState(false);
 
     const apiData = useApiData({ script_id }); // load api data: script, screens, diagnoses & configuration
     const { screens, configuration, diagnoses } = apiData;
@@ -151,19 +153,41 @@ export function useScriptLogic(): UseScriptLogic {
     };
 
     const onBack = () => {
+        const isFirstScreen = screen_id === screens[0]?.id;
+
+        if (isFirstScreen) {
+            setShouldCancel(true);
+            setTimeout(() => navigation.navigate('Root'), 50);
+        };
+
         if (visitedScreens.length > 1) {
             entriesLogic.removeEntry(screen_id);
             const prevID = visitedScreens[visitedScreens.length - 2];
             setVisitedScreens(prev => prev.filter(id => id !== screen_id));
             navigateToScreen(prevID);
         }
+
+        return false;
     };
+
+    React.useEffect(() => navigation.addListener('beforeRemove', e => {
+        if (!shouldCancel) e.preventDefault();
+    }), [navigation, activeScreen, shouldCancel]);
+
+    React.useEffect(() => {
+        let backHandler = null;
+        if (Platform.OS === 'android') {
+          backHandler = BackHandler.addEventListener('hardwareBackPress', onBack);
+        }
+        return () => { if (backHandler) backHandler.remove(); };
+    }, [navigation, activeScreen, shouldCancel]);
 
     return {
         ...apiData,
         ...entriesLogic,
         refresh,
         activeScreen,
+        shouldCancel,
         setRefresh,
         onNext,
         navigateToScreen,
@@ -172,5 +196,6 @@ export function useScriptLogic(): UseScriptLogic {
         getSuggestedDiagnoses,
         getLastScreen,
         parseCondition,
+        setShouldCancel,
     };
 }
