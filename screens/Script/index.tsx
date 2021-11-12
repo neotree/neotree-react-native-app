@@ -34,7 +34,7 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
                 headerLeft: ({ tintColor }) => {
                     return (
                         <TouchableOpacity
-                            style={{ marginRight: theme.spacing(), }}
+                            style={{ marginRight: theme.spacing(2), }}
                             onPress={() => onBack()}
                         >
                             <MaterialIcons 
@@ -53,7 +53,7 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
                             numberOfLines={1}
                         >{activeScreen.data.title}</Text>
                         <Text 
-                            // variant="caption" 
+                            variant="caption" 
                             color="textSecondary"
                             numberOfLines={1}
                         >{script.data.title}</Text>
