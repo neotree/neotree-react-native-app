@@ -101,7 +101,7 @@ function DrawerNavigator() {
             initialRouteName="Home"
             screenOptions={{
                 headerTitleAlign: 'left',
-                headerTintColor: theme.palette.text.primary,
+                headerTintColor: theme.palette.primary.main,
             }}
             drawerContent={props => <DrawerContent {...props} />}
         >
