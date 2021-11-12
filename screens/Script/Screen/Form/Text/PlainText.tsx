@@ -1,17 +1,28 @@
 import React from 'react';
-import { useTheme, View, TextField, Text } from '@/components/ui';
-import { useScriptContext } from '../../../Context';
+import { View, TextField } from '@/components/ui';
 import { ScreenFormFieldComponentProps } from '../../../types';
 
-export function PlainText({ field }: ScreenFormFieldComponentProps) {
-    const theme = useTheme();
-    const { activeScreen } = useScriptContext();
+export function PlainText({ field, onChange, value, conditionMet, }: ScreenFormFieldComponentProps) {
+    const [error] = React.useState(null);
 
     return (
         <>
             <View>
                 <TextField 
                     variant="outlined"
+                    autoCorrect={false}
+                    editable={conditionMet}
+                    value={value || ''}
+                    defaultValue={value || ''}
+                    error={!!error}
+                    helperText={error}
+                    onChange={e => {
+                        const value = e.nativeEvent.text;
+                        onChange(value, {
+                            error,
+                            valueText: value,
+                        });
+                    }}
                 />
             </View>
         </>

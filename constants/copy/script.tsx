@@ -11,3 +11,4 @@ export const START_TIMER = 'Tap to start';
 export const STOP_TIMER = 'Tap to stop';
 export const EXIT_SCRIPT_MODAL_TITLE = 'Cancel script';
 export const EXIT_SCRIPT_MODAL_MESSAGE = 'Are you sure you want to cancel script?';
+export const ALLOWED_UID_CHARS_ERR_PREFIX = 'Allowed characters:';
