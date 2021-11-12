@@ -75,6 +75,8 @@ export type ScreenMetadataItem = {
     label: string;
     position: number;
     exclusive: boolean;
+    key: string;
+    type: string;
 };
 
 export type ScreenMetadataImage = { data: string; };

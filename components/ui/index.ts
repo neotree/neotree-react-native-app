@@ -12,3 +12,4 @@ export * from './Text';
 export * from './Icon';
 export * from './Br';
 export * from './TextField';
+export * from './Radio';

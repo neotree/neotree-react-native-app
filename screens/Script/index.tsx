@@ -29,6 +29,7 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
         if (activeScreen) {
             navigateToScreen(activeScreen.id);
             navigation.setOptions({
+                gestureEnabled: true,
                 headerBackVisible: false,
                 headerRight: () => <ScreenInfo screen={activeScreen} />,
                 headerLeft: ({ tintColor }) => {
