@@ -28,10 +28,10 @@ export function Period({
     const onChange = React.useCallback((d) => {
         const value = d ? Math.ceil((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60)) : null;
         _onChange(value, {
-        error: null,
-        // value,
-        valueText: d ? formatDate(d) : null,
-        exportValue: d ? formatDate(d) : null,
+            error: null,
+            // value,
+            valueText: d ? formatDate(d) : null,
+            exportValue: d ? formatDate(d) : null,
         });
     }, []);
 
@@ -50,6 +50,7 @@ export function Period({
             <DatePicker
                 mode="datetime"
                 value={date}
+                maxDate="date_now"
                 valueText={valueObject ? valueObject.valueText : ''}
                 onChange={selectedDate => {
                     setDate(selectedDate);
