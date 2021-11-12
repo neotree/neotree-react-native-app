@@ -77,6 +77,8 @@ export type ScreenMetadataItem = {
     exclusive: boolean;
     key: string;
     type: string;
+    summary: string;
+    checked: string;
 };
 
 export type ScreenMetadataImage = { data: string; };
