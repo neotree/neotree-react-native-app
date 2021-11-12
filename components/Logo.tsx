@@ -23,7 +23,7 @@ export const Logo = React.forwardRef(({ style, size, colorScheme, ...props }: Lo
                 {
                     width: size === 'small' ? 80 : (size === 'large' ? 150 : 100),
                     height: undefined,
-                    aspectRatio: 361/195
+                    aspectRatio: 400/400 // 361/195
                 },
                 /* @ts-ignore */
                 style && style.map ? style : [style],
