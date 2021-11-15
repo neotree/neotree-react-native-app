@@ -47,7 +47,6 @@ export function Screen() {
                 </View>
                 
             )}
-            <Text>{`${activeScreen.id} - ${activeScreen.data.type}`}</Text>
 
             <ScrollView>
                 {!!activeScreen.data.contentText && (

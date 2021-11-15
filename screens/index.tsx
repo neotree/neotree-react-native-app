@@ -2,7 +2,7 @@ import React from 'react';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { NavigationContainer, DefaultTheme, DarkTheme, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ColorSchemeName, SafeAreaView, StatusBar } from 'react-native';
+import { ColorSchemeName, SafeAreaView } from 'react-native';
 import * as Linking from 'expo-linking';
 import { ConfigScreen } from '@/screens/Config';
 import { HomeScreen } from '@/screens/Home';
@@ -68,12 +68,7 @@ const DrawerContent = (props) => {
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <View
-                style={{ 
-                    height: 200, 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    backgroundColor: theme.palette.primary.main, 
-                }}
+                style={{ height: 150, alignItems: 'center', justifyContent: 'center' }}
             >
                 <Logo />
             </View>
@@ -152,61 +147,54 @@ export function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
     const navTheme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
     const theme = useTheme();
     return (
-        <>
-            <NavigationContainer
-                linking={linking}
-                theme={{
-                    ...navTheme,
-                    colors: {
-                        ...navTheme.colors,
-                        primary: theme.palette.primary.main,
-                        text: theme.palette.text.primary,
-                        background: theme.palette.background.paper,
-                        card: theme.palette.background.paper,
-                        border: theme.palette.divider,
-                        notification: theme.palette.info.main,
-                    },
-                }}
+        <NavigationContainer
+            linking={linking}
+            theme={{
+                ...navTheme,
+                colors: {
+                    ...navTheme.colors,
+                    primary: theme.palette.primary.main,
+                    text: theme.palette.text.primary,
+                    background: theme.palette.background.paper,
+                    card: theme.palette.background.paper,
+                    border: theme.palette.divider,
+                    notification: theme.palette.info.main,
+                },
+            }}
+        >
+            <Stack.Navigator
+                screenOptions={({ navigation }) => ({
+                    headerTitleAlign: 'left',
+                })}
             >
-                <Stack.Navigator
-                    screenOptions={({ navigation }) => ({
+                <Stack.Screen 
+                    name="Root" 
+                    component={DrawerNavigator} 
+                    options={{ 
+                        headerShown: false,
+                    }} 
+                />
+
+                <Stack.Group 
+                    screenOptions={{ 
+                        presentation: 'card',
                         headerTitleAlign: 'left',
-                    })}
+                    }}
                 >
                     <Stack.Screen 
-                        name="Root" 
-                        component={DrawerNavigator} 
-                        options={{ 
-                            headerShown: false,
-                        }} 
+                        name="Script" 
+                        component={ScriptScreen} 
                     />
+                </Stack.Group>
 
-                    <Stack.Group 
-                        screenOptions={{ 
-                            presentation: 'card',
-                            headerTitleAlign: 'left',
-                        }}
-                    >
-                        <Stack.Screen 
-                            name="Script" 
-                            component={ScriptScreen} 
-                        />
-                    </Stack.Group>
-
-                    <Stack.Screen 
-                        name="NotFound" 
-                        component={NotFoundScreen} 
-                        options={{ 
-                            title: 'Oops!',
-                        }} 
-                    />
-                </Stack.Navigator>
-            </NavigationContainer>
-
-            <StatusBar 
-                backgroundColor={theme.palette.primary.main} 
-                barStyle="light-content"
-            />
-        </>
+                <Stack.Screen 
+                    name="NotFound" 
+                    component={NotFoundScreen} 
+                    options={{ 
+                        title: 'Oops!',
+                    }} 
+                />
+            </Stack.Navigator>
+        </NavigationContainer>
     );
 }
