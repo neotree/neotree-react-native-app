@@ -52,6 +52,12 @@ export default function SelectDiagnoses() {
                         name: item.label,
                         how_agree: 'Yes',
                         priority: hcwDiagnoses.length,
+                        text1: item.text1,
+                        image1: item.image1,
+                        text2: item.text2,
+                        image2: item.image2,
+                        text3: item.text3,
+                        image3: item.image3,
                       }),
                     }]);
                 }}
