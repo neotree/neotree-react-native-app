@@ -188,9 +188,9 @@ export const defaultTheme: Theme = {
         },
     
         info: {
-            main: '#0288d1',
-            dark: '#03a9f4',
-            light: '#01579b',
+            main: '#00acc1',
+            dark: '#00acc1',
+            light: '#00acc1',
             contrastText: '#fff',
         },
 

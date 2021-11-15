@@ -1,17 +1,19 @@
 import React from 'react';
-import { Text, Button, Br, View, useTheme, Content } from '@/components/ui';
+import { Text, Br, View, useTheme, Content } from '@/components/ui';
 import { MaterialIcons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
+import { BackHandler, Platform, TouchableOpacity } from 'react-native';
 import { OverlayLoader } from '@/components/OverlayLoader';
 import { RootStackScreenProps } from '@/types';
 import * as copy from '@/constants/copy/script';
 import { ScriptContext } from './Context';
 import { Screen, ScreenInfo } from './Screen';
 import { useScriptLogic } from './useScriptLogic';
+import { SetNavigationOptions, ScreenOptions } from './types';
 
 export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script'>) {
     const theme = useTheme();
     const { params: { script_id, screen_id }, } = route;
+    const [screenOptions, setScreenOptions] = React.useState<ScreenOptions>(null);
     const contextValue = useScriptLogic();
     const { 
         loadScreensError, 
@@ -23,20 +25,19 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
         loadData, 
         navigateToScreen,
         onBack,
+        shouldExit,
     } = contextValue;
-    
-    React.useEffect(() => {
-        if (activeScreen) {
-            navigateToScreen(activeScreen.id);
+
+    function setNavigationOptions(options: SetNavigationOptions = {}, screen = activeScreen) {
+        const { customTitle, customSubtitle, onBack: _onBack } = options;
+        if (screen) {
             navigation.setOptions({
-                gestureEnabled: true,
-                headerBackVisible: false,
-                headerRight: () => <ScreenInfo screen={activeScreen} />,
+                headerRight: () => <ScreenInfo screen={screen} />,
                 headerLeft: ({ tintColor }) => {
                     return (
                         <TouchableOpacity
                             style={{ marginRight: theme.spacing(2), }}
-                            onPress={() => onBack()}
+                            onPress={() => (screenOptions?.onBack || _onBack || onBack)()}
                         >
                             <MaterialIcons 
                                 name="arrow-back"
@@ -52,17 +53,35 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
                             variant="h6" 
                             color="primary"
                             numberOfLines={1}
-                        >{activeScreen.data.title}</Text>
+                        >{customTitle || screen.data.title}</Text>
                         <Text 
                             variant="caption" 
                             color="textSecondary"
                             numberOfLines={1}
-                        >{script.data.title}</Text>
+                        >{customSubtitle || script.data.title}</Text>
                     </View>
                 ),
+                ...options,
+                gestureEnabled: true,
+                headerBackVisible: false,
             });
         }
+    }
+    
+    React.useEffect(() => {
+        if (activeScreen) {
+            navigateToScreen(activeScreen.id);
+            setNavigationOptions();
+        }
     }, [activeScreen, script_id]);
+
+    React.useEffect(() => {
+        let backHandler = null;
+        if (Platform.OS === 'android') {
+          backHandler = BackHandler.addEventListener('hardwareBackPress', screenOptions?.onBack || onBack);
+        }
+        return () => { if (backHandler) backHandler.remove(); };
+    }, [navigation, activeScreen, shouldExit, screenOptions]);
 
     if (!ready) return <OverlayLoader />;
 
@@ -111,7 +130,12 @@ export function ScriptScreen({ navigation, route }: RootStackScreenProps<'Script
 
     return (
         <ScriptContext.Provider
-            value={contextValue}
+            value={{
+                ...contextValue,
+                setNavigationOptions,
+                screenOptions,
+                setScreenOptions,
+            }}
         >
             {!!activeScreen && <Screen />}
         </ScriptContext.Provider>

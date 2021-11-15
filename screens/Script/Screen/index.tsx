@@ -27,19 +27,26 @@ export function Screen() {
         setEntry ,
         removeEntry,
         screensWithNoAutoFill,
-        onNext
+        onNext,
+        screenOptions
     } = useScriptContext();
 
     if (refresh) return null;
+
+    const renderContent = content => screenOptions?.scrollable === false ? content : (
+        <Content>
+            {content}
+        </Content>
+    );
     
     return (
         <>
             {activeScreen.data.actionText && (
-                <View style={{ backgroundColor: theme.palette.info.main }}>
+                <View style={{ backgroundColor: theme.palette.primary.main }}>
                     <Content style={{ flexDirection: 'row' }}>
-                        <Text style={{ color: theme.palette.info.contrastText, flex: 1, alignItems: 'center' }}>{activeScreen.data.actionText}</Text>
+                        <Text style={{ color: theme.palette.primary.contrastText, flex: 1, alignItems: 'center' }}>{activeScreen.data.actionText}</Text>
                         {!!activeScreen.data.step && (
-                            <Text variant="caption" style={{ color: theme.palette.info.contrastText }}>
+                            <Text variant="caption" style={{ color: theme.palette.primary.contrastText }}>
                                 {activeScreen.data.step.replace(/^\s+|\s+$/g, '')}
                             </Text>
                         )}
@@ -48,11 +55,11 @@ export function Screen() {
                 
             )}
 
-            <ScrollView>
+            <ScrollView contentContainerStyle={screenOptions?.scrollable === false ? { flex: 1 } : {}}>
                 {!!activeScreen.data.contentText && (
                     <View style={{ backgroundColor: 'rgba(255, 255, 0,.2)' }}>
                         <Content>
-                            <Text color="info">
+                            <Text color="primary">
                                 {activeScreen.data.contentText.replace(/^\s+|\s+$/g, '')}
                             </Text>
                         </Content>
@@ -97,8 +104,8 @@ export function Screen() {
                         default:
                             break;
                     }
-                    return !Component ? null : (
-                        <Content>
+                    return !Component ? null : renderContent(
+                        <>
                             <Component 
                                 canAutoFill={!screensWithNoAutoFill[activeScreen.id]}
                                 setEntry={(entry: Entry) => {
@@ -117,7 +124,7 @@ export function Screen() {
                                     });
                                 }}
                             />
-                        </Content>
+                        </>
                     );
                 })()}
             </ScrollView>

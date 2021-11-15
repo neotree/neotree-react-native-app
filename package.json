@@ -26,6 +26,7 @@
     "@react-navigation/drawer": "^6.1.4",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
+    "array-move": "^4.0.0",
     "babel-plugin-module-resolver": "^4.1.0",
     "expo": "~42.0.1",
     "expo-application": "~3.2.0",
@@ -47,6 +48,7 @@
     "react-native-reanimated": "~2.2.0",
     "react-native-safe-area-context": "3.2.0",
     "react-native-screens": "~3.4.0",
+    "react-native-sortable-list": "^0.0.24",
     "react-native-web": "~0.13.12",
     "socket.io-client": "^2.1.1"
   },

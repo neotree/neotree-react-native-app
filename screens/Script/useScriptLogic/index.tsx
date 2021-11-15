@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, BackHandler, Platform } from 'react-native';
+import { Alert } from 'react-native';
 import { RootStackParamList } from '@/types';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/core';
 import { Diagnosis, Screen } from '@/api';
@@ -35,42 +35,43 @@ export function useScriptLogic(): UseScriptLogic {
     });
 
     function getSuggestedDiagnoses() {
-        const _diagnoses = (diagnoses || []).reduce((acc: Diagnosis[], d) => {
-            if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
-            return [...acc, d];
-        }, []);
+        return diagnoses;
+        // const _diagnoses = (diagnoses || []).reduce((acc: Diagnosis[], d) => {
+        //     if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
+        //     return [...acc, d];
+        // }, []);
         
-        const diagnosesRslts = (() => {
-            const rslts = (_diagnoses || []).filter(({ data: { symptoms, expression } }) => {
-            return expression || (symptoms || []).length;
-            }).map((d, i) => {
-            const { data: { symptoms: s, expression } } = d;
-            const symptoms = s || [];
+        // const diagnosesRslts = (() => {
+        //     const rslts = (_diagnoses || []).filter(({ data: { symptoms, expression } }) => {
+        //     return expression || (symptoms || []).length;
+        //     }).map((d, i) => {
+        //     const { data: { symptoms: s, expression } } = d;
+        //     const symptoms = s || [];
         
-            const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
-            // const _symptoms = symptoms;
-            const riskSignCount = _symptoms.reduce((acc, s) => {
-                if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
-                if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
-                return acc;
-            }, { riskCount: 0, signCount: 0 });
+        //     const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+        //     // const _symptoms = symptoms;
+        //     const riskSignCount = _symptoms.reduce((acc, s) => {
+        //         if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
+        //         if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
+        //         return acc;
+        //     }, { riskCount: 0, signCount: 0 });
         
-            const conditionMet = evaluateCondition(parseCondition(expression, {
-                entries: [{
-                    values: [
-                        { key: 'riskCount', value: riskSignCount.riskCount, },
-                        { key: 'signCount', value: riskSignCount.signCount, },
-                    ],
-                }]
-            }));
-            // const conditionMet = i < 2;
-            return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
-            }).filter(d => d);
+        //     const conditionMet = evaluateCondition(parseCondition(expression, {
+        //         entries: [{
+        //             values: [
+        //                 { key: 'riskCount', value: riskSignCount.riskCount, },
+        //                 { key: 'signCount', value: riskSignCount.signCount, },
+        //             ],
+        //         }]
+        //     }));
+        //     // const conditionMet = i < 2;
+        //     return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
+        //     }).filter(d => d);
         
-            return rslts;
-        })();
+        //     return rslts;
+        // })();
         
-        return diagnosesRslts;
+        // return diagnosesRslts;
     };
 
     const navigateToScreen = (screen_id: string | number) => {
@@ -188,14 +189,6 @@ export function useScriptLogic(): UseScriptLogic {
     React.useEffect(() => navigation.addListener('beforeRemove', e => {
         if (!(isFirstScreen && shouldExit)) e.preventDefault();
     }), [navigation, isFirstScreen, shouldExit]);
-
-    React.useEffect(() => {
-        let backHandler = null;
-        if (Platform.OS === 'android') {
-          backHandler = BackHandler.addEventListener('hardwareBackPress', onBack);
-        }
-        return () => { if (backHandler) backHandler.remove(); };
-    }, [navigation, activeScreen, shouldExit]);
 
     return {
         ...apiData,

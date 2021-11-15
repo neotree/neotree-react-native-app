@@ -1,6 +1,7 @@
 import { ScreenMetadataField } from '@/api/types';
-import { Script, Screen, Configuration, Diagnosis, Application } from '@/api';
+import { Script, Screen, Configuration, Diagnosis, Application, DiagnosisData } from '@/api';
 import { parseCondition } from './utils';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 export type LoadApiDataResults = { 
     screens: Screen[]; 
@@ -36,6 +37,14 @@ export type ApiData = {
     loadApplication: () => Promise<Application>;
 };
 
+export type EntryValueDiagnosis = Partial<DiagnosisData> & {
+    how_agree?: string;
+    hcw_follow_instructions?: string;
+    hcw_reason_given?: string;
+    isPrimaryProvisionalDiagnosis?: boolean;
+    priority?: number;
+};
+
 export type EntryValue = {
     value: any;
     exportValue?: any;
@@ -47,6 +56,7 @@ export type EntryValue = {
     dataType?: string;
     exclusive?: boolean;
     error?: any;
+    diagnosis?: EntryValueDiagnosis;
 };
 
 export type EntryScreen = {
@@ -87,7 +97,7 @@ export type UseScriptLogic = ApiData & UseEntriesLogic & {
     activeScreen: Screen;
     shouldExit: boolean;
     exit: () => void;
-    onBack: () => void;
+    onBack: () => boolean;
     onNext: () => void;
     navigateToScreen: (screen_id: string | number) => void;
     getScreen: (nextOrPrev: 'next' | 'back') => { screen: Screen; index: number; };
@@ -97,8 +107,21 @@ export type UseScriptLogic = ApiData & UseEntriesLogic & {
     setRefresh: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+export type SetNavigationOptions = Partial<NativeStackNavigationOptions> & {
+    onBack?: () => boolean;
+    customTitle?: string;
+    customSubtitle?: string;
+};
+
+export type ScreenOptions = {
+    onBack?: () => boolean;
+    scrollable?: boolean;
+};
+
 export type ScriptContext = UseScriptLogic & {
-    
+    setNavigationOptions(options?: SetNavigationOptions, screen?: Screen): void;
+    screenOptions: ScreenOptions;
+    setScreenOptions: React.Dispatch<React.SetStateAction<ScreenOptions>>;
 }
 
 export type ScreenComponentProps = {
@@ -113,4 +136,10 @@ export type ScreenFormFieldComponentProps = ScreenComponentProps & {
     valueObject: EntryValue;
     form: Entry;
     onChange: (value: any, params?: any) => void;
+};
+
+export type ScreenDiagnosisComponentProps = ScreenComponentProps & {
+    value: Entry;
+    onDiagnosisChange: (entry: Partial<EntryValueDiagnosis>) => void;
+    setSection: React.Dispatch<React.SetStateAction<string>>;
 };

@@ -10,7 +10,7 @@ export function Fab( { onPress }: { onPress?: () => void }) {
         <>
             <TouchableOpacity
                 style={{
-                    backgroundColor: theme.palette.primary.main,
+                    backgroundColor: theme.palette.info.main,
                     width: 50,
                     height: 50,
                     borderRadius: 30,
@@ -19,6 +19,7 @@ export function Fab( { onPress }: { onPress?: () => void }) {
                     right: theme.spacing(2),
                     alignItems: 'center',
                     justifyContent: 'center',
+                    zIndex: 100,
                 }}
                 onPress={onPress}
             >
