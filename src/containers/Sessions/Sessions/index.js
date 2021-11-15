@@ -111,65 +111,80 @@ const Sessions = () => {
               </View>
             </Content>
           )}
-          renderItem={({ item }) => (
-            <View style={{ flex: 1 }}>
-              <Content>
-                <Link
-                  to={`/sessions/session/${item.id}`}
-                  style={[{ flex: 1 }]}
-                  component={TouchableOpacity}
-                  onLongPress={() => {
-                    Alert.alert(
-                      'Delete session',
-                      'Do you want to delete this session?',
-                      [
-                        {
-                          text: 'No',
-                          type: 'cancel',
-                          onPress: () => {},
-                        },
-                        {
-                          text: 'Yes',
-                          type: 'cancel',
-                          onPress: () => deleteSessions([item.id]),
-                        }
-                      ]
-                    );
-                  }}
-                >
-                  <Card>
-                    <CardItem>
-                      <Body>
-                        <View style={[{ flexDirection: 'row' }]}>
-                          <View style={[{ flex: 1 }]}>
-                            <Text style={{ color: '#999' }}>Creation date</Text>
-                            <Text>
-                              {moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:mm')}
-                            </Text>
+          renderItem={({ item }) => {
+            return (
+              <View style={{ flex: 1 }}>
+                <Content>
+                  <Link
+                    to={`/sessions/session/${item.id}`}
+                    style={[{ flex: 1 }]}
+                    component={TouchableOpacity}
+                    onLongPress={() => {
+                      Alert.alert(
+                        'Delete session',
+                        'Do you want to delete this session?',
+                        [
+                          {
+                            text: 'No',
+                            type: 'cancel',
+                            onPress: () => {},
+                          },
+                          {
+                            text: 'Yes',
+                            type: 'cancel',
+                            onPress: () => deleteSessions([item.id]),
+                          }
+                        ]
+                      );
+                    }}
+                  >
+                    <Card>
+                      <CardItem>
+                        <Body>
+                          {!!item.exported && (
+                            <Text
+                              style={{ 
+                                backgroundColor: 'green',
+                                color: '#fff',
+                                borderRadius: 20,
+                                fontSize: 10,
+                                paddingVertical: 5,
+                                paddingHorizontal: 10,
+                                marginBottom: 5
+                              }}
+                            >Exported</Text>
+                          )}
+                          <View style={[{ flexDirection: 'row' }]}>
+                            <View style={[{ flex: 1 }]}>
+                              <Text style={{ color: '#999' }}>Creation date</Text>
+                              <Text>
+                                {moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:mm')}
+                              </Text>
+                            </View>
+  
+                            <View style={[{ flex: 1 }]}>
+                              <Text style={{ color: '#999' }}>Completion date</Text>
+                              <Text>
+                                {item.data.completed_at ?
+                                  moment(new Date(item.data.completed_at)).format('DD MMM, YYYY HH:mm')
+                                  :
+                                  'N/A'}
+                              </Text>
+                            </View>
                           </View>
-
-                          <View style={[{ flex: 1 }]}>
-                            <Text style={{ color: '#999' }}>Completion date</Text>
-                            <Text>
-                              {item.data.completed_at ?
-                                moment(new Date(item.data.completed_at)).format('DD MMM, YYYY HH:mm')
-                                :
-                                'N/A'}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <Divider border={false} />
-
-                        <Text style={{ color: '#999' }}>Script</Text>
-                        <Text>{item.data.script.data.title}</Text>
-                      </Body>
-                    </CardItem>
-                  </Card>
-                </Link>
-              </Content>
-            </View>
-          )}
+  
+                          <Divider border={false} />
+  
+                          <Text style={{ color: '#999' }}>Script</Text>
+                          <Text>{item.data.script.data.title}</Text>
+                        </Body>
+                      </CardItem>
+                    </Card>
+                  </Link>
+                </Content>
+              </View>
+            );
+          }}
           keyExtractor={item => `${item.id}`}
         />
       </View>
