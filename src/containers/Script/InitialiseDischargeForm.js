@@ -19,7 +19,8 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
   const onClose = React.useCallback(() => {
     const close = () => {
       setOpenModal(false);
-      _onClose({ uid, session: null, values: null, ...data });
+      const matched = data && data.session ? sessions : [];
+      _onClose({ uid, session: null, values: null, sessions: matched, ...data });
     };
     if (!data || (data && !data.session)) {
       Alert.alert(
@@ -41,7 +42,7 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
     } else {
       close();
     }
-  }, [uid, data]);
+  }, [uid, data, sessions]);
 
   const selectSession = React.useCallback(session => {
     const autoFill = Object.keys(session.data.entries).reduce((acc, key) => {
@@ -181,5 +182,6 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
 }
 
 InitialiseDischargeForm.propTypes = {
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  type: PropTypes.string
 };
