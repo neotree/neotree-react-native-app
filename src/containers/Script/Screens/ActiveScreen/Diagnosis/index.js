@@ -7,6 +7,7 @@ import { DiagnosisContext } from './Context';
 import SelectDiagnoses from './SelectDiagnoses';
 import AgreeDisagree from './AgreeDisagree';
 import ManageSelectedDiagnoses from './ManageSelectedDiagnoses';
+import SortPriority from './SortPriority';
 import FullDiagnosis from './FullDiagnosis';
 import { setPageOptions } from '../../../Context';
 
@@ -59,7 +60,8 @@ function Diagnosis(props) {
   
   const _goBack = () => {
     if (activeDiagnosisIndex === null) {
-      if (section === 'manage') return setSection('agree_disagree');
+      if (section === 'manage') return setSection('sort_priority');
+      if (section === 'sort_priority') return setSection('agree_disagree');
       if (section === 'agree_disagree') return setSection('select');
       if (section === 'select') goBack();
     } else {
@@ -98,8 +100,10 @@ function Diagnosis(props) {
             ]
           );
         } else {
-          setSection('manage');
+          setSection('sort_priority');
         }
+      } else if (section === 'sort_priority') {
+        setSection('manage');
       }
 
       if (section === 'manage') {
@@ -177,6 +181,7 @@ function Diagnosis(props) {
             <>
               {section === 'select' && <SelectDiagnoses />}
               {section === 'agree_disagree' && <AgreeDisagree />}
+              {section === 'sort_priority' && <SortPriority />}
               {section === 'manage' && <ManageSelectedDiagnoses />}
             </>
           )}

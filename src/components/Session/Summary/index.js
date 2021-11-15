@@ -30,6 +30,12 @@ const SessionSummary = ({
             let entries = null;
 
             switch (screen.type) {
+              case 'diagnosis':
+                entries = [{
+                  label: screen.sectionTitle,
+                  values: values.filter(v => v.diagnosis.how_agree !== 'No'),
+                }];
+                break;
               case 'form':
                 entries = values
                   .filter(e => e.confidential ? showConfidential : true)
