@@ -7,7 +7,7 @@ const Entry = ({ label, values }) => { // eslint-disable-line
   return (
     <>
       <Text>{label}</Text>
-      {values.map((v, i) => {
+      {!values.length ? <Text style={{ color: '#999' }}>N/A</Text> : values.map((v, i) => {
         const key = i;
         return (
           <Text

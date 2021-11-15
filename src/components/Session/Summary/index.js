@@ -31,10 +31,17 @@ const SessionSummary = ({
 
             switch (screen.type) {
               case 'diagnosis':
-                entries = [{
-                  label: screen.sectionTitle,
-                  values: values.filter(v => v.diagnosis.how_agree !== 'No'),
-                }];
+                const accepted = values.filter(v => v.diagnosis.how_agree !== 'No');
+                entries = [
+                  {
+                    label: `${screen.sectionTitle} - Primary Provisional Diagnosis`,
+                    values: accepted.filter(v => v.diagnosis.isPrimaryProvisionalDiagnosis),
+                  },
+                  {
+                    label: `${screen.sectionTitle} - Other problems`,
+                    values: accepted.filter(v => !v.diagnosis.isPrimaryProvisionalDiagnosis),
+                  }
+                ]; // .filter(v => v.values.length);
                 break;
               case 'form':
                 entries = values
