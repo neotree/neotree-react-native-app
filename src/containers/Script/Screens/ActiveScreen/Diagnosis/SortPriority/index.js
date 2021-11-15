@@ -5,8 +5,8 @@ import { useDiagnosisContext } from '../Context';
 import Header from '../../Header';
 import DiagnosesList from '../components/DiagnosesList';
 
-export default function AgreeDisagree() {
-  const { props, goBack, hcwDiagnoses, diagnosesEntry, } = useDiagnosisContext();
+export default function SortPriority() {
+  const { props, diagnoses, setDiagnoses, goBack } = useDiagnosisContext();
 
   return (
     <>
@@ -21,22 +21,15 @@ export default function AgreeDisagree() {
             divider
             canAgreeDisagree={false}
             canDelete={false}
-            title="HCW Diagnoses"
+            title="Compiled Diagnoses"
             subtitle="Please order the diagnoses by priority"
-            filter={d => hcwDiagnoses.map(d => d.name).includes(d.name)}
-          />
-
-          <DiagnosesList
-            divider
-            title="Suggested Diagnoses"
-            subtitle="Please order the diagnoses by priority"
-            filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree !== 'No')}
+            filter={d => d.how_agree !== 'No'}
           />
 
           <DiagnosesList
             divider
             title="Diagnoses rejected"
-            filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree === 'No')}
+            filter={d => d.how_agree === 'No'}
           />
         </Content>
       </ScrollView>
