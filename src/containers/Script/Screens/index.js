@@ -93,6 +93,7 @@ const Screens = props => {
     diagnoses,
     script,
     startTime,
+    matches: state.matches,
   });
 
   const getSuggestedDiagnoses = require('./_getSuggestedDiagnoses').default({

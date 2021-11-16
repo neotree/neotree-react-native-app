@@ -7,7 +7,9 @@ export default ({
   evaluateCondition,
   diagnoses,
   appState: { application, location },
+  matches,
 }) => function createSessionSummary(_payload = {}) {
+  console.log(matches);
   diagnoses = (diagnoses || []).reduce((acc, d) => {
     if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
     return [...acc, d];

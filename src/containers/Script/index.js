@@ -13,6 +13,7 @@ const Script = () => {
   const location = useLocation();
 
   const [state, _setState] = React.useState({
+    matches: [],
     pageOptions: null,
     script: null,
     screens: [],
@@ -147,15 +148,15 @@ const Script = () => {
         />
       </View>
 
-      {['discharge', 'neolab'].includes(state.script.type) && !state.autoFillInitialised && (
+      {['discharge', /*'neolab'*/].includes(state.script.type) && !state.autoFillInitialised && (
         <InitialiseDischargeForm
           type={state.script.type}
-          onClose={autoFill => {
+          onClose={(autoFill, matches = []) => {
             if (!autoFill.session) {
               setState({ autoFillInitialised: true, });
             } else {
               refreshPage();
-              setState({ autoFill, autoFillInitialised: true, });
+              setState({ matches, autoFill, autoFillInitialised: true, });
             }
           }}
         />
