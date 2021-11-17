@@ -9,7 +9,6 @@ export default ({
   appState: { application, location },
   matches,
 }) => function createSessionSummary(_payload = {}) {
-  console.log(matches);
   diagnoses = (diagnoses || []).reduce((acc, d) => {
     if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
     return [...acc, d];
@@ -26,6 +25,8 @@ export default ({
     return uid || acc;
   }, null);
 
+  const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
+
   return {
     ...payload,
     uid,
@@ -38,8 +39,19 @@ export default ({
       completed_at: completed ? new Date().toISOString() : null,
       canceled_at: canceled ? new Date().toISOString() : null,
       script,
-      form,
       diagnoses: [],
+      form,
+      matched: script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
+        if (s.data.script.type !== 'discharge') {
+          Object.keys(s.data.entries).forEach(key => {
+            if (neolabKeys.includes(key)) acc.push({ key, ...s.data.entries[key] });
+          });
+          // Object.keys(s.data.entries).forEach(key => {
+          //   acc.push({ key, ...s.data.entries[key] });
+          // });
+        }
+        return acc;
+      }, []),
     },
   };
 };

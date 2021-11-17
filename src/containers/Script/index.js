@@ -145,6 +145,7 @@ const Script = () => {
           diagnoses={state.diagnoses}
           configuration={state.configuration}
           autoFill={state.autoFill}
+          matches={state.matches}
         />
       </View>
 

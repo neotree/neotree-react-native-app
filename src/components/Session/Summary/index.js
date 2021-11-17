@@ -9,7 +9,7 @@ const SessionSummary = ({
   showConfidential, 
   onShowConfidential,
   Wrapper, 
-  session: { data: { form }, ...s } 
+  session: { data: { form, matched }, ...s } 
 }) => {
   Wrapper = Wrapper || React.Fragment;
 
@@ -60,7 +60,7 @@ const SessionSummary = ({
 
             return !entries ? null : entries.map((e, i) => {
               const key = `${screen.id}${i}`;
-              return <Entry key={key} {...e} />;
+              return <Entry key={key} entry={e} matched={matched || []} />;
             });
           })}
       </Wrapper>
