@@ -14,7 +14,7 @@ const Screens = props => {
   const history = useHistory();
   const location = useLocation();
 
-  const { screens, script, configuration, diagnoses, } = props;
+  const { screens, script, configuration, diagnoses, matches, } = props;
   const [activeScreen, _setActiveScreen] = React.useState(null);
   const [hideActiveScreen, setHideActiveScreen] = React.useState(false);
   const setActiveScreen = s => {
@@ -93,8 +93,10 @@ const Screens = props => {
     diagnoses,
     script,
     startTime,
-    matches: state.matches,
+    matches,
   });
+
+  createSessionSummary();
 
   const getSuggestedDiagnoses = require('./_getSuggestedDiagnoses').default({
     parseCondition,
@@ -258,6 +260,7 @@ Screens.propTypes = {
   diagnoses: PropTypes.array.isRequired,
   script: PropTypes.object.isRequired,
   configuration: PropTypes.object,
+  matches: PropTypes.array.isRequired,
 };
 
 export default Screens;

@@ -15,13 +15,12 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
   const [uid, setUID] = React.useState('');
   const [data, setData] = React.useState(null);
   const [sessions, setSessions] = React.useState([]);
-  const [matches, setMatches] = React.useState([]);
 
   const onClose = () => {
     const close = () => {
       setOpenModal(false);
       const matched = data && data.session ? sessions : [];
-      _onClose({ uid, session: null, values: null, sessions: matched, matches, ...data });
+      _onClose({ uid, session: null, values: null, sessions: matched, ...data }, sessions);
     };
     if (!data || (data && !data.session)) {
       Alert.alert(
@@ -62,7 +61,6 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
         setLoading(true);
         try {
           sessions = await api.getExportedSessionsByUID(uid);
-          setMatches(sessions);
         } catch (e) { /**/ console.log(e); }
       }
       setData({ uid, session: null, values: null, });

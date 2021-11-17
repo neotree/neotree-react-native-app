@@ -20,7 +20,7 @@ export default function convertSessionsToExportable(_sessions = [], opts = {}) {
             appVersion: constants.APP_VERSION,
             scriptVersion: application.webeditor_info.version,
             scriptTitle: script.script_id,
-            script: { id: script.script_id, title: script.data.title },
+            script: { id: script.script_id, title: script.data.title, type: script.type, },
             started_at,
             completed_at,
             canceled_at,
