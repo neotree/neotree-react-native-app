@@ -11,8 +11,10 @@ export default (session, showConfidential) => {
     if (entry.values.length) {
       [
         ...(screen.type === 'diagnosis' ? [
-          `${sectionTitle} - Primary Provisional Diagnosis`,
-          `${sectionTitle} - Other problems`,
+          'Primary Problems',
+          'Other problems',
+          // `${sectionTitle} - Primary Provisional Diagnosis`,
+          // `${sectionTitle} - Other problems`,
         ] : [sectionTitle])
       ].forEach((sectionTitle, i) => {
         const _sectionTitle = ucFirst(`${sectionTitle}`.toLowerCase());
