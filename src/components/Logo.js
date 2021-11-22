@@ -4,9 +4,9 @@ import { Image } from 'react-native';
 
 const Logo = ({ style, size, color }) => {
   const src = color === 'white' ?
-    require('~/assets/images/neotree-icon-black.png')
+    require('~/assets/images/logo.png')
     :
-    require('~/assets/images/neotree-icon-black.png');
+    require('~/assets/images/logo-dark.png');
 
   return (
     <>
@@ -17,7 +17,7 @@ const Logo = ({ style, size, color }) => {
           {
             width: size || 90,
             height: size || 90,
-            borderRadius: 45,
+            // borderRadius: 45,
             // backgroundColor: palette[color] ? palette[color].main : 'transparent'
           },
         ]}
