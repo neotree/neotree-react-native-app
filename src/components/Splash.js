@@ -17,7 +17,7 @@ function Splash({ children }) {
       >
         <Image
           style={{ width: 80, height: 80 }}
-          source={require('~/assets/images/icon.png')}
+          source={require('~/assets/images/logo.png')}
         />
 
         {!!children && (

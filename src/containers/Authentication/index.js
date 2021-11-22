@@ -39,8 +39,8 @@ function Authentication() {
       >
         <View style={{ alignItems: 'center' }}>
           <Image
-            style={{ width: 80, height: 80 }}
-            source={require('~/assets/images/icon.png')}
+            style={{ width: 150, height: 150, }}
+            source={require('~/assets/images/logo.png')}
           />
         </View>
 
