@@ -16,7 +16,7 @@ const ManageSelectedDiagnoses = () => {
         {...props}
         goBack={() => goBack()}
         hideActionText
-        title="Manage diagnoses"
+        title={`${props.screen.data.title4 || ''}`}
       />
 
       <ScrollView>
