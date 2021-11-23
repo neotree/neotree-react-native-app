@@ -13,6 +13,7 @@ export default function AgreeDisagree() {
       <Header 
         {...props} 
         goBack={() => goBack()}
+        title={`${props.screen.data.title2 || ''}`}
       />
 
       <ScrollView>

@@ -13,6 +13,7 @@ export default function SortPriority() {
       <Header 
         {...props} 
         goBack={() => goBack()}
+        title={`${props.screen.data.title3 || ''}`}
       />
 
       <ScrollView>
