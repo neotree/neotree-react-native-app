@@ -16,10 +16,25 @@ export default function SelectDiagnoses() {
     setHcwDiagnoses,
     getDefaultDiagnosis,
     goBack,
+    diagnoses,
   } = useDiagnosisContext();
   const { screen } = props;
 
-  const items = ({ ...screen.data.metadata }).items || [];
+  const items = (({ ...screen.data.metadata }).items || []).map(item => {
+    const d = diagnoses.filter(d => d.name === item.label)[0];
+    return {
+      ...item,
+      ...(!d ? null : {
+        text1: d.text1,
+        image1: d.image1,
+        text2: d.text2,
+        image2: d.image2,
+        text3: d.text3,
+        image3: d.image3,
+        symptoms: d.symptoms || [],
+      }),
+    };
+  });
   const exclusiveIsSelected = items
     .filter(item => item.exclusive)
     .filter(item => hcwDiagnoses.map(d => d.name).includes(item.label))[0];
