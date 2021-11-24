@@ -20,6 +20,7 @@ export default function AgreeDisagree() {
         <Content>
           <DiagnosesList
             divider
+            sortable={false}
             canAgreeDisagree={false}
             canDelete={false}
             title="HCW Diagnoses"
@@ -29,6 +30,7 @@ export default function AgreeDisagree() {
 
           <DiagnosesList
             divider
+            sortable={false}
             title="Suggested Diagnoses"
             subtitle="Please order the diagnoses by priority"
             filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree !== 'No')}
@@ -36,6 +38,7 @@ export default function AgreeDisagree() {
 
           <DiagnosesList
             divider
+            sortable={false}
             title="Diagnoses rejected"
             filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree === 'No')}
           />
