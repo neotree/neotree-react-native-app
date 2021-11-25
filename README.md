@@ -1,4 +1,4 @@
-# NeoTree App
+# Neotree App
 
 [![DOI](https://zenodo.org/badge/262277859.svg)](https://zenodo.org/badge/latestdoi/262277859)
 
