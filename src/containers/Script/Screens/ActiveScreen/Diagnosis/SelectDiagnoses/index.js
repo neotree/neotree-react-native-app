@@ -44,6 +44,7 @@ export default function SelectDiagnoses() {
       <Header 
         {...props} 
         goBack={() => goBack()}
+        instructions={`${screen.data.instructions || ''}`}
       />
 
       <ScrollView>
