@@ -23,6 +23,7 @@ const ScreenHeader = ({
   title,
   subtitle,
   actionText,
+  instructions,
 }) => {
   const { state: { pageOptions } } = useContext();
 
@@ -111,6 +112,15 @@ const ScreenHeader = ({
         </>
       )}
 
+      {!!instructions && (
+        <>
+          <Content>
+            <Text style={[colorStyles.primaryColor]}>Instructions</Text>
+            <Text variant="caption">{instructions}</Text>
+          </Content>
+        </>
+      )}
+
       {!!screen && (
         <Modal
           open={openInfoModal}
@@ -132,6 +142,7 @@ const ScreenHeader = ({
 };
 
 ScreenHeader.propTypes = {
+  instructions: PropTypes.string,
   screen: PropTypes.object.isRequired,
   script: PropTypes.object.isRequired,
   goBack: PropTypes.func.isRequired,

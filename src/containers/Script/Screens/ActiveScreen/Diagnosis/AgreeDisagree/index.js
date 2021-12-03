@@ -14,6 +14,7 @@ export default function AgreeDisagree() {
         {...props} 
         goBack={() => goBack()}
         title={`${props.screen.data.title2 || ''}`}
+        instructions={`${props.screen.data.instructions2 || ''}`}
       />
 
       <ScrollView>
@@ -24,7 +25,7 @@ export default function AgreeDisagree() {
             canAgreeDisagree={false}
             canDelete={false}
             title="HCW Diagnoses"
-            subtitle="Please order the diagnoses by priority"
+            // subtitle="Please order the diagnoses by priority"
             filter={d => hcwDiagnoses.map(d => d.name).includes(d.name)}
           />
 
@@ -32,13 +33,15 @@ export default function AgreeDisagree() {
             divider
             sortable={false}
             title="Suggested Diagnoses"
-            subtitle="Please order the diagnoses by priority"
+            canDelete={false}
+            // subtitle="Please order the diagnoses by priority"
             filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree !== 'No')}
           />
 
           <DiagnosesList
             divider
             sortable={false}
+            canDelete={false}
             title="Diagnoses rejected"
             filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree === 'No')}
           />

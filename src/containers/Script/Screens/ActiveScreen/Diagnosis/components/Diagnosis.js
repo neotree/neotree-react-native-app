@@ -207,9 +207,11 @@ export default function Diagnosis({
             </View>
           </Content>
 
-          <Fab onPress={() => onClose()}>
-            <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
-          </Fab>
+          {!!(form.hcw_follow_instructions && form.how_agree) && (
+            <Fab onPress={() => onClose()}>
+              <MaterialIcons size={24} color="black" style={{ color: '#fff' }} name="arrow-forward" />
+            </Fab>
+          )}
         </View>
       </Modal>
     </>

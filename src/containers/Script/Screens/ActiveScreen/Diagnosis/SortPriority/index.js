@@ -14,6 +14,7 @@ export default function SortPriority() {
         {...props} 
         goBack={() => goBack()}
         title={`${props.screen.data.title3 || ''}`}
+        instructions={`${props.screen.data.instructions3 || ''}`}
       />
 
       <ScrollView>
