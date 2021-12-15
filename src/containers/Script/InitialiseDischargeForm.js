@@ -64,7 +64,7 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
         } catch (e) { /**/ console.log(e); }
       }
       setData({ uid, session: null, values: null, });
-      setSessions(sessions);
+      setSessions((sessions || []).filter(s => ['admission', 'neolab'].includes(s.type)));
       setLoading(false);
     })();
   }, [uid]);

@@ -16,7 +16,7 @@ const styles = {
   },
 };
 
-const _DateTime = ({ field, onChange: _onChange, value, conditionMet, }) => {
+const _DateTime = ({ field, onChange: _onChange, value, conditionMet, entries, form }) => {
   const onChange = (d, opts) => _onChange(d, {
     ...opts,
     valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY HH:mm') : '',
@@ -33,6 +33,15 @@ const _DateTime = ({ field, onChange: _onChange, value, conditionMet, }) => {
     const d = date ? new Date(date).toISOString() : null;
     if (v !== d) onChange(date);
   });
+
+  const getMinOrMaxDate = key => {
+    return [...entries.reduce((acc, e) => [...acc, ...e.values], []), ...form.values]
+      .filter(e => e.key === (field[`${key}DateKey`] || '').replace('$', ''))
+      .map(e => e.value && e.value.map ? null : e.value)[0];
+  };
+
+  const maxDate = getMinOrMaxDate('max');
+  const minDate = getMinOrMaxDate('min');
 
   return (
     <>
@@ -51,8 +60,8 @@ const _DateTime = ({ field, onChange: _onChange, value, conditionMet, }) => {
             value={date || null}
             placeholder={formCopy.SELECT_DATE}
             onChange={onDateChange}
-            maxDate={field.maxDate}
-            minDate={field.minDate}
+            maxDate={maxDate || field.maxDate}
+            minDate={minDate || field.minDate}
           />
         </View>
 
