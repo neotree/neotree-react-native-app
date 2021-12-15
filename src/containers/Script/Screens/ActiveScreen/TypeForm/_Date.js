@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 
-const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
+const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, form }) => {
   const onChange = (d, opts) => _onChange(d, {
     ...opts,
     valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY') : '',
@@ -28,6 +28,15 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
     }
   });
 
+  const getMinOrMaxDate = key => {
+    return [...entries.reduce((acc, e) => [...acc, ...e.values], []), ...form.values]
+      .filter(e => e.key === (field[`${key}DateKey`] || '').replace('$', ''))
+      .map(e => e.value && e.value.map ? null : e.value)[0];
+  };
+
+  const maxDate = getMinOrMaxDate('max');
+  const minDate = getMinOrMaxDate('min');
+
   return (
     <>
       <DatePicker
@@ -35,8 +44,8 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, }) => {
         value={date || null}
         placeholder={formCopy.SELECT_DATE}
         onChange={(e, d) => onDateChange(d)}
-        maxDate={field.maxDate}
-        minDate={field.minDate}
+        maxDate={maxDate || field.maxDate}
+        minDate={minDate || field.minDate}
       >
         {field.label}{field.optional ? '' : ' *'}
       </DatePicker>

@@ -149,7 +149,7 @@ const Script = () => {
         />
       </View>
 
-      {['discharge', /*'neolab'*/].includes(state.script.type) && !state.autoFillInitialised && (
+      {['discharge', 'neolab'].includes(state.script.type) && !state.autoFillInitialised && (
         <InitialiseDischargeForm
           type={state.script.type}
           onClose={(autoFill, matches = []) => {

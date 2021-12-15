@@ -123,9 +123,9 @@ export default function Diagnosis({
                   {
                     label: 'No',
                   },
-                  {
-                    label: 'Maybe',
-                  }
+                  // {
+                  //   label: 'Maybe',
+                  // }
                 ].map(({ label, ...btnProps }) => {
                   const selected = form.how_agree === label;
                   return (
@@ -186,9 +186,9 @@ export default function Diagnosis({
                 {
                   label: 'No',
                 },
-                {
-                  label: 'Partially',
-                }
+                // {
+                //   label: 'Partially',
+                // }
               ].map(({ label, ...btnProps }) => {
                 const selected = form.hcw_follow_instructions === label;
                 return (
