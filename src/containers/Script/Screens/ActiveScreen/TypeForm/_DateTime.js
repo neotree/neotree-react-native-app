@@ -4,6 +4,7 @@ import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
 import { View } from 'react-native';
 import Text from '@/components/Text';
+import DateInput from '@/components/DateInput';
 
 const styles = {
   gridContainer: {
@@ -23,9 +24,12 @@ const _DateTime = ({ field, onChange: _onChange, value, conditionMet, entries, f
   });
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
-  const onDateChange = (e, date) => {
-    setDate(date);
-    onChange(date.toISOString());
+  const onDateChange = (date) => {
+    if (date) {
+      date = new Date(date);
+      setDate(date);
+      onChange(date.toISOString());
+    }
   };
 
   React.useEffect(() => {
@@ -53,7 +57,17 @@ const _DateTime = ({ field, onChange: _onChange, value, conditionMet, entries, f
         </Text>
       )}
 
-      <View style={[styles.gridContainer]}>
+      <DateInput
+        mode="datetime"
+        value={date}
+        disabled={!conditionMet}
+        // label={`${field.label}${field.optional ? '' : ' *'}`}
+        onChange={date => date && onDateChange(date)}
+        maxDate={maxDate || field.maxDate}
+        minDate={minDate || field.minDate}
+      />
+
+      {/* <View style={[styles.gridContainer]}>
         <View style={[styles.gridItem]}>
           <DatePicker
             enabled={conditionMet}
@@ -76,7 +90,7 @@ const _DateTime = ({ field, onChange: _onChange, value, conditionMet, entries, f
             onChange={onDateChange}
           />
         </View>
-      </View>
+      </View> */}
     </>
   );
 };

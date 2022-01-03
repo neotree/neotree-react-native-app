@@ -69,7 +69,7 @@ const DatePicker = ({
             ]}
           >
             {!value ? placeholder : (formatDate ?
-              formatDate(value) : moment(value).format(mode === 'time' ? 'LT' : 'LL')
+              formatDate(value) : moment(value).format(mode === 'time' ? 'HH:MM' : 'LL')
             )}
           </Text>
           <MaterialIcons size={24} color="black" style={[enabled ? null : { color: '#ccc' }]} name="arrow-drop-down" />
