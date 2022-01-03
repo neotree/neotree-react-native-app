@@ -2,6 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import DatePicker from '@/components/DatePicker';
 import formCopy from '@/constants/copy/form';
+import { View } from 'react-native';
+import Text from '@/components/Text';
+import DateInput from '@/components/DateInput';
 
 const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, form }) => {
   const onChange = (d, opts) => _onChange(d, {
@@ -12,8 +15,11 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, f
   const [date, setDate] = React.useState(field.defaultValue ? _date || new Date() : _date);
 
   const onDateChange = (date) => {
-    setDate(date);
-    onChange(date.toISOString());
+    if (date) {
+      date = new Date(date);
+      setDate(date);
+      onChange(date.toISOString());
+    }
   };
 
   React.useEffect(() => {
@@ -39,7 +45,27 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, f
 
   return (
     <>
-      <DatePicker
+      {!field.label ? null : (
+        <Text
+          {...conditionMet ? null : { style: { color: '#ccc' } }}
+        >
+          {field.label}{field.optional ? '' : ' *'}
+        </Text>
+      )}
+
+      <DateInput
+          mode="date"
+          value={date}
+          disabled={!conditionMet}
+          // label={`${field.label}${field.optional ? '' : ' *'}`}
+          onChange={date => date && onDateChange(date)}
+          maxDate={field.maxDate}
+          minDate={field.minDate}
+          maxDate={maxDate || field.maxDate}
+          minDate={minDate || field.minDate}
+      />
+
+      {/* <DatePicker
         enabled={conditionMet}
         value={date || null}
         placeholder={formCopy.SELECT_DATE}
@@ -48,7 +74,7 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, f
         minDate={minDate || field.minDate}
       >
         {field.label}{field.optional ? '' : ' *'}
-      </DatePicker>
+      </DatePicker> */}
     </>
   );
 };
