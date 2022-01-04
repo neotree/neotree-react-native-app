@@ -16,6 +16,9 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
   const [data, setData] = React.useState(null);
   const [sessions, setSessions] = React.useState([]);
 
+  const admissionSessions = sessions.filter(s => s.data.script.title.match(/admission/gi) || (s.data.script.type === 'admission'));
+  const neolabSessions = sessions.filter(s => s.data.script.title.match(/neolab/gi) || (s.data.script.type === 'neolab'));
+
   const onClose = () => {
     const close = () => {
       setOpenModal(false);
@@ -116,35 +119,47 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
                     <View style={{ margin: 10 }}>
                       {sessions.length ? (
                         <>
-                          <Text style={{ color: '#16a085', textAlign: 'center' }}>{data.uid} - {sessions.length} sessions found</Text>
-                          <View style={{ marginTop: 10 }} />
-                          {sessions.map(s => {
-                            const selected = s.id === (data.session && data.session.id);
-                            return (
-                              <TouchableOpacity
-                                key={s.id}
-                                onPress={() => selectSession(s)}
-                              >
-                                <Card>
-                                  <CardItem
-                                    style={[
-                                      !selected ? null : { backgroundColor: theme.brandPrimary },
-                                    ]}
+                          <Text style={{ color: '#16a085', textAlign: 'center' }}>{data.uid}</Text>
+                          <Text style={{ color: '#999', textAlign: 'center', fontSize: 14 }}>{admissionSessions.length} Admission sessions found</Text>
+                          <Text style={{ color: '#999', textAlign: 'center', fontSize: 14 }}>{neolabSessions.length} Neolab sessions found</Text>
+                          <View style={{ marginTop: 25 }} />
+                          {!admissionSessions.length ? (
+                            <Text style={{ color: '#999' }}>No admission sessions to select</Text>
+                          ) : (
+                            <>
+                              <Text style={{ marginBottom: 5}}>Select admission session</Text>
+                              {admissionSessions.map(s => {
+                                const selected = s.id === (data.session && data.session.id);
+                                const title = s.data.script.title || '';
+                                const type = s.data.script.type;
+
+                                return (
+                                  <TouchableOpacity
+                                    key={s.id}
+                                    onPress={() => selectSession(s)}
                                   >
-                                    <Body>
-                                      <Text
-                                        style={[!selected ? null : { color: '#fff' }]}
-                                      >{s.data.script.title}</Text>
-                                      <Text
-                                        style={[!selected ? { color: '#999' } : { color: '#ddd' }]}
-                                        variant="caption"
-                                      >{moment(s.ingested_at).format('llll')}</Text>
-                                    </Body>
-                                  </CardItem>
-                                </Card>
-                              </TouchableOpacity>
-                            );
-                          })}
+                                    <Card>
+                                      <CardItem
+                                        style={[
+                                          !selected ? null : { backgroundColor: theme.brandPrimary },
+                                        ]}
+                                      >
+                                        <Body>
+                                          <Text
+                                            style={[!selected ? null : { color: '#fff' }]}
+                                          >{s.data.script.title}</Text>
+                                          <Text
+                                            style={[!selected ? { color: '#999' } : { color: '#ddd' }]}
+                                            variant="caption"
+                                          >{moment(s.ingested_at).format('llll')}</Text>
+                                        </Body>
+                                      </CardItem>
+                                    </Card>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </>
+                          )}
                         </>
                       ) : (
                         <>
