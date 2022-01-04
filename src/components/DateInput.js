@@ -45,7 +45,7 @@ export default function DateInput({
                 case 'date':
                     return moment(date).format('ll');
                 case 'datetime':
-                    return moment(date).format('ll HH:MM');
+                    return moment(date).format('ll HH:mm');
                 default:
                     return null;
             }
