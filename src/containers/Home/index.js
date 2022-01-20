@@ -3,7 +3,6 @@ import { View, TouchableOpacity } from 'react-native';
 import { useHistory } from 'react-router-native';
 import { Drawer } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Permissions from 'expo-permissions';
 import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import Scripts from '@/components/Scripts';
@@ -20,12 +19,6 @@ const Home = () => {
   React.useEffect(() => {
     history.entries = [];
     history.push('/');
-  }, []);
-
-  React.useEffect(() => {
-    Promise.all([
-      Permissions.askAsync(Permissions.NOTIFICATIONS),
-    ]);
   }, []);
 
   return (
