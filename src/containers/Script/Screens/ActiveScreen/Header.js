@@ -11,6 +11,7 @@ import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import bgColorStyles from '@/styles/bgColorStyles';
 import Content from '@/components/Content';
+import { Input, Form, Item } from 'native-base';
 import { useContext } from '../../Context';
 
 const ScreenHeader = ({
@@ -30,6 +31,12 @@ const ScreenHeader = ({
   useBackButton(() => { goBack(); });
 
   const [openInfoModal, setOpenInfoModal] = React.useState(false);
+  const [showSearchInput, setShowSearchInput] = React.useState(false);
+  const [searchVal, setSearchVal] = React.useState('');
+
+  React.useEffect(() => {
+    if (pageOptions && !pageOptions.onSearch) setSearchVal('');
+  }, [pageOptions]);
 
   return (
     <>
@@ -48,6 +55,18 @@ const ScreenHeader = ({
         )}
         rightActions={(
           <>
+            {!!(pageOptions && pageOptions.onSearch) && (
+              <TouchableOpacity
+                  style={{ padding: 10 }}
+                  onPress={() => {
+                    setShowSearchInput(prev => !prev);
+                    setSearchVal('');
+                  }}
+                >
+                  <MaterialIcons size={24} color="#999" style={showSearchInput ? [colorStyles.primaryColor] : []} name="search" />
+              </TouchableOpacity>
+            )}
+
             {!!screen.data.infoText && (
               <>
                 <TouchableOpacity
@@ -136,6 +155,31 @@ const ScreenHeader = ({
           <Divider border={false} />
           <Text note>{screen.data.infoText}</Text>
         </Modal>
+      )}
+
+      {showSearchInput && (
+        <View style={{ padding: 10 }}>
+          <Content>
+            <Form>
+              <Item rounded bordered>
+                <Input
+                  autoFocus
+                  autoCorrect={false}
+                  value={searchVal || ''}
+                  defaultValue={searchVal || ''}
+                  returnKeyType='search'
+                  returnKeyLabel='search'
+                  onChange={e => {
+                    const value = e.nativeEvent.text;
+                    setSearchVal(value);
+                    if (pageOptions && pageOptions.onSearch) pageOptions.onSearch(value);
+                  }}
+                  placeholder="Search"
+                />
+              </Item>
+            </Form>
+          </Content>
+        </View>
       )}
     </>
   );
