@@ -103,8 +103,8 @@ export default function DateInput({
                     minimumDate={!minDate ? null : minDate === 'date_now' ? new Date() : new Date(minDate)}
                     onChange={(e, selectedDate) => {
                         if (!selectedDate) return setShowDatePicker(false);
-                        setDate(selectedDate);
                         setShowDatePicker(false);
+                        setTimeout(() => setDate(selectedDate), 0);
                         if (mode === 'datetime') {
                             setShowTimePicker(true);
                         }
@@ -121,8 +121,8 @@ export default function DateInput({
                     display="default"
                     onChange={(e, selectedDate) => {
                         if (!selectedDate) return setShowTimePicker(false);
-                        setDate(selectedDate);
                         setShowTimePicker(false);
+                        setTimeout(() => setDate(selectedDate), 0);
                     }}
                 />
             )}
