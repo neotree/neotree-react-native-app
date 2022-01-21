@@ -9,8 +9,8 @@ import Text from '@/components/Text';
 import Diagnosis from './Diagnosis';
 import { useDiagnosisContext } from '../Context';
 
-function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDisagree, canDelete }) {
-  const { diagnoses, setDiagnoses } = useDiagnosisContext();
+function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDisagree, canDelete, setRefresh }) {
+  const { diagnoses, setDiagnoses, _setHcwDiagnoses, } = useDiagnosisContext();
 
   const displayedDiagnoses = diagnoses.filter((d, i) => filter ? filter(d, i) : true);
 
@@ -66,10 +66,13 @@ function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDis
 
                 {canAgreeDisagree !== false && (
                   <Diagnosis
-                    setDiagnosis={s => setDiagnoses(diagnoses.map((d, i) => {
-                      if (i !== index) return d;
-                      return { ...d, ...s };
-                    }))}
+                    setDiagnosis={s => {
+                      setDiagnoses(diagnoses.map((d, i) => {
+                        if (i !== index) return d;
+                        return { ...d, ...s };
+                      }));
+                      setRefresh(true);
+                    }}
                     diagnosis={item}
                   />
                 )}
@@ -80,7 +83,11 @@ function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDis
                   <Button
                     transparent
                     onPress={() => {
-                      const deleteDiagnosis = () => setDiagnoses(diagnoses.filter((d, i) => i !== index));
+                      const deleteDiagnosis = () => {
+                        setDiagnoses(diagnoses.filter((d, i) => i !== index));
+                        _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d, i) => d.diagnosis.name !== item.name));
+                        if (setRefresh) setRefresh(true);
+                      };
                       Alert.alert(
                         'Delete diagnosis',
                         'Are you sure?',
@@ -148,6 +155,7 @@ DiagnosesList.propTypes = {
   sortable: PropTypes.bool,
   divider: PropTypes.bool,
   diagnoses: PropTypes.array,
+  setRefresh: PropTypes.func
 };
 
 export default DiagnosesList;

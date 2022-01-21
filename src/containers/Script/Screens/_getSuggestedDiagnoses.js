@@ -3,7 +3,7 @@ export default ({
   evaluateCondition,
   diagnoses,
 }) => function getSuggestedDiagnoses() {
-  return diagnoses.filter((d, i) => i < 2).map((d, i) => d.data);
+  return diagnoses.filter((d, i) => i < 4).map((d, i) => d.data);
   diagnoses = (diagnoses || []).reduce((acc, d) => {
     if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
     return [...acc, d];

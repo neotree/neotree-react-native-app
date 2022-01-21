@@ -153,6 +153,7 @@ function Diagnosis(props) {
           setEntry({ values: entries });
 
         },
+        _setHcwDiagnoses: setHcwDiagnoses,
         setDiagnoses: (diagnoses = []) => {
           const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
           setDiagnosesEntry({ values: entryValues, });
