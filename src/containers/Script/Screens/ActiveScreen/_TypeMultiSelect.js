@@ -2,10 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from '@/components/Select';
 import { useContext } from '../../Context';
+import setPageOptions from '../../setPageOptions';
 
 const TypeMultiSelect = ({ canAutoFill, entry: _entry, screen, setEntry: onChange }) => {
   const value = _entry ? _entry.values.reduce((acc, { value }) => ({ values: [...acc, ...value] }), []) : null;
   const metadata = screen.data.metadata || {};
+  const [searchVal, setSearchVal] = React.useState('');
+
+  setPageOptions({
+    onSearch: value => setSearchVal(value),
+  });
 
   const [entry, setEntry] = React.useState(value || { values: [] });
 
@@ -60,7 +66,7 @@ const TypeMultiSelect = ({ canAutoFill, entry: _entry, screen, setEntry: onChang
             }, null);
             return exclusive ? exclusive !== item.id : false;
           })(),
-        }))}
+        })).filter(o => searchVal ? `${o.label}`.match(new RegExp(searchVal, 'gi')) : true)}
         onChange={(opt, i) => {
           const item = (metadata.items || [])[i];
           const checked = entry.values.map(s => s.value).indexOf(item.id) > -1;
