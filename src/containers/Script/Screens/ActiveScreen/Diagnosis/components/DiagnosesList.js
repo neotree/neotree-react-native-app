@@ -99,7 +99,11 @@ function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDis
                       );
                     }}
                   >
-                    <MaterialIcons size={24} color="#999" name="delete" />
+                    <MaterialIcons 
+                      size={30} // {24} 
+                      color="#999" 
+                      name="delete" 
+                    />
                   </Button>
                 )}
 
