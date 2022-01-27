@@ -23,9 +23,13 @@ export default function DateInput({
     const [showTimePicker, setShowTimePicker] = React.useState(false);
     const [date, setDate] = React.useState(value);
 
+    // React.useEffect(() => {
+    //     if (onChange && !(showDatePicker || showTimePicker)) onChange(date);
+    // }, [date, showDatePicker, showTimePicker]);
+
     React.useEffect(() => {
-        if (onChange && !(showDatePicker || showTimePicker)) onChange(date);
-    }, [date, showDatePicker, showTimePicker]);
+        if (onChange) onChange(date);
+    }, [date]);
 
     React.useEffect(() => {
         setDate(date => {
@@ -104,7 +108,8 @@ export default function DateInput({
                     onChange={(e, selectedDate) => {
                         if (!selectedDate) return setShowDatePicker(false);
                         setShowDatePicker(false);
-                        setTimeout(() => setDate(selectedDate), 0);
+                        // setTimeout(() => setDate(selectedDate), 0);
+                        setDate(selectedDate);
                         if (mode === 'datetime') {
                             setShowTimePicker(true);
                         }
@@ -122,7 +127,8 @@ export default function DateInput({
                     onChange={(e, selectedDate) => {
                         if (!selectedDate) return setShowTimePicker(false);
                         setShowTimePicker(false);
-                        setTimeout(() => setDate(selectedDate), 0);
+                        // setTimeout(() => setDate(selectedDate), 0);
+                        setDate(selectedDate);
                     }}
                 />
             )}
