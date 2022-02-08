@@ -31,11 +31,10 @@ const ScreenHeader = ({
   useBackButton(() => { goBack(); });
 
   const [openInfoModal, setOpenInfoModal] = React.useState(false);
-  const [showSearchInput, setShowSearchInput] = React.useState(false);
   const [searchVal, setSearchVal] = React.useState('');
 
   React.useEffect(() => {
-    if (pageOptions && !pageOptions.onSearch) setSearchVal('');
+    if ((pageOptions && !pageOptions.onSearch) || !pageOptions) setSearchVal('');
   }, [pageOptions]);
 
   return (
@@ -55,18 +54,6 @@ const ScreenHeader = ({
         )}
         rightActions={(
           <>
-            {!!(pageOptions && pageOptions.onSearch) && (
-              <TouchableOpacity
-                  style={{ padding: 10 }}
-                  onPress={() => {
-                    setShowSearchInput(prev => !prev);
-                    setSearchVal('');
-                  }}
-                >
-                  <MaterialIcons size={24} color="#999" style={showSearchInput ? [colorStyles.primaryColor] : []} name="search" />
-              </TouchableOpacity>
-            )}
-
             {!!screen.data.infoText && (
               <>
                 <TouchableOpacity
@@ -157,13 +144,13 @@ const ScreenHeader = ({
         </Modal>
       )}
 
-      {showSearchInput && (
+      {pageOptions && pageOptions.onSearch && (
         <View style={{ padding: 10 }}>
           <Content>
             <Form>
               <Item rounded bordered>
                 <Input
-                  autoFocus
+                  // autoFocus
                   autoCorrect={false}
                   value={searchVal || ''}
                   defaultValue={searchVal || ''}

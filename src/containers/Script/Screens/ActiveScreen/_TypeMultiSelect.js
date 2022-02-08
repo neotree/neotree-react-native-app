@@ -59,6 +59,7 @@ const TypeMultiSelect = ({ canAutoFill, entry: _entry, screen, setEntry: onChang
         options={(metadata.items || []).map(item => ({
           label: item.label,
           value: item.id,
+          hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
           disabled: (() => {
             const exclusive = entry.values.reduce((acc, item) => {
               if (item.exclusive) acc = item.value;
@@ -66,7 +67,7 @@ const TypeMultiSelect = ({ canAutoFill, entry: _entry, screen, setEntry: onChang
             }, null);
             return exclusive ? exclusive !== item.id : false;
           })(),
-        })).filter(o => searchVal ? `${o.label}`.match(new RegExp(searchVal, 'gi')) : true)}
+        }))}
         onChange={(opt, i) => {
           const item = (metadata.items || [])[i];
           const checked = entry.values.map(s => s.value).indexOf(item.id) > -1;
