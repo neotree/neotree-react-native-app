@@ -1,8 +1,6 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import Content from '@/components/Content';
-import Text from '@/components/Text';
-import colorStyles from '@/styles/colorStyles';
 import { useDiagnosisContext } from '../Context';
 import Header from '../../Header';
 import DiagnosesList from '../components/DiagnosesList';
@@ -39,14 +37,8 @@ export default function AgreeDisagree() {
                 // subtitle="Please order the diagnoses by priority"
                 filter={d => hcwDiagnoses.map(d => d.name).includes(d.name)}
                 setRefresh={setRefresh}
+                instructions={props.screen.data.hcwDiagnosesInstructions}
               />
-
-              {!!props.screen.data.instructions2 && (
-                <View style={{ marginBottom: 30, marginTop: 20 }}>
-                  <Text style={[colorStyles.primaryColor, { fontSize: 25 }]}>Instructions</Text>
-                  <Text variant="caption">{props.screen.data.instructions2}</Text>
-                </View>
-              )}
 
               <DiagnosesList
                 divider
@@ -56,6 +48,8 @@ export default function AgreeDisagree() {
                 // subtitle="Please order the diagnoses by priority"
                 filter={d => !hcwDiagnoses.map(d => d.name).includes(d.name) && (d.how_agree !== 'No')}
                 setRefresh={setRefresh}
+                instructions={props.screen.data.suggestedDiagnosesInstructions}
+                emptyListMessage="No suggested diagnoses"
               />
 
               <DiagnosesList

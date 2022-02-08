@@ -4,20 +4,36 @@ import SortableList from '@/components/SortableList';
 import { Button } from 'native-base';
 import { Alert, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import arrayMove from 'array-move';
+import colorStyles from '@/styles/colorStyles';
 import Text from '@/components/Text';
 import Diagnosis from './Diagnosis';
 import { useDiagnosisContext } from '../Context';
 
-function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDisagree, canDelete, setRefresh }) {
+function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDisagree, canDelete, setRefresh, instructions, emptyListMessage }) {
   const { diagnoses, setDiagnoses, _setHcwDiagnoses, } = useDiagnosisContext();
 
   const displayedDiagnoses = diagnoses.filter((d, i) => filter ? filter(d, i) : true);
 
-  if (!displayedDiagnoses.length) return null;
+  if (!displayedDiagnoses.length) {
+    if (emptyListMessage) {
+      return (
+        <View style={{ marginBottom: 30, marginTop: 20 }}>
+          <Text style={{ textAlign: 'center', color: '#999' }} variant="caption">{emptyListMessage}</Text>
+        </View>
+      );
+    }
+    return null;
+  }
 
   return (
     <>
+    {!!instructions && (
+      <View style={{ marginBottom: 30, marginTop: 20 }}>
+        <Text style={[colorStyles.primaryColor]}>Instructions</Text>
+        <Text variant="caption">{instructions}</Text>
+      </View>
+    )}
+
       <View
         style={{
           padding: 10,
@@ -155,7 +171,9 @@ DiagnosesList.propTypes = {
   sortable: PropTypes.bool,
   divider: PropTypes.bool,
   diagnoses: PropTypes.array,
-  setRefresh: PropTypes.func
+  setRefresh: PropTypes.func,
+  instructions: PropTypes.string,
+  emptyListMessage: PropTypes.string,
 };
 
 export default DiagnosesList;
