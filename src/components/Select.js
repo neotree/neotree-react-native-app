@@ -14,7 +14,7 @@ const Select = ({ options, value, variant, onChange, }) => {
         const key = i;
         const isSelected = value.indexOf(o.value) > -1;
         return (
-          <View key={key} style={{ marginBottom: 10 }}>
+          <View key={key} style={[{ marginBottom: 10 }, o.hide ? { display: 'none' } : {}]}>
             <TouchableWithoutFeedback          
               onPress={() => !o.disabled && onChange(o, i)}
             >
