@@ -6,22 +6,22 @@ import Content from '@/components/Content';
 import theme from '~/native-base-theme/variables/commonColor';
 import { useDiagnosisContext } from '../Context';
 import Header from '../../Header';
-import DiagnosesList from './DiagnosesList';
-import AddDiagnosis from './AddDiagnosis';
+import { useContext as useScriptContext } from '../../../../Context';
 
 export default function SelectDiagnoses() {
+  const { state: { diagnoses } } = useScriptContext();
   const {
     props,
     hcwDiagnoses,
     setHcwDiagnoses,
     getDefaultDiagnosis,
     goBack,
-    diagnoses,
+    // diagnoses,
   } = useDiagnosisContext();
   const { screen } = props;
 
   const items = (({ ...screen.data.metadata }).items || []).map(item => {
-    const d = diagnoses.filter(d => d.name === item.label)[0];
+    const d = diagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
     return {
       ...item,
       ...(!d ? null : {
