@@ -132,6 +132,12 @@ export type ScreenData = {
     deletedAt: Date;
     metadata: ScreenMetadata;
     condition: string;
+    instructions?: string;
+    instructions2?: string;
+    instructions3?: string;
+    instructions4?: string;
+    hcwDiagnosesInstructions?: string;
+    suggestedDiagnosesInstructions?: string;
 };
 
 export type ScreenRow = {

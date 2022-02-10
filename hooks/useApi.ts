@@ -1,12 +1,11 @@
 import React from 'react';
 import * as api from '@/api';
-import { SocketEvent } from '@/api';
 
 export type UseApi = [
     api.InitApiResults & {
         initialising: boolean;
         initialised: boolean;
-        lastSocketEvent: SocketEvent;
+        lastSocketEvent: api.SocketEvent;
     },
     () => void
 ];
