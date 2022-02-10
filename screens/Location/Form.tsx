@@ -121,7 +121,7 @@ function LocationForm({ onSetLocation, location }) {
           </>
         )}
 
-        <Br />
+        <Br /><Br /><Br />
 
         <View
             style={{ alignItems: 'flex-end' }}

@@ -27,7 +27,7 @@ export function InitialLocationSetupScreen() {
                         <Text variant="h5">{copy.SCREEN_TITLE}</Text>
                     </View>
 
-                    <Br /><Br />
+                    <Br /><Br /><Br />
 
                     <Form onSetLocation={refreshApp} />
                 </Content>
