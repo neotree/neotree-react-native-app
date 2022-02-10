@@ -1,0 +1,12 @@
+export const LOGIN = 'Log in';
+export const LOGOUT = 'Log out';
+export const SCRIPT = 'Script';
+export const SCREEN = 'Screen';
+export const DIAGNOSIS = 'Diagnosis';
+export const SCRIPTS = 'Scripts';
+export const SCREENS = 'Screens';
+export const DIAGNOSES = 'Diagnoses';
+export const HISTORY = 'History';
+export const CONFIGURATION = 'Configuration';
+export const LOCATION = 'Location';
+export const SETTINGS = 'Settings';

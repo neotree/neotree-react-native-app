@@ -1,56 +1,32 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider, createTheme  } from '@/components/ui';
-import { ErrorBox  } from '@/components/ErrorBox';
-import useCachedResources from '@/hooks/useCachedResources';
-import useColorScheme from '@/hooks/useColorScheme';
-import { Navigation, LoginScreen, InitialLocationSetupScreen } from '@/screens';
-import { AppContext } from '@/AppContext';
-import { useApi } from '@/hooks/useApi';
-import { Splash } from './components/Splash';
+import { Navigation } from './navigation';
+import { createTheme, ThemeProvider } from './components/ui';
 
-const theme = createTheme({});
-const darkTheme = createTheme({
-    palette: { mode: 'dark' },
+const theme = createTheme({
+    palette: {
+        primary: {
+            main: '#70a487',
+            dark: '#70a487',
+            light: '#70a487',
+            contrastText: '#ffffff',
+        },
+    
+        secondary: {
+            main: '#2b304a',
+            dark: '#2b304a',
+            light: '#2b304a',
+            contrastText: '#ffffff',
+        },
+    }
 });
 
-export default function App() {
-    const isLoadingComplete = useCachedResources();
-    const colorScheme = useColorScheme();
-    const [
-      { 
-        error: initError,
-        location,
-        authenticatedUser,
-        initialised: apiInitialised,
-        initialising: initialisingApi, 
-        lastSocketEvent,
-      }, 
-      initApi
-    ] = useApi();
-
+export default function() {
     return (
-        <SafeAreaProvider style={{ flex: 1 }}>
-            <AppContext.Provider
-                value={{
-                    lastSocketEvent,
-                    authenticatedUser,
-                    colorScheme,
-                    refreshApp: initApi,
-                }}
-            >
-                <ThemeProvider theme={colorScheme === 'dark' ? darkTheme : theme}>
-                    {(() => {
-                        if (initialisingApi || !isLoadingComplete) return <Splash loader />;
-                        if (initError) return <ErrorBox error={initError.message} />
-                        if (!authenticatedUser) return <LoginScreen />;
-                        if (!location) return <InitialLocationSetupScreen />;
-                        return <Navigation colorScheme={colorScheme} />;
-                    })()}
-                </ThemeProvider>
-                <StatusBar />
-            </AppContext.Provider>
+        <SafeAreaProvider>
+            <ThemeProvider theme={theme}>
+                <Navigation colorScheme="light" />
+            </ThemeProvider>
         </SafeAreaProvider>
     );
 }

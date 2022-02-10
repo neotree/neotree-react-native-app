@@ -1,30 +1,17 @@
 import React from 'react';
-import { View, ViewProps } from 'react-native';
+import { View as RNView, ViewProps as RNViewProps } from 'react-native';
 import { useTheme } from '../theme';
 
-export type DividerProps = ViewProps & {
+export type DividerProps = RNViewProps & {
 
 };
 
-export const Divider = React.forwardRef(({ style, ...props }: ViewProps, ref) => {
-    const  dividerRef = React.useRef(null);
-    React.useImperativeHandle(ref, () => dividerRef.current);
-
+export function Divider(props: DividerProps) {
     const theme = useTheme();
-
+    
     return (
         <>
-            <View 
-                {...props} 
-                ref={dividerRef} 
-                style={[
-                    {
-                        height: 1,
-                        backgroundColor: theme.palette.divider,
-                    },
-                    style,
-                ]}
-            />
+            <RNView {...props} />
         </>
     );
-});
+}

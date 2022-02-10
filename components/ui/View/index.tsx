@@ -1,88 +1,46 @@
 import React from 'react';
-import { View as RNView,  ViewProps as RNViewProps } from 'react-native';
+import { View as RNView } from 'react-native';
 import { useTheme } from '../theme';
+import { ViewProps } from './types';
 
-export type ViewProps = RNViewProps & {
-    children?: React.ReactNode;
-    variant?: 'outlined' | 'elevated';
-    pl?: string | number;
-    pr?: string | number;
-    pt?: string | number;
-    pb?: string | number;
-    pv?: string | number;
-    ph?: string | number;
-    ml?: string | number;
-    mr?: string | number;
-    mt?: string | number;
-    mb?: string | number;
-    mv?: string | number;
-    mh?: string | number;
-};
-
-export const View = React.forwardRef(({
-    variant,
-    pl,
-    pr,
-    pt,
-    pb,
-    pv,
-    ph,
+export function View({
     ml,
     mr,
     mt,
     mb,
     mv,
     mh,
+    pl,
+    pr,
+    pt,
+    pb,
+    pv,
+    ph,
     style,
     ...props
-}: ViewProps, ref) => {
+}: ViewProps) {
     const theme = useTheme();
-
-    const ViewRef = React.useRef(null);
-    React.useImperativeHandle(ref, () => ViewRef.current);
 
     return (
         <>
-            <RNView
-                {...props}
-                ref={ViewRef}
+            <RNView 
+                {...props} 
                 style={[
-                    theme.typography[variant],
-                    { borderRadius: theme.borderRadius, },
-                    !variant ? {} : { 
-                        backgroundColor: theme.palette.background.paper, 
-                    },
-                    variant !== 'outlined' ? {} : {
-                        borderWidth: 1,
-                        borderColor: theme.palette.divider,
-                    },
-                    variant !== 'elevated' ? {} : {
-                        shadowColor: '#000',
-                        shadowOffset: {
-                            width: 0,
-                            height: 2,
-                        },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 2.62,
-                        elevation: 8,
-                    },
-                    {
-                        paddingLeft: pl,
-                        paddingRight: pr,
-                        paddingTop: pt,
-                        paddingBottom: pb,
-                        paddingVertical: pv,
-                        paddingHorizontal: ph,
-                        marginLeft: ml,
-                        marginRight: mr,
-                        marginTop: mt,
-                        marginBottom: mb,
-                        marginVertical: mv,
-                        marginHorizontal: mh,
-                    },
+                    ml ? { marginLeft: ml, } : {},
+                    mr ? { marginRight: mr, } : {},
+                    mt ? { marginTop: mt, } : {},
+                    mb ? { marginBottom: mb, } : {},
+                    mv ? { marginVertical: mv, } : {},
+                    mh ? { marginHorizontal: mh, } : {},
+                    pl ? { paddingLeft: pl, } : {},
+                    pr ? { paddingRight: pr, } : {},
+                    pt ? { paddingTop: pt, } : {},
+                    pb ? { paddingBottom: pb, } : {},
+                    pv ? { paddingVertical: pv, } : {},
+                    ph ? { paddingHorizontal: ph, } : {},
                     style,
                 ]}
             />
         </>
     );
-});
+}
