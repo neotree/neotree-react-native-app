@@ -152,17 +152,31 @@ export const defaultTheme: Theme = {
             disabled: 'rgba(0, 0, 0, 0.38)',
         },
 
+        // primary: {
+        //     main: '#2980b9',
+        //     dark: '#2980b9',
+        //     light: '#2980b9',
+        //     contrastText: '#ffffff',
+        // },
+
+        // secondary: {
+        //     main: '#f39c12',
+        //     dark: '#f39c12',
+        //     light: '#f39c12',
+        //     contrastText: '#ffffff',
+        // },
+
         primary: {
-            main: '#2980b9', // '#70a487',
-            dark: '#2980b9', // '#70a487',
-            light: '#2980b9', // '#70a487',
+            main: '#70a487',
+            dark: '#70a487',
+            light: '#70a487',
             contrastText: '#ffffff',
         },
 
         secondary: {
-            main: '#f39c12', // '#2b304a',
-            dark: '#f39c12', // '#2b304a',
-            light: '#f39c12', // '#2b304a',
+            main: '#2b304a',
+            dark: '#2b304a',
+            light: '#2b304a',
             contrastText: '#ffffff',
         },
 
