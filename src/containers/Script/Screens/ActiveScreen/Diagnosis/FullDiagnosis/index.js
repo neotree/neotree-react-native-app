@@ -28,7 +28,7 @@ export default function FullDiagnosis() {
       <Header
         {...props}
         goBack={() => goBack()}
-        title={diagnosis.name}
+        title={diagnosis.customValue || diagnosis.name}
         actionText={`Diagnosis ${activeDiagnosisIndex + 1} of ${acceptedDiagnoses.length}`}
       />
       <ScrollView>
