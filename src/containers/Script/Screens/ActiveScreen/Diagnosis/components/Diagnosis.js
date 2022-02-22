@@ -93,7 +93,7 @@ export default function Diagnosis({
         >
           <View style={{ flex: 1 }}>
             <Text variant="caption" style={[colorStyles.primaryColorContrastText, { textTransform: 'uppercase' }]}>
-              {diagnosis.name}
+              {diagnosis.customValue || diagnosis.name}
             </Text>
           </View>
         </Content>

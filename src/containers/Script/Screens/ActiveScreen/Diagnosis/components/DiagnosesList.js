@@ -74,7 +74,7 @@ function DiagnosesList({ filter, title, subtitle, sortable, divider, canAgreeDis
             <View>
               <View style={{ marginVertical: 15, flexDirection: 'row', alignItems: 'center' }}>
                 <View>
-                  <Text>{item.name}</Text>
+                  <Text>{item.customValue || item.name}</Text>
                   {!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
                 </View>
 

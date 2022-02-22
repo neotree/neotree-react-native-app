@@ -26,8 +26,8 @@ const getDefaultDiagnosis = d => ({
 const diagnosisToEntryValue = d => ({
   label: d.name,
   key: d.name,
-  value: d.name,
-  valueText: d.name,
+  value: d.customValue || d.name,
+  valueText: d.customValue || d.name,
   type: 'diagnosis',
   dataType: 'diagnosis',
   diagnosis: {
