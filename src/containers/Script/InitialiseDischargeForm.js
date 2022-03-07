@@ -63,14 +63,20 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
       if (uid) {
         setLoading(true);
         try {
-          sessions = await api.getExportedSessionsByUID(uid);
+          sessions = await api.getExportedSessionsByUID(uid);          
         } catch (e) { /**/ console.log(e); }
       }
+      sessions = sessions || [];
       setData({ uid, session: null, values: null, });
-      setSessions(sessions || []);
+      setSessions(sessions);
       // setSessions((sessions || []).filter(s => ['admission', 'neolab'].includes(s.data.script.type)));
       setLoading(false);
+      if (!sessions.length) alert(`${data ? `${data.uid} - ` : ''}No match found. Enter another UID`);
     })();
+  }, [uid]);
+
+  React.useEffect(() => {
+    if (uid && (uid.length === 9)) search();
   }, [uid]);
 
   return (
@@ -103,16 +109,18 @@ export default function InitialiseDischargeForm({ onClose: _onClose }) {
                         disabled={loading}
                       />
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 'auto', width: 60, justifyContent: 'center' }}>
-                      <Button
-                        transparent
-                        block={false}
-                        disabled={!uid || loading || (data && (data.uid === uid))}
-                        onPress={() => search()}
-                      >
-                        {loading ? <Spinner size={20} /> : <Icon name="search" />}
-                      </Button>
-                    </View>
+                    {loading && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 'auto', width: 60, justifyContent: 'center' }}>
+                        <Button
+                          transparent
+                          block={false}
+                          disabled={!uid || loading || (data && (data.uid === uid))}
+                          onPress={() => search()}
+                        >
+                          {loading ? <Spinner size={20} /> : <Icon name="search" />}
+                        </Button>
+                      </View>
+                    )}
                   </View>
 
                   {!!data && (
