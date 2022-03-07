@@ -37,7 +37,7 @@ const ManageSelectedDiagnoses = () => {
                 <Card>
                   <CardItem>
                     <Body>
-                      <Text>{d.name}</Text>
+                      <Text>{d.customValue || d.name}</Text>
                       <View>
                         <TouchableOpacity
                           style={{ flexDirection: 'row', alignItems: 'center', padding: 10, }}
