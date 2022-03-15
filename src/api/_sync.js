@@ -6,9 +6,10 @@ import { deleteScripts, saveScripts } from './_scripts';
 import { deleteScreens, saveScreens } from './_screens';
 import { deleteDiagnoses, saveDiagnoses } from './_diagnoses';
 import { deleteConfigKeys, saveConfigKeys } from './_configKeys';
+import { shouldResetData } from './_shouldResetData';
 
 export default function sync(opts = {}) {
-  const { force: forceSync, resetData } = opts;
+  const { force: forceSync, resetData: _resetData } = opts;
 
   return new Promise((resolve, reject) => {
     (async () => {
@@ -16,6 +17,9 @@ export default function sync(opts = {}) {
       let application = null;
 
       try {
+        let resetData = await shouldResetData();
+        resetData = resetData || _resetData;
+        
         application = await getApplication();
 
         webEditor = await webeditorApi.getDeviceRegistration({ deviceId: application.device_id });
