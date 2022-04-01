@@ -110,7 +110,7 @@ export function exportEXCEL(opts = {}) {
         const ws = XLSX.utils.json_to_sheet(data);
 
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, scriptTitle);
+        XLSX.utils.book_append_sheet(wb, ws, scriptTitle.substring(0, 31));
 
         const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
 

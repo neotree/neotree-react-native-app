@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Form, Spinner, Button, Text } from 'native-base';
-import { ActivityIndicator, View, Picker } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import ucFirst from '@/utils/ucFirst';
 import * as api from '@/api';
 import config from '@/constants/config';
