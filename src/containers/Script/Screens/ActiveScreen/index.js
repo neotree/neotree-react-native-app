@@ -7,6 +7,7 @@ import Text from '@/components/Text';
 import Content from '@/components/Content';
 import Header from './Header';
 import FloatingButton from './FloatingButton';
+import { useContext } from '../../Context';
 
 import TypeForm from './TypeForm';
 import TypeChecklist from './_TypeChecklist';
@@ -18,6 +19,7 @@ import TypeTimer from './_TypeTimer';
 import TypeYesNo from './_TypeYesNo';
 import TypeManagement from './TypeManagement';
 import Diagnosis from './Diagnosis';
+import EdlizSummaryTable from './EdlizSummaryTable';
 
 const ActiveScreen = props => {
   const { screen, setEntry, removeEntry, hidden, screensWithNoAutoFill, } = props;
@@ -79,6 +81,9 @@ const ActiveScreen = props => {
               break;
             case 'diagnosis':
               Component = Diagnosis;
+              break;
+            case 'edliz_summary_table':
+              Component = EdlizSummaryTable;
               break;
             default:
             // do nothing
