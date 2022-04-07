@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import Select from '@/components/Select';
 import Text from '@/components/Text';
 import { View, TouchableOpacity } from 'react-native';
-import Fab from '@/components/Fab';
-import { MaterialIcons } from '@expo/vector-icons';
 import theme from '~/native-base-theme/variables/commonColor';
 import { useContext } from '../../Context';
 import setPageOptions from '../../setPageOptions';
@@ -68,13 +66,6 @@ const EdlizSummaryTable = (props) => {
                     label: item.label,
                     value: item.id,
                     hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
-                    disabled: (() => {
-                        const exclusive = entry.values.reduce((acc, item) => {
-                            if (item.exclusive) acc = item.value;
-                            return acc;
-                        }, null);
-                        return exclusive ? exclusive !== item.id : false;
-                    })(),
                 }))}
                 onChange={(opt, i) => {
                     const { index } = items[i];
@@ -94,26 +85,28 @@ const EdlizSummaryTable = (props) => {
                         confidential: item.confidential,
                     };
 
-                    if (item.exclusive) {
-                        setEntry(entry => {
-                            return {
-                                ...entry,
-                                values: _checked ? [_entry] : []
-                            };
-                        });
-                    } else {
-                        setEntry(entry => {
-                            return {
-                                ...entry,
-                                values: (
-                                    _checked ?
-                                        [...entry.values, _entry]
-                                        :
-                                        entry.values.filter(s => s.value !== value)
-                                )
-                            };
-                        });
-                    }
+                    setEntry(entry => {
+                        const values = _checked ?
+                            [...entry.values, _entry]
+                            :
+                            entry.values.filter(s => s.value !== value);
+                        const score = values.reduce((acc, v) => {
+                            if (v.type === 'major_criteria') acc += 2;
+                            if (v.type === 'minor_criteria') acc += 1;
+                            return acc;
+                        }, 0);
+                        return {
+                            ...entry,
+                            values,
+                            value: [{
+                                value: score,
+                                label: metadata.label,
+                                key: metadata.key,
+                                type: metadata.dataType ? metadata.dataType : null,
+                                valueText: score,
+                            }]
+                        };
+                    });
                 }}
             />
         );

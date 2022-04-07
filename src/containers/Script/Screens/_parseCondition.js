@@ -53,8 +53,9 @@ export default ({ configuration, entries: form }) => function parseCondition(_co
     return parseConditionString(condition, key, value);
   };
 
-  let parsedCondition = _form.reduce((condition, { screen, values }) => {
-    values = (values || []).filter(e => (e.value !== null) || (e.value !== undefined));
+  let parsedCondition = _form.reduce((condition, { screen, values, value }) => {
+    values = value || values || [];
+    values = values.filter(e => (e.value !== null) || (e.value !== undefined));
     values = values.reduce((acc, e) => [
       ...acc,
       ...(e.value && e.value.map ? e.value : [e]),

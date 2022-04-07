@@ -8,7 +8,8 @@ export default (session, showConfidential) => {
   form.forEach(entry => {
     const { screen } = entry;
     const { sectionTitle } = screen;
-    if (entry.values.length) {
+    const excludeScreenTypes = ['edliz_summary_table'];
+    if (entry.values.length && !excludeScreenTypes.includes(screen.type)) {
       [
         ...(screen.type === 'diagnosis' ? [
           'Primary Problems',
