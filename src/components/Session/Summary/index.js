@@ -12,13 +12,14 @@ const SessionSummary = ({
   session: { data: { form, matched }, ...s } 
 }) => {
   Wrapper = Wrapper || React.Fragment;
+  const excludeScreenTypes = ['edliz_summary_table'];
 
   return (
     <>
       {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
       <Wrapper>
-        {form.filter(({ values }) => values.length)
+        {form.filter(({ values, screen }) => values.length && !excludeScreenTypes.includes(screen.type))
           .map(({ screen, values }) => {
             values = values.reduce((acc, e) => [
               ...acc,
