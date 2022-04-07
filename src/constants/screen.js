@@ -9,6 +9,7 @@ export const fieldsTypes = {
 };
 
 export const screenTypes = {
+  EDLIZ_SUMMARY_TABLE: 'edliz_summary_table',
   DIAGNOSIS: 'diagnosis',
   CHECKLIST: 'checklist',
   FORM: 'form',
