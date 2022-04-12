@@ -48,12 +48,27 @@ const EdlizSummaryTable = (props) => {
     React.useEffect(() => { autoFillFields(); }, [autoFill]);
 
     React.useEffect(() => {
+        let score = 0;
+        if (entry) {
+            score = entry.values.reduce((acc, v) => {
+                if (v.type === 'major_criteria') acc += 2;
+                if (v.type === 'minor_criteria') acc += 1;
+                return acc;
+            }, 0);
+        }
         onChange({
-        values: [{
-            key: metadata.key,
-            type: metadata.dataType,
-            value: entry.values,
-        }],
+            value: [{
+                value: score,
+                label: metadata.label,
+                key: metadata.key,
+                type: metadata.dataType ? metadata.dataType : null,
+                valueText: score,
+            }],
+            values: [{
+                key: metadata.key,
+                type: metadata.dataType,
+                value: entry.values,
+            }],
         });
     }, [entry]);
 
@@ -90,21 +105,9 @@ const EdlizSummaryTable = (props) => {
                             [...entry.values, _entry]
                             :
                             entry.values.filter(s => s.value !== value);
-                        const score = values.reduce((acc, v) => {
-                            if (v.type === 'major_criteria') acc += 2;
-                            if (v.type === 'minor_criteria') acc += 1;
-                            return acc;
-                        }, 0);
                         return {
                             ...entry,
                             values,
-                            value: [{
-                                value: score,
-                                label: metadata.label,
-                                key: metadata.key,
-                                type: metadata.dataType ? metadata.dataType : null,
-                                valueText: score,
-                            }]
                         };
                     });
                 }}
