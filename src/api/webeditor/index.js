@@ -16,3 +16,8 @@ export const syncData = (body = {}, reqOpts = {}) => makeApiCall.get('/sync-data
   body,
   ...reqOpts,
 });
+
+export const addStats = (body = {}, reqOpts = {}) => makeApiCall.post('/add-stats', {
+  body,
+  ...reqOpts,
+});

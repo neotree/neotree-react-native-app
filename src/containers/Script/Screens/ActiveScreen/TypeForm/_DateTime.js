@@ -5,6 +5,7 @@ import formCopy from '@/constants/copy/form';
 import { View } from 'react-native';
 import Text from '@/components/Text';
 import DateInput from '@/components/DateInput';
+import diffHours from '@/utils/diffHours';
 
 const styles = {
   gridContainer: {
@@ -18,10 +19,13 @@ const styles = {
 };
 
 const _DateTime = ({ field, onChange: _onChange, value, conditionMet, entries, form }) => {
-  const onChange = (d, opts) => _onChange(d, {
-    ...opts,
-    valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY HH:mm') : '',
-  });
+  const onChange = (d, opts) => {
+    _onChange(d, {
+      ...opts,
+      valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY HH:mm') : '',
+      calculateValue: d ? diffHours(new Date(d), new Date()) : null,
+    });
+  };
   const [date, setDate] = React.useState(field.defaultValue ? value || new Date() : value);
 
   const onDateChange = (date) => {
