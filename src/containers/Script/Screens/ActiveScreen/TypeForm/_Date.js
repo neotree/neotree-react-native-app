@@ -5,11 +5,13 @@ import formCopy from '@/constants/copy/form';
 import { View } from 'react-native';
 import Text from '@/components/Text';
 import DateInput from '@/components/DateInput';
+import diffHours from '@/utils/diffHours';
 
 const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, form }) => {
   const onChange = (d, opts) => _onChange(d, {
     ...opts,
     valueText: d ? require('moment')(new Date(d)).format('DD MMM, YYYY') : '',
+    calculateValue: d ? diffHours(new Date(d), new Date()) : null,
   });
   const _date = value ? new Date(value) : null;
   const [date, setDate] = React.useState(field.defaultValue ? _date || new Date() : _date);
@@ -59,8 +61,8 @@ const FieldDate = ({ field, onChange: _onChange, value, conditionMet, entries, f
           disabled={!conditionMet}
           // label={`${field.label}${field.optional ? '' : ' *'}`}
           onChange={date => date && onDateChange(date)}
-          maxDate={field.maxDate}
-          minDate={field.minDate}
+          // maxDate={field.maxDate}
+          // minDate={field.minDate}
           maxDate={maxDate || field.maxDate}
           minDate={minDate || field.minDate}
       />

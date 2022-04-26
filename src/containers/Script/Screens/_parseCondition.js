@@ -35,7 +35,8 @@ export default ({ configuration, entries: form }) => function parseCondition(_co
     return [...acc, e];
   }, form);
 
-  const parseValue = (condition, { value, type, key, dataType, }) => {
+  const parseValue = (condition, { value, calculateValue, type, key, dataType, }) => {
+    value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
     value = ((value === null) || (value === undefined)) ? 'no value' : value;
     const t = dataType || type;
 

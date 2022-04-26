@@ -23,6 +23,7 @@ const Screens = props => {
     _setActiveScreen(s);
   };
 
+  const [stats, setStats] = React.useState({});
   const [startTime] = React.useState(new Date().toISOString());
   const [summary, setSummary] = React.useState(null);
   const [savedSession, setSavedSession] = React.useState(null);
@@ -54,6 +55,11 @@ const Screens = props => {
 
   React.useEffect(() => {
     if (activeScreen) {
+      setStats(prev => {
+        const screenStats = prev[activeScreen.screen_id] || [];
+        screenStats.push({ start_time: new Date(), end_time: null, });
+        return { ...prev, [activeScreen.screen_id]: screenStats, };
+      });
       if (summary) {
         history.push(`${location.pathname}?display=summary`);
       } else {
@@ -160,10 +166,57 @@ const Screens = props => {
     setDisplayLoader(true);
     const lastScreen = getLastScreen();
 
+    const activeScreenStats = stats[activeScreen.screen_id] || [];
+    const _stats = {
+      ...stats,
+      [activeScreen.screen_id]: activeScreenStats.map((stat, i) => {
+        if (i !== (activeScreenStats.length - 1)) return stat;
+        return { ...stat, end_time: new Date(), };
+      }), 
+    };
+    setStats(_stats);
+    // console.log(Object.keys(_stats).map(screenId => {
+    //   return {
+    //     type: 'view',
+    //     count: _stats[screenId].length,
+    //     duration: _stats[screenId].reduce((acc, stat) => {
+    //       if (!(stat.end_time && stat.start_time)) return acc;
+    //       const ms = new Date(stat.end_time) - new Date(stat.start_time);
+    //       const secs = ms / 1000; // Math.floor(Math.abs(ms) / 1000);
+    //       const mins = parseFloat((secs / 60).toFixed(2)); // Math.floor(secs / 60);
+    //       return acc + mins;
+    //     }, 0),
+    //     data: {
+    //       screenId,
+    //     }
+    //   };
+    // }));
+
     if (activeScreen.id === lastScreen.id) {
       setDisplayLoader(false);
       try {
         const summary = await saveSession({ completed: true }); // createSessionSummary({ completed: true });
+        try {
+          await api.addStats({
+            stats: Object.keys(_stats).map(screenId => {
+              return {
+                type: 'view',
+                count: _stats[screenId].length,
+                duration: _stats[screenId].reduce((acc, stat) => {
+                  if (!(stat.end_time && stat.start_time)) return acc;
+                  const ms = new Date(stat.end_time) - new Date(stat.start_time);
+                  const secs = ms / 1000; // Math.floor(Math.abs(ms) / 1000);
+                  const mins = parseFloat((secs / 60).toFixed(2)); // Math.floor(secs / 60);
+                  return acc + mins;
+                }, 0),
+                data: {
+                  screenId,
+                  screenTitle: screens.filter(s => s.screen_id === screenId)[0].data.title,
+                }
+              };
+            }),
+          });
+        } catch (e) { /* DO NOTHING */ }
         setSummary(summary);
       } catch (e) {
         Alert.alert(
@@ -198,7 +251,7 @@ const Screens = props => {
             },
           ]
         );
-      }
+      } 
       setEntry(getCachedEntry(nextScreen));
       setActiveScreen(nextScreen);
     }
@@ -208,6 +261,7 @@ const Screens = props => {
   const renderComponent = Component => (
     <Component
       {...props}
+      stats={stats}
       goBack={goBack}
       goNext={goNext}
       cancelScript={cancelScript}
