@@ -39,8 +39,12 @@ const SessionSummary = ({
                     values: accepted.filter(v => v.diagnosis.isPrimaryProvisionalDiagnosis),
                   },
                   {
+                    label: 'Secondary Problems', // `${screen.sectionTitle} - Secondary Problems`,
+                    values: accepted.filter(v => v.diagnosis.isSecondaryProvisionalDiagnosis),
+                  },
+                  {
                     label: 'Other problems', // `${screen.sectionTitle} - Other problems`,
-                    values: accepted.filter(v => !v.diagnosis.isPrimaryProvisionalDiagnosis),
+                    values: accepted.filter(v => !(v.diagnosis.isPrimaryProvisionalDiagnosis || v.diagnosis.isSecondaryProvisionalDiagnosis)),
                   }
                 ]; // .filter(v => v.values.length);
                 break;

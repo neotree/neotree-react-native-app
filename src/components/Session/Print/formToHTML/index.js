@@ -13,6 +13,7 @@ export default (session, showConfidential) => {
       [
         ...(screen.type === 'diagnosis' ? [
           'Primary Problems',
+          'Secondary Problems',
           'Other problems',
           // `${sectionTitle} - Primary Provisional Diagnosis`,
           // `${sectionTitle} - Other problems`,
@@ -30,7 +31,9 @@ export default (session, showConfidential) => {
             if (screen.type === 'diagnosis') {
               let accepted = v.diagnosis.how_agree !== 'No';
               if (!accepted) return false;
-              return i === 1 ? !v.diagnosis.isPrimaryProvisionalDiagnosis : v.diagnosis.isPrimaryProvisionalDiagnosis;
+              if (i === 0) return v.diagnosis.isPrimaryProvisionalDiagnosis;
+              if (i === 1) return v.diagnosis.isSecondaryProvisionalDiagnosis;
+              return true;
             }
             return true;
           })

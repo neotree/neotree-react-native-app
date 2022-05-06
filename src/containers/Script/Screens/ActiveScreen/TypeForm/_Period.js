@@ -2,21 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, TouchableOpacity } from 'react-native';
 import Text from '@/components/Text';
-import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialIcons } from '@expo/vector-icons';
-
-const formatDate = d => {
-  if (!d) return '';
-  const now = moment();
-  const days = now.diff(new Date(d), 'days');
-  let hrs = now.diff(new Date(d), 'hours') - (days * 24);
-  if (hrs < 1) hrs = 1;
-  const v = [];
-  if (days) v.push(`${days} day(s)`);
-  v.push(hrs ? `${hrs} hour(s)` : days ? '' : moment(d).fromNow().replace(' ago', ''));
-  return v.filter(s => s).join(', ');
-};
+import diffHours from '@/utils/diffHours';
 
 const _Period = ({ form, field, onChange: _onChange, conditionMet, valueObject, }) => {
   const [showDatePicker, setShowDatePicker] = React.useState(false);
@@ -26,12 +14,23 @@ const _Period = ({ form, field, onChange: _onChange, conditionMet, valueObject, 
   const [calcFrom, setCalcFrom] = React.useState(null);
 
   const onChange = React.useCallback((d) => {
-    const value = d ? Math.ceil((new Date().getTime() - new Date(d).getTime()) / (1000 * 60 * 60)) : null;
+    let value = d ? diffHours(new Date(d), new Date()) : null;
+    value = d ? (value < 1 ? 1 : value) : null;
+    let days = 0;
+    let hrs = 0;
+    let valueText = [];
+    if (value) {
+      days = Math.floor(value / 24);
+      hrs = Math.floor(value % 24);
+      if (days) valueText.push(`${days} day(s)`);
+      if (hrs) valueText.push(`${hrs} hour(s)`);
+    }
     _onChange(value, {
       error: null,
       // value,
-      valueText: d ? formatDate(d) : null,
-      exportValue: d ? formatDate(d) : null,
+      valueText: d ? valueText.map(t => t).join(', ') : null,
+      exportValue: value,
+      calculateValue: value,
     });
   }, []);
 
@@ -39,7 +38,7 @@ const _Period = ({ form, field, onChange: _onChange, conditionMet, valueObject, 
     const _calcFrom = form.values.filter(v => `$${v.key}` === field.calculation)[0];
     if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
       setCalcFrom(_calcFrom);
-      onChange(_calcFrom.value);
+      if (_calcFrom) onChange(_calcFrom.value);
     }
   }, [form, calcFrom]);
 
