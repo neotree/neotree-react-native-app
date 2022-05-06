@@ -20,6 +20,7 @@ const getDefaultDiagnosis = d => ({
   hcw_follow_instructions: null,
   hcw_reason_given: null,
   isPrimaryProvisionalDiagnosis: false,
+  isSecondaryProvisionalDiagnosis: false,
   ...d,
 });
 
@@ -57,10 +58,16 @@ function Diagnosis(props) {
   const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');
 
   const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState(null);
+
+  const setDiagnoses = (diagnoses = []) => {
+    const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
+    setDiagnosesEntry({ values: entryValues, });
+    setEntry({ values: entryValues });
+  };
   
   const _goBack = () => {
     if (activeDiagnosisIndex === null) {
-      if (section === 'manage') return setSection('sort_priority');
+      // if (section === 'manage') return setSection('sort_priority');
       if (section === 'sort_priority') return setSection('agree_disagree');
       if (section === 'agree_disagree') return setSection('select');
       if (section === 'select') goBack();
@@ -103,16 +110,24 @@ function Diagnosis(props) {
           setSection('sort_priority');
         }
       } else if (section === 'sort_priority') {
-        setSection('manage');
-      }
-
-      if (section === 'manage') {
+        setDiagnoses(diagnoses
+          .sort((a, b) => a.isSecondaryProvisionalDiagnosis > b.isSecondaryProvisionalDiagnosis ? -1 : 1)
+          .sort((a, b) => a.isPrimaryProvisionalDiagnosis > b.isPrimaryProvisionalDiagnosis ? -1 : 1))
+        // setSection('manage');
         if (acceptedDiagnoses[0]) {
           setActiveDiagnosisIndex(0);
         } else {
           goNext();
         }
       }
+
+      // if (section === 'manage') {
+      //   if (acceptedDiagnoses[0]) {
+      //     setActiveDiagnosisIndex(0);
+      //   } else {
+      //     goNext();
+      //   }
+      // }
     } else {
       const activeIndex = activeDiagnosisIndex + 1;
       if (activeIndex < acceptedDiagnoses.length) {
@@ -154,11 +169,7 @@ function Diagnosis(props) {
 
         },
         _setHcwDiagnoses: setHcwDiagnoses,
-        setDiagnoses: (diagnoses = []) => {
-          const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
-          setDiagnosesEntry({ values: entryValues, });
-          setEntry({ values: entryValues });
-        },
+        setDiagnoses,
         goNext: _goNext,
         goBack: _goBack,
       }}
@@ -183,7 +194,7 @@ function Diagnosis(props) {
               {section === 'select' && <SelectDiagnoses />}
               {section === 'agree_disagree' && <AgreeDisagree />}
               {section === 'sort_priority' && <SortPriority />}
-              {section === 'manage' && <ManageSelectedDiagnoses />}
+              {/* {section === 'manage' && <ManageSelectedDiagnoses />} */}
             </>
           )}
 
