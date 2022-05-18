@@ -1,6 +1,5 @@
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
-import * as Permissions from 'expo-permissions';
 import * as MediaLibrary from 'expo-media-library';
 import * as api from '@/api';
 import moment from 'moment';
@@ -13,8 +12,8 @@ const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
 const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
   (async () => {
     try {
-      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      resolve(status === 'granted');
+      const res = await MediaLibrary.requestPermissionsAsync();
+      resolve(res.granted);
     } catch (e) { return reject(e); }
   })();
 });

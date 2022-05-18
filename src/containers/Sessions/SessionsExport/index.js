@@ -7,7 +7,7 @@ import colorStyles from '@/styles/colorStyles';
 import { ListItem, Right, Left, Radio, Button, } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { View, TouchableOpacity, Alert } from 'react-native';
-import * as Permissions from 'expo-permissions';
+import * as MediaLibrary from 'expo-media-library';
 import OverlayLoader from '@/components/OverlayLoader';
 import Text from '@/components/Text';
 import Content from '@/components/Content';
@@ -37,8 +37,8 @@ const ExportPage = () => {
   React.useEffect(() => {
     (async () => {
       try {
-        const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-        if (status !== 'granted') {
+        const { granted } = await MediaLibrary.requestPermissionsAsync();
+        if (!granted) {
           Alert.alert(
             'Permission denied',
             'Permission to write files to disk is not granted, you will not be able to export files.',
