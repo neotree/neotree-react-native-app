@@ -68,6 +68,7 @@ function DiagnosesList({
 
       {diagnoses.map((item, index) => {
         if (filter && !filter(item, index)) return null;
+        const key = item.id || index;
 
         // const sortable = true;
         //
@@ -160,7 +161,7 @@ function DiagnosesList({
         );
 
         return (
-          <View style={{ marginVertical: 10, padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
+          <View key={key} style={{ marginVertical: 10, padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
             {itemWrapper ? itemWrapper(card, { item, index }) : card}
           </View>
         );

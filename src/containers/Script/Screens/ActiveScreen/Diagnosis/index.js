@@ -51,7 +51,7 @@ function Diagnosis(props) {
   React.useEffect(() => {
     const values = getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d));
     setDiagnosesEntry({ values, ...entry });
-    if (!mounted.current) setHcwDiagnoses(entry.values || []);
+    if (!mounted.current && entry) setHcwDiagnoses(entry.values || []);
   }, [entry]);
 
   React.useEffect(() => { mounted.current = true; }, []);
