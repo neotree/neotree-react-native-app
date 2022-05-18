@@ -38,6 +38,7 @@ const diagnosisToEntryValue = d => ({
 });
 
 function Diagnosis(props) {
+  const mounted = React.useRef(false);
   setPageOptions({ hideFAB: true }, []);
 
   const { getSuggestedDiagnoses, entry, setEntry, goNext, goBack, } = props;
@@ -48,11 +49,12 @@ function Diagnosis(props) {
   const [hcwDiagnoses, setHcwDiagnoses] = React.useState([]);
 
   React.useEffect(() => {
-    setDiagnosesEntry({
-      values: getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d)),
-      ...entry
-    });
+    const values = getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d));
+    setDiagnosesEntry({ values, ...entry });
+    if (!mounted.current) setHcwDiagnoses(entry.values || []);
   }, [entry]);
+
+  React.useEffect(() => { mounted.current = true; }, []);
 
   const diagnoses = diagnosesEntry.values.map(v => v.diagnosis);
   const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');

@@ -66,113 +66,105 @@ function DiagnosesList({
         {!!subtitle && <Text variant="caption" style={{ color: '#999' }}>{subtitle}</Text>}
       </View>
 
-      <SortableList
-        onReleaseRow={(rowIndex, sortedIndexes) => {
-          setDiagnoses(sortedIndexes.map(i => diagnoses[i]));
-        }}
-        sortingEnabled={(displayedDiagnoses.length > 1) && (sortable !== false)}
-        data={diagnoses}
-        renderItem={({ index, data: item }) => {
-          if (filter && !filter(item, index)) return null;
+      {diagnoses.map((item, index) => {
+        if (filter && !filter(item, index)) return null;
 
-          // const sortable = true;
-          //
-          // const moveDiagnoses = (from, to) => setDiagnoses(arrayMove([...diagnoses], from, to).map((d, i) => ({
-          //   ...d,
-          //   priority: i + 1,
-          // })));
+        // const sortable = true;
+        //
+        // const moveDiagnoses = (from, to) => setDiagnoses(arrayMove([...diagnoses], from, to).map((d, i) => ({
+        //   ...d,
+        //   priority: i + 1,
+        // })));
 
-          const card = (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View>
-                <Text>{item.customValue || item.name}</Text>
-                {!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
-              </View>
+        const card = (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View>
+              <Text>{item.customValue || item.name}</Text>
+              {!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
+            </View>
 
-              <View style={{ marginLeft: 'auto' }} />
+            <View style={{ marginLeft: 'auto' }} />
 
-              {canAgreeDisagree !== false && (
-                <Diagnosis
-                  setDiagnosis={s => {
-                    setDiagnoses(diagnoses.map((d, i) => {
-                      if (i !== index) return d;
-                      return { ...d, ...s };
-                    }));
-                    setRefresh(true);
-                  }}
-                  diagnosis={item}
+            {canAgreeDisagree !== false && (
+              <Diagnosis
+                setDiagnosis={s => {
+                  setDiagnoses(diagnoses.map((d, i) => {
+                    if (i !== index) return d;
+                    return { ...d, ...s };
+                  }));
+                  setRefresh(true);
+                }}
+                diagnosis={item}
+              />
+            )}
+
+            <View style={{ marginHorizontal: 5 }} />
+
+            {canDelete !== false && (
+              <Button
+                transparent
+                onPress={() => {
+                  const deleteDiagnosis = () => {
+                    setDiagnoses(diagnoses.filter((d, i) => i !== index));
+                    _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d, i) => d.diagnosis.name !== item.name));
+                    if (setRefresh) setRefresh(true);
+                  };
+                  Alert.alert(
+                    'Delete diagnosis',
+                    'Are you sure?',
+                    [
+                      {
+                        text: 'Cancel',
+                        onPress: () => {},
+                        style: 'cancel'
+                      },
+                      {
+                        text: 'Yes',
+                        onPress: () => deleteDiagnosis()
+                      }
+                    ],
+                    { cancelable: false }
+                  );
+                }}
+              >
+                <MaterialIcons 
+                  size={30} // {24} 
+                  color="#999" 
+                  name="delete" 
                 />
-              )}
+              </Button>
+            )}
 
-              <View style={{ marginHorizontal: 5 }} />
+            {/*{sortable && (*/}
+            {/*  <>*/}
+            {/*    {index !== 0 && (*/}
+            {/*      <Button*/}
+            {/*        transparent*/}
+            {/*        onPress={() => moveDiagnoses(index, index - 1)}*/}
+            {/*      >*/}
+            {/*        <MaterialIcons size={24} color="#999" name="arrow-upward" />*/}
+            {/*      </Button>*/}
+            {/*    )}*/}
 
-              {canDelete !== false && (
-                <Button
-                  transparent
-                  onPress={() => {
-                    const deleteDiagnosis = () => {
-                      setDiagnoses(diagnoses.filter((d, i) => i !== index));
-                      _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d, i) => d.diagnosis.name !== item.name));
-                      if (setRefresh) setRefresh(true);
-                    };
-                    Alert.alert(
-                      'Delete diagnosis',
-                      'Are you sure?',
-                      [
-                        {
-                          text: 'Cancel',
-                          onPress: () => {},
-                          style: 'cancel'
-                        },
-                        {
-                          text: 'Yes',
-                          onPress: () => deleteDiagnosis()
-                        }
-                      ],
-                      { cancelable: false }
-                    );
-                  }}
-                >
-                  <MaterialIcons 
-                    size={30} // {24} 
-                    color="#999" 
-                    name="delete" 
-                  />
-                </Button>
-              )}
+            {/*    {index < (diagnoses.length - 1) && (*/}
+            {/*      <Button*/}
+            {/*        transparent*/}
+            {/*        onPress={() => moveDiagnoses(index, index + 1)}*/}
+            {/*      >*/}
+            {/*        <MaterialIcons size={24} color="#999" name="arrow-downward" />*/}
+            {/*      </Button>*/}
+            {/*    )}*/}
+            {/*  </>*/}
+            {/*)}*/}
+          </View>
+        );
 
-              {/*{sortable && (*/}
-              {/*  <>*/}
-              {/*    {index !== 0 && (*/}
-              {/*      <Button*/}
-              {/*        transparent*/}
-              {/*        onPress={() => moveDiagnoses(index, index - 1)}*/}
-              {/*      >*/}
-              {/*        <MaterialIcons size={24} color="#999" name="arrow-upward" />*/}
-              {/*      </Button>*/}
-              {/*    )}*/}
-
-              {/*    {index < (diagnoses.length - 1) && (*/}
-              {/*      <Button*/}
-              {/*        transparent*/}
-              {/*        onPress={() => moveDiagnoses(index, index + 1)}*/}
-              {/*      >*/}
-              {/*        <MaterialIcons size={24} color="#999" name="arrow-downward" />*/}
-              {/*      </Button>*/}
-              {/*    )}*/}
-              {/*  </>*/}
-              {/*)}*/}
-            </View>
-          );
-
-          return (
-            <View style={{ marginVertical: 10, padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
-              {itemWrapper ? itemWrapper(card, { item, index }) : card}
-            </View>
-          );
-        }}
-        // keyExtractor={(item, i) => `${item.id || item.name}${i}`}
-      />
+        return (
+          <View style={{ marginVertical: 10, padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
+            {itemWrapper ? itemWrapper(card, { item, index }) : card}
+          </View>
+        );
+      })}
       {!!divider && <View style={{ marginVertical: 25 }} />}
     </>
   );
