@@ -58,8 +58,8 @@ export default function SortPriority() {
                       onPress={() => onPrimary()}
                       disabled={disablePrimary}
                     >
-                      <Radio color={disablePrimary ? '#999' : undefined} disabled={disablePrimary} onPress={() => onPrimary()} selected={d.isPrimaryProvisionalDiagnosis} />
-                      <Text style={[{ marginLeft: 5 }, disablePrimary ? { color: '#999' } : {}]}>Primary</Text>
+                      <Radio color={disablePrimary ? '#999' : '#000'} disabled={disablePrimary} onPress={() => onPrimary()} selected={d.isPrimaryProvisionalDiagnosis} />
+                      <Text style={[{ marginLeft: 5 }, disablePrimary ? { color: '#999' } : { color: '#000' }]}>Primary</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -67,15 +67,15 @@ export default function SortPriority() {
                       onPress={() => onSecondary()}
                       disabled={disableSecondary}
                     >
-                      <Radio color={disableSecondary ? '#999' : undefined} disabled={disableSecondary} onPress={() => onSecondary()} selected={d.isSecondaryProvisionalDiagnosis} />
-                      <Text style={[{ marginLeft: 5 }, disableSecondary ? { color: '#999' } : {}]}>Secondary</Text>
+                      <Radio color={disableSecondary ? '#999' : '#000'} disabled={disableSecondary} onPress={() => onSecondary()} selected={d.isSecondaryProvisionalDiagnosis} />
+                      <Text style={[{ marginLeft: 5 }, disableSecondary ? { color: '#999' } : { color: '#000' }]}>Secondary</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 10, }}
                       onPress={() => onOther()}
                     >
-                      <Radio onPress={() => onOther()} selected={!(d.isPrimaryProvisionalDiagnosis || d.isSecondaryProvisionalDiagnosis)} />
+                      <Radio color="#000" onPress={() => onOther()} selected={!(d.isPrimaryProvisionalDiagnosis || d.isSecondaryProvisionalDiagnosis)} />
                       <Text style={{ marginLeft: 5 }}>Other</Text>
                     </TouchableOpacity>
                   </View>
