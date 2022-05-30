@@ -18,6 +18,14 @@ const styles = {
     fontSize: 30,
     fontWeight: 'bold',
   },
+  h4: {
+    fontSize: 25,
+    fontWeight: 'bold',
+  },
+  h5: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   caption: {
     fontSize: 15,
   },
@@ -40,7 +48,7 @@ const TextComponent = ({ style, variant, ...props }) => {
 
 TextComponent.propTypes = {
   children: PropTypes.node,
-  variant: PropTypes.oneOf(['h1', 'h2', 'h3', 'caption']),
+  variant: PropTypes.oneOf(['h1', 'h2', 'h3', 'h4', 'h5', 'caption']),
   style: PropTypes.oneOfType([
     PropTypes.array,
     PropTypes.object,
