@@ -39,6 +39,7 @@ const diagnosisToEntryValue = d => ({
 
 function Diagnosis(props) {
   const mounted = React.useRef(false);
+  const entryLoaded = React.useRef(false);
   setPageOptions({ hideFAB: true }, []);
 
   const { getSuggestedDiagnoses, entry, setEntry, goNext, goBack, } = props;
@@ -60,6 +61,16 @@ function Diagnosis(props) {
   const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');
 
   const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState(null);
+
+  React.useEffect(() => { 
+    if (entry) {
+      if (!entryLoaded.current && entry.lastSection) {
+        setSection(entry.lastSection);
+        setActiveDiagnosisIndex(entry.lastActiveDiagnosisIndex);
+      }
+      entryLoaded.current = true;
+    }
+  }, [entry]);
 
   const setDiagnoses = (diagnoses = []) => {
     const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
@@ -83,6 +94,15 @@ function Diagnosis(props) {
     }
   };
 
+  const done = () => {
+    setEntry({ 
+      ...diagnosesEntry, 
+      lastSection: section, 
+      lastActiveDiagnosisIndex: activeDiagnosisIndex, 
+    });
+    goNext();
+  };
+
   const _goNext = () => {
     if (activeDiagnosisIndex === null) {
       if (section === 'select') {
@@ -102,7 +122,7 @@ function Diagnosis(props) {
                 text: 'Yes',
                 onPress: () => {
                   setEntry(diagnosesEntry);
-                  setTimeout(() => goNext(), 10);
+                  setTimeout(() => done(), 10);
                 },
                 style: 'cancel'
               },
@@ -119,7 +139,7 @@ function Diagnosis(props) {
         if (acceptedDiagnoses[0]) {
           setActiveDiagnosisIndex(0);
         } else {
-          goNext();
+          done();
         }
       }
 
@@ -127,7 +147,7 @@ function Diagnosis(props) {
       //   if (acceptedDiagnoses[0]) {
       //     setActiveDiagnosisIndex(0);
       //   } else {
-      //     goNext();
+      //     done();
       //   }
       // }
     } else {
@@ -135,7 +155,7 @@ function Diagnosis(props) {
       if (activeIndex < acceptedDiagnoses.length) {
         setActiveDiagnosisIndex(activeIndex);
       } else {
-        goNext();
+        done();
       }
     }
   };
