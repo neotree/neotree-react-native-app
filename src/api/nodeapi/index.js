@@ -1,12 +1,31 @@
+import { getConfig } from '@/constants';
 import makeApiCall from './makeApiCall';
 import { dbTransaction } from '../database';
 
-export const exportSession = (body = {}, reqOpts = {}) => {
-  const { script, uid, } = body;
-  return makeApiCall.post(`/sessions?uid=${uid}&scriptId=${script.id}`, {
-    body,
-    ...reqOpts,
-  });
+export const exportPollData = async (body = {}, reqOpts = {}) => {
+  try {
+    const config = await getConfig();
+    let res = null;
+    if (config.savePollingData) {
+      const { script, uid, } = body;
+      res = await makeApiCall.post(`/save-poll-data?uid=${uid}&scriptId=${script.id}`, {
+        body,
+        ...reqOpts,
+      });
+    }
+    return res;
+  } catch(e) { throw e; }
+};
+
+export const exportSession = async (body = {}, reqOpts = {}) => {
+  try {
+    const { script, uid, } = body;
+    const res = await makeApiCall.post(`/sessions?uid=${uid}&scriptId=${script.id}`, {
+      body,
+      ...reqOpts,
+    });
+    return res;
+  } catch(e) { throw e; };
 };
 
 export const countSessionsWithUidPrefix = (body = {}, reqOpts = {}) => {

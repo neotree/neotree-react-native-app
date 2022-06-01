@@ -146,6 +146,8 @@ export function exportToApi(opts = {}) {
 
       try { await exportJSON(opts); } catch (e) { /* Do nothing */ }
 
+      api.exportSessions().then(console.log).catch(console.log);
+
       if (postData.length) {
         try {
           await Promise.all(postData.map((s, i) => new Promise((resolve, reject) => {
