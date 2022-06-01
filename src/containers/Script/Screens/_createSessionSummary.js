@@ -29,7 +29,7 @@ export default ({
 
   return {
     ...payload,
-    uid,
+    uid: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
     script_id: activeScreen.script_id,
     data: {
       app_mode: application.mode,
