@@ -1,11 +1,13 @@
 import { Dimensions } from 'react-native';
 import Constants from 'expo-constants';
 
+export * from './config';
+
 const { width, height } = Dimensions.get('window');
 
 export const CONFIG = Constants.manifest.extra;
 
-export default {
+const _config = {
   ...Constants.manifest.extra,
   APP_VERSION: Constants.manifest.version,
 
@@ -19,3 +21,5 @@ export default {
 
   DEFAULT_SPACING: 10,
 };
+
+export default _config;
