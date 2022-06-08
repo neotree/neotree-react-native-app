@@ -9,7 +9,8 @@ export const fieldsTypes = {
 };
 
 export const screenTypes = {
-  EDLIZ_SUMMARY_TABLE: 'edliz_summary_table',
+  ZW_EDLIZ_SUMMARY_TABLE: 'zw_edliz_summary_table',
+  MWI_EDLIZ_SUMMARY_TABLE: 'mwi_edliz_summary_table',
   DIAGNOSIS: 'diagnosis',
   CHECKLIST: 'checklist',
   FORM: 'form',
@@ -19,7 +20,7 @@ export const screenTypes = {
   PROGRESS: 'progress',
   SINGLE_SELECT: 'single_select',
   TIMER: 'timer',
-  YESNO: 'yesno'
+  YESNO: 'yesno',
 };
 
 export const DefaultValueType = {
