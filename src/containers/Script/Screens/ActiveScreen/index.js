@@ -88,6 +88,9 @@ const ActiveScreen = props => {
             case 'mwi_edliz_summary_table':
               Component = EdlizSummaryTable;
               break;
+            case 'edliz_summary_table':
+              Component = EdlizSummaryTable;
+              break;
             default:
             // do nothing
           }
