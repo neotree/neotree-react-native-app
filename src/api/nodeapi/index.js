@@ -7,8 +7,8 @@ export const exportPollData = async (body = {}, reqOpts = {}) => {
     const config = await getConfig();
     let res = null;
     if (config.savePollingData) {
-      const { script, uid, } = body;
-      res = await makeApiCall.post(`/save-poll-data?uid=${uid}&scriptId=${script.id}`, {
+      const { script, uid, unique_key } = body;
+      res = await makeApiCall.post(`/save-poll-data?uid=${uid}&scriptId=${script.id}&unique_key=${unique_key}`, {
         body,
         ...reqOpts,
       });
@@ -20,7 +20,7 @@ export const exportPollData = async (body = {}, reqOpts = {}) => {
 export const exportSession = async (body = {}, reqOpts = {}) => {
   try {
     const { script, uid, } = body;
-    const res = await makeApiCall.post(`/sessions?uid=${uid}&scriptId=${script.id}`, {
+    const res = await makeApiCall.post(`/sessions?uid=${uid}&scriptId=${script.id}&unique_key=${unique_key}`, {
       body,
       ...reqOpts,
     });

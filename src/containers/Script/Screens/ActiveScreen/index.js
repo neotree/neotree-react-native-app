@@ -82,7 +82,10 @@ const ActiveScreen = props => {
             case 'diagnosis':
               Component = Diagnosis;
               break;
-            case 'edliz_summary_table':
+            case 'zw_edliz_summary_table':
+              Component = EdlizSummaryTable;
+              break;
+            case 'mwi_edliz_summary_table':
               Component = EdlizSummaryTable;
               break;
             default:

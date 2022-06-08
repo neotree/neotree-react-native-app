@@ -10,13 +10,14 @@ export default function convertSessionsToExportable(_sessions = [], opts = {}) {
         const { showConfidential } = opts;
 
         const data = _sessions.map((s) => {
-          const { script, form, app_mode, country, hospital_id, started_at, completed_at, canceled_at } = s.data;
+          const { script, form, app_mode, country, hospital_id, started_at, completed_at, canceled_at, unique_key, } = s.data;
 
           const diagnosisScreenEntry = form.filter(e => e.screen.type === 'diagnosis')[0];
           const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.map(v => v.diagnosis);
 
           return {
             uid: s.uid,
+            unique_key,
             appVersion: constants.APP_VERSION,
             scriptVersion: application.webeditor_info.version,
             scriptTitle: script.script_id,
