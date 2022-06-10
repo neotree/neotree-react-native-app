@@ -52,9 +52,11 @@ const EdlizSummaryTable = (props) => {
             score = entry.values.reduce((acc, v) => {
                 if (v.type === 'major_criteria') acc += 2;
                 if (v.type === 'minor_criteria') acc += 1;
+                if (screen.type === 'mwi_edliz_summary_table') acc += 1;
                 return acc;
             }, 0);
         }
+        console.log(score);
         onChange({
             value: [{
                 value: score,
