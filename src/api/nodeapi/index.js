@@ -19,7 +19,7 @@ export const exportPollData = async (body = {}, reqOpts = {}) => {
 
 export const exportSession = async (body = {}, reqOpts = {}) => {
   try {
-    const { script, uid, } = body;
+    const { script, uid, unique_key, } = body;
     const res = await makeApiCall.post(`/sessions?uid=${uid}&scriptId=${script.id}&unique_key=${unique_key}`, {
       body,
       ...reqOpts,
