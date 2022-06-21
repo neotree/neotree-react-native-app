@@ -4,6 +4,7 @@ import { Input, Form, Item } from 'native-base';
 import Text from '@/components/Text';
 
 const NumberField = ({
+  form,
   field,
   onChange,
   value,
@@ -14,18 +15,40 @@ const NumberField = ({
   let maxDecimals = 0;
   if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '').length;
 
+  React.useEffect(() => {
+    const formula = (field.calculation || '').replace(/\$/gi, '');
+    const values = form.values.reduce((acc, v) => {
+      if (formula.match(`${v.key}`)) acc[`${v.key}`] = v.value;
+      return acc;
+    }, {});
+    let calculated = 0;
+    if (formula.match(/SUM\((.*?)\)/gi)) {
+      formula.replace(/SUM\((.*?)\)/gi, '$1').split(',').forEach(key => {
+        key = key.trim();
+        if (values[key] && !isNaN(Number(values[key]))) calculated += Number(values[key]);
+      });
+    }
+    if (formula.match(/MULTIPLY\((.*?)\)/gi)) {
+      formula.replace(/MULTIPLY\((.*?)\)/gi, '$1').split(',').forEach(key => {
+        key = key.trim();
+        if (values[key] && !isNaN(Number(values[key]))) calculated *= Number(values[key]);
+      });
+    }
+    if (`${value}` !== `${calculated}`) onChange(`${calculated}`);
+  }, [field, form, value]);
+
   return (
     <>
       <Form>
         <Text
           style={[
             error ? { color: '#b20008' } : {},
-            !conditionMet ? { color: '#999' } : {},
+            !(conditionMet && !field.calculation) ? { color: '#999' } : {},
           ]}
         >{field.label}{field.optional ? '' : ' *'}</Text>
         <Item regular error={error ? true : false}>
           <Input
-            editable={conditionMet}
+            editable={conditionMet && !field.calculation}
             value={value || ''}
             defaultValue={value || ''}
             autoCapitalize="none"

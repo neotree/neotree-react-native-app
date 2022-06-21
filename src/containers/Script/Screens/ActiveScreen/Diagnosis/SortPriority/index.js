@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, TouchableOpacity, Text, } from 'react-native';
+import { ScrollView, View, TouchableOpacity, Text, Picker, } from 'react-native';
 import { Radio } from 'native-base';
 import Content from '@/components/Content';
 import { useDiagnosisContext } from '../Context';
@@ -8,6 +8,9 @@ import DiagnosesList from '../components/DiagnosesList';
 
 export default function SortPriority() {
   const { props, diagnoses, setDiagnoses, goBack, } = useDiagnosisContext();
+  const [pickerValue, setPickerValue] = React.useState("");
+
+  const filterCompiled = d => d.how_agree !== 'No';
 
   return (
     <>
@@ -26,7 +29,7 @@ export default function SortPriority() {
             canDelete={false}
             title="Compiled Diagnoses"
             subtitle="Please order the diagnoses by priority"
-            filter={d => d.how_agree !== 'No'}
+            filter={filterCompiled}
             itemWrapper={((card, { item: d, index: i }) => {
               const onChange = value => setDiagnoses(diagnoses.map((d, index) => index !== i ? d : {
                 ...d,
@@ -51,8 +54,39 @@ export default function SortPriority() {
 
               return (
                 <View>
-                  {card}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, }}>
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                  >
+                    <View style={{ flex: 1 }}>{card}</View>
+                    <View style={{ width: 110 }}>
+                      <Picker
+                        note
+                        mode="dropdown"
+                        placeholder={{
+                          label: 'Move',
+                          value: 0
+                        }}
+                        value={pickerValue}
+                        onValueChange={(value) => {
+                          if (!isNaN(Number(value))) {
+                            const d = [...diagnoses].filter((d, j) => j === i)[0];
+                            const items = [...diagnoses].filter((d, j) => j !== i);
+                            items.splice(Number(value), 0, d);
+                            setDiagnoses(items);
+                          }
+                          setPickerValue(0);
+                        }}
+                      >
+                        <Picker.Item value="0" label="Move" />
+                        {diagnoses.filter(filterCompiled).map((d, j) => {
+                          const key = j;
+                          if (i === j) return null;
+                          return <Picker.Item key={key} label={`Move to position ${j + 1}`} value={`${j}`} />;
+                        })}
+                      </Picker>
+                    </View>
+                  </View>
+                  {/* <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, }}>
                     <TouchableOpacity
                       style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 10, }}
                       onPress={() => onPrimary()}
@@ -78,7 +112,7 @@ export default function SortPriority() {
                       <Radio color="#000" onPress={() => onOther()} selected={!(d.isPrimaryProvisionalDiagnosis || d.isSecondaryProvisionalDiagnosis)} />
                       <Text style={{ marginLeft: 5 }}>Other</Text>
                     </TouchableOpacity>
-                  </View>
+                  </View> */}
                 </View>
               );
             })}
