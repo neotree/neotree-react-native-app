@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import OverlayLoader from '@/components/OverlayLoader';
 import { useHistory, useLocation } from 'react-router-native';
 import * as api from '@/api';
@@ -198,6 +198,8 @@ const Screens = props => {
         const summary = await saveSession({ completed: true }); // createSessionSummary({ completed: true });
         try {
           await api.addStats({
+            user: appState.authenticatedUser.user.email,
+            device: Platform.OS,
             stats: Object.keys(_stats).map(screenId => {
               return {
                 type: 'view',
