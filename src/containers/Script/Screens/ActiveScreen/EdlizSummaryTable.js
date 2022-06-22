@@ -56,7 +56,6 @@ const EdlizSummaryTable = (props) => {
                 return acc;
             }, 0);
         }
-        console.log(score);
         onChange({
             value: [{
                 value: score,

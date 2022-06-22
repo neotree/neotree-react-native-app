@@ -26,8 +26,8 @@ export default (sessions) => new Promise((resolve, reject) => {
         })));
       }
 
-      if (allSessions.length) {
-        const pollData = await convertSessionsToExportable(allSessions, { showConfidential: true, });
+      if (completedSessions.length) {
+        const pollData = await convertSessionsToExportable(completedSessions, { showConfidential: true, });
         pollData.forEach((s, i) => promises.push(new Promise((resolve, reject) => {
           (async () => {
             try {
