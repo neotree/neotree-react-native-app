@@ -16,8 +16,7 @@ function DiagnosesList({
   sortable, 
   divider, 
   canAgreeDisagree, 
-  canDelete, 
-  setRefresh, 
+  canDelete,
   instructions, 
   emptyListMessage,
   itemWrapper, 
@@ -93,7 +92,6 @@ function DiagnosesList({
                     if (i !== index) return d;
                     return { ...d, ...s };
                   }));
-                  setRefresh(true);
                 }}
                 diagnosis={item}
               />
@@ -108,7 +106,6 @@ function DiagnosesList({
                   const deleteDiagnosis = () => {
                     setDiagnoses(diagnoses.filter((d, i) => i !== index));
                     _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d, i) => d.diagnosis.name !== item.name));
-                    if (setRefresh) setRefresh(true);
                   };
                   Alert.alert(
                     'Delete diagnosis',
@@ -180,7 +177,6 @@ DiagnosesList.propTypes = {
   sortable: PropTypes.bool,
   divider: PropTypes.bool,
   diagnoses: PropTypes.array,
-  setRefresh: PropTypes.func,
   instructions: PropTypes.string,
   emptyListMessage: PropTypes.string,
   itemWrapper: PropTypes.func
