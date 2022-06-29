@@ -97,6 +97,7 @@ export default function SelectDiagnoses() {
                 text3: item.text3,
                 image3: item.image3,
                 suggested: true,
+                isHcwDiagnosis: true,
                 ...val,
               }),
             }]);
