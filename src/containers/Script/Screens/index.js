@@ -165,6 +165,8 @@ const Screens = props => {
 
     setDisplayLoader(true);
     const lastScreen = getLastScreen();
+    const next = getScreen({ direction: 'next' });
+    const nextScreen = next ? next.screen : lastScreen;
 
     const activeScreenStats = stats[activeScreen.screen_id] || [];
     const _stats = {
@@ -193,6 +195,8 @@ const Screens = props => {
     // }));
 
     if (activeScreen.id === lastScreen.id) {
+      if (script.data.exportable === false) return history.push('/');
+      
       setDisplayLoader(false);
       try {
         const summary = await saveSession({ completed: true }); // createSessionSummary({ completed: true });
@@ -239,8 +243,6 @@ const Screens = props => {
         );
       }
     } else {
-      const next = getScreen({ direction: 'next' });
-      const nextScreen = next ? next.screen : null;
       if (!nextScreen) {
         return Alert.alert(
           'ERROR',
