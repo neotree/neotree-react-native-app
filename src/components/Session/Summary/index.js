@@ -35,17 +35,9 @@ const SessionSummary = ({
                 const accepted = values.filter(v => v.diagnosis.how_agree !== 'No');
                 entries = [
                   {
-                    label: 'Primary Problems', // `${screen.sectionTitle} - Primary Problems`,
-                    values: accepted.filter(v => v.diagnosis.isPrimaryProvisionalDiagnosis),
+                    label: 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
+                    values: accepted,
                   },
-                  {
-                    label: 'Secondary Problems', // `${screen.sectionTitle} - Secondary Problems`,
-                    values: accepted.filter(v => v.diagnosis.isSecondaryProvisionalDiagnosis),
-                  },
-                  {
-                    label: 'Other problems', // `${screen.sectionTitle} - Other problems`,
-                    values: accepted.filter(v => !(v.diagnosis.isPrimaryProvisionalDiagnosis || v.diagnosis.isSecondaryProvisionalDiagnosis)),
-                  }
                 ]; // .filter(v => v.values.length);
                 break;
               case 'form':
