@@ -9,8 +9,14 @@ import DiagnosesList from '../components/DiagnosesList';
 export default function SortPriority() {
   const { props, diagnoses, setDiagnoses, goBack, } = useDiagnosisContext();
   const [pickerValue, setPickerValue] = React.useState("");
+  const mounted = React.useRef(false);
 
   const filterCompiled = d => d.how_agree !== 'No';
+
+  React.useEffect(() => {
+    if (!mounted.current) setDiagnoses(diagnoses.map((d, i) => ({ ...d, priority: i + 1, })));
+    mounted.current = true;
+  }, [diagnoses]);
 
   return (
     <>
@@ -72,7 +78,7 @@ export default function SortPriority() {
                             const d = [...diagnoses].filter((d, j) => j === i)[0];
                             const items = [...diagnoses].filter((d, j) => j !== i);
                             items.splice(Number(value), 0, d);
-                            setDiagnoses(items);
+                            setDiagnoses(items.map((d, i) => ({ ...d, priority: i + 1, })));
                           }
                           setPickerValue(0);
                         }}
