@@ -112,6 +112,7 @@ const Sessions = () => {
             </Content>
           )}
           renderItem={({ item }) => {
+            const script_id = item.data.script.script_id;
             return (
               <View style={{ flex: 1 }}>
                 <Content>
@@ -175,8 +176,22 @@ const Sessions = () => {
   
                           <Divider border={false} />
   
-                          <Text style={{ color: '#999' }}>Script</Text>
-                          <Text>{item.data.script.data.title}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'flex-end', }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ color: '#999' }}>Script</Text>
+                              <Text>{item.data.script.data.title}</Text>
+                            </View>
+                            <View>
+                              <Link
+                                to={{
+                                  pathname: `/script/${script_id}`,
+                                  state: { savedSession: item, },
+                                }}
+                              >
+                                <MaterialIcons color="#999" size={24} name="edit" />
+                              </Link>
+                            </View>
+                          </View>
                         </Body>
                       </CardItem>
                     </Card>

@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { View } from 'react-native';
 import {
   Header as HeaderComponent,
   Body,
@@ -25,16 +26,19 @@ const Header = ({
         androidStatusBarColor={theme.brandPrimary}
         {...props}
       >
-        {!!leftActions && (
-          <Left style={{ maxWidth: 50 }}>
-            {leftActions}
-          </Left>
-        )}
-
         <Body>
-          {!!title && <Title style={{ color: theme.brandPrimary }}>{title}</Title>}
-          {!!subtitle && <Text style={{ fontSize: 10, color: '#999' }}>{subtitle}</Text>}
-          {children}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {!!leftActions && (
+              <View style={{ marginRight: 10 }}>
+                {leftActions}
+              </View>
+            )}
+            <View>
+              {!!title && <Title style={{ color: theme.brandPrimary }}>{title}</Title>}
+              {!!subtitle && <Text style={{ fontSize: 10, color: '#999' }}>{subtitle}</Text>}
+              {children}
+            </View>
+          </View>
         </Body>
 
         {!!rightActions && (

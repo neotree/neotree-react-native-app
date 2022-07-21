@@ -11,8 +11,14 @@ const Script = () => {
   const { scriptId } = useParams();
   const history = useHistory();
   const location = useLocation();
+  const drawerRef = React.useRef(null);
 
+  const [savedSession] = React.useState(location.state ? location.state.savedSession : null); 
   const [state, _setState] = React.useState({
+    savedSession,
+    entries: [],
+    activeScreen: null,
+    goToEntryWithIndex: null,
     matches: [],
     pageOptions: null,
     script: null,
@@ -137,7 +143,13 @@ const Script = () => {
   if (!state.script) return null;
 
   return (
-    <Context.Provider value={{ state, setState, }}>
+    <Context.Provider 
+      value={{ 
+        state, 
+        setState, 
+        drawerRef, 
+      }}
+    >
       <View style={{ flex: 1 }}>
         <Screens
           script={state.script}
