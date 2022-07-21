@@ -11,21 +11,27 @@ export default function FloatingButton({
   onPress,
 }) {
   const { state: { pageOptions } } = useContext();
+  const [hide, setHide] = React.useState(false);
 
-  if (pageOptions && pageOptions.hideFAB) return null;
+  React.useEffect(() => { 
+    if (hide) {
+      if (pageOptions && pageOptions.onNext) {
+        pageOptions.onNext(goNext);
+      } else {
+        goNext();
+      }
+      if (onPress) onPress();
+      setTimeout(() => setHide(false), 50); 
+    }
+  }, [hide, pageOptions]);
+
+  if (hide || (pageOptions && pageOptions.hideFAB)) return null;
 
   return (
     <>
       {!!activeScreenEntry && (
         <Fab
-          onPress={() => {
-            if (pageOptions && pageOptions.onNext) {
-              pageOptions.onNext(goNext);
-            } else {
-              goNext();
-            }
-            if (onPress) onPress();
-          }}
+          onPress={() => { setHide(true); }}
         ><MaterialIcons size={24} color="black" style={{ color: '#fff' }} name={summary ? 'check' : 'arrow-forward'} /></Fab>
       )}
     </>

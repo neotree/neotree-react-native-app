@@ -50,7 +50,7 @@ export default (data = {}) => new Promise((resolve, reject) => {
       application = application[0];
       if (application) application.webeditor_info = JSON.parse(application.webeditor_info || '{}');
 
-      updateDeviceRegistration({ deviceId: application.device_id, details: { scripts_count } }).then(() => {}).catch(() => {});
+      if (!data.id) updateDeviceRegistration({ deviceId: application.device_id, details: { scripts_count } }).then(() => {}).catch(() => {});
       exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
     } catch (e) { /* DO NOTHING */ }
 

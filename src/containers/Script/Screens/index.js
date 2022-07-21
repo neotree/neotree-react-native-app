@@ -14,6 +14,8 @@ const Screens = props => {
   const history = useHistory();
   const location = useLocation();
 
+  const { state: { pageOptions, ...scriptState }, setState: setScriptState } = useContext();
+
   const { screens, script, configuration, diagnoses, matches, } = props;
   const [activeScreen, _setActiveScreen] = React.useState(null);
   const [hideActiveScreen, setHideActiveScreen] = React.useState(false);
@@ -31,8 +33,8 @@ const Screens = props => {
   const [screensWithNoAutoFill, _setScreensWithNoAutoFill] = React.useState({});
   const setScreensWithNoAutoFill = s => _setScreensWithNoAutoFill(prev => ({ ...prev, ...s }));
 
-  const [entries, setEntries] = React.useState([]);
-  const [cachedEntries, setCachedEntries] = React.useState([]);
+  const [entries, setEntries] = React.useState((scriptState.savedSession ? scriptState.savedSession.data.form : []) || []);
+  const [cachedEntries, setCachedEntries] = React.useState((scriptState.savedSession ? scriptState.savedSession.data.form : []) || []);
   const setCacheEntry = entry => !entry ? null : setCachedEntries(entries => {
     const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
     return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
@@ -68,6 +70,19 @@ const Screens = props => {
     }
   }, [activeScreen, summary]);
 
+  React.useEffect(() => {
+    setScriptState({ entries, activeScreen, });
+  }, [entries, activeScreen]);
+
+  React.useEffect(() => {
+    if (scriptState.goToEntryWithIndex !== null) {
+      const entry = entries[scriptState.goToEntryWithIndex];
+      setActiveScreen(entry ? screens.filter(s => s.id === entry.screen.id)[0] || activeScreen : activeScreen);
+      setEntries(entries.filter((_, i) => i <= scriptState.goToEntryWithIndex));
+      setScriptState({ goToEntryWithIndex: null, });
+    }
+  }, [scriptState, screens, activeScreen, entries]);
+
   if (!activeScreen) return null;
 
   const activeScreenIndex = getScreenIndex(activeScreen.id);
@@ -100,9 +115,10 @@ const Screens = props => {
     script,
     startTime,
     matches,
+    savedSession: scriptState.savedSession,
   });
 
-  createSessionSummary();
+  // createSessionSummary();
 
   const getSuggestedDiagnoses = require('./_getSuggestedDiagnoses').default({
     parseCondition,
@@ -123,8 +139,6 @@ const Screens = props => {
       setDisplayLoader(false);
     })();
   });
-
-  const { state: { pageOptions } } = useContext();
 
   const cancelScript = () => {
     Alert.alert(
@@ -155,6 +169,7 @@ const Screens = props => {
       if (activeScreenIndex < 1) return cancelScript();
       const prev = getScreen({ direction: 'back' });
       setActiveScreen(prev ? prev.screen : null);
+      setEntries(entries.filter((_, i) => i < (entries.length - 1)));
     };
     if (pageOptions && pageOptions.onBack) return pageOptions.onBack(goBack);
     goBack();
