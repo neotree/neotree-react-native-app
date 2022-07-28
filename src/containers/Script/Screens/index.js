@@ -45,7 +45,8 @@ const Screens = props => {
       setScreensWithNoAutoFill({ [entry.screen.id]: true });
       setEntries(entries => {
         const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
-        return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
+        return (isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry])
+            .filter((_, i) => i <= activeScreenIndex);
       });
       setCacheEntry(entry);
     }
@@ -169,7 +170,6 @@ const Screens = props => {
       if (activeScreenIndex < 1) return cancelScript();
       const prev = getScreen({ direction: 'back' });
       setActiveScreen(prev ? prev.screen : null);
-      setEntries(entries.filter((_, i) => i < (entries.length - 1)));
     };
     if (pageOptions && pageOptions.onBack) return pageOptions.onBack(goBack);
     goBack();

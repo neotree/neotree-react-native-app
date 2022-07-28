@@ -13,25 +13,24 @@ export default function FloatingButton({
   const { state: { pageOptions } } = useContext();
   const [hide, setHide] = React.useState(false);
 
-  React.useEffect(() => { 
-    if (hide) {
-      if (pageOptions && pageOptions.onNext) {
-        pageOptions.onNext(goNext);
-      } else {
-        goNext();
-      }
-      if (onPress) onPress();
-      setTimeout(() => setHide(false), 50); 
-    }
-  }, [hide, pageOptions]);
-
   if (hide || (pageOptions && pageOptions.hideFAB)) return null;
 
   return (
     <>
       {!!activeScreenEntry && (
         <Fab
-          onPress={() => { setHide(true); }}
+          onPress={() => {
+            setHide(true);
+            setTimeout(() => {
+              if (pageOptions && pageOptions.onNext) {
+                pageOptions.onNext(goNext);
+              } else {
+                goNext();
+              }
+              if (onPress) onPress();
+              setHide(false);
+            }, 25);
+          }}
         ><MaterialIcons size={24} color="black" style={{ color: '#fff' }} name={summary ? 'check' : 'arrow-forward'} /></Fab>
       )}
     </>

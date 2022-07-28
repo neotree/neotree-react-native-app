@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Platform, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { ActionSheet } from 'native-base';
 import useBackButton from '@/utils/useBackButton';
 import Modal from '@/components/Modal';
 import Text from '@/components/Text';
@@ -10,7 +11,7 @@ import Header from '@/components/Header';
 import colorStyles from '@/styles/colorStyles';
 import bgColorStyles from '@/styles/bgColorStyles';
 import Content from '@/components/Content';
-import { Input, Form, Item, ActionSheet, } from 'native-base';
+import { Input, Form, Item } from 'native-base';
 import { useContext } from '../../Context';
 import EntriesMenu from './EntriesMenu';
 
@@ -156,8 +157,8 @@ const ScreenHeader = ({
                   autoCorrect={false}
                   value={searchVal || ''}
                   defaultValue={searchVal || ''}
-                  returnKeyType="search"
-                  returnKeyLabel="search"
+                  returnKeyType='search'
+                  returnKeyLabel='search'
                   onChange={e => {
                     const value = e.nativeEvent.text;
                     setSearchVal(value);

@@ -1,9 +1,10 @@
 export default ({
+  parseCondition,
   activeScreen,
   startTime: start_time,
   entries: form,
   script,
-  savedSession,
+  evaluateCondition,
   diagnoses,
   appState: { application, location },
   matches,
@@ -25,15 +26,13 @@ export default ({
   }, null);
 
   const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
-  const unique_key = savedSession ? savedSession.data.unique_key : `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`;
 
   return {
     ...payload,
-    id: savedSession ? savedSession.id : undefined,
-    uid: __DEV__ ? '0000-0000' : uid,
+    uid: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
     script_id: activeScreen.script_id,
     data: {
-      unique_key,
+      unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
       app_mode: application.mode,
       country: location.country,
       hospital_id: location.hospital,

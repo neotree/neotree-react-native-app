@@ -9,7 +9,7 @@ export default function EntriesMenu() {
     const { state: { entries }, setState } = useContext();
     const [open, setOpen] = React.useState(false);
 
-    const disabled = entries.length < 2;
+    const disabled = false;
 
     return (
         <>
@@ -62,27 +62,34 @@ export default function EntriesMenu() {
                                 </Content> */}
                                 <Content style={{ paddingVertical: 0 }}>
                                     <View style={{ backgroundColor: '#fff', padding: 10, }}>
-                                        <Text style={{ fontSize: 20, marginBottom: 25 }}>Go to screen</Text>
-
                                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                             <View style={{ flex: 1 }}>
-                                                {entries.map((e, i) => {
-                                                    const key = i;
-                                                    return (
-                                                        <TouchableOpacity
-                                                            key={key}
-                                                            onPress={() => {
-                                                                setState({ goToEntryWithIndex: i })
-                                                                setOpen(false);
-                                                            }}
-                                                            style={{ marginBottom: 10 }}
-                                                        >
-                                                            <View key={key} style={{ padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
-                                                                <Text>{e.screen.title}</Text>
-                                                            </View>
-                                                        </TouchableOpacity>
-                                                    );
-                                                })}
+                                                {!entries.length ? (
+                                                    <View style={{ alignItems: 'center', justifyContent: 'center', padding: 50, }}>
+                                                        <Text style={{ color: '#999' }}>Your enties will appear here</Text>
+                                                    </View>
+                                                ) : (
+                                                    <>
+                                                        <Text style={{ fontSize: 20, marginBottom: 25 }}>Go to screen</Text>
+                                                        {entries.map((e, i) => {
+                                                            const key = i;
+                                                            return (
+                                                                <TouchableOpacity
+                                                                    key={key}
+                                                                    onPress={() => {
+                                                                        setState({ goToEntryWithIndex: i })
+                                                                        setOpen(false);
+                                                                    }}
+                                                                    style={{ marginBottom: 10 }}
+                                                                >
+                                                                    <View key={key} style={{ padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
+                                                                        <Text>{e.screen.title}</Text>
+                                                                    </View>
+                                                                </TouchableOpacity>
+                                                            );
+                                                        })}
+                                                    </>
+                                                )}
                                             </View>
                                         </View>
                                     </View>
