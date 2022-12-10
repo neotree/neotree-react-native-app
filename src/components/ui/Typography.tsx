@@ -39,7 +39,6 @@ Typography.defaultProps = {
 
 const styles = StyleSheet.create({
     root: {
-        fontFamily: 'PT-Sans-Regular',
         fontSize: 16,
     },
 });

@@ -1,7 +1,5 @@
 import { ScrollView, Text, View } from "react-native";
 
-export const sessionsAssets = [];
-
 export function Sessions() {
 	return (
 		<ScrollView>

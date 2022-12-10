@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, TouchableOpacity } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
 	createDrawerNavigator,
 	DrawerContentScrollView,
@@ -17,14 +18,11 @@ import {
 } from './screens';
 import { Routes } from './types';
 import { useTheme, Typography } from './components';
-import { useNavigation } from '@react-navigation/native';
-
-export const drawerNavAssets = [require('../assets/logos/piket_Location.png')];
+import assets from './assets';
 
 const Drawer = createDrawerNavigator<Routes>();
 
 export function DrawerNavigation() {
-	const theme = useTheme();
 	return (
 		<Drawer.Navigator 
 			initialRouteName="Home"
@@ -34,19 +32,10 @@ export function DrawerNavigation() {
 				name="Home" 
 				component={Home} 
 				options={{
-					// headerShown: false,
-					headerStyle: {
-						backgroundColor: theme.colors['bg.dark'],
-					},
-					headerTintColor: theme.colors['bg.dark.contrast'],
-					headerShadowVisible: false,
 					headerTitle: () => (
 						<Typography
 							size="lg"
 							font="normal"
-							style={{
-								color: theme.colors['bg.dark.contrast'],
-							}}
 						>Home</Typography>
 					),
 				}}
@@ -57,18 +46,13 @@ export function DrawerNavigation() {
 				component={Script} 
 				options={{
 					drawerLabel: 'Script',
-					headerLeft: props => HeaderLeft({ ...props, backRouteName: 'Script', }),
+					// headerLeft: props => HeaderLeft({ ...props, }),
 					headerTitle: () => (
 						<View>
 							<Typography
 								size="lg"
 								font="normal"
 							>Script</Typography>
-							<Typography
-								size="xs"
-								font="normal"
-								color="text.secondary"
-							>Step 1 of 3</Typography>
 						</View>
 					),
 				}}
@@ -78,7 +62,6 @@ export function DrawerNavigation() {
 				name="Location" 
 				component={Location} 
 				options={{
-					headerLeft: HeaderLeft,
 					headerTitle: () => (
 						<Typography
 							size="lg"
@@ -92,12 +75,11 @@ export function DrawerNavigation() {
 				name="Sessions" 
 				component={Sessions} 
 				options={{
-					headerLeft: props => HeaderLeft({ ...props, backRouteName: 'Location', }),
 					headerTitle: () => (
 						<Typography
 							size="lg"
 							font="normal"
-						>Details</Typography>
+						>Sessions</Typography>
 					),
 				}}
 			/>
@@ -106,7 +88,6 @@ export function DrawerNavigation() {
 				name="Configuration" 
 				component={Configuration} 
 				options={{
-					headerLeft: HeaderLeft,
 					headerTitle: () => (
 						<Typography
 							size="lg"
@@ -126,18 +107,19 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 			{...props}
 			contentContainerStyle={{
 				flex: 1,
-				backgroundColor: theme.colors['bg.dark']
+				backgroundColor: theme.colors['bg.light']
 			}}
 		>
 			<View
 				style={{
-					backgroundColor: theme.colors['bg.dark'],
+					backgroundColor: theme.colors['bg.light'],
 					alignItems: 'center',
 					justifyContent: 'center',					
 				}}
 			>
 				<Image
-					source={drawerNavAssets[0]}
+					source={assets.darkLogo}
+					style={{ width: 220, height: 220, }}
 				/>
 			</View>
 
