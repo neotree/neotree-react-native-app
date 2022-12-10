@@ -1,7 +1,5 @@
 import { ScrollView, Text, View } from "react-native";
 
-export const configurationAssets = [];
-
 export function Configuration() {
 	return (
 		<ScrollView>

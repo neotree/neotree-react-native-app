@@ -1,0 +1,5 @@
+export default {
+    icon: require('../assets/images/icon.png'),
+    lightLogo: require('../assets/images/logo.png'),
+    darkLogo: require('../assets/images/logo-dark.png'),
+};

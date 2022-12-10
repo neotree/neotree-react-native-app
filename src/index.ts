@@ -1,10 +1,6 @@
-import { screensAssets } from './screens';
-import { drawerNavAssets } from './DrawerNavigation';
+import registerdAssets from './assets';
 
-export const assets = [
-    ...drawerNavAssets,
-    ...screensAssets,
-];
+export const assets = Object.values(registerdAssets);
 
 export * from './AppContext';
 

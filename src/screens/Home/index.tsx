@@ -1,7 +1,5 @@
 import { ScrollView, Text, View } from "react-native";
 
-export const homeAssets = [];
-
 export function Home() {
 	return (
 		<ScrollView>
