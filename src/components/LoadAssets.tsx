@@ -36,12 +36,21 @@ export interface LoadAssetsProps {
     fonts?: FontSource;
     assets?: number[];
     children: ReactElement | ReactElement[];
+    initialiseData?: () => Promise<any>;
 }
 
-export const LoadAssets = ({ assets, fonts, children }: LoadAssetsProps) => {
+export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAssetsProps) => {
     const [isNavigationReady, setIsNavigationReady] = useState(!__DEV__);
     const [initialState, setInitialState] = useState<InitialState | undefined>();
+    const [dataInitialised, setDataInitialised] = useState(false);
     const ready = useLoadAssets(assets || [], fonts || {});
+
+    useEffect(() => {
+        (async () => {
+            try { if (initialiseData) await initialiseData(); } catch(e) { /**/ }
+            setDataInitialised(true);
+        })();
+    }, []);
 
     useEffect(() => {
         const restoreState = async () => {
@@ -67,7 +76,7 @@ export const LoadAssets = ({ assets, fonts, children }: LoadAssetsProps) => {
 
     const onStateChange = useCallback((state: any) => AsyncStorage.setItem(NAVIGATION_STATE_KEY, JSON.stringify(state)), []);
 
-    if (!ready || !isNavigationReady) return null;
+    if (!ready || !isNavigationReady || !dataInitialised) return null;
 
     return (
         <NavigationContainer {...{ onStateChange, initialState }}>
