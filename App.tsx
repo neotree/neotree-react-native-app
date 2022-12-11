@@ -3,8 +3,9 @@ import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { 
+    initialiseData,
     assets as srcAssets,
-	DrawerNavigation,
+	Navigation,
 	ThemeProvider, 
 	LoadAssets, 
 	LoadAssetsProps,
@@ -21,9 +22,9 @@ export default function App() {
     return (
         <AppContextProvider>
             <ThemeProvider>
-                <LoadAssets {...{ fonts, assets }}>
+                <LoadAssets {...{ fonts, assets, initialiseData }}>
                     <SafeAreaProvider>
-                        <DrawerNavigation />
+                        <Navigation />
                     </SafeAreaProvider>
                 </LoadAssets>
             </ThemeProvider>

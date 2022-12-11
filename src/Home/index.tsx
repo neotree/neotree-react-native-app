@@ -9,24 +9,20 @@ import {
 	DrawerContentComponentProps,
   } from '@react-navigation/drawer';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { StatusBar } from 'expo-status-bar';
-import {
-	Home,
-	Script,
-	Configuration,
-	Location,
-	Sessions,
-} from './screens';
-import { HomeRoutes } from './types';
-import { useTheme, Typography } from './components';
-import assets from './assets';
+import { HomeRoutes } from '../types';
+import { useTheme, Typography } from '../components';
+import assets from '../assets';
+import { Home } from './Home';
+import { Script } from './Script';
+import { Configuration } from './Configuration';
+import { Location } from './Location';
+import { Sessions } from './Sessions';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
 
-export function DrawerNavigation() {
+export function HomeNavigator() {
 	return (
 		<>
-			<StatusBar style="dark" />
 			<Drawer.Navigator 
 				initialRouteName="Home"
 				drawerContent={props => <CustomDrawerContent {...props} />}
@@ -209,3 +205,4 @@ function HeaderLeft({ backRouteName }: any= {}) {
 		</View>
 	);
 }
+
