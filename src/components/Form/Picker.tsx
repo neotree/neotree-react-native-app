@@ -1,26 +1,29 @@
 import React from 'react';
-import { 
-    TextInput as RNTextInput, 
-    TextInputProps as RNTextInputProps 
-} from 'react-native';
+import { Picker as RNPicker, PickerProps as RNPickerProps, PickerItemProps as RNPickerItemProps } from '@react-native-picker/picker';
 import { Box, useTheme, Text } from '../Theme';
 import { Br } from '../Br';
 
-export type TextInputProps = RNTextInputProps & {
+export type PickerOption = RNPickerItemProps & {
+    label: string;
+    value: string | number;
+};
+
+export type PickerProps = RNPickerProps & {
     size?: 's' | 'm' | 'l';
     errors?: string[];
     label?: React.ReactNode;
+    options: PickerOption[];
 };
 
-export const TextInput = React.forwardRef<RNTextInput, TextInputProps>((
+export const Picker = (
     { 
         size,
         style,
         errors,
         label,
+        options,
         ...props
-    }: TextInputProps,
-    ref
+    }: PickerProps,
 ) => {
     size = size || 'm';
 
@@ -43,10 +46,9 @@ export const TextInput = React.forwardRef<RNTextInput, TextInputProps>((
                 borderWidth={1}
                 borderColor={errors?.length ? 'error' : 'divider'}
                 borderRadius="m"
-                backgroundColor={(props.editable === false) ? 'disabledBackground' : undefined}
+                backgroundColor={(props.enabled === false) ? 'disabledBackground' : undefined}
             >
-                <RNTextInput 
-                    ref={ref}
+                <RNPicker 
                     {...props}
                     style={[
                         {
@@ -64,7 +66,17 @@ export const TextInput = React.forwardRef<RNTextInput, TextInputProps>((
                         },
                         style,
                     ]}
-                />
+                >
+                    {options.map((o, i) => {
+                        return (
+                            <RNPicker.Item
+                                key={`${i}${o.value}`}
+                                label={o.label}
+                                value={o.value}
+                            />
+                        );
+                    })}
+                </RNPicker>
             </Box>
 
             {(errors || []).map((e, i) => (
@@ -76,4 +88,4 @@ export const TextInput = React.forwardRef<RNTextInput, TextInputProps>((
             ))}        
         </>
     );
-});
+};
