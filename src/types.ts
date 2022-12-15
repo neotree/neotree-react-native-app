@@ -1,11 +1,13 @@
 import { RouteProp, ParamListBase } from "@react-navigation/native";
-import { DrawerNavigationProp } from "@react-navigation/drawer";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-export interface DrawerNavigationProps<
+export * from '../config/types';
+
+export interface StackNavigationProps<
   ParamList extends ParamListBase,
   RouteName extends keyof ParamList = string
 > {
-  navigation: DrawerNavigationProp<ParamList, RouteName>;
+  navigation: NativeStackNavigationProp<ParamList, RouteName>;
   route: RouteProp<ParamList, RouteName>;
 }
 
@@ -15,6 +17,7 @@ export type AppRoutes = {
 };
 
 export type AuthenticationRoutes = {
+  Location: undefined;
   Login: undefined;
 };
 
