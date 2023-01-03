@@ -8,6 +8,7 @@ import { useAppContext } from './AppContext';
 import { Splash } from './components';
 
 export const assets = Object.values(registerdAssets);
+
 export * from './data';
 export * from './AppContext';
 export * from './types';
@@ -19,16 +20,19 @@ export function Navigation() {
 
     React.useEffect(() => {
         (async () => {
-            try {
-                const res = await initialiseData();                
-                ctx?.setAuthenticatedUser(res?.authenticatedUser);
-            } catch (e) {
-                console.log(e);
-            } finally {
-                setReady(true);
-            }        
+            if (!ready) {
+                try {
+                    const res = await initialiseData();            
+                    ctx?.setAuthenticatedUser(res?.authenticatedUser);
+                    ctx?.setApplication(res?.application);
+                } catch (e) {
+                    console.log(e);
+                } finally {
+                    setReady(true);
+                }     
+            }   
         })();
-    }, []);
+    }, [ready]);
 
     if (!ready) return <Splash />;
 

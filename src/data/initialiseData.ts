@@ -4,11 +4,11 @@ import Constants from 'expo-constants';
 import { createTablesIfNotExist, dbTransaction } from './db';
 import queryString from 'query-string';
 import { makeApiCall } from './api';
-import { getAuthenticatedUser } from './queries';
+import { getApplication, getAuthenticatedUser } from './queries';
 
 const APP_VERSION = Constants.manifest?.version;
 
-export async function initialiseData() {    
+export async function initialiseData() {  
     await createTablesIfNotExist();
 
     const authenticatedUser = await getAuthenticatedUser();
@@ -121,5 +121,10 @@ export async function initialiseData() {
         await Promise.all(promises);
     }
 
-    return { authenticatedUser, };
+    const app = await getApplication();
+
+    return { 
+        authenticatedUser, 
+        application: app,
+    };
 }  
