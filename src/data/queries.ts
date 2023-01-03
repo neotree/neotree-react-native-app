@@ -94,7 +94,19 @@ export const getScript = (options = {}) => new Promise<{
             if (script) {
                 const _screens = await dbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
                 const _diagnoses = await dbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
-                screens = _screens.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+                screens = _screens
+                    .map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
+                    .map(s => ({
+                        ...s,
+                        data: {
+                            ...s.data,
+                            metadata: {
+                                ...s.data?.metadata,
+                                fields: s.data?.metadata?.fields || [],
+                                items: s.data?.metadata?.items || [],
+                            },
+                        },
+                    }));
                 diagnoses = _diagnoses.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
             }
 

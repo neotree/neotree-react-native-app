@@ -1,14 +1,15 @@
 import React from 'react';
-import { ScrollView, Alert, View } from "react-native";
+import { Alert } from "react-native";
 import { useIsFocused } from '@react-navigation/native';
 import * as types from '../../types';
 import { getScript } from '../../data';
 import { getNavOptions } from './navOptions';
-import { useTheme, Text, Box } from '../../components';
+import { useTheme, Text, Box, Modal } from '../../components';
 import { useBackButton } from '../../hooks/useBackButton';
 
 import { Start } from './Start';
 import { Screen } from './Screen';
+import { Context } from './Context';
 
 export function Script({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const { screen_id } = route.params;
@@ -24,6 +25,8 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 
 	const [activeScreen, setActiveScreen] = React.useState<null | types.Screen>(null);
 	const [activeScreenIndex, setActiveScreenIndex] = React.useState(0);
+
+	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
 
 	const loadScript = React.useCallback(() => {
 		(async () => {
@@ -46,29 +49,7 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 	}, [navigation, route]);
 
 	const confirmExit = React.useCallback(() => {
-		if (activeScreenIndex === 0) {
-			Alert.alert(
-				'Cancel script',
-				'Are you sure you want to cancel script?',
-				[
-					{
-						text: 'Cancel',
-						onPress: () => {},
-						style: 'cancel',
-					},
-					{
-						text: 'Ok',
-						onPress: () => {
-							(async () => {
-								// save first
-								navigation.navigate('Home');
-							})();
-						}
-					}
-				],
-				{ cancelable: false }
-			);		
-		}
+		if (activeScreenIndex === 0) setShoultConfirmExit(true);
 	}, [activeScreenIndex]);
 
 	const setNavOptions = React.useCallback(() => {
@@ -101,18 +82,49 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 	if (!script) return null;
 
 	return (
-		<Box flex={1} paddingTop="xl" paddingBottom="m" backgroundColor="white">
-			{!route.params.screen_id ? (
-				<Start 
-					script={script}
-					screens={screens}
-					navigation={navigation}
-				/> 
-			): (
-				<Screen 
-				
-				/>
-			)}
-		</Box>
+		<Context.Provider
+			value={{
+				script,
+				screens,
+				diagnoses,
+				activeScreen,
+				activeScreenIndex,
+				navigation,
+			}}
+		>
+			<>
+				<Box flex={1} paddingBottom="m" backgroundColor="white">
+					{!activeScreen ? (
+						<Start /> 
+					): (
+						<Screen />
+					)}
+				</Box>
+
+				<Modal 
+					open={shouldConfirmExit} 
+					onClose={() => setShoultConfirmExit(false)}
+					title="Cancel Script?"
+					actions={[
+						{
+							label: 'Cancel',
+							onPress: () => setShoultConfirmExit(false),
+						},
+						{
+							label: 'Yes',
+							onPress: () => {
+								(async () => {
+									// save first
+									navigation.navigate('Home');
+									setShoultConfirmExit(false);
+								})();
+							}
+						},
+					]}
+				>
+					<Text>Are you sure you want to cancel script?</Text>
+				</Modal>
+			</>
+		</Context.Provider>
 	);
 }

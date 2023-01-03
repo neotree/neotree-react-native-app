@@ -1,9 +1,10 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import { DrawerNavigationOptions } from '@react-navigation/drawer';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import * as types from '../../types';
-import { Theme, Text, Box, } from '../../components';
+import { Theme, Text, Box, Modal } from '../../components';
 
 type GetNavOptionsParams = {
 	script: null | types.Script;
@@ -14,7 +15,7 @@ type GetNavOptionsParams = {
 };
 
 const headerTitlePlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = () => 
-	props => {
+	() => {
 		return (
 			<Box>
 			
@@ -23,7 +24,7 @@ const headerTitlePlaceholder: (params: GetNavOptionsParams) => DrawerNavigationO
 	};
 
 const headerLeftPlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerLeft'] = () => 
-	props => {
+	() => {
 		return (
 			<Box>
 			
@@ -57,7 +58,7 @@ const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['head
 			<Box marginLeft="m">
 				<TouchableOpacity onPress={() => confirmExit()}>
 					<Icon 
-						name="arrow-back" 
+						name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}  
 						size={28} 
 						color={tintColor}
 					/>
@@ -66,16 +67,65 @@ const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['head
 		);
 	};
 
+function RightActions({ color, screen, }: { color?: string; screen: types.Screen }) {
+	const [openModal, setOpenModal] = React.useState(false);
+	return (
+		<>
+			<Box marginRight="m" flexDirection="row">
+				{!!screen?.data?.infoText && (
+					<>
+						<TouchableOpacity onPress={() => setOpenModal(true)}>
+							<Icon 
+								name="info" 
+								size={24} 
+								color={color}
+							/>
+						</TouchableOpacity>
+
+						<Box marginLeft="s" />
+					</>
+				)}
+
+				<TouchableOpacity onPress={() => setOpenModal(true)}>
+					<Icon 
+						name="more-vert" 
+						size={24} 
+						color={color}
+					/>
+				</TouchableOpacity>
+			</Box>
+
+			<Modal
+				open={openModal}
+				onClose={() => setOpenModal(false)}
+				onRequestClose={() => setOpenModal(false)}
+				title="Action"
+			>
+				<Box>
+					<Text>Cancel Script?</Text>
+				</Box>
+			</Modal>
+		</>
+	);
+}
+
+const headerRight: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerRight'] = ({ activeScreen }) =>
+	({ tintColor }) => {
+		return <RightActions color={tintColor} screen={activeScreen} />;
+	};
+
 export function getNavOptions(params: GetNavOptionsParams) {
+	const opts: Partial<NativeStackNavigationOptions> = {};
+
 	if (!params.script) {
-		return {
-			headerTitle: headerTitlePlaceholder(params),
-			headerLeft: headerLeftPlaceholder(params),
-		};
+		opts.headerTitle = headerTitlePlaceholder(params);
+		opts.headerLeft = headerLeftPlaceholder(params);
+		opts.headerRight = () => null;
+	} else {
+		opts.headerTitle = headerTitle(params);
+		opts.headerLeft = headerLeft(params);
+		opts.headerRight = headerRight(params);
 	}
 	
-	return {
-		headerTitle: headerTitle(params),
-		headerLeft: headerLeft(params),
-	};
+	return opts;
 }

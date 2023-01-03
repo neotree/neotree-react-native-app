@@ -13,3 +13,7 @@ export * from './Button';
 export * from './Splash';
 
 export * from './Card';
+
+export * from './Modal';
+
+export * from './Fab';
