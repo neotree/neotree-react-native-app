@@ -73,7 +73,11 @@ export const getConfiguration = (options = {}) => new Promise((resolve, reject) 
     })();
 });
 
-export const getScript = (options = {}) => new Promise<types.Script>((resolve, reject) => {
+export const getScript = (options = {}) => new Promise<{
+    script: types.Script;
+    screens: types.Screen[];
+    diagnoses: types.Diagnosis[];
+}>((resolve, reject) => {
     (async () => {
         try {
             const { ..._where }: any = options || {};
@@ -83,7 +87,18 @@ export const getScript = (options = {}) => new Promise<types.Script>((resolve, r
             q = where ? `${q} where ${where}` : q;
 
             const res = await dbTransaction(`${q} limit 1;`.trim());
-            resolve(res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]);
+            const script = res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0];
+            let screens = [];
+            let diagnoses = [];
+
+            if (script) {
+                const _screens = await dbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
+                const _diagnoses = await dbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
+                screens = _screens.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+                diagnoses = _diagnoses.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+            }
+
+            resolve({ script, screens, diagnoses, });
         } catch (e) { reject(e); }
     })();
 });
