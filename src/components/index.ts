@@ -9,3 +9,5 @@ export * from './Form';
 export * from './Br';
 
 export * from './Button';
+
+export * from './Splash';

@@ -1,15 +1,18 @@
 import React from 'react';
 import { ActivityIndicator } from "react-native";
 import { Picker, Br, Button, useTheme  } from "../components";
-import { Container } from './Container';
 import Constants from 'expo-constants';
-import { COUNTRY, AuthenticationRoutes, StackNavigationProps } from '../types';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { NEOTREE_DATA_COUNTRY_KEY } from '../constants';
+import { COUNTRY } from '../types';
+import { useIsFocused } from '@react-navigation/native';
+import { dbTransaction } from '../data';
 
 const countries = (Constants.manifest?.extra?.countries || []) as COUNTRY[];
 
-export function Location({ navigation }: StackNavigationProps<AuthenticationRoutes, 'Location'>) {
+type LocationProps = { onSetLocation: () => void; };
+
+export function Location({ onSetLocation }: LocationProps) {
+	const focused = useIsFocused();
+
 	const theme = useTheme();
 
 	const [country, setCountry] = React.useState<any>(countries[0]?.iso || '');
@@ -26,8 +29,12 @@ export function Location({ navigation }: StackNavigationProps<AuthenticationRout
 			setErrors([]);
 			if (country) {
 				setSubmitting(true);
-				await AsyncStorage.setItem(NEOTREE_DATA_COUNTRY_KEY, country);
-				navigation.navigate('Login');
+				const location = { id: 1, hospital, country, };
+				await dbTransaction(
+					`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
+					Object.values(location),
+				);
+				onSetLocation();
 			} else {
 				// if (!hospital) setErrors(prev => [...prev, { field: 'hospital', message: 'Hospital is required.' }]);
 				if (!country) setErrors(prev => [...prev, { field: 'country', message: 'Country is required.' }]);
@@ -35,8 +42,12 @@ export function Location({ navigation }: StackNavigationProps<AuthenticationRout
 		}
 	}, [country, hospital, submitting]);
 
+	React.useEffect(() => {
+		setSubmitting(false);
+	}, [focused]);
+
 	return (
-		<Container>
+		<>
 			<Picker 
 				enabled={!submitting}
 				size="l"
@@ -78,6 +89,6 @@ export function Location({ navigation }: StackNavigationProps<AuthenticationRout
 					/>
 				)}
 			</Button>
-		</Container>
+		</>
 	);
 }

@@ -1,10 +1,11 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import * as types from './types';
 import registerdAssets from './assets';
-import { AuthenticationNavigator } from './Authentication';
+import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
+import { initialiseData } from './data';
+import { useAppContext } from './AppContext';
+import { Splash } from './components';
 
 export const assets = Object.values(registerdAssets);
 export * from './data';
@@ -12,26 +13,29 @@ export * from './AppContext';
 export * from './types';
 export * from './components';
 
-const RootStack = createNativeStackNavigator<types.AppRoutes>();
-
 export function Navigation() {
+    const [ready, setReady] = React.useState(false);
+    const ctx = useAppContext();
+
+    React.useEffect(() => {
+        (async () => {
+            try {
+                const res = await initialiseData();                
+                ctx?.setAuthenticatedUser(res?.authenticatedUser);
+            } catch (e) {
+                console.log(e);
+            } finally {
+                setReady(true);
+            }        
+        })();
+    }, []);
+
+    if (!ready) return <Splash />;
+
     return (
         <>
             <StatusBar style="dark" />
-            <RootStack.Navigator>
-                <RootStack.Screen
-                    name="Authentication"
-                    component={AuthenticationNavigator}
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-
-                <RootStack.Screen
-                    name="Home"
-                    component={HomeNavigator}
-                />
-            </RootStack.Navigator>
+            {!ctx?.authenticatedUser ? <Authentication /> : <HomeNavigator />}
         </>
     );
 }

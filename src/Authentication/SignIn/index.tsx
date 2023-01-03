@@ -1,23 +1,27 @@
 import React from 'react';
 import { ActivityIndicator } from 'react-native';
 import { Box, Br, Text, useTheme, Button  } from "../../components";
-import { Container } from '../Container';
-import { AppRoutes, StackNavigationProps } from '../../types';
 import { Form } from './Form';
 import { initialiseData } from '../../data';
+import { useAppContext } from '../../AppContext';
 
-export function Login({ navigation }: StackNavigationProps<AppRoutes, 'Authentication'>) {
+type SignInProps = { onSignIn: () => void; };
+
+export function SignIn({ onSignIn }: SignInProps) {
+	const ctx = useAppContext();
 	const theme = useTheme();
+
 	const [loggedIn, setLoggedIn] = React.useState(false);
 	const [initialiseDataFailed, setInitialiseDataFailed] = React.useState(false);
 
-	const onLoginSuccess = React.useCallback(() => {
+	const onSignInSuccess = React.useCallback(() => {
 		(async () => {
 			try {
 				setLoggedIn(true);
 				setInitialiseDataFailed(false);
-				await initialiseData();
-				// navigation.navigate('Home');
+				const res = await initialiseData();
+				ctx?.setAuthenticatedUser(res?.authenticatedUser);
+				onSignIn();
 			} catch(e) { 
 				console.log(e);
 				setInitialiseDataFailed(true); 
@@ -26,8 +30,8 @@ export function Login({ navigation }: StackNavigationProps<AppRoutes, 'Authentic
 	}, []);
 
 	return (
-		<Container>
-			{!loggedIn ? <Form onLoginSuccess={onLoginSuccess} /> : (
+		<>
+			{!loggedIn ? <Form onSignInSuccess={onSignInSuccess} /> : (
 				<Box 
 					padding="xl"
 					justifyContent="center"
@@ -44,7 +48,7 @@ export function Login({ navigation }: StackNavigationProps<AppRoutes, 'Authentic
 							<Br />
 
 							<Button
-								onPress={() => onLoginSuccess()}
+								onPress={() => onSignInSuccess()}
 							>Try again</Button>
 						</>
 					) : (
@@ -64,6 +68,6 @@ export function Login({ navigation }: StackNavigationProps<AppRoutes, 'Authentic
 					)}
 				</Box>
 			)}			
-		</Container>
+		</>
 	);
 }

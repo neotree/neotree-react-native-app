@@ -1,12 +1,9 @@
 import React from 'react';
-
-export const defaultAppContextState = {};
-
-export type IAppContextState = typeof defaultAppContextState;
+import { AuthenticatedUser } from './types';
 
 export interface IAppContext {
-    state: IAppContextState;
-    setState: React.Dispatch<React.SetStateAction<IAppContextState>>;
+    authenticatedUser: AuthenticatedUser | null;
+    setAuthenticatedUser: React.Dispatch<React.SetStateAction<AuthenticatedUser | null>>;
 }
 
 export const AppContext = React.createContext<IAppContext | null>(null);
@@ -14,13 +11,13 @@ export const AppContext = React.createContext<IAppContext | null>(null);
 export const useAppContext = () => React.useContext(AppContext);
 
 export function AppContextProvider({ children }: React.PropsWithChildren<{}>) {
-    const [state, setState] = React.useState(defaultAppContextState);
+    const [authenticatedUser, setAuthenticatedUser] = React.useState(null);
 
     return (
         <AppContext.Provider 
             value={{
-                state,
-                setState,
+                authenticatedUser,
+                setAuthenticatedUser,
             }}
         >
             {children}

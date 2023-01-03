@@ -3,6 +3,17 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export * from '../config/types';
 
+export type Location = { 
+  id: number;
+  country: string;
+  hospital?: string;
+};
+
+export type AuthenticatedUser = any;
+export type Script = any;
+export type Screen = any;
+export type Diagnosis = any;
+
 export interface StackNavigationProps<
   ParamList extends ParamListBase,
   RouteName extends keyof ParamList = string

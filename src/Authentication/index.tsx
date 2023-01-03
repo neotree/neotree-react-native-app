@@ -1,22 +1,49 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as types from '../types';
+import React from 'react';
+import { View, Image } from "react-native";
+import assets from "../assets";
+import { Content, Box  } from "../components";
 import { Location } from './Location';
-import { Login } from './Login';
+import { SignIn } from './SignIn';
 
-const AuthenticationStack = createNativeStackNavigator<types.AuthenticationRoutes>();
+export function Authentication() {
+    const [section, setSection] = React.useState<'location' | 'sign-in'>('location');
 
-export function AuthenticationNavigator() {
-    return ( 
-        <AuthenticationStack.Navigator screenOptions={{headerShown: false }}>
-            <AuthenticationStack.Screen
-                name="Location"
-                component={Location}
-            />
+    const onSetLocation = React.useCallback(() => {
+        setSection('sign-in');
+    }, []);
 
-            <AuthenticationStack.Screen
-                name="Login"
-                component={Login}
-            />
-        </AuthenticationStack.Navigator>
-    );
+    const onSignIn = React.useCallback(() => {
+
+    }, []);
+
+	return (
+		<View style={{ flex: 1 }}>
+			<View
+				style={{ 
+					flex: 1,
+					alignItems: 'center',
+					justifyContent: 'center',
+				}}
+			>
+				<Content>
+					<Image 
+						source={assets.darkLogo}
+						style={{
+							width: 300,
+							height: 300,
+						}}
+					/>
+				</Content>
+			</View>
+
+			<Box
+				paddingVertical="m"
+			>
+				<Content>
+					{section === 'location' && <Location onSetLocation={onSetLocation} />}
+                    {section === 'sign-in' && <SignIn onSignIn={onSignIn} />}
+				</Content>
+			</Box>
+		</View>
+	);
 }
