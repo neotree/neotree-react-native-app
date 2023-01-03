@@ -21,7 +21,7 @@ export function Content({ style, containerProps, ...props }: ContentProps) {
                 {...props}
                 style={[                    
                     {
-                        width: '90%',
+                        width: '95%',
                         maxWidth: 500,
                         padding: 10,
                     },

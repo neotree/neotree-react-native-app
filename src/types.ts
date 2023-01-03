@@ -50,7 +50,7 @@ export type AuthenticationRoutes = {
 
 export type HomeRoutes = {
   Home: undefined;
-  Script: { scriptId: string; };
+  Script: { script_id: string; };
   Configuration: undefined;
   Location: undefined;
   Sessions: undefined;
