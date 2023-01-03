@@ -44,6 +44,7 @@ export const theme = createTheme({
         white: '#fff',
         black: '#000',
         divider: 'rgba(0, 0, 0, 0.12)',
+        highlight: 'rgba(255, 255, 0,.2)',
     },
 
     spacing: {

@@ -1,15 +1,22 @@
 import React from 'react';
-import { Box } from '../../../components';
-import * as types from '../../../types';
+import { Box, Content, Fab, Text } from '../../../components';
+import { ScreenType } from './ScreenType';
+import { useContext } from '../Context';
 
-type ScreenProps = {
-
-};
-
-export function Screen({}: ScreenProps) {
+export function Screen() {
+    const ctx = useContext();
+    
     return (
-        <Box>
+        <Box flex={1}>
+            <ScreenType />
 
+            <Box 
+                position="absolute"
+                bottom={25}
+                right={25}
+            >
+                <Fab onPress={() => alert('OUCH!!!')} />
+            </Box>
         </Box>
     );
 }
