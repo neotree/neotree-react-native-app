@@ -14,7 +14,7 @@ export function Br({ spacing }: BrProps) {
 }
 
 const defaultProps: BrProps = {
-    spacing: 'm',
+    spacing: 's',
 };
 
 Br.defaultProps = defaultProps;
