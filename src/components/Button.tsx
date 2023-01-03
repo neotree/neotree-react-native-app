@@ -25,6 +25,7 @@ export function Button({
         <TouchableOpacity
             {...props}
             style={[
+                { borderRadius: theme.borderRadii.m, },
                 (() => {
                     let backgroundColor = theme.colors[color];
                     if (props.disabled) backgroundColor = theme.colors.disabledBackground;
@@ -36,8 +37,7 @@ export function Button({
                             };
                         default: 
                             return {
-                                backgroundColor,
-                                borderRadius: theme.borderRadii[size],
+                                backgroundColor,                                
                                 padding: theme.spacing[size],
                             };
                     }
