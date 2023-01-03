@@ -1,15 +1,13 @@
 import React from 'react';
 import { TextInput as RNTextInput, ActivityIndicator } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { TextInput, Br, Button, useTheme  } from "../../components";
-import { makeApiCall } from '../../api';
-import { NEOTREE_DATA_AUTHENTICATED_USER_KEY } from '../../constants';
+import { TextInput, Br, Button, useTheme, Text  } from "../../components";
+import { makeApiCall, dbTransaction } from '../../data';
 
 type FormProps = {
-	onLoginSuccess: () => any;
+	onSignInSuccess: () => any;
 };
 
-export function Form({ onLoginSuccess }: FormProps) {
+export function Form({ onSignInSuccess }: FormProps) {
 	const theme = useTheme();
 
 	const emailInputRef = React.useRef<RNTextInput>(null);
@@ -37,18 +35,27 @@ export function Form({ onLoginSuccess }: FormProps) {
 					}, { useHost: true });
 					const json = await res.json();
 					const user = json?.user;
-					if (user) {
+
+					setErrors((json?.errors || []).map((e: string) => ({ message: e })));
+
+					if (user) {						
+						await dbTransaction(
+							'insert or replace into authenticated_user (id, details) values (?, ?);',
+							[1, JSON.stringify(user)],
+						);
 						success = true;
-						AsyncStorage.setItem(NEOTREE_DATA_AUTHENTICATED_USER_KEY, JSON.stringify(user));
 					}
 				} else {
 					if (!password) setErrors(prev => [...prev, { field: 'password', message: 'Password is required.' }]);
 					if (!email) setErrors(prev => [...prev, { field: 'email', message: 'Email is required.' }]);
 				}
 			}
-		} catch(e) { console.log(e); }
+		} catch(e: any) { 
+			console.log(e);  
+			setErrors([{ message: e.message }]);
+		}
 		setSubmitting(false);
-		if (success) onLoginSuccess();
+		if (success) onSignInSuccess();
 	}, [email, password, submitting]);
 
 	return (
@@ -61,6 +68,8 @@ export function Form({ onLoginSuccess }: FormProps) {
 				value={email}
 				onChangeText={email => setEmail(email)}
 				keyboardType="email-address"
+				textContentType="username"
+				autoCapitalize="none"
 				returnKeyType="next"
 				onSubmitEditing={() => passwordInputRef.current?.focus()}
 				errors={errors.filter(e => e.field === 'email').map(e => e.message)}
@@ -77,10 +86,19 @@ export function Form({ onLoginSuccess }: FormProps) {
 				onChangeText={password => setPassword(password)}
 				secureTextEntry
 				textContentType="password"
+				autoCapitalize="none"
 				returnKeyType="go"
 				onSubmitEditing={() => submit()}
 				errors={errors.filter(e => e.field === 'password').map(e => e.message)}
 			/>
+
+			{errors.filter(e => !e.field).map((e, i) => (
+				<React.Fragment key={e.message}>
+					{i === 0 && <Br spacing='l' />}
+					<Text color="error">{e.message}</Text>
+					<Br />
+				</React.Fragment>
+			))}
 
 			<Br spacing='l' />
 

@@ -1,7 +1,6 @@
 import Constants from 'expo-constants';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { NEOTREE_DATA_COUNTRY_KEY } from '../constants';
 import { COUNTRY_CONFIG } from '../types';
+import { getLocation } from './queries';
 
 const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
@@ -17,7 +16,11 @@ export async function makeApiCall(
 ) {
     const { useHost } = { ..._otherOptions, ...otherOptions, };
     try {
-        const country = (await AsyncStorage.getItem(NEOTREE_DATA_COUNTRY_KEY)) as string;
+        const location = await getLocation();
+        const country = location?.country;
+
+        if (!country) throw new Error('Location not set');
+
         const config = (CONFIGURATION[country] as COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;

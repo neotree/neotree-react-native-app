@@ -74,7 +74,9 @@ export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAsse
         })();
     }, [ready, isNavigationReady]);
 
-    const onStateChange = useCallback((state: any) => AsyncStorage.setItem(NAVIGATION_STATE_KEY, JSON.stringify(state)), []);
+    const onStateChange = useCallback((state: any) => {
+        // AsyncStorage.setItem(NAVIGATION_STATE_KEY, JSON.stringify(state));
+    }, []);
 
     if (!ready || !isNavigationReady || !dataInitialised) return null;
 
