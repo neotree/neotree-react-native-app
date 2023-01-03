@@ -37,6 +37,10 @@ export const theme = createTheme({
         'grey-700': '#616161',
         'grey-800': '#424242',
         'grey-900': '#212121',
+        'bg.dark': '#000000', //'#231f20',
+		'bg.dark.contrast': '#fff',
+		'bg.light': '#fff',
+		'bg.active': 'rgba(112,164,135,.12)',
         white: '#fff',
         black: '#000',
         divider: 'rgba(0, 0, 0, 0.12)',
@@ -70,6 +74,10 @@ export const theme = createTheme({
         },
         title2: {
             fontSize: 24,
+            color: 'textPrimary',
+        },
+        title3: {
+            fontSize: 20,
             color: 'textPrimary',
         },
         body: {
