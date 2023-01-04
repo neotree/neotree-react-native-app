@@ -39,7 +39,6 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
                 )}
 
                 <Content>
-                    <Text variant="title1" marginVertical="l">{ctx?.activeScreen?.type}</Text>
                     {(() => {
                         let Component: null | React.ComponentType<types.ScreenTypeProps> = null;
 
