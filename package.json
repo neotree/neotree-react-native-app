@@ -21,6 +21,7 @@
     "@shopify/restyle": "^2.1.0",
     "axios": "^1.2.0",
     "expo": "~47.0.3",
+    "expo-av": "~13.0.2",
     "expo-constants": "~14.0.2",
     "expo-splash-screen": "~0.17.5",
     "expo-sqlite": "~11.0.0",

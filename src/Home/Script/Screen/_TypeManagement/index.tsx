@@ -2,9 +2,10 @@ import React from 'react';
 import { Box, Br } from '../../../../components';
 import { useContext } from '../../Context';
 import { MgtSection } from './Section';
+import * as types from '../../../../types';
 
-type TypeManagementProps = {
-    searchVal: string;
+type TypeManagementProps = types.ScreenTypeProps & {
+    
 };
 
 export function TypeManagement({}: TypeManagementProps) {

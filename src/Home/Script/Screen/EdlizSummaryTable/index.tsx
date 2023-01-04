@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box } from '../../../../components';
 import { useContext } from '../../Context';
+import * as types from '../../../../types';
 
-type EdlizSummaryTableProps = {
-    searchVal: string;
+type EdlizSummaryTableProps = types.ScreenTypeProps & {
+    
 };
 
 export function EdlizSummaryTable({}: EdlizSummaryTableProps) {
