@@ -3,7 +3,7 @@ import { Box } from '../../../../components';
 import { useContext } from '../../Context';
 
 type DiagnosisProps = {
-
+    searchVal: string;
 };
 
 export function Diagnosis({}: DiagnosisProps) {

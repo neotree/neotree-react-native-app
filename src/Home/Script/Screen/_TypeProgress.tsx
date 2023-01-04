@@ -3,7 +3,7 @@ import { Box } from '../../../components';
 import { useContext } from '../Context';
 
 type TypeProgressProps = {
-
+    searchVal: string;
 };
 
 export function TypeProgress({}: TypeProgressProps) {

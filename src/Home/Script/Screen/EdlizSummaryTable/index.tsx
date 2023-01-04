@@ -3,7 +3,7 @@ import { Box } from '../../../../components';
 import { useContext } from '../../Context';
 
 type EdlizSummaryTableProps = {
-
+    searchVal: string;
 };
 
 export function EdlizSummaryTable({}: EdlizSummaryTableProps) {

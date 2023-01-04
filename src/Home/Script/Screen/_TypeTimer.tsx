@@ -3,7 +3,7 @@ import { Box } from '../../../components';
 import { useContext } from '../Context';
 
 type TypeTimerProps = {
-
+    searchVal: string;
 };
 
 export function TypeTimer({}: TypeTimerProps) {

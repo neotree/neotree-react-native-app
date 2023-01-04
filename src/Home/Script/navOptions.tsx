@@ -9,9 +9,10 @@ import { Theme, Text, Box, Modal } from '../../components';
 type GetNavOptionsParams = {
 	script: null | types.Script;
 	theme: Theme;
-	confirmExit: () => void;
 	activeScreen: null | types.Screen;
 	activeScreenIndex: number;
+	goBack: () => void;
+	confirmExit: () => void;
 };
 
 const headerTitlePlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = () => 
@@ -52,11 +53,11 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 		);
 	};
 
-const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerLeft'] = ({ confirmExit }) => 
+const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerLeft'] = ({ goBack }) => 
 	({ tintColor }) => {
 		return (
 			<Box marginLeft="m">
-				<TouchableOpacity onPress={() => confirmExit()}>
+				<TouchableOpacity onPress={() => goBack()}>
 					<Icon 
 						name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}  
 						size={28} 
@@ -67,7 +68,7 @@ const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['head
 		);
 	};
 
-function RightActions({ color, screen, }: { color?: string; screen: types.Screen }) {
+function RightActions({ color, screen, confirmExit, }: { color?: string; screen: types.Screen; confirmExit: () => void; }) {
 	const [openModal, setOpenModal] = React.useState(false);
 	return (
 		<>
@@ -100,18 +101,29 @@ function RightActions({ color, screen, }: { color?: string; screen: types.Screen
 				onClose={() => setOpenModal(false)}
 				onRequestClose={() => setOpenModal(false)}
 				title="Action"
+				actions={[
+					{
+						label: 'Cancel',
+						onPress: () => setOpenModal(false),
+					}
+				]}
 			>
-				<Box>
+				<TouchableOpacity 
+					onPress={() => {
+						setOpenModal(false);
+						confirmExit();
+					}}
+				>
 					<Text>Cancel Script?</Text>
-				</Box>
+				</TouchableOpacity>
 			</Modal>
 		</>
 	);
 }
 
-const headerRight: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerRight'] = ({ activeScreen }) =>
+const headerRight: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerRight'] = ({ activeScreen, confirmExit }) =>
 	({ tintColor }) => {
-		return <RightActions color={tintColor} screen={activeScreen} />;
+		return <RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} />;
 	};
 
 export function getNavOptions(params: GetNavOptionsParams) {
