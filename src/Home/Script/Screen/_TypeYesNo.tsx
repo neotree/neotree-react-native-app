@@ -2,9 +2,10 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Box, Br, Card, Text } from '../../../components';
 import { useContext } from '../Context';
+import * as types from '../../../types';
 
-type TypeYesNoProps = {
-    searchVal: string;
+type TypeYesNoProps = types.ScreenTypeProps & {
+    
 };
 
 export function TypeYesNo({}: TypeYesNoProps) {

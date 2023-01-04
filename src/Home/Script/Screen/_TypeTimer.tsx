@@ -1,17 +1,132 @@
 import React from 'react';
-import { Box } from '../../../components';
+import { TouchableWithoutFeedback, Vibration } from 'react-native';
+import { Box, Br, Text, TextInput } from '../../../components';
 import { useContext } from '../Context';
+import * as types from '../../../types';
+import assets from '../../../assets';
+import playSound from '../../../utils/playSound';
 
-type TypeTimerProps = {
-    searchVal: string;
+type TypeTimerProps = types.ScreenTypeProps & {
+    
 };
 
 export function TypeTimer({}: TypeTimerProps) {
     const ctx = useContext();
 
+    const timoutRef = React.useRef<any>(null);
+
+    const metadata = ctx?.activeScreen?.data.metadata;
+    const multiplier = metadata.multiplier || 1;
+    const timerValue = Number(metadata.timerValue || 0);
+
+    const [countdown, setCountDown] = React.useState(0);
+    const [formError, setFormError] = React.useState('');
+    const [value, setValue] = React.useState('');
+
+    React.useEffect(() => {
+        if (value) {
+            const v = parseFloat(`${Number(value || 0) * multiplier}`);
+            const max = parseFloat(metadata.maxValue);
+            const min = parseFloat(metadata.minValue);
+
+            let e = '';
+            if (!isNaN(max) && (v > max)) e = `Max value ${metadata.maxValue}`;
+            if (!isNaN(min) && (v < min)) e = `Min value ${min}`;
+            if (!isNaN(min) && !isNaN(max) && e) e = `The value must be greater than ${min} and lower than ${max}`;
+            setFormError(e);
+        }
+    }, [value]);
+
+    React.useEffect(() => {
+        if (countdown) {
+            const s = countdown - 1;
+            timoutRef.current = setTimeout(() => setCountDown(s), 1000);
+            if (s === 0) {
+                Vibration.vibrate((timerValue > 5 ? 5 : timerValue) * 1000);
+                const play = (timeout = 0) => {
+                    timeout = timeout + 500;
+                    playSound(assets.alarm);
+                    if (timeout < 5000) setTimeout(() => play(timeout), 500);
+                }
+                play();
+            }
+        } else {
+            setCountDown(0);
+        }
+    }, [countdown, timerValue]);
+
     return (
         <Box>
+            <TouchableWithoutFeedback
+                onPress={() => {
+                    if (countdown) {
+                        clearTimeout(timoutRef.current);
+                        setCountDown(0);
+                    } else {
+                        setCountDown(timerValue);
+                    }
+                }}
+            >
+                <Box
+                    backgroundColor="bg.active"
+                    height={250}
+                    alignItems="center"
+                    justifyContent="center"
+                >
+                    <Text
+                        color="primary"
+                        variant="title1"
+                        fontWeight="bold"
+                    >
+                        {`${`0${Math.floor((countdown || timerValue) / 60)}`.slice(-2)}:${`0${(countdown || timerValue) % 60}`.slice(-2)}`}
+                    </Text>
 
+                    <Br />
+
+                    <Text
+                        color="primary"
+                        fontWeight="bold"
+                    >TAP TO START</Text>
+                </Box>
+            </TouchableWithoutFeedback>
+
+            <Br spacing="xl" />
+
+            <Box
+                flexDirection="row"
+                alignItems="flex-end"
+            >
+                <Box flex={1}>
+                    <TextInput
+                        label={metadata.label}
+                        value={value}
+                        defaultValue={value}
+                        errors={formError ? [formError] : []}
+                        onChangeText={val => {
+                            setValue(val);
+                        }}
+                        keyboardType="numeric"
+                    />
+                </Box>
+
+                {!!multiplier && (
+                    <Box marginLeft="m">
+                        <Text variant="title2">x {multiplier}</Text>
+                    </Box>
+                )}
+            </Box>
+
+            <Br spacing="xl" />
+
+            {!!value && (
+                <Box>
+                    <Text
+                        fontWeight="bold"
+                        variant="title1"
+                        textAlign="center"
+                    >{Number(value) * Number(multiplier || 1)}</Text>
+                </Box>
+            )}
         </Box>
     );
 }

@@ -70,12 +70,14 @@ const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['head
 
 function RightActions({ color, screen, confirmExit, }: { color?: string; screen: types.Screen; confirmExit: () => void; }) {
 	const [openModal, setOpenModal] = React.useState(false);
+	const [openInfoModal, setOpenInfoModal] = React.useState(false);
+
 	return (
 		<>
 			<Box marginRight="m" flexDirection="row">
 				{!!screen?.data?.infoText && (
 					<>
-						<TouchableOpacity onPress={() => setOpenModal(true)}>
+						<TouchableOpacity onPress={() => setOpenInfoModal(true)}>
 							<Icon 
 								name="info" 
 								size={24} 
@@ -116,6 +118,21 @@ function RightActions({ color, screen, confirmExit, }: { color?: string; screen:
 				>
 					<Text>Cancel Script?</Text>
 				</TouchableOpacity>
+			</Modal>
+
+			<Modal
+				open={openInfoModal}
+				onClose={() => setOpenInfoModal(false)}
+				onRequestClose={() => setOpenInfoModal(false)}
+				title="Screen Info"
+				actions={[
+					{
+						label: 'Cancel',
+						onPress: () => setOpenInfoModal(false),
+					}
+				]}
+			>
+				<Text>{screen?.data?.infoText}</Text>
 			</Modal>
 		</>
 	);

@@ -47,8 +47,8 @@ export function Screen() {
 
             <Box 
                 position="absolute"
-                bottom={25}
-                right={25}
+                bottom={10}
+                right={20}
             >
                 <Fab 
                     onPress={() => {

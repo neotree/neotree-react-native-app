@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box } from '../../../../components';
 import { useContext } from '../../Context';
+import * as types from '../../../../types';
 
-type TypeFormProps = {
-    searchVal: string;
+type TypeFormProps = types.ScreenTypeProps & {
+    
 };
 
 export function TypeForm({}: TypeFormProps) {

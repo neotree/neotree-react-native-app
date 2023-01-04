@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box } from '../../../components';
 import { useContext } from '../Context';
+import * as types from '../../../types';
 
-type TypeProgressProps = {
-    searchVal: string;
+type TypeProgressProps = types.ScreenTypeProps & {
+    
 };
 
 export function TypeProgress({}: TypeProgressProps) {

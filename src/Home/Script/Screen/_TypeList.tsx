@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box } from '../../../components';
 import { useContext } from '../Context';
+import * as types from '../../../types';
 
-type TypeListProps = {
-    searchVal: string;
+type TypeListProps = types.ScreenTypeProps & {
+    
 };
 
 export function TypeList({}: TypeListProps) {

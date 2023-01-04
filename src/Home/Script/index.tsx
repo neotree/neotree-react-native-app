@@ -41,7 +41,7 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
 				
 				setScript(script);
-				setScreens(screens);
+				setScreens(screens.filter(s => s.type === 'timer'));
 				setDiagnoses(diagnoses);
 				setActiveScreenIndex(0);
 				setLoadingScript(false);
@@ -50,7 +50,7 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 	}, [navigation, route]);
 
 	const confirmExit = React.useCallback(() => {
-		if (activeScreenIndex === 0) setShoultConfirmExit(true);
+		setShoultConfirmExit(true);
 	}, [activeScreenIndex]);
 
 	const goNext = React.useCallback(() => {

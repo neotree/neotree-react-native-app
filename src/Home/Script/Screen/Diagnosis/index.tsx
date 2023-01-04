@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box } from '../../../../components';
 import { useContext } from '../../Context';
+import * as types from '../../../../types';
 
-type DiagnosisProps = {
-    searchVal: string;
+type DiagnosisProps = types.ScreenTypeProps & {
+    
 };
 
 export function Diagnosis({}: DiagnosisProps) {
