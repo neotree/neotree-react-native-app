@@ -1,5 +1,4 @@
 import React from 'react';
-import { Alert } from "react-native";
 import { useIsFocused } from '@react-navigation/native';
 import * as types from '../../types';
 import { getScript } from '../../data';
@@ -37,8 +36,10 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 				setScreens([]);
 				setDiagnoses([]);
 				setActiveScreen(null);
-				setActiveScreenIndex(0)
+				setActiveScreenIndex(0);
+
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
+				
 				setScript(script);
 				setScreens(screens);
 				setDiagnoses(diagnoses);
@@ -52,6 +53,32 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 		if (activeScreenIndex === 0) setShoultConfirmExit(true);
 	}, [activeScreenIndex]);
 
+	const goNext = React.useCallback(() => {
+		const nextIndex = activeScreenIndex + 1;
+		const nextScreen = screens[nextIndex];
+		if (nextScreen) {
+			navigation.navigate('Script', {
+				...route.params,
+				screen_id: nextScreen.screen_id,
+			});
+		}
+	}, [activeScreenIndex, screens, navigation, route]);
+
+	const goBack = React.useCallback(() => {
+		if (activeScreenIndex === 0) {
+			confirmExit();
+		} else {
+			const prevIndex = activeScreenIndex - 1;
+			const prevScreen = screens[prevIndex];
+			if (prevScreen) {
+				navigation.navigate('Script', {
+					...route.params,
+					screen_id: prevScreen.screen_id,
+				});
+			}
+		}
+	}, [activeScreenIndex, screens, navigation, route]);
+
 	const setNavOptions = React.useCallback(() => {
 		navigation.setOptions(getNavOptions({ 
 			script, 
@@ -59,10 +86,9 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 			confirmExit, 
 			activeScreen, 
 			activeScreenIndex,
+			goBack,
 		}));
 	}, [script, route, navigation, theme, activeScreen, activeScreenIndex]);
-
-	useBackButton(() => { confirmExit(); });
 
 	React.useEffect(() => { if (isFocused) loadScript(); }, [isFocused]);
 
@@ -79,6 +105,30 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 		}
 	}, [screen_id, screens]);
 
+	useBackButton(() => { goBack(); });
+
+	if (loadScriptError) {
+		return (
+			<Modal
+				open
+				onClose={() => {}}
+				title="Error"
+				actions={[
+					{
+						label: 'Exit',
+						onPress: () => navigation.navigate('Home'),
+					},
+					{
+						label: 'Try again',
+						onPress: () => loadScript,
+					},
+				]}
+			>
+				<Text>{loadScriptError}</Text>
+			</Modal>
+		)
+	}
+
 	if (!script) return null;
 
 	return (
@@ -90,6 +140,8 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 				activeScreen,
 				activeScreenIndex,
 				navigation,
+				goNext,
+				goBack,
 			}}
 		>
 			<>

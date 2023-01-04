@@ -17,3 +17,5 @@ export * from './Card';
 export * from './Modal';
 
 export * from './Fab';
+
+export * from './Image';

@@ -9,6 +9,8 @@ export type ContextType = {
     screens: types.Screen[];
     diagnoses: types.Diagnosis[];
     navigation: NativeStackNavigationProp<types.HomeRoutes, "Script", undefined>;
+    goNext: () => void;
+    goBack: () => void;
 };
 
 export const Context = React.createContext<null | ContextType>(null);

@@ -3,7 +3,7 @@ import { Box } from '../../../components';
 import { useContext } from '../Context';
 
 type TypeListProps = {
-
+    searchVal: string;
 };
 
 export function TypeList({}: TypeListProps) {

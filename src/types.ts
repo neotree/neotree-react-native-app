@@ -30,6 +30,10 @@ export type Screen = any;
 export type Diagnosis = any;
 export type ConfigKey = any;
 
+export type ScreenTypeProps = {
+  searchVal: string;
+};
+
 export interface StackNavigationProps<
   ParamList extends ParamListBase,
   RouteName extends keyof ParamList = string

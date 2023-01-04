@@ -1,11 +1,11 @@
 import React from 'react';
-import { Box } from './Theme';
+import { Box, Theme } from './Theme';
 
 export type CardProps = React.PropsWithChildren<{
-
+    backgroundColor?: keyof Theme['colors'];
 }>;
 
-export function Card({ children }: CardProps) {
+export function Card({ children, backgroundColor }: CardProps) {
     return (
         <Box
             padding="m"
@@ -14,7 +14,7 @@ export function Card({ children }: CardProps) {
             shadowOffset={{ width: -2, height: 4 }}
             shadowOpacity={0.2}
             shadowRadius={3}
-            backgroundColor="white"
+            backgroundColor={backgroundColor || 'white'}
             borderRadius="s"
         >
             {children}

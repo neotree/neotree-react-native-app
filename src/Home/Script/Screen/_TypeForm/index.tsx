@@ -3,7 +3,7 @@ import { Box } from '../../../../components';
 import { useContext } from '../../Context';
 
 type TypeFormProps = {
-
+    searchVal: string;
 };
 
 export function TypeForm({}: TypeFormProps) {
