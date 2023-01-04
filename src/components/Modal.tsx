@@ -70,12 +70,14 @@ export function Modal({
                                 </Box>
                             )}
 
-                            <ScrollView>
-                                <Box paddingHorizontal="m">
-                                    {children}
-                                </Box>
-                                <Br spacing="l" />
-                            </ScrollView>
+                            <Box maxHeight={500}>
+                                <ScrollView>
+                                    <Box paddingHorizontal="m">
+                                        {children}
+                                    </Box>
+                                    <Br spacing="l" />
+                                </ScrollView>
+                            </Box>
 
                             {!actions ? null : (
                                 <Box 

@@ -34,6 +34,11 @@ export type ScreenTypeProps = {
   searchVal: string;
 };
 
+export type ScreenFormTypeProps = {
+  field: any;
+  conditionMet: boolean;
+};
+
 export interface StackNavigationProps<
   ParamList extends ParamListBase,
   RouteName extends keyof ParamList = string

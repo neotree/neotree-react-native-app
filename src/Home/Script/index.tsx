@@ -41,7 +41,7 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
 				
 				setScript(script);
-				setScreens(screens.filter(s => s.type === 'progress'));
+				setScreens(screens.filter(s => s.type === 'form'));
 				setDiagnoses(diagnoses);
 				setActiveScreenIndex(0);
 				setLoadingScript(false);

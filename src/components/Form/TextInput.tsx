@@ -31,10 +31,7 @@ export const TextInput = React.forwardRef<RNTextInput, TextInputProps>((
             {!!label && (
                 <>
                     {typeof label !== 'string' ? label : (
-                        <Text
-                            variant="caption"
-                            color="textSecondary"
-                        >{label}</Text>
+                        <Text>{label}</Text>
                     )}
                     <Br spacing="s" />
                 </>
