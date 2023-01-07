@@ -1,16 +1,20 @@
 import React from 'react';
-import { Box, Button, Content, TextInput } from '../../components';
+import { Box, Button, Content, NeotreeIDInput } from '../../components';
 import { useContext } from './Context';
 
 export function Start() {
     const ctx = useContext();
 
+    const [uid, setUID] = React.useState('');
+
     return (
         <Box flex={1} paddingTop="xl">
             <Box flex={1}>
                 <Content>
-                    <TextInput
-                        placeholder="Search existing NUID"
+                    <NeotreeIDInput
+                        label="Search existing NUID"
+                        onChange={uid => setUID(uid)}
+                        value={uid}
                     />
                 </Content>
             </Box>
