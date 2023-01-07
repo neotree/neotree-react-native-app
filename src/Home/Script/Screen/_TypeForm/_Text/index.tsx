@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, TextInput } from '../../../../../components';
-import { useContext } from '../../../Context';
+import { Box, NeotreeIDInput, TextInput } from '../../../../../components';
 import * as types from '../../../../../types';
 
 type TextFieldProps = types.ScreenFormTypeProps & {
@@ -8,23 +7,32 @@ type TextFieldProps = types.ScreenFormTypeProps & {
 };
 
 export function TextField({ field }: TextFieldProps) {
-    const ctx = useContext();
-
     const [value, setValue] = React.useState('');
     const [error, setError] = React.useState('');
 
+    const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
+
     return (
         <Box>
-            <TextInput
-                label={field.label}
-                value={value}
-                errors={error ? [error] : []}
-                onChangeText={value => {                    
-                    let err = '';
-                    setValue(value);
-                    setError(err);
-                }}
-            />
+            {isNeotreeID ? (
+                <NeotreeIDInput 
+                    label={`${field.label}${field.optional ? '' : ' *'}`}
+                    value={value}
+                    onChange={value => setValue(value)}
+                    autoGenerateValue={!!field.defaultValue}
+                />
+            ) : (
+                <TextInput
+                    label={`${field.label}${field.optional ? '' : ' *'}`}
+                    value={value}
+                    errors={error ? [error] : []}
+                    onChangeText={value => {                    
+                        let err = '';
+                        setValue(value);
+                        setError(err);
+                    }}
+                />
+            )}
         </Box>
     );
 }
