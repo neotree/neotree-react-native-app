@@ -1,7 +1,7 @@
 import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import * as types from '../../types';
-import { getScript } from '../../data';
+import { getApplication, getConfiguration, getLocation, getScript } from '../../data';
 import { getNavOptions } from './navOptions';
 import { useTheme, Text, Box, Modal } from '../../components';
 import { useBackButton } from '../../hooks/useBackButton';
@@ -9,12 +9,18 @@ import { useBackButton } from '../../hooks/useBackButton';
 import { Start } from './Start';
 import { Screen } from './Screen';
 import { Context } from './Context';
+import { getScriptUtils } from './utils';
 
-export function Script({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
-	const { screen_id } = route.params;
-	const isFocused = useIsFocused();
-
+function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
+
+	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
+
+	const [startTime] = React.useState(new Date().toISOString());
+	const [refresh, setRefresh] = React.useState(false);
+
+	const [application, setApplication] = React.useState<null | types.Application>(null);
+	const [location, setLocation] = React.useState<null | types.Location>(null);
 
 	const [loadingScript, setLoadingScript] = React.useState(false);
 	const [script, setScript] = React.useState<null | types.Script>(null);
@@ -22,10 +28,49 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 	const [diagnoses, setDiagnoses] = React.useState<types.Diagnosis[]>([]);
 	const [loadScriptError, setLoadScriptError] = React.useState('');
 
+	const [loadingConfiguration, setLoadingConfiguration] = React.useState(false);
+	const [configuration, setConfiguration] = React.useState<types.Configuration>({});
+	const [, setLoadConfigurationError] = React.useState('');
+
 	const [activeScreen, setActiveScreen] = React.useState<null | types.Screen>(null);
 	const [activeScreenIndex, setActiveScreenIndex] = React.useState(0);
 
-	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
+	const [entries, setEntries] = React.useState<types.ScreenEntry[]>([]);
+  	const [cachedEntries, setCachedEntries] = React.useState<types.ScreenEntry[]>([]);
+	const setCacheEntry = (entry: types.ScreenEntry) => !entry ? null : setCachedEntries(entries => {
+		const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
+		return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
+	});
+	const getCachedEntry = (screenIndex: number): types.ScreenEntry | undefined => cachedEntries.filter(e => `${e.screenIndex}` === `${screenIndex}`)[0];
+	const setEntry = (entry?: types.ScreenEntry) => {
+		if (entry) {
+			setEntries(entries => {
+				const isAlreadyEntered = entries.map(e => `${e.screen.id}`).includes(`${entry.screen.id}`);
+				return (isAlreadyEntered ? entries.map(e => `${e.screen.id}` === `${entry.screen.id}` ? entry : e) : [...entries, entry]);
+			});
+			setCacheEntry(entry);
+		}
+	};
+	const removeEntry = (screenId: string | number) => {
+		setCacheEntry(entries.filter(e => e.screen.id === screenId)[0]);
+		setEntries(entries => entries.filter(e => e.screen.id !== screenId));
+	};
+	const activeScreenEntry = entries.filter(e => e.screenIndex === activeScreenIndex)[0];
+
+	const utils = getScriptUtils({
+		script,
+		activeScreen,
+		activeScreenIndex,
+		screens,
+		diagnoses,
+		entries,
+		cachedEntries,
+		activeScreenEntry,
+		configuration,
+		location,
+		application,
+		startTime,
+	});
 
 	const loadScript = React.useCallback(() => {
 		(async () => {
@@ -36,48 +81,61 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 				setScreens([]);
 				setDiagnoses([]);
 				setActiveScreen(null);
-				setActiveScreenIndex(0);
 
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
 				
 				setScript(script);
-				setScreens(screens.filter(s => s.type === 'form'));
+				setScreens(
+					screens
+						.filter(s => s.type === 'form')
+				);
 				setDiagnoses(diagnoses);
-				setActiveScreenIndex(0);
 				setLoadingScript(false);
 			} catch (e: any) { console.log(e); setLoadScriptError(e.message); }
 		})();
 	}, [navigation, route]);
 
-	const confirmExit = React.useCallback(() => {
+	const loadConfiguration = React.useCallback(() => {
+		(async () => {
+			try {
+				setLoadingConfiguration(true);
+				const configuration = await getConfiguration();				
+				setConfiguration({ ...configuration?.data });
+				setLoadingConfiguration(false);
+			} catch (e: any) { console.log(e); setLoadConfigurationError(e.message); }
+		})();
+	}, []);
+
+	const confirmExit = () => {
 		setShoultConfirmExit(true);
-	}, [activeScreenIndex]);
+	};
 
-	const goNext = React.useCallback(() => {
-		const nextIndex = activeScreenIndex + 1;
-		const nextScreen = screens[nextIndex];
-		if (nextScreen) {
-			navigation.navigate('Script', {
-				...route.params,
-				screen_id: nextScreen.screen_id,
-			});
+	const goNext = () => {
+		const next = utils.getScreen({ direction: 'next' });
+		if (next?.screen) {
+			setRefresh(true);
+			setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${next.index}`)[0]);			
+			setActiveScreenIndex(next.index);
+			setActiveScreen(next.screen);
+			setTimeout(() => setRefresh(false), 10);
 		}
-	}, [activeScreenIndex, screens, navigation, route]);
+	};
 
-	const goBack = React.useCallback(() => {
+	const goBack = () => {
 		if (activeScreenIndex === 0) {
 			confirmExit();
 		} else {
-			const prevIndex = activeScreenIndex - 1;
-			const prevScreen = screens[prevIndex];
-			if (prevScreen) {
-				navigation.navigate('Script', {
-					...route.params,
-					screen_id: prevScreen.screen_id,
-				});
+			const prev = utils.getScreen({ direction: 'back' });
+			if (prev?.screen) {
+				setRefresh(true);
+				removeEntry(activeScreen?.id);
+				// setEntry(getCachedEntry(prev.index));				
+				setActiveScreenIndex(prev.index);
+				setActiveScreen(prev.screen);
+				setTimeout(() => setRefresh(false), 10);
 			}
 		}
-	}, [activeScreenIndex, screens, navigation, route]);
+	};
 
 	const setNavOptions = React.useCallback(() => {
 		navigation.setOptions(getNavOptions({ 
@@ -90,22 +148,24 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 		}));
 	}, [script, route, navigation, theme, activeScreen, activeScreenIndex]);
 
-	React.useEffect(() => { if (isFocused) loadScript(); }, [isFocused]);
-
-	React.useEffect(() => { if (isFocused) setNavOptions(); }, [isFocused, script, activeScreen]);
-
 	React.useEffect(() => {
-		if (screen_id) {
-			screens.forEach((s, i) => {
-				if (s.screen_id === screen_id) {
-					setActiveScreen(s);
-					setActiveScreenIndex(i);
-				}
-			});
-		}
-	}, [screen_id, screens]);
+        (async () => {
+            const app = await getApplication();
+            setApplication(app);
+
+			const location = await getLocation();
+			setLocation(location);
+
+			loadConfiguration();
+			loadScript(); 
+        })();
+    }, []);
+
+	React.useEffect(() => { setNavOptions(); }, [script, activeScreen]);
 
 	useBackButton(() => { goBack(); });
+
+	if (loadingConfiguration || loadingScript || refresh) return null;
 
 	if (loadScriptError) {
 		return (
@@ -129,7 +189,7 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 		)
 	}
 
-	if (!script) return null;
+	if (!(script || application)) return null;
 
 	return (
 		<Context.Provider
@@ -140,8 +200,42 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 				activeScreen,
 				activeScreenIndex,
 				navigation,
+				entries,
+				cachedEntries,
+				activeScreenEntry,
+				configuration,
+				application,
+				location,
+				...utils,
+				setActiveScreen,
+				setActiveScreenIndex,
+				setCachedEntries,
+				setEntries,
 				goNext,
 				goBack,
+				setCacheEntry,
+				getCachedEntry,
+				setEntry,
+				removeEntry,
+				setEntryValues: (values?: types.ScreenEntry['values']) => {					
+					if (values) {
+						const { label, dataType } = activeScreen.data.metadata;
+						setEntry({
+							values,
+							screenIndex: activeScreenIndex,
+							screen: {
+								title: activeScreen.data.title,
+								sectionTitle: activeScreen.data.sectionTitle,
+								id: activeScreen.id,
+								screen_id: activeScreen.screen_id,
+								type: activeScreen.type,
+								metadata: { label, dataType },
+							}
+						});
+					} else {
+						removeEntry(activeScreen.id,);
+					}
+				},
 			}}
 		>
 			<>
@@ -179,4 +273,9 @@ export function Script({ navigation, route }: types.StackNavigationProps<types.H
 			</>
 		</Context.Provider>
 	);
+}
+
+export function Script(props: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
+	const isFocused = useIsFocused();
+	return !isFocused ? null : <ScriptComponent {...props} />;
 }

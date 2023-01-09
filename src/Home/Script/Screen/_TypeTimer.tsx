@@ -21,21 +21,20 @@ export function TypeTimer({}: TypeTimerProps) {
 
     const [countdown, setCountDown] = React.useState(0);
     const [formError, setFormError] = React.useState('');
-    const [value, setValue] = React.useState('');
+    const [value, setValue] = React.useState(ctx?.activeScreenEntry?.values[0]?.value);
 
-    React.useEffect(() => {
-        if (value) {
-            const v = parseFloat(`${Number(value || 0) * multiplier}`);
-            const max = parseFloat(metadata.maxValue);
-            const min = parseFloat(metadata.minValue);
+    const getFormError = React.useCallback((value: string) => {
+        const v = parseFloat(`${Number(value || 0) * multiplier}`);
+        const max = parseFloat(metadata.maxValue);
+        const min = parseFloat(metadata.minValue);
 
-            let e = '';
-            if (!isNaN(max) && (v > max)) e = `Max value ${metadata.maxValue}`;
-            if (!isNaN(min) && (v < min)) e = `Min value ${min}`;
-            if (!isNaN(min) && !isNaN(max) && e) e = `The value must be greater than ${min} and lower than ${max}`;
-            setFormError(e);
-        }
-    }, [value]);
+        let e = '';
+        if (!isNaN(max) && (v > max)) e = `Max value ${metadata.maxValue}`;
+        if (!isNaN(min) && (v < min)) e = `Min value ${min}`;
+        if (!isNaN(min) && !isNaN(max) && e) e = `The value must be greater than ${min} and lower than ${max}`;
+
+        return e;
+    }, [metadata, multiplier]);
 
     React.useEffect(() => {
         if (countdown) {
@@ -103,7 +102,19 @@ export function TypeTimer({}: TypeTimerProps) {
                         defaultValue={value}
                         errors={formError ? [formError] : []}
                         onChangeText={val => {
+                            const e = getFormError(val);
                             setValue(val);
+                            setFormError(e);
+                            ctx?.setEntryValues(e ? undefined : [{
+                                value: val,
+                                valueText: Number(val) * Number(multiplier || 1),
+                                calculateValue: Number(val) * Number(multiplier || 1),
+                                label: metadata.label,
+                                key: metadata.key,
+                                type: metadata.type || metadata.dataType,
+                                dataType: metadata.dataType,
+                                confidential: metadata.confidential,
+                            }]);
                         }}
                         keyboardType="numeric"
                     />

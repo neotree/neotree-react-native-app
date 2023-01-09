@@ -45,18 +45,20 @@ export function Screen() {
 
             <ScreenType searchVal={searchVal} />
 
-            <Box 
-                position="absolute"
-                bottom={10}
-                right={20}
-            >
-                <Fab 
-                    onPress={() => {
-                        ctx?.goNext();
-                        setSearchVal('');
-                    }} 
-                />
-            </Box>
+            {!!ctx?.activeScreenEntry && (
+                <Box 
+                    position="absolute"
+                    bottom={10}
+                    right={20}
+                >
+                    <Fab 
+                        onPress={() => {
+                            ctx?.goNext();
+                            setSearchVal('');                            
+                        }} 
+                    />
+                </Box>
+            )}
         </Box>
     );
 }

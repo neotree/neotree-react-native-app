@@ -31,8 +31,7 @@ const renderReactNode = (node: React.ReactNode, opts?: RenderReactNodeOptions) =
             fontWeight={opts?.fontWeight}
             color={opts?.textColor}
         >{node}</Text>
-      )  :
-        node
+      ) : node
 );
 
 export function DatePicker({
@@ -49,27 +48,27 @@ export function DatePicker({
     const theme = useTheme();
 
     const [currentDate] = React.useState(new Date());
-    const [date, setDate] = React.useState<null | Date>(null);
+    const [date, setDate] = React.useState<null | Date>(value || null);
 
     const [showDatePicker, setShowDatePicker] = React.useState(false);
     const [showTimePicker, setShowTimePicker] = React.useState(false);
 
     const renderValue = React.useCallback(() => {
         if (valueText !== undefined) return valueText;
-        if (date) {
+        if (value) {
             switch(mode) {
                 case 'time':
-                    return moment(date).format('HH:MM');
+                    return moment(value).format('HH:MM');
                 case 'date':
-                    return moment(date).format('ll');
+                    return moment(value).format('ll');
                 case 'datetime':
-                    return moment(date).format('ll HH:mm');
+                    return moment(value).format('ll HH:mm');
                 default:
                     return null;
             }
         }
         return null;
-    }, [date, valueText]);
+    }, [value, valueText]);
 
     React.useEffect(() => {
         if (onChange) onChange(date);

@@ -1,16 +1,18 @@
 import React from 'react';
 import { Box, DatePicker } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
 type TimeFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function TimeField({ field, conditionMet }: TimeFieldProps) {
-    const ctx = useContext();
-
+export function TimeField({ field, conditionMet, onChange }: TimeFieldProps) {
     const [value, setValue] = React.useState<Date | null>(null);
+
+    React.useEffect(() => { 
+        if (!conditionMet) onChange({ value: null, valueText: null, }); 
+        setValue(null);
+    }, [conditionMet]);
 
     return (
         <Box>

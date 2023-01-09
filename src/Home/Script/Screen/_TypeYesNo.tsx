@@ -18,7 +18,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
         { value: 'false', label: metadata?.negativeLabel || 'No' },
     ];
 
-    const [value, setValue] = React.useState<string | number | null>(null);
+    const [value, setValue] = React.useState<string | number | null>(ctx?.activeScreenEntry?.values[0]?.value);
 
     return (
         <Box>
@@ -27,7 +27,21 @@ export function TypeYesNo({}: TypeYesNoProps) {
 
                 return (
                     <React.Fragment key={o.value}>
-                        <TouchableOpacity onPress={() => setValue(o.value)}>
+                        <TouchableOpacity 
+                            onPress={() => {
+                                const value = o.value;
+                                setValue(o.value);
+                                ctx?.setEntryValues([{
+                                    value,
+                                    confidential: metadata.confidential,
+                                    valueText: value === 'false' ? 'No' : 'Yes',
+                                    key: metadata.key,
+                                    label: o.label,
+                                    type: metadata.dataType,
+                                    dataType: metadata.dataType,
+                                }]);
+                            }}
+                        >
                             <Card backgroundColor={isSelected ? 'primary' : undefined}>
                                 <Text
                                     color={isSelected ? 'primaryContrastText' : undefined}

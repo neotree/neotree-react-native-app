@@ -47,6 +47,7 @@ function Input({
 
     const firstHalfRef = React.useRef<RNTextInput>(null);
     const lastHalfRef = React.useRef<RNTextInput>(null);
+    const [valueInitialised, setValueInitialised] = React.useState(false);
 
     const getDefault = () => {
         const _uid = autoGenerateValue ? (uid || '') : '';
@@ -67,8 +68,11 @@ function Input({
 
     React.useEffect(() => {
         const v = validateUID(_value).isValid ? _value : ''; // (value || _defaultVal.uid);
-        if (v !== value) onChange(v);
-    }, [_value]);
+        if (!valueInitialised || (v !== _value)) {
+            onChange(v);
+            setValueInitialised(true);
+        }
+    }, [_value, valueInitialised]);
 
     React.useEffect(() => {
         if (value) {
@@ -152,15 +156,20 @@ function Input({
     );
 }
 
-export function NeotreeIDInput(props: NeotreeIDInputProps) {
-    const [application, setApplication] = React.useState<types.Application>();
+export function NeotreeIDInput({
+    application: applicationProp,
+    ...props
+}: NeotreeIDInputProps & { application?: null | types.Application; }) {
+    const [application, setApplication] = React.useState<null | types.Application>(applicationProp || null);
 
     React.useEffect(() => {
         (async () => {
-            const app = await getApplication();
-            setApplication(app);
+            if (!applicationProp) {
+                const app = await getApplication();
+                setApplication(app);
+            }
         })();
-    }, []);
+    }, [applicationProp]);
 
     return !application ? null : (
         <Input 
