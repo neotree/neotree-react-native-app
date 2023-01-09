@@ -29,14 +29,49 @@ export type Script = any;
 export type Screen = any;
 export type Diagnosis = any;
 export type ConfigKey = any;
+export type Configuration = any;
+
+export type ScreenEntryValue = {
+  value?: any;
+  valueText?: any;
+  label?: string;
+  key?: string;
+  type?: string;
+  dataType?: string;
+  confidential?: boolean;
+  calculateValue?: any;
+  exclusive?: any;
+  error?: any;
+};
+
+export type ScreenEntry = {
+  values: ScreenEntryValue[];
+  screenIndex: number;
+  screen: {
+    title: string;
+    sectionTitle: string;
+    id: string | number;
+    screen_id: string | number;
+    type: string;
+    metadata: { 
+      label: string; 
+      dataType: string;
+    };
+  };  
+};
 
 export type ScreenTypeProps = {
   searchVal: string;
+  entry?: ScreenEntry;
+  setEntry: (values?: ScreenEntryValue[]) => void;
 };
 
 export type ScreenFormTypeProps = {
   field: any;
+  entryValue: ScreenEntryValue;
+  fieldIndex: number;
   conditionMet: boolean;
+  onChange: (val: Partial<ScreenEntryValue>) => void;
 };
 
 export interface StackNavigationProps<

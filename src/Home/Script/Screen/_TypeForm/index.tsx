@@ -1,8 +1,9 @@
 import React from 'react';
-import { Box, Br, Text } from '../../../../components';
+import { Box, Br } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
 import { fieldsTypes } from '../../../../constants';
+import { FormItem } from './FormItem';
 
 import { NumberField } from './_Number';
 import { DateField } from './_Date';
@@ -17,12 +18,49 @@ type TypeFormProps = types.ScreenTypeProps & {
 
 export function TypeForm({}: TypeFormProps) {
     const ctx = useContext();
-
     const metadata = ctx?.activeScreen?.data?.metadata;
+    const cachedVal = ctx?.activeScreenEntry?.values || [];
+
+    const evaluateFieldCondition = (f: any) => {
+        let conditionMet = true; // @ts-ignore
+        if (f.condition) conditionMet = ctx?.evaluateCondition(ctx?.parseCondition(f.condition, [{ values }])) as boolean;
+        return conditionMet;
+    };
+
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => ({
+        value: cachedVal.filter(v => v.key === f.key)[0]?.value || null,
+        valueText: cachedVal.filter(v => v.key === f.key)[0]?.valueText || null,
+        label: f.label,
+        key: f.key,
+        type: f.type,
+        dataType: f.dataType,
+        confidential: f.confidential,
+    })));
+    
+    const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
+        setValues(prev => prev.map((v, i) => {
+            return `${index}` !== `${i}` ? v : {
+                ...v,
+                ...val
+            };
+        }));
+    };
+
+    React.useEffect(() => {
+        const completed = values.reduce((acc, { value }, i) => {
+            const field = metadata.fields[i];
+            const conditionMet = evaluateFieldCondition(metadata.fields[i]);
+            if (conditionMet && !field.optional && !value) return false;            
+            return acc;
+        }, true);
+    
+        const hasErrors = values.filter(v => v.error).length;
+        ctx?.setEntryValues(hasErrors || !completed ? undefined : values);
+    }, [values, metadata]);
 
     return (
         <Box>
-            {metadata.fields.map((f: any) => {
+            {metadata.fields.map((f: any, i: number) => {
                 return (
                     <React.Fragment key={f.key}>
                         {(() => {
@@ -55,14 +93,24 @@ export function TypeForm({}: TypeFormProps) {
 
                             if (!Component) return null;
 
+                            const conditionMet = evaluateFieldCondition(f);
+                            const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
+
                             return (
-                                <>
+                                <FormItem
+                                    field={f}
+                                    onChange={onChange}
+                                    conditionMet={conditionMet}
+                                >
                                     <Component 
                                         field={f}
-                                        conditionMet={true}
+                                        fieldIndex={i}
+                                        entryValue={values.filter(v => v.key === f.key)[0]}
+                                        conditionMet={conditionMet}
+                                        onChange={onChange}
                                     />
                                     <Br spacing="xl" />
-                                </>
+                                </FormItem>
                             );
                         })()}
                     </React.Fragment>

@@ -10,10 +10,13 @@ type TypeMultiSelectProps = types.ScreenTypeProps & {
 
 export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const ctx = useContext();
-
     const metadata = ctx?.activeScreen?.data?.metadata;
+    const cachedVal = ctx?.activeScreenEntry?.values || [];
 
-    const [value, setValue] = React.useState<{ [key: string]: boolean; }>({});
+    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v) => ({
+        ...acc,
+        [v.value]: true,
+    }), {}));
 
     const opts: any[] = metadata.items.map((item: any) => ({
         label: item.label,
@@ -40,11 +43,32 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                     <React.Fragment key={o.value}>
                         <TouchableOpacity 
                             disabled={o.disabled}
-                            onPress={() => {                                
-                                setValue(prev => {
-                                    if (o.exclusive) return { [o.value]: !prev[o.value], };
-                                    return { ...prev, [o.value]: !prev[o.value], };
-                                });
+                            onPress={() => {   
+                                let form = { ...value };
+                                if (o.exclusive) {
+                                    form = { [o.value]: !form[o.value], };
+                                } else {
+                                    form = { ...form, [o.value]: !form[o.value], }; 
+                                }                         
+                                setValue(form);
+                                const keys = Object.keys(form).filter(key => form[key]);
+                                console.log(keys);
+                                ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
+                                    const item = opts.filter(opt => opt.value === o.value)[0];
+                                    return [
+                                        ...acc,
+                                        {
+                                            value,
+                                            valueText: item.label,
+                                            label: item.label,
+                                            key: metadata.key,
+                                            type: metadata.dataType,
+                                            dataType: item.dataType,
+                                            exclusive: item.exclusive,
+                                            confidential: item.confidential,
+                                        },
+                                    ];
+                                }, []))
                             }}
                         >
                             <Card 

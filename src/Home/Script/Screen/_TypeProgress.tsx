@@ -14,6 +14,8 @@ export function TypeProgress({}: TypeProgressProps) {
 
     const metadata = ctx?.activeScreen?.data?.metadata;
 
+    React.useEffect(() => { ctx?.setEntryValues([]); }, [metadata]);
+
     return (
         <Box>
             {metadata.items.map((item: any, i: number) => {

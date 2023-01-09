@@ -1,16 +1,18 @@
 import React from 'react';
 import { Box, Dropdown } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
 type DropDownFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function DropDownField({ field }: DropDownFieldProps) {
-    const ctx = useContext();
+export function DropDownField({ field, entryValue, onChange, conditionMet }: DropDownFieldProps) {
+    const [value, setValue] = React.useState(entryValue?.value);
 
-    const [value, setValue] = React.useState('');
+    React.useEffect(() => { 
+        if (!conditionMet) onChange({ value: null, valueText: null, }); 
+        setValue('');
+    }, [conditionMet]);
 
     const opts = (field.values || '').split('\n')
         .map((v = '') => v.trim())
@@ -23,12 +25,16 @@ export function DropDownField({ field }: DropDownFieldProps) {
     return (
         <Box>
             <Dropdown
+                disabled={!conditionMet}
                 label={`${field.label || ''}${field.optional ? '' : ' *'}`}
                 title={`${field.label || ''}`}
                 searchable={opts.length > 5}
                 value={value}
                 options={opts}
-                onChange={val => setValue(`${val || ''}`)}
+                onChange={val => {
+                    setValue(`${val || ''}`);
+                    onChange({ value: val, });
+                }}
             />
         </Box>
     );

@@ -1,20 +1,22 @@
 import React from 'react';
 import { Box, TextInput } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
 type NumberFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function NumberField({ field }: NumberFieldProps) {
-    const ctx = useContext();
-
+export function NumberField({ field, onChange, conditionMet, entryValue }: NumberFieldProps) {
     let maxDecimals = 0;
-  if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '').length;
+    if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '').length;
 
-    const [value, setValue] = React.useState('');
+    const [value, setValue] = React.useState(entryValue?.value);
     const [error, setError] = React.useState('');
+
+    React.useEffect(() => { 
+        if (!conditionMet) onChange({ value: null, valueText: null, }); 
+        setValue('');
+    }, [conditionMet]);
 
     return (
         <Box>
@@ -23,6 +25,7 @@ export function NumberField({ field }: NumberFieldProps) {
                 value={value}
                 keyboardType="numeric"
                 errors={error ? [error] : []}
+                editable={conditionMet}
                 onChangeText={value => {                    
                     let err = '';
                     if (value) {
@@ -44,6 +47,7 @@ export function NumberField({ field }: NumberFieldProps) {
                     }
                     setValue(value);
                     setError(err);
+                    onChange({ value: err ? null : value, });
                 }}
             />
         </Box>

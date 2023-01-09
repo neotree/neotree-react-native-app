@@ -47,7 +47,7 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
     })();
 });
 
-export const getConfiguration = (options = {}) => new Promise((resolve, reject) => {
+export const getConfiguration = (options = {}) => new Promise<types.Configuration>((resolve, reject) => {
     (async () => {
         try {
             const { ..._where }: any = options || {};

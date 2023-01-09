@@ -13,6 +13,8 @@ export function TypeManagement({}: TypeManagementProps) {
 
     const metadata = ctx?.activeScreen?.data?.metadata;
 
+    React.useEffect(() => { ctx?.setEntryValues([]); }, [metadata]);
+
     return (
         <Box>
             <MgtSection 

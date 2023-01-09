@@ -22,7 +22,6 @@ type ScreenTypeProps = {
 
 export function ScreenType({ searchVal }: ScreenTypeProps) {
     const ctx = useContext();
-
     const highlightedText = ctx?.activeScreen?.data?.contentText;
 
     return (
@@ -88,7 +87,17 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 
                         if (!Component) return null;
 
-                        return <Component searchVal={searchVal} />;
+                        return (
+                            <Component 
+                                searchVal={searchVal} 
+                                entry={ctx?.entries.filter(e => {
+                                    return e.screen.screen_id === ctx?.activeScreen.screen_id;
+                                })[0]}
+                                setEntry={() => {
+                                    
+                                }}
+                            />
+                        );
                     })()}
                 </Content>
             </>
