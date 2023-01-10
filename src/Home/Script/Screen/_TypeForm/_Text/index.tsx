@@ -15,8 +15,10 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
     const [error, setError] = React.useState('');
 
     React.useEffect(() => { 
-        if (!conditionMet) onChange({ value: null, valueText: null, }); 
-        setValue('');
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, }); 
+            setValue('');
+        }
     }, [conditionMet]);
 
     return (

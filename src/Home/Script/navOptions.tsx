@@ -5,6 +5,7 @@ import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import * as types from '../../types';
 import { Theme, Text, Box, Modal } from '../../components';
+import { MoreNavOptions } from './Context';
 
 type GetNavOptionsParams = {
 	script: null | types.Script;
@@ -13,6 +14,7 @@ type GetNavOptionsParams = {
 	activeScreenIndex: number;
 	goBack: () => void;
 	confirmExit: () => void;
+	moreNavOptions: null | MoreNavOptions;
 };
 
 const headerTitlePlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = () => 
@@ -33,7 +35,7 @@ const headerLeftPlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOp
 		);
 	};
 
-const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = ({ script, activeScreen }) => 
+const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = ({ script, activeScreen, moreNavOptions }) => 
 	({ tintColor }) => {
 		return (
 			<Box>
@@ -41,7 +43,7 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 					style={{ color: tintColor }}
 					variant="title3"
 					numberOfLines={1}
-				>{activeScreen ? activeScreen?.data?.title : script?.data?.title}</Text>
+				>{moreNavOptions?.title || (activeScreen ? activeScreen?.data?.title : script?.data?.title)}</Text>
 				{!activeScreen ? null : (
 					<Text
 						color="textSecondary"
@@ -68,7 +70,7 @@ const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['head
 		);
 	};
 
-function RightActions({ color, screen, confirmExit, }: { color?: string; screen: types.Screen; confirmExit: () => void; }) {
+function RightActions({ color, screen, confirmExit }: { color?: string; screen: types.Screen; confirmExit: () => void; }) {
 	const [openModal, setOpenModal] = React.useState(false);
 	const [openInfoModal, setOpenInfoModal] = React.useState(false);
 
@@ -153,7 +155,7 @@ export function getNavOptions(params: GetNavOptionsParams) {
 	} else {
 		opts.headerTitle = headerTitle(params);
 		opts.headerLeft = headerLeft(params);
-		opts.headerRight = headerRight(params);
+		opts.headerRight = params.moreNavOptions?.hideHeaderRight ? () => null : headerRight(params);
 	}
 	
 	return opts;

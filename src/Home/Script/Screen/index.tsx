@@ -33,7 +33,7 @@ export function Screen() {
                 </Box>
             )}
 
-            {['multi_select'].includes(ctx?.activeScreen?.type) && (
+            {['multi_select', 'diagnosis', 'single_select'].includes(ctx?.activeScreen?.type) && (
                 <Content>
                     <TextInput
                         placeholder="Search"
@@ -45,7 +45,7 @@ export function Screen() {
 
             <ScreenType searchVal={searchVal} />
 
-            {!!ctx?.activeScreenEntry && (
+            {!!ctx?.activeScreenEntry || ctx?.moreNavOptions?.showFAB && (
                 <Box 
                     position="absolute"
                     bottom={10}
@@ -53,7 +53,11 @@ export function Screen() {
                 >
                     <Fab 
                         onPress={() => {
-                            ctx?.goNext();
+                            if (ctx?.moreNavOptions?.goNext) {
+                                ctx.moreNavOptions.goNext();
+                            } else {
+                                ctx?.goNext();
+                            }
                             setSearchVal('');                            
                         }} 
                     />

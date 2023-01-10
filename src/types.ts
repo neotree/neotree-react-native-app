@@ -42,6 +42,7 @@ export type ScreenEntryValue = {
   calculateValue?: any;
   exclusive?: any;
   error?: any;
+  diagnosis?: Diagnosis;
 };
 
 export type ScreenEntry = {
@@ -57,7 +58,9 @@ export type ScreenEntry = {
       label: string; 
       dataType: string;
     };
-  };  
+  }; 
+  lastSection?: any;
+  lastActiveDiagnosisIndex?: any; 
 };
 
 export type ScreenTypeProps = {
@@ -72,6 +75,19 @@ export type ScreenFormTypeProps = {
   fieldIndex: number;
   conditionMet: boolean;
   onChange: (val: Partial<ScreenEntryValue>) => void;
+  formValues: ScreenEntry['values'];
+};
+
+export type DiagnosisSectionProps = ScreenTypeProps & {
+  getDefaultDiagnosis: (d?: Diagnosis) => Diagnosis;
+  diagnosisToEntryValue: (d?: Diagnosis) => ScreenEntryValue;
+  setActiveDiagnosisIndex: React.Dispatch<React.SetStateAction<null | number>>;
+  setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>
+  setDiagnoses: (diagnoses?: Diagnosis[]) => void;
+  diagnoses: Diagnosis[];
+  acceptedDiagnoses: Diagnosis[];
+  activeDiagnosisIndex: null | number;
+  hcwDiagnoses: Diagnosis[];
 };
 
 export interface StackNavigationProps<
