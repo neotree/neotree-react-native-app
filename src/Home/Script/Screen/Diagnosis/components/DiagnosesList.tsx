@@ -1,18 +1,21 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Box, Text } from '../../../../../components';
+import { View, Alert, TouchableOpacity } from 'react-native';
+import Icon from '@expo/vector-icons/MaterialIcons';
+import { Box, Br, Text, useTheme } from '../../../../../components';
 import * as types from '../../../../../types';
+import { Diagnosis } from './Diagnosis';
 
 type DiagnosesListProps = types.DiagnosisSectionProps & {
-    filter: any; 
-    title: any; 
-    subtitle: any; 
-    divider: any; 
-    canAgreeDisagree: any; 
-    canDelete: any;
-    instructions: any; 
-    emptyListMessage: any;
-    itemWrapper: any;
+    filter?: (d: types.Diagnosis, index: number) => boolean; 
+    title?: any; 
+    sortable?: boolean;
+    subtitle?: any; 
+    divider?: any; 
+    canAgreeDisagree?: any; 
+    canDelete?: any;
+    instructions?: any; 
+    emptyListMessage?: any;
+    itemWrapper?: (card: any, params: { item: types.Diagnosis; index: number; }) => React.ReactNode;
 };
 
 export function DiagnosesList({
@@ -25,10 +28,12 @@ export function DiagnosesList({
     instructions, 
     emptyListMessage,
     itemWrapper,
-    setHcwDiagnoses,
+    _setHcwDiagnoses,
     diagnoses,
     setDiagnoses,
 }: DiagnosesListProps) {
+    const theme = useTheme();
+
     const displayedDiagnoses = diagnoses.filter((d, i) => filter ? filter(d, i) : true);
 
     if (!displayedDiagnoses.length) {
@@ -96,47 +101,55 @@ export function DiagnosesList({
                         <View style={{ marginHorizontal: 5 }} />
 
                         {canDelete !== false && (
-                        <Button
-                        transparent
-                        onPress={() => {
-                        const deleteDiagnosis = () => {
-                        setDiagnoses(diagnoses.filter((d, i) => i !== index));
-                        _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d, i) => d.diagnosis.name !== item.name));
-                        };
-                        Alert.alert(
-                        'Delete diagnosis',
-                        'Are you sure?',
-                        [
-                        {
-                        text: 'Cancel',
-                        onPress: () => {},
-                        style: 'cancel'
-                        },
-                        {
-                        text: 'Yes',
-                        onPress: () => deleteDiagnosis()
-                        }
-                        ],
-                        { cancelable: false }
-                        );
-                        }}
-                        >
-                        <MaterialIcons 
-                        size={30} // {24} 
-                        color="#999" 
-                        name="delete" 
-                        />
-                        </Button>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    const deleteDiagnosis = () => {
+                                        setDiagnoses(diagnoses.filter((_, i) => i !== index));
+                                        _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d: any) => d.name !== item.name));
+                                    };
+                                    Alert.alert(
+                                        'Delete diagnosis',
+                                        'Are you sure?',
+                                        [
+                                            {
+                                                text: 'Cancel',
+                                                onPress: () => {},
+                                                style: 'cancel'
+                                            },
+                                            {
+                                                text: 'Yes',
+                                                onPress: () => deleteDiagnosis()
+                                            }
+                                        ],
+                                        { cancelable: false }
+                                    );
+                                }}
+                            >
+                                <Icon 
+                                    size={30} 
+                                    color={theme.colors.textDisabled} 
+                                    name="delete" 
+                                />
+                            </TouchableOpacity>
                         )}
                     </View>
                 );
 
                 return (
-                    <View key={key} style={{ marginVertical: 10, padding: 10, borderWidth: 1, borderColor: '#ddd', borderRadius: 5, }}>
+                    <Box 
+                        key={key} 
+                        borderColor="divider"
+                        borderRadius="m"
+                        marginVertical="m"
+                        borderWidth={1}
+                        padding="m"
+                    >
                         {itemWrapper ? itemWrapper(card, { item, index }) : card}
-                    </View>
+                    </Box>
                 );
             })}
+
+            {!!divider && <Br spacing="l" />}
         </Box>
     );
 }

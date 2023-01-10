@@ -228,7 +228,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				getCachedEntry,
 				setEntry,
 				removeEntry,
-				setEntryValues: (values?: types.ScreenEntry['values']) => {					
+				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {					
 					if (values) {
 						const { label, dataType } = activeScreen.data.metadata;
 						setEntry({
@@ -241,7 +241,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 								screen_id: activeScreen.screen_id,
 								type: activeScreen.type,
 								metadata: { label, dataType },
-							}
+							},
+							...otherValues
 						});
 					} else {
 						removeEntry(activeScreen.id,);

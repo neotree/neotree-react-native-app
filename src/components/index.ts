@@ -19,3 +19,5 @@ export * from './Modal';
 export * from './Fab';
 
 export * from './Image';
+
+export * from './Header';
