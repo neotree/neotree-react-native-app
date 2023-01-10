@@ -82,8 +82,10 @@ export type DiagnosisSectionProps = ScreenTypeProps & {
   getDefaultDiagnosis: (d?: Diagnosis) => Diagnosis;
   diagnosisToEntryValue: (d?: Diagnosis) => ScreenEntryValue;
   setActiveDiagnosisIndex: React.Dispatch<React.SetStateAction<null | number>>;
-  setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>
+  _setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>
+  setHcwDiagnoses: (diagnoses: Diagnosis[]) => void;
   setDiagnoses: (diagnoses?: Diagnosis[]) => void;
+  setMoreNavOptions: () => void;
   diagnoses: Diagnosis[];
   acceptedDiagnoses: Diagnosis[];
   activeDiagnosisIndex: null | number;

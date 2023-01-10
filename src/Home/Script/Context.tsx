@@ -11,6 +11,7 @@ export type MoreNavOptions = {
     hideHeaderRight?: boolean;
     hideSubtitle?: boolean;
     showFAB?: boolean;
+    hideSearch?: boolean;
 };
 
 export type ContextType = ReturnType<typeof getScriptUtils> & {
@@ -37,7 +38,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     getCachedEntry: (screenIndex: number) => void;
     setEntry: (entry: types.ScreenEntry) => void;
     removeEntry: (screenId: string | number) => void;
-    setEntryValues: (values?: types.ScreenEntry['values']) => void;
+    setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => void;
     setNavOptions: () => void;
     setMoreNavOptions: React.Dispatch<React.SetStateAction<null | MoreNavOptions>>;
 };

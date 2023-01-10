@@ -45,7 +45,7 @@ export function Diagnosis(props: DiagnosisProps) {
 
     const [section, setSection] = React.useState('select');
     const [values, setValues] = React.useState(ctx?.getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d)) || []);
-    const [hcwDiagnoses, setHcwDiagnoses] = React.useState<types.ScreenEntryValue[]>([]);
+    const [hcwDiagnoses, setHcwDiagnoses] = React.useState<types.Diagnosis[]>(ctx?.getSuggestedDiagnoses() || []);
 
     const diagnoses = values.map(v => v.diagnosis);
     const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');
@@ -55,13 +55,11 @@ export function Diagnosis(props: DiagnosisProps) {
     const setDiagnoses = (diagnoses: types.Diagnosis[] = []) => {
         const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
         setValues(entryValues);
-        // ctx?.setEntryValues(entryValues);
+        ctx?.setEntryValues(entryValues);
     };
 
     const done = () => {
-        ctx?.setEntry({ 
-            ...ctx?.activeScreenEntry as types.ScreenEntry,
-            values,
+        ctx?.setEntryValues(values, {
             lastSection: section, 
             lastActiveDiagnosisIndex: activeDiagnosisIndex, 
         });
@@ -94,7 +92,7 @@ export function Diagnosis(props: DiagnosisProps) {
                         ]
                     );
                 } else {
-                setSection('sort_priority');
+                    setSection('sort_priority');
                 }
             } else if (section === 'sort_priority') {
                 setDiagnoses(diagnoses
@@ -132,32 +130,44 @@ export function Diagnosis(props: DiagnosisProps) {
         }
     };
 
-    const sectionProps: types.DiagnosisSectionProps = {
-        ...props,
-        getDefaultDiagnosis,
-        setActiveDiagnosisIndex,
-        diagnosisToEntryValue,
-        setHcwDiagnoses,
-        setDiagnoses,
-        diagnoses,
-        acceptedDiagnoses,
-        activeDiagnosisIndex,
-        hcwDiagnoses,
-    };
-
-    React.useEffect(() => {
+    const setMoreNavOptions = () => {
         ctx?.setMoreNavOptions({
             goBack,
             goNext,
             showFAB: true,
-            hideHeaderRight: true,
+            hideHeaderRight: false,
+            hideSearch: section !== 'select',
             title: (() => {
+                if (activeDiagnosisIndex !== null) return acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name;
                 if (section === 'agree_disagree') return `${ctx?.activeScreen?.data?.title2 || ''}`;
-                if (section === 'sort_priority') return `${ctx?.activeScreen?.data?.title || ''}`;
+                if (section === 'sort_priority') return `${ctx?.activeScreen?.data?.title3 || ''}`;
                 return;
             })(),
         });
-	}, [navigation, hcwDiagnoses, section, values, activeDiagnosisIndex]);
+    };
+
+    const sectionProps: types.DiagnosisSectionProps = {
+        ...props,        
+        diagnoses,
+        acceptedDiagnoses,
+        activeDiagnosisIndex,
+        hcwDiagnoses,
+        setMoreNavOptions,
+        getDefaultDiagnosis,
+        setActiveDiagnosisIndex,
+        diagnosisToEntryValue,
+        setDiagnoses,
+        _setHcwDiagnoses: setHcwDiagnoses,
+        setHcwDiagnoses: (diagnoses = []) => {
+            const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));            
+            setHcwDiagnoses(diagnoses);
+            const entries = [...entryValues, ...values.filter(d => !diagnoses.map(d => d.name).includes(d.diagnosis.name))];
+            setValues(entries);
+            ctx?.setEntryValues(entries);
+        },
+    };
+
+    React.useEffect(() => { setMoreNavOptions(); }, [navigation, hcwDiagnoses, section, values, activeDiagnosisIndex]);
 
     React.useEffect(() => () => ctx?.setMoreNavOptions(null), []);
 
