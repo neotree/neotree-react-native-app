@@ -8,13 +8,14 @@ import { useBackButton } from '../../hooks/useBackButton';
 
 import { Start } from './Start';
 import { Screen } from './Screen';
-import { Context } from './Context';
+import { Context, MoreNavOptions } from './Context';
 import { getScriptUtils } from './utils';
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
 
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
+	const [moreNavOptions, setMoreNavOptions] = React.useState<null | MoreNavOptions>(null);
 
 	const [startTime] = React.useState(new Date().toISOString());
 	const [refresh, setRefresh] = React.useState(false);
@@ -87,7 +88,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(
 					screens
-						.filter(s => s.type === 'form')
+						.filter(s => s.type === 'diagnosis')
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
@@ -144,9 +145,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			confirmExit, 
 			activeScreen, 
 			activeScreenIndex,
-			goBack,
+			goBack: moreNavOptions?.goBack || goBack,
+			moreNavOptions,
 		}));
-	}, [script, route, navigation, theme, activeScreen, activeScreenIndex]);
+	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions]);
 
 	React.useEffect(() => {
         (async () => {
@@ -161,9 +163,15 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
         })();
     }, []);
 
-	React.useEffect(() => { setNavOptions(); }, [script, activeScreen]);
+	React.useEffect(() => { setNavOptions(); }, [script, activeScreen, moreNavOptions]);
 
-	useBackButton(() => { goBack(); });
+	useBackButton(() => { 
+		if (moreNavOptions?.goBack) {
+			moreNavOptions.goBack();
+		} else {
+			goBack(); 
+		}
+	});
 
 	if (loadingConfiguration || loadingScript || refresh) return null;
 
@@ -206,7 +214,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				configuration,
 				application,
 				location,
+				moreNavOptions,
 				...utils,
+				setMoreNavOptions,
+				setNavOptions,
 				setActiveScreen,
 				setActiveScreenIndex,
 				setCachedEntries,

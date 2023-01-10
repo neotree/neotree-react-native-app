@@ -106,6 +106,7 @@ export function TypeForm({}: TypeFormProps) {
                                         field={f}
                                         fieldIndex={i}
                                         entryValue={values.filter(v => v.key === f.key)[0]}
+                                        formValues={values}
                                         conditionMet={conditionMet}
                                         onChange={onChange}
                                     />

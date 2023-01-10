@@ -10,8 +10,10 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
 
     React.useEffect(() => { 
-        if (!conditionMet) onChange({ value: null, valueText: null, }); 
-        setValue(null);
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, }); 
+            setValue(null);
+        }
     }, [conditionMet]);
 
     return (

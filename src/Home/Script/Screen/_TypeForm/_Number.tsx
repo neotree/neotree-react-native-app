@@ -14,8 +14,10 @@ export function NumberField({ field, onChange, conditionMet, entryValue }: Numbe
     const [error, setError] = React.useState('');
 
     React.useEffect(() => { 
-        if (!conditionMet) onChange({ value: null, valueText: null, }); 
-        setValue('');
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, }); 
+            setValue(null);
+        }
     }, [conditionMet]);
 
     return (
@@ -30,7 +32,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue }: Numbe
                     let err = '';
                     if (value) {
                         const v = Number(value);
-                        const decimals = value.split('.').filter((n, i) => i > 0).join('');
+                        const decimals = value.split('.').filter((_, i) => i > 0).join('');
                         if (value.indexOf(' ') > -1) {
                             err = 'No spaces allowed'
                         } else if (isNaN(v)) {

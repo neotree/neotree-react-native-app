@@ -22,16 +22,34 @@ function dateToValueText(value: null | Date) {
     return value ? valueText.map(t => t).join(', ') : '';
 }
 
-export function PeriodField({ field, conditionMet, onChange, entryValue }: PeriodFieldProps) {
+export function PeriodField({ field, conditionMet, onChange, entryValue, formValues }: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
+    const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
 
     React.useEffect(() => { setValueText(dateToValueText(value)); }, [value]);
 
     React.useEffect(() => { 
-        if (!conditionMet) onChange({ value: null, valueText: null, }); 
-        setValue(null);
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, }); 
+            setValue(null);
+        }
     }, [conditionMet]);
+
+    React.useEffect(() => {
+        const _calcFrom = formValues.filter(v => `$${v.key}` === field.calculation)[0];
+        if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
+          setCalcFrom(_calcFrom);
+          if (_calcFrom && _calcFrom.value) {
+            try {
+                const val = new Date(_calcFrom.value);
+                setValue(val);
+                setValueText(dateToValueText(val));
+                onChange({ value: val.toISOString(), valueText: dateToValueText(val), });
+            } catch(e) { /**/ }
+          }
+        }
+      }, [formValues, calcFrom]);
 
     return (
         <Box>

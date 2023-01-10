@@ -6,12 +6,14 @@ type TimeFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function TimeField({ field, conditionMet, onChange }: TimeFieldProps) {
-    const [value, setValue] = React.useState<Date | null>(null);
+export function TimeField({ field, conditionMet, onChange, entryValue }: TimeFieldProps) {
+    const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
 
     React.useEffect(() => { 
-        if (!conditionMet) onChange({ value: null, valueText: null, }); 
-        setValue(null);
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, }); 
+            setValue(null);
+        }
     }, [conditionMet]);
 
     return (
@@ -21,7 +23,13 @@ export function TimeField({ field, conditionMet, onChange }: TimeFieldProps) {
                 value={value}
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
-                onChange={date => setValue(date)}
+                onChange={d => {
+                    setValue(d);
+                    onChange({
+                        value: !d ? null : d.toISOString(),
+                        valueText: d ? require('moment')(new Date(d)).format('HH:mm') : ''
+                    });
+                }}
             />
         </Box>
     );

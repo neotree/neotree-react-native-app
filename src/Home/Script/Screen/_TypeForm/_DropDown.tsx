@@ -10,8 +10,10 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
     const [value, setValue] = React.useState(entryValue?.value);
 
     React.useEffect(() => { 
-        if (!conditionMet) onChange({ value: null, valueText: null, }); 
-        setValue('');
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, }); 
+            setValue('');
+        }
     }, [conditionMet]);
 
     const opts = (field.values || '').split('\n')
