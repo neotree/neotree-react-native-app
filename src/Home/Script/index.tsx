@@ -85,7 +85,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		const summary = utils.createSessionSummary(params);
 		(async () => {
 			try {
-				// await api.saveSession(summary);
+				await api.saveSession(summary);
 				setSummary(summary);
 				resolve(summary);
 			} catch (e) { reject(e); }
@@ -250,7 +250,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		)
 	}
 
-	if (!(script || application)) return null;
+	if (!(script && application)) return null;
 
 	return (
 		<Context.Provider
