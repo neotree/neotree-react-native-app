@@ -5,9 +5,10 @@ import { Box, useTheme } from './Theme';
 
 export type FabProps = {
     onPress: () => void;
+    icon?: string
 };
 
-export function Fab({ onPress }: FabProps) {
+export function Fab({ onPress, icon }: FabProps) {
     const theme = useTheme();
 
     return (
@@ -25,8 +26,8 @@ export function Fab({ onPress }: FabProps) {
                 alignItems="center"
                 style={{ borderRadius: 25 }}
             >
-                <Icon 
-                    name={Platform.OS === 'ios' ? 'arrow-forward-ios' : 'arrow-forward'}  
+                <Icon // @ts-ignore
+                    name={icon || (Platform.OS === 'ios' ? 'arrow-forward-ios' : 'arrow-forward')}  
                     size={28} 
                     color={theme.colors.primaryContrastText}
                 />

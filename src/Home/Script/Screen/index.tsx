@@ -52,6 +52,7 @@ export function Screen() {
                     right={20}
                 >
                     <Fab 
+                        icon={ctx?.summary ? 'check' : undefined}
                         onPress={() => {
                             if (ctx?.moreNavOptions?.goNext) {
                                 ctx.moreNavOptions.goNext();
