@@ -11,6 +11,8 @@ import {
 export const theme = createTheme({
     colors: {
         primary: 'rgba(112,164,135,255)',
+        'primary-200': 'rgba(112,164,135,.2)',
+        'primary-500': 'rgba(112,164,135,.5)',
         secondary: 'rgba(43,48,74,255)',
         primaryContrastText: 'white',
         secondaryContrastText: 'rgba(242,237,213,255)',

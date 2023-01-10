@@ -13,7 +13,7 @@ export function Content({ style, containerProps, ...props }: ContentProps) {
             style={[
                 containerProps?.style,
                 {
-                    // alignItems: 'center',
+                    alignItems: 'center',
                 },
             ]}
         >
