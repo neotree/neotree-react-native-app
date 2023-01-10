@@ -73,6 +73,18 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
     })();
 });
 
+export const saveConfiguration = (data = {}) => new Promise((resolve, reject) => {
+    (async () => {
+        try {
+            const res = await dbTransaction(
+                'insert or replace into configuration (id, data, createdAt, updatedAt) values (?, ?, ?, ?);',
+                [1, JSON.stringify(data || {}), new Date().toISOString(), new Date().toISOString()]
+            );
+            resolve(res);
+        } catch (e) { reject(e); }
+    })();
+});
+
 export const getScript = (options = {}) => new Promise<{
     script: types.Script;
     screens: types.Screen[];

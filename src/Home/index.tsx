@@ -48,7 +48,7 @@ export function HomeNavigator() {
 					component={Home} 
 					options={{
 						title: `Scripts v${ctx?.application?.webeditor_info?.version}`,
-						drawerLabel: 'Scripts',
+						drawerLabel: 'Home',
 					}}
 				/>
 
@@ -61,18 +61,21 @@ export function HomeNavigator() {
 				/>
 
 				<Drawer.Screen 
-					name="Location" 
-					component={Location} 
+					name="Configuration" 
+					component={Configuration} 
 				/>	
 
 				<Drawer.Screen 
 					name="Sessions" 
 					component={Sessions} 
+					options={{
+						drawerLabel: 'History'
+					}}
 				/>
 
 				<Drawer.Screen 
-					name="Configuration" 
-					component={Configuration} 
+					name="Location" 
+					component={Location} 
 				/>		
 			</Drawer.Navigator>
 		</>
