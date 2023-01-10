@@ -155,7 +155,9 @@ export function getNavOptions(params: GetNavOptionsParams) {
 	} else {
 		opts.headerTitle = headerTitle(params);
 		opts.headerLeft = headerLeft(params);
-		opts.headerRight = params.moreNavOptions?.hideHeaderRight ? () => null : headerRight(params);
+		opts.headerRight = params.moreNavOptions?.hideHeaderRight ? () => null : (
+			params.moreNavOptions?.headerRight || headerRight(params)
+		);
 	}
 	
 	return opts;

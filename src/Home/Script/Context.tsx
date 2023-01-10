@@ -1,5 +1,6 @@
 import React from 'react';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { DrawerNavigationOptions } from '@react-navigation/drawer';
 import * as types from '../../types';
 import { getScriptUtils } from './utils';
 
@@ -12,6 +13,7 @@ export type MoreNavOptions = {
     hideSubtitle?: boolean;
     showFAB?: boolean;
     hideSearch?: boolean;
+    headerRight?: DrawerNavigationOptions['headerRight'];
 };
 
 export type ContextType = ReturnType<typeof getScriptUtils> & {
@@ -28,6 +30,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     application: null | types.Application;
     location: null | types.Location;
     moreNavOptions: null | MoreNavOptions;
+    summary: any;
     goNext: () => void;
     goBack: () => void;
     setEntries: React.Dispatch<React.SetStateAction<types.ScreenEntry[]>>;

@@ -3,13 +3,16 @@ import { useIsFocused } from '@react-navigation/native';
 import * as types from '../../types';
 import { getApplication, getConfiguration, getLocation, getScript } from '../../data';
 import { getNavOptions } from './navOptions';
-import { useTheme, Text, Box, Modal } from '../../components';
+import { useTheme, Text, Box, Modal, OverlayLoader } from '../../components';
 import { useBackButton } from '../../hooks/useBackButton';
+import * as api from '../../data';
 
 import { Start } from './Start';
 import { Screen } from './Screen';
 import { Context, MoreNavOptions } from './Context';
 import { getScriptUtils } from './utils';
+import { Alert } from 'react-native';
+import { Summary } from './Summary';
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
@@ -22,6 +25,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const [application, setApplication] = React.useState<null | types.Application>(null);
 	const [location, setLocation] = React.useState<null | types.Location>(null);
+
+	const [displayLoader, setDisplayLoader] = React.useState(false);
+
+	const [summary, setSummary] = React.useState<any>(null);
 
 	const [loadingScript, setLoadingScript] = React.useState(false);
 	const [script, setScript] = React.useState<null | types.Script>(null);
@@ -73,6 +80,19 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		startTime,
 	});
 
+	const saveSession = (params: any) => new Promise((resolve, reject) => {
+		setDisplayLoader(true);
+		const summary = utils.createSessionSummary(params);
+		(async () => {
+			try {
+				// await api.saveSession(summary);
+				setSummary(summary);
+				resolve(summary);
+			} catch (e) { reject(e); }
+			setDisplayLoader(false);
+		})();
+	});
+
 	const loadScript = React.useCallback(() => {
 		(async () => {
 			try {
@@ -88,7 +108,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(
 					screens
-						.filter(s => s.type === 'diagnosis')
+						// .filter(s => s.type === 'diagnosis')
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
@@ -111,18 +131,51 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		setShoultConfirmExit(true);
 	};
 
-	const goNext = () => {
+	const goNext = async () => {
+		const lastScreen = utils.getLastScreen();
+		const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
+
 		const next = utils.getScreen({ direction: 'next' });
-		if (next?.screen) {
-			setRefresh(true);
-			setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${next.index}`)[0]);			
-			setActiveScreenIndex(next.index);
-			setActiveScreen(next.screen);
-			setTimeout(() => setRefresh(false), 10);
+		const nextScreen = next?.screen || lastScreen;
+		const nextScreenIndex = next?.screen ? next?.index : lastScreenIndex;
+
+		if (summary) {
+			navigation.navigate('Home');
+			return;
+		}
+
+		if (activeScreen?.id === lastScreen?.id) {
+			const summary = await saveSession({ completed: true });
+			setSummary(summary);
+		} else {
+			if (nextScreen) {
+				setRefresh(true);
+				setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${nextScreenIndex}`)[0]);			
+				setActiveScreenIndex(nextScreenIndex);
+				setActiveScreen(nextScreen);
+				setTimeout(() => setRefresh(false), 10);
+			} else {
+				Alert.alert(
+					'ERROR',
+					'Failed to load next screen. Screen condition might be invalid',
+					[
+					{
+						text: 'Exit',
+						onPress: () => navigation.navigate('Home'),
+						style: 'cancel'
+					},
+					]
+				);
+			}
 		}
 	};
 
 	const goBack = () => {
+		if (summary) {
+			navigation.navigate('Home');
+			return;
+		}
+
 		if (activeScreenIndex === 0) {
 			confirmExit();
 		} else {
@@ -148,7 +201,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			goBack: moreNavOptions?.goBack || goBack,
 			moreNavOptions,
 		}));
-	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions]);
+	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions, summary]);
 
 	React.useEffect(() => {
         (async () => {
@@ -215,6 +268,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				application,
 				location,
 				moreNavOptions,
+				summary,
 				...utils,
 				setMoreNavOptions,
 				setNavOptions,
@@ -251,37 +305,47 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			}}
 		>
 			<>
-				<Box flex={1} paddingBottom="m" backgroundColor="white">
-					{!activeScreen ? (
-						<Start /> 
-					): (
-						<Screen />
-					)}
-				</Box>
+				{(() => {
+					if (summary) return <Summary />;
 
-				<Modal 
-					open={shouldConfirmExit} 
-					onClose={() => setShoultConfirmExit(false)}
-					title="Cancel Script?"
-					actions={[
-						{
-							label: 'Cancel',
-							onPress: () => setShoultConfirmExit(false),
-						},
-						{
-							label: 'Yes',
-							onPress: () => {
-								(async () => {
-									// save first
-									navigation.navigate('Home');
-									setShoultConfirmExit(false);
-								})();
-							}
-						},
-					]}
-				>
-					<Text>Are you sure you want to cancel script?</Text>
-				</Modal>
+					return (
+						<>
+							<Box flex={1} paddingBottom="m" backgroundColor="white">
+								{!activeScreen ? (
+									<Start /> 
+								): (
+									<Screen />
+								)}
+							</Box>
+
+							<Modal 
+								open={shouldConfirmExit} 
+								onClose={() => setShoultConfirmExit(false)}
+								title="Cancel Script?"
+								actions={[
+									{
+										label: 'Cancel',
+										onPress: () => setShoultConfirmExit(false),
+									},
+									{
+										label: 'Yes',
+										onPress: () => {
+											(async () => {
+												// save first
+												navigation.navigate('Home');
+												setShoultConfirmExit(false);
+											})();
+										}
+									},
+								]}
+							>
+								<Text>Are you sure you want to cancel script?</Text>
+							</Modal>
+						</>
+					);
+				})()}
+
+				{displayLoader && <OverlayLoader />}
 			</>
 		</Context.Provider>
 	);
