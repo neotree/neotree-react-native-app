@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image } from 'react-native'
+import { View, Image, Alert } from 'react-native'
+import Icon from '@expo/vector-icons/MaterialIcons';
 import {
 	createDrawerNavigator,
 	DrawerContentScrollView,
@@ -8,7 +9,7 @@ import {
 	DrawerNavigationOptions
   } from '@react-navigation/drawer';
 import { HomeRoutes } from '../types';
-import { useTheme, Text, theme, Box } from '../components';
+import { useTheme, Text, theme, Box, Br, OverlayLoader } from '../components';
 import assets from '../assets';
 import { Home } from './Home';
 import { Script } from './Script';
@@ -16,6 +17,7 @@ import { Configuration } from './Configuration';
 import { Location } from './Location';
 import { Sessions } from './Sessions';
 import { useAppContext } from '../AppContext';
+import * as api from '../data';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
 
@@ -84,6 +86,9 @@ export function HomeNavigator() {
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
 	const theme = useTheme();
+	const [displayLoader, setDisplayLoader] = React.useState(false);
+	const ctx = useAppContext();
+
 	return (
 		<Box 
 			flex={1}
@@ -109,14 +114,11 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 					/>
 				</View>
 
-				<View
-					style={{
-						flex: 1,
-						backgroundColor: theme.colors['bg.light'],
-						
-					}}
+				<Box
+					flex={1}
+					backgroundColor="bg.light"
 				>
-					<View style={{ marginTop: theme.spacing.xl, }} />
+					<Br spacing="xl" />
 
 					{props.state.routes.map((route, i) => {
 						const focused = i === props.state.index;
@@ -126,7 +128,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 								'Screen', 
 							].includes(route.name)) return null;
 						return (
-							<View key={route.key}>
+							<Box key={route.key}>
 								<DrawerItem 
 									focused={focused}
 									key={route.key}
@@ -134,23 +136,146 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 									inactiveBackgroundColor="transparent"
 									pressColor={theme.colors['bg.active']}
 									label={({ focused }) => (
-										<Text
-											color={focused ? 'primary' : undefined}
-											style={{
-												textTransform: 'uppercase',
-											}}
-										>{(drawerLabel || title || route.name) as string}</Text>
+										<Box flexDirection="row" alignItems="center">
+											<Box paddingHorizontal="m">
+												{(() => {
+													switch(route.name) {
+														case 'Home':
+															return (
+																<Icon 
+																	size={24} 
+																	name="home"
+																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
+																/>
+															);
+														case 'Configuration':
+															return (
+																<Icon 
+																	size={24} 
+																	name="settings"
+																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
+																/>
+															);
+														case 'Sessions':
+															return (
+																<Icon 
+																	size={24} 
+																	name="history"
+																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
+																/>
+															);
+														case 'Location':
+															return (
+																<Icon 
+																	size={24} 
+																	name="location-pin"
+																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
+																/>
+															);
+														default:
+															return null;
+													}
+												})()}
+											</Box>
+
+											<Text
+												color={focused ? 'primary' : 'textSecondary'}
+												textTransform="uppercase"
+												fontWeight="bold"
+											>{(drawerLabel || title || route.name) as string}</Text>
+										</Box>
 									)}
 									onPress={() => {
 										props.navigation.navigate(route.name);
 									}}
 								/>
-							</View>
+							</Box>
 						)
 					})}
+					
 					{/* <DrawerItemList {...props} /> */}
-				</View>
+
+					<DrawerItem
+						activeBackgroundColor={theme.colors['bg.active']}
+						inactiveBackgroundColor="transparent"
+						pressColor={theme.colors['bg.active']}
+						onPress={() => {
+
+						}}
+						label={() => {
+							return (
+								<Box flexDirection="row" alignItems="center">
+									<Box paddingHorizontal="m">
+										<Icon 
+											size={24} 
+											name="laptop"
+											color={theme.colors.textSecondary} 
+										/>
+									</Box>
+									<Text
+										color="textSecondary"
+										textTransform="uppercase"
+										fontWeight="bold"
+									>Development</Text>
+								</Box>
+							)
+						}}
+					/>
+				</Box>
 			</DrawerContentScrollView>
+
+			<Box 
+				borderTopWidth={1} 
+				borderTopColor="divider"
+			/>
+
+			<DrawerItem
+				activeBackgroundColor={theme.colors['bg.active']}
+				inactiveBackgroundColor="transparent"
+				pressColor={theme.colors['bg.active']}
+				onPress={() => {
+					Alert.alert(
+						'Logout',
+						'Are you sure you want to logout?',
+						[
+							{
+								text: 'Cancel',
+							},
+							{
+								text: 'Yes',
+								onPress: () => {
+									(async () => {
+										setDisplayLoader(true);
+										await api.logout();
+										setDisplayLoader(false);
+										ctx?.setAuthenticatedUser(null);
+									})();
+								},
+							},
+						]
+					);
+				}}
+				label={() => {
+					return (
+						<Box flexDirection="row" alignItems="center">
+							<Box paddingHorizontal="m">
+								<Icon 
+									size={24} 
+									name="logout"
+									color={theme.colors.textSecondary} 
+								/>
+							</Box>
+							<Text
+								color="textSecondary"
+								textTransform="uppercase"
+								fontWeight="bold"
+							>Logout</Text>
+						</Box>
+					)
+				}}
+			/>
+
+			{displayLoader && <OverlayLoader />}
 		</Box>
 	);
 }

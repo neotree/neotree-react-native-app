@@ -221,14 +221,14 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					'Failed to load sessions',
 					e.message || e.msg || JSON.stringify(e),
 					[
-					{
-						text: 'Cancel',
-						onPress: () => navigation.navigate('Home'),
-					},
-					{
-						text: 'Try again',
-						onPress: () => getSessions(),
-					},
+						{
+							text: 'Cancel',
+							onPress: () => navigation.navigate('Home'),
+						},
+						{
+							text: 'Try again',
+							onPress: () => getSessions(),
+						},
 					]
 				);
 				reject(e);

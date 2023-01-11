@@ -80,7 +80,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		startTime,
 	});
 
-	const saveSession = (params: any) => new Promise((resolve, reject) => {
+	const saveSession = (params?: any) => new Promise((resolve, reject) => {
 		setDisplayLoader(true);
 		const summary = utils.createSessionSummary(params);
 		(async () => {
@@ -171,7 +171,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	};
 
 	const goBack = () => {
-		if (summary) {
+		if (summary || !activeScreen) {
 			navigation.navigate('Home');
 			return;
 		}
@@ -331,7 +331,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 										label: 'Yes',
 										onPress: () => {
 											(async () => {
-												// save first
+												await saveSession({ cancelled: true, });
 												navigation.navigate('Home');
 												setShoultConfirmExit(false);
 											})();

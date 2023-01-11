@@ -4,7 +4,7 @@ import { DrawerNavigationOptions } from '@react-navigation/drawer';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import * as types from '../../types';
-import { Theme, Text, Box, Modal } from '../../components';
+import { Theme, Text, Box, Modal, Radio } from '../../components';
 import { MoreNavOptions } from './Context';
 
 type GetNavOptionsParams = {
@@ -112,14 +112,13 @@ function RightActions({ color, screen, confirmExit }: { color?: string; screen: 
 					}
 				]}
 			>
-				<TouchableOpacity 
-					onPress={() => {
+				<Radio
+					label="Cancel script?"
+					onChange={() => {
 						setOpenModal(false);
 						confirmExit();
 					}}
-				>
-					<Text>Cancel Script?</Text>
-				</TouchableOpacity>
+				/>
 			</Modal>
 
 			<Modal
