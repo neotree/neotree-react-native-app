@@ -1,11 +1,13 @@
 import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
+import * as MediaLibrary from 'expo-media-library';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import * as types from '../../types';
 import * as api from '../../data';
-import { useTheme, Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader } from '../../components';
+import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader } from '../../components';
+import exportData from './export';
 
 const exportTypes = [
 	{
@@ -32,12 +34,14 @@ const exportFormats = [
 	{ label: 'JSONAPI', value: 'jsonapi' },
 ];
 
-const deleteTypes = exportTypes.filter((t, i) => i !== 1);
+const deleteTypes = exportTypes.filter((_, i) => i !== 1);
 
 export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Sessions'>) {
-	const theme = useTheme();
-
 	const isFocused = useIsFocused();
+
+	const [pageInitialised, setPageInitialised] = React.useState(false);
+
+	const [application, setApplication] = React.useState<null | types.Application>(null);
 
 	const [openExportModal, setOpenExportModal] = React.useState(false);
 	const [openFilterModal, setOpenFilterModal] = React.useState(false);
@@ -47,19 +51,65 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [maxDate, setMaxDate] = React.useState<null | Date>(null);
 	const [filterByDate, setFilterByDate] = React.useState(false);
 
-	const [exportType, setExportType] = React.useState('all');
-	const [deleteType, setDeleteType] = React.useState('all');
+	const [deleteType, setDeleteType] = React.useState(deleteTypes[0].value);
+	const [deletingSessions, setDeletingSessions] = React.useState(false);
+
+	const [exportType, setExportType] = React.useState(exportTypes[0].value);
+	const [exportFormat, setExportFormat] = React.useState(exportFormats[0].value);
+	const [showExportFormats, setShowExportFormats] = React.useState(false);
+	const [exportingSessions, setExportingSessions] = React.useState(false);
 
 	const [sessions, setSessions] = React.useState([]);
 	const [dbSessions, setDBSessions] = React.useState([]);
 	const [loadingSessions, setLoadingSessions] = React.useState(false);
 	const [scriptsFields, setScriptsFields] = React.useState({});
 
-	const [deletingSessions, setDeletingSessions] = React.useState(false);
-
-	async function exportSessions() {
-
-	}
+	const exportSessions = async () => {
+		let sessions = dbSessions;
+		switch (exportType) {
+			case 'completed':
+				sessions = dbSessions.filter((s: any) => s.data.completed_at);
+				break;
+			case 'incomplete':
+				sessions = dbSessions.filter((s: any) => !s.data.completed_at);
+				break;
+			case 'date_range':
+				sessions = getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id) as any;
+				break;
+			default:
+				// do nothing
+		}
+		setExportingSessions(true);
+		try {
+			await exportData({ format: exportFormat, sessions, scriptsFields, application, });
+			if (exportFormat === 'jsonapi') await getSessions();
+			Alert.alert(
+				'',
+				'Export success',
+				[
+					{
+						text: 'Ok',
+					}
+				]
+			);
+		} catch (e: any) {
+			Alert.alert(
+				'Failed to export data',
+				e.message || e.msg || JSON.stringify(e),
+				[
+					{
+						text: 'Try again',
+						onPress: () => exportSessions()
+					},
+					{
+						text: 'Cancel',
+					}
+				]
+			);
+		}
+		setExportingSessions(false);
+		setShowExportFormats(false);
+	};
 
 	const deleteSessions = async (ids: any[] = []) => {
 		if (ids.length) {
@@ -194,10 +244,43 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				try {
 					const fields: any = await api.getScriptsFields();
 					setScriptsFields(fields);
+
+					const application = await api.getApplication();
+					setApplication(application);
 				} catch (e) { console.log(e); /* DO NOTHING */ }
 			})();
 		}
 	}, [isFocused]);
+
+	React.useEffect(() => {
+		(async () => {
+			try {
+				const { granted } = await MediaLibrary.requestPermissionsAsync();
+				if (!granted) {
+					Alert.alert(
+						'Permission denied',
+						'Permission to write files to disk is not granted, you will not be able to export files.',
+						[
+							{
+								text: 'Ok',
+							}
+						]
+					);
+				}
+			} catch (e: any) {
+				Alert.alert(
+					'Error',
+					e.message,
+					[
+						{
+							text: 'Ok',
+						}
+					]
+				);
+				}
+				setPageInitialised(true);
+		})();
+	}, []);
 
 	const dateRange = (
 		<>
@@ -216,6 +299,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			/>
 		</>
 	);
+
+	if (!pageInitialised) return null;
 
 	return (
 		<>
@@ -346,46 +431,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			</Modal>
 
 			<Modal
-				open={openExportModal}
-				onClose={() => setOpenExportModal(false)}
-				title="Export sessions"
-				actions={[
-					{
-						label: 'Cancel',
-						onPress: () => {
-							setExportType('all');
-							setOpenExportModal(false);
-						}
-					},
-					{
-						label: 'Export',
-						onPress: () => {
-							exportSessions();
-							setOpenExportModal(false);
-						},
-					}
-				]}
-			>
-				{exportTypes.map(t => (
-					<React.Fragment key={t.value}>
-						<Radio 							
-							label={t.label}
-							value={t.value}
-							checked={t.value === exportType}
-							onChange={t => setExportType(t as string)}
-						/>
-						<Br spacing="m" />
-					</React.Fragment>
-				))}
-				{exportType === 'date_range' && (
-					<>
-						<Br />
-						{dateRange}
-					</>
-				)}
-			</Modal>
-
-			<Modal
 				open={openDeleteModal}
 				onClose={() => setOpenDeleteModal(false)}
 				title="Delete sessions"
@@ -437,7 +482,65 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				)}
 			</Modal>
 
-			{deletingSessions && <OverlayLoader />}
+			<Modal
+				open={openExportModal}
+				onClose={() => setOpenExportModal(false)}
+				title="Export sessions"
+				actions={[
+					{
+						label: 'Cancel',
+						onPress: () => {
+							setExportType('all');
+							setShowExportFormats(false);
+							setOpenExportModal(false);
+						}
+					},
+					{
+						label: showExportFormats ? 'Export' : 'Next',
+						onPress: () => {
+							if (showExportFormats) {
+								exportSessions();
+								setOpenExportModal(false);
+							} else {
+								setShowExportFormats(true);
+							}
+						},
+					}
+				]}
+			>
+				{showExportFormats ? 
+					exportFormats.map(t => (
+						<React.Fragment key={t.value}>
+							<Radio 							
+								label={t.label}
+								value={t.value}
+								checked={t.value === exportFormat}
+								onChange={t => setExportFormat(t as string)}
+							/>
+							<Br spacing="m" />
+						</React.Fragment>
+					))
+					:
+					exportTypes.map(t => (
+						<React.Fragment key={t.value}>
+							<Radio 							
+								label={t.label}
+								value={t.value}
+								checked={t.value === exportType}
+								onChange={t => setExportType(t as string)}
+							/>
+							<Br spacing="m" />
+						</React.Fragment>
+					))}
+				{exportType === 'date_range' && (
+					<>
+						<Br />
+						{dateRange}
+					</>
+				)}
+			</Modal>
+
+			{(deletingSessions || exportingSessions) && <OverlayLoader />}
 		</>
 	);
 }
