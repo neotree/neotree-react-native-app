@@ -1,4 +1,5 @@
 import { makeApiCall } from './api';
+import { dbTransaction } from './db';
 
 export * from './api';
 
@@ -22,3 +23,15 @@ export const exportSession = async (s: any) => {
         body: JSON.stringify(s),
     });
 };
+
+export const logout = () => new Promise((resolve, reject) => {
+    (async () => {
+        try {
+            await dbTransaction(
+                'insert or replace into authenticated_user (id, details) values (?, ?);',
+                [1, null],
+            );
+            resolve(null);
+        } catch (e) { reject(e); }
+    })();
+});

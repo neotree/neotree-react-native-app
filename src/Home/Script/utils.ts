@@ -225,7 +225,7 @@ export const getScriptUtils = ({
     };
 
     function createSessionSummary(_payload: any = {}) {        
-        const { completed, canceled, ...payload } = _payload;
+        const { completed, cancelled, ...payload } = _payload;
         
         const uid = form.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -249,7 +249,7 @@ export const getScriptUtils = ({
             hospital_id: location?.hospital,
             started_at: startTime,
             completed_at: completed ? new Date().toISOString() : null,
-            canceled_at: canceled ? new Date().toISOString() : null,
+            canceled_at: cancelled ? new Date().toISOString() : null,
             script,
             diagnoses: [],
             form,

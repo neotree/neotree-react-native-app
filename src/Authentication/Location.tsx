@@ -61,21 +61,8 @@ export function Location({ onSetLocation }: LocationProps) {
 
 			<Br spacing='l' />
 
-			{/* <Picker 
-				enabled={!submitting}
-				size="l"
-				label="Hospital"
-				selectedValue={hospital}
-				onValueChange={hospital => setHospital(hospital)}
-				errors={errors.filter(e => e.field === 'hospital').map(e => e.message)}
-				options={hospitals}
-			/> */}
-
-			<Br spacing='l' />
-
 			<Button
 				onPress={submit}
-				size="l"
 				disabled={submitting}
 				textStyle={{ textTransform: 'uppercase', }}
 				style={{ alignItems: 'center' }}
