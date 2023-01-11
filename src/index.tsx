@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import registerdAssets from './assets';
 import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
-import { initialiseData } from './data';
+import { syncData } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 
@@ -18,28 +18,26 @@ export function Navigation() {
     const [ready, setReady] = React.useState(false);
     const ctx = useAppContext();
 
-    React.useEffect(() => {
-        (async () => {
-            if (!ready) {
-                try {
-                    const res = await initialiseData();            
-                    ctx?.setAuthenticatedUser(res?.authenticatedUser);
-                    ctx?.setApplication(res?.application);
-                } catch (e) {
-                    console.log(e);
-                } finally {
-                    setReady(true);
-                }     
-            }   
-        })();
-    }, [ready]);
+    const initialiseApp = React.useCallback(async () => {
+        try {
+            const res = await syncData();            
+            ctx?.setAuthenticatedUser(res?.authenticatedUser);
+            ctx?.setApplication(res?.application);
+        } catch (e) {
+            console.log(e);
+        } finally {
+            setReady(true);
+        } 
+    }, [ctx]);
+
+    React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
 
     if (!ready) return <Splash />;
 
     return (
         <>
             <StatusBar style="dark" />
-            {!ctx?.authenticatedUser ? <Authentication /> : <HomeNavigator />}
+            {!ctx?.authenticatedUser ? <Authentication initialiseApp={initialiseApp} /> : <HomeNavigator initialiseApp={initialiseApp} />}
         </>
     );
 }

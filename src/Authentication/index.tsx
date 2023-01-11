@@ -5,7 +5,11 @@ import { Content, Box  } from "../components";
 import { Location } from './Location';
 import { SignIn } from './SignIn';
 
-export function Authentication() {
+type AuthenticationProps = {
+	initialiseApp: () => Promise<void>;
+};
+
+export function Authentication({}: AuthenticationProps) {
     const [section, setSection] = React.useState<'location' | 'sign-in'>('location');
 
     const onSetLocation = React.useCallback(() => {

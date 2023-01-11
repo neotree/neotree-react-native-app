@@ -6,7 +6,7 @@ export * from './db';
 
 export * from './queries';
 
-export * from './initialiseData';
+export * from './syncData';
 
 export * from './convertSessionsToExportable';
 

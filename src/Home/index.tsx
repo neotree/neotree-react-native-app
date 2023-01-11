@@ -33,13 +33,17 @@ const HeaderTitle: DrawerNavigationOptions['headerTitle'] = props => {
 	);
 };
 
-export function HomeNavigator() {
+type HomeNavigatorProps = {
+	initialiseApp: () => Promise<void>;
+};
+
+export function HomeNavigator({ initialiseApp }: HomeNavigatorProps) {
 	const ctx = useAppContext();
 	return (
 		<>
 			<Drawer.Navigator 
 				initialRouteName="Home"
-				drawerContent={props => <CustomDrawerContent {...props} />}
+				drawerContent={props => <CustomDrawerContent {...props} initialiseApp={initialiseApp} />}
 				screenOptions={{
 					headerTintColor: theme.colors.primary,
 					headerTitle: HeaderTitle
@@ -84,7 +88,7 @@ export function HomeNavigator() {
 	);
 }``
 
-function CustomDrawerContent(props: DrawerContentComponentProps) {
+function CustomDrawerContent({ initialiseApp, ...props }: DrawerContentComponentProps & { initialiseApp: HomeNavigatorProps['initialiseApp'] }) {
 	const theme = useTheme();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 	const ctx = useAppContext();
@@ -200,20 +204,41 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						inactiveBackgroundColor="transparent"
 						pressColor={theme.colors['bg.active']}
 						onPress={() => {
-
+							const mode = ctx?.application?.mode === 'development' ? 'production' : 'development';
+							const save = async () => {
+								setDisplayLoader(true);
+								await api.saveApplication({ mode  });
+                            	await api.syncData({ force: true, });
+								await initialiseApp();
+								setDisplayLoader(false);
+							};
+							Alert.alert(
+								'Switch mode',
+                  				`Are you sure you want to ${ctx?.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
+								[
+									{
+										text: 'Cancel',
+									}, 
+									{
+										text: 'Ok',
+										onPress: () => save(),
+									}
+								]
+							);
 						}}
 						label={() => {
+							const isActive = ctx?.application?.mode === 'development';
 							return (
 								<Box flexDirection="row" alignItems="center">
 									<Box paddingHorizontal="m">
 										<Icon 
 											size={24} 
 											name="laptop"
-											color={theme.colors.textSecondary} 
+											color={isActive ? theme.colors.primary : theme.colors.textSecondary} 
 										/>
 									</Box>
 									<Text
-										color="textSecondary"
+										color={isActive ? 'primary' : 'textSecondary'}
 										textTransform="uppercase"
 										fontWeight="bold"
 									>Development</Text>

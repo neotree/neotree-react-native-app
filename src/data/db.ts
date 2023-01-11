@@ -130,10 +130,10 @@ export async function createTablesIfNotExist() {
     ]);
 }
 
-export const reset = async () => {
+export const resetTables = async () => {
     await createTablesIfNotExist();
     return await Promise.all([
-        'delete * from application where 1;',
+        // 'delete * from application where 1;',
         'delete * from scripts where 1;',
         'delete * from screens where 1;',
         'delete * from diagnoses where 1;',
