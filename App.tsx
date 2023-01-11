@@ -1,6 +1,14 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
+
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+
+const firebaseConfig = Constants.manifest?.extra?.firebase;
+firebase.initializeApp(firebaseConfig);
 
 import { 
     assets as srcAssets,

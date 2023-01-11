@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput as RNTextInput, ActivityIndicator } from "react-native";
 import { TextInput, Br, Button, useTheme, Text  } from "../../components";
-import { makeApiCall, dbTransaction } from '../../data';
+import * as api from '../../data';
 
 type FormProps = {
 	onSignInSuccess: () => any;
@@ -26,25 +26,8 @@ export function Form({ onSignInSuccess }: FormProps) {
 				setErrors([]);
 				if (password && email) {
 					setSubmitting(true);
-					const res = await makeApiCall('webeditor', '/sign-in', {
-						method: 'POST',
-						body: JSON.stringify({
-							username: email,
-							password,
-						}),
-					}, { useHost: true });
-					const json = await res.json();
-					const user = json?.user;
-
-					setErrors((json?.errors || []).map((e: string) => ({ message: e })));
-
-					if (user) {						
-						await dbTransaction(
-							'insert or replace into authenticated_user (id, details) values (?, ?);',
-							[1, JSON.stringify(user)],
-						);
-						success = true;
-					}
+					const user = await api.login({ email, password });
+					if (user) success = true;
 				} else {
 					if (!password) setErrors(prev => [...prev, { field: 'password', message: 'Password is required.' }]);
 					if (!email) setErrors(prev => [...prev, { field: 'email', message: 'Email is required.' }]);
