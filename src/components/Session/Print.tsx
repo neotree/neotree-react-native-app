@@ -6,12 +6,12 @@ import formToHTML from './formToHTML';
 
 import { useTheme } from "../Theme";
 
-type PrintProps = {
+type PrintSessionProps = {
     session: any;
     showConfidential?: boolean;
 };
 
-export function Print({ session, showConfidential }: PrintProps) {
+export function PrintSession({ session, showConfidential }: PrintSessionProps) {
     const theme = useTheme();
 
     const [, setPrinting] = React.useState(false);
