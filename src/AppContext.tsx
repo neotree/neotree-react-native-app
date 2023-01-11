@@ -1,11 +1,13 @@
 import React from 'react';
 import * as types from './types';
+import * as api from './data';
 
 export interface IAppContext {
     authenticatedUser: types.AuthenticatedUser | null;
     application: types.Application | null;
     setAuthenticatedUser: React.Dispatch<React.SetStateAction<types.AuthenticatedUser | null>>;    
     setApplication: React.Dispatch<React.SetStateAction<types.Application | null>>;
+    setSyncDataResponse: (res: Awaited<ReturnType<typeof api.syncData>>) => void;
 }
 
 export const AppContext = React.createContext<IAppContext | null>(null);
@@ -22,7 +24,11 @@ export function AppContextProvider({ children }: React.PropsWithChildren<{}>) {
                 authenticatedUser,
                 setAuthenticatedUser,
                 application,
-                setApplication
+                setApplication,
+                setSyncDataResponse: res => {
+                    setAuthenticatedUser(res?.authenticatedUser);
+                    setApplication(res?.application);
+                },
             }}
         >
             {children}

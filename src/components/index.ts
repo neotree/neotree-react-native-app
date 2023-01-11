@@ -25,3 +25,5 @@ export * from './Header';
 export * from './OverlayLoader';
 
 export * from './Session';
+
+export * from './LocationForm';

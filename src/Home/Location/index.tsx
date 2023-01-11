@@ -1,17 +1,49 @@
-import { ScrollView, Text, View } from "react-native";
+import React from 'react';
+import { ScrollView, TouchableOpacity, Platform } from "react-native";
+import Icon from '@expo/vector-icons/MaterialIcons';
+import { useAppContext } from '../../AppContext';
+import { Content, LocationForm, OverlayLoader, Box } from "../../components";
+import * as api from '../../data';
+import * as types from '../../types';
 
-export function Location() {
+export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Configuration'>) {
+	const ctx = useAppContext();
+	const [displayLoader, setDisplayLoader] = React.useState(false);
+
+	React.useEffect(() => {
+		navigation.setOptions({
+			headerLeft: ({ tintColor }) => (
+				<Box marginLeft="m">
+					<TouchableOpacity onPress={() => navigation.navigate('Home')}>
+						<Icon 
+							name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}  
+							size={28} 
+							color={tintColor}
+						/>
+					</TouchableOpacity>
+				</Box>
+			),
+		});
+	}, [navigation]);
+
 	return (
-		<ScrollView>
-			<View 
-				style={{
-					height: 400,
-					justifyContent: 'center',
-					alignItems: 'center',
-				}}
-			>
-				<Text style={{ fontSize: 30 }}>Location</Text>
-			</View>
-		</ScrollView>
+		<>
+			<ScrollView>
+				<Content>
+					<LocationForm 
+						onSetLocation={() => {
+							(async () => {
+								setDisplayLoader(true);
+								const res = await api.syncData({ force: true, });
+								ctx?.setSyncDataResponse(res);
+								setDisplayLoader(false);
+							})();
+						}}
+					/>
+				</Content>
+			</ScrollView>
+			
+			{displayLoader && <OverlayLoader />}
+		</>
 	);
 }
