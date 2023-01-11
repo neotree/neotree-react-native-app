@@ -1,13 +1,10 @@
 import React from 'react';
 import { View, Image } from "react-native";
 import assets from "../assets";
-import { Content, Box  } from "../components";
-import { Location } from './Location';
+import { Content, Box, LocationForm  } from "../components";
 import { SignIn } from './SignIn';
 
-type AuthenticationProps = {
-	initialiseApp: () => Promise<void>;
-};
+type AuthenticationProps = {};
 
 export function Authentication({}: AuthenticationProps) {
     const [section, setSection] = React.useState<'location' | 'sign-in'>('location');
@@ -44,7 +41,7 @@ export function Authentication({}: AuthenticationProps) {
 				paddingVertical="m"
 			>
 				<Content>
-					{section === 'location' && <Location onSetLocation={onSetLocation} />}
+					{section === 'location' && <LocationForm buttonLabel="Next" onSetLocation={onSetLocation} />}
                     {section === 'sign-in' && <SignIn onSignIn={onSignIn} />}
 				</Content>
 			</Box>

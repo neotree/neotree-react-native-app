@@ -1,16 +1,22 @@
 import React from 'react';
 import { ActivityIndicator } from "react-native";
-import { Br, Button, useTheme, Dropdown  } from "../components";
 import Constants from 'expo-constants';
+import { useTheme  } from "./Theme";
+import { Br } from './Br';
+import { Button } from './Button';
+import { Dropdown } from './Form';
 import { COUNTRY } from '../types';
 import { useIsFocused } from '@react-navigation/native';
-import { dbTransaction } from '../data';
+import { dbTransaction, getLocation } from '../data';
 
 const countries = (Constants.manifest?.extra?.countries || []) as COUNTRY[];
 
-type LocationProps = { onSetLocation: () => void; };
+type LocationFormProps = { 
+    onSetLocation: () => void; 
+    buttonLabel?: string;
+};
 
-export function Location({ onSetLocation }: LocationProps) {
+export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) {
 	const focused = useIsFocused();
 
 	const theme = useTheme();
@@ -35,6 +41,7 @@ export function Location({ onSetLocation }: LocationProps) {
 					Object.values(location),
 				);
 				onSetLocation();
+				setSubmitting(false);
 			} else {
 				// if (!hospital) setErrors(prev => [...prev, { field: 'hospital', message: 'Hospital is required.' }]);
 				if (!country) setErrors(prev => [...prev, { field: 'country', message: 'Country is required.' }]);
@@ -44,6 +51,11 @@ export function Location({ onSetLocation }: LocationProps) {
 
 	React.useEffect(() => {
 		setSubmitting(false);
+        if (focused) {
+            getLocation()
+                .then(loc => setCountry((prev: any) => loc?.country || prev))
+                .catch(() => {});
+        }
 	}, [focused]);
 
 	return (
@@ -67,7 +79,7 @@ export function Location({ onSetLocation }: LocationProps) {
 				textStyle={{ textTransform: 'uppercase', }}
 				style={{ alignItems: 'center' }}
 			>
-				{!submitting ? 'Next' : (
+				{!submitting ? (buttonLabel || 'Save') : (
 					<ActivityIndicator 
 						color={theme.colors.primary}
 						size={theme.textVariants.title1.fontSize}

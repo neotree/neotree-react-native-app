@@ -21,8 +21,7 @@ export function Navigation() {
     const initialiseApp = React.useCallback(async () => {
         try {
             const res = await syncData();            
-            ctx?.setAuthenticatedUser(res?.authenticatedUser);
-            ctx?.setApplication(res?.application);
+            ctx?.setSyncDataResponse(res);
         } catch (e) {
             console.log(e);
         } finally {
@@ -37,7 +36,7 @@ export function Navigation() {
     return (
         <>
             <StatusBar style="dark" />
-            {!ctx?.authenticatedUser ? <Authentication initialiseApp={initialiseApp} /> : <HomeNavigator initialiseApp={initialiseApp} />}
+            {!ctx?.authenticatedUser ? <Authentication /> : <HomeNavigator />}
         </>
     );
 }

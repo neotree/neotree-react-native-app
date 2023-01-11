@@ -33,17 +33,15 @@ const HeaderTitle: DrawerNavigationOptions['headerTitle'] = props => {
 	);
 };
 
-type HomeNavigatorProps = {
-	initialiseApp: () => Promise<void>;
-};
+type HomeNavigatorProps = {};
 
-export function HomeNavigator({ initialiseApp }: HomeNavigatorProps) {
+export function HomeNavigator({}: HomeNavigatorProps) {
 	const ctx = useAppContext();
 	return (
 		<>
 			<Drawer.Navigator 
 				initialRouteName="Home"
-				drawerContent={props => <CustomDrawerContent {...props} initialiseApp={initialiseApp} />}
+				drawerContent={props => <CustomDrawerContent {...props} />}
 				screenOptions={{
 					headerTintColor: theme.colors.primary,
 					headerTitle: HeaderTitle
@@ -88,7 +86,7 @@ export function HomeNavigator({ initialiseApp }: HomeNavigatorProps) {
 	);
 }``
 
-function CustomDrawerContent({ initialiseApp, ...props }: DrawerContentComponentProps & { initialiseApp: HomeNavigatorProps['initialiseApp'] }) {
+function CustomDrawerContent(props: DrawerContentComponentProps) {
 	const theme = useTheme();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 	const ctx = useAppContext();
@@ -208,8 +206,8 @@ function CustomDrawerContent({ initialiseApp, ...props }: DrawerContentComponent
 							const save = async () => {
 								setDisplayLoader(true);
 								await api.saveApplication({ mode  });
-                            	await api.syncData({ force: true, });
-								await initialiseApp();
+                            	const res = await api.syncData({ force: true, });
+								ctx?.setSyncDataResponse(res);
 								setDisplayLoader(false);
 							};
 							Alert.alert(
