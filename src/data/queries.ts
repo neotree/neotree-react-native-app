@@ -253,6 +253,18 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
     })();
 });
 
+export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject) => {
+    (async () => {
+        try {
+            ids = ids || [];
+            if (!ids.map) ids = [ids];
+
+            const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
+            resolve(res);
+        } catch (e) { reject(e); }
+    })();
+});
+
 export const getScriptsFields = () => new Promise((resolve, reject) => {
     (async () => {
         try {

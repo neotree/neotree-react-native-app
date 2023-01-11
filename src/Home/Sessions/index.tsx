@@ -1,10 +1,11 @@
 import React from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import { Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
 import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import * as types from '../../types';
 import * as api from '../../data';
-import { useTheme, Box, Text, Modal, DatePicker, Br, Radio, Content, Card } from '../../components';
+import { useTheme, Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader } from '../../components';
 
 const exportTypes = [
 	{
@@ -25,10 +26,18 @@ const exportTypes = [
 	},
 ];
 
+const exportFormats = [
+	{ label: 'Excel Spreadsheet', value: 'excel' },
+	{ label: 'JSON', value: 'json' },
+	{ label: 'JSONAPI', value: 'jsonapi' },
+];
+
 const deleteTypes = exportTypes.filter((t, i) => i !== 1);
 
 export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Sessions'>) {
 	const theme = useTheme();
+
+	const isFocused = useIsFocused();
 
 	const [openExportModal, setOpenExportModal] = React.useState(false);
 	const [openFilterModal, setOpenFilterModal] = React.useState(false);
@@ -46,13 +55,37 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [loadingSessions, setLoadingSessions] = React.useState(false);
 	const [scriptsFields, setScriptsFields] = React.useState({});
 
+	const [deletingSessions, setDeletingSessions] = React.useState(false);
+
 	async function exportSessions() {
 
 	}
 
-	async function deleteSessions(ids?: any[]) {
-
-	}
+	const deleteSessions = async (ids: any[] = []) => {
+		if (ids.length) {
+			setDeletingSessions(true);
+			try {
+				await api.deleteSessions(ids);
+				await getSessions();
+			} catch (e: any) {
+				Alert.alert(
+				'ERROR',
+				e.message || e.msg || JSON.stringify(e),
+				[
+					{
+						text: 'Try again',
+						onPress: () => deleteSessions(ids),
+					},
+					{
+						text: 'Cancel',
+						onPress: () => {},
+					}
+				]
+				);
+			}
+			setDeletingSessions(false);
+		}
+	};
 
 	React.useEffect(() => {
 		navigation.setOptions({
@@ -100,21 +133,24 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		});
 	}, [navigation]);
 
-	const getFilteredSessions = (sessions = dbSessions) => {
+	const getFilteredSessions = (sessions = dbSessions, filters?: any) => {
 		let _sessions = [...sessions];
 		const getParsedDate = (d: any) => {
 			d = moment(d).format('YYYY-MM-DD');
 			return new Date(d).getTime();
 		};
 
-		if (filterByDate) {
-			if (minDate) {
-				_sessions = sessions.filter((s: any) => getParsedDate(s.data.started_at) >= getParsedDate(minDate));
-			}
+		const _filters = filters || {
+			minDate: filterByDate ? minDate : null,
+			maxDate: filterByDate ? maxDate : null,
+		};
 
-			if (maxDate) {
-				_sessions = sessions.filter((s: any) => getParsedDate(s.data.started_at) <= getParsedDate(maxDate));
-			}
+		if (_filters?.minDate) {
+			_sessions = sessions.filter((s: any) => getParsedDate(s.data.started_at) >= getParsedDate(_filters.minDate));
+		}
+
+		if (_filters?.maxDate) {
+			_sessions = sessions.filter((s: any) => getParsedDate(s.data.started_at) <= getParsedDate(_filters.maxDate));
 		}
 
 		return _sessions;
@@ -152,14 +188,16 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	});
 	
 	React.useEffect(() => {
-		getSessions();
-		(async () => {
-			try {
-				const fields: any = await api.getScriptsFields();
-				setScriptsFields(fields);
-			} catch (e) { console.log(e); /* DO NOTHING */ }
-		})();
-	}, []);
+		if (isFocused) {
+			getSessions();
+			(async () => {
+				try {
+					const fields: any = await api.getScriptsFields();
+					setScriptsFields(fields);
+				} catch (e) { console.log(e); /* DO NOTHING */ }
+			})();
+		}
+	}, [isFocused]);
 
 	const dateRange = (
 		<>
@@ -361,9 +399,21 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					},
 					{
 						label: 'Delete',
-						onPress: () => {
-							deleteSessions();
+						onPress: () => {							
 							setOpenDeleteModal(false);
+							switch (deleteType) {
+								case 'all':
+									deleteSessions(dbSessions.map((s: any) => s.id));
+									break;
+								case 'incomplete':
+									deleteSessions(dbSessions.filter((s: any) => !s.data.completed_at).map((s: any) => s.id));
+									break;
+								case 'date_range':
+									deleteSessions(getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id));
+									break;
+								default:
+									// do nothing
+							}
 						},
 					}
 				]}
@@ -386,6 +436,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					</>
 				)}
 			</Modal>
+
+			{deletingSessions && <OverlayLoader />}
 		</>
 	);
 }
