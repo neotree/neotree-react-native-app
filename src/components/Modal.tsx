@@ -62,17 +62,14 @@ export function Modal({
                             {!!title && (
                                 <Box padding="m">
                                     {typeof title === 'string' ? (
-                                        <Text 
-                                            variant="title3" 
-                                            fontWeight="bold"
-                                        >{title}</Text>
+                                        <Text variant="title2">{title}</Text>
                                     ) : title}
                                 </Box>
                             )}
 
                             <Box maxHeight={500}>
                                 <ScrollView>
-                                    <Box paddingHorizontal="m">
+                                    <Box padding="l">
                                         {children}
                                     </Box>
                                     <Br spacing="l" />

@@ -252,3 +252,41 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
         } catch (e) { reject(e); }
     })();
 });
+
+export const getScriptsFields = () => new Promise((resolve, reject) => {
+    (async () => {
+        try {
+            const scripts = await getScripts();
+            const rslts = await Promise.all(scripts.map(script => new Promise((resolve, reject) => {
+                (async () => {
+                    try {
+                        const screens = await getScreens({ script_id: script.script_id });
+                        resolve({
+                            [script.script_id]: screens.map(screen => {
+                                const metadata = { ...screen.data.metadata };
+                                const fields = metadata.fields || [];
+                                return {
+                                    screen_id: screen.screen_id,
+                                    script_id: screen.script_id,
+                                    screen_type: screen.type,
+                                    keys: (() => {
+                                        let keys = [];
+                                        switch (screen.type) {
+                                            case 'form':
+                                                keys = fields.map((f: any) => f.key);
+                                                break;
+                                            default:
+                                                keys.push(metadata.key);
+                                        }
+                                        return keys.filter((k: any) => k);
+                                    })(),
+                                };
+                            })
+                        });
+                    } catch (e) { reject(e); }
+                })();
+            })));
+            resolve(rslts.reduce((acc: any, s: any) => ({ ...acc, ...s }), {}));
+        } catch (e) { reject(e); }
+    })();
+});

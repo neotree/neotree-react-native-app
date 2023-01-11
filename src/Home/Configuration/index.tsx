@@ -5,7 +5,7 @@ import * as types from '../../types';
 import * as api from '../../data';
 import { Box, useTheme, Content, Text } from '../../components';
 
-export function Configuration({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
+export function Configuration({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Configuration'>) {
 	const theme = useTheme();
 
 	const [configKeys, setConfigKeys] = React.useState<types.ConfigKey[]>([]);

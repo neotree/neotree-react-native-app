@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Fab, FormAndDiagnosesSummary, Print } from '../../../components';
+import { Box, Fab, FormAndDiagnosesSummary, PrintSession } from '../../../components';
 import { useContext } from '../Context';
 
 export function Summary() {
@@ -10,7 +10,7 @@ export function Summary() {
     React.useEffect(() => {
         ctx?.setMoreNavOptions({
             title: 'SUMMARY',
-            headerRight: () => <Print session={summary} showConfidential />,
+            headerRight: () => <PrintSession session={summary} showConfidential />,
         });
     }, [summary]);
 
