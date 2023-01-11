@@ -1,5 +1,5 @@
 import { dbTransaction } from './db';
-import convertSessionsToExportable from './convertSessionsToExportable';
+import { convertSessionsToExportable } from './convertSessionsToExportable';
 import { makeApiCall } from './api';
 import { updateSession } from './updateSession';
 
