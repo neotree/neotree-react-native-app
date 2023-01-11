@@ -21,6 +21,8 @@ export async function initialiseData() {
     }
 
     if (authenticatedUser) {
+        await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
+
         const res = await makeApiCall(
             'webeditor',
             `/sync-data?${queryString.stringify({ deviceId, })}`,
@@ -105,8 +107,8 @@ export async function initialiseData() {
             mode: 'production',
             last_sync_date: null,
             uid_prefix: device?.device_hash,
-            total_sessions_recorded: device?.details.scripts_count,
-            device_id: device?.device_id,
+            total_sessions_recorded: device?.details?.scripts_count || 0,
+            device_id: device?.device_id || deviceId,
             webeditor_info: JSON.stringify(webeditorInfo),
             createdAt: _application?.createdAt || new Date().toISOString(),            
             version: APP_VERSION,

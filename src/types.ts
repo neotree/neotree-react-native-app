@@ -46,6 +46,7 @@ export type ScreenEntryValue = {
 };
 
 export type ScreenEntry = {
+  value?: ScreenEntryValue[];
   values: ScreenEntryValue[];
   screenIndex: number;
   screen: {

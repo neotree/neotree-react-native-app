@@ -52,7 +52,6 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                                 }                         
                                 setValue(form);
                                 const keys = Object.keys(form).filter(key => form[key]);
-                                console.log(keys);
                                 ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
                                     const item = opts.filter(opt => opt.value === o.value)[0];
                                     return [
@@ -68,7 +67,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                                             confidential: item.confidential,
                                         },
                                     ];
-                                }, []))
+                                }, []));
                             }}
                         >
                             <Card 

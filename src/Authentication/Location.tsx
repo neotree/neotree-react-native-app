@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator } from "react-native";
-import { Picker, Br, Button, useTheme  } from "../components";
+import { Br, Button, useTheme, Dropdown  } from "../components";
 import Constants from 'expo-constants';
 import { COUNTRY } from '../types';
 import { useIsFocused } from '@react-navigation/native';
@@ -48,13 +48,11 @@ export function Location({ onSetLocation }: LocationProps) {
 
 	return (
 		<>
-			<Picker 
-				enabled={!submitting}
-				size="l"
-				label="Country Address"
-				selectedValue={country}
-				onValueChange={country => setCountry(country)}
-				errors={errors.filter(e => e.field === 'country').map(e => e.message)}
+			<Dropdown
+				value={country}
+				onChange={country => setCountry(country)}
+				label="Country"
+				title="Select country"
 				options={countries.map(c => ({
 					label: c.name,
 					value: c.iso,
