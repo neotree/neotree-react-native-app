@@ -62,7 +62,6 @@ export function Form({ onSignInSuccess }: FormProps) {
 		<>
 			<TextInput 
 				editable={!submitting}
-				size="l"
 				placeholder="Email Address"
 				ref={emailInputRef}
 				value={email}
@@ -79,7 +78,6 @@ export function Form({ onSignInSuccess }: FormProps) {
 
 			<TextInput 
 				editable={!submitting}
-				size="l"
 				placeholder="Password"
 				ref={passwordInputRef}
 				value={password}
@@ -104,7 +102,6 @@ export function Form({ onSignInSuccess }: FormProps) {
 
 			<Button
 				onPress={submit}
-				size="l"
 				disabled={submitting}
 				textStyle={{ textTransform: 'uppercase', }}
 				style={{ alignItems: 'center' }}

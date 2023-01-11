@@ -23,7 +23,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue }: Numbe
     return (
         <Box>
             <TextInput
-                label={field.label}
+                label={`${field.label || ''}${field.optional ? '' : ' *'}`}
                 value={value}
                 keyboardType="numeric"
                 errors={error ? [error] : []}
