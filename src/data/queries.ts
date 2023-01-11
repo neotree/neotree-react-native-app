@@ -1,5 +1,8 @@
+import Constants from 'expo-constants';
 import * as types from '../types';
 import { dbTransaction } from './db';
+
+const APP_VERSION = Constants.manifest?.version;
 
 export async function getAuthenticatedUser() {
     const rows = await dbTransaction('select * from authenticated_user;');
@@ -261,6 +264,30 @@ export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject)
 
             const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
             resolve(res);
+        } catch (e) { reject(e); }
+    })();
+});
+
+export const saveApplication = (params = {}) => new Promise((resolve, reject) => {
+    (async () => {
+        try {
+            const getApplicationRslt = await dbTransaction('select * from application where id=1;');
+            const _application = getApplicationRslt[0];
+
+            let application = {
+                ..._application,
+                ...params,
+                id: 1,
+                version: APP_VERSION,
+                updatedAt: new Date().toISOString(),
+            };
+
+            await dbTransaction(
+                `insert or replace into application (${Object.keys(application).join(',')}) values (${Object.keys(application).map(() => '?').join(',')});`,
+                Object.values(application)
+            );
+            application = await getApplication();
+            resolve(application);
         } catch (e) { reject(e); }
     })();
 });

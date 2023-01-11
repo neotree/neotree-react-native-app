@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator } from 'react-native';
 import { Box, Br, Text, useTheme, Button  } from "../../components";
 import { Form } from './Form';
-import { initialiseData } from '../../data';
+import { syncData } from '../../data';
 import { useAppContext } from '../../AppContext';
 
 type SignInProps = { onSignIn: () => void; };
@@ -19,7 +19,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 			try {
 				setLoggedIn(true);
 				setInitialiseDataFailed(false);
-				const res = await initialiseData();
+				const res = await syncData();
 				ctx?.setAuthenticatedUser(res?.authenticatedUser);
 				onSignIn();
 			} catch(e) { 
