@@ -9,6 +9,10 @@ export type Location = {
   hospital?: string;
 };
 
+export type Facility = { label: string; value: string; other?: string; };
+
+export type MatchedSession = { session: any, uid: string; facility: Facility; };
+
 export type AuthenticatedUser = any;
 
 export type Application = {

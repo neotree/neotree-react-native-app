@@ -81,7 +81,7 @@ export function Dropdown({
                 >
                     <Box flex={1}>
                         {selectedOption ? (
-                            <Text color={disabled ? 'textDisabled' : undefined}>
+                            <Text numberOfLines={1} color={disabled ? 'textDisabled' : undefined}>
                                 {selectedOption ? selectedOption.label : null}
                             </Text>
                         ) : renderReactNode(placeholder, { textColor: 'textDisabled', })}
@@ -102,7 +102,7 @@ export function Dropdown({
                 onClose={() => setOpenModal(true)}
                 title={(title || searchable) ? (
                     <>
-                        {renderReactNode(title, { textVariant: 'title3', fontWeight: 'bold', })}
+                        {renderReactNode(title, { textVariant: 'title3', })}
                         {searchable && (
                             <>
                                 {!!title && <Br />}

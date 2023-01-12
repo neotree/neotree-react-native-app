@@ -240,7 +240,7 @@ export const getScriptUtils = ({
         
         return {
             ...payload,
-            uid: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
+            uid, //: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
             script_id: activeScreen.script_id,
             data: {
             unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,

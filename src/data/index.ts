@@ -1,4 +1,5 @@
 import { makeApiCall } from './api';
+import { dbTransaction } from './db';
 
 export * from './api';
 
@@ -24,3 +25,20 @@ export const exportSession = async (s: any) => {
         body: JSON.stringify(s),
     });
 };
+
+export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((resolve, reject) => {
+    (async () => {
+        if (!uid) return reject(new Error('UID is required'));
+
+        try {
+            const res = await makeApiCall('nodeapi', `/find-sessions-by-uid?uid=${uid}`);
+            const json = await res.json();
+            return resolve(json?.sessions || []);
+        } catch (e) { /**/ }
+
+        try {
+            const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);
+            resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+        } catch (e) { console.log(e); reject(e); }
+    })();
+});

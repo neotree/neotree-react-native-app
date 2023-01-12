@@ -23,6 +23,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [startTime] = React.useState(new Date().toISOString());
 	const [refresh, setRefresh] = React.useState(false);
 
+	const [matched, setMatched] = React.useState<types.MatchedSession | null>(null);
+
 	const [application, setApplication] = React.useState<null | types.Application>(null);
 	const [location, setLocation] = React.useState<null | types.Location>(null);
 
@@ -226,6 +228,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 	});
 
+	const getBirthFacilities = (): any[] => {
+        // ["ReferredFrom", 'BirthFacility']
+        const s = screens.filter(s => ['BirthFacility'].includes(s?.data?.metadata?.key))[0]
+        return (s?.data?.metadata?.items || []);
+    }
+
 	if (refresh) return null;
 
 	if (loadingConfiguration || loadingScript) return <OverlayLoader transparent={false} />;
@@ -257,6 +265,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	return (
 		<Context.Provider
 			value={{
+				...utils,
 				script,
 				screens,
 				diagnoses,
@@ -270,8 +279,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				application,
 				location,
 				moreNavOptions,
-				summary,
-				...utils,
+				summary,	
+				matched,
+				setMatched,
+				getBirthFacilities,
 				setMoreNavOptions,
 				setNavOptions,
 				setActiveScreen,
