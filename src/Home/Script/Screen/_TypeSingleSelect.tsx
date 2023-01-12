@@ -15,7 +15,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
 
     const opts: any[] = metadata.items.map((item: any) => ({
         ...item,
-        matched: (ctx?.matched?.autoFill?.session?.data?.entries || {})[metadata.key],
+        matched: (ctx?.matched?.autoFill?.data?.entries || {})[metadata.key],
         onChange: () => {
             setValue(item.id);
             ctx?.setEntryValues([{

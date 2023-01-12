@@ -82,6 +82,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		location,
 		application,
 		startTime,
+		matchingSession: matched?.session || null,
 	});
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
@@ -283,7 +284,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				moreNavOptions,
 				summary,	
 				matched,
-				mountedScreens,
+				mountedScreens,				
 				setMountedScreens,
 				setMatched,
 				getBirthFacilities,
