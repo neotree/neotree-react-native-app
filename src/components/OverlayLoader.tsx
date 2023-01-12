@@ -4,15 +4,18 @@ import { Box, useTheme } from './Theme';
 
 export type OverlayLoaderProps = {
     light?: boolean;
+    transparent?: boolean;
 };
 
-export function OverlayLoader({ light }: OverlayLoaderProps) {
+export function OverlayLoader({ light, transparent }: OverlayLoaderProps) {
     const theme = useTheme();
+
+    let backgroundColor = light ? 'rgba(255,255,255,.25)' : theme.colors['bg.active'];
 
     return (
         <Modal
             visible
-            transparent
+            transparent={transparent}
             statusBarTranslucent
             animationType="none"
             onRequestClose={() => {}}
@@ -21,9 +24,9 @@ export function OverlayLoader({ light }: OverlayLoaderProps) {
                 flex={1}
                 justifyContent="center"
                 alignItems="center"
-                style={{ 
-                    backgroundColor: light ? 'rgba(255,255,255,.25)' : theme.colors['bg.active'],
-                }}
+                style={[
+                    transparent === false ? null : { backgroundColor },
+                ]}
             >
                 <ActivityIndicator 
                     color={theme.colors.primary}
