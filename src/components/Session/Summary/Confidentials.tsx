@@ -3,6 +3,7 @@ import { TouchableOpacity, View } from "react-native";
 import { Box, Text } from "../../Theme";
 import { TextInput } from "../../Form";
 import { Modal } from "../../Modal";
+import { Content } from "../../Content";
 
 type ConfidentialsProps = {
     onShowConfidential?: (show: boolean) => void;
@@ -35,17 +36,21 @@ export function Confidentials({ onShowConfidential }: ConfidentialsProps) {
 
     return (
         <>
-            <Box
-                flexDirection="row"
-                alignItems="center"
-            >
-                <Text variant="caption">Confidential data is hidden</Text>
+            <Box backgroundColor="highlight">
+                <Content>
+                    <Box
+                        flexDirection="row"
+                        alignItems="center"
+                    >
+                        <Text variant="caption" color="primary">Confidential data is hidden</Text>
 
-                <View style={{ marginLeft: 'auto' }} />
+                        <View style={{ marginLeft: 'auto' }} />
 
-                <TouchableOpacity
-                    onPress={() => setOpenModal(true)}
-                ><Text variant="caption" color="primary">SHOW</Text></TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setOpenModal(true)}
+                        ><Text variant="caption" color="primary" fontWeight="bold">SHOW</Text></TouchableOpacity>
+                    </Box>
+                </Content>
             </Box>
 
             <Modal
@@ -71,7 +76,7 @@ export function Confidentials({ onShowConfidential }: ConfidentialsProps) {
                     value={password}
                     onChangeText={v => setPassword(v)}
                     label="Enter password"
-                    errors={error ? undefined : [error]}
+                    errors={error ? [error] : []}
                 />
             </Modal>
         </>

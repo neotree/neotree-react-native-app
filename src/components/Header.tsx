@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from './Theme';
 
@@ -36,15 +37,12 @@ export function Header({ left, title, right, }: HeaderProps) {
                             >{left}</Box>
                         )}
 
-                        <Box
-                            padding="s"
-                        >{title}</Box>
+                        <Box padding="s">{title}</Box>
+
+                        <View style={{ marginLeft: 'auto' }} />
 
                         {!!right && (
-                            <Box
-                                width={50}
-                                padding="s"
-                            >{right}</Box>
+                            <Box padding="s">{right}</Box>
                         )}
                     </Box>
                 </SafeAreaView>
