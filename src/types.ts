@@ -11,7 +11,7 @@ export type Location = {
 
 export type Facility = { label: string; value: string; other?: string; };
 
-export type MatchedSession = { session: any, uid: string; facility: Facility; autoFill: any; };
+export type MatchedSession = { session: any, uid: string; facility: Facility; autoFill?: any; };
 
 export type AuthenticatedUser = any;
 

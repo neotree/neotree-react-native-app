@@ -40,10 +40,6 @@ export function TypeForm({}: TypeFormProps) {
             confidential: f.confidential,
         };
     }));
-
-    console.log(metadata.fields.map((f: any) => {
-        return ((ctx?.matched?.autoFill?.session?.data?.entries || {})[f.key]?.values?.value || [])[0];
-    }))
     
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
