@@ -226,7 +226,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 	});
 
-	if (loadingConfiguration || loadingScript || refresh) return null;
+	if (refresh) return null;
+
+	if (loadingConfiguration || loadingScript) return <OverlayLoader transparent={false} />;
 
 	if (loadScriptError) {
 		return (
