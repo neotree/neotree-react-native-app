@@ -32,6 +32,8 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     moreNavOptions: null | MoreNavOptions;
     summary: any;
     matched: null | types.MatchedSession;
+    mountedScreens: { [id: string]: boolean; };
+    setMountedScreens: React.Dispatch<React.SetStateAction<{ [id: string]: boolean; }>>;
     setMatched: React.Dispatch<React.SetStateAction<null | types.MatchedSession>>;
     getBirthFacilities: () => any[];
     goNext: () => void;

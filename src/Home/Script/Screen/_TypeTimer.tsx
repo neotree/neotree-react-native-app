@@ -12,6 +12,8 @@ type TypeTimerProps = types.ScreenTypeProps & {
 
 export function TypeTimer({}: TypeTimerProps) {
     const ctx = useContext();
+    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
+    const matched = ctx?.matched?.autoFill;
 
     const timoutRef = React.useRef<any>(null);
 
@@ -36,6 +38,22 @@ export function TypeTimer({}: TypeTimerProps) {
         return e;
     }, [metadata, multiplier]);
 
+    function onChange(val: string) {
+        const e = getFormError(val);
+        setValue(val);
+        setFormError(e);
+        ctx?.setEntryValues(e ? undefined : [{
+            value: val,
+            valueText: Number(val) * Number(multiplier || 1),
+            calculateValue: Number(val) * Number(multiplier || 1),
+            label: metadata.label,
+            key: metadata.key,
+            type: metadata.type || metadata.dataType,
+            dataType: metadata.dataType,
+            confidential: metadata.confidential,
+        }]);
+    }
+
     React.useEffect(() => {
         if (countdown) {
             const s = countdown - 1;
@@ -53,6 +71,13 @@ export function TypeTimer({}: TypeTimerProps) {
             setCountDown(0);
         }
     }, [countdown, timerValue]);
+
+    React.useEffect(() => {
+        if (canAutoFill) {
+            const _matched = (matched?.session?.data?.entries || {})[metadata.key || metadata.dataType]?.values?.value || [];
+            if (_matched.length) onChange(`${_matched[0] || ''}`);
+        }
+    }, [canAutoFill, matched, metadata]);
 
     return (
         <Box>
@@ -102,19 +127,7 @@ export function TypeTimer({}: TypeTimerProps) {
                         defaultValue={value}
                         errors={formError ? [formError] : []}
                         onChangeText={val => {
-                            const e = getFormError(val);
-                            setValue(val);
-                            setFormError(e);
-                            ctx?.setEntryValues(e ? undefined : [{
-                                value: val,
-                                valueText: Number(val) * Number(multiplier || 1),
-                                calculateValue: Number(val) * Number(multiplier || 1),
-                                label: metadata.label,
-                                key: metadata.key,
-                                type: metadata.type || metadata.dataType,
-                                dataType: metadata.dataType,
-                                confidential: metadata.confidential,
-                            }]);
+                            onChange(val);
                         }}
                         keyboardType="numeric"
                     />

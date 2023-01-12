@@ -25,6 +25,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const [matched, setMatched] = React.useState<types.MatchedSession | null>(null);
 
+	const [mountedScreens, setMountedScreens] = React.useState<{ [id: string]: boolean; }>({});
+
 	const [application, setApplication] = React.useState<null | types.Application>(null);
 	const [location, setLocation] = React.useState<null | types.Location>(null);
 
@@ -281,6 +283,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				moreNavOptions,
 				summary,	
 				matched,
+				mountedScreens,
+				setMountedScreens,
 				setMatched,
 				getBirthFacilities,
 				setMoreNavOptions,
@@ -295,7 +299,11 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				getCachedEntry,
 				setEntry,
 				removeEntry,
-				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {					
+				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {
+					setMountedScreens(prev => ({
+						...prev,
+						[activeScreen.id]: true,
+					}));					
 					if (values) {
 						const { label, dataType } = activeScreen.data.metadata;
 						setEntry({
