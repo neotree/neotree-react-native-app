@@ -11,11 +11,33 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
     const cachedVal = ctx?.activeScreenEntry?.values || [];
+    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
+    const matched = ctx?.matched?.autoFill;
 
     const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v) => ({
         ...acc,
         [v.value]: false,
     }), {}));
+
+    function onChange(_value: typeof value) {
+        setValue(_value);
+        const keys = Object.keys(_value).filter(key => _value[key]);
+        ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
+            const item = metadata.items.filter((item: any) => item.key === value)[0];
+            return [
+                ...acc,
+                {
+                    value,
+                    valueText: item.label,
+                    label: item.label,
+                    key: metadata.key || item.key,
+                    type: item.type,
+                    dataType: item.dataType,
+                    exclusive: item.exclusive,
+                },
+            ];
+        }, []));
+    }
 
     const opts: any[] = metadata.items.map((item: any) => ({
         label: item.label,
@@ -30,7 +52,25 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
             return exclusive && value[exclusive] ? exclusive !== item.key : false;
         })(),
         item,
+        onChange: (selectValue: boolean) => {
+            let form = { ...value };
+            if (item.exclusive) {
+                form = { [item.value]: selectValue, };
+            } else {
+                form = { ...value, [item.value]: selectValue, };
+            }
+            onChange(form);
+        },
     }));
+
+    React.useEffect(() => {
+        if (canAutoFill) {
+            const _value: any = {};
+            const _matched = (matched?.session?.data?.entries || {})[metadata.key]?.values?.value || [];
+            _matched.forEach((m: string) => { _value[m] = true; });
+            if (_matched.length) onChange(_value);
+        }
+    }, [canAutoFill, matched, metadata]);
 
     return (
         <Box>
@@ -40,33 +80,6 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                 if (o.hide) return null;
 
                 const isSelected = value[o.value];
-
-                const _onChange = (selectValue: boolean) => {
-                    let form = { ...value };
-                    if (o.exclusive) {
-                        form = { [o.value]: selectValue, };
-                    } else {
-                        form = { ...value, [o.value]: selectValue, };
-                    }
-                    setValue(form);
-            
-                    const keys = Object.keys(form).filter(key => form[key]);
-                    ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
-                        const item = opts.filter(opt => opt.value === o.value)[0].item;
-                        return [
-                            ...acc,
-                            {
-                                value,
-                                valueText: item.label,
-                                label: item.label,
-                                key: metadata.key || item.key,
-                                type: item.type,
-                                dataType: item.dataType,
-                                exclusive: item.exclusive,
-                            },
-                        ];
-                    }, []));
-                };
 
                 return (
                     <React.Fragment key={key}>
@@ -80,7 +93,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                                     <Radio
                                         label="Yes"
                                         checked={isSelected}
-                                        onChange={() => _onChange(true)}
+                                        onChange={() => o.onChange(true)}
                                         disabled={o.disabled}
                                     />
                                 </Box>
@@ -89,7 +102,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                                     <Radio
                                         label="No"
                                         checked={!isSelected}
-                                        onChange={() => _onChange(false)}
+                                        onChange={() => o.onChange(false)}
                                         disabled={o.disabled}
                                     />
                                 </Box>

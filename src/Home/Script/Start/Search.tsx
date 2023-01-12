@@ -61,7 +61,7 @@ export function Search({ onSession, label }: SearchProps) {
                                     checked={selected}
                                     onChange={() => {
                                         const session = selected ? null : s;
-                                        const matched = session ? { session, uid, facility: facility as types.Facility, } : null;
+                                        const matched = session ? { session, uid, facility: facility as types.Facility, autoFill: session, } : null;
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
                                         ctx?.setMatched(matched);

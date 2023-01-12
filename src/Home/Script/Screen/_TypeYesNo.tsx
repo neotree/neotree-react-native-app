@@ -12,13 +12,39 @@ export function TypeYesNo({}: TypeYesNoProps) {
     const ctx = useContext();
 
     const metadata = ctx?.activeScreen?.data?.metadata;
+    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
 
-    const opts = [
+    const _opts = [
         { value: 'true', label: metadata?.positiveLabel || 'Yes' },
         { value: 'false', label: metadata?.negativeLabel || 'No' },
     ];
 
+    const opts = _opts.map(o => ({
+        ...o,
+        matched: (ctx?.matched?.autoFill?.session?.data?.entries || {})[metadata.key],
+        onChange: () => {
+            const value = o.value;
+            setValue(o.value);
+            ctx?.setEntryValues([{
+                value,
+                confidential: metadata.confidential,
+                valueText: value === 'false' ? 'No' : 'Yes',
+                key: metadata.key,
+                label: o.label,
+                type: metadata.dataType,
+                dataType: metadata.dataType,
+            }]);
+        },
+    }));
+
     const [value, setValue] = React.useState<string | number | null>(ctx?.activeScreenEntry?.values[0]?.value);
+
+    React.useEffect(() => {
+        if (canAutoFill) {
+            const o = opts.filter(o => o.matched)[0];
+            if (o) o.onChange();
+        }
+    }, [canAutoFill, opts]);
 
     return (
         <Box>
@@ -28,19 +54,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
                 return (
                     <React.Fragment key={o.value}>
                         <TouchableOpacity 
-                            onPress={() => {
-                                const value = o.value;
-                                setValue(o.value);
-                                ctx?.setEntryValues([{
-                                    value,
-                                    confidential: metadata.confidential,
-                                    valueText: value === 'false' ? 'No' : 'Yes',
-                                    key: metadata.key,
-                                    label: o.label,
-                                    type: metadata.dataType,
-                                    dataType: metadata.dataType,
-                                }]);
-                            }}
+                            onPress={() => o.onChange()}
                         >
                             <Card backgroundColor={isSelected ? 'primary' : undefined}>
                                 <Text

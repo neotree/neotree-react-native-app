@@ -20,6 +20,7 @@ export function TypeForm({}: TypeFormProps) {
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
     const cachedVal = ctx?.activeScreenEntry?.values || [];
+    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
 
     const evaluateFieldCondition = (f: any) => {
         let conditionMet = true; // @ts-ignore
@@ -27,15 +28,22 @@ export function TypeForm({}: TypeFormProps) {
         return conditionMet;
     };
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => ({
-        value: cachedVal.filter(v => v.key === f.key)[0]?.value || null,
-        valueText: cachedVal.filter(v => v.key === f.key)[0]?.valueText || null,
-        label: f.label,
-        key: f.key,
-        type: f.type,
-        dataType: f.dataType,
-        confidential: f.confidential,
-    })));
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
+        const matched = !canAutoFill ? null : ((ctx?.matched?.autoFill?.session?.data?.entries || {})[f.key]?.values?.value || [])[0];
+        return {
+            value: cachedVal.filter(v => v.key === f.key)[0]?.value || `${matched}` || null,
+            valueText: cachedVal.filter(v => v.key === f.key)[0]?.valueText || matched || null,
+            label: f.label,
+            key: f.key,
+            type: f.type,
+            dataType: f.dataType,
+            confidential: f.confidential,
+        };
+    }));
+
+    console.log(metadata.fields.map((f: any) => {
+        return ((ctx?.matched?.autoFill?.session?.data?.entries || {})[f.key]?.values?.value || [])[0];
+    }))
     
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
