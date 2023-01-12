@@ -8,6 +8,7 @@ import * as types from '../../types';
 import * as api from '../../data';
 import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader } from '../../components';
 import exportData from './export';
+import { Session } from './Session';
 
 const exportTypes = [
 	{
@@ -63,6 +64,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [dbSessions, setDBSessions] = React.useState([]);
 	const [loadingSessions, setLoadingSessions] = React.useState(false);
 	const [scriptsFields, setScriptsFields] = React.useState({});
+
+	const [selectedSession, setSelectedSession] = React.useState<any>(null);
 
 	const exportSessions = async () => {
 		let sessions = dbSessions;
@@ -142,7 +145,15 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			title: 'Session History',
 			headerLeft: ({ tintColor }) => (
 				<Box marginLeft="m">
-					<TouchableOpacity onPress={() => navigation.navigate('Home')}>
+					<TouchableOpacity 
+						onPress={() => {
+							if (selectedSession) {
+								setSelectedSession(null);
+							} else {
+								navigation.navigate('Home');
+							}
+						}}
+					>
 						<Icon 
 							name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}  
 							size={28} 
@@ -181,7 +192,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				</Box>
 			),
 		});
-	}, [navigation]);
+	}, [navigation, selectedSession]);
 
 	const getFilteredSessions = (sessions = dbSessions, filters?: any) => {
 		let _sessions = [...sessions];
@@ -302,6 +313,16 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 	if (!pageInitialised) return null;
 
+	if (selectedSession) {
+		return (
+			<Session 
+				navigation={navigation} 
+				session={selectedSession} 
+				onBack={() => setSelectedSession(null)} 
+			/>
+		);
+	}
+
 	return (
 		<>
 			<FlatList
@@ -332,6 +353,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						<>
 							<Content>
 								<TouchableOpacity
+									onPress={() => setSelectedSession(item)}
 									onLongPress={() => {
 										Alert.alert(
 											'Delete session',
