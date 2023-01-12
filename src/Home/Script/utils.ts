@@ -49,6 +49,7 @@ type UtilsParams = {
     application?: null | types.Application;
     location: null | types.Location;
     startTime: string;
+    matchingSession: any;
 };
   
 export const getScriptUtils = ({
@@ -64,6 +65,7 @@ export const getScriptUtils = ({
     application,
     location,
     startTime,
+    matchingSession,
 }: UtilsParams) => {
     const matches: any[] = [];
 
@@ -253,6 +255,7 @@ export const getScriptUtils = ({
             script,
             diagnoses: [],
             form,
+            matchingSession,
             matched: script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
                 if (s.data.script.type !== 'discharge') {
                     Object.keys(s.data.entries).forEach(key => {

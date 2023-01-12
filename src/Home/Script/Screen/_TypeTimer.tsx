@@ -13,7 +13,7 @@ type TypeTimerProps = types.ScreenTypeProps & {
 export function TypeTimer({}: TypeTimerProps) {
     const ctx = useContext();
     const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
-    const matched = ctx?.matched?.autoFill;
+    const matched = ctx?.matched;
 
     const timoutRef = React.useRef<any>(null);
 
@@ -74,7 +74,7 @@ export function TypeTimer({}: TypeTimerProps) {
 
     React.useEffect(() => {
         if (canAutoFill) {
-            const _matched = (matched?.session?.data?.entries || {})[metadata.key || metadata.dataType]?.values?.value || [];
+            const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key || metadata.dataType]?.values?.value || [];
             if (_matched.length) onChange(`${_matched[0] || ''}`);
         }
     }, [canAutoFill, matched, metadata]);

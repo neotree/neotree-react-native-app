@@ -21,7 +21,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
 
     const opts = _opts.map(o => ({
         ...o,
-        matched: (ctx?.matched?.autoFill?.session?.data?.entries || {})[metadata.key],
+        matched: (ctx?.matched?.autoFill?.data?.entries || {})[metadata.key],
         onChange: () => {
             const value = o.value;
             setValue(o.value);

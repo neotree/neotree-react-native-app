@@ -12,7 +12,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     const metadata = ctx?.activeScreen?.data?.metadata;
     const cachedVal = ctx?.activeScreenEntry?.values || [];
     const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
-    const matched = ctx?.matched?.autoFill;
+    const matched = ctx?.matched;
 
     const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v) => ({
         ...acc,
@@ -66,7 +66,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     React.useEffect(() => {
         if (canAutoFill) {
             const _value: any = {};
-            const _matched = (matched?.session?.data?.entries || {})[metadata.key]?.values?.value || [];
+            const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key]?.values?.value || [];
             _matched.forEach((m: string) => { _value[m] = true; });
             if (_matched.length) onChange(_value);
         }

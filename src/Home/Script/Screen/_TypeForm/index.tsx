@@ -29,9 +29,9 @@ export function TypeForm({}: TypeFormProps) {
     };
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
-        const matched = !canAutoFill ? null : ((ctx?.matched?.autoFill?.session?.data?.entries || {})[f.key]?.values?.value || [])[0];
+        const matched = !canAutoFill ? null : ((ctx?.matched?.autoFill?.data?.entries || {})[f.key]?.values?.value || [])[0];
         return {
-            value: cachedVal.filter(v => v.key === f.key)[0]?.value || `${matched}` || null,
+            value: cachedVal.filter(v => v.key === f.key)[0]?.value || `${matched || ''}` || null,
             valueText: cachedVal.filter(v => v.key === f.key)[0]?.valueText || matched || null,
             label: f.label,
             key: f.key,
