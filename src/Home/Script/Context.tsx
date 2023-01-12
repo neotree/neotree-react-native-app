@@ -31,6 +31,9 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     location: null | types.Location;
     moreNavOptions: null | MoreNavOptions;
     summary: any;
+    matched: null | types.MatchedSession;
+    setMatched: React.Dispatch<React.SetStateAction<null | types.MatchedSession>>;
+    getBirthFacilities: () => any[];
     goNext: () => void;
     goBack: () => void;
     setEntries: React.Dispatch<React.SetStateAction<types.ScreenEntry[]>>;

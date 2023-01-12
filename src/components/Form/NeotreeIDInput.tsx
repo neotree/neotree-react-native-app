@@ -26,14 +26,16 @@ const validateUID = (value = '') => {
 };
 
 export type NeotreeIDInputProps = {
-    autoGenerateValue?: boolean,
-    label?: string,
-    onChange: (value: string) => void,
-    value?: any,
-    disabled?: boolean,
+    autoGenerateValue?: boolean;
+    label?: string;
+    onChange: (value: string) => void;
+    value?: any;
+    disabled?: boolean;
+    defaultValue?: string;
 };
 
 function Input({
+    defaultValue,
     autoGenerateValue,
     label,
     onChange,
@@ -45,12 +47,14 @@ function Input({
 
     const uid = `${uid_prefix}-${`000${(total_sessions_recorded || 0) + 1}`.slice(-4)}`;
 
+    const [mounted, setMounted] = React.useState(false);
+
     const firstHalfRef = React.useRef<RNTextInput>(null);
     const lastHalfRef = React.useRef<RNTextInput>(null);
     const [valueInitialised, setValueInitialised] = React.useState(false);
 
     const getDefault = () => {
-        const _uid = autoGenerateValue ? (uid || '') : '';
+        const _uid = autoGenerateValue ? (defaultValue || uid || '') : '';
         const [firstHalf, lastHalf] = _uid.split('-');
         return { uid: _uid, firstHalf: firstHalf || '', lastHalf: lastHalf || '', };
     };
@@ -58,6 +62,7 @@ function Input({
     const [_defaultVal] = React.useState(getDefault());
     const [firstHalf, setFirstHalf] = React.useState(`${value || ''}`.substring(0, 4) || _defaultVal.firstHalf);
     const [lastHalf, setLastHalf] = React.useState(`${value || ''}`.substring(5, 9) || _defaultVal.lastHalf);
+    const [uidValue, setUIDValue] = React.useState('');
 
     const _value = `${firstHalf}-${lastHalf}`;
     const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
@@ -66,21 +71,36 @@ function Input({
         // if (firstHalf.length === 4) lastHalfRef.current._root.focus();
     }, [firstHalf]);
 
+    // React.useEffect(() => {
+    //     const v = validateUID(_value).isValid ? _value : ''; // (value || _defaultVal.uid);
+    //     if (!valueInitialised || (v !== _value)) {
+    //         onChange(v);
+    //         setValueInitialised(true);
+    //     }
+    // }, [_value, valueInitialised]);
+
     React.useEffect(() => {
+        const _value = `${firstHalf}-${lastHalf}`;
         const v = validateUID(_value).isValid ? _value : ''; // (value || _defaultVal.uid);
-        if (!valueInitialised || (v !== _value)) {
-            onChange(v);
-            setValueInitialised(true);
-        }
-    }, [_value, valueInitialised]);
+        setUIDValue(v);
+    }, [firstHalf, lastHalf]);
+
+    React.useEffect(() => { onChange(uidValue); }, [uidValue]);
 
     React.useEffect(() => {
         if (value) {
             const [_firstHalf, _lastHalf] = (value || '').split('-');
             setFirstHalf(_firstHalf || _defaultVal.firstHalf);
             setLastHalf(_lastHalf || _defaultVal.lastHalf);
+        } else if (mounted) {
+            // setFirstHalf('');
+            // setLastHalf('');
         }
-    }, [value]);
+    }, [value, mounted]);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const disableLastHalf = !(!disabled && firstHalfIsValid);
     const error = !(firstHalfIsValid && lastHalfIsValid && !disabled) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);

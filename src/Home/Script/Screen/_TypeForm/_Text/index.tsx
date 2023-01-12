@@ -26,6 +26,7 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
             {isNeotreeID ? (
                 <NeotreeIDInput 
                     disabled={!conditionMet}
+                    defaultValue={ctx?.matched?.uid}
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
                     application={ctx?.application}

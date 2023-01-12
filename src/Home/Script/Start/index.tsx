@@ -3,6 +3,7 @@ import { Keyboard } from 'react-native';
 import { Box, Button, Content } from '../../../components';
 import { useContext } from '../Context';
 import { Search } from './Search';
+import { Transfer } from './Transfer';
 
 export function Start() {
     const ctx = useContext();
@@ -22,7 +23,8 @@ export function Start() {
         <Box flex={1} paddingTop="xl">
             <Box flex={1}>
                 <Content>
-                    <Search />
+                    {ctx?.script?.type === 'admission' && <Transfer />}
+                    {ctx?.script?.type === 'discharge' && <Search label="Search existing NUID" />}
                 </Content>
             </Box>
 
