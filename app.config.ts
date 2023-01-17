@@ -5,10 +5,7 @@ const appConfig = (() => {
     try {
         config = { ...config, ...require(`./config/config.json`) } // eslint-disable-line
     } catch (e) { /**/ }
-    return {
-        BUILD_TYPE,
-        ...config[BUILD_TYPE],
-    };
+    return { ...config[BUILD_TYPE], };
 })();
 
 const getBuldConfig = (config: any) => ({
@@ -48,6 +45,7 @@ export default ({ config }: any) => ({
     ...config,
     ...getBuldConfig(config),
     extra: { 
+        BUILD_TYPE,
         ...config.extra, 
         ...appConfig,
         ...getBuldConfig(config).extra

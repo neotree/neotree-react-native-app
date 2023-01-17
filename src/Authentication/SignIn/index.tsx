@@ -20,7 +20,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 				setLoggedIn(true);
 				setInitialiseDataFailed(false);
 				const res = await syncData();
-				ctx?.setAuthenticatedUser(res?.authenticatedUser);
+				ctx?.setSyncDataResponse(res);
 				onSignIn();
 			} catch(e) { 
 				console.log(e);
