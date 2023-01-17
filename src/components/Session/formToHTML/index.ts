@@ -62,8 +62,10 @@ export default (session: any, showConfidential?: boolean) => {
         `)}
 
         ${entries.filter((e: any) => e.values.length)
-          .map(({ values, screen: { metadata: { label } } }: any) => {
-            return values.filter((e: any) => e.confidential ? showConfidential : true).map((v: any) => {
+          .map(({ values, management, screen: { metadata: { label } } }: any) => {
+            management = management || [];
+
+            const valuesHTML = values.filter((e: any) => e.confidential ? showConfidential : true).map((v: any) => {
               return `
                 <div  class="row">
                   <span>${label || v.label}</span>
@@ -76,7 +78,28 @@ export default (session: any, showConfidential?: boolean) => {
                   </div>                  
                 </div>
               `;
-            }).join('')
+            }).join('');
+
+            let managementHTML = management.map((s: any) => {
+              const sections = [
+                { title: s.metadata.title1, image: s.metadata.image1?.data, text: s.metadata.text1, },
+                { title: s.metadata.title2, image: s.metadata.image2?.data, text: s.metadata.text2, },
+                { title: s.metadata.title3, image: s.metadata.image3?.data, text: s.metadata.text3, },
+              ].filter(s => s.title || s.text || s.image);
+              return sections.map(s => {
+                return [
+                  !s.title ? '' : `<div>${s.title}</div>`,
+                  !s.image ? '' : `<div><img style="width:auto;height:auto;max-width:100%;" src="${s.image}" /></div>`,
+                  !s.text ? '' : `<div>${s.text}</div>`,
+                ].filter(s => s).join('');
+              }).join('');
+            }).join('');
+            managementHTML = !managementHTML ? '' : `<div>${managementHTML}</div>`;
+
+            return `
+              <div>${valuesHTML}</div> 
+              <div>${managementHTML}</div>
+            `;
           }).join('')}
       `;
     }).join('');

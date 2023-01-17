@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Text } from "../../Theme";
 import { Br } from "../../Br";
 import { Content } from "../../Content";
+import { ManagementScreen } from '../../ManagementScreen';
 
 type EntriesProps = {
     entry: any;
@@ -9,6 +10,7 @@ type EntriesProps = {
 };
 
 export function Entry({ entry, matched }: EntriesProps) {
+    const management = entry.management || [];
     const { label, values } = entry;
 
     return (
@@ -39,6 +41,16 @@ export function Entry({ entry, matched }: EntriesProps) {
                                 })}
                             </Box>
                         )}
+
+                        {management.map((s: any) => {
+                            return (
+                                <Box key={s.screen_id}>
+                                    <ManagementScreen 
+                                        data={s.metadata}
+                                    />
+                                </Box>
+                            )
+                        })}
                     </Box>
                 );
             })}

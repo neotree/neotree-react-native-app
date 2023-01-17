@@ -1,5 +1,8 @@
 import React from 'react';
-import { Text, Card, Br, Image } from '../../../../components';
+import { Text } from '../Theme';
+import { Card } from '../Card';
+import { Image } from '../Image';
+import { Br } from '../Br';
 
 type MgtSectionProps = {
     title?: string;

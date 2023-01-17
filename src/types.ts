@@ -52,6 +52,7 @@ export type ScreenEntryValue = {
 export type ScreenEntry = {
   value?: ScreenEntryValue[];
   values: ScreenEntryValue[];
+  management: any[];
   screenIndex: number;
   screen: {
     title: string;
