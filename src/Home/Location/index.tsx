@@ -6,7 +6,7 @@ import { Content, LocationForm, OverlayLoader, Box } from "../../components";
 import * as api from '../../data';
 import * as types from '../../types';
 
-export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Configuration'>) {
+export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Location'>) {
 	const ctx = useAppContext();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 
