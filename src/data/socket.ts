@@ -18,40 +18,42 @@ export const sockets: { [key: string]: any; } = countries.reduce((acc, country) 
 }, {});
 
 export async function addSocketEventsListeners(listener: (e: any) => void) {
-    const loc = await getLocation();
-    const country = loc?.country;
+    try {
+        const loc = await getLocation();
+        const country = loc?.country;
 
-    if (country) {
-        const onEvent = (e: any) => setTimeout(() => listener && listener(e), 0);
+        if (country) {
+            const onEvent = (e: any) => setTimeout(() => listener && listener(e), 0);
 
-        const webeditorSocket = sockets[`${country}WebEditor`];
-        const nodeApiSocket = sockets[`${country}NodeApi`];
+            const webeditorSocket = sockets[`${country}WebEditor`];
+            const nodeApiSocket = sockets[`${country}NodeApi`];
 
-        if (webeditorSocket) {
-            webeditorSocket.on('data_updated', (data: any) => onEvent({
-                name: 'data_updated',
-                ...data
-            }));
+            if (webeditorSocket) {
+                webeditorSocket.on('data_updated', (data: any) => onEvent({
+                    name: 'data_updated',
+                    ...data
+                }));
 
-            webeditorSocket.on('data_published', (data: any) => onEvent({
-                name: 'data_published',
-                ...data
-            }));
+                webeditorSocket.on('data_published', (data: any) => onEvent({
+                    name: 'data_published',
+                    ...data
+                }));
 
-            webeditorSocket.on('changes_discarded', (data: any) => onEvent({
-                name: 'changes_discarded',
-                ...data
-            }));
-        }
+                webeditorSocket.on('changes_discarded', (data: any) => onEvent({
+                    name: 'changes_discarded',
+                    ...data
+                }));
+            }
 
-        if (nodeApiSocket) {
-            nodeApiSocket.on('sessions_exported', (data: any) => {
-                getExportedSessions().then(() => {}).catch(() => {}); // these will load all the exported sessions that are not on this device
-                onEvent({
-                name: 'sessions_exported',
-                ...data
+            if (nodeApiSocket) {
+                nodeApiSocket.on('sessions_exported', (data: any) => {
+                    getExportedSessions().then(() => {}).catch(() => {}); // these will load all the exported sessions that are not on this device
+                    onEvent({
+                    name: 'sessions_exported',
+                    ...data
+                    });
                 });
-            });
+            }
         }
-    }
+    } catch(e) { /**/ }
 }
