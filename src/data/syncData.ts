@@ -23,17 +23,23 @@ export async function syncData(opts?: { force?: boolean; }) {
         deviceId = await Application.getIosIdForVendorAsync();
     }
 
+    let last_sync_date = null;
+
     if (authenticatedUser && networkState?.isInternetReachable) {
         const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
         const deviceRegJSON = await deviceReg.json();
 
         const app = await getApplication();
 
+        last_sync_date = app?.last_sync_date;
+
         const shouldSync = opts?.force || 
             (app?.mode === 'development') ||
             !((app?.mode === 'production') && (deviceRegJSON?.info?.version === app?.webeditor_info?.version));
 
         if (shouldSync) {
+            last_sync_date = new Date().toISOString();
+
             const res = await makeApiCall(
                 'webeditor',
                 `/sync-data?${queryString.stringify({ deviceId, })}`,
@@ -116,7 +122,7 @@ export async function syncData(opts?: { force?: boolean; }) {
             let application = {
                 id: 1,
                 mode: _application?.mode || 'production',
-                last_sync_date: new Date().toISOString(),
+                last_sync_date,
                 uid_prefix: _application?.uid_prefix || device?.device_hash,
                 total_sessions_recorded: Math.max(_application?.total_sessions_recorded || 0, device?.details?.scripts_count || 0),
                 device_id: _application?.device_id || device?.device_id || deviceId,
@@ -140,5 +146,6 @@ export async function syncData(opts?: { force?: boolean; }) {
     return { 
         authenticatedUser, 
         application: _app,
+        last_sync_date,
     };
 }  

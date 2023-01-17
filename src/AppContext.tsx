@@ -22,8 +22,8 @@ export function AppContextProvider({ children }: React.PropsWithChildren<{}>) {
         <AppContext.Provider 
             value={{
                 authenticatedUser,
-                setAuthenticatedUser,
                 application,
+                setAuthenticatedUser,
                 setApplication,
                 setSyncDataResponse: res => {
                     setAuthenticatedUser(res?.authenticatedUser);

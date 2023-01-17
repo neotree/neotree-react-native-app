@@ -1,6 +1,7 @@
 import { useIsFocused } from '@react-navigation/native';
 import React from 'react';
 import { FlatList, TouchableOpacity } from "react-native";
+import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box } from '../../components';
 import { getScripts } from '../../data';
 import * as types from '../../types';
@@ -8,19 +9,28 @@ import * as types from '../../types';
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
 	const isFocused = useIsFocused();
 
+	const ctx = useAppContext();
+	const application = ctx?.application;
+
+	const [scriptsInitialised, setScriptsInitialised] = React.useState(false);
 	const [loadingScripts, setLoadingScripts] = React.useState(false);
 	const [scripts, setScripts] = React.useState<types.Script[]>([]);
 
-	const loadScripts = React.useCallback(() => {
+	const loadScripts = React.useCallback((showLoader = true) => {
 		(async () => {
-			setLoadingScripts(true);
+			if (showLoader) setLoadingScripts(true);
 			const scripts = await getScripts();
 			setScripts(scripts);
 			setLoadingScripts(false);
+			setScriptsInitialised(true);
 		})();
 	}, []);
 
 	React.useEffect(() => { if (isFocused) loadScripts(); }, [isFocused]);
+
+	React.useEffect(() => { 
+		if (isFocused && scriptsInitialised) loadScripts(false); 
+	}, [isFocused, scriptsInitialised, application]);
 
 	return (
 		<Box
