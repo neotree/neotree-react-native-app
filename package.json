@@ -9,7 +9,10 @@
     "web": "expo start --web",
     "lint": "eslint --ext .ts,.tsx . --max-warnings 0",
     "tsc": "tsc",
-    "ci": "yarn lint && yarn tsc"
+    "ci": "yarn lint && yarn tsc",
+    "build:demo": "cross-env BUILD_TYPE=demo eas build --platform android --profile preview",
+    "build:stage": "cross-env BUILD_TYPE=stage eas build --platform android --profile preview",
+    "build:prod": "cross-env BUILD_TYPE=production eas build --platform android --profile preview"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
@@ -22,6 +25,7 @@
     "@react-navigation/native-stack": "^6.9.1",
     "@shopify/restyle": "^2.1.0",
     "axios": "^1.2.0",
+    "cross-env": "^7.0.3",
     "expo": "~47.0.3",
     "expo-av": "~13.0.2",
     "expo-constants": "~14.0.2",
