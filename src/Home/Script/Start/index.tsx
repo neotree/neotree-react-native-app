@@ -1,6 +1,6 @@
 import React from 'react';
 import { Keyboard } from 'react-native';
-import { Box, Button, Content } from '../../../components';
+import { Box, Button, Content, Text } from '../../../components';
 import { useContext } from '../Context';
 import { Search } from './Search';
 import { Transfer } from './Transfer';
@@ -23,24 +23,35 @@ export function Start() {
         <Box flex={1} paddingTop="xl">
             <Box flex={1}>
                 <Content>
-                    {ctx?.script?.type === 'admission' && <Transfer />}
-                    {ctx?.script?.type === 'discharge' && <Search label="Search existing NUID" />}
+                    {/* {ctx?.script?.type === 'admission' && <Transfer />} */}
+                    {ctx?.script?.type === 'discharge' ? 
+                        <Search label="Search existing NUID" />
+                        :
+                        <Transfer />}
                 </Content>
             </Box>
 
             {keyboardIsOpen ? null : (
-                <Box 
-                    alignContent="center" 
-                    justifyContent="center"
+                <Box  
+                    borderTopColor="divider"
+                    borderTopWidth={1}
                 >
                     <Content>
+                        {!ctx?.matched?.session && (
+                            <Box
+                                padding="m"
+                            >
+                                <Text textAlign="center">Start a new session</Text>
+                            </Box>
+                        )}
+
                         <Button
                             disabled={!ctx?.screens?.length}
                             onPress={() => {
                                 ctx?.setActiveScreen(ctx?.screens[0]);
                                 ctx?.setActiveScreenIndex(0);
                             }}
-                        >Start</Button>
+                        >{ctx?.matched?.session ? 'Continue' : 'Start'}</Button>
                     </Content>
                 </Box>
             )}

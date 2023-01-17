@@ -28,6 +28,7 @@ export function Search({ onSession, label }: SearchProps) {
     const [sessionType, setSessionType] = React.useState('admission');
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
     const [facility, setFacility] = React.useState<null | types.Facility>(null);
+    const [searched, setSearched] = React.useState('');
 
     const [searching, setSearching] = React.useState(false);
 
@@ -37,6 +38,7 @@ export function Search({ onSession, label }: SearchProps) {
             const sessions = await api.getExportedSessionsByUID(uid);
             setSessions(sessions);
             setSearching(false);
+            setSearched(uid);
         })();
     }, [uid]);
 
@@ -150,7 +152,11 @@ export function Search({ onSession, label }: SearchProps) {
                             return [];
                         })())}
                     </>
-                ) : null}
+                ) : (
+                    <>
+                        {!searched ? null : <Text textAlign="center" color="textSecondary">No results found</Text>}
+                    </>
+                )}
             </ScrollView>
         </Box>
     );

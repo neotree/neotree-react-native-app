@@ -310,6 +310,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 						setEntry({
 							values,
 							screenIndex: activeScreenIndex,
+							management: screens
+								.filter(s => [activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
+								.map(s => s.data),
 							screen: {
 								title: activeScreen.data.title,
 								sectionTitle: activeScreen.data.sectionTitle,

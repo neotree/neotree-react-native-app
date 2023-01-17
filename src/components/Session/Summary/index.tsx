@@ -25,46 +25,51 @@ export function Summary({
 
             <Wrapper>
                 {form.filter(({ values, screen }: any) => values.length && !excludeScreenTypes.includes(screen.type))
-                    .map(({ screen, values }: any) => {
-                    values = values.reduce((acc: any, e: any) => [
-                        ...acc,
-                        ...(e.value && e.value.map ? e.value : [e]),
-                    ], []);
-                    
-                    const metadata = screen.metadata;
+                    .map(({ screen, values, management }: any) => {
+                        management = management || [];
 
-                    let entries = null;
+                        values = values.reduce((acc: any, e: any) => [
+                            ...acc,
+                            ...(e.value && e.value.map ? e.value : [e]),
+                        ], []);
+                        
+                        const metadata = screen.metadata;
 
-                    switch (screen.type) {
-                        case 'diagnosis':
-                            const accepted = values.filter((v: any) => v.diagnosis.how_agree !== 'No');
-                            entries = [
-                                {
-                                    label: 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
-                                    values: accepted,
-                                },
-                            ]; // .filter(v => v.values.length);
-                            break;
-                        case 'form':
-                            entries = values
-                                .filter((e: any) => e.confidential ? showConfidential : true)
-                                .map((entry: any) => ({
-                                    label: entry.label,
-                                    values: [entry]
-                                }));
-                            break;
-                        default:
-                            entries = [{
-                                label: screen.sectionTitle || metadata.label,
-                                values,
-                            }];
-                    }
+                        let entries = null;
 
-                    return !entries ? null : entries.map((e: any, i: any) => {
-                        const key = `${screen.id}${i}`;
-                        return <Entry key={key} entry={e} matched={matched || []} />;
-                    });
-                })}
+                        switch (screen.type) {
+                            case 'diagnosis':
+                                const accepted = values.filter((v: any) => v.diagnosis.how_agree !== 'No');
+                                entries = [
+                                    {
+                                        label: 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
+                                        values: accepted,
+                                        management: [],
+                                    },
+                                ]; // .filter(v => v.values.length);
+                                break;
+                            case 'form':
+                                entries = values
+                                    .filter((e: any) => e.confidential ? showConfidential : true)
+                                    .map((entry: any) => ({
+                                        label: entry.label,
+                                        values: [entry],
+                                        management: [],
+                                    }));
+                                break;
+                            default:
+                                entries = [{
+                                    label: screen.sectionTitle || metadata.label,
+                                    values,
+                                    management,
+                                }];
+                        }
+
+                        return !entries ? null : entries.map((e: any, i: any) => {
+                            const key = `${screen.id}${i}`;
+                            return <Entry key={key} entry={e} matched={matched || []} />;
+                        });
+                    })}
             </Wrapper>
         </Box>
     )
