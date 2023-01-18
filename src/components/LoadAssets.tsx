@@ -1,5 +1,5 @@
 import React, { ReactElement, useCallback, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Asset } from "expo-asset";
 import * as Font from "expo-font";
 import { InitialState, NavigationContainer } from "@react-navigation/native";
@@ -40,7 +40,7 @@ export interface LoadAssetsProps {
 }
 
 export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAssetsProps) => {
-    const [isNavigationReady, setIsNavigationReady] = useState(!__DEV__);
+    const [isNavigationReady, setIsNavigationReady] = useState(true); // useState(!__DEV__);
     const [initialState, setInitialState] = useState<InitialState | undefined>();
     const [dataInitialised, setDataInitialised] = useState(false);
     const ready = useLoadAssets(assets || [], fonts || {});
@@ -55,9 +55,9 @@ export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAsse
     useEffect(() => {
         const restoreState = async () => {
             try {
-                const savedStateString = await AsyncStorage.getItem(NAVIGATION_STATE_KEY);
-                const state = savedStateString ? JSON.parse(savedStateString) : undefined;
-                setInitialState(state);
+                // const savedStateString = await AsyncStorage.getItem(NAVIGATION_STATE_KEY);
+                // const state = savedStateString ? JSON.parse(savedStateString) : undefined;
+                // setInitialState(state);
             } finally {
                 setIsNavigationReady(true);
             }
