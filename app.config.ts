@@ -9,6 +9,14 @@ const appConfig = (() => {
 })();
 
 const getBuldConfig = (config: any) => ({
+    ...(BUILD_TYPE === 'development' ? {
+        extra: {
+            eas: {
+                projectId: '88713878-bb93-4e2d-b54f-ed71db372a81',
+            }, 
+        },
+    } : null),
+
     ...(BUILD_TYPE === 'demo' ? {
         // version: `${config.version}-DEMO`,
         name: `${config.name} (DEMO)`,
