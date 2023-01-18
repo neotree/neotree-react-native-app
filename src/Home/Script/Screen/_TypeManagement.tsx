@@ -1,7 +1,7 @@
 import React from 'react';
-import { Box, ManagementScreen } from '../../../../components';
-import { useContext } from '../../Context';
-import * as types from '../../../../types';
+import { Box, ManagementScreen } from '../../../components';
+import { useContext } from '../Context';
+import * as types from '../../../types';
 
 type TypeManagementProps = types.ScreenTypeProps & {
     
