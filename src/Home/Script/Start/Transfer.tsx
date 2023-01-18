@@ -34,7 +34,12 @@ export function Transfer({}: TransferProps) {
 
             <Br spacing="xl" />
 
-            {isTransferred && <Search label="Search patient's NUID" />}
+            {isTransferred && (
+				<Search 
+					label="Search patient's NUID" 
+					autofillKeys={['BirthFacility', 'OtherBirthFacility']}
+				/>
+			)}
         </Box>
     )
 }

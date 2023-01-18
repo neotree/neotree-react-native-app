@@ -1,7 +1,7 @@
 import React from 'react';
-import { Box, NeotreeIDInput, TextInput } from '../../../../../components';
-import * as types from '../../../../../types';
-import { useContext } from '../../../Context';
+import { Box, NeotreeIDInput, TextInput } from '../../../../components';
+import * as types from '../../../../types';
+import { useContext } from '../../Context';
 
 type TextFieldProps = types.ScreenFormTypeProps & {
     
@@ -11,7 +11,7 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
     const ctx = useContext();
     const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
 
-    const [value, setValue] = React.useState(entryValue?.value);
+    const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? ctx?.matched?.uid : '') || '');
     const [error, setError] = React.useState('');
 
     React.useEffect(() => { 

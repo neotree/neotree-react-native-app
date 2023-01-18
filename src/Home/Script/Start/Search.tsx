@@ -9,6 +9,7 @@ import { useContext } from '../Context';
 type SearchProps = {
     onSession?: (data: null | types.MatchedSession) => void;
     label: string;
+	autofillKeys?: string[];
 };
 
 function getSessionFacility(session: any) {
@@ -20,7 +21,7 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
-export function Search({ onSession, label }: SearchProps) {    
+export function Search({ onSession, label, autofillKeys }: SearchProps) {    
     const ctx = useContext();
 
     const [uid, setUID] = React.useState('');
@@ -63,7 +64,13 @@ export function Search({ onSession, label }: SearchProps) {
                                     checked={selected}
                                     onChange={() => {
                                         const session = selected ? null : s;
-                                        const matched = session ? { session, uid, facility: facility as types.Facility, autoFill: session, } : null;
+										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
+										if (autoFill && autofillKeys) {
+											autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
+												if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
+											}, {});
+										}
+                                        const matched = session ? { session, uid, facility: facility as types.Facility, autoFill, } : null;
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
                                         ctx?.setMatched(matched);
