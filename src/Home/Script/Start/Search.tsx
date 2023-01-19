@@ -68,6 +68,7 @@ export function Search({ onSession, label, autofillKeys }: SearchProps) {
 										if (autoFill && autofillKeys) {
 											autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
 												if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
+                                                return acc;
 											}, {});
 										}
                                         const matched = session ? { session, uid, facility: facility as types.Facility, autoFill, } : null;
