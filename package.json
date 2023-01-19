@@ -9,9 +9,9 @@
     "lint": "eslint --ext .ts,.tsx . --max-warnings 0",
     "tsc": "tsc",
     "ci": "yarn lint && yarn tsc",
-    "build:demo": "cross-env BUILD_TYPE=demo eas build --platform android --profile preview2",
-    "build:stage": "cross-env BUILD_TYPE=stage eas build --platform android --profile preview2",
-    "build:prod": "cross-env BUILD_TYPE=production eas build --platform android --profile preview2"
+    "build:demo": "cross-env NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
+    "build:stage": "cross-env NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage",
+    "build:prod": "cross-env NEOTREE_BUILD_TYPE=production eas build --platform android --profile production"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",

@@ -1,15 +1,15 @@
-const BUILD_TYPE = process.env.BUILD_TYPE || 'development';
+const NEOTREE_BUILD_TYPE = process.env.NEOTREE_BUILD_TYPE || 'development';
 
 const appConfig = (() => {
     let config: any = {};
     try {
         config = { ...config, ...require(`./config/config.json`) } // eslint-disable-line
     } catch (e) { /**/ }
-    return { ...config[BUILD_TYPE], };
+    return { ...config[NEOTREE_BUILD_TYPE], };
 })();
 
 const getBuldConfig = (config: any) => ({
-    ...(BUILD_TYPE === 'development' ? {
+    ...(NEOTREE_BUILD_TYPE === 'development' ? {
         extra: {
             eas: {
                 projectId: '88713878-bb93-4e2d-b54f-ed71db372a81',
@@ -17,7 +17,7 @@ const getBuldConfig = (config: any) => ({
         },
     } : null),
 
-    ...(BUILD_TYPE === 'demo' ? {
+    ...(NEOTREE_BUILD_TYPE === 'demo' ? {
         // version: `${config.version}-DEMO`,
         name: `${config.name} (DEMO)`,
         slug: `${config.slug}-demo`,
@@ -28,7 +28,7 @@ const getBuldConfig = (config: any) => ({
         },
     } : null),
 
-    ...(BUILD_TYPE === 'stage' ? {
+    ...(NEOTREE_BUILD_TYPE === 'stage' ? {
         // version: `${config.version}-DEV`,
         name: `${config.name} (DEV)`,
         slug: `${config.slug}-dev`,
@@ -39,7 +39,7 @@ const getBuldConfig = (config: any) => ({
         },
     } : null),
 
-    ...(BUILD_TYPE === 'production' ? {
+    ...(NEOTREE_BUILD_TYPE === 'production' ? {
         // version: `${config.version}-PROD`,
         extra: {
             eas: {
@@ -53,7 +53,7 @@ export default ({ config }: any) => ({
     ...config,
     ...getBuldConfig(config),
     extra: { 
-        BUILD_TYPE,
+        NEOTREE_BUILD_TYPE,
         ...config.extra, 
         ...appConfig,
         ...getBuldConfig(config).extra
