@@ -15,7 +15,30 @@
         "buildType": "apk"
       }
     },
-    "production": {}
+    "demo": {
+		"env": {
+			"NEOTREE_BUILD_TYPE": "demo"
+		},
+		"android": {
+			"buildType": "apk"
+		}
+	},
+	"stage": {
+		"env": {
+			"NEOTREE_BUILD_TYPE": "stage"
+		},
+		"android": {
+			"buildType": "apk"
+		}
+	},
+	"production": {
+		"env": {
+			"NEOTREE_BUILD_TYPE": "production"
+		},
+		"android": {
+			"buildType": "apk"
+		}
+	}
   },
   "submit": {
     "production": {}
