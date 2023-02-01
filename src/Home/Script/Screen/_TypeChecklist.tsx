@@ -23,7 +23,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
         setValue(_value);
         const keys = Object.keys(_value).filter(key => _value[key]);
         ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
-            const item = metadata.items.filter((item: any) => item.key === value)[0];
+            const item = (metadata.items || []).filter((item: any) => item.key === value)[0];
             return [
                 ...acc,
                 {
@@ -55,9 +55,9 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
         onChange: (selectValue: boolean) => {
             let form = { ...value };
             if (item.exclusive) {
-                form = { [item.value]: selectValue, };
+                form = { [item.key]: selectValue, };
             } else {
-                form = { ...value, [item.value]: selectValue, };
+                form = { ...value, [item.key]: selectValue, };
             }
             onChange(form);
         },
