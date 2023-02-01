@@ -113,7 +113,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(
 					screens
-						// .filter(s => ['zw_edliz_summary_table', 'mwi_edliz_summary_table', 'edliz_summary_table'].includes(s.type))
+						.filter(s => ['checklist'].includes(s.type))
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
