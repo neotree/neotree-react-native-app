@@ -16,7 +16,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
 
     const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v) => ({
         ...acc,
-        [v.value]: false,
+        [v.value]: true,
     }), {}));
 
     function onChange(_value: typeof value) {
