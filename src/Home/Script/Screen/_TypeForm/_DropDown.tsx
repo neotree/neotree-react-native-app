@@ -33,9 +33,13 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
                 searchable={opts.length > 5}
                 value={value}
                 options={opts}
-                onChange={val => {
+                onChange={(val, o) => {
                     setValue(`${val || ''}`);
-                    onChange({ value: val, });
+                    onChange({ 
+						value: val, 
+						valueLabel: o.label,
+          				valueText: !(val && o) ? null : o.label,
+					});
                 }}
             />
         </Box>

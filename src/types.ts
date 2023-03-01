@@ -38,6 +38,7 @@ export type Configuration = any;
 export type ScreenEntryValue = {
   value?: any;
   valueText?: any;
+  valueLabel?: any;
   label?: string;
   key?: string;
   type?: string;
