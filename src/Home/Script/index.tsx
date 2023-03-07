@@ -9,7 +9,7 @@ import * as api from '../../data';
 
 import { Start } from './Start';
 import { Screen } from './Screen';
-import { Context, MoreNavOptions } from './Context';
+import { Context, MoreNavOptions, ContextType } from './Context';
 import { getScriptUtils } from './utils';
 import { Alert } from 'react-native';
 import { Summary } from './Summary';
@@ -26,6 +26,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [matched, setMatched] = React.useState<types.MatchedSession | null>(null);
 
 	const [mountedScreens, setMountedScreens] = React.useState<{ [id: string]: boolean; }>({});
+
+	const [sessionID, setSessionID] = React.useState<ContextType['sessionID']>(route.params?.session?.id || null);
 
 	const [application, setApplication] = React.useState<null | types.Application>(null);
 	const [location, setLocation] = React.useState<null | types.Location>(null);
@@ -47,8 +49,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [activeScreen, setActiveScreen] = React.useState<null | types.Screen>(null);
 	const [activeScreenIndex, setActiveScreenIndex] = React.useState(0);
 
-	const [entries, setEntries] = React.useState<types.ScreenEntry[]>([]);
-  	const [cachedEntries, setCachedEntries] = React.useState<types.ScreenEntry[]>([]);
+	const [entries, setEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
+  	const [cachedEntries, setCachedEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
 	const setCacheEntry = (entry: types.ScreenEntry) => !entry ? null : setCachedEntries(entries => {
 		const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
 		return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
@@ -70,6 +72,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const activeScreenEntry = entries.filter(e => e.screenIndex === activeScreenIndex)[0];
 
 	const utils = getScriptUtils({
+		script_id: route.params.script_id,
 		script,
 		activeScreen,
 		activeScreenIndex,
@@ -83,14 +86,28 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		application,
 		startTime,
 		matchingSession: matched?.session || null,
+		session: route.params?.session,
 	});
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
-		setDisplayLoader(true);
 		const summary = utils.createSessionSummary(params);
 		(async () => {
 			try {
-				await api.saveSession(summary);
+				const res = await api.saveSession({
+					id: sessionID,
+					...summary
+				});
+				setSessionID(res?.sessionID);
+				resolve(summary);
+			} catch (e) { reject(e); }
+		})();
+	});
+
+	const createSummaryAndSaveSession = (params?: any) => new Promise((resolve, reject) => {
+		setDisplayLoader(true);
+		(async () => {
+			try {
+				const summary = await saveSession(params);
 				setSummary(summary);
 				resolve(summary);
 			} catch (e) { reject(e); }
@@ -117,6 +134,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
+				if (route.params?.session) {
+					setActiveScreen(screens[0]);
+					setActiveScreenIndex(0);
+				}
 			} catch (e: any) { console.log(e); setLoadScriptError(e.message); }
 		})();
 	}, [navigation, route]);
@@ -150,7 +171,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 
 		if (activeScreen?.id === lastScreen?.id) {
-			const summary = await saveSession({ completed: true });
+			const summary = await createSummaryAndSaveSession({ completed: true });
 			setSummary(summary);
 		} else {
 			if (nextScreen) {
@@ -159,6 +180,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setActiveScreenIndex(nextScreenIndex);
 				setActiveScreen(nextScreen);
 				setTimeout(() => setRefresh(false), 10);
+
+				saveSession();
 			} else {
 				Alert.alert(
 					'ERROR',
@@ -192,6 +215,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setActiveScreenIndex(prev.index);
 				setActiveScreen(prev.screen);
 				setTimeout(() => setRefresh(false), 10);
+
+				saveSession();
 			}
 		}
 	};
@@ -284,7 +309,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				moreNavOptions,
 				summary,	
 				matched,
-				mountedScreens,				
+				mountedScreens,		
+				sessionID,
+				script_id: route.params.script_id,
+				saveSession,
+				createSummaryAndSaveSession,
+				setSessionID,		
 				setMountedScreens,
 				setMatched,
 				getBirthFacilities,
@@ -356,7 +386,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 										label: 'Yes',
 										onPress: () => {
 											(async () => {
-												await saveSession({ cancelled: true, });
+												await createSummaryAndSaveSession({ cancelled: true, });
 												navigation.navigate('Home');
 												setShoultConfirmExit(false);
 											})();

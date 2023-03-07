@@ -37,6 +37,7 @@ const parseConditionString = (condition: string, _key = '', value: any) => {
 };
 
 type UtilsParams = {
+	script_id: string | number;
     script: types.Script;
     activeScreen: types.Screen;
     activeScreenIndex: number;
@@ -50,9 +51,11 @@ type UtilsParams = {
     location: null | types.Location;
     startTime: string;
     matchingSession: any;
+	session?: any;
 };
   
 export const getScriptUtils = ({
+	script_id,
     script,
     activeScreen,
     activeScreenIndex,
@@ -66,6 +69,7 @@ export const getScriptUtils = ({
     location,
     startTime,
     matchingSession,
+	session,
 }: UtilsParams) => {
     const matches: any[] = [];
 
@@ -243,30 +247,30 @@ export const getScriptUtils = ({
         return {
             ...payload,
             uid, //: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
-            script_id: activeScreen.script_id,
+            script_id: activeScreen?.script_id || script_id,
             data: {
-            unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
-            app_mode: application?.mode,
-            country: location?.country,
-            hospital_id: location?.hospital,
-            started_at: startTime,
-            completed_at: completed ? new Date().toISOString() : null,
-            canceled_at: cancelled ? new Date().toISOString() : null,
-            script,
-            diagnoses: [],
-            form,
-            matchingSession,
-            matched: script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
-                if (s.data.script.type !== 'discharge') {
-                    Object.keys(s.data.entries).forEach(key => {
-                        if (neolabKeys.includes(key)) acc.push({ key, ...s.data.entries[key] });
-                    });
-                    // Object.keys(s.data.entries).forEach(key => {
-                    //   acc.push({ key, ...s.data.entries[key] });
-                    // });
-                }
-                return acc;
-            }, []),
+				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
+				app_mode: application?.mode,
+				country: location?.country,
+				hospital_id: location?.hospital,
+				started_at: session?.data?.started_at || startTime,
+				completed_at: completed ? new Date().toISOString() : null,
+				canceled_at: cancelled ? new Date().toISOString() : null,
+				script,
+				diagnoses: [],
+				form,
+				matchingSession: session?.data?.matchingSession || matchingSession,
+				matched: session?.data?.matched || (script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
+					if (s.data.script.type !== 'discharge') {
+						Object.keys(s.data.entries).forEach(key => {
+							if (neolabKeys.includes(key)) acc.push({ key, ...s.data.entries[key] });
+						});
+						// Object.keys(s.data.entries).forEach(key => {
+						//   acc.push({ key, ...s.data.entries[key] });
+						// });
+					}
+					return acc;
+				}, [])),
             },
         };
     };      
