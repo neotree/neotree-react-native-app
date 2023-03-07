@@ -48,8 +48,13 @@ export function Start() {
                         <Button
                             disabled={!ctx?.screens?.length}
                             onPress={() => {
-                                ctx?.setActiveScreen(ctx?.screens[0]);
-                                ctx?.setActiveScreenIndex(0);
+                                (async () => {
+									try {
+										ctx?.setActiveScreen(ctx?.screens[0]);
+										ctx?.setActiveScreenIndex(0);
+										ctx?.saveSession();
+									} catch(e) { /**/ }
+								})();
                             }}
                         >{ctx?.matched?.session ? 'Continue' : 'Start'}</Button>
                     </Content>

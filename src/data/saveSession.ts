@@ -2,7 +2,7 @@ import { dbTransaction } from './db';
 import { makeApiCall } from './api';
 import { exportSessions } from './exportSessions';
 
-export const saveSession = (data: any = {}) => new Promise((resolve, reject) => {
+export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject) => {
 (async () => {
     const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
         .filter(c => c)
@@ -23,10 +23,13 @@ export const saveSession = (data: any = {}) => new Promise((resolve, reject) => 
         data.updatedAt || new Date().toISOString(),
     ];
 
+	let sessionID = null;
+
     try {
         await dbTransaction(
             `insert or replace into sessions (${columns}) values (${values});`,
             params,
+			(_, rslts) => { sessionID = data.id || rslts.insertId; }
         );
     } catch (e) { return reject(e); }
 
@@ -59,6 +62,6 @@ export const saveSession = (data: any = {}) => new Promise((resolve, reject) => 
         exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
     } catch (e) { /* DO NOTHING */ }
 
-    resolve({ application });
+    resolve({ application, sessionID });
 })();
 });

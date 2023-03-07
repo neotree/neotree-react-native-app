@@ -2,16 +2,18 @@ import * as SQLite from 'expo-sqlite';
 
 export const db = SQLite.openDatabase('db.db');
 
-export const dbTransaction = (q: string, data: any = null) => new Promise<any[]>((resolve, reject) => {
+export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
     db.transaction(
         tx => {
             tx.executeSql(
                 q,
                 data,
                 (_, rslts) => {
+					if (cb) cb(null, rslts);
                     resolve(rslts.rows._array);
                 },
                 (_, e) => { 
+					if (cb) cb(e);
                     reject(e); 
                     return true; 
                 }

@@ -17,6 +17,8 @@ export type MoreNavOptions = {
 };
 
 export type ContextType = ReturnType<typeof getScriptUtils> & {
+	script_id: string | number;
+	sessionID: null | number | string;
     script: types.Script;
     activeScreen: types.Screen;
     activeScreenIndex: number;
@@ -33,6 +35,9 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     summary: any;
     matched: null | types.MatchedSession;
     mountedScreens: { [id: string]: boolean; };
+	saveSession: (params?: any) => Promise<any>;
+	createSummaryAndSaveSession: (params?: any) => Promise<any>;
+	setSessionID: React.Dispatch<React.SetStateAction<string | number | null>>;
     setMountedScreens: React.Dispatch<React.SetStateAction<{ [id: string]: boolean; }>>;
     setMatched: React.Dispatch<React.SetStateAction<null | types.MatchedSession>>;
     getBirthFacilities: () => any[];

@@ -122,6 +122,7 @@ export type HomeRoutes = {
   Script: { 
     script_id: string; 
     screen_id?: string;
+	session?: any;
   };
   Configuration: undefined;
   Location: undefined;

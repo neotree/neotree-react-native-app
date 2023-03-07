@@ -6,7 +6,7 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import * as types from '../../types';
 import * as api from '../../data';
-import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader } from '../../components';
+import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, useTheme } from '../../components';
 import exportData from './export';
 import { Session } from './Session';
 
@@ -38,6 +38,8 @@ const exportFormats = [
 const deleteTypes = exportTypes.filter((_, i) => i !== 1);
 
 export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Sessions'>) {
+	const theme = useTheme();
+
 	const isFocused = useIsFocused();
 
 	const [pageInitialised, setPageInitialised] = React.useState(false);
@@ -392,6 +394,44 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											</>
 										)}
 
+										{!(item.data.completed_at || item.data.canceled_at) && (
+											<>
+												<Box flexDirection="row">
+													<Box 
+														backgroundColor="error"
+														paddingVertical="s"
+														paddingHorizontal="m"
+														borderRadius="xl"
+													>
+														<Text
+															textAlign="center"
+															variant="caption"
+															color="successContrastText"
+														>Interrupted</Text>
+													</Box>	
+
+													<View style={{ marginLeft: 'auto' }} />
+
+													<Box>
+														<TouchableOpacity
+															onPress={() => navigation.navigate('Script', {
+																script_id: item.script_id,
+																session: item,
+															})}
+														>
+															<Icon
+																name="edit"
+																size={24}
+																color={theme.colors.textDisabled}
+															/>
+														</TouchableOpacity>
+													</Box>											
+												</Box>
+												
+												<Br spacing="m" />
+											</>
+										)}
+
 										<Box flexDirection="row">
 											<View style={{ flex: 1 }}>
 												<Text color="textSecondary">Creation date</Text>
@@ -401,10 +441,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											</View>
 
 											<View style={{ flex: 1 }}>
-												<Text color="textSecondary">Completion date</Text>
+												<Text color="textSecondary">{`${item.data.canceled_at ? 'Cancellation' : 'Completion'}`} date</Text>
 												<Text>
-													{item.data.completed_at ?
-														moment(new Date(item.data.completed_at)).format('DD MMM, YYYY HH:mm')
+													{(item.data.canceled_at || item.data.completed_at) ?
+														moment(new Date(item.data.canceled_at || item.data.completed_at)).format('DD MMM, YYYY HH:mm')
 														:
 														'N/A'}
 												</Text>
