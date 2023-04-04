@@ -1,6 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
-import { Box, Text, Modal, Card, Br, TextInput } from '../../../../components';
+import { TouchableOpacity, View, FlatList } from 'react-native';
+import { Box, Text, Modal, Card, Br, TextInput, CONTENT_STYLES } from '../../../../components';
 import * as types from '../../../../types';
 import { useContext } from '../../Context';
 
@@ -51,18 +51,123 @@ export function SelectDiagnoses({
     return (
         <>
             <Box>
-                {!!ctx?.activeScreen?.data?.instructions && (
-                    <>
-                        <Box>
-                            <Text color="primary">Instructions</Text>
-                            <Text variant="caption">{ctx?.activeScreen?.data?.instructions}</Text>
-                        </Box>
-                    </>
-                )}
+				<FlatList 
+					data={items}
+					keyExtractor={(_, index) => `${index}`}
+					ListHeaderComponent={(
+						<>
+							{!!ctx?.activeScreen?.data?.instructions && (
+								<>
+									<Box>
+										<Text color="primary">Instructions</Text>
+										<Text variant="caption">{ctx?.activeScreen?.data?.instructions}</Text>
+									</Box>
+								</>
+							)}
 
-                <Br spacing="xl" />
+							<Br spacing="xl" />
+						</>
+					)}
+					centerContent
+					contentContainerStyle={{
+						...CONTENT_STYLES,
+						marginLeft: 'auto',
+						marginRight: 'auto',
+						paddingBottom: 200,
+					}}
+					renderItem={({ item }) => {
+						const hide = searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false;
+                    
+						const isExclusive = item.exclusive;
+						const diagnosis = hcwDiagnoses.filter(d => d.name === item.label)[0];
+						const isSelected = !!diagnosis;
+						const disabled = exclusiveIsSelected && !isExclusive;
+			
+						const setValue = (val?: Partial<types.Diagnosis>) => {
+							setHcwDiagnoses([...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), {
+								...getDefaultDiagnosis({
+									name: item.label,
+									how_agree: 'Yes',
+									priority: hcwDiagnoses.length,
+									text1: item.text1,
+									image1: item.image1,
+									text2: item.text2,
+									image2: item.image2,
+									text3: item.text3,
+									image3: item.image3,
+									suggested: true,
+									isHcwDiagnosis: true,
+									...val,
+								}),
+							}]);
+						};
 
-                {items.map((item, i) => {
+						return (
+							<View
+								style={hide ? { display: 'none' } : {}}
+							>
+								<TouchableOpacity                                
+									onPress={() => {
+										if (exclusiveIsSelected && !isExclusive) return;
+										if (isSelected) {
+											setHcwDiagnoses(hcwDiagnoses.filter(d => d.name !== item.label));
+											setDiagnoses(diagnoses.filter((d) => d.name !== item.label));
+										} else {
+											if (item.enterValueManually) {
+												setCustomValueModal({ onClose: setValue });
+											} else {
+												setValue();
+											}
+										}
+									}}
+								>  
+									<Card
+										backgroundColor={(() => {
+											if (isSelected) return 'primary';
+											if (disabled) return 'disabledBackground';
+											return;
+										})()}
+									>
+										<Text
+											variant="title3"
+											color={(() => {
+												if (isSelected) return 'primaryContrastText';
+												if (disabled) return 'textDisabled';
+												return;
+											})()}
+										>{item.label}</Text>
+
+										{!!(diagnosis && diagnosis.customValue) && (
+											<Text
+												variant="caption"
+												color={(() => {
+													if (isSelected) return 'primaryContrastText';
+													if (disabled) return 'textDisabled';
+													return;
+												})()}
+											>{diagnosis.customValue}</Text>
+										)}
+									</Card>
+								</TouchableOpacity>
+
+								{diagnosis && diagnosis.customValue && (
+									<TouchableOpacity 
+										onPress={() => {
+											setCustomValue(diagnosis.customValue);
+											setCustomValueModal({ onClose: setValue });
+										}}
+									>
+										<Text variant="caption">Edit value</Text>
+									</TouchableOpacity>
+								)}
+
+								<Br spacing="m" />
+							</View>
+						);
+					}}
+				/>
+
+                {/* {items.map((item, i) => {
                     const hide = searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false;
                     
                     const key = `${i}`;
@@ -153,7 +258,7 @@ export function SelectDiagnoses({
                             <Br spacing="m" />
                         </View>
                     );
-                })}
+                })} */}
             </Box>
 
             <Modal

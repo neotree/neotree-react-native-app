@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Alert, TouchableOpacity, FlatList } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { Box, Br, Text, useTheme } from '../../../../../components';
+import { Box, Br, Text, useTheme, CONTENT_STYLES } from '../../../../../components';
 import * as types from '../../../../../types';
 import { Diagnosis } from './Diagnosis';
 
@@ -49,33 +49,42 @@ export function DiagnosesList({
 
     return (
         <Box>
-            {!!instructions && (
-                <Box style={{ marginBottom: 30, marginTop: 20 }}>
-                    <Text color="primary">Instructions</Text>
-                    <Text variant="caption">{instructions}</Text>
-                </Box>
-            )}
-
-            <Box
-                style={{
-                    padding: 10,
-                    borderTopWidth: 1,
-                    borderBottomWidth: 1,
-                    borderColor: '#999',
-                }}
-            >
-                <Text
-                    color="textDisabled"
-                    textTransform="uppercase"
-                    fontWeight="bold"
-                >{title}</Text>
-
-                {!!subtitle && <Text variant="caption" color="textDisabled">{subtitle}</Text>}
-            </Box>
-
 			<FlatList 
 				data={diagnoses}
 				keyExtractor={(item, index) => item.id || index}
+				ListHeaderComponent={(
+					<>
+						{!!instructions && (
+							<Box style={{ marginBottom: 30, marginTop: 20 }}>
+								<Text color="primary">Instructions</Text>
+								<Text variant="caption">{instructions}</Text>
+							</Box>
+						)}
+
+						<Box
+							style={{
+								padding: 10,
+								borderTopWidth: 1,
+								borderBottomWidth: 1,
+								borderColor: '#999',
+							}}
+						>
+							<Text
+								color="textDisabled"
+								textTransform="uppercase"
+								fontWeight="bold"
+							>{title}</Text>
+
+							{!!subtitle && <Text variant="caption" color="textDisabled">{subtitle}</Text>}
+						</Box>
+					</>
+				)}
+				contentContainerStyle={{
+					...CONTENT_STYLES,
+					marginLeft: 'auto',
+					marginRight: 'auto',
+					paddingBottom: 200,
+				}}
 				renderItem={({ item, index }) => {
 					const card = (
 						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
