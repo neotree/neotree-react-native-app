@@ -25,80 +25,84 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
     const highlightedText = ctx?.activeScreen?.data?.contentText;
 
     return (
-        <ScrollView>
-            <>
-                {!!highlightedText && (
-                    <Box backgroundColor="highlight">
-                        <Content>
-                            <Text color="primary">{`${highlightedText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
-                        </Content>
-                    </Box>
-                )}
+		<>
+			{!!highlightedText && (
+				<Box backgroundColor="highlight">
+					<Content>
+						<Text color="primary">{`${highlightedText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
+					</Content>
+				</Box>
+			)}
 
-                <Content>
-                    {(() => {
-                        let Component: null | React.ComponentType<types.ScreenTypeProps> = null;
+			{(() => {
+				let Component: null | React.ComponentType<types.ScreenTypeProps> = null;
+				let scrollable = true;
+				let useContentWidth = true;
 
-                        switch (ctx?.activeScreen?.type) {
-                            case 'yesno':
-                                Component = TypeYesNo;
-                                break;
-                            case 'checklist':
-                                Component = TypeChecklist;
-                                break;
-                            case 'multi_select':
-                                Component = TypeMultiSelect;
-                                break;
-                            case 'single_select':
-                                Component = TypeSingleSelect;
-                                break;
-                            case 'form':
-                                Component = TypeForm;
-                                break;
-                            case 'timer':
-                                Component = TypeTimer;
-                                break;
-                            case 'progress':
-                                Component = TypeProgress;
-                                break;
-                            case 'management':
-                                Component = TypeManagement;
-                                break;
-                            case 'list':
-                                Component = TypeList;
-                                break;
-                            case 'diagnosis':
-                                Component = Diagnosis;
-                                break;
-                            case 'zw_edliz_summary_table':
-                                Component = EdlizSummaryTable;
-                                break;
-                            case 'mwi_edliz_summary_table':
-                                Component = EdlizSummaryTable;
-                                break;
-                            case 'edliz_summary_table':
-                                Component = EdlizSummaryTable;
-                                break;
-                            default:
-                                // do nothing
-                        }
+				switch (ctx?.activeScreen?.type) {
+					case 'yesno':
+						Component = TypeYesNo;
+						break;
+					case 'checklist':
+						Component = TypeChecklist;
+						break;
+					case 'multi_select':
+						Component = TypeMultiSelect;
+						break;
+					case 'single_select':
+						Component = TypeSingleSelect;
+						break;
+					case 'form':
+						Component = TypeForm;
+						break;
+					case 'timer':
+						Component = TypeTimer;
+						break;
+					case 'progress':
+						Component = TypeProgress;
+						break;
+					case 'management':
+						Component = TypeManagement;
+						break;
+					case 'list':
+						Component = TypeList;
+						break;
+					case 'diagnosis':
+						Component = Diagnosis;
+						scrollable = false;
+						useContentWidth = false;
+						break;
+					case 'zw_edliz_summary_table':
+						Component = EdlizSummaryTable;
+						break;
+					case 'mwi_edliz_summary_table':
+						Component = EdlizSummaryTable;
+						break;
+					case 'edliz_summary_table':
+						Component = EdlizSummaryTable;
+						break;
+					default:
+						// do nothing
+				}
 
-                        if (!Component) return null;
+				let node = !Component ? null : (
+					<Component 
+						searchVal={searchVal} 
+						entry={ctx?.entries.filter(e => {
+							return e.screen.screen_id === ctx?.activeScreen.screen_id;
+						})[0]}
+						setEntry={() => {
+							
+						}}
+					/>
+				);
 
-                        return (
-                            <Component 
-                                searchVal={searchVal} 
-                                entry={ctx?.entries.filter(e => {
-                                    return e.screen.screen_id === ctx?.activeScreen.screen_id;
-                                })[0]}
-                                setEntry={() => {
-                                    
-                                }}
-                            />
-                        );
-                    })()}
-                </Content>
-            </>
-        </ScrollView>
+				if (useContentWidth) node = <Content>{node}</Content>;
+
+				if (scrollable) node = <ScrollView>{node}</ScrollView>;
+
+				return node;
+			})()}
+		</>
     );
 }

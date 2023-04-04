@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Text, Card, Image, Br } from '../../../../components';
+import { ScrollView } from 'react-native';
+import { Box, Text, Card, Image, Br, Content } from '../../../../components';
 import * as types from '../../../../types';
 
 type FullDiagnosisProps = types.DiagnosisSectionProps & {
@@ -43,17 +44,21 @@ export function FullDiagnosis({ acceptedDiagnoses, activeDiagnosisIndex }: FullD
     }, true);
 
     return (
-        <Box>
-            {!!diagnosis.expressionMeaning && <Text style={{ marginBottom: 20 }}>{diagnosis.expressionMeaning}</Text>}
-            {data.map((item, i) => {
-                const key = `${i}`;
-                return <ManagementCard key={key} {...item} />;
-            })}
-            {!noData ? null : (
-                <Box marginVertical="xl">
-                    <Text color="textDisabled" variant="title3" textAlign="center">Diagnosis does not have management details</Text>
-                </Box>
-            )}
-        </Box>
+		<ScrollView>
+			<Content>
+				<Box>
+					{!!diagnosis.expressionMeaning && <Text style={{ marginBottom: 20 }}>{diagnosis.expressionMeaning}</Text>}
+					{data.map((item, i) => {
+						const key = `${i}`;
+						return <ManagementCard key={key} {...item} />;
+					})}
+					{!noData ? null : (
+						<Box marginVertical="xl">
+							<Text color="textDisabled" variant="title3" textAlign="center">Diagnosis does not have management details</Text>
+						</Box>
+					)}
+				</Box>
+			</Content>
+		</ScrollView>
     );
 }

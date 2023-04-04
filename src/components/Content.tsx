@@ -5,6 +5,11 @@ export type ContentProps = React.PropsWithChildren<ViewProps & {
     containerProps?: ViewProps;
 }>;
 
+export const CONTENT_STYLES = {
+	width: '95%',
+	maxWidth: 500,
+	padding: 10,
+};
 
 export function Content({ style, containerProps, ...props }: ContentProps) {
     return (
@@ -20,11 +25,7 @@ export function Content({ style, containerProps, ...props }: ContentProps) {
             <View
                 {...props}
                 style={[                    
-                    {
-                        width: '95%',
-                        maxWidth: 500,
-                        padding: 10,
-                    },
+                    CONTENT_STYLES,
                     style,
                 ]}
             />
