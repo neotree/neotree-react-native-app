@@ -16,6 +16,11 @@ export type MoreNavOptions = {
     headerRight?: DrawerNavigationOptions['headerRight'];
 };
 
+export type PatientDetails = {
+	isTwin: boolean;
+	twinID: string;
+};
+
 export type ContextType = ReturnType<typeof getScriptUtils> & {
 	script_id: string | number;
 	sessionID: null | number | string;
@@ -35,6 +40,8 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     summary: any;
     matched: null | types.MatchedSession;
     mountedScreens: { [id: string]: boolean; };
+	patientDetails: PatientDetails;
+	setPatientDetails: React.Dispatch<React.SetStateAction<PatientDetails>>;
 	saveSession: (params?: any) => Promise<any>;
 	createSummaryAndSaveSession: (params?: any) => Promise<any>;
 	setSessionID: React.Dispatch<React.SetStateAction<string | number | null>>;

@@ -77,7 +77,7 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                         )}
                     />
 
-                    <Box height={winH - 60}>
+                    <Box height={winH - 100}>
                         <ScrollView>
                             <Content>
                                 {!!symptoms.length && (
@@ -203,7 +203,7 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                         >
                             <Fab 
                                 onPress={() => {
-                                                            
+									onClose();
                                 }} 
                             />
                         </Box>
