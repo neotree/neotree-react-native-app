@@ -24,6 +24,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [refresh, setRefresh] = React.useState(false);
 
 	const [matched, setMatched] = React.useState<types.MatchedSession | null>(null);
+	const [patientDetails, setPatientDetails] = React.useState({
+		isTwin: false,
+		twinID: '',
+	});
 
 	const [mountedScreens, setMountedScreens] = React.useState<{ [id: string]: boolean; }>({});
 
@@ -130,7 +134,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(
 					screens
-						// .filter(s => ['checklist'].includes(s.type))
+						// .filter(s => ['diagnosis'].includes(s.type))
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
@@ -312,6 +316,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				mountedScreens,		
 				sessionID,
 				script_id: route.params.script_id,
+				patientDetails,
+				setPatientDetails,
 				saveSession,
 				createSummaryAndSaveSession,
 				setSessionID,		

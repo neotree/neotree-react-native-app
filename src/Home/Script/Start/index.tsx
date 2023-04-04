@@ -1,6 +1,6 @@
 import React from 'react';
 import { Keyboard } from 'react-native';
-import { Box, Button, Content, Text } from '../../../components';
+import { Box, Button, Content, Text, Radio, NeotreeIDInput } from '../../../components';
 import { useContext } from '../Context';
 import { Search } from './Search';
 import { Transfer } from './Transfer';
@@ -28,6 +28,42 @@ export function Start() {
                         <Search label="Search existing NUID" />
                         :
                         <Transfer />}
+
+					{((ctx?.script?.data?.title || '').match(/admission/gi) || (ctx?.script?.data?.script?.type === 'admission')) && (
+						<Box my="xl">
+							<Text>Does the baby have a twin?</Text>
+							<Box flexDirection="row">
+								<Radio
+									checked={ctx?.patientDetails?.isTwin}
+									onChange={() => {
+										ctx?.setPatientDetails(prev => ({ ...prev, isTwin: true, }));
+									}}
+									label="Yes"
+								/>
+
+								<Box mx="l" />
+
+								<Radio
+									checked={!ctx?.patientDetails?.isTwin}
+									onChange={() => {
+										ctx?.setPatientDetails(prev => ({ ...prev, isTwin: false, }));
+									}}
+									label="No"
+								/>
+							</Box>
+							{ctx?.patientDetails?.isTwin && (
+								<Box
+									mt="xl"
+								>
+									<NeotreeIDInput 
+										label="Twin Neotree ID"
+										onChange={twinID => ctx?.setPatientDetails(prev => ({ ...prev, twinID }))}
+										value={ctx?.patientDetails?.twinID}
+									/>
+								</Box>
+							)}
+						</Box>
+					)}
                 </Content>
             </Box>
 
