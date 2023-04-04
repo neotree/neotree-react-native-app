@@ -193,41 +193,41 @@ export const getScriptUtils = ({
     }
 
     function getSuggestedDiagnoses() {
-        // return diagnoses.map((d, i) => d.data).filter((d, i) => i < 4);
-        diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
-            if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
-            return [...acc, d];
-        }, []);
+        return diagnoses.map((d, i) => d.data);//.filter((d, i) => i < 4);
+        // diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
+        //     if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
+        //     return [...acc, d];
+        // }, []);
         
-        const diagnosesRslts = (() => {
-            const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
-                return expression || (symptoms || []).length;
-            }).map((d, i) => {
-                const { data: { symptoms: s, expression } } = d;
-                const symptoms: any[] = s || [];
+        // const diagnosesRslts = (() => {
+        //     const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
+        //         return expression || (symptoms || []).length;
+        //     }).map((d, i) => {
+        //         const { data: { symptoms: s, expression } } = d;
+        //         const symptoms: any[] = s || [];
             
-                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
-                // const _symptoms = symptoms;
-                const riskSignCount = _symptoms.reduce((acc, s) => {
-                    if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
-                    if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
-                    return acc;
-                }, { riskCount: 0, signCount: 0 }); // @ts-ignore
+        //         const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+        //         // const _symptoms = symptoms;
+        //         const riskSignCount = _symptoms.reduce((acc, s) => {
+        //             if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
+        //             if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
+        //             return acc;
+        //         }, { riskCount: 0, signCount: 0 }); // @ts-ignore
                 
-                const conditionMet = evaluateCondition(parseCondition(expression, [{
-                    values: [ 
-                        { key: 'riskCount', value: riskSignCount.riskCount, },
-                        { key: 'signCount', value: riskSignCount.signCount, },
-                    ],
-                }]));
-                // const conditionMet = i < 2;
-                return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
-            }).filter(d => d);
+        //         const conditionMet = evaluateCondition(parseCondition(expression, [{
+        //             values: [ 
+        //                 { key: 'riskCount', value: riskSignCount.riskCount, },
+        //                 { key: 'signCount', value: riskSignCount.signCount, },
+        //             ],
+        //         }]));
+        //         // const conditionMet = i < 2;
+        //         return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
+        //     }).filter(d => d);
         
-            return rslts;
-        })();
+        //     return rslts;
+        // })();
         
-        return diagnosesRslts;
+        // return diagnosesRslts;
     };
 
     function createSessionSummary(_payload: any = {}) {        
