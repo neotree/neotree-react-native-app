@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert, TouchableOpacity } from 'react-native';
+import { View, Alert, TouchableOpacity, FlatList } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { Box, Br, Text, useTheme } from '../../../../../components';
 import * as types from '../../../../../types';
@@ -73,7 +73,83 @@ export function DiagnosesList({
                 {!!subtitle && <Text variant="caption" color="textDisabled">{subtitle}</Text>}
             </Box>
 
-            {diagnoses.map((item, index) => {
+			<FlatList 
+				data={diagnoses}
+				keyExtractor={(item, index) => item.id || index}
+				renderItem={({ item, index }) => {
+					const card = (
+						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+							<View>
+								<Text>{item.customValue || item.name}</Text>
+								{!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
+							</View>
+	
+							<View style={{ marginLeft: 'auto' }} />
+	
+							{canAgreeDisagree !== false && (
+								<Diagnosis
+									setDiagnosis={s => {
+										setDiagnoses(diagnoses.map((d, i) => {
+											if (i !== index) return d;
+											return { ...d, ...s };
+										}));
+									}}
+									diagnosis={item}
+								/>
+							)}
+	
+							<View style={{ marginHorizontal: 5 }} />
+	
+							{canDelete !== false && (
+								<TouchableOpacity
+									onPress={() => {
+										const deleteDiagnosis = () => {
+											setDiagnoses(diagnoses.filter((_, i) => i !== index));
+											_setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d: any) => d.name !== item.name));
+										};
+										Alert.alert(
+											'Delete diagnosis',
+											'Are you sure?',
+											[
+												{
+													text: 'Cancel',
+													onPress: () => {},
+													style: 'cancel'
+												},
+												{
+													text: 'Yes',
+													onPress: () => deleteDiagnosis()
+												}
+											],
+											{ cancelable: false }
+										);
+									}}
+								>
+									<Icon 
+										size={30} 
+										color={theme.colors.textDisabled} 
+										name="delete" 
+									/>
+								</TouchableOpacity>
+							)}
+						</View>
+					);
+	
+					return (
+						<Box 
+							borderColor="divider"
+							borderRadius="m"
+							marginVertical="m"
+							borderWidth={1}
+							padding="m"
+						>
+							{itemWrapper ? itemWrapper(card, { item, index }) : card}
+						</Box>
+					);
+				}}
+			/>
+
+            {/* {diagnoses.map((item, index) => {
                 if (filter && !filter(item, index)) return null;
                 const key = item.id || index;
 
@@ -147,7 +223,7 @@ export function DiagnosesList({
                         {itemWrapper ? itemWrapper(card, { item, index }) : card}
                     </Box>
                 );
-            })}
+            })} */}
 
             {!!divider && <Br spacing="l" />}
         </Box>
