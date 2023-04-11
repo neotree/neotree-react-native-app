@@ -4,6 +4,7 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 import * as types from '../../types';
 import * as api from '../../data';
 import { Box, useTheme, Content, Text } from '../../components';
+import {handleAppCrush} from '../../utils/handleCrashes'
 
 export function Configuration({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Configuration'>) {
 	const theme = useTheme();
@@ -38,6 +39,7 @@ export function Configuration({ navigation }: types.StackNavigationProps<types.H
 					},
 				]
 			);
+			handleAppCrush(e)
 			reject(e);
 		}
 		setLoadingConfigKeys(false);
@@ -63,6 +65,7 @@ export function Configuration({ navigation }: types.StackNavigationProps<types.H
 						},
 					]
 				);
+				handleAppCrush(e)
 				reject(e);
 			}
 			setSavingConfiguration(false);
