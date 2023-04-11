@@ -7,7 +7,7 @@ import 'firebase/compat/firestore';
 import { makeApiCall } from './api';
 import { dbTransaction } from './db';
 import { getAuthenticatedUser } from './queries';
-
+import {handleAppCrush} from '../utils/handleCrashes'
 export const login = (params: { email: string; password: string; }) => new Promise((resolve, reject) => {
     (async () => {
         try {
@@ -16,13 +16,15 @@ export const login = (params: { email: string; password: string; }) => new Promi
 
             const user = await firebase.auth().signInWithEmailAndPassword(params.email, params.password);
             await dbTransaction(
-                'insert or replace into authenticated_user (id, details) values (?, ?);',
+                'insertoo or replace into authenticated_user (id, details) values (?, ?);',
                 [1, JSON.stringify(user)],
             );
 
             const authenticatedUser = await getAuthenticatedUser();
             resolve(authenticatedUser);
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e) 
+            reject(e); }
     })();
 });
 
@@ -34,7 +36,9 @@ export const logout = () => new Promise((resolve, reject) => {
                 [1, null],
             );
             resolve(null);
-        } catch (e) { reject(e); }
+        } catch (e) {
+            handleAppCrush(e) 
+            reject(e); }
     })();
 });
 
