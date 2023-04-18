@@ -6,10 +6,14 @@ import Constants from 'expo-constants';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
+import Crashes from 'appcenter-crashes';
 
 const firebaseConfig = Constants.manifest?.extra?.firebase;
 firebase.initializeApp(firebaseConfig);
 
+const enableCrashes = async ()=>{
+    await Crashes.setEnabled(true)
+}
 import { 
     assets as srcAssets,
 	Navigation,
@@ -26,6 +30,7 @@ const assets: LoadAssetsProps['assets'] = [
 const fonts: LoadAssetsProps['fonts'] = {};
 
 export default function App() {
+    enableCrashes();
     return (
         <AppContextProvider>
             <ThemeProvider>
