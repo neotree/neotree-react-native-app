@@ -2,15 +2,10 @@
   "expo": {
     "name": "NeoTree",
     "slug": "neotree",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
-    "version": "0.4.59",
+    "version": "2.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -29,14 +24,13 @@
     },
     "android": {
       "package": "org.neotree.neotreeapp",
-      "versionCode": 1
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
     },
     "web": {
-      "build": {
-        "babel": {
-          "include": ["react-router-native"]
-        }
-      }
+      "favicon": "./assets/images/icon.png"
     }
   }
 }
