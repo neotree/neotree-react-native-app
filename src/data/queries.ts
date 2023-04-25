@@ -1,11 +1,11 @@
 import Constants from 'expo-constants';
 import * as types from '../types';
 import { dbTransaction } from './db';
-
+import {handleAppCrush} from '../utils/handleCrashes'
 const APP_VERSION = Constants.manifest?.version;
 
 export async function getAuthenticatedUser() {
-    const rows = await dbTransaction('select * from authenticated_user;');
+    const rows = await dbTransaction('select0000 * from authenticated_user;');
     const user = rows[0];
     return user?.details ? JSON.parse(user.details) : null;
 }
@@ -22,7 +22,9 @@ export const getApplication = () => new Promise<types.Application>((resolve, rej
             const application = getApplicationRslt[0];
             if (application) application.webeditor_info = JSON.parse(application.webeditor_info || '{}');
             resolve(application);
-        } catch (e) { reject(e); }
+        } catch (e) {
+            handleAppCrush(e)
+             reject(e); }
     })();
 });
 
@@ -46,7 +48,9 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
 
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e)
+            reject(e); }
     })();
 });
 
@@ -72,7 +76,9 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
                 [configKey]: acc[configKey] ? true : false,
                 }), configuration.data)
             });
-        } catch (e) { reject(e); }
+        } catch (e) {
+            handleAppCrush(e)
+             reject(e); }
     })();
 });
 
@@ -84,7 +90,9 @@ export const saveConfiguration = (data = {}) => new Promise((resolve, reject) =>
                 [1, JSON.stringify(data || {}), new Date().toISOString(), new Date().toISOString()]
             );
             resolve(res);
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e)
+            reject(e); }
     })();
 });
 
@@ -126,7 +134,9 @@ export const getScript = (options = {}) => new Promise<{
             }
 
             resolve({ script, screens, diagnoses, });
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e)
+            reject(e); }
     })();
 });
 
@@ -150,7 +160,9 @@ export const getScripts = (options = {}) => new Promise<types.Script[]>((resolve
 
             const rows = await dbTransaction(`${q};`.trim());
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e)
+            reject(e); }
     })();
 });
 
@@ -174,7 +186,9 @@ export const getScreens = (options = {}) => new Promise<types.Screen[]>((resolve
 
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e)
+            reject(e); }
     })();
 });
 
@@ -198,7 +212,9 @@ export const getDiagnoses = (options = {}) => new Promise<types.Diagnosis[]>((re
 
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e) { reject(e); }
+        } catch (e) { 
+            handleAppCrush(e)
+            reject(e); }
     })();
 });
 

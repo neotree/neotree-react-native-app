@@ -9,6 +9,7 @@ import * as api from '../../data';
 import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, useTheme } from '../../components';
 import exportData from './export';
 import { Session } from './Session';
+import {handleAppCrush} from '../../utils/handleCrashes'
 
 const exportTypes = [
 	{
@@ -111,6 +112,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					}
 				]
 			);
+			handleAppCrush(e)
 		}
 		setExportingSessions(false);
 		setShowExportFormats(false);
@@ -137,6 +139,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					}
 				]
 				);
+				handleAppCrush(e)
 			}
 			setDeletingSessions(false);
 		}
@@ -244,6 +247,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						},
 					]
 				);
+				handleAppCrush(e)
 				reject(e);
 			}
 			setLoadingSessions(false);
@@ -290,6 +294,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						}
 					]
 				);
+				handleAppCrush(e)
 				}
 				setPageInitialised(true);
 		})();
