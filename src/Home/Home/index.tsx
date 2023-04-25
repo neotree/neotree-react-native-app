@@ -5,6 +5,7 @@ import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box } from '../../components';
 import { getScripts } from '../../data';
 import * as types from '../../types';
+import {handleAppCrush} from '../../utils/handleCrashes'
 
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
 	const isFocused = useIsFocused();
@@ -18,11 +19,16 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 
 	const loadScripts = React.useCallback((showLoader = true) => {
 		(async () => {
+			try{
 			if (showLoader) setLoadingScripts(true);
 			const scripts = await getScripts();
 			setScripts(scripts);
 			setLoadingScripts(false);
 			setScriptsInitialised(true);
+			throw new Error('This is a test javascript crash!');
+			}catch(err){
+            handleAppCrush(err)
+			}
 		})();
 	}, []);
 
