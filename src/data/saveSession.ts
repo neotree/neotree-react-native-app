@@ -1,6 +1,7 @@
 import { dbTransaction } from './db';
 import { makeApiCall } from './api';
 import { exportSessions } from './exportSessions';
+import {handleAppCrush} from '../utils/handleCrashes'
 
 export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject) => {
 (async () => {
@@ -31,7 +32,9 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
             params,
 			(_, rslts) => { sessionID = data.id || rslts.insertId; }
         );
-    } catch (e) { return reject(e); }
+    } catch (e) { 
+        handleAppCrush(e)
+        return reject(e); }
 
     let application = null;
     try {
@@ -59,8 +62,12 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
                 body: JSON.stringify({ deviceId: application.device_id, details: { scripts_count } }),
             }).then(() => {}).catch(() => {});
         }
-        exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
-    } catch (e) { /* DO NOTHING */ }
+        exportSessions().then(() => {}).catch((e) => {
+            handleAppCrush(e)
+        }); // this will export sessions that haven't yet been exported
+    } catch (e) { 
+        handleAppCrush(e)
+        /* DO NOTHING */ }
 
     resolve({ application, sessionID });
 })();

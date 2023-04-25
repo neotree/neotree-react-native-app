@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { COUNTRY } from '../types';
 import { getExportedSessions } from './sessions';
 import { getLocation } from './queries';
+import {handleAppCrush} from '../utils/handleCrashes'
 
 const config = { ...Constants.manifest?.extra };
 const countries = (config.countries || []) as COUNTRY[];
@@ -55,5 +56,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void) {
                 });
             }
         }
-    } catch(e) { /**/ }
+    } catch(e) { 
+        handleAppCrush(e)
+        /**/ }
 }

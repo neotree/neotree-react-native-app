@@ -1,5 +1,6 @@
 import { makeApiCall } from './api';
 import { dbTransaction } from './db';
+import {handleAppCrush} from '../utils/handleCrashes'
 
 export const exportSession = async (s: any) => {
     return await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
@@ -10,18 +11,23 @@ export const exportSession = async (s: any) => {
 
 export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((resolve, reject) => {
     (async () => {
-        if (!uid) return reject(new Error('UID is required'));
+        if (!uid) 
+        return reject(new Error('UID is required'));
 
         try {
             const res = await makeApiCall('nodeapi', `/find-sessions-by-uid?uid=${uid}`);
             const json = await res.json();
             return resolve(json?.sessions || []);
-        } catch (e) { /**/ }
+        } catch (e) { 
+            handleAppCrush(e)
+            /**/ }
 
         try {
             const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);
             resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e) { console.log(e); reject(e); }
+        } catch (e) {
+            handleAppCrush(e)
+             console.log(e); reject(e); }
     })();
 });
 
@@ -58,6 +64,8 @@ export const getExportedSessions = () => new Promise((resolve, reject) => {
             await dbTransaction('delete from exports where ingested_at < ?;', [lastTwoWeeks.toISOString()]);
 
             resolve(null);
-        } catch (e) { console.log('error', e); reject(e); }
+        } catch (e) {
+            handleAppCrush(e) 
+            console.log('error', e); reject(e); }
     })();
 });

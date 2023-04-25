@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { COUNTRY_CONFIG } from '../types';
 import { getLocation } from './queries';
+import {handleAppCrush} from '../utils/handleCrashes'
 
 const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
@@ -40,5 +41,7 @@ export async function makeApiCall(
                 'x-api-key': config.api_key,
             }
         });
-    } catch(e) { throw e; }
+    } catch(e) {
+        handleAppCrush(e)
+        throw e; }
 }

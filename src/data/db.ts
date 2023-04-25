@@ -1,3 +1,4 @@
+import {handleAppCrush} from '../utils/handleCrashes'
 import * as SQLite from 'expo-sqlite';
 
 export const db = SQLite.openDatabase('db.db');
@@ -14,6 +15,7 @@ export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?:
                 },
                 (_, e) => { 
 					if (cb) cb(e);
+                    handleAppCrush(e)
                     reject(e); 
                     return true; 
                 }

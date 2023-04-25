@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { getApplication } from './queries';
-
+import {handleAppCrush} from '../utils/handleCrashes'
 export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {}) {
     return new Promise((resolve, reject) => {
         (async () => {
@@ -104,7 +104,9 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                     };
                 });
                 resolve(data);
-            } catch (e) { reject(e); }
+            } catch (e) { 
+                handleAppCrush(e)
+                reject(e); }
         })();
     });
 }

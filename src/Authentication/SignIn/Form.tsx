@@ -2,6 +2,8 @@ import React from 'react';
 import { TextInput as RNTextInput, ActivityIndicator } from "react-native";
 import { TextInput, Br, Button, useTheme, Text  } from "../../components";
 import * as api from '../../data';
+import {handleAppCrush} from "../../utils/handleCrashes"
+import { err } from 'react-native-svg/lib/typescript/xml';
 
 type FormProps = {
 	onSignInSuccess: () => any;
@@ -34,8 +36,9 @@ export function Form({ onSignInSuccess }: FormProps) {
 				}
 			}
 		} catch(e: any) { 
-			console.log(e);  
+			console.log(e);
 			setErrors([{ message: e.message }]);
+			handleAppCrush(e);
 		}
 		setSubmitting(false);
 		if (success) onSignInSuccess();
