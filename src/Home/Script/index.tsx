@@ -13,6 +13,7 @@ import { Context, MoreNavOptions, ContextType } from './Context';
 import { getScriptUtils } from './utils';
 import { Alert } from 'react-native';
 import { Summary } from './Summary';
+import {handleAppCrush} from '../../utils/handleCrashes'
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
@@ -99,7 +100,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				});
 				setSessionID(res?.sessionID);
 				resolve(summary);
-			} catch (e) { reject(e); }
+			} catch (e) { 
+				handleAppCrush(e)
+				reject(e); }
 		})();
 	});
 
@@ -110,7 +113,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				const summary = await saveSession(params);
 				setSummary(summary);
 				resolve(summary);
-			} catch (e) { reject(e); }
+			} catch (e) { 
+				handleAppCrush(e)
+				reject(e); }
 			setDisplayLoader(false);
 		})();
 	});
@@ -138,7 +143,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					setActiveScreen(screens[0]);
 					setActiveScreenIndex(0);
 				}
-			} catch (e: any) { console.log(e); setLoadScriptError(e.message); }
+			} catch (e: any) { 
+				handleAppCrush(e)
+				console.log(e); setLoadScriptError(e.message); }
 		})();
 	}, [navigation, route]);
 
@@ -149,7 +156,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				const configuration = await getConfiguration();				
 				setConfiguration({ ...configuration?.data });
 				setLoadingConfiguration(false);
-			} catch (e: any) { console.log(e); setLoadConfigurationError(e.message); }
+			} catch (e: any) { 
+				handleAppCrush(e)
+				setLoadConfigurationError(e.message); }
 		})();
 	}, []);
 
