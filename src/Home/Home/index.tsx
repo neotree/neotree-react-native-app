@@ -25,7 +25,6 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			setScripts(scripts);
 			setLoadingScripts(false);
 			setScriptsInitialised(true);
-			throw new Error('This is a test javascript crash!');
 			}catch(err){
             handleAppCrush(err)
 			}
