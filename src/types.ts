@@ -48,6 +48,7 @@ export type ScreenEntryValue = {
   exclusive?: any;
   error?: any;
   diagnosis?: Diagnosis;
+  prePopulate?: any[];
 };
 
 export type ScreenEntry = {
