@@ -60,7 +60,9 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
             makeApiCall('webeditor', '/update-device-registration', {
                 method: 'POST',
                 body: JSON.stringify({ deviceId: application.device_id, details: { scripts_count } }),
-            }).then(() => {}).catch(() => {});
+            }).then(() => {}).catch((e) => {
+                handleAppCrush(e) 
+            });
         }
         exportSessions().then(() => {}).catch((e) => {
             handleAppCrush(e)

@@ -16,7 +16,7 @@ export const login = (params: { email: string; password: string; }) => new Promi
 
             const user = await firebase.auth().signInWithEmailAndPassword(params.email, params.password);
             await dbTransaction(
-                'insertoo or replace into authenticated_user (id, details) values (?, ?);',
+                'insert or replace into authenticated_user (id, details) values (?, ?);',
                 [1, JSON.stringify(user)],
             );
 
