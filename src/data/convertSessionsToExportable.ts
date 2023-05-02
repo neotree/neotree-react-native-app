@@ -70,12 +70,15 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                                         exportValue,
                                     } = v;
 
+									console.log(e.prePopulate);
+
                                     if (value && value.map) {
                                         return [
                                             ...acc,
                                             {
                                                 [key]: {
                                                     type: dataType || type,
+													prePopulate: e.prePopulate || [],
                                                     values: value.reduce((acc: any, { value, label, valueLabel, exportValue }: any) => ({
                                                         ...acc,
                                                         label: [...acc.label, valueLabel || label],
@@ -90,8 +93,9 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                                         ...acc,
                                         {
                                             [key]: {
-                                                    type: dataType || type,
-                                                    values: {
+												type: dataType || type,
+												prePopulate: e.prePopulate || [],
+												values: {
                                                     label: [valueLabel || label],
                                                     value: [exportValue || getVal(v)]
                                                 },

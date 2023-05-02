@@ -10,6 +10,7 @@ type SearchProps = {
     onSession?: (data: null | types.MatchedSession) => void;
     label: string;
 	autofillKeys?: string[];
+	filterEntries?: (entry: any) => any;
 };
 
 function getSessionFacility(session: any) {
@@ -21,7 +22,7 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
-export function Search({ onSession, label, autofillKeys }: SearchProps) {    
+export function Search({ onSession, label, autofillKeys, filterEntries, }: SearchProps) {    
     const ctx = useContext();
 
     const [uid, setUID] = React.useState('');
@@ -65,11 +66,17 @@ export function Search({ onSession, label, autofillKeys }: SearchProps) {
                                     onChange={() => {
                                         const session = selected ? null : s;
 										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
-										if (autoFill && autofillKeys) {
-											autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
-												if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
-                                                return acc;
+										if (autoFill) {
+											autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
+												if (filterEntries && filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
+												return acc;
 											}, {});
+											if (autofillKeys) {
+												autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
+													if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
+													return acc;
+												}, {});
+											}
 										}
                                         const matched = session ? { session, uid, facility: facility as types.Facility, autoFill, } : null;
                                         setSelectedSession(session);
