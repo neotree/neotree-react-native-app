@@ -38,6 +38,7 @@ export function Twin({}: TwinProps) {
 				<Search 
 					label="Search patient's NUID" 
 					filterEntries={e => e.prePopulate && e.prePopulate.includes('twinSearches')}
+					prePopulateWithUID={false}
 				/>
 			)}
         </Box>
