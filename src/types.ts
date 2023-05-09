@@ -128,3 +128,10 @@ export type HomeRoutes = {
   Location: undefined;
   Sessions: undefined;
 };
+
+export type CustomError = {
+  message: string;
+  stack: string;
+  
+  
+}

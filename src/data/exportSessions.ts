@@ -2,7 +2,6 @@ import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 import { makeApiCall } from './api';
 import { updateSession } from './updateSession';
-import {handleAppCrush} from '../utils/handleCrashes'
 
 export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject) => {
     (async () => {
@@ -25,7 +24,6 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                             const id = completedSessions[i].id;
                             await updateSession({ exported: true }, { where: { id, }, });
                         } catch (e) { console.log(e); 
-                            handleAppCrush(e)
                             return reject(e); }
                         resolve(null);
                     })();
@@ -42,7 +40,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                                 body: JSON.stringify(s),
                             });
                         } catch (e) { 
-                            handleAppCrush(e)
+                            
                             return reject(e); }
                         resolve(null);
                     })();
@@ -53,7 +51,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
 
             resolve(null);
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });

@@ -10,6 +10,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
     const [value, setValue] = React.useState(entryValue?.value);
 
     React.useEffect(() => { 
+        throw new Error("TESTING APP CRUS")
         if (!conditionMet) {
             onChange({ value: null, valueText: null, }); 
             setValue('');
