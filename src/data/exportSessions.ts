@@ -23,8 +23,8 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                             });
                             const id = completedSessions[i].id;
                             await updateSession({ exported: true }, { where: { id, }, });
-                        } catch (e) { console.log(e); return reject(e); }
-                        resolve(null);
+							resolve(true);
+                        } catch (e) { console.log(e); reject(e); }
                     })();
                 })));
             }
@@ -38,8 +38,8 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                                 method: 'POST',
                                 body: JSON.stringify(s),
                             });
-                        } catch (e) { return reject(e); }
-                        resolve(null);
+							resolve(true);
+                        } catch (e) { reject(e); }
                     })();
                 })));
             }

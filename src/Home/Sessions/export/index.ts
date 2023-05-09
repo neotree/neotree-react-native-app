@@ -149,10 +149,11 @@ export function exportToApi(opts: any = {}) {
 
       if (postData.length) {
         try {
-          await Promise.all(postData.map((s: any) => new Promise((resolve, reject) => {
+          await Promise.all(postData.map((s: any, i: number) => new Promise((resolve, reject) => {
             (async () => {
               try {
-                await api.exportSession(s);                
+                await api.exportSession(s);    
+				await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id, }, });           
               } catch (e) { return reject(e); }
               resolve(null);
             })();
