@@ -6,7 +6,6 @@ import { createTablesIfNotExist, dbTransaction } from './db';
 import queryString from 'query-string';
 import { makeApiCall } from './api';
 import { getApplication, getAuthenticatedUser } from './queries';
-import { handleAppCrush } from '../utils/handleCrashes';
 
 const APP_VERSION = Constants.manifest?.version;
 
@@ -141,7 +140,7 @@ export async function syncData(opts?: { force?: boolean; }) {
 
             await Promise.all(promises);
             }catch(e){
-                handleAppCrush(e)
+                
             }
         }
     }

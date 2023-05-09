@@ -1,7 +1,6 @@
 import Constants from 'expo-constants';
 import * as types from '../types';
 import { dbTransaction } from './db';
-import {handleAppCrush} from '../utils/handleCrashes'
 const APP_VERSION = Constants.manifest?.version;
 
 export async function getAuthenticatedUser() {
@@ -23,7 +22,6 @@ export const getApplication = () => new Promise<types.Application>((resolve, rej
             if (application) application.webeditor_info = JSON.parse(application.webeditor_info || '{}');
             resolve(application);
         } catch (e) {
-            handleAppCrush(e)
              reject(e); }
     })();
 });
@@ -49,7 +47,6 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { 
-            handleAppCrush(e)
             reject(e); }
     })();
 });
@@ -77,7 +74,6 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
                 }), configuration.data)
             });
         } catch (e) {
-            handleAppCrush(e)
              reject(e); }
     })();
 });
@@ -91,7 +87,6 @@ export const saveConfiguration = (data = {}) => new Promise((resolve, reject) =>
             );
             resolve(res);
         } catch (e) { 
-            handleAppCrush(e)
             reject(e); }
     })();
 });
@@ -135,7 +130,7 @@ export const getScript = (options = {}) => new Promise<{
 
             resolve({ script, screens, diagnoses, });
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -161,7 +156,7 @@ export const getScripts = (options = {}) => new Promise<types.Script[]>((resolve
             const rows = await dbTransaction(`${q};`.trim());
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -187,7 +182,7 @@ export const getScreens = (options = {}) => new Promise<types.Screen[]>((resolve
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -213,7 +208,7 @@ export const getDiagnoses = (options = {}) => new Promise<types.Diagnosis[]>((re
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -230,7 +225,7 @@ export const countSessions = (options = {}) => new Promise((resolve, reject) => 
             const res = await dbTransaction(`${q};`.trim());
             resolve(res ? res[0] : 0);
         } catch (e) {
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -247,7 +242,7 @@ export const getSession = (options = {}) => new Promise((resolve, reject) => {
             const res = await dbTransaction(`${q} limit 1;`.trim());
             resolve(res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]);
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -273,7 +268,7 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
             const rows = await dbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -287,7 +282,7 @@ export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject)
             const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
             resolve(res);
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -313,7 +308,7 @@ export const saveApplication = (params = {}) => new Promise((resolve, reject) =>
             application = await getApplication();
             resolve(application);
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
@@ -349,13 +344,13 @@ export const getScriptsFields = () => new Promise((resolve, reject) => {
                             })
                         });
                     } catch (e) { 
-                        handleAppCrush(e)
+                        
                         reject(e); }
                 })();
             })));
             resolve(rslts.reduce((acc: any, s: any) => ({ ...acc, ...s }), {}));
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });

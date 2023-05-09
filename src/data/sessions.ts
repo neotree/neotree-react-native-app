@@ -1,6 +1,6 @@
 import { makeApiCall } from './api';
 import { dbTransaction } from './db';
-import {handleAppCrush} from '../utils/handleCrashes'
+
 
 export const exportSession = async (s: any) => {
     return await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
@@ -19,14 +19,14 @@ export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((re
             const json = await res.json();
             return resolve(json?.sessions || []);
         } catch (e) { 
-            handleAppCrush(e)
+            
             /**/ }
 
         try {
             const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);
             resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) {
-            handleAppCrush(e)
+            
              console.log(e); reject(e); }
     })();
 });
@@ -65,7 +65,7 @@ export const getExportedSessions = () => new Promise((resolve, reject) => {
 
             resolve(null);
         } catch (e) {
-            handleAppCrush(e) 
+             
             console.log('error', e); reject(e); }
     })();
 });

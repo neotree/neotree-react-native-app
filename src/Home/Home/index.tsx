@@ -5,7 +5,6 @@ import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box } from '../../components';
 import { getScripts } from '../../data';
 import * as types from '../../types';
-import {handleAppCrush} from '../../utils/handleCrashes'
 
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
 	const isFocused = useIsFocused();
@@ -26,7 +25,6 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			setLoadingScripts(false);
 			setScriptsInitialised(true);
 			}catch(err){
-            handleAppCrush(err)
 			}
 		})();
 	}, []);
