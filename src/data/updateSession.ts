@@ -1,5 +1,4 @@
 import { dbTransaction } from './db';
-import {handleAppCrush} from '../utils/handleCrashes'
 export const updateSession = (data: any = {}, opts: any = {}) => new Promise((resolve, reject) => {
     (async () => {
         try {
@@ -13,7 +12,7 @@ export const updateSession = (data: any = {}, opts: any = {}) => new Promise((re
             const res = await dbTransaction(`update sessions set ${set} where ${_where || 1};`, Object.values(data));
             resolve(res);
         } catch (e) { 
-            handleAppCrush(e)
+            
             reject(e); }
     })();
 });
