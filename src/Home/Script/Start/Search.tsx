@@ -11,6 +11,7 @@ type SearchProps = {
     label: string;
 	autofillKeys?: string[];
 	filterEntries?: (entry: any) => any;
+	prePopulateWithUID: boolean;
 };
 
 function getSessionFacility(session: any) {
@@ -22,7 +23,7 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
-export function Search({ onSession, label, autofillKeys, filterEntries, }: SearchProps) {    
+export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {    
     const ctx = useContext();
 
     const [uid, setUID] = React.useState('');
@@ -78,7 +79,13 @@ export function Search({ onSession, label, autofillKeys, filterEntries, }: Searc
 												}, {});
 											}
 										}
-                                        const matched = session ? { session, uid, facility: facility as types.Facility, autoFill, } : null;
+                                        const matched = session ? { 
+											session, 
+											uid, 
+											facility: facility as types.Facility, 
+											autoFill, 
+											prePopulateWithUID: prePopulateWithUID !== false,
+										} : null;
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
                                         ctx?.setMatched(matched);
