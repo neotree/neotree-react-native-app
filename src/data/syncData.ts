@@ -3,7 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { createTablesIfNotExist, dbTransaction } from './db';
-import queryString from 'query-string';
+//import queryString from 'query-string';
 import { makeApiCall } from './api';
 import { getApplication, getAuthenticatedUser } from './queries';
 
@@ -42,7 +42,8 @@ export async function syncData(opts?: { force?: boolean; }) {
 
             const res = await makeApiCall(
                 'webeditor',
-                `/sync-data?${queryString.stringify({ deviceId, })}`,
+                `/sync-data?deviceId=${deviceId})`
+                //`/sync-data?${queryString.stringify({ deviceId, })}`,
             );
             const json = await res.json();
     
