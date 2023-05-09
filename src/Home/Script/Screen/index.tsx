@@ -2,18 +2,11 @@ import React from 'react';
 import { Box, Content, Fab, Text, TextInput } from '../../../components';
 import { ScreenType } from './ScreenType';
 import { useContext } from '../Context';
-import {handleAppCrush} from '../../../utils/handleCrashes'
 
 export function Screen() {
     const ctx = useContext()?.configuration;
     const [searchVal, setSearchVal] = React.useState('');
-    React.useEffect(()=>{
-        try{
-            throw new Error('This is a test javascript crash!');
-        }catch(e){
-            handleAppCrush(e)
-        }
-    })   
+    
     return (
         <Box flex={1}>
             {!!ctx?.activeScreen?.data?.actionText && (

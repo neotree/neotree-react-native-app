@@ -13,7 +13,6 @@ import { Context, MoreNavOptions, ContextType } from './Context';
 import { getScriptUtils } from './utils';
 import { Alert } from 'react-native';
 import { Summary } from './Summary';
-import {handleAppCrush} from '../../utils/handleCrashes'
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
@@ -101,7 +100,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setSessionID(res?.sessionID);
 				resolve(summary);
 			} catch (e) { 
-				handleAppCrush(e)
+				
 				reject(e); }
 		})();
 	});
@@ -114,7 +113,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setSummary(summary);
 				resolve(summary);
 			} catch (e) { 
-				handleAppCrush(e)
+				
 				reject(e); }
 			setDisplayLoader(false);
 		})();
@@ -144,7 +143,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					setActiveScreenIndex(0);
 				}
 			} catch (e: any) { 
-				handleAppCrush(e)
+				
 				console.log(e); setLoadScriptError(e.message); }
 		})();
 	}, [navigation, route]);
@@ -157,7 +156,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setConfiguration({ ...configuration?.data });
 				setLoadingConfiguration(false);
 			} catch (e: any) { 
-				handleAppCrush(e)
+				
 				setLoadConfigurationError(e.message); }
 		})();
 	}, []);
