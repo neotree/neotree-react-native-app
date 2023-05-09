@@ -1,7 +1,8 @@
+var openDatabase = require('websql/custom');
 import * as SQLite from 'expo-sqlite';
 
-export const db = SQLite.openDatabase('db.db');
-
+export const db = SQLite.openDatabase('db.db') ||openDatabase('db.db', '1.0', 'Neotree Web Database', 1);
+console.log("---MY DB===",db.version)
 export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
     db.transaction(
         tx => {
