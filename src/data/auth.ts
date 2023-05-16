@@ -16,7 +16,7 @@ export const login = (params: { email: string; password: string; }) => new Promi
 
             const user = await firebase.auth().signInWithEmailAndPassword(params.email, params.password);
             await dbTransaction(
-                'insert or replace into authenticated_user (id, details) values (?, ?);',
+                'replace into authenticated_user (id, details) values (?, ?);',
                 [1, JSON.stringify(user)],
             );
 
@@ -30,7 +30,7 @@ export const logout = () => new Promise((resolve, reject) => {
     (async () => {
         try {
             await dbTransaction(
-                'insert or replace into authenticated_user (id, details) values (?, ?);',
+                'replace into authenticated_user (id, details) values (?, ?);',
                 [1, null],
             );
             resolve(null);
@@ -52,7 +52,7 @@ export async function signIn({ email, password }: { email: string; password: str
 
     if (json?.user) {						
         await dbTransaction(
-            'insert or replace into authenticated_user (id, details) values (?, ?);',
+            'replace into authenticated_user (id, details) values (?, ?);',
             [1, JSON.stringify(json.user)],
         );
     }

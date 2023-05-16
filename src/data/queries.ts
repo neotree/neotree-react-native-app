@@ -45,7 +45,7 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
 });
@@ -62,7 +62,7 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
             const configurationRslts = await dbTransaction(`${q} limit 1;`.trim());
             const configuration = {
                 data: {},
-                ...configurationRslts.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
+                ...configurationRslts.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
             };
             const configKeys = await getConfigKeys();
             resolve({
@@ -80,7 +80,7 @@ export const saveConfiguration = (data = {}) => new Promise((resolve, reject) =>
     (async () => {
         try {
             const res = await dbTransaction(
-                'insert or replace into configuration (id, data, createdAt, updatedAt) values (?, ?, ?, ?);',
+                'replace into configuration (id, data, createdAt, updatedAt) values (?, ?, ?, ?);',
                 [1, JSON.stringify(data || {}), new Date().toISOString(), new Date().toISOString()]
             );
             resolve(res);
@@ -102,7 +102,7 @@ export const getScript = (options = {}) => new Promise<{
             q = where ? `${q} where ${where}` : q;
 
             const res = await dbTransaction(`${q} limit 1;`.trim());
-            const script = res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0];
+            const script = res.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') }))[0];
             let screens = [];
             let diagnoses = [];
 
@@ -110,8 +110,8 @@ export const getScript = (options = {}) => new Promise<{
                 const _screens = await dbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
                 const _diagnoses = await dbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
                 screens = _screens
-                    .map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
-                    .map(s => ({
+                    .map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') }))
+                    .map((s: { data: { metadata: { fields: any; items: any; }; }; }) => ({
                         ...s,
                         data: {
                             ...s.data,
@@ -122,7 +122,7 @@ export const getScript = (options = {}) => new Promise<{
                             },
                         },
                     }));
-                diagnoses = _diagnoses.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+                diagnoses = _diagnoses.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') }));
             }
 
             resolve({ script, screens, diagnoses, });
@@ -149,7 +149,7 @@ export const getScripts = (options = {}) => new Promise<types.Script[]>((resolve
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim());
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
 });
@@ -173,7 +173,7 @@ export const getScreens = (options = {}) => new Promise<types.Screen[]>((resolve
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
 });
@@ -197,7 +197,7 @@ export const getDiagnoses = (options = {}) => new Promise<types.Diagnosis[]>((re
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
 });
@@ -227,7 +227,7 @@ export const getSession = (options = {}) => new Promise((resolve, reject) => {
             q = where ? `${q} where ${where}` : q;
 
             const res = await dbTransaction(`${q} limit 1;`.trim());
-            resolve(res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]);
+            resolve(res.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]);
         } catch (e) { reject(e); }
     })();
 });
@@ -251,7 +251,7 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows.map((s: { data: any; }) => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
 });
@@ -283,7 +283,7 @@ export const saveApplication = (params = {}) => new Promise((resolve, reject) =>
             };
 
             await dbTransaction(
-                `insert or replace into application (${Object.keys(application).join(',')}) values (${Object.keys(application).map(() => '?').join(',')});`,
+                `replace into application (${Object.keys(application).join(',')}) values (${Object.keys(application).map(() => '?').join(',')});`,
                 Object.values(application)
             );
             application = await getApplication();

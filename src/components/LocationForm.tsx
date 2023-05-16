@@ -7,7 +7,7 @@ import { Button } from './Button';
 import { Dropdown } from './Form';
 import { COUNTRY } from '../types';
 import { useIsFocused } from '@react-navigation/native';
-import { dbTransaction, getLocation } from '../data';
+import { dbTransaction, getLocation, createTablesIfNotExist } from '../data';
 
 const countries = (Constants.manifest?.extra?.countries || []) as COUNTRY[];
 
@@ -36,8 +36,12 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 			if (country) {
 				setSubmitting(true);
 				const location = { id: 1, hospital, country, };
+				window.localStorage.setItem("country",country);
+				//CREATE DBASE IF NOT EXISTS
+				await dbTransaction("CREATE DATABASE IF NOT EXISTS neotree;")
+				await createTablesIfNotExist();
 				await dbTransaction(
-					`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
+					`replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
 					Object.values(location),
 				);
 				onSetLocation();
