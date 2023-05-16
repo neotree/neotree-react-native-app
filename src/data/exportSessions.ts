@@ -9,7 +9,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
             if (!sessions) sessions = await dbTransaction('select * from sessions where exported != ?;', [true]);
 
             const promises: Promise<any>[] = [];
-            const allSessions = sessions.filter(s => s.data.completed_at || s.data.canceled_at).map(s => ({ ...s, data: JSON.parse(s.data || '{}'), }));
+            const allSessions = sessions&&sessions.length>0?sessions.filter(s => s.data.completed_at || s.data.canceled_at).map(s => ({ ...s, data: JSON.parse(s.data || '{}'), })):[];
             const completedSessions: any = allSessions.filter(s => s.data.completed_at);
 
             if (completedSessions.length) {

@@ -1,27 +1,35 @@
-var openDatabase = require('websql/custom');
-import * as SQLite from 'expo-sqlite';
+import Constants from 'expo-constants';
+import { COUNTRY_CONFIG } from '../types';
+import {createPool} from 'mysql2'
+const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
-export const db = SQLite.openDatabase('db.db') ||openDatabase('db.db', '1.0', 'Neotree Web Database', 1);
-console.log("---MY DB===",db.version)
-export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
-    db.transaction(
-        tx => {
-            tx.executeSql(
+const country = window.localStorage.getItem('country')||'zw';
+const config = (CONFIGURATION[country] as COUNTRY_CONFIG)
+
+const pool = createPool({
+    host: 'localhost',
+    user: config.mysql_user,
+    database: 'neotree_demo',
+    password:config.mysql_pw,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  });
+
+
+export const dbTransaction = (q: string, data: any = null) => new Promise<any>((resolve, reject) => {
+            pool.execute(
                 q,
                 data,
-                (_, rslts) => {
-					if (cb) cb(null, rslts);
-                    resolve(rslts.rows._array);
+                (e, rslts) => {
+                    if(!e)
+                    resolve(rslts);
+                    else
+                    reject(e)
                 },
-                (_, e) => { 
-					if (cb) cb(e);
-                    reject(e); 
-                    return true; 
-                }
             );
         },
     );
-});
 
 export async function createTablesIfNotExist() {
     const applicationTableColumns = [

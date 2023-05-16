@@ -27,10 +27,10 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
 
     try {
         await dbTransaction(
-            `insert or replace into sessions (${columns}) values (${values});`,
-            params,
-			(_, rslts) => { sessionID = data.id || rslts.insertId; }
-        );
+            `replace into sessions (${columns}) values (${values});`,
+                params).then(r=>{
+                    sessionID = data.id || r.insertId;
+                })
     } catch (e) { return reject(e); }
 
     let application = null;
@@ -45,7 +45,7 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
         };
 
         await dbTransaction(
-            `insert or replace into application (${Object.keys(_application).join(',')}) values (${Object.keys(_application).map(() => '?').join(',')});`,
+            `replace into application (${Object.keys(_application).join(',')}) values (${Object.keys(_application).map(() => '?').join(',')});`,
             Object.values(_application)
         );
 
