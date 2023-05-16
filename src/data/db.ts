@@ -1,24 +1,21 @@
 import Constants from 'expo-constants';
 import { COUNTRY_CONFIG } from '../types';
-import {createPool} from 'mysql2'
+import * as mysql from 'mysql2'
 const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
 const country = window.localStorage.getItem('country')||'zw';
 const config = (CONFIGURATION[country] as COUNTRY_CONFIG)
 
-const pool = createPool({
+const connection = mysql.createConnection({
     host: 'localhost',
     user: config.mysql_user,
     database: 'neotree_demo',
-    password:config.mysql_pw,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    password:config.mysql_pw
   });
 
 
 export const dbTransaction = (q: string, data: any = null) => new Promise<any>((resolve, reject) => {
-            pool.execute(
+    connection.execute(
                 q,
                 data,
                 (e, rslts) => {
