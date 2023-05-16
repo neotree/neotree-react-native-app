@@ -1,7 +1,7 @@
 module.exports = function(api) {
 	api.cache(true);
 	return {
-		presets: ['babel-preset-expo',"@babel/preset-env","@babel/preset-react"],
+		presets: ["babel-preset-expo","@babel/preset-env","@babel/preset-react"],
 		plugins: [
 			[
 				"module-resolver",
@@ -11,11 +11,8 @@ module.exports = function(api) {
 						"@": "./"
 					},
 					"extensions":['.js','.jsx','.ts','.tsx','.json']
-				},
-				
-		
+				}
 			],
-			["@babel/plugin-proposal-private-methods", { "loose": true }],
 			'react-native-reanimated/plugin', // Reanimated plugin has to be the last item in the plugins array.
 		],
 	};
