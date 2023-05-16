@@ -48,6 +48,7 @@
     "react-native-screens": "~3.18.0",
     "react-native-svg": "13.4.0",
     "react-native-web": "^0.18.10",
+    "react-scripts": "^5.0.1",
     "socket.io-client": "^4.5.4",
     "websql": "^2.0.3",
     "xlsx": "^0.18.5"
