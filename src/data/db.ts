@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
+var openDatabase = require('websql/custom');
 
-export const db = SQLite.openDatabase('db.db');
+export const db = SQLite.openDatabase('db.db') || openDatabase('db.db', '2.0', 'description', 1);
 
 export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
     db.transaction(
@@ -21,6 +22,18 @@ export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?:
         },
     );
 });
+
+export const webSqlDbTransaction= (q: string, args: any = [])=>new Promise<any[]> ((resolve,reject)=>{
+    db.transaction(function(t) {
+        t.executeSql(q, args,(error: any, results: any)=>{
+            if(Object.keys(error).length==0){
+                resolve(Array.from(results.rows))
+            }else{
+                reject(error)
+            }
+        });
+    })
+})
 
 export async function createTablesIfNotExist() {
     const applicationTableColumns = [
@@ -119,16 +132,16 @@ export async function createTablesIfNotExist() {
     ].join(',');
 
     return await Promise.all([
-        dbTransaction(`create table if not exists application (${applicationTableColumns});`),
-        dbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
-        dbTransaction(`create table if not exists screens (${screensTableColumns});`),
-        dbTransaction(`create table if not exists diagnoses (${diagnosesTableColumns});`),
-        dbTransaction(`create table if not exists sessions (${sessionsTableColumns});`),
-        dbTransaction(`create table if not exists authenticated_user (${authenticatedUserTableColumns});`),
-        dbTransaction(`create table if not exists config_keys (${config_keysTableColumns});`),
-        dbTransaction(`create table if not exists configuration (${configurationTableColumns});`),
-        dbTransaction(`create table if not exists location (${locationTableColumns});`),
-        dbTransaction(`create table if not exists exports (${exportsTableColumns});`),
+        webSqlDbTransaction(`create table if not exists application (${applicationTableColumns});`),
+        webSqlDbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
+        webSqlDbTransaction(`create table if not exists screens (${screensTableColumns});`),
+        webSqlDbTransaction(`create table if not exists diagnoses (${diagnosesTableColumns});`),
+        webSqlDbTransaction(`create table if not exists sessions (${sessionsTableColumns});`),
+        webSqlDbTransaction(`create table if not exists authenticated_user (${authenticatedUserTableColumns});`),
+        webSqlDbTransaction(`create table if not exists config_keys (${config_keysTableColumns});`),
+        webSqlDbTransaction(`create table if not exists configuration (${configurationTableColumns});`),
+        webSqlDbTransaction(`create table if not exists location (${locationTableColumns});`),
+        webSqlDbTransaction(`create table if not exists exports (${exportsTableColumns});`),
     ]);
 }
 
@@ -145,5 +158,5 @@ export const resetTables = async () => {
         'delete * from configuration where 1;',
         // 'delete * from location where 1;',
         // 'delete * from exports where 1;',
-    ].map(q => dbTransaction(q))); 
+    ].map(q => webSqlDbTransaction(q))); 
 };

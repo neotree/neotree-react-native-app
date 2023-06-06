@@ -26,7 +26,9 @@ export function Form({ onSignInSuccess }: FormProps) {
 				setErrors([]);
 				if (password && email) {
 					setSubmitting(true);
+					console.log("BIF===",password,email)
 					const user = await api.login({ email, password });
+					console.log("BWRM===",user)
 					if (user) success = true;
 				} else {
 					if (!password) setErrors(prev => [...prev, { field: 'password', message: 'Password is required.' }]);
