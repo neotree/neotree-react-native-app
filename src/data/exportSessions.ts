@@ -1,4 +1,4 @@
-import { dbTransaction } from './db';
+import { webSqlDbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 import { makeApiCall } from './api';
 import { updateSession } from './updateSession';
@@ -6,7 +6,7 @@ import { updateSession } from './updateSession';
 export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject) => {
     (async () => {
         try {
-            if (!sessions) sessions = await dbTransaction('select * from sessions where exported != ?;', [true]);
+            if (!sessions) sessions = await webSqlDbTransaction('select * from sessions where exported != ?;', [true]);
 
             const promises: Promise<any>[] = [];
             const allSessions = sessions.filter(s => s.data.completed_at || s.data.canceled_at).map(s => ({ ...s, data: JSON.parse(s.data || '{}'), }));

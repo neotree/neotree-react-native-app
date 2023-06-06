@@ -1,24 +1,25 @@
 import Constants from 'expo-constants';
 import * as types from '../types';
-import { dbTransaction } from './db';
+import { dbTransaction, webSqlDbTransaction } from './db';
 
 const APP_VERSION = Constants.manifest?.version;
 
 export async function getAuthenticatedUser() {
-    const rows = await dbTransaction('select * from authenticated_user;');
+    const rows = await webSqlDbTransaction('select * from authenticated_user;');
+    console.log("--MMMMMM--",rows);
     const user = rows[0];
-    return user?.details ? JSON.parse(user.details) : null;
+    return user?.details ? JSON.parse(user.details):null;
 }
 
 export async function getLocation() {
-    const rows = await dbTransaction('select * from location limit 1;', null);
+    const rows = await webSqlDbTransaction('select * from location limit 1;', null);
     return rows[0] as (null | types.Location);
 } 
 
 export const getApplication = () => new Promise<types.Application>((resolve, reject) => {
     (async () => {
         try {
-            const getApplicationRslt = await dbTransaction('select * from application where id=1;');
+            const getApplicationRslt = await webSqlDbTransaction('select * from application where id=1;');
             const application = getApplicationRslt[0];
             if (application) application.webeditor_info = JSON.parse(application.webeditor_info || '{}');
             resolve(application);
@@ -44,7 +45,7 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
             q = where ? `${q} where ${where}` : q;
             q = order ? `${q} order by ${order}` : q;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
+            const rows = await webSqlDbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
@@ -59,7 +60,7 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
             let q = 'select * from configuration';
             q = where ? `${q} where ${where}` : q;
 
-            const configurationRslts = await dbTransaction(`${q} limit 1;`.trim());
+            const configurationRslts = await webSqlDbTransaction(`${q} limit 1;`.trim());
             const configuration = {
                 data: {},
                 ...configurationRslts.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
@@ -79,7 +80,7 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
 export const saveConfiguration = (data = {}) => new Promise((resolve, reject) => {
     (async () => {
         try {
-            const res = await dbTransaction(
+            const res = await webSqlDbTransaction(
                 'insert or replace into configuration (id, data, createdAt, updatedAt) values (?, ?, ?, ?);',
                 [1, JSON.stringify(data || {}), new Date().toISOString(), new Date().toISOString()]
             );
@@ -101,14 +102,14 @@ export const getScript = (options = {}) => new Promise<{
             let q = 'select * from scripts';
             q = where ? `${q} where ${where}` : q;
 
-            const res = await dbTransaction(`${q} limit 1;`.trim());
+            const res = await webSqlDbTransaction(`${q} limit 1;`.trim());
             const script = res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0];
             let screens = [];
             let diagnoses = [];
 
             if (script) {
-                const _screens = await dbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
-                const _diagnoses = await dbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
+                const _screens = await webSqlDbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
+                const _diagnoses = await webSqlDbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
                 screens = _screens
                     .map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
                     .map(s => ({
@@ -147,8 +148,7 @@ export const getScripts = (options = {}) => new Promise<types.Script[]>((resolve
             let q = 'select * from scripts';
             q = where ? `${q} where ${where}` : q;
             q = order ? `${q} order by ${order}` : q;
-
-            const rows = await dbTransaction(`${q};`.trim());
+            const rows = await webSqlDbTransaction(`${q};`.trim());
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
@@ -172,7 +172,7 @@ export const getScreens = (options = {}) => new Promise<types.Screen[]>((resolve
             q = where ? `${q} where ${where}` : q;
             q = order ? `${q} order by ${order}` : q;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
+            const rows = await webSqlDbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
@@ -196,7 +196,7 @@ export const getDiagnoses = (options = {}) => new Promise<types.Diagnosis[]>((re
             q = where ? `${q} where ${where}` : q;
             q = order ? `${q} order by ${order}` : q;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
+            const rows = await webSqlDbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
@@ -211,7 +211,7 @@ export const countSessions = (options = {}) => new Promise((resolve, reject) => 
             let q = 'select count(id) from sessions';
             q = where ? `${q} where ${where}` : q;
 
-            const res = await dbTransaction(`${q};`.trim());
+            const res = await webSqlDbTransaction(`${q};`.trim());
             resolve(res ? res[0] : 0);
         } catch (e) { reject(e); }
     })();
@@ -226,7 +226,7 @@ export const getSession = (options = {}) => new Promise((resolve, reject) => {
             let q = 'select * from sessions';
             q = where ? `${q} where ${where}` : q;
 
-            const res = await dbTransaction(`${q} limit 1;`.trim());
+            const res = await webSqlDbTransaction(`${q} limit 1;`.trim());
             resolve(res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]);
         } catch (e) { reject(e); }
     })();
@@ -250,7 +250,7 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
             q = where ? `${q} where ${where}` : q;
             q = order ? `${q} order by ${order}` : q;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
+            const rows = await webSqlDbTransaction(`${q};`.trim(), null);
             resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e) { reject(e); }
     })();
@@ -262,7 +262,7 @@ export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject)
             ids = ids || [];
             if (!ids.map) ids = [ids];
 
-            const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
+            const res = await webSqlDbTransaction(`delete from sessions where id in (${ids.join(',')})`);
             resolve(res);
         } catch (e) { reject(e); }
     })();
@@ -271,7 +271,7 @@ export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject)
 export const saveApplication = (params = {}) => new Promise((resolve, reject) => {
     (async () => {
         try {
-            const getApplicationRslt = await dbTransaction('select * from application where id=1;');
+            const getApplicationRslt = await webSqlDbTransaction('select * from application where id=1;');
             const _application = getApplicationRslt[0];
 
             let application = {
@@ -282,7 +282,7 @@ export const saveApplication = (params = {}) => new Promise((resolve, reject) =>
                 updatedAt: new Date().toISOString(),
             };
 
-            await dbTransaction(
+            await webSqlDbTransaction(
                 `insert or replace into application (${Object.keys(application).join(',')}) values (${Object.keys(application).map(() => '?').join(',')});`,
                 Object.values(application)
             );
