@@ -13,8 +13,8 @@
     "build:demo": "eas build --platform android --profile demo",
     "build:stage": "eas build --platform android --profile stage",
     "build:prod": "eas build --platform android --profile production",
-    "start: web-server":"npx expo start --web",
-    "web-server": "pm2 --name neotree_mobile_demo --watch --no-daemon start npm -- run start:prod-server"
+    "start:mobile-web":"npx expo start --web",
+    "mobile-web": "pm2 --name neotree_mobile_demo --watch --no-daemon start npm -- run start:mobile-web"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
