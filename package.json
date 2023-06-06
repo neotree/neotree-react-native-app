@@ -1,7 +1,7 @@
 {
   "name": "neotree",
   "version": "1.0.0",
-   "scripts": {
+    "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -9,9 +9,12 @@
     "lint": "eslint --ext .ts,.tsx . --max-warnings 0",
     "tsc": "tsc",
     "ci": "yarn lint && yarn tsc",
+    "build": "npx expo export:web",
     "build:demo": "eas build --platform android --profile demo",
     "build:stage": "eas build --platform android --profile stage",
-    "build:prod": "eas build --platform android --profile production"
+    "build:prod": "eas build --platform android --profile production",
+    "start: web-server":"npx expo start --web",
+    "web-server": "pm2 --name neotree_mobile_demo --watch --no-daemon start npm -- run start:prod-server"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
