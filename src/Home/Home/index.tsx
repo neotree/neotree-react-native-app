@@ -3,7 +3,7 @@ import React from 'react';
 import { FlatList, TouchableOpacity } from "react-native";
 import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box } from '../../components';
-import { getScripts } from '../../data';
+import { api } from '../../data';
 import * as types from '../../types';
 
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
@@ -19,7 +19,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 	const loadScripts = React.useCallback((showLoader = true) => {
 		(async () => {
 			if (showLoader) setLoadingScripts(true);
-			const scripts = await getScripts();
+			const scripts = await api.getScripts();
 			setScripts(scripts);
 			setLoadingScripts(false);
 			setScriptsInitialised(true);

@@ -3,9 +3,13 @@ import { StatusBar } from 'expo-status-bar';
 import registerdAssets from './assets';
 import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
-import { syncData, addSocketEventsListeners } from './data';
+import { api } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
+
+import * as dataAPI from './data';
+
+console.log(Object.keys(dataAPI).map((key: string) => `${typeof (dataAPI as any)[key]} ${key}`).join('\n'));
 
 export const assets = Object.values(registerdAssets);
 
@@ -20,7 +24,7 @@ export function Navigation() {
 
     const initialiseApp = React.useCallback(async () => {
         try {
-            const res = await syncData();            
+            const res = await api.syncData();            
             ctx?.setSyncDataResponse(res);
         } catch (e) {
             console.log(e);
@@ -31,7 +35,7 @@ export function Navigation() {
 
     React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
 
-    React.useEffect(() => { addSocketEventsListeners(initialiseApp); }, []);
+    React.useEffect(() => { api.addSocketEventsListeners(initialiseApp); }, []);
 
     if (!ready) return <Splash />;
 

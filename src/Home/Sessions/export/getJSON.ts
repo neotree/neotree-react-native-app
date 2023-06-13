@@ -1,12 +1,12 @@
 import Constants from 'expo-constants';
-import { convertSessionsToExportable } from '../../../data';
+import { api } from '../../../data';
 
 export default function getJSON(opts: any = {}) {
   const { showConfidential, sessions: _sessions, application } = opts;
 
   const sessions = (_sessions || []).map((s: any) => {
     const { script, app_mode, country, hospital_id, started_at, completed_at, canceled_at } = s.data;
-    const { entries, diagnoses }: any = convertSessionsToExportable([s], { showConfidential });
+    const { entries, diagnoses }: any = api.convertSessionsToExportable([s], { showConfidential });
 
     const data = {
       uid: s.uid,

@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import moment from 'moment';
 import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme } from '../../../components';
-import * as api from '../../../data';
+import { api } from '../../../data';
 import * as types from '../../../types';
 import { useContext } from '../Context';
 

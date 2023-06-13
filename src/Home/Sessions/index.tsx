@@ -5,7 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import * as types from '../../types';
-import * as api from '../../data';
+import { api } from '../../data';
 import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, useTheme } from '../../components';
 import exportData from './export';
 import { Session } from './Session';

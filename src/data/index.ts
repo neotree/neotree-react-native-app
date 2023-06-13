@@ -1,21 +1,4 @@
-export * from './api';
+import { Platform } from 'react-native';
 
-export * from './db';
-
-export * from './queries';
-
-export * from './syncData';
-
-export * from './convertSessionsToExportable';
-
-export * from './exportSessions';
-
-export * from './saveSession';
-
-export * from './updateSession';
-
-export * from './auth';
-
-export * from './sessions';
-
-export * from './socket';
+export const api = Platform.OS === 'web' ? 
+	require('./web') : require('./device');

@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, TouchableOpacity, Platform, FlatList, View, Switch } from "react-native";
 import Icon from '@expo/vector-icons/MaterialIcons';
 import * as types from '../../types';
-import * as api from '../../data';
+import { api } from '../../data';
 import { Box, useTheme, Content, Text } from '../../components';
 
 export function Configuration({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Configuration'>) {

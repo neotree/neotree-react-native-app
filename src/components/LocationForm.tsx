@@ -7,7 +7,7 @@ import { Button } from './Button';
 import { Dropdown } from './Form';
 import { COUNTRY } from '../types';
 import { useIsFocused } from '@react-navigation/native';
-import { dbTransaction, getLocation } from '../data';
+import { api } from '../data';
 
 const countries = (Constants.manifest?.extra?.countries || []) as COUNTRY[];
 
@@ -36,7 +36,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 			if (country) {
 				setSubmitting(true);
 				const location = { id: 1, hospital, country, };
-				await dbTransaction(
+				await api.dbTransaction(
 					`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
 					Object.values(location),
 				);
@@ -52,7 +52,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 	React.useEffect(() => {
 		setSubmitting(false);
         if (focused) {
-            getLocation()
+            api.getLocation()
                 .then(loc => setCountry((prev: any) => loc?.country || prev))
                 .catch(() => {});
         }

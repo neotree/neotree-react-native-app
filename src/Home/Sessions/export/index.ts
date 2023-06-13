@@ -1,7 +1,7 @@
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
-import * as api from '../../../data';
+import { api } from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
 

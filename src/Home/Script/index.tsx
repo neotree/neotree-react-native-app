@@ -1,11 +1,10 @@
 import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import * as types from '../../types';
-import { getApplication, getConfiguration, getLocation, getScript } from '../../data';
+import { api } from '../../data';
 import { getNavOptions } from './navOptions';
 import { useTheme, Text, Box, Modal, OverlayLoader } from '../../components';
 import { useBackButton } from '../../hooks/useBackButton';
-import * as api from '../../data';
 
 import { Start } from './Start';
 import { Screen } from './Screen';
@@ -129,7 +128,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setDiagnoses([]);
 				setActiveScreen(null);
 
-				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
+				const { script, screens, diagnoses, } = await api.getScript({ script_id: route.params.script_id, });
 				
 				setScript(script);
 				setScreens(
@@ -150,7 +149,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		(async () => {
 			try {
 				setLoadingConfiguration(true);
-				const configuration = await getConfiguration();				
+				const configuration = await api.getConfiguration();				
 				setConfiguration({ ...configuration?.data });
 				setLoadingConfiguration(false);
 			} catch (e: any) { console.log(e); setLoadConfigurationError(e.message); }
@@ -239,10 +238,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	React.useEffect(() => {
         (async () => {
-            const app = await getApplication();
+            const app = await api.getApplication();
             setApplication(app);
 
-			const location = await getLocation();
+			const location = await api.getLocation();
 			setLocation(location);
 
 			loadConfiguration();

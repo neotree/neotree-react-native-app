@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { COUNTRY_CONFIG } from '../types';
+import { COUNTRY_CONFIG } from '../../types';
 import { getLocation } from './queries';
 
 const CONFIGURATION = (Constants.manifest?.extra || {}) as any;

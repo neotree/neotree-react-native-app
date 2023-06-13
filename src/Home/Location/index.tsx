@@ -3,7 +3,7 @@ import { ScrollView, TouchableOpacity, Platform } from "react-native";
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { useAppContext } from '../../AppContext';
 import { Content, LocationForm, OverlayLoader, Box } from "../../components";
-import * as api from '../../data';
+import { api } from '../../data';
 import * as types from '../../types';
 
 export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Location'>) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput as RNTextInput, ActivityIndicator } from "react-native";
 import { TextInput, Br, Button, useTheme, Text  } from "../../components";
-import * as api from '../../data';
+import { api } from '../../data';
 
 type FormProps = {
 	onSignInSuccess: () => any;

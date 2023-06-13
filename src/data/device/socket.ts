@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 import Constants from 'expo-constants';
-import { COUNTRY } from '../types';
+import { COUNTRY } from '../../types';
 import { getExportedSessions } from './sessions';
 import { getLocation } from './queries';
 
