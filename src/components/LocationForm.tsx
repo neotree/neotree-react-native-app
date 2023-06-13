@@ -35,11 +35,8 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 			setErrors([]);
 			if (country) {
 				setSubmitting(true);
-				const location = { id: 1, hospital, country, };
-				await api.dbTransaction(
-					`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
-					Object.values(location),
-				);
+				const location = { hospital, country, };
+				await api.setLocation(location);
 				onSetLocation();
 				setSubmitting(false);
 			} else {

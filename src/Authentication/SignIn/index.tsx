@@ -23,7 +23,6 @@ export function SignIn({ onSignIn }: SignInProps) {
 				ctx?.setSyncDataResponse(res);
 				onSignIn();
 			} catch(e) { 
-				console.log(e);
 				setInitialiseDataFailed(true); 
 			}
 		})();

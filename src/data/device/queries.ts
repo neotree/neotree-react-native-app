@@ -10,6 +10,14 @@ export async function getAuthenticatedUser() {
     return user?.details ? JSON.parse(user.details) : null;
 }
 
+export async function setLocation(params: { hospital?: string; country: string; }) {
+	const location = { id: 1, ...params, };
+	await dbTransaction(
+		`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
+		Object.values(location),
+	);
+}
+
 export async function getLocation() {
     const rows = await dbTransaction('select * from location limit 1;', null);
     return rows[0] as (null | types.Location);
