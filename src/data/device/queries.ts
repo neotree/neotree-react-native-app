@@ -4,6 +4,8 @@ import { dbTransaction } from './db';
 
 const APP_VERSION = Constants.manifest?.version;
 
+export const _data_: any = {};
+
 export async function getAuthenticatedUser() {
     const rows = await dbTransaction('select * from authenticated_user;');
     const user = rows[0];

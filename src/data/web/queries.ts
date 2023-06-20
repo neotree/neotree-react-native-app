@@ -7,6 +7,8 @@ import * as types from '../../types';
 
 const APP_VERSION = Constants.manifest?.version;
 
+export const _data_: any = {};
+
 export const db = {};
 export const sockets = {};
 
@@ -132,11 +134,8 @@ export async function resetTables() {
 }
 
 export async function getConfigKeys() {
-	try {
-
-	} catch(e) {
-
-	}
+	const configKeys = _data_.configKeys || [];
+	return configKeys;
 }
 
 export async function getConfiguration() {
@@ -155,20 +154,26 @@ export async function saveConfiguration() {
 	}
 }
 
-export async function getScript() {
-	try {
+export async function getScript(opts: any = {}) {
+	const allScripts: any[] = _data_.scripts || [];
+	const allScreens: any[] = _data_.screens || [];
+	const allDiagnoses: any[] = _data_.diagnoses || [];
 
-	} catch(e) {
+	const script = allScripts.filter(s => s.script_id === opts?.script_id)[0];
+	let screens: any[] = [];
+	let diagnoses: any[] = [];
 
+	if (script) {
+		screens = allScreens.filter(s => s.script_id === script.script_id);
+		diagnoses = allDiagnoses.filter(s => s.script_id === script.script_id);
 	}
+
+	return { script, screens, diagnoses, };
 }
 
 export async function getScripts() {
-	try {
-
-	} catch(e) {
-
-	}
+	const scripts = _data_.scripts || [];
+	return scripts;
 }
 
 export async function getScreens() {

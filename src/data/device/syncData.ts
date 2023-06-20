@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import { createTablesIfNotExist, dbTransaction } from './db';
 //import queryString from 'query-string';
 import { makeApiCall } from './api';
-import { getApplication, getAuthenticatedUser } from './queries';
+import { getApplication, getAuthenticatedUser, _data_ } from './queries';
 
 const APP_VERSION = Constants.manifest?.version;
 
@@ -52,6 +52,13 @@ export async function syncData(opts?: { force?: boolean; }) {
             const scripts = json?.scripts || [];
             const screens = json?.screens || [];
             const diagnoses = json?.diagnoses || [];
+
+			_data_.webeditorInfo = webeditorInfo;
+			_data_.device = device;
+			_data_.configKeys = configKeys;
+			_data_.scripts = scripts;
+			_data_.screens = screens;
+			_data_.diagnoses = diagnoses;
             
             await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
                 `delete from ${table} where 1;`

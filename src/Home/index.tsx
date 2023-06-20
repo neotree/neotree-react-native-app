@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, Alert } from 'react-native'
+import { View, Image, Alert, Platform } from 'react-native'
 import Icon from '@expo/vector-icons/MaterialIcons';
 import {
 	createDrawerNavigator,
@@ -44,7 +44,10 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				drawerContent={props => <CustomDrawerContent {...props} />}
 				screenOptions={{
 					headerTintColor: theme.colors.primary,
-					headerTitle: HeaderTitle
+					headerTitle: HeaderTitle,
+					sceneContainerStyle: { 
+						backgroundColor: Platform.OS === 'web' ? 'transparent' : undefined, 
+					},
 				}}
 			>
 				<Drawer.Screen 
