@@ -1,10 +1,13 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, Box, Theme, useTheme } from '../Theme';
+import { TextInput } from './TextInput';
+import { Dropdown, DropdownOption } from './Dropdown';
 import { Br } from '../Br';
+import { months } from '../../constants';
 
 export type DatePickerProps = {
     placeholder?: React.ReactNode;
@@ -34,7 +37,7 @@ const renderReactNode = (node: React.ReactNode, opts?: RenderReactNodeOptions) =
       ) : node
 );
 
-export function DatePicker({
+function DefaultDatePicker({
     placeholder,
     label,
     value,
@@ -169,6 +172,98 @@ export function DatePicker({
     );
 }
 
-DatePicker.defaultProps = {
+export function WebDatePicker({ disabled }: DatePickerProps) {
+	const [state, setState] = React.useState({
+		date: null,
+		month: null,
+		year: null,
+		hours: null,
+		minutes: null,
+	});
+
+	return (
+		<>
+			<Box
+				flexDirection="row"
+				flexWrap="wrap"
+			>
+				<Box
+					mr="s"
+					width={100}
+				>
+					<Dropdown 
+						placeholder="DD"
+						disabled={disabled}
+						options={(() => {
+							const opts: DropdownOption[] = [];
+							for (let i = 0; i < 30; i++) opts.push({ label: i + 1, value: i + 1, });
+							return opts;
+						})()}
+					/>
+				</Box>
+
+				<Box
+					mr="s"
+					width={100}
+				>
+					<Dropdown 
+						placeholder="MM"
+						disabled={disabled}
+						options={(() => {
+							const opts: DropdownOption[] = [];
+							for (let i = 0; i < 12; i++) opts.push({ label: months[i], value: i + 1, });
+							return opts;
+						})()}
+					/>
+				</Box>
+
+				<Box
+					mr="s"
+					width={100}
+				>
+					<TextInput 
+						editable={!disabled}
+						placeholder="YYYY"
+						keyboardType="numeric"
+					/>
+				</Box>
+
+				<Box
+					mr="s"
+					width={100}
+				>
+					<Dropdown 
+						placeholder="hh"
+						disabled={disabled}
+						options={(() => {
+							const opts: DropdownOption[] = [];
+							for (let i = 0; i < 24; i++) opts.push({ label: months[i], value: i + 1, });
+							return opts;
+						})()}
+					/>
+				</Box>
+
+				<Box
+					mr="s"
+					width={100}
+				>
+					<Dropdown 
+						placeholder="mm"
+						disabled={disabled}
+						options={(() => {
+							const opts: DropdownOption[] = [];
+							for (let i = 0; i < 60; i++) opts.push({ label: months[i], value: i + 1, });
+							return opts;
+						})()}
+					/>
+				</Box>
+			</Box>
+		</>
+	);
+}
+
+DefaultDatePicker.defaultProps = {
     mode: 'date',
 };
+
+export const DatePicker = Platform.OS === 'web' ? WebDatePicker : DefaultDatePicker;
