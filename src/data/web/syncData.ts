@@ -10,7 +10,7 @@ export async function syncData(opts?: { force?: boolean; }) {
 	try {
 		const authenticatedUser = await getAuthenticatedUser();
 
-		let deviceId = uuidv4();
+		let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID'); // uuidv4();
 
 		let last_sync_date = null;
 

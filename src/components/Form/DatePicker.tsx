@@ -141,7 +141,7 @@ function DefaultDatePicker({
                     display="default"
                     maximumDate={!maxDate ? undefined : (maxDate === 'date_now' ? new Date() : new Date(maxDate))}
                     minimumDate={!minDate ? undefined : (minDate === 'date_now' ? new Date() : new Date(minDate))}
-                    onChange={(e, selectedDate) => {
+                    onChange={(_, selectedDate) => {
                         if (!selectedDate) return setShowDatePicker(false);
                         setShowDatePicker(false);
                         // setTimeout(() => setDate(selectedDate), 0);
@@ -160,7 +160,7 @@ function DefaultDatePicker({
                     mode="time"
                     is24Hour={true}
                     display="default"
-                    onChange={(e, selectedDate) => {
+                    onChange={(_, selectedDate) => {
                         if (!selectedDate) return setShowTimePicker(false);
                         setShowTimePicker(false);
                         // setTimeout(() => setDate(selectedDate), 0);
@@ -172,17 +172,133 @@ function DefaultDatePicker({
     );
 }
 
-export function WebDatePicker({ disabled }: DatePickerProps) {
-	const [state, setState] = React.useState({
-		date: null,
-		month: null,
-		year: null,
-		hours: null,
-		minutes: null,
-	});
+function WebDatePicker({ 
+	value, 
+	disabled, 
+	mode, 
+	maxDate,
+	minDate,
+	label,
+	onChange, 
+}: DatePickerProps) {
+	const getState = React.useCallback(() => {
+		const state: {
+			date: null | number;
+			month: null | number;
+			year: null | number;
+			hours: null | number;
+			minutes: null | number;
+		} = {
+			date: null,
+			month: null,
+			year: null,
+			hours: null,
+			minutes: null,
+		};
+		if (value) {
+			state.date = value.getDate();
+			state.month = value.getMonth();
+			state.year = value.getFullYear();
+			state.hours = value.getHours();
+			state.minutes = value.getMinutes();
+		}
+		return state;
+	}, [value]);
+
+	const [state, setState] = React.useState(getState());
+	const [isDateValid, setIsDateValid] = React.useState(false);
+	const [isDateEmpty, setIsDateEmpty] = React.useState(false);
+	const [error, setError] = React.useState('');
+
+	const validateDate = React.useCallback(() => {
+		let isValid = false;
+		let isEmpty = !(state.date || state.month || state.year || state.hours || state.minutes);
+		let error = '';
+
+		if (!isEmpty) {
+			if ((mode === 'date') || (mode === 'datetime')) {
+				if (state.date && state.month && state.year) {
+					isValid = moment({
+						date: state.date || undefined,
+						month: state.month || undefined,
+						year: state.year || undefined,
+					}).isValid();
+				}
+				if (isValid && state.hours && state.minutes) {
+					isValid = moment({
+						date: state.date || undefined,
+						month: state.month || undefined,
+						year: state.year || undefined,
+						hours: state.hours || undefined,
+						minutes: state.minutes || undefined,
+					}).isValid();
+				}
+			}
+			if (mode === 'time') {
+				if (state.hours && state.minutes) {
+					isValid = moment({
+						date: new Date().getDate(),
+						month: new Date().getMonth(),
+						year: new Date().getFullYear(),
+						hours: state.hours || undefined,
+						minutes: state.minutes || undefined,
+					}).isValid();
+				}
+			}
+		}
+
+		if (isValid) {
+			const _maxDate = !maxDate ? undefined : (maxDate === 'date_now' ? new Date() : new Date(maxDate));
+			const _minDate = !minDate ? undefined : (minDate === 'date_now' ? new Date() : new Date(minDate));
+			const _date = moment({
+				date: state.date || undefined,
+				month: state.month || undefined,
+				year: state.year || undefined,
+				hours: state.hours || undefined,
+				minutes: state.minutes || undefined,
+			}).toDate();
+
+			if (_maxDate && (_date > _maxDate)) {
+				isValid = false;
+				error = `Max date is '${moment(new Date(_maxDate)).format('YYYY/MM/DD')}'`;
+			}
+
+			if (_minDate && (_date < _minDate)) {
+				isValid = false;
+				error = `Min date is '${moment(new Date(_minDate)).format('YYYY/MM/DD')}'`;
+			}
+		}
+
+		return { isValid, isEmpty, error };
+	}, [state, mode]);
+
+	React.useEffect(() => { 
+		const { isValid, isEmpty, error } = validateDate();
+		setIsDateValid(isValid); 
+		setIsDateEmpty(isEmpty);
+		setError(error);
+		let val = null;
+		if (isValid) {
+			val = moment({
+				date: state.date || undefined,
+				month: state.month || undefined,
+				year: state.year || undefined,
+				hours: state.hours || undefined,
+				minutes: state.minutes || undefined,
+			}).toDate();
+		}
+		if (onChange) onChange(val);
+	}, [state])
 
 	return (
 		<>
+			{!!label && (
+                <>
+                    {renderReactNode(label)}
+                    <Br spacing="s" />
+                </>
+            )}
+			
 			<Box
 				flexDirection="row"
 				flexWrap="wrap"
@@ -199,6 +315,8 @@ export function WebDatePicker({ disabled }: DatePickerProps) {
 							for (let i = 0; i < 30; i++) opts.push({ label: i + 1, value: i + 1, });
 							return opts;
 						})()}
+						value={`${state.date || ''}`}
+						onChange={val => setState(prev => ({ ...prev, date: val ? Number(val) : null, }))}
 					/>
 				</Box>
 
@@ -214,6 +332,8 @@ export function WebDatePicker({ disabled }: DatePickerProps) {
 							for (let i = 0; i < 12; i++) opts.push({ label: months[i], value: i + 1, });
 							return opts;
 						})()}
+						value={`${state.month || ''}`}
+						onChange={val => setState(prev => ({ ...prev, month: val ? Number(val) : null, }))}
 					/>
 				</Box>
 
@@ -225,45 +345,66 @@ export function WebDatePicker({ disabled }: DatePickerProps) {
 						editable={!disabled}
 						placeholder="YYYY"
 						keyboardType="numeric"
+						value={`${state.year || ''}`}
+						onChangeText={val => setState(prev => ({ ...prev, year: val ? Number(val) : null, }))}
 					/>
 				</Box>
 
-				<Box
-					mr="s"
-					width={100}
-				>
-					<Dropdown 
-						placeholder="hh"
-						disabled={disabled}
-						options={(() => {
-							const opts: DropdownOption[] = [];
-							for (let i = 0; i < 24; i++) opts.push({ label: months[i], value: i + 1, });
-							return opts;
-						})()}
-					/>
-				</Box>
+				{(mode === 'datetime') || (mode === 'time') && (
+					<Box
+						mr="s"
+						width={100}
+					>
+						<Dropdown 
+							placeholder="hh"
+							disabled={disabled}
+							options={(() => {
+								const opts: DropdownOption[] = [];
+								for (let i = 0; i < 24; i++) opts.push({ label: months[i], value: i + 1, });
+								return opts;
+							})()}
+							value={`${state.hours || ''}`}
+							onChange={val => setState(prev => ({ ...prev, hours: val ? Number(val) : null, }))}
+						/>
+					</Box>
+				)}
 
-				<Box
-					mr="s"
-					width={100}
-				>
-					<Dropdown 
-						placeholder="mm"
-						disabled={disabled}
-						options={(() => {
-							const opts: DropdownOption[] = [];
-							for (let i = 0; i < 60; i++) opts.push({ label: months[i], value: i + 1, });
-							return opts;
-						})()}
-					/>
-				</Box>
+				{(mode === 'datetime') || (mode === 'time') && (
+					<Box
+						mr="s"
+						width={100}
+					>
+						<Dropdown 
+							placeholder="mm"
+							disabled={disabled}
+							options={(() => {
+								const opts: DropdownOption[] = [];
+								for (let i = 0; i < 60; i++) opts.push({ label: months[i], value: i + 1, });
+								return opts;
+							})()}
+							value={`${state.minutes || ''}`}
+							onChange={val => setState(prev => ({ ...prev, minutes: val ? Number(val) : null, }))}
+						/>
+					</Box>
+				)}
 			</Box>
+
+			{isDateEmpty ? null : (!isDateValid && (
+				<>
+					<Br />
+					<Text color="error" variant="caption">{error || 'Invalid date'}</Text>
+				</>
+			))}
 		</>
 	);
 }
 
-DefaultDatePicker.defaultProps = {
+const defaultProps = {
     mode: 'date',
 };
+
+DefaultDatePicker.defaultProps = defaultProps;
+
+WebDatePicker.defaultProps = defaultProps;
 
 export const DatePicker = Platform.OS === 'web' ? WebDatePicker : DefaultDatePicker;

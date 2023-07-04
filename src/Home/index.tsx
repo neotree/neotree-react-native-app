@@ -200,53 +200,55 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 					
 					{/* <DrawerItemList {...props} /> */}
 
-					<DrawerItem
-						activeBackgroundColor={theme.colors['bg.active']}
-						inactiveBackgroundColor="transparent"
-						pressColor={theme.colors['bg.active']}
-						onPress={() => {
-							const mode = ctx?.application?.mode === 'development' ? 'production' : 'development';
-							const save = async () => {
-								setDisplayLoader(true);
-								await api.saveApplication({ mode  });
-                            	const res = await api.syncData({ force: true, });
-								ctx?.setSyncDataResponse(res);
-								setDisplayLoader(false);
-							};
-							Alert.alert(
-								'Switch mode',
-                  				`Are you sure you want to ${ctx?.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
-								[
-									{
-										text: 'Cancel',
-									}, 
-									{
-										text: 'Ok',
-										onPress: () => save(),
-									}
-								]
-							);
-						}}
-						label={() => {
-							const isActive = ctx?.application?.mode === 'development';
-							return (
-								<Box flexDirection="row" alignItems="center">
-									<Box paddingHorizontal="m">
-										<Icon 
-											size={24} 
-											name="laptop"
-											color={isActive ? theme.colors.primary : theme.colors.textSecondary} 
-										/>
+					{Platform.OS === 'web' ? null : (
+						<DrawerItem
+							activeBackgroundColor={theme.colors['bg.active']}
+							inactiveBackgroundColor="transparent"
+							pressColor={theme.colors['bg.active']}
+							onPress={() => {
+								const mode = ctx?.application?.mode === 'development' ? 'production' : 'development';
+								const save = async () => {
+									setDisplayLoader(true);
+									await api.saveApplication({ mode  });
+									const res = await api.syncData({ force: true, });
+									ctx?.setSyncDataResponse(res);
+									setDisplayLoader(false);
+								};
+								Alert.alert(
+									'Switch mode',
+									`Are you sure you want to ${ctx?.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
+									[
+										{
+											text: 'Cancel',
+										}, 
+										{
+											text: 'Ok',
+											onPress: () => save(),
+										}
+									]
+								);
+							}}
+							label={() => {
+								const isActive = ctx?.application?.mode === 'development';
+								return (
+									<Box flexDirection="row" alignItems="center">
+										<Box paddingHorizontal="m">
+											<Icon 
+												size={24} 
+												name="laptop"
+												color={isActive ? theme.colors.primary : theme.colors.textSecondary} 
+											/>
+										</Box>
+										<Text
+											color={isActive ? 'primary' : 'textSecondary'}
+											textTransform="uppercase"
+											fontWeight="bold"
+										>Development</Text>
 									</Box>
-									<Text
-										color={isActive ? 'primary' : 'textSecondary'}
-										textTransform="uppercase"
-										fontWeight="bold"
-									>Development</Text>
-								</Box>
-							)
-						}}
-					/>
+								)
+							}}
+						/>
+					)}
 				</Box>
 			</DrawerContentScrollView>
 

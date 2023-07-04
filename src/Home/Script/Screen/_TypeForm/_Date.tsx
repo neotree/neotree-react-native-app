@@ -24,6 +24,7 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
                 onChange={date => {
+					console.log('DatePicker onChange', date);
                     setValue(date);
                     onChange({
                         value: date ? date.toISOString() : null,

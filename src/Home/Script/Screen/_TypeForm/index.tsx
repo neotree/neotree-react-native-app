@@ -40,6 +40,8 @@ export function TypeForm({}: TypeFormProps) {
             confidential: f.confidential,
         };
     }));
+
+	console.log('values', values);
     
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
