@@ -9,7 +9,7 @@ type TypeManagementProps = types.ScreenTypeProps & {
 
 export function TypeManagement({}: TypeManagementProps) {
     const ctx = useContext();
-
+   throw new Error("Makandihwa nani");
     const metadata = ctx?.activeScreen?.data?.metadata;
 
     React.useEffect(() => { ctx?.setEntryValues([]); }, [metadata]);

@@ -119,6 +119,16 @@ export async function createTablesIfNotExist() {
         'hospital varchar',
     ].join(',');
 
+    const exceptionTableColumns = [
+        'id integer primary key not null',
+        'country varchar',
+        'message varchar',
+         'stack vachar',
+        'device varchar',
+        'exported boolean',
+        'hospital vachar',
+    ].join(',');
+
     return await Promise.all([
         dbTransaction(`create table if not exists application (${applicationTableColumns});`),
         dbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
@@ -130,6 +140,7 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists configuration (${configurationTableColumns});`),
         dbTransaction(`create table if not exists location (${locationTableColumns});`),
         dbTransaction(`create table if not exists exports (${exportsTableColumns});`),
+        dbTransaction(`create table if not exists exceptions (${exceptionTableColumns});`),
     ]);
 }
 
