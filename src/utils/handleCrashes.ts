@@ -4,6 +4,8 @@ import { getLocation } from '../data/queries';
 export async function handleAppCrush(error: any) {
     const stack = error.stack.split('in').splice(0,5).join(" in");
     const message = error.message;
+    console.log("====STACK===",stack)
+    console.log("====MSG===",message)
     let app = await dbTransaction('select * from application where id=1;');
       let  application = app[0];
         if(application){
@@ -12,6 +14,7 @@ export async function handleAppCrush(error: any) {
                 // DO NOTHING ERROR ALREADY CAPTURED
             }else{
                 //RECORD THE ERROR
+                try{
                 const columns = ['message', 'stack', 'device', 'exported','country','hospital'].join(',');
                 const values = ['?', '?', '?', '?', '?','?'].join(',');
                 const location = await getLocation();
@@ -25,7 +28,10 @@ export async function handleAppCrush(error: any) {
                     location?.hospital
                 
                 ]);
+            }catch(ex){
+            console.log("---DB EX---",ex)
             }
+        }
         }
 
 }
