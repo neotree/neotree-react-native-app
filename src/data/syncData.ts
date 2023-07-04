@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import { createTablesIfNotExist, dbTransaction } from './db';
 import queryString from 'query-string';
 import { makeApiCall } from './api';
-import { getApplication, getAuthenticatedUser } from './queries';
+import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
 
 const APP_VERSION = Constants.manifest?.version;
 
@@ -26,6 +26,16 @@ export async function syncData(opts?: { force?: boolean; }) {
     let last_sync_date = null;
 
     if (authenticatedUser && networkState?.isInternetReachable) {
+        const exeptions = await getExceptions()
+        if(exeptions){
+            for (const ex of exeptions){
+             const response= await makeApiCall('nodeapi', `/exceptions`, {
+                    method: 'POST',
+                    body: JSON.stringify(ex),
+                });
+                console.log("====MY RESPONSE====",response)
+            }
+        }
         const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
         const deviceRegJSON = await deviceReg.json();
 
