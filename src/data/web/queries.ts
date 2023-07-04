@@ -4,6 +4,7 @@ import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 
 import * as types from '../../types';
+import { makeApiCall } from './makeApiCall';
 
 const APP_VERSION = Constants.manifest?.version;
 
@@ -146,11 +147,16 @@ export async function getConfiguration() {
 	}
 }
 
-export async function saveConfiguration() {
+export async function saveConfiguration(data = {}) {
 	try {
-
+		let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID'); // uuidv4();
+		const res = await makeApiCall('nodeapi', `/web-app/${deviceId}/saveConfiguration`, {
+			method: 'POST',
+			body: JSON.stringify(data),
+		});
+		console.log('saveConfiguration', res);
 	} catch(e) {
-
+		console.log('saveConfiguration ERR', e);
 	}
 }
 
