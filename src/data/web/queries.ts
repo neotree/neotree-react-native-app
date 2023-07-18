@@ -6,7 +6,7 @@ import 'firebase/compat/firestore';
 import * as types from '../../types';
 import { makeApiCall } from './makeApiCall';
 
-const APP_VERSION = Constants.manifest?.version;
+const APP_VERSION = Constants.expoConfig?.version;
 
 export const _data_: any = {};
 

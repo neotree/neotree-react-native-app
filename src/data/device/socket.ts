@@ -4,7 +4,7 @@ import { COUNTRY } from '../../types';
 import { getExportedSessions } from './sessions';
 import { getLocation } from './queries';
 
-const config = { ...Constants.manifest?.extra };
+const config = { ...Constants.expoConfig?.extra };
 const countries = (config.countries || []) as COUNTRY[];
 
 export const sockets: { [key: string]: any; } = countries.reduce((acc, country) => {

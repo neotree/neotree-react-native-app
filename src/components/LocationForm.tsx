@@ -9,7 +9,7 @@ import { COUNTRY } from '../types';
 import { useIsFocused } from '@react-navigation/native';
 import { api } from '../data';
 
-const countries = (Constants.manifest?.extra?.countries || []) as COUNTRY[];
+const countries = (Constants.expoConfig?.extra?.countries || []) as COUNTRY[];
 
 type LocationFormProps = { 
     onSetLocation: () => void; 

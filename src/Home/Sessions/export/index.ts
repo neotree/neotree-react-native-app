@@ -1,4 +1,4 @@
-import XLSX from 'xlsx';
+// import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { api } from '../../../data';
@@ -68,6 +68,7 @@ export function exportEXCEL(opts: any = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       try {
+		const XLSX = require('xlsx');
         const permissionGranted = await isSavingToDevicePermitted();
         if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
 

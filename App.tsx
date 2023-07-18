@@ -3,11 +3,13 @@ import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 
+console.log(Constants);
+
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 
-const firebaseConfig = Constants.manifest?.extra?.firebase;
+const firebaseConfig = Constants.expoConfig?.extra?.firebase;
 firebase.initializeApp(firebaseConfig);
 
 import { 

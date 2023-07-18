@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { COUNTRY_CONFIG } from '../../types';
 import { getLocation } from './queries';
 
-const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
+const CONFIGURATION = (Constants.expoConfig?.extra || {}) as any;
 
 const _otherOptions = {
     useHost: false,

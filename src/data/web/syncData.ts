@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { makeApiCall } from './makeApiCall';
 import { getApplication, saveApplication, getAuthenticatedUser, _data_ } from './queries';
 
-const APP_VERSION = Constants.manifest?.version;
+const APP_VERSION = Constants.expoConfig?.version;
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	try {

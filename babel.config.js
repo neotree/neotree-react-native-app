@@ -12,7 +12,7 @@ module.exports = function(api) {
 					}
 				},
 			],
-			'@babel/plugin-proposal-export-namespace-from',
+			// '@babel/plugin-proposal-export-namespace-from',
 			'react-native-reanimated/plugin', // Reanimated plugin has to be the last item in the plugins array.
 		],
 	};

@@ -7,10 +7,6 @@ import { api } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 
-import * as dataAPI from './data';
-
-console.log(Object.keys(dataAPI).map((key: string) => `${typeof (dataAPI as any)[key]} ${key}`).join('\n'));
-
 export const assets = Object.values(registerdAssets);
 
 export * from './data';

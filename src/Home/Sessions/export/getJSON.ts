@@ -13,7 +13,7 @@ export default function getJSON(opts: any = {}) {
       started_at,
       completed_at,
       canceled_at,
-      appVersion: Constants.manifest?.extra?.APP_VERSION,
+      appVersion: Constants.expoConfig?.extra?.APP_VERSION,
       scriptVersion: application.webeditor_info.version,
       scriptTitle: script.script_id,
       script: { id: script.script_id, title: script.data.title },

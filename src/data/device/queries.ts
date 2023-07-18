@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import * as types from '../../types';
 import { dbTransaction } from './db';
 
-const APP_VERSION = Constants.manifest?.version;
+const APP_VERSION = Constants.expoConfig?.version;
 
 export const _data_: any = {};
 

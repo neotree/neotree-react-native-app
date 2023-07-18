@@ -9,7 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync();
 
-const NAVIGATION_STATE_KEY = `NAVIGATION_STATE_KEY-${Constants?.manifest?.sdkVersion}`;
+const NAVIGATION_STATE_KEY = `NAVIGATION_STATE_KEY-${Constants?.expoConfig?.sdkVersion}`;
 
 export type FontSource = Parameters<typeof Font.loadAsync>[0];
 
