@@ -26,9 +26,7 @@ export async function syncData(opts?: { force?: boolean; }) {
     let last_sync_date = null;
 
     if (authenticatedUser && networkState?.isInternetReachable) {
-        console.log("======I M HERE")
         const exeptions = await getExceptions()
-        console.log("====exexe",exeptions)
         if(exeptions){
             for (const ex of exeptions){
              const response= await makeApiCall('nodeapi', `/exceptions`, {
