@@ -30,8 +30,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/images/icon.png",
-	  "bundler": "metro"
+      "favicon": "./assets/images/icon.png"
     }
   }
 }
