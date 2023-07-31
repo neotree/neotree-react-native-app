@@ -135,29 +135,45 @@ export async function resetTables() {
 }
 
 export async function getConfigKeys() {
-	const configKeys = _data_.configKeys || [];
-	return configKeys;
+	const res = await makeApiCall(
+		'webeditor',
+		`/get-config-keys`,
+	);
+	const json = await res.json();
+	return (json.config_keys || []) as types.ConfigKey[];
 }
 
 export async function getConfiguration() {
 	try {
-
+		const configKeys = await getConfigKeys();
+		let configuration = JSON.parse(sessionStorage.getItem('configuration') || JSON.stringify({ data: {}, id: 1 }));
+		configuration = {
+			id: 1,
+			data: configKeys.reduce((acc, { data: { configKey } }) => ({
+				...acc,
+				[configKey]: acc[configKey] ? true : false,
+			}), configuration.data)
+		};
+		sessionStorage.setItem('configuration', JSON.stringify(configuration));
+		return configuration;
 	} catch(e) {
-
+		throw e;
 	}
 }
 
 export async function saveConfiguration(data = {}) {
-	try {
-		let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID'); // uuidv4();
-		const res = await makeApiCall('nodeapi', `/web-app/${deviceId}/saveConfiguration`, {
-			method: 'POST',
-			body: JSON.stringify(data),
-		});
-		console.log('saveConfiguration', res);
-	} catch(e) {
-		console.log('saveConfiguration ERR', e);
-	}
+	sessionStorage.setItem('configuration', JSON.stringify({ id: 1, data }));
+	return sessionStorage.getItem('configuration');
+	// try {
+	// 	let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID'); // uuidv4();
+	// 	const res = await makeApiCall('nodeapi', `/web-app/${deviceId}/saveConfiguration`, {
+	// 		method: 'POST',
+	// 		body: JSON.stringify(data),
+	// 	});
+	// 	console.log('saveConfiguration', res);
+	// } catch(e) {
+	// 	console.log('saveConfiguration ERR', e);
+	// }
 }
 
 export async function getScript(opts: any = {}) {
