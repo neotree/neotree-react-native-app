@@ -32,7 +32,7 @@ export async function syncData(opts?: { force?: boolean; }) {
 
 				const res = await makeApiCall(
 					'webeditor',
-					`/sync-data?deviceId=${deviceId}`,
+					`/sync-data?deviceId=${deviceId}&deviceDataOnly=true`,
 				);
 				const json = await res.json();
 

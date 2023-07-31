@@ -161,25 +161,37 @@ export async function saveConfiguration(data = {}) {
 }
 
 export async function getScript(opts: any = {}) {
-	const allScripts: any[] = _data_.scripts || [];
-	const allScreens: any[] = _data_.screens || [];
-	const allDiagnoses: any[] = _data_.diagnoses || [];
+	const getScriptRes = await makeApiCall(
+		'webeditor',
+		`/get-script?script_id=${opts?.script_id}`,
+	);
+	const getScreensRes = await makeApiCall(
+		'webeditor',
+		`/get-screens?script_id=${opts?.script_id}`,
+	);
+	const getDiagnosesRes = await makeApiCall(
+		'webeditor',
+		`/get-diagnoses?script_id=${opts?.script_id}`,
+	);
 
-	const script = allScripts.filter(s => s.script_id === opts?.script_id)[0];
-	let screens: any[] = [];
-	let diagnoses: any[] = [];
+	const getScriptJSON = await getScriptRes.json();
+	const getScreensJSON = await getScreensRes.json();
+	const getDiagnosesJSON = await getDiagnosesRes.json();
 
-	if (script) {
-		screens = allScreens.filter(s => s.script_id === script.script_id);
-		diagnoses = allDiagnoses.filter(s => s.script_id === script.script_id);
-	}
-
-	return { script, screens, diagnoses, };
+	return { 
+		script: getScriptJSON.script as types.Script[], 
+		screens: (getScreensJSON.screens || []) as types.Screen[], 
+		diagnoses: (getDiagnosesJSON.diagnoses || []) as types.Diagnosis[], 
+	};
 }
 
 export async function getScripts() {
-	const scripts = _data_.scripts || [];
-	return scripts;
+	const res = await makeApiCall(
+		'webeditor',
+		`/get-scripts`,
+	);
+	const json = await res.json();
+	return (json.scripts || []) as types.Script[];
 }
 
 export async function getScreens() {
