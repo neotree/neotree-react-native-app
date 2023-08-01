@@ -29,11 +29,11 @@ export async function syncData(opts?: { force?: boolean; }) {
         const exeptions = await getExceptions()
         if(exeptions){
             for (const ex of exeptions){
-             const response= await makeApiCall('nodeapi', `/exceptions`, {
+             await makeApiCall('nodeapi', `/exceptions`, {
                     method: 'POST',
                     body: JSON.stringify(ex),
-                });
-                console.log("====MY RESPONSE====",response)
+                })
+            
             }
         }
         const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
