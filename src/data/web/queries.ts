@@ -266,38 +266,6 @@ export async function getScriptsFields() {
 	}
 }
 
-export async function convertSessionsToExportable() {
-	try {
-
-	} catch(e) {
-
-	}
-}
-
-export async function exportSessions() {
-	try {
-
-	} catch(e) {
-
-	}
-}
-
-export async function saveSession() {
-	try {
-
-	} catch(e) {
-
-	}
-}
-
-export async function updateSession() {
-	try {
-
-	} catch(e) {
-
-	}
-}
-
 export async function exportSession() {
 	try {
 
