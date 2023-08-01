@@ -20,8 +20,7 @@ export async function setLocation(params: { hospital?: string; country: string; 
 
 export async function getLocation() {
 	let location = sessionStorage.getItem('location') || null;
-	if (location) return JSON.parse(location);
-    return location as (null | types.Location);
+    return (location ? JSON.parse(location) : null) as (null | types.Location);
 }
 
 export async function getAuthenticatedUser() {
