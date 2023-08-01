@@ -81,7 +81,7 @@ export async function getApplication() {
 	try {
 		const applicationRslt = sessionStorage.getItem('application');
 		const application = applicationRslt ? JSON.parse(applicationRslt) : null;
-		if (application?.webeditor_info) application.webeditor_info = JSON.parse(application?.webeditor_info);
+		if (application?.webeditor_info) application.webeditor_info = JSON.parse(application.webeditor_info);
 		return application;
 	} catch(e) {
 		console.log('[ERR]: getApplication', e);
