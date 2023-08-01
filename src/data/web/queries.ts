@@ -81,7 +81,7 @@ export async function getApplication() {
 	try {
 		const applicationRslt = sessionStorage.getItem('application');
 		const application = applicationRslt ? JSON.parse(applicationRslt) : null;
-        if (application) application.webeditor_info = JSON.parse(application.webeditor_info || '{}');
+		if (application?.webeditor_info) application.webeditor_info = JSON.parse(application?.webeditor_info);
 		return application;
 	} catch(e) {
 		console.log('[ERR]: getApplication', e);
@@ -242,12 +242,14 @@ export async function getSession() {
 	}
 }
 
-export async function getSessions() {
-	try {
-
-	} catch(e) {
-
-	}
+export async function getSessions(opts: any = {}) {
+	let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID');
+	const res = await makeApiCall(
+		'nodeapi',
+		`/web-app/${deviceId}/getSessions?${Object.keys(opts).reduce((acc, key) => `${acc ? `${acc}&` : acc}${key}=${opts[key]}`, '')}`,
+	);
+	const json = await res.json();
+	return (json.data || []) as any[];
 }
 
 export async function deleteSessions() {

@@ -7,6 +7,26 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
 	let sessionID = null;
     let application = null;
     try {
+		let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID');
+		const res = await makeApiCall('nodeapi', `/web-app/${deviceId}/saveSession`, {
+			method: 'POST',
+			body: JSON.stringify({
+				id: data.id || undefined,
+				data: JSON.stringify(data.data),
+				uid: data.uid,
+				script_id: data.script_id,
+				completed: data.completed || false,
+				exported: data.exported || false,
+				createdAt: data.createdAt || new Date().toISOString(),
+				updatedAt: data.updatedAt || new Date().toISOString(),
+				device_id: deviceId,
+			}),
+		});
+		const json = await res.json();
+		if (json.data) {
+			sessionID = json.data.id;
+		}
+
 		application = await getApplication();
 
         const scripts_count = application.total_sessions_recorded + 1;

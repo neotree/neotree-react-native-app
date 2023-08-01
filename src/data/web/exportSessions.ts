@@ -1,14 +1,13 @@
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 import { makeApiCall } from './makeApiCall';
+import { getSessions } from './queries';
 import { updateSession } from './updateSession';
 
 export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject) => {
     (async () => {
         try {
             if (!sessions) {
-				const res = await makeApiCall('nodeapi', `getSessions?exported=true`);
-				const json = await res.json();
-				sessions = (json.sessions as any[]) || [];
+				sessions = await getSessions({ exported: true });
 			}
 
             const promises: Promise<any>[] = [];
