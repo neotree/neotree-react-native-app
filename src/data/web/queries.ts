@@ -80,7 +80,6 @@ export async function getApplication() {
 	try {
 		const applicationRslt = sessionStorage.getItem('application');
 		const application = applicationRslt ? JSON.parse(applicationRslt) : null;
-		if (application?.webeditor_info) application.webeditor_info = JSON.parse(application.webeditor_info);
 		return application;
 	} catch(e) {
 		console.log('[ERR]: getApplication', e);
@@ -233,12 +232,14 @@ export async function countSessions() {
 	}
 }
 
-export async function getSession() {
-	try {
-
-	} catch(e) {
-
-	}
+export async function getSession(opts: any = {}) {
+	let deviceId = localStorage.getItem('EXPO_CONSTANTS_INSTALLATION_ID');
+	const res = await makeApiCall(
+		'nodeapi',
+		`/web-app/${deviceId}/getSession?${Object.keys(opts).reduce((acc, key) => `${acc ? `${acc}&` : acc}${key}=${opts[key]}`, '')}`,
+	);
+	const json = await res.json();
+	return json.data;
 }
 
 export async function getSessions(opts: any = {}) {

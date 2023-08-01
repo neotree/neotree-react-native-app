@@ -59,7 +59,7 @@ export async function syncData(opts?: { force?: boolean; }) {
 					uid_prefix: _application?.uid_prefix || device?.device_hash,
 					total_sessions_recorded: Math.max(_application?.total_sessions_recorded || 0, device?.details?.scripts_count || 0),
 					device_id: _application?.device_id || device?.device_id || deviceId,
-					webeditor_info: JSON.stringify(webeditorInfo),
+					webeditor_info: webeditorInfo, // JSON.stringify(webeditorInfo),
 					createdAt: _application?.createdAt || new Date().toISOString(),            
 					version: APP_VERSION,
 					updatedAt: new Date().toISOString(),
