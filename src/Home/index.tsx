@@ -17,7 +17,7 @@ import { Configuration } from './Configuration';
 import { Location } from './Location';
 import { Sessions } from './Sessions';
 import { useAppContext } from '../AppContext';
-import * as api from '../data';
+import { api } from '../data';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput as RNTextInput } from "react-native";
-import { getApplication } from '../../data';
+import { api } from '../../data';
 import * as types from '../../types';
 import { Br } from '../Br';
 import { Box, Text } from '../Theme';
@@ -185,7 +185,7 @@ export function NeotreeIDInput({
     React.useEffect(() => {
         (async () => {
             if (!applicationProp) {
-                const app = await getApplication();
+                const app = await api.getApplication();
                 setApplication(app);
             }
         })();

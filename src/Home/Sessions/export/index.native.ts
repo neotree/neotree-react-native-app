@@ -1,4 +1,4 @@
-// import XLSX from 'xlsx';
+import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { api } from '../../../data';
@@ -66,7 +66,72 @@ export function exportEXCEL(opts: any = {}) {
   const scriptsFields = { ...opts.scriptsFields };
 
   return new Promise((resolve, reject) => {
-    reject(new Error("Functionality not available on web"));
+    (async () => {
+      try {
+        const permissionGranted = await isSavingToDevicePermitted();
+        if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
+
+        const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+        if (granted) {
+          const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
+            ...acc,
+            [script.script_id]: script,
+          }), {});
+    
+          const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+          const json = parsedSessions.reduce((acc: any, e: any) => ({
+            ...acc,
+            [e.script.id]: [...(acc[e.script.id] || []), e],
+          }), {});
+
+          const sheets = await Promise.all(Object.keys(json).map(scriptId => new Promise((resolve, reject) => {
+            (async () => {
+              try {
+                const scriptTitle = scripts[scriptId].data.title;
+                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.xlsx`;
+                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        
+                const keys = !scriptsFields[scriptId] ? [] : scriptsFields[scriptId].reduce((acc: any, { keys }: any) => [...acc, ...keys], []);
+        
+                const data = json[scriptId].map((e: any) => {
+                  const values = Object.keys(e.entries).reduce((acc: any, entryKey) => {
+                    const entry = e.entries[entryKey];
+                    return {
+                      ...acc,
+                      [entryKey || 'N/A']: entry.values.value.join(', ')
+                    };
+                  }, null);
+                  return !values ? null : keys.reduce((acc: any, key: any) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
+                }).filter((e: any) => e);
+        
+                const ws = XLSX.utils.json_to_sheet(data);
+        
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, scriptTitle.substring(0, 31));
+        
+                const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+        
+                resolve([fileUri, wbout]);
+              } catch (e) { reject(e); }
+            })();
+          })));
+    
+          if (sheets.length) {
+            await Promise.all(sheets.map(([fileUri, wbout]: any) => new Promise((resolve, reject) => {
+              (async () => {
+                try {
+                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+                  resolve(null);
+                } catch (e) { reject(e); }
+              })();
+            })));
+          }
+        }
+
+        resolve(null);
+      } catch (e) { reject(e); }
+    })();
   });
 }
 
