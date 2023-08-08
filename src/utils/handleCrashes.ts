@@ -2,20 +2,16 @@ import { dbTransaction } from '../data/db';
 import { getLocation } from '../data/queries';
 
 export async function handleAppCrush(error: any) {
-    const stack = error.stack.split('in').splice(0,5).join(" in");
+    const stack = error.stack.split('in').splice(0,6).join(" in");
     const message = error.message;
-    console.log("====STACK===",stack)
-    console.log("====MSG===",message)
     let app = await dbTransaction('select * from application where id=1;');
-    console.log("====MSG2===",app)
       let  application = app[0];
         if(application){
            
             let e = await dbTransaction(`select * from exceptions where message='${message}'`);
             
             if(e && e.length>0){
-                console.log("====MSGE3===",e)
-                // DO NOTHING ERROR ALREADY CAPTURED
+               // ERROR ALREADY LOGGED, DO NOTHING
             }else{
                 
                 //RECORD THE ERROR
