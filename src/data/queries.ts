@@ -26,6 +26,17 @@ export const getApplication = () => new Promise<types.Application>((resolve, rej
     })();
 });
 
+export const getExceptions = () => new Promise<types.Exception[]>((resolve, reject) => {
+    (async () => {
+        try {
+            const results = await dbTransaction('select * from exceptions where exported != ?;', [true]);
+            resolve(results);
+        } catch (e) {
+             reject(e); }
+    })();
+});
+
+
 export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((resolve, reject) => {
     (async () => {
         try {

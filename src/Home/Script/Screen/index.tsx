@@ -4,7 +4,7 @@ import { ScreenType } from './ScreenType';
 import { useContext } from '../Context';
 
 export function Screen() {
-    const ctx = useContext()?.configuration;
+    const ctx = useContext();
     const [searchVal, setSearchVal] = React.useState('');
     
     return (

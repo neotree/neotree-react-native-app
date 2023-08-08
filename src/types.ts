@@ -28,6 +28,13 @@ export type Application = {
     version: number;
   };
 };
+export type Exception = {
+  id: Number,
+  device: string;
+  message:string;
+  hospital: string;
+  stack: string;
+};
 
 export type Script = any;
 export type Screen = any;
