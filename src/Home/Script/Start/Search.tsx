@@ -11,7 +11,7 @@ type SearchProps = {
     label: string;
 	autofillKeys?: string[];
 	filterEntries?: (entry: any) => any;
-	prePopulateWithUID: boolean;
+	prePopulateWithUID?: boolean;
 };
 
 function getSessionFacility(session: any) {
@@ -68,10 +68,12 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                         const session = selected ? null : s;
 										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
 										if (autoFill) {
-											autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
-												if (filterEntries && filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
-												return acc;
-											}, {});
+											if (filterEntries) {
+												autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
+													if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
+													return acc;
+												}, {});
+											}
 											if (autofillKeys) {
 												autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
 													if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];

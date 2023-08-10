@@ -54,6 +54,10 @@ export function Screen() {
                     <Fab 
                         icon={ctx?.summary ? 'check' : undefined}
                         onPress={() => {
+							ctx?.setMountedScreens(prev => ({
+								...prev,
+								[ctx?.activeScreen.id]: true,
+							}));
                             if (ctx?.moreNavOptions?.goNext) {
                                 ctx.moreNavOptions.goNext();
                             } else {
