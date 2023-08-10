@@ -337,10 +337,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setEntry,
 				removeEntry,
 				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {
-					setMountedScreens(prev => ({
-						...prev,
-						[activeScreen.id]: true,
-					}));					
+					// setMountedScreens(prev => ({
+					// 	...prev,
+					// 	[activeScreen.id]: true,
+					// }));					
 					if (values) {
 						const { label, dataType } = activeScreen.data.metadata;
 						setEntry({
