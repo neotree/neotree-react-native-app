@@ -13,7 +13,7 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
 
 	const prePopulatedUID = ctx?.matched?.prePopulateWithUID ? ctx?.matched?.uid : '';
 
-    const [value, setValue] = React.useState(entryValue?.value || prePopulatedUID || '');
+    const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? prePopulatedUID : '') || '');
     const [error, setError] = React.useState('');
 
     React.useEffect(() => { 
