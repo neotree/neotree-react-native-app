@@ -112,6 +112,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		(async () => {
 			try {
 				const summary = await saveSession(params);
+				api.exportSessions().then(() => {}).catch(() => {});
 				setSummary(summary);
 				resolve(summary);
 			} catch (e) { reject(e); }

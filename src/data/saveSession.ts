@@ -25,16 +25,14 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
 
 	let sessionID = null;
 
+    let application = null;
     try {
-        await dbTransaction(
+		await dbTransaction(
             `insert or replace into sessions (${columns}) values (${values});`,
             params,
 			(_, rslts) => { sessionID = data.id || rslts.insertId; }
         );
-    } catch (e) { return reject(e); }
 
-    let application = null;
-    try {
         application = await dbTransaction('select * from application where id=1;');
         application = application[0];
 
@@ -59,9 +57,9 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
                 body: JSON.stringify({ deviceId: application.device_id, details: { scripts_count } }),
             }).then(() => {}).catch(() => {});
         }
-        exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
-    } catch (e) { /* DO NOTHING */ }
-
-    resolve({ application, sessionID });
+		// exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
+		
+		resolve({ application, sessionID });
+    } catch (e) { console.log('saveSession', e); reject(e); /* DO NOTHING */ }
 })();
 });
