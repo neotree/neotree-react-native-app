@@ -50,6 +50,7 @@ export type ScreenEntryValue = {
   type?: string;
   dataType?: string;
   confidential?: boolean;
+  exportValue?: any;
   calculateValue?: any;
   exclusive?: any;
   error?: any;
