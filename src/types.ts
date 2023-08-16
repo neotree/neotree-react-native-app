@@ -41,6 +41,13 @@ export type Diagnosis = any;
 export type ConfigKey = any;
 export type Configuration = any;
 
+export type Hospital = {
+	id: number;
+	hospital_id: string;
+	name: string;
+	country: string;
+};
+
 export type ScreenEntryValue = {
   value?: any;
   valueText?: any;

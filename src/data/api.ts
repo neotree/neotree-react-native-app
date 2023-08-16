@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
-import { COUNTRY_CONFIG } from '../types';
+import queryString from 'query-string';
+import * as types from '../types';
 import { getLocation } from './queries';
 
 const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
@@ -21,7 +22,7 @@ export async function makeApiCall(
 
         if (!country) throw new Error('Location not set');
 
-        const config = (CONFIGURATION[country] as COUNTRY_CONFIG)[source];
+        const config = (CONFIGURATION[country] as types.COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;
         api_endpoint[api_endpoint.length - 1] === '/' ? 
@@ -42,3 +43,9 @@ export async function makeApiCall(
         });
     } catch(e) { throw e; }
 }
+
+export const getHospitals = async (params = {}) => {
+	const res = await makeApiCall('webeditor', `/get-hospitals?${queryString.stringify(params)}`);
+	const json = await res.json();
+	return json.hospitals as types.Hospital[];
+};
