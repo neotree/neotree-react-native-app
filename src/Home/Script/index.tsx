@@ -134,8 +134,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				
 				setScript(script);
 				setScreens(
-					screens
-						// .filter(s => ['diagnosis'].includes(s.type))
+					screens.filter(s => `${s.id}` === '2031')
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
