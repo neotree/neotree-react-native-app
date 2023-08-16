@@ -95,7 +95,7 @@ export function SelectDiagnoses({
 									image2: item.image2,
 									text3: item.text3,
 									image3: item.image3,
-									suggested: true,
+									suggested: false,
 									isHcwDiagnosis: true,
 									...val,
 								}),
