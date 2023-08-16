@@ -7,6 +7,7 @@ type DateFieldProps = types.ScreenFormTypeProps & {
 };
 
 export function DateField({ field, conditionMet, entryValue, onChange, }: DateFieldProps) {
+	const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
 
     React.useEffect(() => { 
@@ -14,7 +15,26 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
             onChange({ value: null, valueText: null, }); 
             setValue(null);
         }
-    }, [conditionMet]);
+		if (!mounted && (field.defaultValue === 'date_now')) {
+			const date = new Date();
+			onChange({ 
+				value: date,
+				valueText: (() => {
+					switch(field.type) {
+						case 'date':
+							return require('moment')(new Date(date)).format('DD MMM, YYYY') ;
+						case 'datetime':
+							return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
+						default:
+							return null;
+					}
+				})(),
+			}); 
+            setValue(date);
+		}
+    }, [conditionMet, field, mounted]);
+
+	React.useEffect(() => { setMounted(true); }, []);
 
     return (
         <Box>
