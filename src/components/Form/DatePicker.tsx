@@ -58,11 +58,11 @@ export function DatePicker({
         if (value) {
             switch(mode) {
                 case 'time':
-                    return moments(value).format('HH:MM');
+                    return moment(value).format('HH:MM');
                 case 'date':
-                    return moments(value).format('ll');
+                    return moment(value).format('ll');
                 case 'datetime':
-                    return moments(value).format('ll HH:mm');
+                    return moment(value).format('ll HH:mm');
                 default:
                     return null;
             }
