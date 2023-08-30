@@ -348,7 +348,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 							prePopulate: activeScreen?.data?.prePopulate,
 							screenIndex: activeScreenIndex,
 							management: screens
-								.filter(s => [activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
+								.filter(s => [activeScreen?.data?.refId, activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
 								.map(s => s.data),
 							screen: {
 								title: activeScreen.data.title,
