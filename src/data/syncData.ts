@@ -28,10 +28,19 @@ export async function syncData(opts?: { force?: boolean; }) {
     if (authenticatedUser && networkState?.isInternetReachable) {
         const exeptions = await getExceptions()
         if(exeptions){
-            for (const ex of exeptions){
+            for (let ex of exeptions){
              await makeApiCall('nodeapi', `/exceptions`, {
                     method: 'POST',
                     body: JSON.stringify(ex),
+                }).then(async()=>{
+                    ex.exported = true
+                    await dbTransaction(
+                        `insert or replace into exceptions (${Object.keys(ex).join(',')}) values (${Object.keys(ex).map(() => '?').join(',')});`,
+                        Object.values(ex)
+                    );
+        
+                }).catch(er=>{
+
                 })
             
             }
