@@ -42,10 +42,12 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
             total_sessions_recorded: scripts_count,
         };
 
-        await dbTransaction(
-            `insert or replace into application (${Object.keys(_application).join(',')}) values (${Object.keys(_application).map(() => '?').join(',')});`,
-            Object.values(_application)
-        );
+		if (!data.id) {
+			await dbTransaction(
+				`insert or replace into application (${Object.keys(_application).join(',')}) values (${Object.keys(_application).map(() => '?').join(',')});`,
+				Object.values(_application)
+			);
+		}
 
         application = await dbTransaction('select * from application where id=1;');
         application = application[0];

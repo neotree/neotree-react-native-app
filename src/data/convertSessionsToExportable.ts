@@ -69,8 +69,6 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                                         exportValue,
                                     } = v;
 
-									console.log(e.prePopulate);
-
                                     if (value && value.map) {
                                         return [
                                             ...acc,
