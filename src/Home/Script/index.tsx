@@ -114,6 +114,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		(async () => {
 			try {
 				const summary = await saveSession(params);
+				api.exportSessions().then(() => {}).catch(() => {});
 				setSummary(summary);
 				resolve(summary);
 			} catch (e) { 
@@ -138,7 +139,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(
 					screens
-						// .filter(s => ['diagnosis'].includes(s.type))
 				);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
@@ -345,18 +345,20 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setEntry,
 				removeEntry,
 				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {
-					setMountedScreens(prev => ({
-						...prev,
-						[activeScreen.id]: true,
-					}));					
+					// setMountedScreens(prev => ({
+					// 	...prev,
+					// 	[activeScreen.id]: true,
+					// }));					
 					if (values) {
 						const { label, dataType } = activeScreen.data.metadata;
 						setEntry({
 							values,
+							prePopulate: activeScreen?.data?.prePopulate,
 							screenIndex: activeScreenIndex,
 							management: screens
-								.filter(s => [activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
-								.map(s => s.data),
+								.filter(s => [activeScreen?.data?.refId, activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
+								.map(s => s.data)
+								.filter(s => s.printable),
 							screen: {
 								title: activeScreen.data.title,
 								sectionTitle: activeScreen.data.sectionTitle,

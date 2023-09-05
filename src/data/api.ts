@@ -1,11 +1,13 @@
 import Constants from 'expo-constants';
-import { COUNTRY_CONFIG } from '../types';
+import queryString from 'query-string';
+import * as types from '../types';
 import { getLocation } from './queries';
 
 const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
 const _otherOptions = {
     useHost: false,
+	country: '',
 };
 
 export async function makeApiCall(
@@ -17,11 +19,11 @@ export async function makeApiCall(
     const { useHost } = { ..._otherOptions, ...otherOptions, };
     try {
         const location = await getLocation();
-        const country = location?.country;
+        const country = otherOptions.country || location?.country;
 
         if (!country) throw new Error('Location not set');
 
-        const config = (CONFIGURATION[country] as COUNTRY_CONFIG)[source];
+        const config = (CONFIGURATION[country] as types.COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;
         api_endpoint[api_endpoint.length - 1] === '/' ? 
@@ -43,3 +45,9 @@ export async function makeApiCall(
     } catch(e) {
         throw e; }
 }
+
+export const getHospitals = async (params = {}, otherParams: Partial<(typeof _otherOptions)> = {}) => {
+	const res = await makeApiCall('webeditor', `/get-hospitals?${queryString.stringify(params)}`, undefined, otherParams);
+	const json = await res.json();
+	return json.hospitals as types.Hospital[];
+};

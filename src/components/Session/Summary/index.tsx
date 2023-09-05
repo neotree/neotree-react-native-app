@@ -44,17 +44,17 @@ export function Summary({
                                     {
                                         label: 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
                                         values: accepted,
-                                        management: [],
+                                        management: management,
                                     },
                                 ]; // .filter(v => v.values.length);
                                 break;
                             case 'form':
                                 entries = values
                                     .filter((e: any) => e.confidential ? showConfidential : true)
-                                    .map((entry: any) => ({
+                                    .map((entry: any, i: number, arr: any[]) => ({
                                         label: entry.label,
                                         values: [entry],
-                                        management: [],
+                                        management: i === (arr.length - 1) ? management : [],
                                     }));
                                 break;
                             default:
@@ -67,7 +67,12 @@ export function Summary({
 
                         return !entries ? null : entries.map((e: any, i: any) => {
                             const key = `${screen.id}${i}`;
-                            return <Entry key={key} entry={e} matched={matched || []} />;
+                            return (
+								<Entry 
+									key={key} entry={e} 
+									matched={matched || []} 
+								/>
+							);
                         });
                     })}
             </Wrapper>
