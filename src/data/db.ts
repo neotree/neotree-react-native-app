@@ -123,10 +123,15 @@ export async function createTablesIfNotExist() {
         'id integer primary key not null',
         'country varchar',
         'message varchar',
-         'stack vachar',
+        'stack varchar',
         'device varchar',
         'exported boolean',
-        'hospital vachar',
+        'hospital varchar',
+        'version varchar',
+        'battery varchar',
+        'device_model varchar',
+        'memory varchar',
+        'editor_version varchar'
     ].join(',');
 
     return await Promise.all([

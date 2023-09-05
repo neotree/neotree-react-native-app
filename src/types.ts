@@ -34,6 +34,12 @@ export type Exception = {
   message:string;
   hospital: string;
   stack: string;
+  exported: boolean;
+  version: string;
+  editor_version: string;
+  battery: string;
+  memory: string;
+  device_model: string;
 };
 
 export type Script = any;
