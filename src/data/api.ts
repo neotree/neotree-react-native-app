@@ -7,6 +7,7 @@ const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
 const _otherOptions = {
     useHost: false,
+	country: '',
 };
 
 export async function makeApiCall(
@@ -18,7 +19,7 @@ export async function makeApiCall(
     const { useHost } = { ..._otherOptions, ...otherOptions, };
     try {
         const location = await getLocation();
-        const country = location?.country;
+        const country = otherOptions.country || location?.country;
 
         if (!country) throw new Error('Location not set');
 
@@ -44,8 +45,8 @@ export async function makeApiCall(
     } catch(e) { throw e; }
 }
 
-export const getHospitals = async (params = {}) => {
-	const res = await makeApiCall('webeditor', `/get-hospitals?${queryString.stringify(params)}`);
+export const getHospitals = async (params = {}, otherParams: Partial<(typeof _otherOptions)> = {}) => {
+	const res = await makeApiCall('webeditor', `/get-hospitals?${queryString.stringify(params)}`, undefined, otherParams);
 	const json = await res.json();
 	return json.hospitals as types.Hospital[];
 };
