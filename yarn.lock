@@ -5777,10 +5777,10 @@ expo-av@~13.0.3:
   resolved "https://registry.yarnpkg.com/expo-av/-/expo-av-13.0.3.tgz#b624757f3c4f8c35ca83d0485bb20b79b2f9e13d"
   integrity sha512-9SpXOjY2MUK+jCIL68EUro/aHBlbZ3B4cY1nRr2aTPfv/dLD3bXRZNTTtSwOgsHbuKO6XwjHgCoYbd9T0GcE4A==
 
-expo-battery@^7.3.0:
-  version "7.3.0"
-  resolved "https://registry.yarnpkg.com/expo-battery/-/expo-battery-7.3.0.tgz#be99c20e99d104219e4abede43c502a712556dbc"
-  integrity sha512-+YBrQovEqeqP8/MdyRe9sYvfmzSgpJYDEOrCWsh49UwKeNjtBAnBTJ5cS0NDA/eHeS+WP+B0E5LfzYh78uzCwQ==
+expo-battery@~7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/expo-battery/-/expo-battery-7.0.0.tgz#f5a8b0f8361272c46c85b40b129993b0e47b7ade"
+  integrity sha512-y1ehvHNKTnK29GmrgIVl8H1nVLNuF6slVSNRhESZHaCU7v5Cl62d825OAbfJGKAfoWwhtjfnsO2bPiQJGF1WPA==
 
 expo-constants@~14.0.0, expo-constants@~14.0.2:
   version "14.0.2"
@@ -5790,12 +5790,12 @@ expo-constants@~14.0.0, expo-constants@~14.0.2:
     "@expo/config" "~7.0.2"
     uuid "^3.3.2"
 
-expo-device@^5.4.0:
-  version "5.4.0"
-  resolved "https://registry.yarnpkg.com/expo-device/-/expo-device-5.4.0.tgz#4dc4db4b2265d1f5c9d7c2be6548c375882be437"
-  integrity sha512-TQxSVPrC6njCbzZ9Cqpc1lGLIjPmO1zBIbqW7CTqBPD1dOIMrgQvt7lZZhkHh3pWzoZznH283sSYqCvy3XcURw==
+expo-device@~5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/expo-device/-/expo-device-5.0.0.tgz#2039e01a9d8bc696c060771145b764758e3ed242"
+  integrity sha512-FWlbOUMzAjHojLER8fnS42vLT7aqZ7IoEY+nw/RqmW17SA3GE2lzcYxRYZs1vAIgDnLzcS5CQMp08Eu+EXih1g==
   dependencies:
-    ua-parser-js "^0.7.33"
+    ua-parser-js "^0.7.19"
 
 expo-error-recovery@~4.0.1:
   version "4.0.1"
@@ -12165,7 +12165,7 @@ typescript@^4.6.3:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
   integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
-ua-parser-js@^0.7.33:
+ua-parser-js@^0.7.19:
   version "0.7.35"
   resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-0.7.35.tgz#8bda4827be4f0b1dda91699a29499575a1f1d307"
   integrity sha512-veRf7dawaj9xaWEu9HoTVn5Pggtc/qj+kqTOFvNiN1l0YdxwC1kvel57UCjThjGa3BHBihE8/UJAHI+uQHmd/g==
