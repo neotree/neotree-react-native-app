@@ -31,7 +31,12 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, }); 
+            onChange({ 
+				value: null, 
+				valueText: null, 
+				calculateValue: null,
+				exportValue: null,
+			}); 
             setValue(null);
         }
     }, [conditionMet]);
@@ -45,7 +50,12 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
                 const val = new Date(_calcFrom.value);
                 setValue(val);
                 setValueText(dateToValueText(val));
-                onChange({ value: val.toISOString(), valueText: dateToValueText(val), });
+                onChange({ 
+					value: val.toISOString(), 
+					valueText: dateToValueText(val), 
+					exportValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
+      				calculateValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
+				});
             } catch(e) { /**/ }
           }
         }
@@ -63,6 +73,8 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
                     onChange({
                         value: !date ? null : date.toISOString(),
                         valueText: dateToValueText(date),
+						exportValue: date ? diffHours(date, new Date()) : null,
+      					calculateValue: date ? diffHours(date, new Date()) : null,
                     });
                 }}
                 valueText={valueText}

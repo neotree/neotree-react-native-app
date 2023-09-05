@@ -1,9 +1,10 @@
 import React from 'react';
 import { Keyboard } from 'react-native';
-import { Box, Button, Content, Text, Radio, NeotreeIDInput } from '../../../components';
+import { Box, Button, Content, Text } from '../../../components';
 import { useContext } from '../Context';
 import { Search } from './Search';
 import { Transfer } from './Transfer';
+import { Twin } from './Twin';
 
 export function Start() {
     const ctx = useContext();
@@ -27,9 +28,13 @@ export function Start() {
                     {ctx?.script?.type === 'discharge' ? 
                         <Search label="Search existing NUID" />
                         :
-                        <Transfer />}
+                        <>
+							<Transfer />
+							<Box mt="l" />
+							<Twin />
+						</>}
 
-					{((ctx?.script?.data?.title || '').match(/admission/gi) || (ctx?.script?.data?.script?.type === 'admission')) && (
+					{/* {((ctx?.script?.data?.title || '').match(/admission/gi) || (ctx?.script?.data?.script?.type === 'admission')) && (
 						<Box my="xl">
 							<Text>Does the baby have a twin?</Text>
 							<Box flexDirection="row">
@@ -63,7 +68,7 @@ export function Start() {
 								</Box>
 							)}
 						</Box>
-					)}
+					)} */}
                 </Content>
             </Box>
 

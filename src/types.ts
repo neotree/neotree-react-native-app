@@ -11,7 +11,13 @@ export type Location = {
 
 export type Facility = { label: string; value: string; other?: string; };
 
-export type MatchedSession = { session: any, uid: string; facility: Facility; autoFill?: any; };
+export type MatchedSession = { 
+	session: any, 
+	uid: string; 
+	facility: Facility; 
+	autoFill?: any; 
+	prePopulateWithUID?: boolean;
+};
 
 export type AuthenticatedUser = any;
 
@@ -48,6 +54,13 @@ export type Diagnosis = any;
 export type ConfigKey = any;
 export type Configuration = any;
 
+export type Hospital = {
+	id: number;
+	hospital_id: string;
+	name: string;
+	country: string;
+};
+
 export type ScreenEntryValue = {
   value?: any;
   valueText?: any;
@@ -57,10 +70,12 @@ export type ScreenEntryValue = {
   type?: string;
   dataType?: string;
   confidential?: boolean;
+  exportValue?: any;
   calculateValue?: any;
   exclusive?: any;
   error?: any;
   diagnosis?: Diagnosis;
+  prePopulate?: any[];
 };
 
 export type ScreenEntry = {
@@ -99,17 +114,17 @@ export type ScreenFormTypeProps = {
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {
-  getDefaultDiagnosis: (d?: Diagnosis) => Diagnosis;
-  diagnosisToEntryValue: (d?: Diagnosis) => ScreenEntryValue;
-  setActiveDiagnosisIndex: React.Dispatch<React.SetStateAction<null | number>>;
-  _setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>
-  setHcwDiagnoses: (diagnoses: Diagnosis[]) => void;
-  setDiagnoses: (diagnoses?: Diagnosis[]) => void;
-  setMoreNavOptions: () => void;
-  diagnoses: Diagnosis[];
-  acceptedDiagnoses: Diagnosis[];
-  activeDiagnosisIndex: null | number;
-  hcwDiagnoses: Diagnosis[];
+	getDefaultDiagnosis: (d?: Diagnosis) => Diagnosis;
+	diagnosisToEntryValue: (d?: Diagnosis) => ScreenEntryValue;
+	setActiveDiagnosisIndex: React.Dispatch<React.SetStateAction<null | number>>;
+	_setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>
+	setHcwDiagnoses: (diagnoses: Diagnosis[]) => void;
+	setDiagnoses: (diagnoses?: Diagnosis[]) => void;
+	setMoreNavOptions: () => void;
+	diagnoses: Diagnosis[];
+	acceptedDiagnoses: Diagnosis[];
+	activeDiagnosisIndex: null | number;
+	hcwDiagnoses: Diagnosis[];
 };
 
 export interface StackNavigationProps<

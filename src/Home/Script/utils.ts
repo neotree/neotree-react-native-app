@@ -1,4 +1,3 @@
-import { ContextType } from './Context';
 import * as types from '../../types';
 
 export const evaluateCondition = (condition: string, defaultEval = false) => {
@@ -73,13 +72,13 @@ export const getScriptUtils = ({
 }: UtilsParams) => {
     const matches: any[] = [];
 
-    function parseCondition(_condition = '', entries: ContextType['entries'] = []) {    
+    function parseCondition(_condition = '', entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []) {    
         _condition = (_condition || '').toString();
     
         const _form = entries.reduce((acc, e) => {
             const index = !e.screen ? -1 : acc.map(e => e.screen.id).indexOf(e.screen.id);
-            if (index > -1) return acc.map((_e, i) => i === index ? { ..._e, ...e } : _e);
-            return [...acc, e];
+            if (index > -1) return acc.map((_e, i) => i === index ? { ..._e, ...e } : _e) as types.ScreenEntry[];
+            return [...acc, e] as types.ScreenEntry[];
         }, form);
     
         const parseValue = (condition = '', { value, calculateValue, type, key, dataType, }: types.ScreenEntryValue) => {
