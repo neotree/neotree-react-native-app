@@ -74,13 +74,13 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 				setLoadingHospitals(true);
 				setLoadHospitalsError(null);
 				try {
-					const hospitals = await api.getHospitals();
+					const hospitals = await api.getHospitals(undefined, { country });
 					setHospitals(hospitals);
 				} catch (e: any) { setLoadHospitalsError(e.message); }
 				setLoadingHospitals(false);
 			}
 		})();
-	}, []);
+	}, [country]);
 
 	React.useEffect(() => { getHospitals(country); }, [country]);
 
@@ -108,6 +108,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 				value={hospital}
 				onChange={hospital => setHospital(hospital as string)}
 				label="Hospital"
+				placeholder={loadingHospitals ? 'Loading hospitals...' : ''}
 				title="Select hospital"
 				options={hospitals.map(c => ({
 					label: c.name,
