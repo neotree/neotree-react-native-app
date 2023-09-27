@@ -137,12 +137,11 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
 				
 				setScript(script);
-				setScreens(
-					screens
-				);
+				setScreens(screens);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
-				if (route.params?.session) {
+				console.log(script);
+				if (route.params?.session || !(script.data.nuid_search_enabled)) {
 					setActiveScreen(screens[0]);
 					setActiveScreenIndex(0);
 				}
@@ -355,10 +354,11 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 							values,
 							prePopulate: activeScreen?.data?.prePopulate,
 							screenIndex: activeScreenIndex,
-							management: screens
-								.filter(s => [activeScreen?.data?.refId, activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
-								.map(s => s.data)
-								.filter(s => s.printable),
+							management: [],
+							// management: screens
+							// 	.filter(s => [activeScreen?.data?.refId, activeScreen?.data?.metadata?.key, `$${activeScreen?.data?.metadata?.key}`].includes(`${s.data?.refKey}`))
+							// 	.map(s => s.data)
+							// 	.filter(s => s.printable),
 							screen: {
 								title: activeScreen.data.title,
 								sectionTitle: activeScreen.data.sectionTitle,

@@ -53,16 +53,16 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
         return (
             <>
                 {sessions.map((s: any) => {
-                    const selected = s.id === selectedSession?.id;
+                    const selected = s.data.unique_key === selectedSession?.data?.unique_key;
                     return (
-                        <React.Fragment key={s.id}>
+                        <React.Fragment key={s.data.unique_key}>
                             <Box
                                 borderBottomColor="divider"
                                 borderBottomWidth={1}
                                 paddingVertical="m"
                             >
                                 <Radio
-                                    value={s.id}
+                                    value={s.data.unique_key}
                                     checked={selected}
                                     onChange={() => {
                                         const session = selected ? null : s;
