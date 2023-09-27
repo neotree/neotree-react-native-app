@@ -256,6 +256,10 @@ export const getScriptUtils = ({
 				completed_at: completed ? new Date().toISOString() : null,
 				canceled_at: cancelled ? new Date().toISOString() : null,
 				script,
+				management: screens
+					.map(s => s.data)
+					.filter(s => s.type === 'management')
+					.filter(s => s.printable),
 				diagnoses: [],
 				form,
 				matchingSession: session?.data?.matchingSession || matchingSession,

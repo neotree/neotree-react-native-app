@@ -1,6 +1,6 @@
 import { makeApiCall } from './api';
 import { dbTransaction } from './db';
-
+import { convertSessionsToExportable } from './convertSessionsToExportable';
 
 export const exportSession = async (s: any) => {
     return await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
@@ -11,16 +11,29 @@ export const exportSession = async (s: any) => {
 
 export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((resolve, reject) => {
     (async () => {
-        if (!uid) 
-        return reject(new Error('UID is required'));
+        if (!uid) return reject(new Error('UID is required'));
 
         try {
+			const localRes = await dbTransaction(`select * from sessions where uid='${uid}';`);
+			const localSessions: any = await convertSessionsToExportable((localRes || []).filter(s => s.data).map(s => ({
+				...s,
+				data: JSON.parse(s.data),
+			})));
             const res = await makeApiCall('nodeapi', `/find-sessions-by-uid?uid=${uid}`);
             const json = await res.json();
-            return resolve(json?.sessions || []);
-        } catch (e) { 
-            
-            /**/ }
+            resolve(Object.values({
+				...localSessions
+					.reduce((acc: any, s: any) => ({
+						...acc,
+						[s.unique_key]: { data: s },
+					}), {}),
+				...(json?.sessions || [])
+					.reduce((acc: any, s: any) => ({
+						...acc,
+						[s.data.unique_key]: s,
+					}), {})
+			}));
+        } catch (e) { /**/ }
 
         try {
             const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);

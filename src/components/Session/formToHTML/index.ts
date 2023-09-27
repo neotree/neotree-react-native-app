@@ -3,8 +3,31 @@ import ucFirst from '../../../utils/ucFirst';
 import baseHTML from './baseHTML';
 
 export default (session: any, showConfidential?: boolean) => {
-  const { form } = session.data;
+  let { form, management } = session.data;
   const sections: any[] = [];
+  management = management || [];
+
+  let managementHTML = management.map((screen: any) => {
+	const sections = [
+	  { title: screen.metadata.title1, image: screen.metadata.image1?.data, text: screen.metadata.text1, },
+	  { title: screen.metadata.title2, image: screen.metadata.image2?.data, text: screen.metadata.text2, },
+	  { title: screen.metadata.title3, image: screen.metadata.image3?.data, text: screen.metadata.text3, },
+	].filter(s => s.title || s.text || s.image);
+	return `
+		<div style="margin: 25px 0;">
+			<div class="title">${screen.printTitle || screen.title}</div>
+			${sections.map(s => {
+				return [
+				!s.title ? '' : `<div>${s.title}</div>`,
+				!s.image ? '' : `<div><img style="width:100%;height:auto;" src="${s.image}" /></div>`,
+				!s.text ? '' : `<div>${s.text}</div>`,
+				].filter(s => s).join('');
+			}).join('')}
+		</div>
+	`;
+  }).join('');
+  managementHTML = !managementHTML ? '' : `<div>${managementHTML}</div>`;
+
   form.forEach((entry: any) => {
     const { screen } = entry;
     const { sectionTitle } = screen;
@@ -18,7 +41,7 @@ export default (session: any, showConfidential?: boolean) => {
           // `${sectionTitle} - Primary Provisional Diagnosis`,
           // `${sectionTitle} - Other problems`,
         ] : [sectionTitle])
-      ].forEach((sectionTitle, i) => {
+      ].forEach((sectionTitle) => {
         const _sectionTitle = ucFirst(`${sectionTitle}`.toLowerCase());
         let sectionIndex = sections.map(([section]) => section).indexOf(_sectionTitle);
         if (sectionIndex < 0) {
@@ -62,8 +85,12 @@ export default (session: any, showConfidential?: boolean) => {
         `)}
 
         ${entries.filter((e: any) => e.values.length)
-          .map(({ values, management, screen: { metadata: { label } } }: any) => {
-            management = management || [];
+          .map(({ 
+			values, 
+			// management, 
+			screen: { metadata: { label } } 
+			}: any) => {
+            // management = management || [];
 
             const valuesHTML = values.filter((e: any) => e.confidential ? showConfidential : true).map((v: any) => {
               return `
@@ -80,29 +107,31 @@ export default (session: any, showConfidential?: boolean) => {
               `;
             }).join('');
 
-            let managementHTML = management.map((s: any) => {
-              const sections = [
-                { title: s.metadata.title1, image: s.metadata.image1?.data, text: s.metadata.text1, },
-                { title: s.metadata.title2, image: s.metadata.image2?.data, text: s.metadata.text2, },
-                { title: s.metadata.title3, image: s.metadata.image3?.data, text: s.metadata.text3, },
-              ].filter(s => s.title || s.text || s.image);
-              return sections.map(s => {
-                return [
-                  !s.title ? '' : `<div>${s.title}</div>`,
-                  !s.image ? '' : `<div><img style="width:auto;height:auto;max-width:100%;" src="${s.image}" /></div>`,
-                  !s.text ? '' : `<div>${s.text}</div>`,
-                ].filter(s => s).join('');
-              }).join('');
-            }).join('');
-            managementHTML = !managementHTML ? '' : `<div>${managementHTML}</div>`;
+            // let managementHTML = management.map((s: any) => {
+            //   const sections = [
+            //     { title: s.metadata.title1, image: s.metadata.image1?.data, text: s.metadata.text1, },
+            //     { title: s.metadata.title2, image: s.metadata.image2?.data, text: s.metadata.text2, },
+            //     { title: s.metadata.title3, image: s.metadata.image3?.data, text: s.metadata.text3, },
+            //   ].filter(s => s.title || s.text || s.image);
+            //   return sections.map(s => {
+            //     return [
+            //       !s.title ? '' : `<div>${s.title}</div>`,
+            //       !s.image ? '' : `<div><img style="width:auto;height:auto;max-width:100%;" src="${s.image}" /></div>`,
+            //       !s.text ? '' : `<div>${s.text}</div>`,
+            //     ].filter(s => s).join('');
+            //   }).join('');
+            // }).join('');
+            // managementHTML = !managementHTML ? '' : `<div>${managementHTML}</div>`;
 
-            return `
-              <div>${valuesHTML}</div> 
-              <div>${managementHTML}</div>
-            `;
+            // return `
+            //   <div>${valuesHTML}</div> 
+            //   <div>${managementHTML}</div>
+            // `;
+
+			return `<div>${valuesHTML}</div>`;
           }).join('')}
       `;
     }).join('');
 
-  return baseHTML(tables, session);
+  return baseHTML(`<div>${tables}</div><div>${managementHTML}</div>`, session);
 };
