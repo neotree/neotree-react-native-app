@@ -27,7 +27,7 @@ export default (html: any, session: any) => {
           margin: 0;
           padding: 0;
         }
-        #content {
+        .grid {
           webkit-columns: 0px 2;
           moz-columns: 0px 2;
           ms-columns: 0px 2;
