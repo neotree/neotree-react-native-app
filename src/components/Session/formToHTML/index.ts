@@ -14,7 +14,7 @@ export default (session: any, showConfidential?: boolean) => {
 	  { title: screen.metadata.title3, image: screen.metadata.image3?.data, text: screen.metadata.text3, },
 	].filter(s => s.title || s.text || s.image);
 	return `
-		<div style="margin: 25px 0;">
+		<div style="margin: 25px 0;page-break-after:always;">
 			<div class="title">${screen.printTitle || screen.title}</div>
 			${sections.map(s => {
 				return [
@@ -26,7 +26,7 @@ export default (session: any, showConfidential?: boolean) => {
 		</div>
 	`;
   }).join('');
-  managementHTML = !managementHTML ? '' : `<div>${managementHTML}</div>`;
+  managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
 
   form.forEach((entry: any) => {
     const { screen } = entry;
@@ -133,5 +133,5 @@ export default (session: any, showConfidential?: boolean) => {
       `;
     }).join('');
 
-  return baseHTML(`<div>${tables}</div><div>${managementHTML}</div>`, session);
+  return baseHTML(`<div class="grid">${tables}</div><div>${managementHTML}</div>`, session);
 };
