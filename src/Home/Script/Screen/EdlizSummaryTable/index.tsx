@@ -20,9 +20,12 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
         let score = 0;
         if (values) {
             score = values.reduce((acc, v) => {
-                if (v.type === 'major_criteria') acc += 2;
-                if (v.type === 'minor_criteria') acc += 1;
-                if (activeScreen.type === 'mwi_edliz_summary_table') acc += 1;
+                if (activeScreen.type === 'mwi_edliz_summary_table') {
+					acc += 1;
+				} else {
+					if (v.type === 'major_criteria') acc += 2;
+                	if (v.type === 'minor_criteria') acc += 1;
+				}
                 return acc;
             }, 0);
         }

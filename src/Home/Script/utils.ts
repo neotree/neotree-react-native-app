@@ -100,8 +100,13 @@ export const getScriptUtils = ({
             return parseConditionString(condition, key, value);
         };
     
-        let parsedCondition = _form.reduce((condition: string, { screen, values }: types.ScreenEntry) => {
+        let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
+			values = value || values || [];
             values = values.filter(e => (e.value !== null) || (e.value !== undefined));
+			values = values.reduce((acc: types.ScreenEntryValue[], e) => [
+				...acc,
+				...(e.value && e.value.map ? e.value : [e]),
+			], []);
     
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
     
