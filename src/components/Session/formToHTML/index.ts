@@ -16,13 +16,14 @@ export default (session: any, showConfidential?: boolean) => {
 	return `
 		<div style="margin: 25px 0;page-break-after:always;">
 			<div class="title">${screen.printTitle || screen.title}</div>
+			<br />
 			${sections.map(s => {
 				return [
-				!s.title ? '' : `<div>${s.title}</div>`,
+				!s.title ? '' : `<div><b>${s.title}</b></div>`,
 				!s.image ? '' : `<div><img style="width:100%;height:auto;" src="${s.image}" /></div>`,
-				!s.text ? '' : `<div>${s.text}</div>`,
+				!s.text ? '' : `<div>${s.text.replace(new RegExp('\n', 'gi'), '<br />')}</div>`,
 				].filter(s => s).join('');
-			}).join('')}
+			}).join('<br />')}
 		</div>
 	`;
   }).join('');
