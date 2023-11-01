@@ -42,7 +42,7 @@ export function Summary({
                                 const accepted = values.filter((v: any) => v.diagnosis.how_agree !== 'No');
                                 entries = [
                                     {
-                                        label: 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
+                                        label: screen.sectionTitle || 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
                                         values: accepted,
                                         management: management,
                                     },
