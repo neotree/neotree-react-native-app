@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import * as Network from 'expo-network';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { createTablesIfNotExist, dbTransaction } from './db';
@@ -10,7 +10,7 @@ import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
 const APP_VERSION = Constants.manifest?.version;
 
 export async function syncData(opts?: { force?: boolean; }) {  
-    const networkState = await NetInfo.fetch();
+    const networkState = await Network.getNetworkStateAsync();
 
     await createTablesIfNotExist();
 

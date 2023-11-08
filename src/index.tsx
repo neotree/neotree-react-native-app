@@ -19,7 +19,7 @@ export function Navigation() {
     const ctx = useAppContext();
 
     const initialiseApp = React.useCallback(async () => {
-        try {
+        try { 
             const res = await syncData();            
             ctx?.setSyncDataResponse(res);
         } catch (e) {
