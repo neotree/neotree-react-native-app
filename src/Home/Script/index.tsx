@@ -51,7 +51,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [, setLoadConfigurationError] = React.useState('');
 
 	const [activeScreen, setActiveScreen] = React.useState<null | types.Screen>(null);
-	const [activeScreenIndex, setActiveScreenIndex] = React.useState(0);
+	const [activeScreenIndex, setActiveScreenIndex] = React.useState((route.params?.session?.data?.form || []).length);
 
 	const [entries, setEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
   	const [cachedEntries, setCachedEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
@@ -140,10 +140,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScreens(screens);
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
-				console.log(script);
+
+				const activeScreenIndex = (route.params?.session?.data?.form || []).length;
+
 				if (route.params?.session || !(script.data.nuid_search_enabled)) {
-					setActiveScreen(screens[0]);
-					setActiveScreenIndex(0);
+					setActiveScreen(screens[activeScreenIndex]);
+					setActiveScreenIndex(activeScreenIndex);
 				}
 			} catch (e: any) { 
 				
