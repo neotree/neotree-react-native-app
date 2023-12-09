@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
-import * as Network from 'expo-network';
+// import * as Network from 'expo-network';
+import NetInfo from '@react-native-community/netinfo';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { createTablesIfNotExist, dbTransaction } from './db';
@@ -10,7 +11,8 @@ import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
 const APP_VERSION = Constants.manifest?.version;
 
 export async function syncData(opts?: { force?: boolean; }) {  
-    const networkState = await Network.getNetworkStateAsync();
+	const netInfo = await NetInfo.fetch();
+    // const networkState = await Network.getNetworkStateAsync(); 
 
     await createTablesIfNotExist();
 
@@ -25,7 +27,8 @@ export async function syncData(opts?: { force?: boolean; }) {
 
     let last_sync_date = null;
 
-    if (authenticatedUser && networkState?.isInternetReachable) {
+	// if (authenticatedUser && networkState?.isConnected && networkState?.isInternetReachable) {
+    if (authenticatedUser && netInfo?.isConnected && netInfo?.isInternetReachable) {
         const exeptions = await getExceptions()
         if(exeptions){
             for (let ex of exeptions){
