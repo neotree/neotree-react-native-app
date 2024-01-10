@@ -65,4 +65,28 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
 
 export const Context = React.createContext<null | ContextType>(null);
 
-export const useContext = () => React.useContext(Context);
+export const useContext = () => React.useContext(Context)!;
+
+export function useDiagnoses() {
+	const ctx = useContext();
+	const metadataItems = ctx.activeScreen.data.metadata.items || [];
+	const allDiagnoses = ctx.diagnoses;
+
+	const diagnoses: any[] = metadataItems.map((item: any) => {
+        const d = allDiagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
+        return {
+            ...item,
+            ...(!d ? null : {
+                text1: d.text1,
+                image1: d.image1,
+                text2: d.text2,
+                image2: d.image2,
+                text3: d.text3,
+                image3: d.image3,
+                symptoms: d.symptoms || [],
+            }),
+        };
+    });
+
+	return { allDiagnoses, diagnoses, };
+}

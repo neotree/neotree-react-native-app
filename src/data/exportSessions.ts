@@ -35,7 +35,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                 pollData.forEach((s: any) => promises.push(new Promise((resolve, reject) => {
                     (async () => {
                         try {
-                            await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
+                            await makeApiCall('nodeapi', `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
                                 method: 'POST',
                                 body: JSON.stringify(s),
                             });
