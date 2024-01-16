@@ -4,6 +4,7 @@ import * as types from '../../../../types';
 import { useContext, useDiagnoses } from '../../Context';
 import { SelectHcwDiagnoses } from './SelectHcwDiagnoses';
 import { AgreeDisagree } from './AgreeDisagree';
+import { SortPriority } from './SortPriority';
 
 type DiagnosisProps = types.ScreenTypeProps & {};
 
@@ -20,7 +21,7 @@ const getDefaultDiagnosis = (d?: types.Diagnosis) => ({
     ...d,
 });
 
-const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
+const diagnosisToEntryValue = ({ selected, ...d }: types.Diagnosis): types.ScreenEntryValue => ({
     label: d.name,
     key: d.name,
     value: d.customValue || d.name,
@@ -30,11 +31,14 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
     diagnosis: {
         ...getDefaultDiagnosis(),
         ...d,
+		how_agree: d.how_agree || null,
+		hcw_reason_given: d.hcw_reason_given || null,
+		hcw_follow_instructions: d.hcw_follow_instructions || null,
     },
 });
 
 export function Diagnosis(props: DiagnosisProps) {
-	const { activeScreenEntry, activeScreen, setMoreNavOptions } = useContext();
+	const { activeScreenEntry, activeScreen, setEntryValues, setMoreNavOptions } = useContext();
 	const { diagnoses } = useDiagnoses();
 
 	const [section, setSection] = React.useState('select');
@@ -46,6 +50,10 @@ export function Diagnosis(props: DiagnosisProps) {
 			how_agree: useSharedValue('Yes'),
 			hcw_reason_given: useSharedValue(null),
 			hcw_follow_instructions: useSharedValue('Yes'),
+			position: (activeScreenEntry?.values || [])
+				.map((v, i) => ({ diagnosis: v.diagnosis, index: i, }))
+				.filter(v => v.diagnosis?.isHcwDiagnosis && (v.diagnosis.name === d.name))
+				.map((_, i) => i)[0] || null,
 			selected: useSharedValue(
 				!!(activeScreenEntry?.values || [])
 					.filter(v => v?.diagnosis?.isHcwDiagnosis)
@@ -63,6 +71,7 @@ export function Diagnosis(props: DiagnosisProps) {
 			hcw_reason_given: useSharedValue(null),
 			hcw_follow_instructions: useSharedValue(null),
 			selected: useSharedValue(true),
+			position: null,
 		},
 		{
 			...diagnoses[diagnoses.length - 2],
@@ -71,11 +80,14 @@ export function Diagnosis(props: DiagnosisProps) {
 			hcw_reason_given: useSharedValue(null),
 			hcw_follow_instructions: useSharedValue(null),
 			selected: useSharedValue(true),
+			position: null,
 		},
 		...(activeScreenEntry?.values || [])
+			.map((v, i) => ({ diagnosis: v?.diagnosis, index: i, }))
 			.filter(v => !v?.diagnosis?.isHcwDiagnosis)
 			.map(v => ({
 				...v.diagnosis,
+				position: v.index,
 				selected: useSharedValue(true),
 				how_agree: useSharedValue(v.diagnosis.how_agree),
 				hcw_reason_given: useSharedValue(v.diagnosis.hcw_reason_given),
@@ -85,10 +97,12 @@ export function Diagnosis(props: DiagnosisProps) {
 
 	const goNext = React.useCallback(() => {
 		if (section === 'select') setSection('agree_disagree');
+		if (section === 'agree_disagree') setSection('sort_priority');
 	}, [section]);
 
 	const goBack = React.useCallback(() => {
 		if (section === 'agree_disagree') setSection('select');
+		if (section === 'sort_priority') setSection('agree_disagree');
 	}, [section]);
 
 	React.useEffect(() => {
@@ -123,6 +137,22 @@ export function Diagnosis(props: DiagnosisProps) {
 				<AgreeDisagree 
 					{...props}
 					hcwDiagnoses={hcwDiagnoses}
+					suggestedDiagnoses={suggestedDiagnoses}
+					onNext={() => {
+						const entryValues = [
+							...suggestedDiagnoses,
+							...hcwDiagnoses.map(d => d.selected.value),
+						].map(d => diagnosisToEntryValue(d));
+						setEntryValues(entryValues);
+						// setSection('sort_priority');
+					}}
+				/>
+			)}
+
+			{section === 'sort_priority' && (
+				<SortPriority 
+					{...props}
+					hcwDiagnoses={hcwDiagnoses.filter(d => d.selected.value)}
 					suggestedDiagnoses={suggestedDiagnoses}
 					onNext={() => {
 						

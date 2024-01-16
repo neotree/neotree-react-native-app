@@ -53,6 +53,7 @@ function DiagnosisListItem({ diagnosis, selected, hidden }: DiagnosisListItemPro
 							textStyle
 						]}
 					>{diagnosis.label}</Animated.Text>
+					<Text>{diagnosis.position}</Text>
 				</Animated.View>
 			</TouchableOpacity>
 
