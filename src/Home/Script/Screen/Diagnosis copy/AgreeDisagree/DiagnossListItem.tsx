@@ -52,7 +52,7 @@ export function DiagnosisListItem({ diagnosis, hidden, selected, variant }: Diag
 							fontSize: 20,
 						},
 					]}
-				>{`${diagnosis.label} ${diagnosis.how_agree.value}`}</Animated.Text>
+				>{diagnosis.label}</Animated.Text>
 
 				<Box flex={1} />
 
