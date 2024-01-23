@@ -11,7 +11,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, }); 
+            onChange({ value: null, valueText: null, valueLabel: null, }); 
             setValue('');
         }
     }, [conditionMet]);
@@ -21,7 +21,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
         .filter((v: any) => v)
         .map((v: any) => {
             v = v.split(',');
-            return { value: v[0], label: v[1] };
+            return { value: v[0], label: v[1], };
         });
 
     return (
@@ -37,8 +37,9 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
                     setValue(`${val || ''}`);
                     onChange({ 
 						value: val, 
-						valueLabel: o.label,
-          				valueText: !(val && o) ? null : o.label,
+						valueLabel: !val ? null : field.label,
+          				valueText: !val ? null : o.label,
+						exportValue: !val ? null : o.label,
 					});
                 }}
             />
