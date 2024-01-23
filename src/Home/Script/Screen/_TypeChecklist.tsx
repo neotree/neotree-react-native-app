@@ -10,11 +10,14 @@ type TypeChecklistProps = types.ScreenTypeProps & {
 export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
-    const cachedVal = ctx?.activeScreenEntry?.values || [];
+
+    let cachedVal = (ctx?.activeScreenEntry?.values || [])[0]?.value || [];
+	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
+
     const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
     const matched = ctx?.matched;
 
-    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v) => ({
+    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
         ...acc,
         [v.value]: true,
     }), {}));
@@ -22,7 +25,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     function onChange(_value: typeof value) {
         setValue(_value);
         const keys = Object.keys(_value).filter(key => _value[key]);
-        ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
+		const values = keys.reduce((acc: types.ScreenEntryValue[], value) => {
             const item = (metadata.items || []).filter((item: any) => item.key === value)[0];
             return [
                 ...acc,
@@ -30,13 +33,21 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                     value,
                     valueText: item.label,
                     label: item.label,
-                    key: metadata.key || item.key,
+                    key: item.key,
                     type: item.type,
                     dataType: item.dataType,
                     exclusive: item.exclusive,
                 },
             ];
-        }, []));
+        }, []);
+        ctx?.setEntryValues(!keys.length ? undefined : [
+			{
+				value: values,
+				key: metadata.key || ctx.activeScreen.data.title,
+				label: metadata.label || ctx.activeScreen.data.title,
+				type: metadata.dataType,
+			}
+		]);
     }
 
     const opts: any[] = metadata.items.map((item: any) => ({

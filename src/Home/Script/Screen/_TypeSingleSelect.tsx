@@ -21,7 +21,8 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
             ctx?.setEntryValues([{
                 value: item.id,
                 valueText: item.label,
-                label: item.label,
+				exportValue: item.label,
+                label: metadata.label,
                 key: metadata.key,
                 type: item.type,
                 dataType: metadata.dataType,
