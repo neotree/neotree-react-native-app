@@ -49,7 +49,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
 
             resolve(null);
         } catch (e) { 
-            
+            console.log(e);
             reject(e); }
     })();
 });

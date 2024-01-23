@@ -76,11 +76,12 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                                                 [key]: {
                                                     type: dataType || type,
 													prePopulate: e.prePopulate || [],
-                                                    values: value.reduce((acc: any, { value, label, valueLabel, exportValue }: any) => ({
-                                                        ...acc,
-                                                        label: [...acc.label, valueLabel || label],
-                                                        value: [...acc.value, exportValue || value]
-                                                    }), { label: [], value: [], })
+                                                    values: value.reduce((acc: any, item: any) => {
+														const { value, label, valueLabel, exportValue } = item;
+														acc.label.push(valueLabel || label);
+														acc.value.push(exportValue || value);
+														return acc;
+													}, { label: [], value: [], })
                                                 }
                                             }
                                         ];

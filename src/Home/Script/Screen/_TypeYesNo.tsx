@@ -29,6 +29,8 @@ export function TypeYesNo({}: TypeYesNoProps) {
                 value,
                 confidential: metadata.confidential,
                 valueText: value === 'false' ? 'No' : 'Yes',
+				exportValue: value === 'false' ? 'No' : 'Yes',
+				valueLabel: metadata.label,
                 key: metadata.key,
                 label: o.label,
                 type: metadata.dataType,

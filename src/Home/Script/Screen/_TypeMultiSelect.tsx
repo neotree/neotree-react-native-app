@@ -11,11 +11,14 @@ type TypeMultiSelectProps = types.ScreenTypeProps & {
 export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
-    const cachedVal = ctx?.activeScreenEntry?.values || [];
+
+    let cachedVal = (ctx?.activeScreenEntry?.values || [])[0]?.value || [];
+	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
+
     const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
     const matched = ctx?.matched;
 
-    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v) => ({
+    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
         ...acc,
         [v.value]: true,
     }), {}));
@@ -23,22 +26,30 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     function onChange(_value: typeof value) {
         setValue(_value);
         const keys = Object.keys(_value).filter(key => _value[key]);
-        ctx?.setEntryValues(!keys.length ? undefined : keys.reduce((acc: types.ScreenEntryValue[], value) => {
+		const values = keys.reduce((acc: types.ScreenEntryValue[], value) => {
             const item = metadata.items.filter((item: any) => item.id === value)[0];
             return [
                 ...acc,
                 {
                     value,
+					valueLabel: item.label,
                     valueText: item.label,
                     label: item.label,
-                    key: metadata.key,
-                    type: metadata.dataType,
+                    key: item.id,
                     dataType: item.dataType,
                     exclusive: item.exclusive,
                     confidential: item.confidential,
                 },
             ];
-        }, []));
+        }, []);
+        ctx.setEntryValues(!keys.length ? undefined : [
+			{
+				value: values,
+				key: metadata.key,
+				label: metadata.label,
+				type: metadata.dataType,
+			}
+		]);
     }
 
     const opts: any[] = metadata.items.map((item: any) => {
