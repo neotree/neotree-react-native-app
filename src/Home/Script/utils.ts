@@ -81,7 +81,7 @@ export const getScriptUtils = ({
             return [...acc, e] as types.ScreenEntry[];
         }, form);
     
-        const parseValue = (condition = '', { value, calculateValue, type, key, dataType, }: types.ScreenEntryValue) => {
+        const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
             value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
             value = ((value === null) || (value === undefined)) ? 'no value' : value;
             const t = dataType || type;
@@ -97,7 +97,7 @@ export const getScriptUtils = ({
                 value = JSON.stringify(value);
             }
     
-            return parseConditionString(condition, key, value);
+            return parseConditionString(condition, inputKey || key, value);
         };
     
         let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
@@ -111,15 +111,15 @@ export const getScriptUtils = ({
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
     
             if (screen) {
-            let chunks = [];
-            switch (screen.type) {
-                case 'multi_select':
-                chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
-                c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
-                break;
-                default:
-                // do nothing
-            }
+				let chunks = [];
+				switch (screen.type) {
+					case 'multi_select':
+						chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+						c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
+					break;
+					default:
+					// do nothing
+				}
             }
     
             return c || condition;
@@ -127,7 +127,7 @@ export const getScriptUtils = ({
     
         if (configuration) {
             parsedCondition = Object.keys(configuration).reduce((acc, key) => {
-            return parseConditionString(acc, key, configuration[key] ? true : false);
+            	return parseConditionString(acc, key, configuration[key] ? true : false);
             }, parsedCondition);
         }
     
@@ -162,8 +162,10 @@ export const getScriptUtils = ({
             const condition = screen.data.condition;
         
             if (!condition) return target;
+
+			const parsedCondition = parseCondition(condition);
         
-            return evaluateCondition(parseCondition(condition)) ? target : getTargetScreen(index);
+            return evaluateCondition(parsedCondition) ? target : getTargetScreen(index);
         };
         
         return getTargetScreen();
