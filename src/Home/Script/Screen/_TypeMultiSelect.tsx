@@ -36,6 +36,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                     valueText: item.label,
                     label: item.label,
                     key: item.id,
+					inputKey: metadata.key,
                     dataType: item.dataType,
                     exclusive: item.exclusive,
                     confidential: item.confidential,

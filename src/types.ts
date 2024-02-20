@@ -67,6 +67,7 @@ export type ScreenEntryValue = {
   valueLabel?: any;
   label?: string;
   key?: string;
+  inputKey?: string;
   type?: string;
   dataType?: string;
   confidential?: boolean;
