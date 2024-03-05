@@ -3,7 +3,7 @@ import React from 'react';
 import { FlatList, TouchableOpacity } from "react-native";
 import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box } from '../../components';
-import { getScripts } from '../../data';
+import { getLocation, getScripts } from '../../data';
 import * as types from '../../types';
 
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
@@ -18,13 +18,15 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 
 	const loadScripts = React.useCallback((showLoader = true) => {
 		(async () => {
-			try{
-			if (showLoader) setLoadingScripts(true);
-			const scripts = await getScripts();
-			setScripts(scripts);
-			setLoadingScripts(false);
-			setScriptsInitialised(true);
-			}catch(err){
+			try {
+				if (showLoader) setLoadingScripts(true);
+				const location = await getLocation();
+				const scripts = await getScripts();
+				setScripts(scripts.filter(s => s.data?.hospital === location?.hospital));
+				setLoadingScripts(false);
+				setScriptsInitialised(true);
+			} catch(err) {
+				//
 			}
 		})();
 	}, []);

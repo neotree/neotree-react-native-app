@@ -56,18 +56,6 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 		}
 	}, [country, hospital, submitting]);
 
-	React.useEffect(() => {
-		setSubmitting(false);
-        if (focused) {
-            api.getLocation()
-                .then(loc => {
-					setCountry((prev: any) => loc?.country || prev);
-					setHospital((prev: any) => loc?.hospital || prev)
-				})
-                .catch(() => {});
-        }
-	}, [focused]);
-
 	const getHospitals = React.useCallback((country: string) => {
 		(async () => {
 			if (country) {
@@ -82,7 +70,24 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 		})();
 	}, [country]);
 
-	React.useEffect(() => { getHospitals(country); }, [country]);
+	React.useEffect(() => {
+		(async () => {
+			try {
+				setSubmitting(false);
+				setLoadingHospitals(true);
+				if (focused) {
+					const loc = await api.getLocation()
+					setCountry((prev: any) => loc?.country || prev);
+					setHospital((prev: any) => loc?.hospital || prev)
+					await getHospitals(loc?.country || countries[0]?.iso);
+				}
+			} catch(e) {
+				//
+			} finally {
+				setLoadingHospitals(false);
+			}
+		})();
+	}, [focused]);
 
 	return (
 		<>
