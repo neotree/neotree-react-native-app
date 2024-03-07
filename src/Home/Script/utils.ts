@@ -204,6 +204,12 @@ export const getScriptUtils = ({
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
             return [...acc, d];
         }, []);
+
+        diagnoses = [
+            ...diagnoses.filter(d => (d.data.severity_order !== null) || (d.data.severity_order !== undefined) || (d.data.severity_order !== ''))
+                .sort((a, b) => a.data.severity_order - b.data.severity_order),
+            ...diagnoses.filter(d => (d.data.severity_order === null) || (d.data.severity_order === undefined) || (d.data.severity_order === '')),
+        ];
         
         const diagnosesRslts = (() => {
             const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
