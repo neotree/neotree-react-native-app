@@ -97,6 +97,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 					setCountry(country);
 					setHospital('');
 					setHospitals([]);
+                    if (country) getHospitals(country as string);
 				}}
 				label="Country"
 				title="Select country"
