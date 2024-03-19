@@ -74,13 +74,20 @@ export function Diagnosis(props: DiagnosisProps) {
         if (activeDiagnosisIndex === null) {
             if (section === 'select') {
 				const suggested = (ctx?.getSuggestedDiagnoses() || []) as types.Diagnosis[];        
-				const entries = [
+				const _entries = [
 					...values, 
 					...suggested.filter(d => !values.map(item => item.label).includes(d.name)).map(d => diagnosisToEntryValue({
 						...d,
 						suggested: true,
 					})),
 				];
+
+                const entries = [
+                    ..._entries.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
+                        .sort((a, b) => a.diagnosis.severity_order - b.diagnosis.severity_order),
+                    ..._entries.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
+                ];
+
 				setValues(entries);
 				ctx?.setEntryValues(entries);
                 setSection('agree_disagree');

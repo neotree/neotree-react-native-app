@@ -28,7 +28,7 @@ export function SelectDiagnoses({
         setCustomValue('');
     };
 
-    const items: any[] = metadata.items.map((item: any) => {
+    const _items: any[] = metadata.items.map((item: any) => {
         const d = allDiagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
         return {
             ...item,
@@ -40,9 +40,15 @@ export function SelectDiagnoses({
                 text3: d.text3,
                 image3: d.image3,
                 symptoms: d.symptoms || [],
+                severity_order: item.severity_order || d.severity_order,
             }),
         };
     });
+    const items = [
+        ..._items.filter(d => (d.severity_order !== null) || (d.severity_order !== undefined) || (d.severity_order !== ''))
+            .sort((a, b) => a.severity_order - b.severity_order),
+        ..._items.filter(d => (d.severity_order === null) || (d.severity_order === undefined) || (d.severity_order === '')),
+    ];
 
     const exclusiveIsSelected = items
         .filter(item => item.exclusive)
@@ -97,6 +103,7 @@ export function SelectDiagnoses({
 									image3: item.image3,
 									suggested: false,
 									isHcwDiagnosis: true,
+                                    severity_order: item.severity_order,
 									...val,
 								}),
 							}]);

@@ -206,7 +206,7 @@ export const getScriptUtils = ({
         }, []);
 
         diagnoses = [
-            ...diagnoses.filter(d => (d.data.severity_order !== null) || (d.data.severity_order !== undefined) || (d.data.severity_order !== ''))
+            ...diagnoses.filter(d => d.data.severity_order || (d.data.severity_order === 0))
                 .sort((a, b) => a.data.severity_order - b.data.severity_order),
             ...diagnoses.filter(d => (d.data.severity_order === null) || (d.data.severity_order === undefined) || (d.data.severity_order === '')),
         ];
