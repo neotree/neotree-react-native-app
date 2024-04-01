@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { View, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { Box, Br, Content, Text, useTheme } from '../../../../../components';
@@ -6,6 +6,7 @@ import * as types from '../../../../../types';
 import { Diagnosis } from './Diagnosis';
 
 type DiagnosesListProps = types.DiagnosisSectionProps & {
+    scrollable?: boolean;
     filter?: (d: types.Diagnosis, index: number) => boolean; 
     title?: any; 
     sortable?: boolean;
@@ -20,6 +21,7 @@ type DiagnosesListProps = types.DiagnosisSectionProps & {
 
 export function DiagnosesList({
     filter, 
+    scrollable,
     title, 
     subtitle, 
     divider, 
@@ -47,8 +49,10 @@ export function DiagnosesList({
         return null;
     }
 
+    const Container = scrollable ? ScrollView : Fragment;
+
     return (
-		<ScrollView>
+		<Container>
 			<Content>
 				<Box>
 					{!!instructions && (
@@ -154,6 +158,6 @@ export function DiagnosesList({
 					{!!divider && <Br spacing="l" />}
 				</Box>
 			</Content>
-		</ScrollView>
+		</Container>
     );
 }
