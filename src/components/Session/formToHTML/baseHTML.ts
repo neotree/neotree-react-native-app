@@ -82,11 +82,6 @@ export default (html: any, session: any) => {
           .content-wrap {
             page-break-inside: avoid;
           }
-
-          html, body {
-            width: 210mm;
-            height: 297mm;
-          }
         }
       </style>
     </header>
@@ -98,7 +93,9 @@ export default (html: any, session: any) => {
         </div>
       </div>
       <div id"content-wrap">
-        <div id="content">${html || ''}<div>
+        <div id="content">
+            ${html || ''}
+        <div>
       </div>
       <footer>
         <span>Session ID: ${session.id}</span>
