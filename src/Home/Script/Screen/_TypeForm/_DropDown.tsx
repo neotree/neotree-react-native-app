@@ -39,7 +39,8 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
 						value: val, 
 						valueLabel: !val ? null : field.label,
           				valueText: !val ? null : o.label,
-						exportValue: !val ? null : o.label,
+						exportLabel: !val ? null : o.label,
+                        exportValue: !val ? null : val,
 					});
                 }}
             />
