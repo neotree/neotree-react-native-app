@@ -72,6 +72,7 @@ export type ScreenEntryValue = {
   dataType?: string;
   confidential?: boolean;
   exportValue?: any;
+  exportLabel?: any;
   calculateValue?: any;
   exclusive?: any;
   error?: any;
