@@ -35,16 +35,6 @@
                 "api_endpoint":"",
                 "api_key":""
             }
-        },
-        "firebase": {
-            "apiKey": "",
-            "authDomain": "",
-            "databaseURL": "",
-            "projectId": "",
-            "storageBucket": "",
-            "messagingSenderId": "",
-            "appId": "",
-            "measurementId": ""
         }
     },
 
@@ -84,16 +74,6 @@
                 "api_endpoint":"",
                 "api_key":""
             }
-        },
-        "firebase": {
-            "apiKey": "",
-            "authDomain": "",
-            "databaseURL": "",
-            "projectId": "",
-            "storageBucket": "",
-            "messagingSenderId": "",
-            "appId": "",
-            "measurementId": ""
         }
     },
 
@@ -133,16 +113,6 @@
                 "api_endpoint":"",
                 "api_key":""
             }
-        },
-        "firebase": {
-            "apiKey": "",
-            "authDomain": "",
-            "databaseURL": "",
-            "projectId": "",
-            "storageBucket": "",
-            "messagingSenderId": "",
-            "appId": "",
-            "measurementId": ""
         }
     },
 
@@ -166,16 +136,6 @@
                 "api_endpoint":"",
                 "api_key":""
             }
-        },
-        "firebase": {
-            "apiKey": "",
-            "authDomain": "",
-            "databaseURL": "",
-            "projectId": "",
-            "storageBucket": "",
-            "messagingSenderId": "",
-            "appId": "",
-            "measurementId": ""
         }
     }
 }

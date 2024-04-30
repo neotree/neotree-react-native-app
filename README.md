@@ -40,17 +40,11 @@ https://reactnative.dev/docs/environment-setup
 }
 ```
 
-### Firebase
-`firebase.config.json`
-
-https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
-
 **Place the config files into `<project folder>/config`**
 
 ```
   <project folder>/config/neotree-webeditor-api.json
   <project folder>/config/neotree-nodeapi-api.json
-  <project folder>/config/firebase.config.json
 ```
 
 ***

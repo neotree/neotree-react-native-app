@@ -42,9 +42,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                         Object.values(ex)
                     );
         
-                }).catch(er=>{
-
-                })
+                }).catch(() => {})
             
             }
         }
