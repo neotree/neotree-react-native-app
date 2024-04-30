@@ -17,7 +17,7 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                 return {
                     uid: s.uid,
                     unique_key,
-                    appVersion: Constants.manifest?.extra?.APP_VERSION,
+                    appVersion: Constants.manifest?.extra?.APP_VERSION || Constants.default.manifest?.version,
                     scriptVersion: application.webeditor_info.version,
                     scriptTitle: script.script_id,
                     script: { id: script.script_id, title: script.data.title, type: script.type, },
