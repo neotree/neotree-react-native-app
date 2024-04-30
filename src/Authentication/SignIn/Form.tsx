@@ -16,30 +16,67 @@ export function Form({ onSignInSuccess }: FormProps) {
 
 	const [email, setEmail] = React.useState('');
 	const [password, setPassword] = React.useState('');
+    const [password2, setPassword2] = React.useState('');
+    const [registration, setRegistration] = React.useState<any>(null);
 	const [errors, setErrors] = React.useState<({ field?: string; message: string })[]>([]);
 
 	const [submitting, setSubmitting] = React.useState(false);
 
 	const submit = React.useCallback(async () => {
-		let success = false;
 		try {
 			if (!submitting) {
 				setErrors([]);
-				if (password && email) {
-					setSubmitting(true);
-					const user = await api.login({ email, password });
-					if (user) success = true;
-				} else {
-					if (!password) setErrors(prev => [...prev, { field: 'password', message: 'Password is required.' }]);
-					if (!email) setErrors(prev => [...prev, { field: 'email', message: 'Email is required.' }]);
-				}
+
+                if (!email) {
+                    setErrors(prev => [...prev, { field: 'email', message: 'Email is required.' }]);
+                    return;
+                }
+
+                if (!registration) {
+                    setSubmitting(true);
+                    const reg = await api.checkEmailRegistration({ email });
+                    setRegistration(reg);
+                    setSubmitting(false);
+                    return;
+                }
+
+                if (!password) {
+                    setErrors(prev => [...prev, { field: 'password', message: 'Password is required.' }]);
+                    return;
+                }
+
+                let user = null;
+                if (registration.activated) {
+                    setSubmitting(true);
+                    user = await api.signIn({ 
+                        email, 
+                        password,
+                        id: registration.userId, 
+                    });
+                } else {
+                    if (!password2) {
+                        setErrors(prev => [...prev, { field: 'password2', message: 'Password confirmation is required.' }]);
+                        return;
+                    } else if (password2 !== password) {
+                        setErrors(prev => [...prev, { field: 'password', message: 'Passwords do not match' }, { field: 'password2', message: 'Passwords do not match' }]);
+                        return;
+                    }
+                    setSubmitting(true);
+                    user = await api.signUp({ 
+                        email, 
+                        password,
+                        password2,
+                        id: registration.userId, 
+                    });
+                }
+                if (user) onSignInSuccess();
 			}
 		} catch(e: any) { 
 			setErrors([{ message: e.message }]);
-		}
-		setSubmitting(false);
-		if (success) onSignInSuccess();
-	}, [email, password, submitting]);
+		} finally {
+		    setSubmitting(false);
+        }
+	}, [email, password, submitting, registration, password2]);
 
 	return (
 		<>
@@ -57,21 +94,45 @@ export function Form({ onSignInSuccess }: FormProps) {
 				errors={errors.filter(e => e.field === 'email').map(e => e.message)}
 			/>
 
-			<Br spacing='l' />
+			{!!registration && (
+                <>
+                    <Br spacing='l' />
 
-			<TextInput 
-				editable={!submitting}
-				placeholder="Password"
-				ref={passwordInputRef}
-				value={password}
-				onChangeText={password => setPassword(password)}
-				secureTextEntry
-				textContentType="password"
-				autoCapitalize="none"
-				returnKeyType="go"
-				onSubmitEditing={() => submit()}
-				errors={errors.filter(e => e.field === 'password').map(e => e.message)}
-			/>
+                    <TextInput 
+                        editable={!submitting}
+                        placeholder="Password"
+                        ref={passwordInputRef}
+                        value={password}
+                        onChangeText={password => setPassword(password)}
+                        secureTextEntry
+                        textContentType="password"
+                        autoCapitalize="none"
+                        returnKeyType="go"
+                        onSubmitEditing={() => submit()}
+                        errors={errors.filter(e => e.field === 'password').map(e => e.message)}
+                    />
+
+                    {!registration.activated && (
+                        <>
+                            <Br spacing='l' />
+
+                            <TextInput 
+                                editable={!submitting}
+                                placeholder="Confirm password"
+                                ref={passwordInputRef}
+                                value={password2}
+                                onChangeText={password2 => setPassword2(password2)}
+                                secureTextEntry
+                                textContentType="password"
+                                autoCapitalize="none"
+                                returnKeyType="go"
+                                onSubmitEditing={() => submit()}
+                                errors={errors.filter(e => e.field === 'password2').map(e => e.message)}
+                            />
+                        </>
+                    )}
+                </>
+            )}
 
 			{errors.filter(e => !e.field).map((e, i) => (
 				<React.Fragment key={e.message}>
@@ -89,7 +150,7 @@ export function Form({ onSignInSuccess }: FormProps) {
 				textStyle={{ textTransform: 'uppercase', }}
 				style={{ alignItems: 'center' }}
 			>
-				{!submitting ? 'Sign in' : (
+				{!submitting ? (registration ? 'Sign in' : 'Continue') : (
 					<ActivityIndicator 
 						color={theme.colors.primary}
 						size={theme.textVariants.title1.fontSize}
