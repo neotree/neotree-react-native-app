@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { getApplication } from './queries';
+
 export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {}) {
     return new Promise((resolve, reject) => {
         (async () => {
@@ -17,7 +18,8 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                 return {
                     uid: s.uid,
                     unique_key,
-                    appVersion: Constants.manifest?.extra?.APP_VERSION || Constants.default.manifest?.version,
+                    appVersion: Constants.manifest?.version,
+                    appEnv: Constants.manifest?.extra?.APP_ENV,
                     scriptVersion: application.webeditor_info.version,
                     scriptTitle: script.script_id,
                     script: { id: script.script_id, title: script.data.title, type: script.type, },
