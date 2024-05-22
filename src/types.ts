@@ -14,9 +14,13 @@ export type Facility = { label: string; value: string; other?: string; };
 export type MatchedSession = { 
 	session: any, 
 	uid: string; 
-	facility: Facility; 
+	// facility: Facility; 
 	autoFill?: any; 
 	prePopulateWithUID?: boolean;
+    // fields: ({
+    //     key: string;
+    //     value: string;
+    // })[]
 };
 
 export type AuthenticatedUser = any;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Box, Br, Card, Text } from '../../../components';
 import { useContext } from '../Context';
@@ -9,6 +9,8 @@ type TypeMultiSelectProps = types.ScreenTypeProps & {
 };
 
 export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
+    const autoFilled = useRef(false);
+    
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
 
@@ -79,11 +81,12 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     });
 
     React.useEffect(() => {
-        if (canAutoFill) {
+        if (canAutoFill && !autoFilled.current) {
             const _value: any = {};
             const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key]?.values?.value || [];
             _matched.forEach((m: string) => { _value[m] = true; });
             if (_matched.length) onChange(_value);
+            autoFilled.current = true;
         }
     }, [canAutoFill, matched, metadata]);
 

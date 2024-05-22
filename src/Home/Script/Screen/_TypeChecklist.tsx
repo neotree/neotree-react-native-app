@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Box, Br, Card, Text, Radio } from '../../../components';
 import { useContext } from '../Context';
 import * as types from '../../../types';
@@ -8,6 +8,8 @@ type TypeChecklistProps = types.ScreenTypeProps & {
 };
 
 export function TypeChecklist({ searchVal }: TypeChecklistProps) {
+    const autoFilled = useRef(false);
+    
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
 
@@ -75,11 +77,12 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     }));
 
     React.useEffect(() => {
-        if (canAutoFill) {
+        if (canAutoFill && !autoFilled.current) {
             const _value: any = {};
             const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key]?.values?.value || [];
             _matched.forEach((m: string) => { _value[m] = true; });
             if (_matched.length) onChange(_value);
+            autoFilled.current = true;
         }
     }, [canAutoFill, matched, metadata]);
 
