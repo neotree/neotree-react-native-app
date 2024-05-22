@@ -35,7 +35,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                 {
                     value,
                     valueText: item.label,
-                    valueLabel: metadata.label,
+                    // valueLabel: metadata.label,
                     label: item.label,
                     key: item.id,
 					inputKey: metadata.key,
