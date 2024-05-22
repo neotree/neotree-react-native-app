@@ -1,15 +1,36 @@
-import React from 'react';
-import { Keyboard } from 'react-native';
+import React, { Fragment, useState } from 'react';
+import { Keyboard, ScrollView } from 'react-native';
 import { Box, Button, Content, Text } from '../../../components';
 import { useContext } from '../Context';
-import { Search } from './Search';
-import { Transfer } from './Transfer';
-import { Twin } from './Twin';
+import { Field } from './field';
 
 export function Start() {
     const ctx = useContext();
+    const { 
+        screens, 
+        matched, 
+        script: { 
+            data: {
+                nuidSearchFields = [], 
+            },
+        }, 
+    } = ctx;
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
+
+    const [fields, setFields] = useState<any[]>(nuidSearchFields.map((f: any) => ({
+        key: f.key,
+        value: null,
+        condition: f.condition,
+        type: f.type,
+    })));
+
+    const evaluateFieldCondition = (f: any) => {
+        let conditionMet = true;
+        const values = fields;
+        if (f.condition) conditionMet = ctx?.evaluateCondition(ctx?.parseCondition(f.condition, [{ values }])) as boolean;
+        return conditionMet;
+    };
 
     React.useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => setKeyboardIsOpen(true));
@@ -22,55 +43,41 @@ export function Start() {
 
     return (
         <Box flex={1} paddingTop="xl">
-            <Box flex={1}>
+            <ScrollView
+                contentContainerStyle={{ minHeight: '100%', }}
+            >
                 <Content>
-                    {/* {ctx?.script?.type === 'admission' && <Transfer />} */}
-                    {ctx?.script?.type === 'discharge' ? 
-                        <Search label="Search existing NUID" />
-                        :
-                        <>
-							<Transfer />
-							<Box mt="l" />
-							<Twin />
-						</>}
+                    {nuidSearchFields.map((field: any, i: number) => {
+                        const conditionMet = evaluateFieldCondition(field);
 
-					{/* {((ctx?.script?.data?.title || '').match(/admission/gi) || (ctx?.script?.data?.script?.type === 'admission')) && (
-						<Box my="xl">
-							<Text>Does the baby have a twin?</Text>
-							<Box flexDirection="row">
-								<Radio
-									checked={ctx?.patientDetails?.isTwin}
-									onChange={() => {
-										ctx?.setPatientDetails(prev => ({ ...prev, isTwin: true, }));
-									}}
-									label="Yes"
-								/>
+                        if (!conditionMet) return null;
 
-								<Box mx="l" />
-
-								<Radio
-									checked={!ctx?.patientDetails?.isTwin}
-									onChange={() => {
-										ctx?.setPatientDetails(prev => ({ ...prev, isTwin: false, }));
-									}}
-									label="No"
-								/>
-							</Box>
-							{ctx?.patientDetails?.isTwin && (
-								<Box
-									mt="xl"
-								>
-									<NeotreeIDInput 
-										label="Twin Neotree ID"
-										onChange={twinID => ctx?.setPatientDetails(prev => ({ ...prev, twinID }))}
-										value={ctx?.patientDetails?.twinID}
-									/>
-								</Box>
-							)}
-						</Box>
-					)} */}
+                        return (
+                            <Fragment key={i}>
+                                <Field 
+                                    field={field}
+                                    value={fields[i].value}
+                                    onChange={value => {
+                                        const newState = fields.map((f, j) => {
+                                            if (j === i) return { ...f, value, };
+                                            return f;
+                                        });
+                                        setFields(newState);
+                                        if (field.type === 'text') {
+                                            const matchedPatient = newState.filter(f => (f.key === 'patientNUID') && (f.type === 'text'))[0]?.value;
+                                            const otherMatches = newState.filter(f => (f.key !== 'patientNUID') && (f.type === 'text') && f.value).map(f => f.value);
+                                            ctx.setMatched(matchedPatient || otherMatches[0] || null);
+                                        }
+                                    }}
+                                />
+                                <Box marginVertical="l" />
+                            </Fragment>
+                        )
+                    })}
                 </Content>
-            </Box>
+
+                {keyboardIsOpen && <Box height={300} />}
+            </ScrollView>
 
             {keyboardIsOpen ? null : (
                 <Box  
@@ -78,7 +85,7 @@ export function Start() {
                     borderTopWidth={1}
                 >
                     <Content>
-                        {!ctx?.matched?.session && (
+                        {!matched?.session && (
                             <Box
                                 padding="m"
                             >
@@ -87,17 +94,17 @@ export function Start() {
                         )}
 
                         <Button
-                            disabled={!ctx?.screens?.length}
+                            disabled={!screens?.length}
                             onPress={() => {
                                 (async () => {
 									try {
-										ctx?.setActiveScreen(ctx?.screens[0]);
-										ctx?.setActiveScreenIndex(0);
-										ctx?.saveSession();
+										ctx.setActiveScreen(screens[0]);
+										ctx.setActiveScreenIndex(0);
+										ctx.saveSession();
 									} catch(e) { /**/ }
 								})();
                             }}
-                        >{ctx?.matched?.session ? 'Continue' : 'Start'}</Button>
+                        >{matched?.session ? 'Continue' : 'Start'}</Button>
                     </Content>
                 </Box>
             )}

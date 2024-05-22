@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { TouchableWithoutFeedback, Vibration } from 'react-native';
 import { Box, Br, Text, TextInput } from '../../../components';
 import { useContext } from '../Context';
@@ -11,6 +11,8 @@ type TypeTimerProps = types.ScreenTypeProps & {
 };
 
 export function TypeTimer({}: TypeTimerProps) {
+    const autoFilled = useRef(false);
+    
     const ctx = useContext();
     const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
     const matched = ctx?.matched;
@@ -73,9 +75,10 @@ export function TypeTimer({}: TypeTimerProps) {
     }, [countdown, timerValue]);
 
     React.useEffect(() => {
-        if (canAutoFill) {
+        if (canAutoFill && !autoFilled.current) {
             const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key || metadata.dataType]?.values?.value || [];
             if (_matched.length) onChange(`${_matched[0] || ''}`);
+            autoFilled.current = true;
         }
     }, [canAutoFill, matched, metadata]);
 

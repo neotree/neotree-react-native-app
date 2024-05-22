@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Box, Br, Card, Text } from '../../../components';
 import { useContext } from '../Context';
@@ -9,6 +9,8 @@ type TypeSingleSelectProps = types.ScreenTypeProps & {
 };
 
 export function TypeSingleSelect({}: TypeSingleSelectProps) {
+    const autoFilled = useRef(false);
+    
     const ctx = useContext();
     const metadata = ctx?.activeScreen?.data?.metadata;
     const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
@@ -34,9 +36,10 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
     const [value, setValue] = React.useState<string | number | null>(ctx?.activeScreenEntry?.values[0]?.value);
 
     React.useEffect(() => {
-        if (canAutoFill) {
+        if (canAutoFill && !autoFilled.current) {
             const o = opts.filter(o => o.matched)[0];
             if (o) o.onChange();
+            autoFilled.current = true;
         }
     }, [canAutoFill, opts]);
 
