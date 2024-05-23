@@ -3,10 +3,24 @@ import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 
 export const exportSession = async (s: any) => {
-    return await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
-        method: 'POST',
-        body: JSON.stringify(s),
-    });
+    try {
+        const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
+            method: 'POST',
+            body: JSON.stringify(s),
+        });
+        if (res.status !== 200) {
+            const text = await res.text();
+            console.log({
+                status: res.status,
+                error: text,
+            });
+            throw new Error('Failed to export session, try again!');
+        }
+        return true;
+    } catch(e) {
+        console.log('exportSession ERR', e);
+        throw e;
+    }
 };
 
 export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((resolve, reject) => {

@@ -69,7 +69,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 	const [selectedSession, setSelectedSession] = React.useState<any>(null);
 
-	const exportSessions = async () => {
+	const exportSessions = async (opts: any = {}) => {
 		let sessions = dbSessions;
 		switch (exportType) {
 			case 'completed':
@@ -86,7 +86,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		}
 		setExportingSessions(true);
 		try {
-			await exportData({ format: exportFormat, sessions, scriptsFields, application, });
+			await exportData({ ...opts, format: exportFormat, sessions, scriptsFields, application, });
 			if (exportFormat === 'jsonapi') await getSessions();
 			Alert.alert(
 				'',
@@ -104,7 +104,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				[
 					{
 						text: 'Try again',
-						onPress: () => exportSessions()
+						onPress: () => exportSessions({ dontSaveFile: true, })
 					},
 					{
 						text: 'Cancel',

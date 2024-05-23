@@ -143,9 +143,11 @@ export function exportToApi(opts: any = {}) {
       const sessions = _sessions.filter((s: any) => !s.exported);
       const postData: any = await api.convertSessionsToExportable(sessions, opts);
 
-      try { await exportJSON(opts); } catch (e) { /* Do nothing */ }
+      try { 
+        if (opts.dontSaveFile !== true) await exportJSON(opts); 
+      } catch (e) { /* Do nothing */ }
 
-      api.exportSessions().then(console.log).catch(console.log);
+    //   api.exportSessions().then(console.log).catch(console.log);
 
       if (postData.length) {
         try {

@@ -13,19 +13,31 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
             const exportableDbSessions = dbSessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}'), })).filter(s => s.data.completed_at || s.data.canceled_at);
             const exportData: any[] = sessions || exportableDbSessions.filter(s => s.data.completed_at);
 
+            const failed: any[] = [];
+
             if (exportData.length) {
                 const postData: any = await convertSessionsToExportable(exportData);
                 postData.forEach((s: any, i: any) => promises.push(new Promise((resolve, reject) => {
                     (async () => {
                         try {
-                            await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
+                            const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
                                 method: 'POST',
                                 body: JSON.stringify(s),
                             });
-                            const id = exportData[i].id;
-                            await updateSession({ exported: true }, { where: { id, }, });
-							resolve(true);
-                        } catch (e) { console.log(e); reject(e); }
+                            if (res.status == 200) {
+                                console.log('Updating...');
+                                const id = exportData[i].id;
+                                await updateSession({ exported: true }, { where: { id, }, });
+                                resolve(true);
+                            } else {
+                                failed.push(exportData[i].id);
+                                throw new Error('Failed to export session, try again!');
+                            }
+                        } catch (e) { 
+                            failed.push(exportData[i].id);
+                            console.log(e); 
+                            reject(e); 
+                        }
                     })();
                 })));
             }
@@ -47,9 +59,12 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
 
             await Promise.all(promises);
 
+            if (failed.length) throw new Error('Failed to export session, try again!');
+
             resolve(null);
         } catch (e) { 
             console.log(e);
-            reject(e); }
+            reject(e); 
+        }
     })();
 });
