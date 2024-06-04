@@ -10,7 +10,7 @@ export interface IAppContext {
     setSyncDataResponse: (res: Awaited<ReturnType<typeof api.syncData>>) => void;
 }
 
-export const AppContext = React.createContext<IAppContext | null>(null);
+export const AppContext = React.createContext<IAppContext>(null!);
 
 export const useAppContext = () => React.useContext(AppContext);
 

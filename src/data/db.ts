@@ -164,3 +164,19 @@ export const resetTables = async () => {
         // 'delete * from exports where 1;',
     ].map(q => dbTransaction(q))); 
 };
+export const resetApp = async () => {
+    await Promise.all([
+        dbTransaction(`drop table application;`),
+        dbTransaction(`drop table scripts;`),
+        dbTransaction(`drop table screens;`),
+        dbTransaction(`drop table diagnoses;`),
+        dbTransaction(`drop table sessions;`),
+        dbTransaction(`drop table authenticated_user ;`),
+        dbTransaction(`drop table config_keys;`),
+        dbTransaction(`drop table configuration;`),
+        dbTransaction(`drop table location;`),
+        dbTransaction(`drop table exports;`),
+        dbTransaction(`drop table exceptions;`),
+    ]); 
+    await createTablesIfNotExist();
+};

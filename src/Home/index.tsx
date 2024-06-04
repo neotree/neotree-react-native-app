@@ -12,6 +12,7 @@ import { HomeRoutes } from '../types';
 import { useTheme, Text, theme, Box, Br, OverlayLoader } from '../components';
 import assets from '../assets';
 import { Home } from './Home';
+import { Account } from './Account';
 import { Script } from './Script';
 import { Configuration } from './Configuration';
 import { Location } from './Location';
@@ -80,6 +81,11 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				<Drawer.Screen 
 					name="Location" 
 					component={Location} 
+				/>	
+
+                <Drawer.Screen 
+					name="Account" 
+					component={Account} 
 				/>		
 			</Drawer.Navigator>
 		</>
@@ -128,6 +134,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						if ([
 								'Script', 
 								'Screen', 
+                                'Account',
 							].includes(route.name)) return null;
 						return (
 							<Box key={route.key}>
@@ -257,26 +264,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 				inactiveBackgroundColor="transparent"
 				pressColor={theme.colors['bg.active']}
 				onPress={() => {
-					Alert.alert(
-						'Logout',
-						'Are you sure you want to logout?',
-						[
-							{
-								text: 'Cancel',
-							},
-							{
-								text: 'Yes',
-								onPress: () => {
-									(async () => {
-										setDisplayLoader(true);
-										await api.logout();
-										setDisplayLoader(false);
-										ctx?.setAuthenticatedUser(null);
-									})();
-								},
-							},
-						]
-					);
+                    props.navigation.navigate('Account');
 				}}
 				label={() => {
 					return (
@@ -284,7 +272,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 							<Box paddingHorizontal="m">
 								<Icon 
 									size={24} 
-									name="logout"
+									name="account-circle"
 									color={theme.colors.textSecondary} 
 								/>
 							</Box>
@@ -292,7 +280,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 								color="textSecondary"
 								textTransform="uppercase"
 								fontWeight="bold"
-							>Logout</Text>
+							>Account</Text>
 						</Box>
 					)
 				}}
