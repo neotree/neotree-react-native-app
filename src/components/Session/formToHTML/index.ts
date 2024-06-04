@@ -93,20 +93,23 @@ export default (session: any, showConfidential?: boolean) => {
 			}: any) => {
             // management = management || [];
 
-            const valuesHTML = values.filter((e: any) => e.confidential ? showConfidential : true).map((v: any) => {
-              return `
-                <div  class="row">
-                  <span>${label || v.label}</span>
-                  <div>
-                    ${v.value && v.value.map ? 
-                      v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />') 
-                      : 
-                      `<span>${v.valueText || v.value || 'N/A'}</span>`
-                    }
-                  </div>                  
-                </div>
-              `;
-            }).join('');
+            const valuesHTML = values
+                .filter((e: any) => e.confidential ? showConfidential : true)
+                .filter((v: any) => v.valueText || v.value)
+                .map((v: any) => {
+                    return `
+                        <div  class="row">
+                        <span>${label || v.label}</span>
+                        <div>
+                            ${v.value && v.value.map ? 
+                            v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />') 
+                            : 
+                            `<span>${v.valueText || v.value || 'N/A'}</span>`
+                            }
+                        </div>                  
+                        </div>
+                    `;
+                }).join('');
 
             // let managementHTML = management.map((s: any) => {
             //   const sections = [
