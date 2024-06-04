@@ -17,43 +17,48 @@ export function Entry({ entry, matched }: EntriesProps) {
         <Content>
             <Text>{label}</Text>
 
-            {!values.length ? <Text color="textDisabled">N/A</Text> : values.map((v: any, i: any) => {
-                const matches = matched.filter(e => e.key === v.key);
+            {!values.length ? 
+                <Text color="textDisabled">N/A</Text> 
+                : 
+                values
+                    .filter((v: any) => v.valueText || v.value)
+                    .map((v: any, i: any) => {
+                        const matches = matched.filter(e => e.key === v.key);
 
-                return (
-                    <Box key={i}>
-                        <Text color="textDisabled">{v.valueText || v.value || 'N/A'}</Text>
+                        return (
+                            <Box key={i}>
+                                <Text color="textDisabled">{v.valueText || v.value || 'N/A'}</Text>
 
-                        {!!matches.length && (
-                            <Box>
-                                <Br />
+                                {!!matches.length && (
+                                    <Box>
+                                        <Br />
 
-                                <Text fontWeight="bold">Matched Neolabs</Text>
+                                        <Text fontWeight="bold">Matched Neolabs</Text>
 
-                                {matches.map((e, i) => {
+                                        {matches.map((e, i) => {
+                                            return (
+                                                <Box key={`${e.key}${i}`}>
+                                                    {e.values.value.map((text: any, j: any) => (
+                                                        <Text key={`${e.key}${i}${j}`} style={{ color: '#999' }}>{`${text}`}</Text>
+                                                    ))}
+                                                </Box>
+                                            );
+                                        })}
+                                    </Box>
+                                )}
+
+                                {management.map((s: any) => {
                                     return (
-                                        <Box key={`${e.key}${i}`}>
-                                            {e.values.value.map((text: any, j: any) => (
-                                                <Text key={`${e.key}${i}${j}`} style={{ color: '#999' }}>{`${text}`}</Text>
-                                            ))}
+                                        <Box key={s.screen_id}>
+                                            <ManagementScreen 
+                                                data={s.metadata}
+                                            />
                                         </Box>
-                                    );
+                                    )
                                 })}
                             </Box>
-                        )}
-
-                        {management.map((s: any) => {
-                            return (
-                                <Box key={s.screen_id}>
-                                    <ManagementScreen 
-                                        data={s.metadata}
-                                    />
-                                </Box>
-                            )
-                        })}
-                    </Box>
-                );
-            })}
+                        );
+                    })}
         </Content>
     )
 }
