@@ -90,7 +90,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 										} : null;
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
-                                        ctx?.setMatched(matched);
+                                        ctx.setMatched(matched);
                                         if (onSession) onSession(matched);
                                     }}
                                     label={(
@@ -121,7 +121,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 label={label}
                 onChange={uid => setUID(uid)}
                 value={uid}
-                application={ctx?.application}
+                application={ctx.application}
             />
             
             <Br />

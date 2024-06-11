@@ -52,7 +52,7 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 					name="Home" 
 					component={Home} 
 					options={{
-						title: `Scripts v${ctx?.application?.webeditor_info?.version}`,
+						title: `Scripts v${ctx.application?.webeditor_info?.version}`,
 						drawerLabel: 'Home',
 					}}
 				/>
@@ -209,17 +209,17 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						inactiveBackgroundColor="transparent"
 						pressColor={theme.colors['bg.active']}
 						onPress={() => {
-							const mode = ctx?.application?.mode === 'development' ? 'production' : 'development';
+							const mode = ctx.application?.mode === 'development' ? 'production' : 'development';
 							const save = async () => {
 								setDisplayLoader(true);
 								await api.saveApplication({ mode  });
                             	const res = await api.syncData({ force: true, });
-								ctx?.setSyncDataResponse(res);
+								ctx.setSyncDataResponse(res);
 								setDisplayLoader(false);
 							};
 							Alert.alert(
 								'Switch mode',
-                  				`Are you sure you want to ${ctx?.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
+                  				`Are you sure you want to ${ctx.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
 								[
 									{
 										text: 'Cancel',
@@ -232,7 +232,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 							);
 						}}
 						label={() => {
-							const isActive = ctx?.application?.mode === 'development';
+							const isActive = ctx.application?.mode === 'development';
 							return (
 								<Box flexDirection="row" alignItems="center">
 									<Box paddingHorizontal="m">

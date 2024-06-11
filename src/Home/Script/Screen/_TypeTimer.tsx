@@ -14,18 +14,18 @@ export function TypeTimer({}: TypeTimerProps) {
     const autoFilled = useRef(false);
     
     const ctx = useContext();
-    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
-    const matched = ctx?.matched;
+    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
+    const matched = ctx.getPrepopulationData();
 
     const timoutRef = React.useRef<any>(null);
 
-    const metadata = ctx?.activeScreen?.data.metadata;
+    const metadata = ctx.activeScreen?.data.metadata;
     const multiplier = metadata.multiplier || 1;
     const timerValue = Number(metadata.timerValue || 0);
 
     const [countdown, setCountDown] = React.useState(0);
     const [formError, setFormError] = React.useState('');
-    const [value, setValue] = React.useState(ctx?.activeScreenEntry?.values[0]?.value);
+    const [value, setValue] = React.useState(ctx.activeScreenEntry?.values[0]?.value);
 
     const getFormError = React.useCallback((value: string) => {
         const v = parseFloat(`${Number(value || 0) * multiplier}`);
@@ -44,7 +44,7 @@ export function TypeTimer({}: TypeTimerProps) {
         const e = getFormError(val);
         setValue(val);
         setFormError(e);
-        ctx?.setEntryValues(e ? undefined : [{
+        ctx.setEntryValues(e ? undefined : [{
             value: val,
             valueText: Number(val) * Number(multiplier || 1),
             calculateValue: Number(val) * Number(multiplier || 1),
@@ -76,7 +76,7 @@ export function TypeTimer({}: TypeTimerProps) {
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {
-            const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key || metadata.dataType]?.values?.value || [];
+            const _matched = matched[metadata.key || metadata.dataType]?.values?.value || [];
             if (_matched.length) onChange(`${_matched[0] || ''}`);
             autoFilled.current = true;
         }

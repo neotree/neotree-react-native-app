@@ -41,15 +41,15 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 
 export function Diagnosis(props: DiagnosisProps) {
     const ctx = useContext();
-    const navigation = ctx?.navigation;
+    const navigation = ctx.navigation;
 
     const [section, setSection] = React.useState('select');
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(
-		(ctx?.activeScreenEntry?.values || []).filter(v => !v?.diagnosis?.suggested)
-	); // React.useState(ctx?.getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d)) || []);
+		(ctx.activeScreenEntry?.values || []).filter(v => !v?.diagnosis?.suggested)
+	); // React.useState(ctx.getSuggestedDiagnoses().map(d => diagnosisToEntryValue(d)) || []);
     const [hcwDiagnoses, setHcwDiagnoses] = React.useState<types.ScreenEntryValue[]>(
-		(ctx?.activeScreenEntry?.values || []).filter(v => v?.diagnosis?.isHcwDiagnosis).map(v => v.diagnosis)
-	); // React.useState<types.Diagnosis[]>(ctx?.getSuggestedDiagnoses() || []);
+		(ctx.activeScreenEntry?.values || []).filter(v => v?.diagnosis?.isHcwDiagnosis).map(v => v.diagnosis)
+	); // React.useState<types.Diagnosis[]>(ctx.getSuggestedDiagnoses() || []);
 
     const diagnoses = values.map(v => v.diagnosis);
     const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');
@@ -59,21 +59,21 @@ export function Diagnosis(props: DiagnosisProps) {
     const setDiagnoses = (diagnoses: types.Diagnosis[] = []) => {
         const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
         setValues(entryValues);
-        ctx?.setEntryValues(entryValues);
+        ctx.setEntryValues(entryValues);
     };
 
     const done = () => {
-        ctx?.setEntryValues(values, {
+        ctx.setEntryValues(values, {
             lastSection: section, 
             lastActiveDiagnosisIndex: activeDiagnosisIndex, 
         });
-        ctx?.goNext();
+        ctx.goNext();
     };
 
     const goNext = () => {
         if (activeDiagnosisIndex === null) {
             if (section === 'select') {
-				const suggested = (ctx?.getSuggestedDiagnoses() || []) as types.Diagnosis[];        
+				const suggested = (ctx.getSuggestedDiagnoses() || []) as types.Diagnosis[];        
 				const _entries = [
 					...values, 
 					...suggested.filter(d => !values.map(item => item.label).includes(d.name)).map(d => diagnosisToEntryValue({
@@ -89,7 +89,7 @@ export function Diagnosis(props: DiagnosisProps) {
                 ];
 
 				setValues(entries);
-				ctx?.setEntryValues(entries);
+				ctx.setEntryValues(entries);
                 setSection('agree_disagree');
             } else if (section === 'agree_disagree') {
                 if (!diagnoses.length) {
@@ -105,7 +105,7 @@ export function Diagnosis(props: DiagnosisProps) {
                         {
                             text: 'Yes',
                             onPress: () => {
-                                ctx?.setEntryValues(values);
+                                ctx.setEntryValues(values);
                                 setTimeout(() => done(), 10);
                             },
                             style: 'cancel'
@@ -140,7 +140,7 @@ export function Diagnosis(props: DiagnosisProps) {
             // if (section === 'manage') return setSection('sort_priority');
             if (section === 'sort_priority') return setSection('agree_disagree');
             if (section === 'agree_disagree') return setSection('select');
-            if (section === 'select') ctx?.goBack();
+            if (section === 'select') ctx.goBack();
         } else {
             const nextIndex = activeDiagnosisIndex - 1;
             if (nextIndex < 0) {
@@ -152,7 +152,7 @@ export function Diagnosis(props: DiagnosisProps) {
     };
 
     const setMoreNavOptions = () => {
-        ctx?.setMoreNavOptions({
+        ctx.setMoreNavOptions({
             goBack,
             goNext,
             showFAB: true,
@@ -160,8 +160,8 @@ export function Diagnosis(props: DiagnosisProps) {
             hideSearch: section !== 'select',
             title: (() => {
                 if (activeDiagnosisIndex !== null) return acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name;
-                if (section === 'agree_disagree') return `${ctx?.activeScreen?.data?.title2 || ''}`;
-                if (section === 'sort_priority') return `${ctx?.activeScreen?.data?.title3 || ''}`;
+                if (section === 'agree_disagree') return `${ctx.activeScreen?.data?.title2 || ''}`;
+                if (section === 'sort_priority') return `${ctx.activeScreen?.data?.title3 || ''}`;
                 return;
             })(),
         });
@@ -184,13 +184,13 @@ export function Diagnosis(props: DiagnosisProps) {
             setHcwDiagnoses(diagnoses);
             const entries = [...entryValues, ...values.filter(d => !diagnoses.map(d => d.name).includes(d.diagnosis.name))];
             setValues(entries);
-            ctx?.setEntryValues(entries);
+            ctx.setEntryValues(entries);
         },
     };
 
     React.useEffect(() => { setMoreNavOptions(); }, [navigation, hcwDiagnoses, section, values, activeDiagnosisIndex]);
 
-    React.useEffect(() => () => ctx?.setMoreNavOptions(null), []);
+    React.useEffect(() => () => ctx.setMoreNavOptions(null), []);
 
     return (
         <Box>

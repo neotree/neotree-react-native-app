@@ -17,8 +17,8 @@ export function SelectDiagnoses({
     setDiagnoses, 
 }: SelectDiagnosesProps) {
     const ctx = useContext();
-    const metadata = ctx?.activeScreen?.data?.metadata;
-    const allDiagnoses = ctx?.diagnoses as types.Diagnosis[];
+    const metadata = ctx.activeScreen?.data?.metadata;
+    const allDiagnoses = ctx.diagnoses as types.Diagnosis[];
 
     const [customValue, setCustomValue] = React.useState('');
     const [customValueModal, setCustomValueModal] = React.useState<null | { onClose: (opts: { customValue: any; }) => void; }>(null);
@@ -62,11 +62,11 @@ export function SelectDiagnoses({
 					keyExtractor={(_, index) => `${index}`}
 					ListHeaderComponent={(
 						<>
-							{!!ctx?.activeScreen?.data?.instructions && (
+							{!!ctx.activeScreen?.data?.instructions && (
 								<>
 									<Box>
 										<Text color="primary">Instructions</Text>
-										<Text variant="caption">{ctx?.activeScreen?.data?.instructions}</Text>
+										<Text variant="caption">{ctx.activeScreen?.data?.instructions}</Text>
 									</Box>
 								</>
 							)}

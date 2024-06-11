@@ -35,7 +35,7 @@ export function Location({ navigation }: types.StackNavigationProps<types.HomeRo
 							(async () => {
 								setDisplayLoader(true);
 								const res = await api.syncData({ force: true, });
-								ctx?.setSyncDataResponse(res);
+								ctx.setSyncDataResponse(res);
 								setDisplayLoader(false);
 							})();
 						}}

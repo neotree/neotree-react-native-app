@@ -13,8 +13,8 @@ export function TypeYesNo({}: TypeYesNoProps) {
     
     const ctx = useContext();
 
-    const metadata = ctx?.activeScreen?.data?.metadata;
-    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
+    const metadata = ctx.activeScreen.data.metadata;
+    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
 
     const _opts = [
         { value: 'true', label: metadata?.positiveLabel || 'Yes' },
@@ -23,11 +23,11 @@ export function TypeYesNo({}: TypeYesNoProps) {
 
     const opts = _opts.map(o => ({
         ...o,
-        matched: (ctx?.matched?.autoFill?.data?.entries || {})[metadata.key],
+        matched: ctx.getPrepopulationData()[metadata.key],
         onChange: () => {
             const value = o.value;
             setValue(o.value);
-            ctx?.setEntryValues([{
+            ctx.setEntryValues([{
                 value,
                 confidential: metadata.confidential,
                 valueText: value === 'false' ? 'No' : 'Yes',
@@ -41,7 +41,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
         },
     }));
 
-    const [value, setValue] = React.useState<string | number | null>(ctx?.activeScreenEntry?.values[0]?.value);
+    const [value, setValue] = React.useState<string | number | null>(ctx.activeScreenEntry?.values[0]?.value);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {

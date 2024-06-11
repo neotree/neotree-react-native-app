@@ -11,6 +11,21 @@ export type Location = {
 
 export type Facility = { label: string; value: string; other?: string; };
 
+export type NuidSearchResults = {
+    session: any;
+    uid: string; 
+    autoFill?: any; 
+    prePopulateWithUID?: boolean;
+};
+
+export type NuidSearchFormField = {
+    results: null | NuidSearchResults;
+    key: string;
+    value: any;
+    type: string;
+    condition: string;
+};
+
 export type MatchedSession = { 
 	session: any, 
 	uid: string; 

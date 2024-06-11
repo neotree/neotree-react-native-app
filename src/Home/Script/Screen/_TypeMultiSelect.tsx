@@ -12,13 +12,13 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const autoFilled = useRef(false);
     
     const ctx = useContext();
-    const metadata = ctx?.activeScreen?.data?.metadata;
+    const metadata = ctx.activeScreen?.data?.metadata;
 
-    let cachedVal = (ctx?.activeScreenEntry?.values || [])[0]?.value || [];
+    let cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
-    const matched = ctx?.matched;
+    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
+    const matched = ctx.getPrepopulationData();
 
     const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
         ...acc,
@@ -83,7 +83,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {
             const _value: any = {};
-            const _matched = (matched?.autoFill?.data?.entries || {})[metadata.key]?.values?.value || [];
+            const _matched = matched[metadata.key]?.values?.value || [];
             _matched.forEach((m: string) => { _value[m] = true; });
             if (_matched.length) onChange(_value);
             autoFilled.current = true;

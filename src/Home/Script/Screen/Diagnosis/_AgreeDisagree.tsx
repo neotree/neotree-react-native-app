@@ -23,7 +23,7 @@ export function AgreeDisagree(props: AgreeDisagreeProps) {
                 title="HCW Diagnoses"
                 // subtitle="Please order the diagnoses by priority"
                 filter={d => d.isHcwDiagnosis}
-                instructions={ctx?.activeScreen?.data?.hcwDiagnosesInstructions}
+                instructions={ctx.activeScreen?.data?.hcwDiagnosesInstructions}
                 scrollable={false}
             />
 
@@ -35,7 +35,7 @@ export function AgreeDisagree(props: AgreeDisagreeProps) {
                 canDelete={false}
                 // subtitle="Please order the diagnoses by priority"
                 filter={d => !d.isHcwDiagnosis && (d.how_agree !== 'No')}
-                instructions={ctx?.activeScreen?.data?.suggestedDiagnosesInstructions}
+                instructions={ctx.activeScreen?.data?.suggestedDiagnosesInstructions}
                 emptyListMessage="No suggested diagnoses"
                 scrollable={false}
             />

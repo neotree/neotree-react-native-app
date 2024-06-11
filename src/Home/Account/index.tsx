@@ -64,7 +64,7 @@ export function Account() {
                                             setDisplayLoader(true);
                                             await api.logout();
                                             setDisplayLoader(false);
-                                            ctx?.setAuthenticatedUser(null);
+                                            ctx.setAuthenticatedUser(null);
                                         })();
                                     },
                                 },
@@ -95,7 +95,7 @@ export function Account() {
                                             await api.resetApp();
                                             await api.logout();
                                             setDisplayLoader(false);
-                                            ctx?.setAuthenticatedUser(null);
+                                            ctx.setAuthenticatedUser(null);
                                         })();
                                     },
                                 },

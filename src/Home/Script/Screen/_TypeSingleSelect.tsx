@@ -12,15 +12,15 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
     const autoFilled = useRef(false);
     
     const ctx = useContext();
-    const metadata = ctx?.activeScreen?.data?.metadata;
-    const canAutoFill = !ctx?.mountedScreens[ctx?.activeScreen?.id];
+    const metadata = ctx.activeScreen?.data?.metadata;
+    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
 
     const opts: any[] = metadata.items.map((item: any) => ({
         ...item,
-        matched: (ctx?.matched?.autoFill?.data?.entries || {})[metadata.key],
+        matched: ctx.getPrepopulationData()[metadata.key],
         onChange: () => {
             setValue(item.id);
-            ctx?.setEntryValues([{
+            ctx.setEntryValues([{
                 value: item.id,
                 valueText: item.label,
 				// exportValue: item.label,
@@ -34,7 +34,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
         },
     }));
 
-    const [value, setValue] = React.useState<string | number | null>(ctx?.activeScreenEntry?.values[0]?.value);
+    const [value, setValue] = React.useState<string | number | null>(ctx.activeScreenEntry?.values[0]?.value);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {

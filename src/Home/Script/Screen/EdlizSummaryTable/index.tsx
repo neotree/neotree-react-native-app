@@ -10,9 +10,9 @@ type EdlizSummaryTableProps = types.ScreenTypeProps & {
 
 export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
     const ctx = useContext();
-    const activeScreen = ctx?.activeScreen;
-    const metadata = ctx?.activeScreen?.data?.metadata;
-    const cachedVal = (ctx?.activeScreenEntry?.values || [])[0]?.value;
+    const activeScreen = ctx.activeScreen;
+    const metadata = ctx.activeScreen?.data?.metadata;
+    const cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value;
 
     const [values, setValues] = React.useState<any[]>(cachedVal || []);
 
@@ -29,7 +29,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                 return acc;
             }, 0);
         }
-        ctx?.setEntryValues([{
+        ctx.setEntryValues([{
             key: metadata.key,
             type: metadata.dataType,
             value: values,
