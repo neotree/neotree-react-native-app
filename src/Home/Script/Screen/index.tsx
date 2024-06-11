@@ -9,7 +9,7 @@ export function Screen() {
     
     return (
         <Box flex={1}>
-            {!!ctx?.activeScreen?.data?.actionText && (
+            {!!ctx.activeScreen?.data?.actionText && (
                 <Box backgroundColor="primary">
                     <Content>
                         <Box 
@@ -18,14 +18,14 @@ export function Screen() {
                             <Box flex={1}>
                                 <Text
                                     color="primaryContrastText"
-                                >{ctx?.activeScreen?.data?.actionText}</Text>
+                                >{ctx.activeScreen?.data?.actionText}</Text>
                             </Box>
 
-                            {!!ctx?.activeScreen?.data?.step && (
+                            {!!ctx.activeScreen?.data?.step && (
                                 <Box>
                                     <Text
                                         color="primaryContrastText"
-                                    >{ctx?.activeScreen?.data?.step}</Text>
+                                    >{ctx.activeScreen?.data?.step}</Text>
                                 </Box>
                             )}
                         </Box>
@@ -33,7 +33,7 @@ export function Screen() {
                 </Box>
             )}
 
-            {!ctx?.moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(ctx?.activeScreen?.type) && (
+            {!ctx.moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(ctx.activeScreen?.type) && (
                 <Content>
                     <TextInput
                         placeholder="Search"
@@ -45,23 +45,23 @@ export function Screen() {
 
             <ScreenType searchVal={searchVal} />
 
-            {(!!ctx?.activeScreenEntry || ctx?.moreNavOptions?.showFAB) && (
+            {(!!ctx.activeScreenEntry || ctx.moreNavOptions?.showFAB) && (
                 <Box 
                     position="absolute"
                     bottom={10}
                     right={20}
                 >
                     <Fab 
-                        icon={ctx?.summary ? 'check' : undefined}
+                        icon={ctx.summary ? 'check' : undefined}
                         onPress={() => {
-							ctx?.setMountedScreens(prev => ({
+							ctx.setMountedScreens(prev => ({
 								...prev,
-								[ctx?.activeScreen.id]: true,
+								[ctx.activeScreen.id]: true,
 							}));
-                            if (ctx?.moreNavOptions?.goNext) {
+                            if (ctx.moreNavOptions?.goNext) {
                                 ctx.moreNavOptions.goNext();
                             } else {
-                                ctx?.goNext();
+                                ctx.goNext();
                             }
                             setSearchVal('');                            
                         }} 

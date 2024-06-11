@@ -41,6 +41,8 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     matched: null | types.MatchedSession;
     mountedScreens: { [id: string]: boolean; };
 	patientDetails: PatientDetails;
+    nuidSearchForm: types.NuidSearchFormField[];
+    setNuidSearchForm: React.Dispatch<React.SetStateAction<types.NuidSearchFormField[]>>;
 	setPatientDetails: React.Dispatch<React.SetStateAction<PatientDetails>>;
 	saveSession: (params?: any) => Promise<any>;
 	createSummaryAndSaveSession: (params?: any) => Promise<any>;
@@ -61,6 +63,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => void;
     setNavOptions: () => void;
     setMoreNavOptions: React.Dispatch<React.SetStateAction<null | MoreNavOptions>>;
+    getPrepopulationData: (prePopulationRules?: string[]) => any;
 };
 
 export const Context = React.createContext<null | ContextType>(null);

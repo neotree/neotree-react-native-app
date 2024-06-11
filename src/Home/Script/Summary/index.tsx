@@ -5,10 +5,10 @@ import { useContext } from '../Context';
 export function Summary() {
     const ctx = useContext();
 
-    const summary = ctx?.summary;
+    const summary = ctx.summary;
 
     React.useEffect(() => {
-        ctx?.setMoreNavOptions({
+        ctx.setMoreNavOptions({
             title: 'SUMMARY',
             headerRight: () => <PrintSession session={summary} showConfidential />,
         });
@@ -27,9 +27,9 @@ export function Summary() {
                 right={20}
             >
                 <Fab 
-                    icon={ctx?.summary ? 'check' : undefined}
+                    icon={ctx.summary ? 'check' : undefined}
                     onPress={() => {
-                        ctx?.navigation?.navigate('Home');                         
+                        ctx.navigation?.navigate('Home');                         
                     }} 
                 />
             </Box>

@@ -22,7 +22,7 @@ type ScreenTypeProps = {
 
 export function ScreenType({ searchVal }: ScreenTypeProps) {
     const ctx = useContext();
-    const highlightedText = ctx?.activeScreen?.data?.contentText;
+    const highlightedText = ctx.activeScreen?.data?.contentText;
 
     return (
 		<>
@@ -39,7 +39,7 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 				let scrollable = true;
 				let useContentWidth = true;
 
-				switch (ctx?.activeScreen?.type) {
+				switch (ctx.activeScreen?.type) {
 					case 'yesno':
 						Component = TypeYesNo;
 						break;
@@ -88,8 +88,8 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 				let node = !Component ? null : (
 					<Component 
 						searchVal={searchVal} 
-						entry={ctx?.entries.filter(e => {
-							return e.screen.screen_id === ctx?.activeScreen.screen_id;
+						entry={ctx.entries.filter(e => {
+							return e.screen.screen_id === ctx.activeScreen.screen_id;
 						})[0]}
 						setEntry={() => {
 							

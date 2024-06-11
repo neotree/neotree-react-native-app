@@ -23,6 +23,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [startTime] = React.useState(new Date().toISOString());
 	const [refresh, setRefresh] = React.useState(false);
 
+    const [nuidSearchForm, setNuidSearchForm] = React.useState<types.NuidSearchFormField[]>([]);
 	const [matched, setMatched] = React.useState<types.MatchedSession | null>(null);
 	const [patientDetails, setPatientDetails] = React.useState({
 		isTwin: false,
@@ -326,6 +327,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				sessionID,
 				script_id: route.params.script_id,
 				patientDetails,
+                nuidSearchForm,
+                setNuidSearchForm,
 				setPatientDetails,
 				saveSession,
 				createSummaryAndSaveSession,
@@ -345,6 +348,26 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				getCachedEntry,
 				setEntry,
 				removeEntry,
+                getPrepopulationData(prePopulationRules?: string[]) {
+                    const results = nuidSearchForm
+                        .filter(f => f.results)
+                        .filter(f => {
+                            const prePopulate = prePopulationRules || activeScreen.data.prePopulate || activeScreen.data.metadata.prePopulate || [];
+                            if (!prePopulate.length) return false;
+                            if (prePopulate.includes('allSearches')) return true;
+                            const isTwinSearch = f.key === 'BabyTwinNUID';
+                            if (!prePopulate.includes('twinSearches') && isTwinSearch) return false;
+                            return true;
+                        });
+                    const twin = results.filter(item => item.key === 'BabyTwinNUID')[0];
+                    return {
+                        ...results.reduce((acc, item) => ({
+                            ...acc,
+                            ...item?.results?.autoFill?.data?.entries,
+                        }), {}),
+                        ...twin?.results?.autoFill?.data?.entries,
+                    };
+                },
 				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {
 					// setMountedScreens(prev => ({
 					// 	...prev,

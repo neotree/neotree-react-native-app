@@ -3,6 +3,7 @@ import { Keyboard, ScrollView } from 'react-native';
 import { Box, Button, Content, Text } from '../../../components';
 import { useContext } from '../Context';
 import { Field } from './field';
+import * as types from '../../../types';
 
 export function Start() {
     const ctx = useContext();
@@ -18,17 +19,18 @@ export function Start() {
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
 
-    const [fields, setFields] = useState<any[]>(nuidSearchFields.map((f: any) => ({
+    const [fields, setFields] = useState<types.NuidSearchFormField[]>(nuidSearchFields.map((f: any) => ({
         key: f.key,
         value: null,
         condition: f.condition,
         type: f.type,
+        results: null,
     })));
 
     const evaluateFieldCondition = (f: any) => {
         let conditionMet = true;
         const values = fields;
-        if (f.condition) conditionMet = ctx?.evaluateCondition(ctx?.parseCondition(f.condition, [{ values }])) as boolean;
+        if (f.condition) conditionMet = ctx.evaluateCondition(ctx.parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
     };
 
@@ -58,16 +60,18 @@ export function Start() {
                                     field={field}
                                     value={fields[i].value}
                                     onChange={value => {
+                                        let results = null;
+
+                                        if (field.type === 'text') {
+                                            results = value;
+                                            value = value?.uid || null;
+                                        }
+
                                         const newState = fields.map((f, j) => {
-                                            if (j === i) return { ...f, value, };
+                                            if (j === i) return { ...f, value, results, };
                                             return f;
                                         });
                                         setFields(newState);
-                                        if (field.type === 'text') {
-                                            const matchedPatient = newState.filter(f => (f.key === 'patientNUID') && (f.type === 'text'))[0]?.value;
-                                            const otherMatches = newState.filter(f => (f.key !== 'patientNUID') && (f.type === 'text') && f.value).map(f => f.value);
-                                            ctx.setMatched(matchedPatient || otherMatches[0] || null);
-                                        }
                                     }}
                                 />
                                 <Box marginVertical="l" />
@@ -98,6 +102,7 @@ export function Start() {
                             onPress={() => {
                                 (async () => {
 									try {
+                                        ctx.setNuidSearchForm(fields);
 										ctx.setActiveScreen(screens[0]);
 										ctx.setActiveScreenIndex(0);
 										ctx.saveSession();

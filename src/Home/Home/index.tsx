@@ -10,7 +10,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 	const isFocused = useIsFocused();
 
 	const ctx = useAppContext();
-	const application = ctx?.application;
+	const application = ctx.application;
 
 	const [scriptsInitialised, setScriptsInitialised] = React.useState(false);
 	const [loadingScripts, setLoadingScripts] = React.useState(false);
