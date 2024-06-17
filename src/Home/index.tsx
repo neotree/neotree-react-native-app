@@ -12,7 +12,6 @@ import { HomeRoutes } from '../types';
 import { useTheme, Text, theme, Box, Br, OverlayLoader } from '../components';
 import assets from '../assets';
 import { Home } from './Home';
-import { Account } from './Account';
 import { Script } from './Script';
 import { Configuration } from './Configuration';
 import { Location } from './Location';
@@ -52,7 +51,7 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 					name="Home" 
 					component={Home} 
 					options={{
-						title: `Scripts v${ctx.application?.webeditor_info?.version}`,
+						title: `Scripts v${ctx?.application?.webeditor_info?.version}`,
 						drawerLabel: 'Home',
 					}}
 				/>
@@ -81,11 +80,6 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				<Drawer.Screen 
 					name="Location" 
 					component={Location} 
-				/>	
-
-                <Drawer.Screen 
-					name="Account" 
-					component={Account} 
 				/>		
 			</Drawer.Navigator>
 		</>
@@ -134,7 +128,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						if ([
 								'Script', 
 								'Screen', 
-                                'Account',
 							].includes(route.name)) return null;
 						return (
 							<Box key={route.key}>
@@ -209,17 +202,17 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						inactiveBackgroundColor="transparent"
 						pressColor={theme.colors['bg.active']}
 						onPress={() => {
-							const mode = ctx.application?.mode === 'development' ? 'production' : 'development';
+							const mode = ctx?.application?.mode === 'development' ? 'production' : 'development';
 							const save = async () => {
 								setDisplayLoader(true);
 								await api.saveApplication({ mode  });
                             	const res = await api.syncData({ force: true, });
-								ctx.setSyncDataResponse(res);
+								ctx?.setSyncDataResponse(res);
 								setDisplayLoader(false);
 							};
 							Alert.alert(
 								'Switch mode',
-                  				`Are you sure you want to ${ctx.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
+                  				`Are you sure you want to ${ctx?.application?.mode === 'development' ? 'leave' : 'enter'} development mode?`,
 								[
 									{
 										text: 'Cancel',
@@ -232,7 +225,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 							);
 						}}
 						label={() => {
-							const isActive = ctx.application?.mode === 'development';
+							const isActive = ctx?.application?.mode === 'development';
 							return (
 								<Box flexDirection="row" alignItems="center">
 									<Box paddingHorizontal="m">
@@ -264,7 +257,26 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 				inactiveBackgroundColor="transparent"
 				pressColor={theme.colors['bg.active']}
 				onPress={() => {
-                    props.navigation.navigate('Account');
+					Alert.alert(
+						'Logout',
+						'Are you sure you want to logout?',
+						[
+							{
+								text: 'Cancel',
+							},
+							{
+								text: 'Yes',
+								onPress: () => {
+									(async () => {
+										setDisplayLoader(true);
+										await api.logout();
+										setDisplayLoader(false);
+										ctx?.setAuthenticatedUser(null);
+									})();
+								},
+							},
+						]
+					);
 				}}
 				label={() => {
 					return (
@@ -272,7 +284,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 							<Box paddingHorizontal="m">
 								<Icon 
 									size={24} 
-									name="account-circle"
+									name="logout"
 									color={theme.colors.textSecondary} 
 								/>
 							</Box>
@@ -280,7 +292,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 								color="textSecondary"
 								textTransform="uppercase"
 								fontWeight="bold"
-							>Account</Text>
+							>Logout</Text>
 						</Box>
 					)
 				}}
@@ -290,4 +302,3 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 		</Box>
 	);
 }
-
