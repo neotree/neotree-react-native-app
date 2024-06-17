@@ -25,7 +25,6 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                                 body: JSON.stringify(s),
                             });
                             if (res.status == 200) {
-                                console.log('Updating...');
                                 const id = exportData[i].id;
                                 await updateSession({ exported: true }, { where: { id, }, });
                                 resolve(true);

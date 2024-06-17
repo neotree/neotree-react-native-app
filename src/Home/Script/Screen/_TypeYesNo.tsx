@@ -21,25 +21,33 @@ export function TypeYesNo({}: TypeYesNoProps) {
         { value: 'false', label: metadata?.negativeLabel || 'No' },
     ];
 
-    const opts = _opts.map(o => ({
-        ...o,
-        matched: ctx.getPrepopulationData()[metadata.key],
-        onChange: () => {
-            const value = o.value;
-            setValue(o.value);
-            ctx.setEntryValues([{
-                value,
-                confidential: metadata.confidential,
-                valueText: value === 'false' ? 'No' : 'Yes',
-				exportValue: value === 'false' ? 'No' : 'Yes',
-				valueLabel: metadata.label,
-                key: metadata.key,
-                label: o.label,
-                type: metadata.dataType,
-                dataType: metadata.dataType,
-            }]);
-        },
-    }));
+    const opts = _opts.map(o => {
+        let matched = undefined;
+        if (((ctx.getPrepopulationData()[metadata.key]?.values?.value || [])[0] === 'Yes') && (o.value === 'true')) {
+            matched = ctx.getPrepopulationData()[metadata.key];
+        } else if (((ctx.getPrepopulationData()[metadata.key]?.values?.value || [])[0] === 'No') && (o.value === 'false')) {
+            matched = ctx.getPrepopulationData()[metadata.key];
+        }
+        return {
+            ...o,
+            matched,
+            onChange: () => {
+                const value = o.value;
+                setValue(o.value);
+                ctx.setEntryValues([{
+                    value,
+                    confidential: metadata.confidential,
+                    valueText: value === 'false' ? 'No' : 'Yes',
+                    exportValue: value === 'false' ? 'No' : 'Yes',
+                    valueLabel: metadata.label,
+                    key: metadata.key,
+                    label: o.label,
+                    type: metadata.dataType,
+                    dataType: metadata.dataType,
+                }]);
+            },
+        };
+    });
 
     const [value, setValue] = React.useState<string | number | null>(ctx.activeScreenEntry?.values[0]?.value);
 
