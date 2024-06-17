@@ -174,7 +174,6 @@ export type HomeRoutes = {
 	session?: any;
   };
   Configuration: undefined;
-  Account: undefined;
   Location: undefined;
   Sessions: undefined;
 };
