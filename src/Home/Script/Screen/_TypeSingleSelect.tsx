@@ -15,24 +15,31 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
     const metadata = ctx.activeScreen?.data?.metadata;
     const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
 
-    const opts: any[] = metadata.items.map((item: any) => ({
-        ...item,
-        matched: ctx.getPrepopulationData()[metadata.key],
-        onChange: () => {
-            setValue(item.id);
-            ctx.setEntryValues([{
-                value: item.id,
-                valueText: item.label,
-				// exportValue: item.label,
-                label: metadata.label,
-                valueLabel: item.label,
-                key: metadata.key,
-                type: item.type,
-                dataType: metadata.dataType,
-                confidential: item.confidential,
-            }]);
-        },
-    }));
+    const opts: any[] = metadata.items.map((item: any) => {
+        let matched = undefined;
+        if ((ctx.getPrepopulationData()[metadata.key]?.values?.value || [])[0] === item.id) {
+            matched = ctx.getPrepopulationData()[metadata.key];
+        }
+
+        return {
+            ...item,
+            matched,
+            onChange: () => {
+                setValue(item.id);
+                ctx.setEntryValues([{
+                    value: item.id,
+                    valueText: item.label,
+                    // exportValue: item.label,
+                    label: metadata.label,
+                    valueLabel: item.label,
+                    key: metadata.key,
+                    type: item.type,
+                    dataType: metadata.dataType,
+                    confidential: item.confidential,
+                }]);
+            },
+        };
+    });
 
     const [value, setValue] = React.useState<string | number | null>(ctx.activeScreenEntry?.values[0]?.value);
 
