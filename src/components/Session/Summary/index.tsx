@@ -34,6 +34,72 @@ export function Summary({
                         .map(([sectionTitle, entries], sectionIndex) => {
                             const key = [sectionTitle, sectionIndex].join('');
 
+                            const displayItems = entries
+                                .filter((e: any) => e.values.length && !excludeScreenTypes.includes(e.screen.type))
+                                .map(({
+                                    values, 
+                                    management = [],
+                                    screen: { metadata: { label } } 
+                                }: any, entryIndex: number) => {
+                                    const nodes = values
+                                        .filter((e: any) => e.confidential ? showConfidential : true)
+                                        .filter((v: any) => v.valueText || v.value)
+                                        .filter((v: any) => v.printable !== false)
+                                        .map((v: any, i: number) => {
+                                            return (
+                                                <Box key={`${entryIndex}${i}`}>
+                                                    <Box
+                                                        flexDirection="row"
+                                                        columnGap="l"
+                                                        mb="m"
+                                                    >
+                                                        <Box flex={1}>
+                                                            <Text color="textSecondary">{label || v.label}</Text>
+                                                        </Box>
+
+                                                        <Box flex={1}>
+                                                            {
+                                                                v.value && v.value.map ? 
+                                                                    v.value.map((v: any, j: number) => (
+                                                                        <Box key={`${entryIndex}${i}${j}`} mb="s">
+                                                                            <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                                        </Box>
+                                                                    )) 
+                                                                    : 
+                                                                    <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                            }
+                                                        </Box>
+                                                    </Box>
+
+                                                    {!!management.length && (
+                                                        <Box mt="l">
+                                                            {management.map((s: any) => {
+                                                                return (
+                                                                    <Box key={s.screen_id}>
+                                                                        <ManagementScreen 
+                                                                            data={s.metadata}
+                                                                        />
+                                                                    </Box>
+                                                                )
+                                                            })}
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                            );
+                                    });
+
+                                    if (!nodes.length) return null;
+
+                                    return (
+                                        <Box key={entryIndex}>
+                                            {nodes}
+                                        </Box>
+                                    );
+                                })
+                                .filter((item: any) => item);
+
+                            if (!displayItems.length) return null;
+
                             return (
                                 <Box key={key} mb="l">
                                     {!!sectionTitle && (
@@ -42,66 +108,7 @@ export function Summary({
                                         </Box>
                                     )}
 
-                                    {entries
-                                        .filter((e: any) => e.values.length && !excludeScreenTypes.includes(e.screen.type))
-                                        .map(({
-                                            values, 
-                                            management = [],
-                                            screen: { metadata: { label } } 
-                                        }: any, entryIndex: number) => {
-                                            const nodes = values
-                                                .filter((e: any) => e.confidential ? showConfidential : true)
-                                                .filter((v: any) => v.valueText || v.value)
-                                                .filter((v: any) => v.printable !== false)
-                                                .map((v: any, i: number) => {
-                                                    return (
-                                                        <Box key={`${entryIndex}${i}`}>
-                                                            <Box
-                                                                flexDirection="row"
-                                                                columnGap="l"
-                                                                mb="m"
-                                                            >
-                                                                <Box flex={1}>
-                                                                    <Text color="textSecondary">{label || v.label}</Text>
-                                                                </Box>
-
-                                                                <Box flex={1}>
-                                                                    {
-                                                                        v.value && v.value.map ? 
-                                                                            v.value.map((v: any, j: number) => (
-                                                                                <Box key={`${entryIndex}${i}${j}`} mb="s">
-                                                                                    <Text>{v.valueText || v.value || 'N/A'}</Text>
-                                                                                </Box>
-                                                                            )) 
-                                                                            : 
-                                                                            <Text>{v.valueText || v.value || 'N/A'}</Text>
-                                                                    }
-                                                                </Box>
-                                                            </Box>
-
-                                                            {!!management.length && (
-                                                                <Box mt="l">
-                                                                    {management.map((s: any) => {
-                                                                        return (
-                                                                            <Box key={s.screen_id}>
-                                                                                <ManagementScreen 
-                                                                                    data={s.metadata}
-                                                                                />
-                                                                            </Box>
-                                                                        )
-                                                                    })}
-                                                                </Box>
-                                                            )}
-                                                        </Box>
-                                                    );
-                                            });
-
-                                            return (
-                                                <Box key={entryIndex}>
-                                                    {nodes}
-                                                </Box>
-                                            );
-                                        })}
+                                    {displayItems}
                                 </Box>
                             );
                         })}
