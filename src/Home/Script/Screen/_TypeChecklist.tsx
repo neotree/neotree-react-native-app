@@ -12,6 +12,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     
     const ctx = useContext();
     const metadata = ctx.activeScreen?.data?.metadata;
+    const printable = ctx.activeScreen.dataprintable !== false;
 
     let cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
@@ -39,11 +40,13 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                     type: item.type,
                     dataType: item.dataType,
                     exclusive: item.exclusive,
+                    exportType: 'checklist',
                 },
             ];
         }, []);
         ctx.setEntryValues(!keys.length ? undefined : [
 			{
+                printable,
 				value: values,
 				key: metadata.key || ctx.activeScreen.data.title,
 				label: metadata.label || ctx.activeScreen.data.title,

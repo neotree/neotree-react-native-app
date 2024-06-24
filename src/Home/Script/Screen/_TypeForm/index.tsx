@@ -31,6 +31,7 @@ export function TypeForm({}: TypeFormProps) {
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
         const matched = !canAutoFill ? null : (ctx.getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
         return {
+            printable: f.printable === false,
             value: cachedVal.filter(v => v.key === f.key)[0]?.value || `${matched || ''}` || null,
             valueText: cachedVal.filter(v => v.key === f.key)[0]?.valueText || matched || null,
             label: f.label,

@@ -1,7 +1,9 @@
 import React from "react";
-import { Box } from "../../Theme";
+import { Box, Text } from "../../Theme";
 import { Confidentials } from "./Confidentials";
-import { Entry } from "./Entry";
+import { ManagementScreen } from '../../ManagementScreen';
+import groupEntries from '../formToHTML/groupEntries';
+import { Content } from "../../Content";
 
 type SummaryProps = {
     Wrapper?: React.ComponentType<React.PropsWithChildren<{}>>;
@@ -19,19 +21,105 @@ export function Summary({
     Wrapper = Wrapper || React.Fragment;
     const excludeScreenTypes = ['edliz_summary_table'];
 
+    const sections: any[] = groupEntries(form);
+
     return (
         <Box>
             {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
             <Wrapper>
-                {form.filter(({ values, screen }: any) => values.length && !excludeScreenTypes.includes(screen.type))
+                <Content>
+                    {sections
+                        .filter(([, entries]) => entries.length)
+                        .map(([sectionTitle, entries], sectionIndex) => {
+                            const key = [sectionTitle, sectionIndex].join('');
+
+                            return (
+                                <Box key={key} mb="l">
+                                    {!!sectionTitle && (
+                                        <Box mb="s">
+                                            <Text variant="title3">{sectionTitle}</Text>
+                                        </Box>
+                                    )}
+
+                                    {entries
+                                        .filter((e: any) => e.values.length && !excludeScreenTypes.includes(e.screen.type))
+                                        .map(({
+                                            values, 
+                                            management = [],
+                                            screen: { metadata: { label } } 
+                                        }: any, entryIndex: number) => {
+                                            const nodes = values
+                                                .filter((e: any) => e.confidential ? showConfidential : true)
+                                                .filter((v: any) => v.valueText || v.value)
+                                                .filter((v: any) => v.printable !== false)
+                                                .map((v: any, i: number) => {
+                                                    return (
+                                                        <Box key={`${entryIndex}${i}`}>
+                                                            <Box
+                                                                flexDirection="row"
+                                                                columnGap="l"
+                                                                mb="m"
+                                                            >
+                                                                <Box flex={1}>
+                                                                    <Text color="textSecondary">{label || v.label}</Text>
+                                                                </Box>
+
+                                                                <Box flex={1}>
+                                                                    {
+                                                                        v.value && v.value.map ? 
+                                                                            v.value.map((v: any, j: number) => (
+                                                                                <Box key={`${entryIndex}${i}${j}`} mb="s">
+                                                                                    <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                                                </Box>
+                                                                            )) 
+                                                                            : 
+                                                                            <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                                    }
+                                                                </Box>
+                                                            </Box>
+
+                                                            {!!management.length && (
+                                                                <Box mt="l">
+                                                                    {management.map((s: any) => {
+                                                                        return (
+                                                                            <Box key={s.screen_id}>
+                                                                                <ManagementScreen 
+                                                                                    data={s.metadata}
+                                                                                />
+                                                                            </Box>
+                                                                        )
+                                                                    })}
+                                                                </Box>
+                                                            )}
+                                                        </Box>
+                                                    );
+                                            });
+
+                                            return (
+                                                <Box key={entryIndex}>
+                                                    {nodes}
+                                                </Box>
+                                            );
+                                        })}
+                                </Box>
+                            );
+                        })}
+                </Content>
+
+                {/* {form
+                    .filter(({ values, screen }: any) => values.length && !excludeScreenTypes.includes(screen.type))
                     .map(({ screen, values, management }: any) => {
                         management = management || [];
 
-                        values = values.reduce((acc: any, e: any) => [
-                            ...acc,
-                            ...(e.value && e.value.map ? e.value : [e]),
-                        ], []);
+                        console.log(JSON.stringify(values, null, 4));
+
+                        values = values
+                            // .filter((e: any) => e.printable)
+                            .reduce((acc: any, e: any) => [
+                                ...acc,
+                                ...(e.value && e.value.map ? e.value : [e]),
+                            ], []);
                         
                         const metadata = screen.metadata;
 
@@ -39,7 +127,8 @@ export function Summary({
 
                         switch (screen.type) {
                             case 'diagnosis':
-                                const accepted = values.filter((v: any) => v.diagnosis.how_agree !== 'No');
+                                const accepted = values
+                                    .filter((v: any) => v.diagnosis.how_agree !== 'No');
                                 entries = [
                                     {
                                         label: screen.sectionTitle || 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
@@ -50,6 +139,7 @@ export function Summary({
                                 break;
                             case 'form':
                                 entries = values
+                                    // .filter((e: any) => e.printable)
                                     .filter((e: any) => e.confidential ? showConfidential : true)
                                     .map((entry: any, i: number, arr: any[]) => ({
                                         label: entry.label,
@@ -74,7 +164,7 @@ export function Summary({
 								/>
 							);
                         });
-                    })}
+                    })} */}
             </Wrapper>
         </Box>
     )

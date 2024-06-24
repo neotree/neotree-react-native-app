@@ -13,12 +13,13 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, }); 
+            onChange({ value: null, valueText: null, exportType: 'date', }); 
             setValue(null);
         } else {
 			if (!mounted && (field.defaultValue === 'date_now')) {
 				const date = new Date();
 				onChange({ 
+                    exportType: 'date',
 					value: date,
 					valueText: (() => {
 						switch(field.type) {
@@ -37,6 +38,7 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 			if (!mounted && (field.defaultValue === 'date_noon')) {
 				const date = moment(new Date()).startOf('day').hour(12).minute(0).toDate();
 				onChange({ 
+                    exportType: 'date',
 					value: date,
 					valueText: (() => {
 						switch(field.type) {
@@ -55,6 +57,7 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 			if (!mounted && (field.defaultValue === 'date_midnight')) {
 				const date = moment(new Date()).startOf('day').hour(0).minute(0).toDate();
 				onChange({ 
+                    exportType: 'date',
 					value: date,
 					valueText: (() => {
 						switch(field.type) {
@@ -84,6 +87,7 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
                 onChange={date => {
                     setValue(date);
                     onChange({
+                        exportType: 'date',
                         value: date ? date.toISOString() : null,
                         valueText: (() => {
                             if (!date) return null;

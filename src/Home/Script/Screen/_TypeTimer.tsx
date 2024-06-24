@@ -20,6 +20,8 @@ export function TypeTimer({}: TypeTimerProps) {
     const timoutRef = React.useRef<any>(null);
 
     const metadata = ctx.activeScreen?.data.metadata;
+    const printable = ctx.activeScreen.dataprintable !== false;
+
     const multiplier = metadata.multiplier || 1;
     const timerValue = Number(metadata.timerValue || 0);
 
@@ -45,6 +47,7 @@ export function TypeTimer({}: TypeTimerProps) {
         setValue(val);
         setFormError(e);
         ctx.setEntryValues(e ? undefined : [{
+            printable,
             value: val,
             valueText: Number(val) * Number(multiplier || 1),
             calculateValue: Number(val) * Number(multiplier || 1),
@@ -53,6 +56,7 @@ export function TypeTimer({}: TypeTimerProps) {
             type: metadata.type || metadata.dataType,
             dataType: metadata.dataType,
             confidential: metadata.confidential,
+            exportType: 'timer',
         }]);
     }
 

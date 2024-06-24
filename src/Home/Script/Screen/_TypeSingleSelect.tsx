@@ -13,6 +13,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
     
     const ctx = useContext();
     const metadata = ctx.activeScreen?.data?.metadata;
+    const printable = ctx.activeScreen.dataprintable !== false;
     const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
 
     const opts: any[] = metadata.items.map((item: any) => {
@@ -27,6 +28,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
             onChange: () => {
                 setValue(item.id);
                 ctx.setEntryValues([{
+                    printable,
                     value: item.id,
                     valueText: item.label,
                     // exportValue: item.label,
@@ -36,6 +38,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
                     type: item.type,
                     dataType: metadata.dataType,
                     confidential: item.confidential,
+                    exportType: 'single_select',
                 }]);
             },
         };

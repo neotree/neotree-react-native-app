@@ -11,7 +11,7 @@ export function TimeField({ field, conditionMet, onChange, entryValue }: TimeFie
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, }); 
+            onChange({ value: null, valueText: null, exportType: 'time', }); 
             setValue(null);
         }
     }, [conditionMet]);
@@ -26,6 +26,7 @@ export function TimeField({ field, conditionMet, onChange, entryValue }: TimeFie
                 onChange={d => {
                     setValue(d);
                     onChange({
+                        exportType: 'time',
                         value: !d ? null : d.toISOString(),
                         valueText: d ? require('moment')(new Date(d)).format('HH:mm') : ''
                     });
