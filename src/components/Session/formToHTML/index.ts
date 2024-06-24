@@ -1,11 +1,12 @@
 /* eslint-disable indent */
-import ucFirst from '../../../utils/ucFirst';
 import baseHTML from './baseHTML';
+import groupEntries from './groupEntries';
 
 export default (session: any, showConfidential?: boolean) => {
   let { form, management } = session.data;
-  const sections: any[] = [];
   management = management || [];
+
+  const sections: any[] = groupEntries(form);
 
   let managementHTML = management.map((screen: any) => {
 	const sections = [
@@ -28,50 +29,6 @@ export default (session: any, showConfidential?: boolean) => {
 	`;
   }).join('');
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
-
-  form.forEach((entry: any) => {
-    const { screen } = entry;
-    const { sectionTitle } = screen;
-    const excludeScreenTypes = ['edliz_summary_table'];
-    if (entry.values.length && !excludeScreenTypes.includes(screen.type)) {
-      [
-        ...(screen.type === 'diagnosis' ? [
-          'Ranked diagnoses', // 'Primary Problems',
-          // 'Secondary Problems',
-          // 'Other problems',
-          // `${sectionTitle} - Primary Provisional Diagnosis`,
-          // `${sectionTitle} - Other problems`,
-        ] : [sectionTitle])
-      ].forEach((sectionTitle) => {
-        const _sectionTitle = ucFirst(`${sectionTitle}`.toLowerCase());
-        let sectionIndex = sections.map(([section]) => section).indexOf(_sectionTitle);
-        if (sectionIndex < 0) {
-          sections.push([sectionTitle ? _sectionTitle : '', []]);
-          sectionIndex = sections.length - 1;
-        }
-        sections[sectionIndex][1].push({
-          ...entry,
-          values: entry.values.filter((v: any) => {
-            if (screen.type === 'diagnosis') {
-              let accepted = v.diagnosis.how_agree !== 'No';
-              if (!accepted) return false;
-              // if (i === 0) return v.diagnosis.isPrimaryProvisionalDiagnosis;
-              // if (i === 1) return v.diagnosis.isSecondaryProvisionalDiagnosis;
-              return true;
-            }
-            return true;
-          })
-        });
-      });
-      // const _sectionTitle = ucFirst(`${sectionTitle}`.toLowerCase());
-      // let sectionIndex = sections.map(([section]) => section).indexOf(_sectionTitle);
-      // if (sectionIndex < 0) {
-      //   sections.push([sectionTitle ? _sectionTitle : '', []]);
-      //   sectionIndex = sections.length - 1;
-      // }
-      // sections[sectionIndex][1].push(entry);
-    }
-  });
 
   const tables = sections
     .filter(([, entries]) => entries.length)

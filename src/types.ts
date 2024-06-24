@@ -92,11 +92,13 @@ export type ScreenEntryValue = {
   confidential?: boolean;
   exportValue?: any;
   exportLabel?: any;
+  exportType?: any;
   calculateValue?: any;
   exclusive?: any;
   error?: any;
   diagnosis?: Diagnosis;
   prePopulate?: any[];
+  printable?: boolean;
 };
 
 export type ScreenEntry = {

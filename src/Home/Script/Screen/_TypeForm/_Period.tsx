@@ -37,6 +37,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
 				valueText: null, 
 				calculateValue: null,
 				exportValue: null,
+                exportType: 'number',
 			}); 
             setValue(null);
         }
@@ -52,6 +53,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
                 setValue(val);
                 setValueText(dateToValueText(val));
                 onChange({ 
+                    exportType: 'number',
 					value: val.toISOString(), 
 					valueText: dateToValueText(val), 
 					exportValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
@@ -72,6 +74,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
                 onChange={date => {
                     setValue(date);
                     onChange({
+                        exportType: 'number',
                         value: !date ? null : date.toISOString(),
                         valueText: dateToValueText(date),
 						exportValue: date ? diffHours(date, new Date()) : null,

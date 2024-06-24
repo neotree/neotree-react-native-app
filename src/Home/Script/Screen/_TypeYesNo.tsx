@@ -15,6 +15,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
 
     const metadata = ctx.activeScreen.data.metadata;
     const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
+    const printable = ctx.activeScreen.dataprintable !== false;
 
     const _opts = [
         { value: 'true', label: metadata?.positiveLabel || 'Yes' },
@@ -36,6 +37,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
                 setValue(o.value);
                 ctx.setEntryValues([{
                     value,
+                    printable,
                     confidential: metadata.confidential,
                     valueText: value === 'false' ? 'No' : 'Yes',
                     exportValue: value === 'false' ? 'No' : 'Yes',
@@ -44,6 +46,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
                     label: o.label,
                     type: metadata.dataType,
                     dataType: metadata.dataType,
+                    exportType: 'yesno',
                 }]);
             },
         };

@@ -18,7 +18,7 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, }); 
+            onChange({ value: null, valueText: null, exportType: 'text', }); 
             setValue('');
         }
     }, [conditionMet]);
@@ -34,7 +34,7 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
                     application={ctx.application}
                     onChange={val => {
                         setValue(`${val || ''}`);
-                        onChange({ value: val, });
+                        onChange({ value: val, exportType: 'text', });
                     }}
                     autoGenerateValue={!!field.defaultValue}
 
@@ -49,7 +49,7 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
                         let err = '';
                         setValue(value);
                         setError(err);
-                        onChange({ value: err ? null : value, });
+                        onChange({ value: err ? null : value, exportType: 'text', });
                     }}
                 />
             )}

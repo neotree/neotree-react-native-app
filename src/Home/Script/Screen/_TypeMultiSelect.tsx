@@ -13,6 +13,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     
     const ctx = useContext();
     const metadata = ctx.activeScreen?.data?.metadata;
+    const printable = ctx.activeScreen.dataprintable !== false;
 
     let cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
@@ -42,11 +43,13 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                     dataType: item.dataType,
                     exclusive: item.exclusive,
                     confidential: item.confidential,
+                    exportType: 'multi_select',
                 },
             ];
         }, []);
         ctx.setEntryValues(!keys.length ? undefined : [
 			{
+                printable,
 				value: values,
 				key: metadata.key,
 				label: metadata.label,

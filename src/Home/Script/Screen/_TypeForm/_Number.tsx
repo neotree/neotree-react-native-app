@@ -15,7 +15,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue }: Numbe
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, }); 
+            onChange({ value: null, valueText: null, exportType: 'number', }); 
             setValue(null);
         }
     }, [conditionMet]);
@@ -49,7 +49,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue }: Numbe
                     }
                     setValue(value);
                     setError(err);
-                    onChange({ value: err ? null : value, });
+                    onChange({ value: err ? null : value, exportType: 'number', });
                 }}
             />
         </Box>
