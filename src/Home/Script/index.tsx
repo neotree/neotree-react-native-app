@@ -276,6 +276,18 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 	});
 
+    const getEntryValues = React.useCallback((key: string) => {
+        key = `${key || ''}`.replace('$', '');
+        let values: any[] = [];
+        entries.forEach(e => e.values.forEach(v => {
+            if (v.key === key) {
+                const value = v.value;
+                values = value?.map ? value : [value];
+            }
+        }));
+        return values;
+    }, [entries]);
+
 	const getBirthFacilities = (): any[] => {
         // ["ReferredFrom", 'BirthFacility']
         const s = screens.filter(s => ['BirthFacility'].includes(s?.data?.metadata?.key))[0]
@@ -355,6 +367,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				getCachedEntry,
 				setEntry,
 				removeEntry,
+                getEntryValues,
                 getPrepopulationData(prePopulationRules?: string[]) {
                     const results = nuidSearchForm
                         .filter(f => f.results)
