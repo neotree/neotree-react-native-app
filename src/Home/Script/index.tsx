@@ -352,12 +352,32 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
                     const results = nuidSearchForm
                         .filter(f => f.results)
                         .filter(f => {
-                            const prePopulate = prePopulationRules || activeScreen.data.prePopulate || activeScreen.data.metadata.prePopulate || [];
-                            if (!prePopulate.length) return false;
-                            if (prePopulate.includes('allSearches')) return true;
-                            const isTwinSearch = f.key === 'BabyTwinNUID';
-                            if (!prePopulate.includes('twinSearches') && isTwinSearch) return false;
-                            return true;
+                            const metadata = activeScreen.data.metadata;
+                            const fields: any[] = metadata.fields || [];
+                            const items: any[] = metadata.items || [];
+                        
+                            const canPrePopulate = (rules: string[]) => {
+                                const prePopulate = rules;
+                                if (!prePopulate.length) return false;
+                                if (prePopulate.includes('allSearches')) return true;
+                                const isTwinSearch = f.key === 'BabyTwinNUID';
+                                if (!prePopulate.includes('twinSearches') && isTwinSearch) return false;
+                                return true;
+                            };
+
+                            let isPrePopulatable = canPrePopulate(prePopulationRules || activeScreen.data.prePopulate || activeScreen.data.metadata.prePopulate || []);
+
+                            fields.forEach(f => {
+                                const isTrue = canPrePopulate(f.prePopulate || []);
+                                if (isTrue) isPrePopulatable = true;
+                            });
+
+                            items.forEach(f => {
+                                const isTrue = canPrePopulate(f.prePopulate || []);
+                                if (isTrue) isPrePopulatable = true;
+                            });
+
+                            return isPrePopulatable;
                         });
                     const twin = results.filter(item => item.key === 'BabyTwinNUID')[0];
                     return {

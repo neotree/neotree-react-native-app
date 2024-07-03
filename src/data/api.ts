@@ -17,6 +17,7 @@ export async function makeApiCall(
     otherOptions: Partial<(typeof _otherOptions)> = _otherOptions,
 ) {
     const { useHost } = { ..._otherOptions, ...otherOptions, };
+    let url = '';
     try {
         const location = await getLocation();
         const country = otherOptions.country || location?.country;
@@ -30,11 +31,11 @@ export async function makeApiCall(
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
-        const url = [api_endpoint, endpoint].join('/');
+        url = [api_endpoint, endpoint].join('/');
 
         console.log('[API]: ', url);
 
-        return await fetch(url, {
+        const res = await fetch(url, {
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -42,7 +43,14 @@ export async function makeApiCall(
                 'x-api-key': config.api_key,
             }
         });
+
+        if (res.status !== 200) {
+            console.log(res);
+        }
+
+        return res;
     } catch(e) {
+        if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
 }
 
