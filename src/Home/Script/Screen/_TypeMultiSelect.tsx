@@ -13,7 +13,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     
     const ctx = useContext();
     const metadata = ctx.activeScreen?.data?.metadata;
-    const printable = ctx.activeScreen.dataprintable !== false;
+    const printable = ctx.activeScreen.data.printable !== false;
 
     let cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];

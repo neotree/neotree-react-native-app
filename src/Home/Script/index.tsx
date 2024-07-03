@@ -1,5 +1,6 @@
 import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
+import { generateUID } from '@/src/utils/uid';
 import * as types from '../../types';
 import { getApplication, getConfiguration, getLocation, getScript } from '../../data';
 import { getNavOptions } from './navOptions';
@@ -16,6 +17,8 @@ import { Summary } from './Summary';
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
+
+    const [generatedUID, setGeneratedUID] = React.useState('');
 
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
 	const [moreNavOptions, setMoreNavOptions] = React.useState<null | MoreNavOptions>(null);
@@ -252,6 +255,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
             const app = await getApplication();
             setApplication(app);
 
+            const uid = await generateUID();
+            setGeneratedUID(uid);
+            
 			const location = await getLocation();
 			setLocation(location);
 
@@ -308,6 +314,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		<Context.Provider
 			value={{
 				...utils,
+                generatedUID,
 				script,
 				screens,
 				diagnoses,

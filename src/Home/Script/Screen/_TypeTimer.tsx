@@ -20,7 +20,7 @@ export function TypeTimer({}: TypeTimerProps) {
     const timoutRef = React.useRef<any>(null);
 
     const metadata = ctx.activeScreen?.data.metadata;
-    const printable = ctx.activeScreen.dataprintable !== false;
+    const printable = ctx.activeScreen.data.printable !== false;
 
     const multiplier = metadata.multiplier || 1;
     const timerValue = Number(metadata.timerValue || 0);
