@@ -15,7 +15,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
 
     const metadata = ctx.activeScreen.data.metadata;
     const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
-    const printable = ctx.activeScreen.dataprintable !== false;
+    const printable = ctx.activeScreen.data.printable !== false;
 
     const _opts = [
         { value: 'true', label: metadata?.positiveLabel || 'Yes' },

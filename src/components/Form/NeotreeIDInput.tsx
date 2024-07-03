@@ -1,29 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TextInput as RNTextInput } from "react-native";
-import { getApplication } from '../../data';
-import * as types from '../../types';
+import { generateUID, validateUID } from '@/src/utils/uid';
 import { Br } from '../Br';
 import { Box, Text } from '../Theme';
 import { TextInput } from './TextInput';
-
-const validateUID = (value = '') => {
-    const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
-    const allowedLastHalf = /^[0-9]*$/gi;
-    const [_firstHalf, _lastHalf] = (value || '').split('-');
-
-    const firstHalfHasForbiddenChars = !allowedFirstHalf.test(_firstHalf);
-    const lastHalfHasForbiddenChars = !allowedLastHalf.test(_lastHalf);
-    const firstHalfIsValid = (_firstHalf.length === 4) && !firstHalfHasForbiddenChars;
-    const lastHalfIsValid = (_lastHalf.length === 4) && !lastHalfHasForbiddenChars;
-
-    return {
-        firstHalfHasForbiddenChars,
-        lastHalfHasForbiddenChars,
-        firstHalfIsValid,
-        lastHalfIsValid,
-        isValid: firstHalfIsValid && lastHalfIsValid,
-    };
-};
 
 export type NeotreeIDInputProps = {
     autoGenerateValue?: boolean;
@@ -41,20 +21,17 @@ function Input({
     onChange,
     value,
     disabled,
-    application: { uid_prefix, total_sessions_recorded, },
-}: NeotreeIDInputProps & { application: types.Application; }) {
+    generatedUID,
+}: NeotreeIDInputProps & { generatedUID?: string; }) {
     disabled = disabled;
-
-    const uid = `${uid_prefix}-${`000${(total_sessions_recorded || 0) + 1}`.slice(-4)}`;
 
     const [mounted, setMounted] = React.useState(false);
 
     const firstHalfRef = React.useRef<RNTextInput>(null);
     const lastHalfRef = React.useRef<RNTextInput>(null);
-    const [valueInitialised, setValueInitialised] = React.useState(false);
 
     const getDefault = () => {
-        const _uid = autoGenerateValue ? (defaultValue || uid || '') : '';
+        const _uid = autoGenerateValue ? (defaultValue || generatedUID || '') : '';
         const [firstHalf, lastHalf] = _uid.split('-');
         return { uid: _uid, firstHalf: firstHalf || '', lastHalf: lastHalf || '', };
     };
@@ -177,24 +154,26 @@ function Input({
 }
 
 export function NeotreeIDInput({
-    application: applicationProp,
+    generatedUID: generatedUidProp,
     ...props
-}: NeotreeIDInputProps & { application?: null | types.Application; }) {
-    const [application, setApplication] = React.useState<null | types.Application>(applicationProp || null);
+}: NeotreeIDInputProps & { generatedUID?: string; }) {
+    const [generatedUID, setGeneratedUID] = useState(generatedUidProp);
+    const [isReady, setIsReady] = useState(false);
 
     React.useEffect(() => {
         (async () => {
-            if (!applicationProp) {
-                const app = await getApplication();
-                setApplication(app);
+            if (!generatedUID) {
+                const uid = await generateUID();
+                setGeneratedUID(uid);
             }
+            setIsReady(true);
         })();
-    }, [applicationProp]);
+    }, [generatedUID]);
 
-    return !application ? null : (
+    return !isReady ? null : (
         <Input 
             {...props}
-            application={application}
+            generatedUID={generatedUID}
         />
     );
 }

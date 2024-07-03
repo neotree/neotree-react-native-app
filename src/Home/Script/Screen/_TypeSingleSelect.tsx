@@ -13,7 +13,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
     
     const ctx = useContext();
     const metadata = ctx.activeScreen?.data?.metadata;
-    const printable = ctx.activeScreen.dataprintable !== false;
+    const printable = ctx.activeScreen.data.printable !== false;
     const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
 
     const opts: any[] = metadata.items.map((item: any) => {

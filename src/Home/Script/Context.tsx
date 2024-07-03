@@ -22,6 +22,7 @@ export type PatientDetails = {
 };
 
 export type ContextType = ReturnType<typeof getScriptUtils> & {
+    generatedUID: string;
 	script_id: string | number;
 	sessionID: null | number | string;
     script: types.Script;
