@@ -61,6 +61,8 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 					component={Script} 
 					options={{
 						drawerItemStyle: { display: 'none' },
+                        headerTitleContainerStyle: { width: '100%', },
+                        headerLeft: () => null,
 					}}
 				/>
 
