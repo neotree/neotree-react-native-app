@@ -29,7 +29,8 @@ export function TypeForm({}: TypeFormProps) {
     };
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
-        const matched = (!canAutoFill || !f.prePopulate?.length) ? null : (ctx.getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
+        const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
+        const matched = !shouldAutoPopulate ? null : (ctx.getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
         return {
             printable: f.printable !== false,
             value: cachedVal.filter(v => v.key === f.key)[0]?.value || `${matched || ''}` || null,

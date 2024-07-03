@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import moment from 'moment';
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
+import { useContext } from '../../Context';
 
 type DateFieldProps = types.ScreenFormTypeProps & {
     
 };
 
 export function DateField({ field, conditionMet, entryValue, onChange, }: DateFieldProps) {
+    const ctx = useContext();
+
 	const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
 
@@ -77,6 +80,15 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 
 	React.useEffect(() => { setMounted(true); }, []);
 
+    const { minDate, maxDate } = useMemo(() => {
+        const [minDate] = ctx.getEntryValues(field.minDateKey);
+        const [maxDate] = ctx.getEntryValues(field.maxDateKey);
+        return {
+            minDate: minDate ? new Date(minDate) : undefined,
+            maxDate: maxDate ? new Date(maxDate) : undefined,
+        };
+    }, [ctx, field]);
+
     return (
         <Box>
             <DatePicker
@@ -102,8 +114,8 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
                         })(),
                     });
                 }}
-                maxDate={field.maxDate}
-                minDate={field.minDate}
+                maxDate={maxDate || field.maxDate}
+                minDate={minDate || field.minDate}
             />
         </Box>
     );
