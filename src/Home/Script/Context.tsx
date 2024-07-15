@@ -65,7 +65,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     setNavOptions: () => void;
     setMoreNavOptions: React.Dispatch<React.SetStateAction<null | MoreNavOptions>>;
     getPrepopulationData: (prePopulationRules?: string[]) => any;
-    getEntryValues: (key: string) => any[];
+    getEntryValueByKey: (key: string) => null | types.ScreenEntryValue;
 };
 
 export const Context = React.createContext<null | ContextType>(null);

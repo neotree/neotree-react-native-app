@@ -4,10 +4,16 @@ import * as types from '../../../../types';
 import { useContext } from '../../Context';
 
 type TextFieldProps = types.ScreenFormTypeProps & {
-    
+    patientNUID?: string | null;
 };
 
-export function TextField({ field, conditionMet, entryValue, onChange }: TextFieldProps) {
+export function TextField({ 
+    field, 
+    conditionMet, 
+    entryValue, 
+    patientNUID,
+    onChange 
+}: TextFieldProps) {
     const ctx = useContext();
     const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
 
@@ -22,6 +28,13 @@ export function TextField({ field, conditionMet, entryValue, onChange }: TextFie
             setValue('');
         }
     }, [conditionMet]);
+
+    React.useEffect(() => {
+        if (`${field.key}`.match(/NUID_/gi) && conditionMet && patientNUID) {
+            onChange({ value: patientNUID, valueText: patientNUID, exportType: 'text', }); 
+            setValue(patientNUID);
+        }
+    }, [conditionMet, patientNUID, field.key]);
 
     const autoGenerateValue = useMemo(() => !!field.defaultValue, [field]);
 

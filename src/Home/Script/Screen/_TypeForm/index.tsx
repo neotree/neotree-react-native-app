@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Br } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
@@ -22,19 +22,32 @@ export function TypeForm({}: TypeFormProps) {
     const cachedVal = ctx.activeScreenEntry?.values || [];
     const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
 
+    const patientNUID = useMemo(() => ctx.nuidSearchForm.filter(f => f.key === 'patientNUID')[0]?.value, [ctx.nuidSearchForm]);
+
     const evaluateFieldCondition = (f: any) => {
-        let conditionMet = true; // @ts-ignore
+        let conditionMet = true;
         if (f.condition) conditionMet = ctx.evaluateCondition(ctx.parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
     };
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
         const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
+
         const matched = !shouldAutoPopulate ? null : (ctx.getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
+
+        const cached = cachedVal.filter(v => v.key === f.key)[0];
+        let value = cached?.value || `${matched || ''}` || null;
+        let valueText = cached?.valueText || matched || null;
+
+        if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
+            value = cached?.value || patientNUID; 
+            valueText = cached?.valueText || patientNUID; 
+        }
+        
         return {
             printable: f.printable !== false,
-            value: cachedVal.filter(v => v.key === f.key)[0]?.value || `${matched || ''}` || null,
-            valueText: cachedVal.filter(v => v.key === f.key)[0]?.valueText || matched || null,
+            value,
+            valueText,
             label: f.label,
             key: f.key,
             type: f.type,
@@ -70,7 +83,7 @@ export function TypeForm({}: TypeFormProps) {
                 return (
                     <React.Fragment key={f.key}>
                         {(() => {
-                            let Component: null | React.ComponentType<types.ScreenFormTypeProps> = null;
+                            let Component: null | React.ComponentType<types.ScreenFormTypeProps & { patientNUID?: string | null; }> = null;
                             switch (f.type) {
                             case fieldsTypes.NUMBER:
                                 Component = NumberField;
@@ -114,6 +127,7 @@ export function TypeForm({}: TypeFormProps) {
                                         entryValue={values.filter(v => v.key === f.key)[0]}
                                         formValues={values}
                                         conditionMet={conditionMet}
+                                        patientNUID={patientNUID}
                                         onChange={onChange}
                                     />
                                     <Br spacing="xl" />

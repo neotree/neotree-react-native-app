@@ -3,8 +3,8 @@ import * as types from '../../../../types';
 
 type FormItemProps = React.PropsWithChildren<{
     field: types.ScreenFormTypeProps['field'];
-    onChange: types.ScreenFormTypeProps['onChange'];
     conditionMet: types.ScreenFormTypeProps['conditionMet'];
+    onChange: types.ScreenFormTypeProps['onChange'];
 }>;
 
 export function FormItem({
