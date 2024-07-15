@@ -81,24 +81,58 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 	React.useEffect(() => { setMounted(true); }, []);
 
     const { minDate, maxDate } = useMemo(() => {
-        const [minDate] = ctx.getEntryValues(field.minDateKey);
-        const [maxDate] = ctx.getEntryValues(field.maxDateKey);
-        return {
-            minDate: minDate ? new Date(minDate) : undefined,
-            maxDate: maxDate ? new Date(maxDate) : undefined,
-        };
+        const { value: _minDate, type: _minDateType, } = { ...ctx.getEntryValueByKey(field.minDateKey) };
+        const { value: _maxDate, type: _maxDateType, } = { ...ctx.getEntryValueByKey(field.maxDateKey) };
+
+        let minDate = undefined;
+        let maxDate = undefined;
+
+        if (_minDate) {
+            minDate = new Date(_minDate);
+            if (_minDateType === 'date') {
+                minDate.setHours(0);
+                minDate.setMinutes(0);
+            }
+        }
+
+        if (_maxDate) {
+            maxDate = new Date(_maxDate);
+            if (_maxDateType === 'date') {
+                maxDate.setHours(23);
+                maxDate.setMinutes(59);
+            }
+        }
+
+        return { minDate, maxDate, };
     }, [ctx, field]);
+
+    const getErrors = useCallback((date: null | string) => {
+        const errors = [];
+
+        if (minDate && date && (new Date(date).getTime() < new Date(minDate).getTime())) {
+            errors.push(`Date should be on or after the min date: ${moment(minDate).format(field.type === 'date' ? 'LL' : 'LLL')}`);
+        }
+
+        if (maxDate && date && (new Date(date).getTime() > new Date(maxDate).getTime())) {
+            errors.push(`Date should be on or before the max date: ${moment(maxDate).format(field.type === 'date' ? 'LL' : 'LLL')}`);
+        }
+
+        return errors;
+    }, [field.type, minDate, maxDate]);
 
     return (
         <Box>
             <DatePicker
+                errors={getErrors(entryValue.value)}
                 mode={field.type === 'date' ? 'date' : 'datetime'}
                 value={value}
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
                 onChange={date => {
+                    const error = getErrors(date?.toISOString() || null)[0] || null;
                     setValue(date);
                     onChange({
+                        error,
                         exportType: 'date',
                         value: date ? date.toISOString() : null,
                         valueText: (() => {

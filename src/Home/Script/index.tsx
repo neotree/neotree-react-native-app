@@ -276,16 +276,15 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 	});
 
-    const getEntryValues = React.useCallback((key: string) => {
+    const getEntryValueByKey = React.useCallback((key: string) => {
         key = `${key || ''}`.replace('$', '');
-        let values: any[] = [];
+        let value: null | types.ScreenEntryValue = null;
         entries.forEach(e => e.values.forEach(v => {
-            if (v.key === key) {
-                const value = v.value;
-                values = value?.map ? value : [value];
+            if (`${v.key}`.toLowerCase() === `${key}`.toLowerCase()) {
+                value = v;
             }
         }));
-        return values;
+        return value;
     }, [entries]);
 
 	const getBirthFacilities = (): any[] => {
@@ -367,7 +366,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				getCachedEntry,
 				setEntry,
 				removeEntry,
-                getEntryValues,
+                getEntryValueByKey,
                 getPrepopulationData(prePopulationRules?: string[]) {
                     const results = nuidSearchForm
                         .filter(f => f.results)

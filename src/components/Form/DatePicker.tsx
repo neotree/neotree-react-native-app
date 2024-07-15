@@ -11,11 +11,12 @@ export type DatePickerProps = {
     label?: React.ReactNode;
     value?: null | Date;
     valueText?: string;
-    onChange?: (value: null | Date) => void;
     disabled?: boolean;
     mode: 'date' | 'time' | 'datetime';
     maxDate?: Date | 'date_now';
     minDate?: Date | 'date_now';
+    errors?: string[];
+    onChange?: (value: null | Date) => void;
 };
 
 type RenderReactNodeOptions = { 
@@ -38,13 +39,16 @@ export function DatePicker({
     placeholder,
     label,
     value,
-    onChange,
     disabled,
     mode,
     maxDate,
     minDate,
     valueText,
+    errors,
+    onChange,
 }: DatePickerProps) {
+    errors = (errors || []).filter(e => e);
+
     const theme = useTheme();
 
     const [currentDate] = React.useState(new Date());
@@ -103,7 +107,7 @@ export function DatePicker({
                 }}
             >
                 <Box
-                    borderColor="divider"
+                    borderColor={errors?.length ? 'error' : 'divider'}
                     borderWidth={1}
                     borderRadius="m"
                     padding="m"
@@ -164,6 +168,21 @@ export function DatePicker({
                         setDate(selectedDate);
                     }}
                 />
+            )}
+
+            {!!errors?.length && (
+                <Box>
+                    {errors.map((e, i)=> (
+                        <Text
+                            key={i}
+                            fontSize={12}
+                            color="error"
+                            mb="s"
+                        >
+                            {e}
+                        </Text>
+                    ))}
+                </Box>
             )}
         </>
     );

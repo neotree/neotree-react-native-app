@@ -53,6 +53,7 @@ export default (session: any, showConfidential?: boolean) => {
             const valuesHTML = values
                 .filter((e: any) => e.confidential ? showConfidential : true)
                 .filter((v: any) => v.valueText || v.value)
+                .filter((e: any) => e.printable !== false)
                 .map((v: any) => {
                     return `
                         <div  class="row">
