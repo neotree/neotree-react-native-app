@@ -11441,6 +11441,11 @@ toidentifier@1.0.1:
   resolved "https://registry.yarnpkg.com/toidentifier/-/toidentifier-1.0.1.tgz#3be34321a88a820ed1bd80dfaa33e479fbb8dd35"
   integrity sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==
 
+tp-react-native-bluetooth-printer@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/tp-react-native-bluetooth-printer/-/tp-react-native-bluetooth-printer-1.5.0.tgz#9511d9d4da94ba885e7c6858518efb753220f05f"
+  integrity sha512-bK3Y0NtKJb13ThuIuWysve6aIvnVoeIapndajqJpghNZAqnFp1FeK2zpDgpZLceY7X7t1a/0apCUhCZhxiYmJw==
+
 tr46@~0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/tr46/-/tr46-0.0.3.tgz#8184fd347dac9cdc185992f3a6622e14b9d9ab6a"
