@@ -11,11 +11,11 @@ export type ButtonProps = TouchableOpacityProps & {
 };
 
 export function Button({ 
-    variant, 
+    variant = 'default', 
     children, 
     style,
-    color,
-    size,
+    color = 'primary',
+    size = 'm',
     textStyle,
     ...props 
 }: ButtonProps) {
@@ -72,11 +72,3 @@ export function Button({
         </TouchableOpacity>
     );
 }
-
-const defaultProps: Partial<ButtonProps> = {
-    variant: 'default',
-    color: 'primary',
-    size: 'm',
-};
-
-Button.defaultProps = defaultProps;

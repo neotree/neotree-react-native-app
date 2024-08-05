@@ -40,7 +40,7 @@ export function DatePicker({
     label,
     value,
     disabled,
-    mode,
+    mode = 'date',
     maxDate,
     minDate,
     valueText,
@@ -187,7 +187,3 @@ export function DatePicker({
         </>
     );
 }
-
-DatePicker.defaultProps = {
-    mode: 'date',
-};
