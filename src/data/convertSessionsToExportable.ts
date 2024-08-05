@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import { APP_ENV, APP_VERSION } from '@/src/constants';
 import { getApplication } from './queries';
 
 export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {}) {
@@ -18,8 +18,8 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
                 return {
                     uid: s.uid,
                     unique_key,
-                    appVersion: Constants.manifest?.version,
-                    appEnv: Constants.manifest?.extra?.APP_ENV,
+                    appVersion: APP_VERSION,
+                    appEnv: APP_ENV,
                     scriptVersion: application.webeditor_info.version,
                     scriptTitle: script.script_id,
                     script: { id: script.script_id, title: script.data.title, type: script.type, },

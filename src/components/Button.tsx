@@ -3,9 +3,9 @@ import { TouchableOpacity, TouchableOpacityProps, TextProps  } from 'react-nativ
 import { useTheme, Text } from './Theme';
 
 export type ButtonProps = TouchableOpacityProps & {
-    size: 's' | 'm' | 'l';
-    color: 'primary' | 'secondary';
-    variant: 'default' | 'link'
+    size?: 's' | 'm' | 'l';
+    color?: 'primary' | 'secondary';
+    variant?: 'default' | 'link'
     children?: React.ReactNode | string;
     textStyle?: TextProps['style'];
 };

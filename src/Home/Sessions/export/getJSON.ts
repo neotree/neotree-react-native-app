@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import { APP_VERSION } from '@/src/constants';
 import { convertSessionsToExportable } from '../../../data';
 
 export default function getJSON(opts: any = {}) {
@@ -13,7 +13,7 @@ export default function getJSON(opts: any = {}) {
       started_at,
       completed_at,
       canceled_at,
-      appVersion: Constants.manifest?.extra?.APP_VERSION,
+      appVersion: APP_VERSION,
       scriptVersion: application.webeditor_info.version,
       scriptTitle: script.script_id,
       script: { id: script.script_id, title: script.data.title },
