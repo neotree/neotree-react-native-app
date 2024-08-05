@@ -5,16 +5,10 @@ export type BrProps = {
     spacing: keyof Theme['spacing'];
 };
 
-export function Br({ spacing }: BrProps) {
+export function Br({ spacing = 's' }: BrProps) {
     return (
         <Box
             marginBottom={spacing}
         />
     );
 }
-
-const defaultProps: BrProps = {
-    spacing: 's',
-};
-
-Br.defaultProps = defaultProps;
