@@ -1,26 +1,20 @@
 
 import * as SQLite from 'expo-sqlite';
 
-export const db = SQLite.openDatabase('db.db');
+export const db = SQLite.openDatabaseSync('db.db');
 
 export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
-    db.transaction(
-        tx => {
-            tx.executeSql(
-                q,
-                data,
-                (_, rslts) => {
-					if (cb) cb(null, rslts);
-                    resolve(rslts.rows._array);
-                },
-                (_, e) => { 
-					if (cb) cb(e);
-                    reject(e); 
-                    return true; 
-                }
-            );
-        },
-    );
+    const done = (error?: null | Error, data?: any[]) => {
+        if (error) {
+            reject(error);
+        } else {
+            resolve(data || []);
+        }
+        cb?.(error, data);
+    };
+    db.getAllAsync<any>(q, data)
+        .then(res => done(null, res))
+        .catch(done);
 });
 
 export async function createTablesIfNotExist() {

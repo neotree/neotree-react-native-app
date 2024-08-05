@@ -12,6 +12,7 @@
         "build:stage": "eas build --platform android --profile stage",
         "build:prod": "eas build --platform android --profile production"
     },
+    "main": "expo-router/entry",
     "jest": {
         "preset": "jest-expo"
     },
@@ -30,7 +31,6 @@
         "axios": "^1.7.3",
         "cross-env": "^7.0.3",
         "expo": "~51.0.24",
-        "expo-application": "~5.9.1",
         "expo-av": "~14.0.6",
         "expo-battery": "~8.0.1",
         "expo-constants": "~16.0.2",
