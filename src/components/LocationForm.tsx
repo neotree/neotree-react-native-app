@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator } from "react-native";
-import Constants from 'expo-constants';
+import { countries, SDK_VERSION } from '@/src/constants';
+
 import { useTheme, Text  } from "./Theme";
 import { Br } from './Br';
 import { Button } from './Button';
@@ -8,8 +9,6 @@ import { Dropdown } from './Form';
 import * as types from '../types';
 import { useIsFocused } from '@react-navigation/native';
 import * as api from '../data';
-
-const countries = (Constants.manifest?.extra?.countries || []) as types.COUNTRY[];
 
 type LocationFormProps = { 
     onSetLocation: () => void; 

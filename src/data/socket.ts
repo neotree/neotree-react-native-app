@@ -1,15 +1,16 @@
 import io from 'socket.io-client';
-import Constants from 'expo-constants';
+
 import { COUNTRY } from '../types';
 import { getExportedSessions } from './sessions';
 import { getLocation } from './queries';
+import { APP_CONFIG } from '../constants';
 
-const config = { ...Constants.manifest?.extra };
-const countries = (config.countries || []) as COUNTRY[];
+
+const countries = (APP_CONFIG.countries || []) as COUNTRY[];
 
 export const sockets: { [key: string]: any; } = countries.reduce((acc, country) => {
-  const webEditorHost = config[country?.iso]?.webeditor.host || null;
-  const nodeApiHost = config[country?.iso]?.nodeapi.host || null;
+  const webEditorHost = APP_CONFIG[country?.iso]?.webeditor.host || null;
+  const nodeApiHost = APP_CONFIG[country?.iso]?.nodeapi.host || null;
   return {
     ...acc,
     ...(webEditorHost ? { [`${country}WebEditor`]: io(webEditorHost) } : null),

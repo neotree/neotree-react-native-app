@@ -1,7 +1,6 @@
-import Constants from 'expo-constants';
+import { APP_VERSION } from '@/src/constants';
 import * as types from '../types';
 import { dbTransaction } from './db';
-const APP_VERSION = Constants.manifest?.version;
 
 export async function getAuthenticatedUser() {
     const rows = await dbTransaction('select * from authenticated_user;');

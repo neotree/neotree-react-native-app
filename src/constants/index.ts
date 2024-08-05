@@ -1,3 +1,15 @@
+import Constants from 'expo-constants';
+
+export const expoContantsExtra = {
+    ...Constants.manifest2?.extra?.expoClient?.extra,
+} as { [key: string]: any; };
+
+export const APP_CONFIG = expoContantsExtra;
+export const countries = (expoContantsExtra.countries || []) as { name: string; iso: string; }[];
+export const APP_ENV: string = expoContantsExtra.APP_ENV;
+export const APP_VERSION: string = Constants.manifest2?.extra?.expoClient?.version!;
+export const SDK_VERSION: string = Constants.manifest2?.extra?.expoClient?.sdkVersion!;
+
 export const fieldsTypes = {
     DATE: 'date',
     DATETIME: 'datetime',
