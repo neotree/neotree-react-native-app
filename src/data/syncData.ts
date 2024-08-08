@@ -1,14 +1,12 @@
-import { Platform } from 'react-native';
 // import * as Network from 'expo-network';
 import NetInfo from '@react-native-community/netinfo';
-import * as Application from 'expo-application';
-import Constants from 'expo-constants';
-import { createTablesIfNotExist, dbTransaction } from './db';
 import queryString from 'query-string';
+
+import { createTablesIfNotExist, dbTransaction } from './db';
 import { makeApiCall } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
-
-const APP_VERSION = Constants.manifest?.version;
+import { APP_VERSION } from '../constants';
+import { getDeviceID } from '../utils/getDeviceID';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
@@ -18,12 +16,7 @@ export async function syncData(opts?: { force?: boolean; }) {
 
     const authenticatedUser = await getAuthenticatedUser();
 
-    let deviceId = null;
-    if (Platform.OS === 'android') {
-        deviceId = Application.androidId;
-    } else {
-        deviceId = await Application.getIosIdForVendorAsync();
-    }
+    const deviceId = await getDeviceID();
 
     let last_sync_date = null;
 

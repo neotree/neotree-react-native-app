@@ -3,19 +3,19 @@ import { TouchableOpacity, TouchableOpacityProps, TextProps  } from 'react-nativ
 import { useTheme, Text } from './Theme';
 
 export type ButtonProps = TouchableOpacityProps & {
-    size: 's' | 'm' | 'l';
-    color: 'primary' | 'secondary';
-    variant: 'default' | 'link'
+    size?: 's' | 'm' | 'l';
+    color?: 'primary' | 'secondary';
+    variant?: 'default' | 'link'
     children?: React.ReactNode | string;
     textStyle?: TextProps['style'];
 };
 
 export function Button({ 
-    variant, 
+    variant = 'default', 
     children, 
     style,
-    color,
-    size,
+    color = 'primary',
+    size = 'm',
     textStyle,
     ...props 
 }: ButtonProps) {
@@ -72,11 +72,3 @@ export function Button({
         </TouchableOpacity>
     );
 }
-
-const defaultProps: Partial<ButtonProps> = {
-    variant: 'default',
-    color: 'primary',
-    size: 'm',
-};
-
-Button.defaultProps = defaultProps;

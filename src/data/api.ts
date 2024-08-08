@@ -1,9 +1,8 @@
-import Constants from 'expo-constants';
 import queryString from 'query-string';
+
+import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
-
-const CONFIGURATION = (Constants.manifest?.extra || {}) as any;
 
 const _otherOptions = {
     useHost: false,
@@ -24,7 +23,7 @@ export async function makeApiCall(
 
         if (!country) throw new Error('Location not set');
 
-        const config = (CONFIGURATION[country] as types.COUNTRY_CONFIG)[source];
+        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;
         api_endpoint[api_endpoint.length - 1] === '/' ? 

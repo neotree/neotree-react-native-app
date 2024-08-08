@@ -1,36 +1,45 @@
 {
-  "expo": {
-    "name": "NeoTree",
-    "slug": "neotree",
-    "version": "2.3.6",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "org.neotree.neotreeapp",
-      "buildNumber": "1.0.0"
-    },
-    "android": {
-      "package": "org.neotree.neotreeapp",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#FFFFFF"
-      }
-    },
-    "web": {
-      "favicon": "./assets/images/icon.png"
+    "expo": {
+        "name": "NeoTree",
+        "slug": "neotree",
+        "version": "2.4.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/icon.png",
+        "scheme": "myapp",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "image": "./assets/images/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+        },
+        "updates": {
+            "fallbackToCacheTimeout": 0
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "org.neotree.neotreeapp",
+            "buildNumber": "1.0.0"
+        },
+        "android": {
+            "package": "org.neotree.neotreeapp",
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/images/icon.png",
+                "backgroundColor": "#FFFFFF"
+            }
+        },
+        "web": {
+            "favicon": "./assets/images/icon.png",
+            "bundler": "metro",
+            "output": "static"
+        },
+        "plugins": [
+            "expo-router"
+        ],
+        "experiments": {
+            "typedRoutes": true
+        }
     }
-  }
 }
