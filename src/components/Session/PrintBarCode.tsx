@@ -1,7 +1,8 @@
 import React from "react";
+import { useTheme} from "../Theme";
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { TouchableOpacity } from 'react-native';
-import { useTheme,Text } from "../Theme";
+import {ActivityIndicator, ToastAndroid} from "react-native"
+import {Button} from "../../components/Button"
 import {
     BluetoothManager,
     BluetoothTscPrinter,
@@ -20,6 +21,7 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
     const theme = useTheme();
     const [error, setError] = React.useState<any>(null);
     const [printer,setPrinter] = React.useState<any>(null);
+    const [printing, setPrinting] = React.useState(false)
 
 
     let options = {
@@ -52,6 +54,10 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
             },
         ],
     };
+    const showPrintingError = ()=>
+          {
+            ToastAndroid.show(error,ToastAndroid.LONG)
+    }
     const connectToPrinter = async () => {
         try {
             let barCodePrinter = null;
@@ -88,37 +94,45 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
     }, [connectToPrinter]);
 
     const print = async () => {
-
+        setPrinting(true)
+        if(!printer){
+           await connectToPrinter()
+        }
         try {
+            if(printer){
             await BluetoothManager.connect(printer.address)
             await BluetoothTscPrinter.printLabel(options)
+            }
         } catch (e: any) {
-            setError({ message: e.message })
+            setError(e.message)
 
+        } finally{
+            setPrinting(false)
+            if(error){
+                showPrintingError()
+                setError(null)
+            }
         }
     }
     return (
-        <>
-        {error? <>
-            < Text color={'error'}>{error}</Text>
-        </>:
-        <>
-           {printer ? <TouchableOpacity
-                style={{ paddingHorizontal: 10 }}
-                onPress={() => print()}
-                disabled={!printer || error}
+           <>
+			<Button
+            onPress={print}
+            disabled={printing}
+            textStyle={{ textTransform: 'uppercase', }}
+            size="s"
+        
+            style={{ alignItems: 'flex-start',width:50,backgroundColor:theme.colors["grey-800"]}}
             >
-                <Icon color={theme.colors.primary} size={24} name="qr-code" />
-            </TouchableOpacity>:
-            <TouchableOpacity
-                style={{ paddingHorizontal: 10 }}
-                onPress={() => connectToPrinter()}
-                disabled={!printer || error}
-            >
-                <Icon color={theme.colors.primary} size={24} name="refresh" />
-            </TouchableOpacity> }
-            
-        </>}
+            {!printing ? (printer ?  <Icon color={theme.colors.primary} size={30} name="qr-code" /> 
+            :  <Icon color={theme.colors.error} size={30} name="qr-code" />) : (
+                <ActivityIndicator 
+                    color={theme.colors.primary}
+                    size={theme.textVariants.title1.fontSize}
+                />
+            )}
+        </Button>  
+      
         </>
     );
 
