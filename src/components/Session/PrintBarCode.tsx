@@ -65,12 +65,12 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
             if (!BluetoothManager.isBluetoothEnabled()) {
                 await BluetoothManager.enableBluetooth();
             }
-            const scannedDevices = await BluetoothManager.scanDevices();
-            if (!scannedDevices || scannedDevices.paired.length == 0) {
+            const scannedDevices = await BluetoothManager.getConnectedDevice();
+            if (!scannedDevices || scannedDevices.length <= 0) {
                 setError("PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE." )
             } else {
                 //TO MAKE THIS CONFIGURABLE
-                barCodePrinter = scannedDevices.paired.filter(b => b.name == 'BT-58L')
+                barCodePrinter = scannedDevices.filter(b => (b.name.toUpperCase().includes('BT-58L')))
                 if (!barCodePrinter) {
                     setError("PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE.")
                 }
@@ -91,7 +91,7 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
             }
         };
         fetchPrinterDetails();
-    }, [connectToPrinter]);
+    }, [printer]);
 
     const print = async () => {
         setPrinting(true)
