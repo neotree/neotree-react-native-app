@@ -1,17 +1,14 @@
 import React from "react";
 import { useTheme} from "../Theme";
 import Icon from '@expo/vector-icons/MaterialIcons';
-import {ActivityIndicator, ToastAndroid} from "react-native"
+import {ActivityIndicator, Alert,Platform, PermissionsAndroid} from "react-native"
 import {Button} from "../../components/Button"
 import {
     BluetoothManager,
+    BluetoothEscposPrinter,
     BluetoothTscPrinter,
-    DIRECTION,
-    TEAR,
-    FONTTYPE,
-    TSC_ROTATION,
-    FONTMUL,
-    EEC
+    ERROR_CORRECTION,
+    ALIGN
 } from "tp-react-native-bluetooth-printer";
 
 type PrintBarCodeProps = {
@@ -19,79 +16,84 @@ type PrintBarCodeProps = {
 };
 export function PrintBarCode({session }: PrintBarCodeProps) {
     const theme = useTheme();
-    const [error, setError] = React.useState<any>(null);
     const [printer,setPrinter] = React.useState<any>(null);
     const [printing, setPrinting] = React.useState(false)
 
 
-    let options = {
-        width: 40,
-        height: 30,
-        gap: 20,
-        direction: DIRECTION.FORWARD,
-        reference: [0, 0],
-        tear: TEAR.ON,
-        sound: 0,
-        text: [
-            {
-                text: session['uid'],
-                x: 20,
-                y: 0,
-                fonttype: FONTTYPE.SIMPLIFIED_CHINESE,
-                rotation: TSC_ROTATION.ROTATION_0,
-                xscal: FONTMUL.MUL_1,
-                yscal: FONTMUL.MUL_1,
-            }
-        ],
-        qrcode: [
-            {
-                x: 20,
-                y: 96,
-                level: EEC.LEVEL_L,
-                width: 3,
-                rotation: TSC_ROTATION.ROTATION_0,
-                code:  session['uid'],
-            },
-        ],
-    };
-    const showPrintingError = ()=>
+
+    const showPrintingError = (error:any)=>{
+    
           {
-            ToastAndroid.show(error,ToastAndroid.LONG)
+            Alert.alert(
+                'Printer Not Connected:',
+                  error,
+                [
+                    {
+                        text: 'Cancel',
+                    }, 
+                    {
+                        text: 'Retry?',
+                        onPress: () => connectToPrinter(),
+                    }
+                ]
+            );
+          }
+        
     }
     const connectToPrinter = async () => {
         try {
-            let barCodePrinter = null;
-
-            if (!BluetoothManager.isBluetoothEnabled()) {
-                await BluetoothManager.enableBluetooth();
+           
+            const bluetoothEnabled =await BluetoothManager.isBluetoothEnabled()
+            if (!bluetoothEnabled) {
+                if(Platform.OS==='android'){
+                const connect =await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT); 
+                if(connect==='granted'){
+                    await BluetoothManager.enableBluetooth()
+                   const scan =await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN); 
+                   if(scan==='granted'){
+                    await BluetoothManager.scanDevices()
+                   } else{
+                    showPrintingError("PLEASE ALLOW BLUETOOTH SCAN PERMISSIONS AND RETRY")
+                   }    
+                    
+                } else{
+                    showPrintingError("PLEASE ALLOW BLUETOOTH CONNECTION PERMISSIONS AND RETRY")
+                }              
+                }else{
+                    showPrintingError("PRINTING NOT YET SUPPORTED IN IOS!!")
+                }
+              
             }
-            const scannedDevices = await BluetoothManager.getConnectedDevice();
-            if (!scannedDevices || scannedDevices.length <= 0) {
-                setError("PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE." )
+            let scannedDevices = await BluetoothManager.scanDevices();
+            
+            if (!scannedDevices) {
+                showPrintingError("NO CONNECTED PRINTERS FOUND." )
+    
             } else {
+                const scanned = JSON.parse(String(scannedDevices))
                 //TO MAKE THIS CONFIGURABLE
-                barCodePrinter = scannedDevices.filter(b => (b.name.toUpperCase().includes('BT-58L')))
+                const  barCodePrinter =Array.from(scanned.paired).filter((b:any) => (b.name.toUpperCase().includes('BT-58L')))
                 if (!barCodePrinter) {
-                    setError("PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE.")
+                    showPrintingError("BT-58L LABELS PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE.")
+            
+                }else {
+                    return setPrinter(barCodePrinter[0])
                 }
 
             }
-            return barCodePrinter;
+            
         } catch (e: any) {
-            setError(e.message )
-            return null;
+            showPrintingError(e.message )
         }
     }
 
     React.useEffect(() => {
         const fetchPrinterDetails = async () => {
-            const details = await connectToPrinter();
-            if (details) {
-             setPrinter(details);
-            }
+            await connectToPrinter();
+        
         };
         fetchPrinterDetails();
-    }, [printer]);
+    }, []);
 
     const print = async () => {
         setPrinting(true)
@@ -101,17 +103,19 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
         try {
             if(printer){
             await BluetoothManager.connect(printer.address)
-            await BluetoothTscPrinter.printLabel(options)
+            await BluetoothEscposPrinter.printerAlign(ALIGN.CENTER)
+            await BluetoothEscposPrinter.printQRCode(session['uid'],150,ERROR_CORRECTION.H,0)
+            await BluetoothEscposPrinter.printAndFeed(2)
+            await BluetoothEscposPrinter.printText(session['uid'],{})
+            await BluetoothEscposPrinter.cutLine(1)
+            await BluetoothManager.disableBluetooth();   
             }
         } catch (e: any) {
-            setError(e.message)
+            showPrintingError(e.message)
 
         } finally{
             setPrinting(false)
-            if(error){
-                showPrintingError()
-                setError(null)
-            }
+        
         }
     }
     return (

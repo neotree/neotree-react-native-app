@@ -35,6 +35,42 @@ const getBuldConfig = (config: any) => ({
         name: `${config.name} (PRINT)`,
         slug: `${config.slug}-dev`,
         extra: {
+            "countries": [
+                {
+                    "iso": "zw",
+                    "name": "Zimbabwe"
+                },
+                {
+                    "iso": "mwi",
+                    "name": "Malawi"
+                }
+            ],
+            "zw": {
+                "savePollingData": true,
+                "webeditor": {
+                    "host":"https://zim-dev-webeditor.neotree.org:10243",
+                    "api_endpoint":"https://zim-dev-webeditor.neotree.org:10243/api",
+                    "api_key":"KWTXE8YYP8S3Z8SXD742PPH1ERDUQKN"
+                },
+                "nodeapi": {
+                    "host":"http://zim-dev-nodeapi.neotree.org",
+                    "api_endpoint":"http://zim-dev-nodeapi.neotree.org",
+                    "api_key":"DdCbe3cz0b6fuEqDIhuML7DuOburXlFr2RCDRkFA"
+                }
+            },
+            "mwi": {
+                "savePollingData": false,
+                "webeditor": {
+                    "host":"https://webeditor-dev.neotree.org",
+                    "api_endpoint":"https://webeditor-dev.neotree.org/api",
+                    "api_key":"KWTXE8YYP8S3Z8SXD742PPH1ERDUQKN"
+                },
+                "nodeapi": {
+                    "host":"https://nodeapi-dev.neotree.org",
+                    "api_endpoint":"https://nodeapi-dev.neotree.org",
+                    "api_key":"DdCbe3cz0b6fuEqDIhuML7DuOburXlFr2RCDRkFA"
+                }
+            },
             APP_ENV: 'DEV',
             eas: {
                 projectId: '42a5fe96-9887-457c-91e7-9298cb4aa378',

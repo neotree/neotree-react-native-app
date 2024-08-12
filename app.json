@@ -25,6 +25,7 @@
         },
         "android": {
             "package": "org.neotree.neotreeapp",
+            "permissions": ["BLUETOOTH_ADMIN", "BLUETOOTH_CONNECT", "BLUETOOTH_SCAN", "BLUETOOTH","ACCESS_FINE_LOCATION"],
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/icon.png",
                 "backgroundColor": "#FFFFFF"
