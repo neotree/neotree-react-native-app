@@ -303,6 +303,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		<>
 			<DatePicker
 				value={minDate}
+				mode='date'
 				label="Min Date"
 				onChange={date => setMinDate(date)}
 			/>
@@ -311,6 +312,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 			<DatePicker
 				value={maxDate}
+				mode='date'
 				label="Max Date"
 				onChange={date => setMaxDate(date)}
 			/>

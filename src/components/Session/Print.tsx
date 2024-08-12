@@ -19,6 +19,7 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
 
     const print = () => {
         setPrinting(true);
+        
         ExpoPrint.printAsync({ html: formToHTML(session, showConfidential) })
             .then(() => setPrinting(false))
             .catch(e => {
