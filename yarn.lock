@@ -3130,10 +3130,10 @@ babel-preset-current-node-syntax@^1.0.0:
     "@babel/plugin-syntax-optional-chaining" "^7.8.3"
     "@babel/plugin-syntax-top-level-await" "^7.8.3"
 
-babel-preset-expo@~11.0.13:
-  version "11.0.13"
-  resolved "https://registry.yarnpkg.com/babel-preset-expo/-/babel-preset-expo-11.0.13.tgz#ccf349ca244a67a2ee57b6b57bd6468e9c892d71"
-  integrity sha512-5oUXyxnIVyDUhG4a306PpT2c9HhKx0tG4LXjpSIA/dERzwGvU8LUxDSD6yCohhRSsPZIoR7u2mnH0PypqFqYnQ==
+babel-preset-expo@~11.0.14:
+  version "11.0.14"
+  resolved "https://registry.yarnpkg.com/babel-preset-expo/-/babel-preset-expo-11.0.14.tgz#ca0884e82d89e49cd216ad3497e3d7ad93657d51"
+  integrity sha512-4BVYR0Sc2sSNxYTiE/OLSnPiOp+weFNy8eV+hX3aD6YAIbBnw+VubKRWqJV/sOJauzOLz0SgYAYyFciYMqizRA==
   dependencies:
     "@babel/plugin-proposal-decorators" "^7.12.9"
     "@babel/plugin-transform-export-namespace-from" "^7.22.11"
@@ -4820,10 +4820,10 @@ expo-modules-autolinking@1.11.1:
     find-up "^5.0.0"
     fs-extra "^9.1.0"
 
-expo-modules-core@1.12.20:
-  version "1.12.20"
-  resolved "https://registry.yarnpkg.com/expo-modules-core/-/expo-modules-core-1.12.20.tgz#072dea10791f32ea5d1d3b15a7d5fd1984173429"
-  integrity sha512-CCXjlgT8lDAufgt912P1W7TwD+KAylfIttc1Doh1a0hAfkdkUsDRmrgthnYrrxEo2ECVpbaB71Epp1bnZ1rRrA==
+expo-modules-core@1.12.21:
+  version "1.12.21"
+  resolved "https://registry.yarnpkg.com/expo-modules-core/-/expo-modules-core-1.12.21.tgz#8014fa549af3c1c00b14fd84a26ef921b39207fb"
+  integrity sha512-UQxRljqPcowS1+bECW9tnuVGfvWL18GAKPiKMnu9sZwJssAN9FU/JhED50DJzdzICLR0hL17FZAgV4rbMG3IWQ==
   dependencies:
     invariant "^2.2.4"
 
@@ -4894,10 +4894,10 @@ expo-web-browser@~13.0.3:
   resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-13.0.3.tgz#dceb05dbc187b498ca937b02adf385b0232a4e92"
   integrity sha512-HXb7y82ApVJtqk8tManyudtTrCtx8xcUnVzmJECeHCB0SsWSQ+penVLZxJkcyATWoJOsFMnfVSVdrTcpKKGszQ==
 
-expo@~51.0.26:
-  version "51.0.26"
-  resolved "https://registry.yarnpkg.com/expo/-/expo-51.0.26.tgz#a19b891f8d1f1e7639dc375fa69a152ab6f4843a"
-  integrity sha512-7ThQa6CVbiVtk4GNw0E9CewSzXYOeHkcRTCGorBZVcjAu6SuxbdWEtl0RI01/VpRKV+6I+yy/BmGnCl7lFRILg==
+expo@~51.0.27:
+  version "51.0.27"
+  resolved "https://registry.yarnpkg.com/expo/-/expo-51.0.27.tgz#295186e61833a856395ce4b2c53c4f566feb93db"
+  integrity sha512-fYiIiSDKKwH9Oc8DhoMzqGGooC4uW2RaiD7P97rbgWUylRm8g1d+0WXaJ4nctwzaVEC848H11s1P4enIXjmDSw==
   dependencies:
     "@babel/runtime" "^7.20.0"
     "@expo/cli" "0.18.28"
@@ -4905,13 +4905,13 @@ expo@~51.0.26:
     "@expo/config-plugins" "8.0.8"
     "@expo/metro-config" "0.18.11"
     "@expo/vector-icons" "^14.0.0"
-    babel-preset-expo "~11.0.13"
+    babel-preset-expo "~11.0.14"
     expo-asset "~10.0.10"
     expo-file-system "~17.0.1"
     expo-font "~12.0.9"
     expo-keep-awake "~13.0.2"
     expo-modules-autolinking "1.11.1"
-    expo-modules-core "1.12.20"
+    expo-modules-core "1.12.21"
     fbemitter "^3.0.0"
     whatwg-url-without-unicode "8.0.0-3"
 
