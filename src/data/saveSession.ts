@@ -27,11 +27,11 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
 
     let application = null;
     try {
-		await dbTransaction(
-            `insert or replace into sessions (${columns}) values (${values});`,
-            params,
-			(_, rslts) => { sessionID = data.id || rslts.insertId; }
-        );
+		const res = await dbTransaction(`insert or replace into sessions (${columns}) values (${values}) RETURNING id;`, params);
+
+        if (!res[0]) throw new Error('Failed to save session');
+
+        sessionID = res[0]?.id + 1;
 
         application = await dbTransaction('select * from application where id=1;');
         application = application[0];
