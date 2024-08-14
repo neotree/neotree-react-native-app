@@ -128,8 +128,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		})();
 	});
 
-	const loadScript = React.useCallback(() => {
-		(async () => {
+	const loadScript = React.useCallback(async () => {
 			try {
 				setLoadingScript(true);
 				setLoadScriptError('');
@@ -139,6 +138,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setActiveScreen(null);
 
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
+
+                const uid = await generateUID(script?.type);
+                setGeneratedUID(uid);
 				
 				setScript(script);
 				setScreens(screens);
@@ -152,9 +154,11 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					setActiveScreenIndex(activeScreenIndex);
 				}
 			} catch (e: any) { 
-				
-				console.log(e); setLoadScriptError(e.message); }
-		})();
+				console.log(e);
+                setLoadScriptError(e.message);
+		    } finally {
+                setLoadingScript(false);
+            }
 	}, [navigation, route]);
 
 	const loadConfiguration = React.useCallback(() => {
@@ -254,9 +258,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
         (async () => {
             const app = await getApplication();
             setApplication(app);
-
-            const uid = await generateUID();
-            setGeneratedUID(uid);
             
 			const location = await getLocation();
 			setLocation(location);
