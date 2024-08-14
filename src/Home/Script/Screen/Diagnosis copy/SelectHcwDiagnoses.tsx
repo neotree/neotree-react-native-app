@@ -57,7 +57,7 @@ function DiagnosisListItem({ diagnosis, selected, hidden }: DiagnosisListItemPro
 				</Animated.View>
 			</TouchableOpacity>
 
-			<Br />
+			<Br spacing='s'/>
 		</>
 	);
 }

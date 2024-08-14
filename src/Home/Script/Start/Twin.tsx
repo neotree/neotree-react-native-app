@@ -12,7 +12,7 @@ export function Twin({}: TwinProps) {
     return (
         <Box>
             <Text>Does the baby have a twin?</Text>
-            <Br />
+            <Br spacing='s'/>
             <Box flexDirection="row" alignItems="center">
                 {[
                     { label: 'Yes', value: true, },
