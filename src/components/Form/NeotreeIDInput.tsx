@@ -19,7 +19,8 @@ function getUidSuffix(uid = '') {
     if (suffix?.length === 7) {
         // do nothing
     } else {
-        suffix = `${suffix || ''}`.substring(5, 9);
+        // suffix = `${suffix || ''}`.substring(5, 9);
+        suffix = `${suffix || ''}`.substring(5, 12);
     }
     return suffix;
 }
@@ -57,8 +58,8 @@ function Input({
         lastHalfIsValid, 
         firstHalfHasForbiddenChars, 
         lastHalfHasForbiddenChars,
-        firstHalfLength,
-        lastHalfLength, 
+        firstHalfMaxLength,
+        lastHalfMaxLength, 
     } = validateUID(_value);
 
     React.useEffect(() => {
@@ -117,7 +118,7 @@ function Input({
                     <TextInput
                         autoCorrect={false}
                         ref={firstHalfRef}
-                        maxLength={firstHalfLength}
+                        maxLength={firstHalfMaxLength}
                         autoCapitalize="characters"
                         editable={!disabled}
                         value={firstHalf}
@@ -144,7 +145,7 @@ function Input({
                                 firstHalfRef.current?.focus();
                             }
                         }}
-                        maxLength={lastHalfLength}
+                        maxLength={lastHalfMaxLength}
                         keyboardType="numeric"
                         editable={!(disabled || disableLastHalf)}
                         value={lastHalf}
