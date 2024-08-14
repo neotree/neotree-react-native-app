@@ -14,6 +14,16 @@ export type NeotreeIDInputProps = {
     defaultValue?: string;
 };
 
+function getUidSuffix(uid = '') {
+    let [, suffix] = uid.split('-');
+    if (suffix?.length === 7) {
+        // do nothing
+    } else {
+        suffix = `${suffix || ''}`.substring(5, 9);
+    }
+    return suffix;
+}
+
 function Input({
     defaultValue,
     autoGenerateValue,
@@ -38,11 +48,18 @@ function Input({
 
     const [_defaultVal] = React.useState(getDefault());
     const [firstHalf, setFirstHalf] = React.useState(`${value || ''}`.substring(0, 4) || _defaultVal.firstHalf);
-    const [lastHalf, setLastHalf] = React.useState(`${value || ''}`.substring(5, 9) || _defaultVal.lastHalf);
+    const [lastHalf, setLastHalf] = React.useState(getUidSuffix(value) || _defaultVal.lastHalf);
     const [uidValue, setUIDValue] = React.useState('');
 
     const _value = `${firstHalf}-${lastHalf}`;
-    const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
+    const { 
+        firstHalfIsValid, 
+        lastHalfIsValid, 
+        firstHalfHasForbiddenChars, 
+        lastHalfHasForbiddenChars,
+        firstHalfLength,
+        lastHalfLength, 
+    } = validateUID(_value);
 
     React.useEffect(() => {
         // if (firstHalf.length === 4) lastHalfRef.current._root.focus();
@@ -100,7 +117,7 @@ function Input({
                     <TextInput
                         autoCorrect={false}
                         ref={firstHalfRef}
-                        maxLength={4}
+                        maxLength={firstHalfLength}
                         autoCapitalize="characters"
                         editable={!disabled}
                         value={firstHalf}
@@ -123,11 +140,11 @@ function Input({
                         ref={lastHalfRef}
                         onKeyPress={e => {
                             if (e.nativeEvent.key === 'Backspace' && !lastHalf) {
-                                setFirstHalf(firstHalf.substr(0, firstHalf.length - 1));
+                                setFirstHalf(firstHalf.substring(0, firstHalf.length - 1));
                                 firstHalfRef.current?.focus();
                             }
                         }}
-                        maxLength={4}
+                        maxLength={lastHalfLength}
                         keyboardType="numeric"
                         editable={!(disabled || disableLastHalf)}
                         value={lastHalf}
