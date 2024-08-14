@@ -126,7 +126,7 @@ export function Search({
                 application={ctx.application}
             />
             
-            <Br />
+            <Br spacing='s'/>
 
             <Button 
                 color="secondary"

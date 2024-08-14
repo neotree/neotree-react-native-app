@@ -544,7 +544,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				))}
 				{deleteType === 'date_range' && (
 					<>
-						<Br />
+						<Br spacing='s'/>
 						{dateRange}
 					</>
 				)}
@@ -602,7 +602,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					))}
 				{exportType === 'date_range' && (
 					<>
-						<Br />
+						<Br spacing='s'/>
 						{dateRange}
 					</>
 				)}

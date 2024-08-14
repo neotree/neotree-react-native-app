@@ -16,7 +16,7 @@ export function ManagementScreen({ data }: ManagementScreenProps) {
                 image={data.image1?.data}
             />
 
-            <Br />
+            <Br spacing='s'/>
 
             <MgtSection 
                 title={data.title2}
@@ -24,7 +24,7 @@ export function ManagementScreen({ data }: ManagementScreenProps) {
                 image={data.image2?.data}
             />
 
-            <Br />
+            <Br spacing='s'/>
 
             <MgtSection 
                 title={data.title3}

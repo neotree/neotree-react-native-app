@@ -124,7 +124,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 application={ctx.application}
             />
             
-            <Br />
+            <Br spacing='s'/>
 
             <Button 
                 color="secondary"

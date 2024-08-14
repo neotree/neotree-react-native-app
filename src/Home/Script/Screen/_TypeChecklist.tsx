@@ -103,7 +103,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                         <Card>
                             <Text variant="title3">{o.label}</Text>
 
-                            <Br />
+                            <Br spacing='s'/>
 
                             <Box flexDirection="row" justifyContent="flex-end">
                                 <Box>

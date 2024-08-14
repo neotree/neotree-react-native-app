@@ -119,11 +119,11 @@ export function AgreeDisagree({ diagnosis }: AgreeDisagreeProps) {
                                     </>
                                 )}
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Text variant="title3">Do you agree with this diagnosis?</Text>
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Box flexDirection="row">
                                     {[
@@ -158,17 +158,17 @@ export function AgreeDisagree({ diagnosis }: AgreeDisagreeProps) {
 
                                 {how_agree === 'No' && (
                                     <>
-                                        <Br />
+                                        <Br spacing='s'/>
                                         <TextInput
                                             label="Can you explain why not?"
                                             value={hcw_reason_given}
                                             onChangeText={v => setHcwReasonGiven(v)}
                                         />
-                                        <Br />
+                                        <Br spacing='s'/>
                                     </>
                                 )}
 
-                                <Br />                                
+                                <Br spacing='s'/>                                
 
                                 {instrunctions.map(({ image, text }, i) => {
                                     const key = `${i}`;
@@ -189,11 +189,11 @@ export function AgreeDisagree({ diagnosis }: AgreeDisagreeProps) {
                                     );
                                 })}
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Text variant="title3">Did you folow the above instructions?</Text>
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Box flexDirection="row">
                                     {[

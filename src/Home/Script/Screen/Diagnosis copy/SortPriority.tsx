@@ -24,7 +24,7 @@ function DiagnosisListItem({ diagnosis }: DiagnosisListItemProps) {
 				</View>
 			</Card>
 
-			<Br />
+			<Br spacing='s'/>
 		</>
 	);
 }
