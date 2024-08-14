@@ -4,19 +4,23 @@ import { generateDeviceHash } from '@/src/utils/generate-device-hash';
 export function validateUID(value = '') {
     const [_firstHalf, _lastHalf] = (value || '').split('-');
 
-    const firstHalfLength = 4;
+    const firstHalfMaxLength = 4;
+    const firstHalfMinLength = 4;
     const allowedFirstHalf = /^[a-fA-F0-9]*$/gi;
     const firstHalfHasForbiddenChars = !(allowedFirstHalf.test(_firstHalf));
-    const firstHalfIsValid = (_firstHalf.length === firstHalfLength) && !firstHalfHasForbiddenChars;
+    const firstHalfIsValid = (_firstHalf.length === firstHalfMaxLength) && !firstHalfHasForbiddenChars;
 
-    const lastHalfLength = value.length === 12 ? 7 : 4;
+    const lastHalfMaxLength = 7; // value.length === 12 ? 7 : 4;
+    const lastHalfMinLength = 4;
     const allowedLastHalf = value.length === 12 ? /^[a-fA-F0-9]*$/gi : /^[0-9]*$/gi;
     const lastHalfHasForbiddenChars = !(allowedLastHalf.test(_lastHalf));
-    const lastHalfIsValid = (_lastHalf.length === lastHalfLength) && !lastHalfHasForbiddenChars;
+    const lastHalfIsValid = (_lastHalf.length >= lastHalfMinLength) && (_lastHalf.length <= lastHalfMaxLength) && !lastHalfHasForbiddenChars;
 
     return {
-        firstHalfLength,
-        lastHalfLength,
+        firstHalfMaxLength,
+        firstHalfMinLength,
+        lastHalfMaxLength,
+        lastHalfMinLength,
         firstHalfHasForbiddenChars,
         lastHalfHasForbiddenChars,
         firstHalfIsValid,
