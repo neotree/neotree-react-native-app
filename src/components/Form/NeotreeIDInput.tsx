@@ -55,11 +55,10 @@ function Input({
     const _value = `${firstHalf}-${lastHalf}`;
     const { 
         firstHalfIsValid, 
-        lastHalfIsValid, 
-        firstHalfHasForbiddenChars, 
-        lastHalfHasForbiddenChars,
+        firstHalfErrors, 
         firstHalfMaxLength,
         lastHalfMaxLength, 
+        lastHalfErrors,
     } = validateUID(_value);
 
     React.useEffect(() => {
@@ -98,7 +97,6 @@ function Input({
     }, []);
 
     const disableLastHalf = !(!disabled && firstHalfIsValid);
-    const error = !(firstHalfIsValid && lastHalfIsValid && !disabled) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);
 
     return (
         <Box>
@@ -127,7 +125,7 @@ function Input({
                             const value = e.nativeEvent.text;
                             setFirstHalf(value);
                         }}
-                        errors={!firstHalfHasForbiddenChars ? undefined : ['Allowed characters: ABCDEF0123456789']}
+                        errors={disabled ? undefined : firstHalfErrors}
                     />
                 </Box>
 
@@ -154,19 +152,10 @@ function Input({
                             const value = e.nativeEvent.text;
                             setLastHalf(value);
                         }}
-                        errors={!lastHalfHasForbiddenChars ? undefined : ['Allowed characters: 0123456789']}
+                        errors={(disabled || disableLastHalf) ? undefined : lastHalfErrors}
                     />
                 </Box>
             </Box>
-
-            {!error ? null : (
-                <>
-                    <Br spacing="s" />
-                    <Text color="error">
-                        {error}
-                    </Text>
-                </>
-            )}
         </Box>
     );
 }
