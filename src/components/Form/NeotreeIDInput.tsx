@@ -14,6 +14,17 @@ export type NeotreeIDInputProps = {
     defaultValue?: string;
 };
 
+function getUidSuffix(uid = '') {
+    let [, suffix] = uid.split('-');
+    if (suffix?.length === 7) {
+        // do nothing
+    } else {
+        // suffix = `${suffix || ''}`.substring(5, 9);
+        suffix = `${suffix || ''}`.substring(5, 12);
+    }
+    return suffix;
+}
+
 function Input({
     defaultValue,
     autoGenerateValue,
@@ -38,11 +49,17 @@ function Input({
 
     const [_defaultVal] = React.useState(getDefault());
     const [firstHalf, setFirstHalf] = React.useState(`${value || ''}`.substring(0, 4) || _defaultVal.firstHalf);
-    const [lastHalf, setLastHalf] = React.useState(`${value || ''}`.substring(5, 9) || _defaultVal.lastHalf);
+    const [lastHalf, setLastHalf] = React.useState(getUidSuffix(value) || _defaultVal.lastHalf);
     const [uidValue, setUIDValue] = React.useState('');
 
     const _value = `${firstHalf}-${lastHalf}`;
-    const { firstHalfIsValid, lastHalfIsValid, firstHalfHasForbiddenChars, lastHalfHasForbiddenChars } = validateUID(_value);
+    const { 
+        firstHalfIsValid, 
+        firstHalfErrors, 
+        firstHalfMaxLength,
+        lastHalfMaxLength, 
+        lastHalfErrors,
+    } = validateUID(_value);
 
     React.useEffect(() => {
         // if (firstHalf.length === 4) lastHalfRef.current._root.focus();
@@ -80,7 +97,6 @@ function Input({
     }, []);
 
     const disableLastHalf = !(!disabled && firstHalfIsValid);
-    const error = !(firstHalfIsValid && lastHalfIsValid && !disabled) ? null : (_value.length < 9 ? 'ID must have 8 characters' : null);
 
     return (
         <Box>
@@ -100,7 +116,7 @@ function Input({
                     <TextInput
                         autoCorrect={false}
                         ref={firstHalfRef}
-                        maxLength={4}
+                        maxLength={firstHalfMaxLength}
                         autoCapitalize="characters"
                         editable={!disabled}
                         value={firstHalf}
@@ -109,7 +125,7 @@ function Input({
                             const value = e.nativeEvent.text;
                             setFirstHalf(value);
                         }}
-                        errors={!firstHalfHasForbiddenChars ? undefined : ['Allowed characters: ABCDEF0123456789']}
+                        errors={disabled ? undefined : firstHalfErrors}
                     />
                 </Box>
 
@@ -123,11 +139,11 @@ function Input({
                         ref={lastHalfRef}
                         onKeyPress={e => {
                             if (e.nativeEvent.key === 'Backspace' && !lastHalf) {
-                                setFirstHalf(firstHalf.substr(0, firstHalf.length - 1));
+                                setFirstHalf(firstHalf.substring(0, firstHalf.length - 1));
                                 firstHalfRef.current?.focus();
                             }
                         }}
-                        maxLength={4}
+                        maxLength={lastHalfMaxLength}
                         keyboardType="numeric"
                         editable={!(disabled || disableLastHalf)}
                         value={lastHalf}
@@ -136,19 +152,10 @@ function Input({
                             const value = e.nativeEvent.text;
                             setLastHalf(value);
                         }}
-                        errors={!lastHalfHasForbiddenChars ? undefined : ['Allowed characters: 0123456789']}
+                        errors={(disabled || disableLastHalf) ? undefined : lastHalfErrors}
                     />
                 </Box>
             </Box>
-
-            {!error ? null : (
-                <>
-                    <Br spacing="s" />
-                    <Text color="error">
-                        {error}
-                    </Text>
-                </>
-            )}
         </Box>
     );
 }
