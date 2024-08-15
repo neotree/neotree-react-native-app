@@ -1,12 +1,11 @@
 import React from "react";
 import { useTheme} from "../Theme";
 import Icon from '@expo/vector-icons/MaterialIcons';
-import {ActivityIndicator, Alert,Platform, PermissionsAndroid} from "react-native"
+import {ActivityIndicator, Alert} from "react-native"
 import {Button} from "../../components/Button"
 import {
     BluetoothManager,
     BluetoothEscposPrinter,
-    BluetoothTscPrinter,
     ERROR_CORRECTION,
     ALIGN
 } from "tp-react-native-bluetooth-printer";
@@ -41,16 +40,17 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
         
     }
     const connectToPrinter = async () => {
+        console.log("---POT04")
         try {
            
             const bluetoothEnabled =await BluetoothManager.isBluetoothEnabled()
             if (!bluetoothEnabled) {
-               
-                    await BluetoothManager.scanDevices()             
-              
-            } else{
                 BluetoothManager.enableBluetooth()
                 showPrintingError("ENABLE BLUE TOOTH AND RETRY." )
+                             
+              
+            } else{
+                await BluetoothManager.scanDevices()   
             }
             let scannedDevices = await BluetoothManager.scanDevices();
             
@@ -96,7 +96,6 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
             await BluetoothEscposPrinter.printAndFeed(2)
             await BluetoothEscposPrinter.printText(session['uid'],{})
             await BluetoothEscposPrinter.cutLine(1)
-            await BluetoothManager.disableBluetooth();   
             }
         } catch (e: any) {
             showPrintingError(e.message)
