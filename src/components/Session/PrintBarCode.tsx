@@ -49,6 +49,7 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
                     await BluetoothManager.scanDevices()             
               
             } else{
+                BluetoothManager.enableBluetooth()
                 showPrintingError("ENABLE BLUE TOOTH AND RETRY." )
             }
             let scannedDevices = await BluetoothManager.scanDevices();
