@@ -123,9 +123,11 @@ const headerRight: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 	};
 
 const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = 
-    ({ script, activeScreen, moreNavOptions, goBack, confirmExit }) => 
-        ({ tintColor }) => {
+    params => {
+        const { script, activeScreen, moreNavOptions, goBack, confirmExit } = params;
+        return ({ tintColor }) => {
             const title = moreNavOptions?.title || (activeScreen ? activeScreen?.data?.title : script?.data?.title);
+            const headerRight = moreNavOptions?.headerRight;
             return (
                 <View
                     style={{
@@ -159,6 +161,8 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
                             >{script?.data?.title}</Text>
                         )}
                     </Box>
+
+                    {!!headerRight && headerRight({ ...params, tintColor })}
                     
                     {!!script && (
                         <Box>
@@ -168,6 +172,7 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
                 </View>
             );
         }; 
+    };
 
 export function getNavOptions(params: GetNavOptionsParams) {
 	const opts: Partial<NativeStackNavigationOptions> = {};

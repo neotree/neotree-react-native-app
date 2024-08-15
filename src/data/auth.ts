@@ -20,9 +20,9 @@ export const checkEmailRegistration = async ({ email }: { email: string }) => {
 export const logout = () => new Promise((resolve, reject) => {
     (async () => {
         try {
-            makeApiCall('webeditor', '/logout', {}, { useHost: true, })
-                .then(() => {})
-                .catch(() => {});
+            // makeApiCall('webeditor', '/logout', {}, { useHost: true, })
+            //     .then(() => {})
+            //     .catch(() => {});
 
             await dbTransaction(
                 'insert or replace into authenticated_user (id, details) values (?, ?);',
