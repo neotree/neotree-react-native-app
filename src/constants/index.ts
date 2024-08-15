@@ -1,11 +1,13 @@
 import Constants from 'expo-constants';
+import config from '@/config/config.json';
 
 export const expoContantsExtra = {
     ...Constants.manifest2?.extra?.expoClient?.extra,
 } as { [key: string]: any; };
 
 export const APP_CONFIG = expoContantsExtra;
-export const countries = (expoContantsExtra.countries || []) as { name: string; iso: string; }[];
+// export const countries = (expoContantsExtra.countries || []) as { name: string; iso: string; }[];
+export const countries = config.stage.countries as { name: string; iso: string; }[];
 export const APP_ENV: string = expoContantsExtra.APP_ENV;
 export const APP_VERSION: string = Constants.manifest2?.extra?.expoClient?.version!;
 export const SDK_VERSION: string = Constants.manifest2?.extra?.expoClient?.sdkVersion!;
