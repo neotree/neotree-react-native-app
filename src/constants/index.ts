@@ -5,8 +5,9 @@ export const expoContantsExtra = {
     ...Constants.manifest2?.extra?.expoClient?.extra,
 } as { [key: string]: any; };
 
-export const APP_CONFIG = expoContantsExtra;
+// export const APP_CONFIG = expoContantsExtra;
 // export const countries = (expoContantsExtra.countries || []) as { name: string; iso: string; }[];
+export const APP_CONFIG = config.stage;
 export const countries = config.stage.countries as { name: string; iso: string; }[];
 export const APP_ENV: string = expoContantsExtra.APP_ENV;
 export const APP_VERSION: string = Constants.manifest2?.extra?.expoClient?.version!;
