@@ -45,24 +45,11 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
            
             const bluetoothEnabled =await BluetoothManager.isBluetoothEnabled()
             if (!bluetoothEnabled) {
-                if(Platform.OS==='android'){
-                const connect =await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT); 
-                if(connect==='granted'){
-                    await BluetoothManager.enableBluetooth()
-                   const scan =await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN); 
-                   if(scan==='granted'){
-                    await BluetoothManager.scanDevices()
-                   } else{
-                    showPrintingError("PLEASE ALLOW BLUETOOTH SCAN PERMISSIONS AND RETRY")
-                   }    
-                    
-                } else{
-                    showPrintingError("PLEASE ALLOW BLUETOOTH CONNECTION PERMISSIONS AND RETRY")
-                }              
-                }else{
-                    showPrintingError("PRINTING NOT YET SUPPORTED IN IOS!!")
-                }
+               
+                    await BluetoothManager.scanDevices()             
               
+            } else{
+                showPrintingError("ENABLE BLUE TOOTH AND RETRY." )
             }
             let scannedDevices = await BluetoothManager.scanDevices();
             
