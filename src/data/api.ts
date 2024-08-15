@@ -58,3 +58,14 @@ export const getHospitals = async (params = {}, otherParams: Partial<(typeof _ot
 	const json = await res.json();
 	return json.hospitals as types.Hospital[];
 };
+
+export const reportErrors = async (...args: any[]) => {
+    try {
+        await makeApiCall('webeditor', `/app/errors`, {
+            method: 'POST',
+            body: JSON.stringify(args),
+        });
+    } catch (e) {
+        // do nothing
+    }
+};
