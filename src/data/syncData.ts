@@ -3,7 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import queryString from 'query-string';
 
 import { createTablesIfNotExist, dbTransaction } from './db';
-import { makeApiCall } from './api';
+import { makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
 import { APP_VERSION } from '../constants';
 import { getDeviceID } from '../utils/getDeviceID';
@@ -157,8 +157,9 @@ export async function syncData(opts?: { force?: boolean; }) {
                     
                     }
                 }
-            }catch(e){
-                
+            }catch(e: any){
+                reportErrors('syncData', e.message);
+                throw e;
             }
         }
     }
