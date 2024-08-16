@@ -4,16 +4,14 @@ import QRCode from 'react-native-qrcode-svg';
 
 type ViewQRCodeProps ={
   value: any,
-  logo?: any
 }
 
-export function QRcodeView({value,logo}:ViewQRCodeProps){
+export function QRcodeView({value}:ViewQRCodeProps){
+
   return ( <View>
     <QRCode
       value={value}
-      size={80}
-      logo={logo}
-      logoSize={20}
+      size={40}
     />
   </View>)
 }

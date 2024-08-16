@@ -5,9 +5,6 @@ import { Confidentials } from "./Confidentials";
 import { ManagementScreen } from '../../ManagementScreen';
 import groupEntries from '../formToHTML/groupEntries';
 import { Content } from "../../Content";
-import assets from "../../../assets";
-import { Colors } from "react-native/Libraries/NewAppScreen";
-import { color } from "@shopify/restyle";
 
 type SummaryProps = {
     Wrapper?: React.ComponentType<React.PropsWithChildren<{}>>;
@@ -25,6 +22,7 @@ export function Summary({
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
     const excludeScreenTypes = ['edliz_summary_table'];
+  
 
     const sections: any[] = groupEntries(form);
 
@@ -43,7 +41,7 @@ export function Summary({
                             <Text color={"grey-900"}>QR CODE: </Text>
                         </Box>
                         <Box>
-                           <QRcodeView value={uid?uid:"NO-UID"} logo={assets.icon}/>
+                           <QRcodeView value={uid?uid:"NO-UID"}/>
                         </Box>
                     </Box>
                 
