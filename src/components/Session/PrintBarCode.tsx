@@ -40,7 +40,6 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
         
     }
     const connectToPrinter = async () => {
-        console.log("---POT04")
         try {
            
             const bluetoothEnabled =await BluetoothManager.isBluetoothEnabled()
@@ -92,9 +91,9 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
             if(printer){
             await BluetoothManager.connect(printer.address)
             await BluetoothEscposPrinter.printerAlign(ALIGN.CENTER)
-            await BluetoothEscposPrinter.printQRCode(session['uid'],150,ERROR_CORRECTION.H,0)
+            await BluetoothEscposPrinter.printQRCode(session?session['uid']:"NO-UID",150,ERROR_CORRECTION.H,0)
             await BluetoothEscposPrinter.printAndFeed(2)
-            await BluetoothEscposPrinter.printText(session['uid'],{})
+            await BluetoothEscposPrinter.printText(session?session['uid']:"NO-UID",{})
             await BluetoothEscposPrinter.cutLine(1)
             }
         } catch (e: any) {
