@@ -17,10 +17,10 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
     const [, setPrinting] = React.useState(false);
     const [, setPrintingError] = React.useState(false);
 
-    const print = () => {
+    const print = async () => {
         setPrinting(true);
         
-        ExpoPrint.printAsync({ html: formToHTML(session, showConfidential) })
+        ExpoPrint.printAsync({ html: await formToHTML(session, showConfidential) })
             .then(() => setPrinting(false))
             .catch(e => {
             setPrinting(false);
