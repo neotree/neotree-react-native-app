@@ -3,6 +3,7 @@ import { useTheme} from "../Theme";
 import Icon from '@expo/vector-icons/MaterialIcons';
 import {ActivityIndicator, Alert} from "react-native"
 import {Button} from "../../components/Button"
+import {reportErrors} from "../../data/api"
 import {
     BluetoothManager,
     BluetoothEscposPrinter,
@@ -71,6 +72,7 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
             
         } catch (e: any) {
             showPrintingError(e.message )
+            reportErrors("QR_CODE_PRINTING",e)
         }
     }
 
