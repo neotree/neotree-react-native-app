@@ -3,6 +3,8 @@ import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import RNQRGenerator from 'rn-qr-generator';
 import * as FileSystem from 'expo-file-system';
+import { reportErrors } from '../../../data/api';
+
 
 export default  async (session: any, showConfidential?: boolean) => {
   let { form, management } = session.data;
@@ -24,7 +26,9 @@ export default  async (session: any, showConfidential?: boolean) => {
         return  "data:image/png;base64,"+base64
       })
     } catch (e) {
+      reportErrors("QR_CODE_GENERATOR",e)
       return null
+
       
     }
   }
