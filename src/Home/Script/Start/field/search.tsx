@@ -5,6 +5,7 @@ import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme } from '.
 import * as api from '../../../../data';
 import * as types from '../../../../types';
 import { useContext } from '../../Context';
+import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 
 type SearchProps = {
     label: string;
@@ -37,9 +38,23 @@ export function Search({
     const [sessionType, setSessionType] = React.useState('admission');
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
     const [searched, setSearched] = React.useState('');
-
     const [searching, setSearching] = React.useState(false);
 
+    const [showQR, setShowQR] = React.useState(false);
+
+    const openQRscanner = () => {
+        setShowQR(true);
+    };
+
+    const onQrRead = (qrtext: any) => {
+        if (qrtext) {
+            setUID(qrtext);
+        }
+        setShowQR(false);
+    };
+
+
+  
     const search = React.useCallback(() => {
         (async () => {
             setSearching(true);
@@ -125,8 +140,17 @@ export function Search({
                 value={uid}
                 application={ctx.application}
             />
-            
-            <Br spacing='s'/>
+            <Br spacing='l' />
+            <>
+                <Br />
+               <Button disabled={searching || uid!=''}
+               color="primary"
+               onPress={() => openQRscanner()}>
+               Scan QR
+               </Button>
+               {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
+               </>
+            <Br spacing='l' />
 
             <Button 
                 color="secondary"
