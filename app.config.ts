@@ -35,7 +35,7 @@ const getBuldConfig = (config: any) => ({
         name: `${config.name} (PRINT)`,
         slug: `${config.slug}-dev`,
         extra: {
-            APP_ENV: 'DEV',
+            APP_ENV: 'DEV',    
             eas: {
                 projectId: '42a5fe96-9887-457c-91e7-9298cb4aa378',
             }, 

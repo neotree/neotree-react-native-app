@@ -2786,7 +2786,7 @@ ajv@^6.12.4, ajv@^6.12.5:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-ajv@^8.0.0, ajv@^8.9.0:
+ajv@^8.0.0, ajv@^8.11.0, ajv@^8.9.0:
   version "8.17.1"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.17.1.tgz#37d9a5c776af6bc92d7f4f9510eba4c0a60d11a6"
   integrity sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
@@ -4776,6 +4776,14 @@ expo-battery@~8.0.1:
   version "8.0.1"
   resolved "https://registry.yarnpkg.com/expo-battery/-/expo-battery-8.0.1.tgz#9aa7e189e921146123da1fc6d41f1f6227eeca33"
   integrity sha512-4lpwvKPCKzXn91UYJu/tYDgN1mLMb678P6H9M61t6Asmp8B8FpRi/AAhs2FhLatw1iM3Jz6lIREUNkrW0Cn3nQ==
+
+expo-build-properties@~0.12.5:
+  version "0.12.5"
+  resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-0.12.5.tgz#4d6232389f00c846ba37ca5df2c0b5527c2d94ca"
+  integrity sha512-donC1le0PYfLKCPKRMGQoixuWuwDWCngzXSoQXUPsgHTDHQUKr8aw+lcWkTwZcItgNovcnk784I0dyfYDcxybA==
+  dependencies:
+    ajv "^8.11.0"
+    semver "^7.6.0"
 
 expo-constants@~16.0.0, expo-constants@~16.0.2:
   version "16.0.2"
