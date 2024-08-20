@@ -10,6 +10,7 @@ import {
     ERROR_CORRECTION,
     ALIGN
 } from "tp-react-native-bluetooth-printer";
+import * as Device from 'expo-device'
 
 type PrintBarCodeProps = {
     session?: any;
@@ -91,13 +92,21 @@ export function PrintBarCode({session }: PrintBarCodeProps) {
         }
         try {
             if(printer){
-            await BluetoothManager.connect(printer.address)
             await BluetoothEscposPrinter.printerAlign(ALIGN.CENTER)
-            await BluetoothEscposPrinter.printQRCode(session?session['uid']:"NO-UID",150,ERROR_CORRECTION.H,0)
-            await BluetoothEscposPrinter.printAndFeed(2)
+            if(Device.osName==="Android" &&Device.osVersion!==null&& Number(Device.osVersion.substring(0, 1))<9){
+                await BluetoothEscposPrinter.printQRCode(session?session['uid']:"NO-UID",200,ERROR_CORRECTION.M,0) 
+                await BluetoothEscposPrinter.printText("\n",{})
+                await BluetoothEscposPrinter.printText("\n",{})
+                await BluetoothEscposPrinter.printText("\n",{})
+            }else{ 
+            await BluetoothEscposPrinter.printQRCode(session?session['uid']:"NO-UID",150,ERROR_CORRECTION.M,0)
             await BluetoothEscposPrinter.printText(session?session['uid']:"NO-UID",{})
-            await BluetoothEscposPrinter.cutLine(1)
-            }
+            await BluetoothEscposPrinter.printText("\n",{})
+               
+            }   
+           
+            await BluetoothEscposPrinter.printerInit()
+        }
         } catch (e: any) {
             showPrintingError(e.message)
 
