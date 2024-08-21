@@ -73,7 +73,7 @@ export function QRCodeScan (props:any){
           <Icon 
 						name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}  
 						size={28} 
-						color={"snow"}
+						color={"red"}
 					/>
         </TouchableOpacity>
       </View>
@@ -84,14 +84,15 @@ export function QRCodeScan (props:any){
             paddingHorizontal: 10,
             borderWidth: 1,
             borderRadius: 5,
-            borderColor: "snow",
+            borderColor: "grey",
+            backgroundColor:"red",
             alignItems: "center",
           }}
           onPress={() => {
             props.onRead(null);
           }}
         >
-          <Text style={{ color: "snow", fontSize: 14 }}>Close</Text>
+          <Text style={{ color: "white", fontSize: 14,fontWeight:'500' }}>Close</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -105,8 +106,9 @@ const styles = StyleSheet.create({
     flex: 1,
     position: "absolute",
     top: 0,
-    height: "100%",
+    height: "200%",
     width: "100%",
+    borderColor:"green",
     alignItems: "center",
     justifyContent: "center",
   },
