@@ -43,17 +43,16 @@ export function PrintBarCode({ session }: PrintBarCodeProps) {
     }
     const connectToPrinter = async () => {
         try {
+            setBluetoothEnabled(await BluetoothManager.isBluetoothEnabled())
             if (!bluetoothEnabled) {
                 BluetoothManager.enableBluetooth()
                 showPrintingError("ENABLE BLUE TOOTH AND RETRY.")
-                return
             } else {
                 setBluetoothEnabled(true)
                 let scannedDevices = await BluetoothManager.scanDevices();
 
                 if (!scannedDevices) {
                     showPrintingError("NO CONNECTED PRINTERS FOUND.")
-                    return
                 } else {
                     const scanned = JSON.parse(String(scannedDevices))
                     //TO MAKE THIS CONFIGURABLE
