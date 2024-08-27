@@ -138,7 +138,6 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 label={label}
                 onChange={uid => setUID(uid)}
                 value={uid}
-                application={ctx.application}
             />
 
             <Br spacing='s' />
