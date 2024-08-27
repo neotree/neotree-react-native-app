@@ -138,7 +138,6 @@ export function Search({
                 label={label}
                 onChange={uid => setUID(uid)}
                 value={uid}
-                application={ctx.application}
             />
             <Br spacing='l' />
             <>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Dimensions, Modal, TouchableOpacity, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { Box, FormAndDiagnosesSummary, Header, PrintSession, useTheme, Text,PrintBarCode } from '../../components';
+import { Box, FormAndDiagnosesSummary, Header, PrintSession, useTheme,PrintBarCode } from '../../components';
 import * as types from '../../types';
 
 export type SessionProps = {

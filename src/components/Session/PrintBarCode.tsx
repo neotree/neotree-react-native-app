@@ -12,9 +12,10 @@ import {
 } from "tp-react-native-bluetooth-printer";
 
 type PrintBarCodeProps = {
-    session?: any;
+    session: any;
+    isGeneric?: boolean;
 };
-export function PrintBarCode({ session }: PrintBarCodeProps) {
+export function PrintBarCode({ session,isGeneric }: PrintBarCodeProps) {
     const theme = useTheme();
     const [printer, setPrinter] = React.useState<any>(null);
     const [printing, setPrinting] = React.useState(false)
@@ -30,10 +31,10 @@ export function PrintBarCode({ session }: PrintBarCodeProps) {
                 error,
                 [
                     {
-                        text: 'Cancel',
+                        text: 'CANCEL',
                     },
                     {
-                        text: 'Retry?',
+                        text: 'RETRY?',
                         onPress: () => connectToPrinter(),
                     }
                 ]
@@ -45,9 +46,10 @@ export function PrintBarCode({ session }: PrintBarCodeProps) {
         try {
             setBluetoothEnabled(await BluetoothManager.isBluetoothEnabled())
             if (!bluetoothEnabled) {
-                BluetoothManager.enableBluetooth()
-                showPrintingError("ENABLE BLUE TOOTH AND RETRY.")
-            } else {
+                await BluetoothManager.enableBluetooth()
+                setBluetoothEnabled(await BluetoothManager.isBluetoothEnabled())
+            } 
+               if(bluetoothEnabled){
                 setBluetoothEnabled(true)
                 let scannedDevices = await BluetoothManager.scanDevices();
 
@@ -65,6 +67,8 @@ export function PrintBarCode({ session }: PrintBarCodeProps) {
                     }
                 }
 
+            }else{
+                showPrintingError("BLUE TOOTH NOT ENABLED. PUT BLUETOOTH ON AND PRESS RETRY")
             }
 
         } catch (e: any) {
@@ -107,9 +111,17 @@ export function PrintBarCode({ session }: PrintBarCodeProps) {
     }
     return (
         <>
+           {isGeneric? 
             <Button
+            color={printer?('primary'):"secondary"}
+            disabled={printing || !session}
+            onPress={print}
+        >
+            {printing ? <ActivityIndicator size={24} color={theme.colors.primary} /> : (printer?'Print':'Connect Printer')}
+              </Button>
+           :<Button
                 onPress={print}
-                disabled={printing}
+                disabled={printing || !session}
                 textStyle={{ textTransform: 'uppercase', }}
                 size="s"
 
@@ -125,6 +137,7 @@ export function PrintBarCode({ session }: PrintBarCodeProps) {
                         />
                     )}
             </Button>
+            }
 
         </>
     );
