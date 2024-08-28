@@ -9,7 +9,6 @@ import { reportErrors } from '../../../data/api';
 export default  async (session: any, showConfidential?: boolean) => {
   let { form, management } = session.data;
   management = management || [];
-
   const sections: any[] = groupEntries(form);
   const generateQRCode = async () => {
     try {
@@ -20,10 +19,15 @@ export default  async (session: any, showConfidential?: boolean) => {
         correctionLevel: 'H',
       }).then(async response => {
         const { uri } =  response;
+        if(uri){
         const base64 = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
+      
         return  "data:image/png;base64,"+base64
+      }else{
+        return null;
+      }
       })
     } catch (e) {
       reportErrors("QR_CODE_GENERATOR",e)

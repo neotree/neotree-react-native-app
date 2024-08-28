@@ -14,7 +14,6 @@ export type MoreNavOptions = {
     showFAB?: boolean;
     hideSearch?: boolean;
     headerRight?: DrawerNavigationOptions['headerRight'];
-    headerLeft? : DrawerNavigationOptions['headerLeft'];
 };
 
 export type PatientDetails = {
