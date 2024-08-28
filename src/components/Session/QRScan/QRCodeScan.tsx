@@ -18,6 +18,43 @@ export function QRCodeScan (props:any){
     },
   });
 
+const styles = StyleSheet.create({
+  page2: {
+    flex: 1,
+    position: "absolute",
+    top: 0,
+    height: props&&props.size?props.size:"200%",
+    width: "100%",
+    borderColor:"green",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backHeader: {
+    backgroundColor: "#00000090",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: "2%",
+    height: "5%",
+    width: "100%",
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  footer: {
+    backgroundColor: "#00000090",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: "10%",
+    height: "20%",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
   useEffect(() => {
     // exception case
     setRefresh(!refresh);
@@ -98,43 +135,4 @@ export function QRCodeScan (props:any){
     </View>
   );
 };
-
-
-
-const styles = StyleSheet.create({
-  page2: {
-    flex: 1,
-    position: "absolute",
-    top: 0,
-    height: "200%",
-    width: "100%",
-    borderColor:"green",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backHeader: {
-    backgroundColor: "#00000090",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    padding: "2%",
-    height: "5%",
-    width: "100%",
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  footer: {
-    backgroundColor: "#00000090",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: "10%",
-    height: "20%",
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
 

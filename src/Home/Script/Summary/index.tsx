@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Fab, FormAndDiagnosesSummary, PrintSession, PrintBarCode} from '../../../components';
+import { Box, Fab, FormAndDiagnosesSummary, PrintSession} from '../../../components';
 import { useContext } from '../Context';
 
 export function Summary() {
@@ -11,7 +11,6 @@ export function Summary() {
         ctx.setMoreNavOptions({
             title: 'SUMMARY',
             headerRight: () => <PrintSession session={summary} showConfidential />,
-            headerLeft: () => <PrintBarCode session={summary} />
         });
     }, [summary]);
 

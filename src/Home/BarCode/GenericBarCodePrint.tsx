@@ -8,6 +8,7 @@ import { NeotreeIDInput } from "../../components/Form";
 import { PrintBarCode } from "../../components/Session/PrintBarCode";
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import * as types from '../../types';
+import { useIsFocused } from '@react-navigation/native';
 
 
 export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'QrCode'>) {
@@ -15,13 +16,18 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
     const [uid, setUID] = React.useState('');
     const [showQR, setShowQR] = React.useState(false);
     const [session,setSession] =   React.useState<any>(null);
+    const focused = useIsFocused()
 
     const openQRscanner = () => {
         setShowQR(true);
     };
     React.useEffect(()=>{
-     setSession({'uid':uid})
-    },[uid])
+     if(focused){
+        setUID('')
+        setSession(null)
+     }
+     
+    },[focused])
 
     React.useEffect(() => {
 		navigation.setOptions({
@@ -42,10 +48,10 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
             setUID(qrtext);
+            setSession({"uid":qrtext})
         }
         setShowQR(false);
     };
-
 
     return (
         <>
@@ -60,12 +66,14 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
                 onPress={() => openQRscanner()}>
                 Scan QR
             </Button>
-            {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
+            {showQR ? <QRCodeScan onRead={onQrRead} size="50%"/> : null}
             <Br spacing='l' />
-            <PrintBarCode
+            {uid &&  <PrintBarCode
                 session={session}
                 isGeneric={true}
-            />
+
+            />}
+            
         </>
     );
 

@@ -8,9 +8,10 @@ export type HeaderProps = {
     left?: React.ReactNode;
     title?: React.ReactNode;
     right?: React.ReactNode;
+    center?: React.ReactNode;
 };
 
-export function Header({ left, title, right, }: HeaderProps) {
+export function Header({ left, title, right,center }: HeaderProps) {
     return (
         <Box flex={1} backgroundColor="white">
             <Box
@@ -38,6 +39,18 @@ export function Header({ left, title, right, }: HeaderProps) {
                         )}
 
                         <Box padding="s">{title}</Box>
+
+                        <View style={{ marginLeft: 'auto' }} />
+
+                        {!!center && (
+                            <Box
+                                width={50}
+                                alignSelf={'center'}
+                                
+                        
+                                
+                            >{center}</Box>
+                        )}
 
                         <View style={{ marginLeft: 'auto' }} />
 
