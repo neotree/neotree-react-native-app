@@ -459,7 +459,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 										<Box>
 											<Text color="textSecondary">Script</Text>
-											<Text>{item.data.script.data.title}</Text>
+											<Text>{item?.data?.script?.data?.title}</Text>
 										</Box>
 									</Card>
 								</TouchableOpacity>
