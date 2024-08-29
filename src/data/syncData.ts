@@ -165,6 +165,7 @@ export async function syncData(opts?: { force?: boolean; }) {
         }
     }
 
+    // TODO: REMOVE THIS
     patch();
 
     const _app = await getApplication();
