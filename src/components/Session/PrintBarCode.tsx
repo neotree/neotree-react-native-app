@@ -2,7 +2,6 @@ import React from "react";
 import { useTheme } from "../Theme";
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { ActivityIndicator, Alert, TouchableOpacity } from "react-native"
-import { Text } from "../../components/Theme"
 import { reportErrors } from "../../data/api"
 import {
     BluetoothManager,
@@ -140,8 +139,8 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
             disabled={printing || !session || connecting}
             onPress={print}
         >
-            {printing||connecting ? <ActivityIndicator size={24} color={theme.colors.primary} /> : (printer?<Text color={'white'}>Print QR Code</Text>
-            :<Text color={'white'}>Connect Printer</Text>)}
+            {printing||connecting ? <ActivityIndicator size={24} color={theme.colors.primary} /> : (printer?'Print QR Code':
+                'Connect Printer')}
               </Button>
            :<TouchableOpacity
                 onPress={print}

@@ -12,7 +12,7 @@ export function QRCodeScan (props:any){
   const [refresh, setRefresh] = useState(false);
   const device = useCameraDevice("back");
   const codeScanner = useCodeScanner({
-    codeTypes: ["qr"],
+    codeTypes: ["qr","pdf-417","aztec","data-matrix"],
     onCodeScanned: (codes) => {
       props.onRead(codes[0].value);
     },

@@ -43,6 +43,13 @@
 
                   "enableCodeScanner": true
                 }
+              ],
+              [
+                "./plugins/withAndroidMainActivityAttributes",
+                {
+                  "android:showWhenLocked": true,
+                  "android:turnScreenOn": true
+                }
               ]
            
         ],
