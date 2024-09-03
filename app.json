@@ -36,7 +36,14 @@
             "output": "static"
         },
         "plugins": [
-            "expo-router"
+            "expo-router",
+            [
+              "./plugins/withAndroidMainActivityAttributes",
+              {
+                "android:showWhenLocked": true,
+                "android:turnScreenOn": true
+              }
+            ]
         ],
         "experiments": {
             "typedRoutes": true
