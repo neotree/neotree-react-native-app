@@ -1,8 +1,10 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import {CustomError}from './src/types'
 import ErrorBoundary from 'react-native-error-boundary'
+import Icon from '@expo/vector-icons/MaterialIcons';
+
+import {CustomError}from './src/types'
 import {handleAppCrush} from './src/utils/handleCrashes'
 
 import { 
@@ -18,7 +20,9 @@ const assets: LoadAssetsProps['assets'] = [
     ...srcAssets,
 ];
 
-const fonts: LoadAssetsProps['fonts'] = {};
+const fonts: LoadAssetsProps['fonts'] = {
+    ...Icon.font,
+};
 
 export default function App() {
 
