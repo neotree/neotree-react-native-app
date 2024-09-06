@@ -105,7 +105,7 @@ export function Dropdown({
                         {renderReactNode(title, { textVariant: 'title3', })}
                         {searchable && (
                             <>
-                                {!!title && <Br />}
+                                {!!title && <Br spacing='s'/>}
                                 
                                 <TextInput
                                     placeholder="Search"

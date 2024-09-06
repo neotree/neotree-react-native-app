@@ -178,6 +178,7 @@ export type HomeRoutes = {
   Configuration: undefined;
   Location: undefined;
   Sessions: undefined;
+  QrCode: undefined;
 };
 
 export type CustomError = {

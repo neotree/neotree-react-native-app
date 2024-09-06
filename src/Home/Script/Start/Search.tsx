@@ -5,13 +5,14 @@ import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme } from '.
 import * as api from '../../../data';
 import * as types from '../../../types';
 import { useContext } from '../Context';
+import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 
 type SearchProps = {
     onSession?: (data: null | types.MatchedSession) => void;
     label: string;
-	autofillKeys?: string[];
-	filterEntries?: (entry: any) => any;
-	prePopulateWithUID?: boolean;
+    autofillKeys?: string[];
+    filterEntries?: (entry: any) => any;
+    prePopulateWithUID?: boolean;
 };
 
 function getSessionFacility(session: any) {
@@ -23,7 +24,8 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
-export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {    
+
+export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {
     const ctx = useContext();
 
     const [uid, setUID] = React.useState('');
@@ -32,6 +34,19 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
     const [facility, setFacility] = React.useState<null | types.Facility>(null);
     const [searched, setSearched] = React.useState('');
+    const [showQR, setShowQR] = React.useState(false);
+
+    const openQRscanner = () => {
+        setShowQR(true);
+    };
+
+    const onQrRead = (qrtext: any) => {
+        if (qrtext) {
+            setUID(qrtext);
+        }
+        setShowQR(false);
+    };
+
 
     const [searching, setSearching] = React.useState(false);
 
@@ -44,6 +59,8 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
             setSearched(uid);
         })();
     }, [uid]);
+
+
 
     const admissionSessions = sessions.filter(s => s.data.script.title.match(/admission/gi) || (s.data.script.type === 'admission'));
     const neolabSessions = sessions.filter(s => s.data.script.title.match(/neolab/gi) || (s.data.script.type === 'neolab'));
@@ -66,28 +83,28 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                     checked={selected}
                                     onChange={() => {
                                         const session = selected ? null : s;
-										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
-										if (autoFill) {
-											if (filterEntries) {
-												autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
-													if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
-													return acc;
-												}, {});
-											}
-											if (autofillKeys) {
-												autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
-													if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
-													return acc;
-												}, {});
-											}
-										}
-                                        const matched = session ? { 
-											session, 
-											uid, 
-											facility: facility as types.Facility, 
-											autoFill, 
-											prePopulateWithUID: prePopulateWithUID !== false,
-										} : null;
+                                        let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
+                                        if (autoFill) {
+                                            if (filterEntries) {
+                                                autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
+                                                    if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
+                                                    return acc;
+                                                }, {});
+                                            }
+                                            if (autofillKeys) {
+                                                autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
+                                                    if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
+                                                    return acc;
+                                                }, {});
+                                            }
+                                        }
+                                        const matched = session ? {
+                                            session,
+                                            uid,
+                                            facility: facility as types.Facility,
+                                            autoFill,
+                                            prePopulateWithUID: prePopulateWithUID !== false,
+                                        } : null;
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
                                         ctx.setMatched(matched);
@@ -121,18 +138,28 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 label={label}
                 onChange={uid => setUID(uid)}
                 value={uid}
-                application={ctx.application}
             />
-            
-            <Br />
 
-            <Button 
+            <Br spacing='s' />
+            <>
+                <Br />
+               <Button disabled={searching || uid!==''}
+               color="primary"
+               onPress={() => openQRscanner()}>
+               Scan QR
+               </Button>
+               {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
+               </>
+            <Br spacing='s' />
+            <Button
                 color="secondary"
                 disabled={searching || !uid}
                 onPress={() => search()}
             >
                 {searching ? <ActivityIndicator size={24} color={theme.colors.primary} /> : 'Search'}
             </Button>
+
+            <Br spacing='s' />
 
             <ScrollView>
                 <Br spacing="xl" />

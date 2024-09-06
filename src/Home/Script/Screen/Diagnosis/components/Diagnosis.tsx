@@ -90,11 +90,11 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                                     </>
                                 )}
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Text variant="title3">Do you agree with this diagnosis?</Text>
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Box flexDirection="row">
                                     {[
@@ -129,17 +129,17 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
 
                                 {form.how_agree === 'No' && (
                                     <>
-                                        <Br />
+                                        <Br spacing='s'/>
                                         <TextInput
                                             label="Can you explain why not?"
                                             value={form.hcw_reason_given}
                                             onChangeText={v => setForm({ hcw_reason_given: v })}
                                         />
-                                        <Br />
+                                        <Br spacing='s'/>
                                     </>
                                 )}
 
-                                <Br />                                
+                                <Br spacing='s'/>                                
 
                                 {instrunctions.map(({ image, text }, i) => {
                                     const key = `${i}`;
@@ -160,11 +160,11 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                                     );
                                 })}
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Text variant="title3">Did you folow the above instructions?</Text>
 
-                                <Br />
+                                <Br spacing='s'/>
 
                                 <Box flexDirection="row">
                                     {[

@@ -16,7 +16,9 @@ import { Script } from './Script';
 import { Configuration } from './Configuration';
 import { Location } from './Location';
 import { Sessions } from './Sessions';
+import {PrintGenericBarCode} from './BarCode/GenericBarCodePrint'
 import { useAppContext } from '../AppContext';
+import {} from '../components/'
 import * as api from '../data';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
@@ -82,7 +84,13 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				<Drawer.Screen 
 					name="Location" 
 					component={Location} 
-				/>		
+				/>	
+
+				<Drawer.Screen 
+					name="QrCode" 
+					component={PrintGenericBarCode} 
+				/>	
+	
 			</Drawer.Navigator>
 		</>
 	);
@@ -173,6 +181,14 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 																<Icon 
 																	size={24} 
 																	name="location-pin"
+																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
+																/>
+															);
+															case 'QrCode':
+															return (
+																<Icon 
+																	size={24} 
+																	name="qr-code"
 																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
 																/>
 															);

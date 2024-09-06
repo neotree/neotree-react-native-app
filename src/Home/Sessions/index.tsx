@@ -313,6 +313,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		<>
 			<DatePicker
 				value={minDate}
+				mode='date'
 				label="Min Date"
 				onChange={date => setMinDate(date)}
 			/>
@@ -321,6 +322,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 			<DatePicker
 				value={maxDate}
+				mode='date'
 				label="Max Date"
 				onChange={date => setMaxDate(date)}
 			/>
@@ -564,7 +566,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				))}
 				{deleteType === 'date_range' && (
 					<>
-						<Br />
+						<Br spacing='s'/>
 						{dateRange}
 					</>
 				)}
@@ -622,7 +624,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					))}
 				{exportType === 'date_range' && (
 					<>
-						<Br />
+						<Br spacing='s'/>
 						{dateRange}
 					</>
 				)}

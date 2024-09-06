@@ -2,7 +2,7 @@ import React from 'react';
 import { Dimensions, Modal, TouchableOpacity, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
-import { Box, FormAndDiagnosesSummary, Header, PrintSession, useTheme, Text } from '../../components';
+import { Box, FormAndDiagnosesSummary, Header, PrintSession, useTheme,PrintBarCode,Text} from '../../components';
 import * as types from '../../types';
 
 export type SessionProps = {
@@ -49,12 +49,20 @@ export function Session({ session, onBack }: SessionProps) {
                             >Session Details</Text>
                         </>
                     )}
+                    center ={(
+                        <>
+                            <PrintBarCode 
+                                session={session}
+                            />
+                        </>
+                    )}
                     right={(
                         <>
                             <PrintSession 
                                 session={session} 
                                 showConfidential 
                             />
+                             
                         </>
                     )}
                 />
@@ -65,6 +73,7 @@ export function Session({ session, onBack }: SessionProps) {
                         showConfidential={showConfidential}
                         onShowConfidential={show => setShowConfidential(show)}
                     />
+                   
                 </Box>
             </Box>
         </Modal>
