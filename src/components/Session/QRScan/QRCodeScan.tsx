@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     //if it is idle for 15 secs, it will be closed
     setTimeout(() => {
       props.onRead(null);
-    }, 15 * 1000);
+    }, 20 * 1000);
   }, []);
 
   if (device == null || !hasPermission) {
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
             props.onRead(null);
           }}
         >
-          <Text style={{ color: "white", fontSize: 14,fontWeight:'500' }}>Close</Text>
+          <Text style={{ color: "white",fontWeight:'500' }}>Close</Text>
         </TouchableOpacity>
       </View>
     </View>
