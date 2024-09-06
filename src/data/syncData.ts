@@ -7,6 +7,7 @@ import { makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
 import { APP_VERSION } from '../constants';
 import { getDeviceID } from '../utils/getDeviceID';
+import { patch } from '@/src/utils/patch';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
@@ -163,6 +164,9 @@ export async function syncData(opts?: { force?: boolean; }) {
             }
         }
     }
+
+    // TODO: REMOVE THIS
+    patch();
 
     const _app = await getApplication();
 
