@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useDeferredValue } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
 import * as MediaLibrary from 'expo-media-library';
@@ -6,7 +6,7 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import * as types from '../../types';
 import * as api from '../../data';
-import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, useTheme } from '../../components';
+import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, useTheme, TextInput } from '@/src/components';
 import exportData from './export';
 import { Session } from './Session';
 
@@ -68,6 +68,9 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [scriptsFields, setScriptsFields] = React.useState({});
 
 	const [selectedSession, setSelectedSession] = React.useState<any>(null);
+
+    const [searchValue, setSearchValue] = React.useState('');
+    const searchTimeout = React.useRef<any>();
 
 	const exportSessions = async (opts: any = {}) => {
 		let sessions = dbSessions;
@@ -200,23 +203,30 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 	const getFilteredSessions = (sessions = dbSessions, filters?: any) => {
 		let _sessions = [...sessions];
+
 		const getParsedDate = (d: any) => {
 			d = moment(d).format('YYYY-MM-DD');
 			return new Date(d).getTime();
 		};
 
-		const _filters = filters || {
+		const _filters = {
 			minDate: filterByDate ? minDate : null,
 			maxDate: filterByDate ? maxDate : null,
+            searchValue: searchValue || '', 
+            ...filters
 		};
 
 		if (_filters?.minDate) {
-			_sessions = sessions.filter((s: any) => getParsedDate(s.data.started_at) >= getParsedDate(_filters.minDate));
+			_sessions = _sessions.filter((s: any) => getParsedDate(s.data.started_at) >= getParsedDate(_filters.minDate));
 		}
 
 		if (_filters?.maxDate) {
-			_sessions = sessions.filter((s: any) => getParsedDate(s.data.started_at) <= getParsedDate(_filters.maxDate));
+			_sessions = _sessions.filter((s: any) => getParsedDate(s.data.started_at) <= getParsedDate(_filters.maxDate));
 		}
+
+        if (_filters?.searchValue) {
+            _sessions = _sessions.filter((s: any) => `${s.uid || ''}`.toLowerCase().includes(_filters.searchValue.toLowerCase()));
+        }
 
 		return _sessions;
 	};
@@ -333,6 +343,18 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 	return (
 		<>
+            <Content>
+                <TextInput
+                    placeholder="Search Neotree ID"
+                    value={searchValue}
+                    onChangeText={searchValue => {
+                        setSearchValue(searchValue);
+                        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                        searchTimeout.current = setTimeout(() => setSessions(getFilteredSessions(dbSessions, { searchValue })), 1000);
+                    }}
+                />
+            </Content>
+
 			<FlatList
 				data={sessions}
 				onRefresh={getSessions}
@@ -461,7 +483,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 										<Box>
 											<Text color="textSecondary">Script</Text>
-											<Text>{item.data.script.data.title}</Text>
+											<Text>{item?.data?.script?.data?.title}</Text>
 										</Box>
 									</Card>
 								</TouchableOpacity>

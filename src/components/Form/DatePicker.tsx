@@ -12,7 +12,7 @@ export type DatePickerProps = {
     value?: null | Date;
     valueText?: string;
     disabled?: boolean;
-    mode: 'date' | 'time' | 'datetime';
+    mode?: 'date' | 'time' | 'datetime';
     maxDate?: Date | 'date_now';
     minDate?: Date | 'date_now';
     errors?: string[];
