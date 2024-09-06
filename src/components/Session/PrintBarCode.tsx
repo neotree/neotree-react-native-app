@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, TouchableOpacity } from "react-native"
 import { reportErrors } from "../../data/api"
 import {
     BluetoothManager,
+    BluetoothDevice,
     BluetoothEscposPrinter,
     ERROR_CORRECTION,
     ALIGN
@@ -21,6 +22,7 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
     const [printing, setPrinting] = React.useState(false)
     const [bluetoothEnabled, setBluetoothEnabled] = React.useState(false)
     const [connecting,setConnecting] = React.useState(false)
+    const [printerConnected,setPrinterConnected] = React.useState(false)
 
 
 
@@ -63,7 +65,13 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
                         }
 
                     } else {
-                        return setPrinter(barCodePrinter[0])
+                        setPrinter(barCodePrinter[0])
+                        await BluetoothManager.connect(printer?.address)
+                        const connectedDevices = await BluetoothManager.getConnectedDevice()
+                        if(connectedDevices){
+                            console.log("---PRINER----",printer)
+                            setPrinterConnected(connectedDevices.includes(printer))
+                        }
                     }
                 }
 
@@ -108,12 +116,11 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
 
     const print = async () => {
         setPrinting(true)
-        if (!printer) {
+        if (!printer || !printerConnected) {
             await connectToPrinter(false)
         }
         try {
-            if (printer) {
-                await BluetoothManager.connect(printer.address)
+            if (printerConnected) {
                 await BluetoothEscposPrinter.printerAlign(ALIGN.CENTER)
                     await BluetoothEscposPrinter.printQRCode(session ? session['uid'] : "NO-UID", 150, ERROR_CORRECTION.M, 0)
                     await BluetoothEscposPrinter.printText(session ? session['uid'] : "NO-UID", {})
@@ -133,13 +140,13 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
            {isGeneric? 
             <Button
             hitSlop={{bottom: 20, left: 20, right: 20}}
-            style={printer?{ alignItems: 'center', backgroundColor: theme.colors.primary}:
+            style={printerConnected?{ alignItems: 'center', backgroundColor: theme.colors.primary}:
             (bluetoothEnabled?{ alignItems: 'center', width: 'auto',backgroundColor: "blue"}
             :{ alignItems: 'center', width:'auto',backgroundColor: theme.colors.error})}
             disabled={printing || !session || connecting}
             onPress={print}
         >
-            {printing||connecting ? <ActivityIndicator size={24} color={theme.colors.primary} /> : (printer?'Print QR Code':
+            {printing||connecting ? <ActivityIndicator size={24} color={theme.colors.primary} /> : (printerConnected?'Print QR Code':
                 'Connect Printer')}
               </Button>
            :<TouchableOpacity
@@ -148,7 +155,7 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
                 hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}
                 style={{ alignItems: 'flex-start'}}
             >
-                {!printing && !connecting? (printer ? <Icon color={theme.colors.primary} size={40} name="qr-code" />
+                {!printing && !connecting? (printerConnected ? <Icon color={theme.colors.primary} size={40} name="qr-code" />
                     : (bluetoothEnabled ? <Icon color={"blue"} size={40} name="qr-code" />
                         : <Icon color={theme.colors.error} size={40} name="qr-code" />))
                     : (
