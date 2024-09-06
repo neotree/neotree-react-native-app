@@ -5,7 +5,6 @@ import { ActivityIndicator, Alert, TouchableOpacity } from "react-native"
 import { reportErrors } from "../../data/api"
 import {
     BluetoothManager,
-    BluetoothDevice,
     BluetoothEscposPrinter,
     ERROR_CORRECTION,
     ALIGN
@@ -69,8 +68,8 @@ export function PrintBarCode({ session,isGeneric}: PrintBarCodeProps) {
                         await BluetoothManager.connect(printer?.address)
                         const connectedDevices = await BluetoothManager.getConnectedDevice()
                         if(connectedDevices){
-                            console.log("---PRINER----",printer)
-                            setPrinterConnected(connectedDevices.includes(printer))
+                            const connectedDevs = JSON.parse(connectedDevices.toString())
+                            setPrinterConnected(connectedDevs?.address===printer?.address)
                         }
                     }
                 }

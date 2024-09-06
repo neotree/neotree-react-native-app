@@ -10,7 +10,7 @@ export function Summary() {
     React.useEffect(() => {
         ctx.setMoreNavOptions({
             title: 'SUMMARY',
-            headerRight: () => <><PrintBarCode session={summary}/> <Br/><PrintSession session={summary} showConfidential /></>,
+            headerRight: () => <><PrintBarCode session={summary}/><Box width={120}></Box><PrintSession session={summary} showConfidential /></>,
         });
     }, [summary]);
 
