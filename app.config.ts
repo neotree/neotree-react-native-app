@@ -32,7 +32,7 @@ const getBuldConfig = (config: any) => ({
 
     ...(NEOTREE_BUILD_TYPE === 'stage' ? {
         // version: `${config.version}-DEV`,
-        name: `${config.name} (DEV)`,
+        name: `${config.name} (PRINT)`,
         slug: `${config.slug}-dev`,
         extra: {
             APP_ENV: 'DEV',

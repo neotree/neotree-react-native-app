@@ -138,7 +138,7 @@ export function Form({ onSignInSuccess }: FormProps) {
 				<React.Fragment key={e.message}>
 					{i === 0 && <Br spacing='l' />}
 					<Text color="error">{e.message}</Text>
-					<Br />
+					<Br spacing='s'/>
 				</React.Fragment>
 			))}
 

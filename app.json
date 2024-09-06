@@ -2,7 +2,7 @@
     "expo": {
         "name": "NeoTree",
         "slug": "neotree",
-        "version": "2.4.0",
+        "version": "2.4.1-BARCODES",
         "orientation": "portrait",
         "icon": "./assets/images/icon.png",
         "scheme": "myapp",
@@ -38,12 +38,28 @@
         "plugins": [
             "expo-router",
             [
-              "./plugins/withAndroidMainActivityAttributes",
-              {
-                "android:showWhenLocked": true,
-                "android:turnScreenOn": true
-              }
-            ]
+                "react-native-vision-camera",
+                {
+
+                  "enableCodeScanner": true
+                }
+              ],
+              [
+                "./plugins/withAndroidMainActivityAttributes",
+                {
+                  "android:showWhenLocked": true,
+                  "android:turnScreenOn": true
+                }
+              ],
+              [
+                "expo-build-properties",
+                {
+                  "android": {
+                    "enableProguardInReleaseBuilds": true
+                  }
+                }
+              ]
+           
         ],
         "experiments": {
             "typedRoutes": true

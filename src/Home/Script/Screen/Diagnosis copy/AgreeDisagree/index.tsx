@@ -23,7 +23,7 @@ export function AgreeDisagree(props: DiagnosisProps) {
 				instructions={activeScreen.data.hcwDiagnosesInstructions}
 			/>
 
-			<Br />
+			<Br spacing='s'/>
 
 			<DiagnosesList 
 				{...props}
@@ -31,7 +31,7 @@ export function AgreeDisagree(props: DiagnosisProps) {
 				instructions={activeScreen.data.suggestedDiagnosesInstructions}
 			/>
 
-			<Br />
+			<Br spacing='s'/>
 
 			<DiagnosesList 
 				{...props}

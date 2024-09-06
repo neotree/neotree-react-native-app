@@ -31,7 +31,7 @@ export function Entry({ entry, matched }: EntriesProps) {
 
                                 {!!matches.length && (
                                     <Box>
-                                        <Br />
+                                        <Br spacing="s"/>
 
                                         <Text fontWeight="bold">Matched Neolabs</Text>
 

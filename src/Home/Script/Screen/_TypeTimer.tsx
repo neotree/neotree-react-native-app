@@ -112,7 +112,7 @@ export function TypeTimer({}: TypeTimerProps) {
                         {`${`0${Math.floor((countdown || timerValue) / 60)}`.slice(-2)}:${`0${(countdown || timerValue) % 60}`.slice(-2)}`}
                     </Text>
 
-                    <Br />
+                    <Br spacing='s'/>
 
                     <Text
                         color="primary"
