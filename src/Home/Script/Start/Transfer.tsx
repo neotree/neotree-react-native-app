@@ -12,7 +12,7 @@ export function Transfer({}: TransferProps) {
     return (
         <Box>
             <Text>Has the baby been transferred from another facility?</Text>
-            <Br />
+            <Br spacing='s'/>
             <Box flexDirection="row" alignItems="center">
                 {[
                     { label: 'Yes', value: true, },

@@ -45,7 +45,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 								color="error"
 							>Failed to setup the app, please try again</Text>
 
-							<Br />
+							<Br spacing='s'/>
 
 							<Button
 								onPress={() => onSignInSuccess()}
@@ -58,7 +58,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 								textAlign="center"
 							>Logged in. Getting the app ready, please wait...</Text>
 
-							<Br />
+							<Br spacing='s'/>
 
 							<ActivityIndicator 
 								color={theme.colors.primary}

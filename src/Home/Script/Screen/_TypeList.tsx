@@ -24,7 +24,7 @@ export function TypeList({}: TypeListProps) {
                             <Br spacing="s" />
                             <Text>{item.summary}</Text>
                         </Card>
-                        <Br />
+                        <Br spacing='s'/>
                     </React.Fragment>
                 )
             })}

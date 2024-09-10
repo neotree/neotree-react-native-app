@@ -1,4 +1,5 @@
 import React from "react";
+import { QRcodeView } from "../QRCodeView";
 import { Box, Text } from "../../Theme";
 import { Confidentials } from "./Confidentials";
 import { ManagementScreen } from '../../ManagementScreen';
@@ -7,19 +8,21 @@ import { Content } from "../../Content";
 
 type SummaryProps = {
     Wrapper?: React.ComponentType<React.PropsWithChildren<{}>>;
-    showConfidential?: boolean; 
+    showConfidential?: boolean;
     onShowConfidential?: (show: boolean) => void;
     session: any;
+    qrCode?: any;
 };
 
-export function Summary({ 
-    Wrapper, 
-    showConfidential, 
-    onShowConfidential, 
-    session: { data: { form, matched } },  
+export function Summary({
+    Wrapper,
+    showConfidential,
+    onShowConfidential,
+    session: { uid,data: { form} },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
     const excludeScreenTypes = ['edliz_summary_table'];
+  
 
     const sections: any[] = groupEntries(form);
 
@@ -28,6 +31,21 @@ export function Summary({
             {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
             <Wrapper>
+            <Content>
+                    <Box
+                        flexDirection="row"
+                        columnGap="l"
+                        mb="none"
+                    >
+                        <Box flex={0.90}>
+                            <Text color={"grey-900"}>QR CODE: </Text>
+                        </Box>
+                        <Box>
+                           <QRcodeView value={uid?uid:"NO-UID"}/>
+                        </Box>
+                    </Box>
+                
+                </Content>
                 <Content>
                     {sections
                         .filter(([, entries]) => entries.length)
@@ -37,9 +55,9 @@ export function Summary({
                             const displayItems = entries
                                 .filter((e: any) => e.values.length && !excludeScreenTypes.includes(e.screen.type))
                                 .map(({
-                                    values, 
+                                    values,
                                     management = [],
-                                    screen: { metadata: { label } } 
+                                    screen: { metadata: { label } }
                                 }: any, entryIndex: number) => {
                                     const nodes = values
                                         .filter((e: any) => e.confidential ? showConfidential : true)
@@ -59,13 +77,13 @@ export function Summary({
 
                                                         <Box flex={1}>
                                                             {
-                                                                v.value && v.value.map ? 
+                                                                v.value && v.value.map ?
                                                                     v.value.map((v: any, j: number) => (
                                                                         <Box key={`${entryIndex}${i}${j}`} mb="s">
                                                                             <Text>{v.valueText || v.value || 'N/A'}</Text>
                                                                         </Box>
-                                                                    )) 
-                                                                    : 
+                                                                    ))
+                                                                    :
                                                                     <Text>{v.valueText || v.value || 'N/A'}</Text>
                                                             }
                                                         </Box>
@@ -76,7 +94,7 @@ export function Summary({
                                                             {management.map((s: any) => {
                                                                 return (
                                                                     <Box key={s.screen_id}>
-                                                                        <ManagementScreen 
+                                                                        <ManagementScreen
                                                                             data={s.metadata}
                                                                         />
                                                                     </Box>
@@ -86,7 +104,7 @@ export function Summary({
                                                     )}
                                                 </Box>
                                             );
-                                    });
+                                        });
 
                                     if (!nodes.length) return null;
 
