@@ -59,7 +59,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 										variant="title3"
 									>{item.data?.title}</Text>
 
-									<Br />
+									<Br spacing='s'/>
 
 									<Text
 										color="textSecondary"

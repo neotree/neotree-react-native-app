@@ -69,7 +69,7 @@ export function DiagnosisListItem({ diagnosis, hidden, selected, variant }: Diag
 				)}
 			</Animated.View>
 
-			<Br />
+			<Br spacing='s' />
 		</>
 	);
 }

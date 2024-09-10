@@ -4,6 +4,8 @@ import { Box, Text } from "../../Theme";
 import { TextInput } from "../../Form";
 import { Modal } from "../../Modal";
 import { Content } from "../../Content";
+import {Br} from "../../../components/Br"
+
 
 type ConfidentialsProps = {
     onShowConfidential?: (show: boolean) => void;
@@ -36,6 +38,9 @@ export function Confidentials({ onShowConfidential }: ConfidentialsProps) {
 
     return (
         <>
+        <Br spacing="l"/>
+        <Br spacing="l"/>
+        <Br spacing="s"/>
             <Box backgroundColor="highlight">
                 <Content>
                     <Box
