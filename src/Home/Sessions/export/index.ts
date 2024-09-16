@@ -171,7 +171,7 @@ export function exportToApi(opts: any = {}) {
 export default function exportData(opts: any = {}) {
   const { format } = opts;
 
-  opts.sessions = (opts.sessions || []).filter((s: any) => s.data.completed_at || s.data.canceled_at);
+  opts.sessions = (opts.sessions || []).filter((s: any) => s?.data?.completed_at || s?.data?.canceled_at);
 
   switch (format) {
     case 'jsonapi':
