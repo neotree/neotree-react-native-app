@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { generateUID } from '@/src/utils/uid';
 import * as types from '../../types';
@@ -12,8 +12,9 @@ import { Start } from './Start';
 import { Screen } from './Screen';
 import { Context, MoreNavOptions, ContextType } from './Context';
 import { getScriptUtils } from './utils';
-import { Alert } from 'react-native';
+import { Alert, TextProps } from 'react-native';
 import { Summary } from './Summary';
+import { defaultPreferences } from '@/src/constants';
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
@@ -246,11 +247,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		navigation.setOptions(getNavOptions({ 
 			script, 
 			theme, 
-			confirmExit, 
 			activeScreen, 
 			activeScreenIndex,
+            moreNavOptions,
+            confirmExit, 
 			goBack: moreNavOptions?.goBack || goBack,
-			moreNavOptions,
+            goNext: moreNavOptions?.goNext || goNext,
 		}));
 	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions, summary]);
 
@@ -292,7 +294,41 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
         // ["ReferredFrom", 'BirthFacility']
         const s = screens.filter(s => ['BirthFacility'].includes(s?.data?.metadata?.key))[0]
         return (s?.data?.metadata?.items || []);
-    }
+    };
+
+    const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
+        const preferences = {
+            ...defaultPreferences,
+            ...screen?.data?.preferences,
+        } as typeof defaultPreferences;
+
+        const fieldPreferences = {
+            fontSize: preferences.fontSize[field],
+            fontWeight: preferences.fontWeight[field],
+            fontStyle: preferences.fontStyle[field] || [],
+            textColor: preferences.textColor[field],
+            backgroundColor: preferences.backgroundColor[field],
+            highlight: preferences.highlight[field],
+        };
+
+        return {
+            ...fieldPreferences,
+            style: {
+                color: fieldPreferences?.textColor,
+                fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
+                fontWeight: !fieldPreferences?.fontWeight ? undefined : {
+                    bold: 900,
+                }[fieldPreferences.fontWeight!],
+                fontSize: !fieldPreferences?.fontSize ? undefined : {
+                    xs: 6,
+                    sm: 12,
+                    default: undefined,
+                    lg: 20,
+                    xl: 26,
+                }[fieldPreferences.fontSize!],
+            } as TextProps['style'],
+        };
+    }, [activeScreen]);
 
 	if (refresh) return null;
 
@@ -347,6 +383,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				script_id: route.params.script_id,
 				patientDetails,
                 nuidSearchForm,
+                getFieldPreferences,
                 setNuidSearchForm,
 				setPatientDetails,
 				saveSession,

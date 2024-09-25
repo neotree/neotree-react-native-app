@@ -3,6 +3,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { DrawerNavigationOptions } from '@react-navigation/drawer';
 import * as types from '../../types';
 import { getScriptUtils } from './utils';
+import { TextProps } from 'react-native';
 
 export type MoreNavOptions = {
     goBack?: () => void;
@@ -66,6 +67,15 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     setMoreNavOptions: React.Dispatch<React.SetStateAction<null | MoreNavOptions>>;
     getPrepopulationData: (prePopulationRules?: string[]) => any;
     getEntryValueByKey: (key: string) => null | types.ScreenEntryValue;
+    getFieldPreferences: (field: string, screen?: any) => {
+        fontSize: "xl" | "default" | "xs" | "sm" | "lg" | undefined;
+        fontWeight: "bold" | undefined;
+        fontStyle: string[];
+        textColor: string | undefined;
+        backgroundColor: string | undefined;
+        highlight: boolean | undefined;
+        style: TextProps['style'],
+    };
 };
 
 export const Context = React.createContext<null | ContextType>(null);

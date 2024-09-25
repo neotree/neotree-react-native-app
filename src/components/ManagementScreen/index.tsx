@@ -14,6 +14,7 @@ export function ManagementScreen({ data }: ManagementScreenProps) {
                 title={data.title1}
                 text={data.text1}
                 image={data.image1?.data}
+                textStyle={data.text1Style}
             />
 
             <Br spacing='s'/>
@@ -22,6 +23,7 @@ export function ManagementScreen({ data }: ManagementScreenProps) {
                 title={data.title2}
                 text={data.text2}
                 image={data.image2?.data}
+                textStyle={data.text2Style}
             />
 
             <Br spacing='s'/>
@@ -30,6 +32,7 @@ export function ManagementScreen({ data }: ManagementScreenProps) {
                 title={data.title3}
                 text={data.text3}
                 image={data.image3?.data}
+                textStyle={data.text3Style}
             />
         </Box>
     );
