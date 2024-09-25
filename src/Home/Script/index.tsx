@@ -247,11 +247,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		navigation.setOptions(getNavOptions({ 
 			script, 
 			theme, 
-			confirmExit, 
 			activeScreen, 
 			activeScreenIndex,
+            moreNavOptions,
+            confirmExit, 
 			goBack: moreNavOptions?.goBack || goBack,
-			moreNavOptions,
+            goNext: moreNavOptions?.goNext || goNext,
 		}));
 	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions, summary]);
 
