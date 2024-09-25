@@ -21,14 +21,14 @@ export function MgtSection({ title, text, image, textStyle }: MgtSectionProps) {
             {!!title && (
                 <>
                     <Text variant="title3" fontWeight="bold">{title}</Text>
-                    <Br />
+                    <Br spacing='s' />
                 </>
             )}
 
             {!!text && (
                 <>
                     <Text style={textStyle}>{text}</Text>
-                    <Br />
+                    <Br spacing='s' />
                 </>
             )}
 
@@ -39,7 +39,7 @@ export function MgtSection({ title, text, image, textStyle }: MgtSectionProps) {
                         resizeMode="contain"
                         source={{ uri: image }}
                     />
-                    <Br />
+                    <Br spacing='s' />
                 </>
             )}
         </Card>
