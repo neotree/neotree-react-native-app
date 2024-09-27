@@ -1,69 +1,27 @@
 {
-    "expo": {
-        "name": "NeoTree",
-        "slug": "neotree",
-        "version": "2.4.2",
-        "orientation": "portrait",
-        "icon": "./assets/images/icon.png",
-        "scheme": "myapp",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/images/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#ffffff"
-        },
-        "updates": {
-            "fallbackToCacheTimeout": 0
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "org.neotree.neotreeapp",
-            "buildNumber": "1.0.0"
-        },
-        "android": {
-            "package": "org.neotree.neotreeapp",
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/images/icon.png",
-                "backgroundColor": "#FFFFFF"
-            }
-        },
-        "web": {
-            "favicon": "./assets/images/icon.png",
-            "bundler": "metro",
-            "output": "static"
-        },
-        "plugins": [
-            "expo-router",
-            "expo-font",
-            [
-                "react-native-vision-camera",
-                {
-
-                  "enableCodeScanner": true
-                }
-              ],
-              [
-                "./plugins/withAndroidMainActivityAttributes",
-                {
-                  "android:showWhenLocked": true,
-                  "android:turnScreenOn": true
-                }
-              ],
-              [
-                "expo-build-properties",
-                {
-                  "android": {
-                    "enableProguardInReleaseBuilds": true
-                  }
-                }
-              ]
-           
-        ],
-        "experiments": {
-            "typedRoutes": true
-        }
+  "expo": {
+    "name": "neotree",
+    "slug": "neotree",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
+  }
 }
