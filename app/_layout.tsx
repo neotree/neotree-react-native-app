@@ -35,6 +35,13 @@ export default function AppLayout() {
                             headerShown: false,
                         }}
                     />
+
+                    <Stack.Screen 
+                        name="script/[scriptId]" 
+                        options={{
+                            headerShown: true,
+                        }}
+                    />
                 </Stack>
             </GestureHandlerRootView>
         </AppContextProvider>

@@ -8,6 +8,7 @@ export function useScripts() {
 
     const mounted = useRef(false);
 
+    const [loading, setLoading] = useState(false);
     const [scripts, setScripts] = useState<{ 
         data: Script[]; 
         errors?: string[]; 
@@ -16,8 +17,10 @@ export function useScripts() {
     });
 
     const getScripts = useCallback(async () => {
+        setLoading(true);
         const res = await _getScripts();
         setScripts(res);
+        setLoading(false);
     }, [_getScripts]);
 
     useEffect(() => {
@@ -26,6 +29,7 @@ export function useScripts() {
     }, [getScripts]);
 
     return {
+        loading,
         scripts,
         getScripts,
     };

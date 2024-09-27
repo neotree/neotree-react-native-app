@@ -1,4 +1,5 @@
 import { View, ViewProps } from "react-native";
+import clsx from "clsx";
 
 import { Text, TextProps } from './text';
 
@@ -15,7 +16,31 @@ export function CardTitle({ children, textProps, ...props }: CardTitleProps) {
             >
                 <Text
                     {...textProps}
+                    className={clsx(
+                        'text-lg mb-1 font-semi-bold',
+                        textProps?.className,
+                    )}
                 >{children}</Text>
+            </View>
+        </>
+    );
+}
+
+export type CardContentProps = ViewProps & {
+
+};
+
+export function CardContent({ children, ...props }: CardContentProps) {
+    return (
+        <>
+            <View
+                {...props}
+                className={clsx(
+                    'p-3',
+                    props.className,
+                )}
+            >
+                {children}
             </View>
         </>
     );
@@ -30,6 +55,10 @@ export function Card({ children, ...props }: CardProps) {
         <>
             <View
                 {...props}
+                className={clsx(
+                    'border border-border bg-background rounded-lg',
+                    props.className,
+                )}
             >
                 {children}
             </View>
