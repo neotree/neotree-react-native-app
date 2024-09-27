@@ -1,4 +1,6 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, SplashScreen } from "expo-router";
+import { Drawer } from 'expo-router/drawer';
 
 import { useAppInit } from "@/hooks/use-app-init";
 import { AppContextProvider } from "@/contexts/app";
@@ -6,7 +8,7 @@ import { AppErrors } from "@/components/app-errors";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function HomeScreen() {
+export default function AppLayout() {
     const appData = useAppInit();
 
     const { isReady, errors } = appData;
@@ -17,22 +19,24 @@ export default function HomeScreen() {
 
     return (
         <AppContextProvider {...appData}>
-            <Stack>
-                <Stack.Screen 
-                    name="index" 
-                    options={{
-                        headerShown: true,
-                        title: 'Scripts',
-                    }}
-                />
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <Stack>
+                    <Stack.Screen 
+                        name="(main)" 
+                        options={{
+                            headerShown: false,
+                            title: 'Scripts',
+                        }}
+                    />
 
-                <Stack.Screen 
-                    name="(auth)" 
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-            </Stack>
+                    <Stack.Screen 
+                        name="(auth)" 
+                        options={{
+                            headerShown: false,
+                        }}
+                    />
+                </Stack>
+            </GestureHandlerRootView>
         </AppContextProvider>
     );
 }
