@@ -464,7 +464,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											<View style={{ flex: 1 }}>
 												<Text color="textSecondary">Creation date</Text>
 												<Text>
-													{moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:mm')}
+													{moment(new Date(item?.data?.started_at)).format('DD MMM, YYYY HH:mm')}
 												</Text>
 											</View>
 
