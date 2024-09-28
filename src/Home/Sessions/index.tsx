@@ -76,10 +76,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		let sessions = dbSessions;
 		switch (exportType) {
 			case 'completed':
-				sessions = dbSessions.filter((s: any) => s.data.completed_at);
+				sessions = dbSessions.filter((s: any) => s?.data?.completed_at);
 				break;
 			case 'incomplete':
-				sessions = dbSessions.filter((s: any) => !s.data.completed_at);
+				sessions = dbSessions.filter((s: any) => !s?.data?.completed_at);
 				break;
 			case 'date_range':
 				sessions = getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id) as any;
@@ -420,7 +420,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											</>
 										)}
 
-										{!(item.data.completed_at || item.data.canceled_at) && (
+										{!(item?.data?.completed_at || item?.data?.canceled_at) && (
 											<>
 												<Box flexDirection="row">
 													<Box 
@@ -462,15 +462,15 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											<View style={{ flex: 1 }}>
 												<Text color="textSecondary">Creation date</Text>
 												<Text>
-													{moment(new Date(item.data.started_at)).format('DD MMM, YYYY HH:mm')}
+													{moment(new Date(item?.data?.started_at)).format('DD MMM, YYYY HH:mm')}
 												</Text>
 											</View>
 
 											<View style={{ flex: 1 }}>
-												<Text color="textSecondary">{`${item.data.canceled_at ? 'Cancellation' : 'Completion'}`} date</Text>
+												<Text color="textSecondary">{`${item?.data?.canceled_at ? 'Cancellation' : 'Completion'}`} date</Text>
 												<Text>
-													{(item.data.canceled_at || item.data.completed_at) ?
-														moment(new Date(item.data.canceled_at || item.data.completed_at)).format('DD MMM, YYYY HH:mm')
+													{(item?.data?.canceled_at || item?.data?.completed_at) ?
+														moment(new Date(item?.data?.canceled_at || item?.data?.completed_at)).format('DD MMM, YYYY HH:mm')
 														:
 														'N/A'}
 												</Text>
@@ -539,7 +539,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 									deleteSessions(dbSessions.map((s: any) => s.id));
 									break;
 								case 'incomplete':
-									deleteSessions(dbSessions.filter((s: any) => !s.data.completed_at).map((s: any) => s.id));
+									deleteSessions(dbSessions.filter((s: any) => !s?.data?.completed_at).map((s: any) => s.id));
 									break;
 								case 'date_range':
 									deleteSessions(getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id));
