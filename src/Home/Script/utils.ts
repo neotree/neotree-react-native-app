@@ -51,6 +51,7 @@ type UtilsParams = {
     startTime: string;
     matchingSession: any;
 	session?: any;
+    generatedUID: string;
 };
   
 export const getScriptUtils = ({
@@ -69,6 +70,7 @@ export const getScriptUtils = ({
     startTime,
     matchingSession,
 	session,
+    generatedUID,
 }: UtilsParams) => {
     const matches: any[] = [];
 
@@ -245,14 +247,16 @@ export const getScriptUtils = ({
     function createSessionSummary(_payload: any = {}) {        
         const { completed, cancelled, ...payload } = _payload;
         
-        const uid = form.reduce((acc, { values }) => {
+        let uid = form.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
             if (`${key}`.match(/uid/gi)) return value;
             return acc;
             }, null);
         
             return uid || acc;
-        }, null);
+        }, '');
+
+        uid = uid || generatedUID;
         
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
         
