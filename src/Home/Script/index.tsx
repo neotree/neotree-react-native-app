@@ -95,6 +95,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		startTime,
 		matchingSession: matched?.session || null,
 		session: route.params?.session,
+        generatedUID,
 	});
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
