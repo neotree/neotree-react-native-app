@@ -8,7 +8,7 @@ export function Content({ children, className, ...props }: ViewProps) {
         <View
             {...props}
             className={clsx(
-                'w-[90%] max-w-[500px] mx-auto',
+                'w-[90%] max-w-lg mx-auto',
                 className,
             )}
         >

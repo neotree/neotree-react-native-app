@@ -12,6 +12,10 @@ module.exports = {
                     DEFAULT: '#fff',
                     foreground: '#161622',
                 },
+                danger: {
+                    DEFAULT: '#ff7675',
+                    foreground: '#fff',
+                },
                 primary: {
                     100: '#f0f5f3',
                     200: '#e2ece7',

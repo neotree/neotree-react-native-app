@@ -46,6 +46,26 @@ export function CardContent({ children, ...props }: CardContentProps) {
     );
 }
 
+export type CardFooterProps = ViewProps & {
+
+};
+
+export function CardFooter({ children, ...props }: CardFooterProps) {
+    return (
+        <>
+            <View
+                {...props}
+                className={clsx(
+                    'flex flex-row items-center justify-end',
+                    props.className,
+                )}
+            >
+                {children}
+            </View>
+        </>
+    );
+}
+
 export type CardProps = ViewProps & {
 
 };

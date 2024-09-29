@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
 
 import { db as initDB } from "@/lib/db";
 
 export function useAppInit() {
-    const [isReady, setIsReady] = useState(false);
+    const [dataInitialised, setDataInitialised] = useState(false);
     const [errors, setErrors] = useState<string[]>([]);
     const [db, setDb] = useState<Awaited<ReturnType<typeof initDB>>>(null!);
 
@@ -24,6 +24,11 @@ export function useAppInit() {
         "Roboto-ThinItalic": require("../assets/fonts/Roboto-ThinItalic.ttf"),
     });
 
+    const isReady = useMemo(() => !!(dataInitialised && fontsLoaded), [
+        dataInitialised, 
+        fontsLoaded,
+    ]);
+
     useEffect(() => {
         if (isReady) SplashScreen.hideAsync();
     }, [isReady]);
@@ -36,7 +41,7 @@ export function useAppInit() {
             } catch(e: any) {
                 setErrors([e.message]);
             } finally {
-                setIsReady(true);
+                setDataInitialised(true);
             }
         })();
     }, []);
