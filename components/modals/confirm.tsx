@@ -1,19 +1,11 @@
 'use client';
 
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { FiAlertCircle } from "react-icons/fi";
+import { View } from "react-native";
+import Icon from '@expo/vector-icons/Feather'
 
 import { useConfirmModal } from "@/hooks/use-confirm-modal";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Modal, ModalContent } from "@/components/ui/modal";
+import { Text } from "@/components/ui/text";
   
 export function ConfirmModal() {
     const { 
@@ -28,42 +20,40 @@ export function ConfirmModal() {
     } = useConfirmModal();
 
     return (
-        <AlertDialog
+        <Modal
             open={isOpen}
             onOpenChange={close}
+            title={title}
+            titleProps={{ textProps: { className: 'text-center', }, }}
+            actions={[
+                {
+                    label: negativeLabel,
+                    destructive: true,
+                    color: danger ? 'danger' : undefined,
+                },
+                {
+                    label: positiveLabel,
+                    destructive: true,
+                    onPress: onConfirm,
+                },
+            ]}
         >
-            <AlertDialogContent className="p-0 max-h-[80%] flex flex-col">
-                {!!title && (
-                    <AlertDialogHeader className="py-2 px-4">
-                        <AlertDialogTitle>{title}</AlertDialogTitle>
-                    </AlertDialogHeader>
-                )}
-                
-                <div 
-                    className={cn(
-                        'px-4 flex-1 flex flex-col gap-y-4 items-center sm:items-start sm:flex-row sm:gap-x-4 overflow-y-auto',
-                        !title && 'py-2',
+            <ModalContent>
+                <View className="gap-y-1">
+                    {danger && (
+                        <View className="flex-row justify-center">
+                            <Icon 
+                                name="alert-triangle" 
+                                color={'#ff7675'}
+                                size={48}
+                                />
+                        </View>
                     )}
-                >
-                    {danger && <FiAlertCircle className="text-red-600 min-w-10 min-h-10 w-10 h-10" />}
-                    <div dangerouslySetInnerHTML={{ __html: message, }} />
-                </div>
 
-                <AlertDialogFooter className="px-4 py-2">
-                    <AlertDialogCancel>{negativeLabel}</AlertDialogCancel>
-                    <Button
-                        variant={danger ? 'destructive' : undefined}
-                        asChild
-                    >
-                        <AlertDialogAction
-                            onClick={() => onConfirm?.()}
-                        >
-                            {positiveLabel}
-                        </AlertDialogAction>
-                    </Button>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+                    <Text className="text-center">{message}</Text>
+                </View>
+            </ModalContent>
+        </Modal>
     );
 }
   

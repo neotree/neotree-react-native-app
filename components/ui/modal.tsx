@@ -14,10 +14,10 @@ import {
     ScrollView, 
     Dimensions, 
     TouchableOpacityProps, 
-    GestureResponderEvent 
+    GestureResponderEvent, 
 } from "react-native";
 
-import { Card, CardContent, CardFooter, CardTitle } from "./card";
+import { Card, CardContent, CardFooter, CardTitle, CardTitleProps } from "./card";
 import { Separator } from "./separator";
 import { Text } from "./text";
 import clsx from "clsx";
@@ -36,6 +36,7 @@ export type ModalAction = {
 
 export type ModalProps = RNModalProps & {
     title?: React.ReactNode;
+    titleProps?: CardTitleProps;
     open?: boolean;
     closeOnClickAway?: boolean;
     actions?: ModalAction[];
@@ -65,13 +66,13 @@ export function Modal(props: ModalProps) {
     useEffect(() => { setIsOpen(!!open); }, [open]);
 
     const onOpen = useCallback(() => {
-        onOpenChange?.(true);
         setIsOpen(true);
+        onOpenChange?.(true);
     }, [onOpenChange]);
 
     const onClose = useCallback(() => {
-        onOpenChange?.(false);
         setIsOpen(false);
+        onOpenChange?.(false);
     }, [onOpenChange]);
 
     return (
@@ -99,6 +100,7 @@ export function ModalContent({ children, }: ModalContentProps) {
             title,
             closeOnClickAway = true,
             actions = [],
+            titleProps,
         },
         onClose,
     } = useModalContext();
@@ -151,7 +153,7 @@ export function ModalContent({ children, }: ModalContentProps) {
                             }}
                         >
                             <CardContent className="p-0">
-                                {!!title && <CardTitle className="py-2 px-3">{title}</CardTitle>}
+                                {!!title && <CardTitle {...titleProps} className={clsx('py-2 px-3', titleProps?.className)}>{title}</CardTitle>}
 
                                 <View 
                                     style={{ maxHeight: MAX_CONTENT_HEIGHT, }}

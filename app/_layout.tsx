@@ -5,6 +5,8 @@ import { Drawer } from 'expo-router/drawer';
 import { useAppInit } from "@/hooks/use-app-init";
 import { AppContextProvider } from "@/contexts/app";
 import { AppErrors } from "@/components/app-errors";
+import { ConfirmModal } from '@/components/modals/confirm';
+import { AlertModal } from '@/components/modals/alert';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +22,8 @@ export default function AppLayout() {
     return (
         <AppContextProvider {...appData}>
             <GestureHandlerRootView style={{ flex: 1 }}>
+                <ConfirmModal />
+                <AlertModal />
                 <Stack>
                     <Stack.Screen 
                         name="(main)" 

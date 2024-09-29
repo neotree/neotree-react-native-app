@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Text as RNText, TextProps as RNTextProps } from "react-native";
 
 export type TextProps = RNTextProps & {
-    className?: string;
+    
 };
 
 export function Text({ 

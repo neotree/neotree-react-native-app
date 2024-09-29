@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Text, TextProps } from './text';
 
 export type CardTitleProps = Omit<ViewProps, 'children'> & {
-    children: TextProps['children'];
+    children?: TextProps['children'];
     textProps?: TextProps;
 };
 

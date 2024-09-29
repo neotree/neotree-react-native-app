@@ -5,39 +5,65 @@ import { useScripts } from "@/hooks/use-scripts";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
-import { Modal, ModalClose, ModalContent, ModalTrigger } from "@/components/ui/modal";
+import { Modal, ModalContent, ModalTrigger } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { useConfirmModal } from "@/hooks/use-confirm-modal";
+import { useAlertModal } from "@/hooks/use-alert-modal";
 
 export default function HomeScreen() {
     const { scripts, loading, getScripts, } = useScripts();
+    const { confirm } = useConfirmModal();
+    const { alert } = useAlertModal();
 
     return (
         <>
             <SafeAreaView className="pt-5">
-                <Modal 
-                    closeOnClickAway={false}
-                    title="Test this modal component"
-                    actions={[
-                        {
-                            label: 'Cancel',
-                            color: 'danger',
-                            destructive: true,
-                        },
-                        {
-                            label: 'Continue',
-                        },
-                    ]}
-                >
-                    <ModalTrigger as={Button}>
-                        Open modal
-                    </ModalTrigger>
+                <View className="flex-row gap-x-2">
+                    <Modal 
+                        closeOnClickAway={false}
+                        title="Test this modal component"
+                        actions={[
+                            {
+                                label: 'Cancel',
+                                color: 'danger',
+                                destructive: true,
+                            },
+                            {
+                                label: 'Continue',
+                            },
+                        ]}
+                    >
+                        <ModalTrigger as={Button}>
+                            Open modal
+                        </ModalTrigger>
 
-                    <ModalContent>
-                        <View>
-                            <Text>This is a test!</Text>
-                        </View>
-                    </ModalContent>
-                </Modal>
+                        <ModalContent>
+                            <View>
+                                <Text>This is a test!</Text>
+                            </View>
+                        </ModalContent>
+                    </Modal>
+
+                    <Button
+                        onPress={() => confirm(() => {}, {
+                            title: 'Delete item?',
+                            message: 'Are you sure?',
+                            danger: true,
+                        })}
+                    >
+                        Confirm
+                    </Button>
+
+                    <Button
+                        onPress={() => alert({
+                            title: 'Item deleted',
+                            message: 'Item was deleted succefully!',
+                            variant: 'success',
+                        })}
+                    >
+                        Alert
+                    </Button>
+                </View>
 
                 <FlatList 
                     data={scripts.data}
@@ -48,9 +74,6 @@ export default function HomeScreen() {
                         return (
                             <TouchableOpacity
                                 onPress={() => router.push(`/script/${item.scriptId}`)}
-                                onLongPress={() => {
-                                    alert(10);
-                                }}
                             >
                                 <Content>
                                     <Card className="mb-2">
