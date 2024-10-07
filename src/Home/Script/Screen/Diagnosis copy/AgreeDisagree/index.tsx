@@ -13,7 +13,8 @@ type DiagnosisProps = types.ScreenTypeProps & {
 
 export function AgreeDisagree(props: DiagnosisProps) {
 	const { onNext } = props;
-	const { activeScreen } = useContext();
+    const ctx = useContext();
+	const { activeScreen } = ctx;
 
 	return (
 		<>
@@ -21,6 +22,7 @@ export function AgreeDisagree(props: DiagnosisProps) {
 				{...props}
 				variant="hcw"
 				instructions={activeScreen.data.hcwDiagnosesInstructions}
+                instructionsStyle={ctx.getFieldPreferences('hcwDiagnosesInstructions')?.style}
 			/>
 
 			<Br spacing='s'/>
@@ -29,6 +31,7 @@ export function AgreeDisagree(props: DiagnosisProps) {
 				{...props}
 				variant="suggested"
 				instructions={activeScreen.data.suggestedDiagnosesInstructions}
+                instructionsStyle={ctx.getFieldPreferences('suggestedDiagnosesInstructions')?.style}
 			/>
 
 			<Br spacing='s'/>

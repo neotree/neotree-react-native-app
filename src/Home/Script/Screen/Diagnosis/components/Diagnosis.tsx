@@ -3,6 +3,7 @@ import { TouchableOpacity, Modal, Platform, ScrollView, Dimensions } from 'react
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { Box, Br, Button, Content, Fab, Header, Text, TextInput, useTheme, Image } from '../../../../../components';
 import * as types from '../../../../../types';
+import { useContext } from '../../../Context';
 
 const { height: winH } = Dimensions.get('window');
 
@@ -14,15 +15,16 @@ type DiagnosisProps = {
 
 export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
     const theme = useTheme();
+    const ctx = useContext();
 
     const [openModal, setOpenModal] = React.useState(false);
     const [form, _setForm] = React.useState<types.Diagnosis>(diagnosis);
     const setForm = (s: Partial<types.Diagnosis>) => _setForm((prev: types.Diagnosis) => ({ ...prev, ...(typeof s === 'function' ? s(prev) : s) }));
 
     const instrunctions = [
-        { text: diagnosis.text1, image: diagnosis.image1 },
-        { text: diagnosis.text2, image: diagnosis.image2 },
-        { text: diagnosis.text3, image: diagnosis.image3 }
+        { text: diagnosis.text1, image: diagnosis.image1, style: ctx.getFieldPreferences('text1')?.style },
+        { text: diagnosis.text2, image: diagnosis.image2, style: ctx.getFieldPreferences('text2')?.style },
+        { text: diagnosis.text3, image: diagnosis.image3, style: ctx.getFieldPreferences('text3')?.style }
     ].filter(item => item.text || item.image);
 
     const onClose = () => {
@@ -141,12 +143,12 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
 
                                 <Br spacing='s'/>                                
 
-                                {instrunctions.map(({ image, text }, i) => {
+                                {instrunctions.map(({ image, text, style }, i) => {
                                     const key = `${i}`;
                                     return (
                                         <React.Fragment key={key}>
                                             <Box key={key} style={{ marginVertical: 10 }}>
-                                                {!!text && <Text>{text}</Text>}
+                                                {!!text && <Text style={style}>{text}</Text>}
 
                                                 {!!image && (
                                                     <Image

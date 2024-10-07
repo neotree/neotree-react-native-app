@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
 
+import { Preferences } from '../types';
+
 export const expoContantsExtra = {
     ...Constants.expoConfig?.extra,
 } as { [key: string]: any; };
@@ -9,6 +11,15 @@ export const countries = (expoContantsExtra.countries || []) as { name: string; 
 export const APP_ENV: string = expoContantsExtra.APP_ENV;
 export const APP_VERSION: string = Constants.expoConfig?.version!;
 export const SDK_VERSION: string = Constants.expoConfig?.sdkVersion!;
+
+export const defaultPreferences = { 
+    fontSize: {}, 
+    fontWeight: {}, 
+    fontStyle: {}, 
+    textColor: {}, 
+    backgroundColor: {}, 
+    highlight: {},
+} as Preferences;
 
 export const fieldsTypes = {
     DATE: 'date',

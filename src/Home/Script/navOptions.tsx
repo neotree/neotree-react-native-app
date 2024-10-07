@@ -12,9 +12,10 @@ type GetNavOptionsParams = {
 	theme: Theme;
 	activeScreen: null | types.Screen;
 	activeScreenIndex: number;
-	goBack: () => void;
-	confirmExit: () => void;
 	moreNavOptions: null | MoreNavOptions;
+    goNext: () => void;
+    goBack: () => void;
+	confirmExit: () => void;
 };
 
 const headerTitlePlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = () => 
@@ -50,13 +51,25 @@ const headerLeft: (params: GetNavOptionsParams) => DrawerNavigationOptions['head
 		);
 	};
 
-function RightActions({ color, screen, confirmExit }: { color?: string; screen: types.Screen; confirmExit: () => void; }) {
+function RightActions({ color, screen, confirmExit, goNext, }: { color?: string; screen: types.Screen; confirmExit: () => void; goNext: () => void; }) {
 	const [openModal, setOpenModal] = React.useState(false);
 	const [openInfoModal, setOpenInfoModal] = React.useState(false);
 
 	return (
 		<>
 			<Box flexDirection="row" justifyContent="flex-end" columnGap="s">
+                {!!screen && (
+                    <TouchableOpacity
+                        style={{ alignItems: "center", justifyContent: 'center', }}
+                        onPress={() => goNext()}
+                    >
+                        <Text
+                            fontWeight="bold"
+                            color="grey-500"
+                        >SKIP</Text>
+                    </TouchableOpacity>
+                )}
+
 				{!!screen?.data?.infoText && (
 					<Box marginRight="s">
 						<TouchableOpacity onPress={() => setOpenInfoModal(true)}>
@@ -117,14 +130,14 @@ function RightActions({ color, screen, confirmExit }: { color?: string; screen: 
 	);
 }
 
-const headerRight: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerRight'] = ({ activeScreen, confirmExit }) =>
+const headerRight: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerRight'] = ({ activeScreen, goNext, confirmExit }) =>
 	({ tintColor }) => {
-		return <RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} />;
+		return <RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} goNext={goNext} />;
 	};
 
 const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = 
     params => {
-        const { script, activeScreen, moreNavOptions, goBack, confirmExit } = params;
+        const { script, activeScreen, moreNavOptions, goBack, confirmExit, goNext } = params;
         return ({ tintColor }) => {
             const title = moreNavOptions?.title || (activeScreen ? activeScreen?.data?.title : script?.data?.title);
             const headerRight = moreNavOptions?.headerRight;
@@ -166,7 +179,7 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
                     
                     {!!script && (
                         <Box>
-                            <RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} />
+                            <RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} goNext={goNext} />
                         </Box>
                     )}
                 </View>

@@ -3,6 +3,15 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export * from '../config/types';
 
+export type Preferences = {
+    fontSize: { [key: string]: undefined | 'default' | 'xs' | 'sm' | 'lg' | 'xl'; };
+    fontWeight: { [key: string]: undefined | 'bold'; };
+    fontStyle: { [key: string]: undefined | string[]; };
+    textColor: { [key: string]: undefined | string; };
+    backgroundColor: { [key: string]: undefined | string; };
+    highlight: { [key: string]: undefined | boolean; };
+};
+
 export type Location = { 
   id: number;
   country: string;
