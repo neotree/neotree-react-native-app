@@ -6,7 +6,7 @@ import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { createTablesIfNotExist, dbTransaction } from './db';
 import { makeApiCall, reportErrors } from './api';
-import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
+import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
@@ -35,11 +35,13 @@ export async function syncData(opts?: { force?: boolean; }) {
 
         if (shouldSync) {
             try{
+                const location = await getLocation();
+
                 last_sync_date = new Date().toISOString();
 
                 const res = await makeApiCall(
                     'webeditor',
-                    `/sync-data?${queryString.stringify({ deviceId, })}`,
+                    `/sync-data?${queryString.stringify({ deviceId, hospitalId: location?.hospital, })}`,
                 );
                 const json = await res.json();
         
