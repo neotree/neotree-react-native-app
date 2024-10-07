@@ -29,7 +29,10 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 			{!!highlightedText && (
 				<Box backgroundColor="highlight">
 					<Content>
-						<Text color="primary">{`${highlightedText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
+						<Text 
+                            color="primary"
+                            style={ctx.getFieldPreferences('contentText')?.style}
+                        >{`${highlightedText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
 					</Content>
 				</Box>
 			)}
