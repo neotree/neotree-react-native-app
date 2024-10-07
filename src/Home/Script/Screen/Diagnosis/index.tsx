@@ -75,7 +75,7 @@ export function Diagnosis(props: DiagnosisProps) {
             if (section === 'select') {
 				const suggested = (ctx.getSuggestedDiagnoses() || []) as types.Diagnosis[];        
 				const _entries = [
-					...values, 
+					// ...values, 
 					...suggested.filter(d => !values.map(item => item.label).includes(d.name)).map(d => diagnosisToEntryValue({
 						...d,
 						suggested: true,
@@ -83,6 +83,7 @@ export function Diagnosis(props: DiagnosisProps) {
 				];
 
                 const entries = [
+                    ...values,
                     ..._entries.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
                         .sort((a, b) => a.diagnosis.severity_order - b.diagnosis.severity_order),
                     ..._entries.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
@@ -116,9 +117,9 @@ export function Diagnosis(props: DiagnosisProps) {
                     setSection('sort_priority');
                 }
             } else if (section === 'sort_priority') {
-                setDiagnoses(diagnoses
-                    .sort((a, b) => a.isSecondaryProvisionalDiagnosis > b.isSecondaryProvisionalDiagnosis ? -1 : 1)
-                    .sort((a, b) => a.isPrimaryProvisionalDiagnosis > b.isPrimaryProvisionalDiagnosis ? -1 : 1));
+                // setDiagnoses(diagnoses
+                //     .sort((a, b) => a.isSecondaryProvisionalDiagnosis > b.isSecondaryProvisionalDiagnosis ? -1 : 1)
+                //     .sort((a, b) => a.isPrimaryProvisionalDiagnosis > b.isPrimaryProvisionalDiagnosis ? -1 : 1));
                 if (acceptedDiagnoses[0]) {
                     setActiveDiagnosisIndex(0);
                 } else {
@@ -159,7 +160,7 @@ export function Diagnosis(props: DiagnosisProps) {
             hideHeaderRight: false,
             hideSearch: section !== 'select',
             title: (() => {
-                if (activeDiagnosisIndex !== null) return acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name;
+                if (activeDiagnosisIndex !== null) return `${acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name}`;
                 if (section === 'agree_disagree') return `${ctx.activeScreen?.data?.title2 || ''}`;
                 if (section === 'sort_priority') return `${ctx.activeScreen?.data?.title3 || ''}`;
                 return;
