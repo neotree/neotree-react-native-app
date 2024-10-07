@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, ViewProps } from 'react-native';
+import { View, ViewProps, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export type ContentProps = React.PropsWithChildren<ViewProps & {
     containerProps?: ViewProps;
 }>;
 
 export const CONTENT_STYLES = {
-	width: '95%',
+	width: width * 0.95,
 	maxWidth: 500,
 	padding: 10,
 };
