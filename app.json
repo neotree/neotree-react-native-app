@@ -21,9 +21,15 @@
         "ios": {
             "supportsTablet": true,
             "bundleIdentifier": "org.neotree.neotreeapp",
-            "buildNumber": "1.0.0"
+            "buildNumber": "1.0.0",
+            "infoPlist": {
+                "NSAppTransportSecurity": { 
+                    "NSAllowsArbitraryLoads": true 
+                }
+            }
         },
         "android": {
+            "usesCleartextTraffic": true,
             "package": "org.neotree.neotreeapp",
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/icon.png",
