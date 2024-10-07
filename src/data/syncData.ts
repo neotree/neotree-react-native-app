@@ -2,12 +2,11 @@
 import NetInfo from '@react-native-community/netinfo';
 import queryString from 'query-string';
 
+import { APP_VERSION } from '@/src/constants';
+import { getDeviceID } from '@/src/utils/getDeviceID';
 import { createTablesIfNotExist, dbTransaction } from './db';
 import { makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions } from './queries';
-import { APP_VERSION } from '../constants';
-import { getDeviceID } from '../utils/getDeviceID';
-import { patch } from '@/src/utils/patch';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
@@ -164,9 +163,6 @@ export async function syncData(opts?: { force?: boolean; }) {
             }
         }
     }
-
-    // TODO: REMOVE THIS
-    patch();
 
     const _app = await getApplication();
 
