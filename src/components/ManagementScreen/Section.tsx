@@ -1,4 +1,6 @@
 import React from 'react';
+import { TextProps } from 'react-native';
+
 import { Text } from '../Theme';
 import { Card } from '../Card';
 import { Image } from '../Image';
@@ -8,9 +10,10 @@ type MgtSectionProps = {
     title?: string;
     text?: string;
     image?: string;
+    textStyle?: TextProps['style'];
 };
 
-export function MgtSection({ title, text, image }: MgtSectionProps) {
+export function MgtSection({ title, text, image, textStyle }: MgtSectionProps) {
     if (!(title || text || image)) return null;
     
     return (
@@ -18,14 +21,14 @@ export function MgtSection({ title, text, image }: MgtSectionProps) {
             {!!title && (
                 <>
                     <Text variant="title3" fontWeight="bold">{title}</Text>
-                    <Br />
+                    <Br spacing='s' />
                 </>
             )}
 
             {!!text && (
                 <>
-                    <Text>{text}</Text>
-                    <Br />
+                    <Text style={textStyle}>{text}</Text>
+                    <Br spacing='s' />
                 </>
             )}
 
@@ -36,7 +39,7 @@ export function MgtSection({ title, text, image }: MgtSectionProps) {
                         resizeMode="contain"
                         source={{ uri: image }}
                     />
-                    <Br />
+                    <Br spacing='s' />
                 </>
             )}
         </Card>

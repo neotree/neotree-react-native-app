@@ -18,6 +18,7 @@ export function Screen() {
                             <Box flex={1}>
                                 <Text
                                     color="primaryContrastText"
+                                    style={ctx.getFieldPreferences('actionText')?.style}
                                 >{ctx.activeScreen?.data?.actionText}</Text>
                             </Box>
 

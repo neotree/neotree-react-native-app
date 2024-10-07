@@ -1,6 +1,6 @@
 import React from 'react';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { FlatList } from 'react-native';
+import { FlatList, TextProps } from 'react-native';
 import * as types from '../../../../../types';
 import { CONTENT_STYLES, Box, Text, Content } from '../../../../../components';
 import { DiagnosisListItem } from './DiagnossListItem';
@@ -10,10 +10,11 @@ type DiagnosisProps = types.ScreenTypeProps & {
 	suggestedDiagnoses: any[];
 	variant: 'hcw' | 'suggested' | 'rejected';
 	instructions?: string;
+    instructionsStyle?: TextProps['style'];
 };
 
 export function DiagnosesList(props: DiagnosisProps) {
-	const { hcwDiagnoses, suggestedDiagnoses, variant, instructions } = props;
+	const { hcwDiagnoses, suggestedDiagnoses, variant, instructions, instructionsStyle } = props;
 
 	let diagnoses: any[] = [];
 	if (variant === 'hcw') diagnoses = hcwDiagnoses;
@@ -75,7 +76,10 @@ export function DiagnosesList(props: DiagnosisProps) {
 						{!!instructions && (
 							<Box style={{ marginBottom: 10 }}>
 								<Text color="primary">Instructions</Text>
-								<Text variant="caption">{instructions}</Text>
+								<Text 
+                                    variant="caption"
+                                    style={instructionsStyle}
+                                >{instructions}</Text>
 							</Box>
 						)}
 					</>

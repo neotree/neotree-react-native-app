@@ -66,7 +66,10 @@ export function SelectDiagnoses({
 								<>
 									<Box>
 										<Text color="primary">Instructions</Text>
-										<Text variant="caption">{ctx.activeScreen?.data?.instructions}</Text>
+										<Text 
+                                            variant="caption"
+                                            style={ctx.getFieldPreferences('instructions')?.style}
+                                        >{ctx.activeScreen?.data?.instructions}</Text>
 									</Box>
 								</>
 							)}
