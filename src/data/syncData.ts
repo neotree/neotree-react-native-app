@@ -29,10 +29,9 @@ export async function syncData(opts?: { force?: boolean; }) {
 
         last_sync_date = app?.last_sync_date;
 
-        let webeditorInfo = app?.webeditor_info;
-        const shouldSync = (deviceRegJSON?.info?.version !== app?.webeditor_info?.version) || (
-            (webeditorInfo && deviceRegJSON?.info?.last_sync_date && (webeditorInfo.last_backup_date !== deviceRegJSON.info.last_sync_date))
-        );
+        const shouldSync = opts?.force || 
+            (app?.mode === 'development') ||
+            !((app?.mode === 'production') && (deviceRegJSON?.info?.version === app?.webeditor_info?.version));
 
         if (shouldSync) {
             try{
@@ -46,7 +45,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                 );
                 const json = await res.json();
         
-                webeditorInfo = json?.webeditorInfo || {};
+                const webeditorInfo = json?.webeditorInfo || {};
                 const device = json?.device || {};
                 const configKeys = json?.configKeys || [];
                 const scripts = json?.scripts || [];
