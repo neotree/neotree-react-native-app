@@ -6,6 +6,9 @@ export default function MainLayout() {
         <>
             <Drawer
                 drawerContent={props => <DrawerContent drawerContentComponentProps={props} />}
+                screenOptions={{
+                    headerTintColor: '#70a487',
+                }}
             >
                 <Drawer.Screen
                     name="index"
