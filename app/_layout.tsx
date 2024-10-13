@@ -1,12 +1,12 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, SplashScreen } from "expo-router";
-import { Drawer } from 'expo-router/drawer';
 
 import { useAppInit } from "@/hooks/use-app-init";
 import { AppContextProvider } from "@/contexts/app";
 import { AppErrors } from "@/components/app-errors";
 import { ConfirmModal } from '@/components/modals/confirm';
 import { AlertModal } from '@/components/modals/alert';
+import config from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,9 +24,14 @@ export default function AppLayout() {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <ConfirmModal />
                 <AlertModal />
-                <Stack>
+
+                <Stack
+                    screenOptions={{
+                        headerTintColor: config.colors.primary.DEFAULT,
+                    }}
+                >
                     <Stack.Screen 
-                        name="(main)" 
+                        name="(drawer)" 
                         options={{
                             headerShown: false,
                             title: 'Scripts',
@@ -42,8 +47,12 @@ export default function AppLayout() {
 
                     <Stack.Screen 
                         name="script/[scriptId]" 
-                        options={{
-                            headerShown: true,
+                        options={props => {
+                            const params = props.route.params as { title: string; scriptId: string; };
+                            return {
+                                headerShown: true,
+                                title: params.title || '',
+                            };
                         }}
                     />
                 </Stack>

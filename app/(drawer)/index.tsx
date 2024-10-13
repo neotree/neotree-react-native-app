@@ -73,7 +73,10 @@ export default function HomeScreen() {
                     renderItem={({ item }) => {
                         return (
                             <TouchableOpacity
-                                onPress={() => router.push(`/script/${item.scriptId}`)}
+                                onPress={() => router.push({
+                                    pathname: `/script/${item.scriptId}?title=${item.title}`,
+                                    // params: { title: item.title, },
+                                })}
                             >
                                 <Content>
                                     <Card className="mb-2">
