@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useAppContext } from "@/contexts/app";
 import { Script } from "@/types";
+import { getScripts as _getScripts } from "@/data";
 
 export function useScripts() {
-    const { getScripts: _getScripts } = useAppContext();
-
     const mounted = useRef(false);
 
     const [loading, setLoading] = useState(false);

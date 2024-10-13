@@ -2,12 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import { SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
 
-import { db as initDB } from "@/lib/db";
+import { initDB } from '@/data';
 
 export function useAppInit() {
     const [dataInitialised, setDataInitialised] = useState(false);
     const [errors, setErrors] = useState<string[]>([]);
-    const [db, setDb] = useState<Awaited<ReturnType<typeof initDB>>>(null!);
 
     const [fontsLoaded, loadFontsError] = useFonts({
         "Roboto-Black": require("../assets/fonts/Roboto-Black.ttf"),
@@ -36,8 +35,7 @@ export function useAppInit() {
     useEffect(() => {
         (async () => {
             try {
-                const db = await initDB();
-                setDb(db);
+                await initDB();
             } catch(e: any) {
                 setErrors([e.message]);
             } finally {
@@ -46,9 +44,13 @@ export function useAppInit() {
         })();
     }, []);
 
+    const appErrors = useMemo(() => [
+        ...(!loadFontsError ? [] : [loadFontsError.message]),
+        ...errors,
+    ], [errors, loadFontsError]);
+
     return {
         isReady,
-        errors,
-        ...db,
+        errors: appErrors,
     };
 }

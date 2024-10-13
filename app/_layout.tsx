@@ -1,18 +1,19 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, SplashScreen } from "expo-router";
 
+import { useTheme } from '@/hooks/use-theme';
 import { useAppInit } from "@/hooks/use-app-init";
 import { AppContextProvider } from "@/contexts/app";
 import { AppErrors } from "@/components/app-errors";
 import { ConfirmModal } from '@/components/modals/confirm';
 import { AlertModal } from '@/components/modals/alert';
-import config from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
-    const appData = useAppInit();
+    const theme = useTheme();
 
+    const appData = useAppInit();
     const { isReady, errors } = appData;
 
     if (!isReady) return null;
@@ -27,7 +28,7 @@ export default function AppLayout() {
 
                 <Stack
                     screenOptions={{
-                        headerTintColor: config.colors.primary.DEFAULT,
+                        headerTintColor: theme.primaryColor,
                     }}
                 >
                     <Stack.Screen 
