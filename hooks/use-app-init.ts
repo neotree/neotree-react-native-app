@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from "react";
+import { useAssets } from "expo-asset";
 
+import { assets } from "@/constants";
 import { useDatabase } from "./use-database";
 import { useFonts } from "./use-fonts";
 import { useAuthentication } from "./use-authentication";
@@ -10,6 +12,8 @@ export function useAppInit(options?: {
     onIsReadyWithoutErrors?: () => void;
 }) {
     const { onIsReady, onIsReadyWithoutErrors } = { ...options, };
+
+    const [, loadAssetsError] = useAssets(Object.values(assets));
 
     const { databaseLoaded, loadDatabaseErrors, } = useDatabase();
     const { fontsLoaded, loadFontsErrors, } = useFonts();
@@ -34,11 +38,13 @@ export function useAppInit(options?: {
         ...(loadAuthInfoErrors || []),
         ...(loadDatabaseErrors || []),
         ...(loadDeviceIdErrors || []),
+        ...(loadAssetsError ? [loadAssetsError.message] : []),
     ], [
         loadFontsErrors, 
         loadAuthInfoErrors,
         loadDatabaseErrors,
         loadDeviceIdErrors,
+        loadAssetsError,
     ]);
 
     useEffect(() => { 

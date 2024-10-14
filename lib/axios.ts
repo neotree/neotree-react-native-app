@@ -4,7 +4,7 @@ import logger from "@/lib/logger";
 
 export async function getAxiosClient() {
     const baseURL = 'https://zim-dev-webeditor.neotree.org/api';
-    const apiKey = '';
+    const apiKey = process.env.EXPO_PUBLIC_API_KEY || '';
 
     const axiosClient = axios.create({
         baseURL,
