@@ -1,3 +1,8 @@
+export type DataResponse<T = any> = {
+    data: T;
+    errors?: string[];
+};
+
 export type ScriptItem = {
     id: string;
     label: string;

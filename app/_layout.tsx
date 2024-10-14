@@ -14,11 +14,13 @@ export default function AppLayout() {
     const theme = useTheme();
 
     const appData = useAppInit();
-    const { isReady, errors } = appData;
+    const { isReady, errors, authenticated } = appData;
 
     if (!isReady) return null;
 
-    if (errors.length) return <AppErrors errors={errors} />
+    if (errors.length) return <AppErrors errors={errors} />;
+
+    console.log(authenticated ? '(drawer)' : '(auth)')
 
     return (
         <AppContextProvider {...appData}>
@@ -27,23 +29,21 @@ export default function AppLayout() {
                 <AlertModal />
 
                 <Stack
+                    initialRouteName={authenticated ? '(drawer)' : '(auth)'}
                     screenOptions={{
                         headerTintColor: theme.primaryColor,
+                        headerShown: false,
                     }}
                 >
                     <Stack.Screen 
                         name="(drawer)" 
                         options={{
-                            headerShown: false,
                             title: 'Scripts',
                         }}
                     />
 
                     <Stack.Screen 
                         name="(auth)" 
-                        options={{
-                            headerShown: false,
-                        }}
                     />
 
                     <Stack.Screen 

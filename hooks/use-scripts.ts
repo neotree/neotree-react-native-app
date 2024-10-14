@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Script } from "@/types";
-import { getScripts as _getScripts } from "@/data";
 
 export function useScripts() {
     const mounted = useRef(false);
@@ -16,10 +15,11 @@ export function useScripts() {
 
     const getScripts = useCallback(async () => {
         setLoading(true);
-        const res = await _getScripts();
-        setScripts(res);
+        // TODO: get DB scripts
+        // const res = await _getScripts();
+        // setScripts(res);
         setLoading(false);
-    }, [_getScripts]);
+    }, []);
 
     useEffect(() => {
         if (!mounted.current) getScripts();
