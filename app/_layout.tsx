@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, SplashScreen } from "expo-router";
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -20,18 +20,20 @@ export default function AppLayout() {
 
     const { remotedSynced, syncRemoteErrors = [], sync } = useSyncRemote({ syncOnmount: false, });
     const appData = useAppInit({
-        onIsReadyWithoutErrors: sync, // we want to sync when the app is ready
+        onInitialisedWithoutErrors: sync, // we want to sync when the app is ready
     });
 
-    const { isReady, errors, authenticated } = appData;
+    const { initialised, errors, authenticated } = appData;
+
+    const appIsReady = useMemo(() => initialised && remotedSynced, [initialised, remotedSynced]);
 
     useEffect(() => {
-        if (isReady && remotedSynced) SplashScreen.hideAsync();
-    }, [isReady, remotedSynced]);
+        if (appIsReady) SplashScreen.hideAsync();
+    }, [appIsReady]);
 
     const allErrors = [...errors, ...syncRemoteErrors];
 
-    if (!isReady) return null;
+    if (!appIsReady) return null;
 
     if (allErrors.length) {
         return (

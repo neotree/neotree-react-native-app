@@ -8,10 +8,10 @@ import { useAuthentication } from "./use-authentication";
 import { useDeviceId } from "./use-device-id";
 
 export function useAppInit(options?: {
-    onIsReady?: () => void;
-    onIsReadyWithoutErrors?: () => void;
+    onInitialised?: () => void;
+    onInitialisedWithoutErrors?: () => void;
 }) {
-    const { onIsReady, onIsReadyWithoutErrors } = { ...options, };
+    const { onInitialised, onInitialisedWithoutErrors } = { ...options, };
 
     const [, loadAssetsError] = useAssets(Object.values(assets));
 
@@ -20,7 +20,7 @@ export function useAppInit(options?: {
     const { authInfoLoaded, loadAuthInfoErrors, ...authInfo } = useAuthentication();
     const { deviceId, deviceIdLoaded, loadDeviceIdErrors, } = useDeviceId();
 
-    const isReady = useMemo(() => !!(
+    const initialised = useMemo(() => !!(
         authInfoLoaded && 
         fontsLoaded &&
         databaseLoaded &&
@@ -48,14 +48,14 @@ export function useAppInit(options?: {
     ]);
 
     useEffect(() => { 
-        if (isReady) {
-            onIsReady?.(); 
-            if (!appErrors.length) onIsReadyWithoutErrors?.();
+        if (initialised) {
+            onInitialised?.(); 
+            if (!appErrors.length) onInitialisedWithoutErrors?.();
         }
-    }, [isReady, appErrors, onIsReady, onIsReadyWithoutErrors]);
+    }, [initialised, appErrors, onInitialised, onInitialisedWithoutErrors]);
 
     return {
-        isReady,
+        initialised,
         deviceId,
         errors: appErrors,
         ...authInfo,

@@ -1,6 +1,10 @@
 export const asyncStorageKeys = {
     BEARER_TOKEN: 'BEARER_TOKEN',
     DEVICE_ID: 'DEVICE_ID',
+    DEVICE_HASH: 'DEVICE_HASH',
+    LAST_REMOTE_SYNC_DATE: 'LAST_REMOTE_SYNC_DATE',
+    COUNTRY_ISO: 'COUNTRY_ISO',
+    HOSPITAL_ID: 'HOSPITAL_ID',
 };
 
 export const assets = {
