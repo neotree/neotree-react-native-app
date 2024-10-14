@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { getAuthenticationInfo, defaultAuthenticationInfo } from '@/data/auth';
+import { DataResponse } from '@/types';
+import { BEARER_TOKEN } from '@/constants/async-storage';
+import logger from '@/lib/logger';
+
+const defaultAuthenticationInfo: DataResponse<{ authenticated: boolean; }> = {
+    data: { 
+        authenticated: false, 
+    }, 
+};
 
 export function useAuthentication() {
     const [info, setInfo] = useState<typeof defaultAuthenticationInfo>(defaultAuthenticationInfo);
@@ -8,9 +17,22 @@ export function useAuthentication() {
 
     useEffect(() => {
         (async () => {
-            const res = await getAuthenticationInfo();
-            setInfo(res);
-            setAuthInfoLoaded(true);
+            try {
+                const bearerToken = await AsyncStorage.getItem(BEARER_TOKEN);
+                setInfo({ 
+                    data: {
+                        authenticated: !!bearerToken,
+                    }, 
+                });
+            } catch(e: any) {
+                logger.error('getAuthenticationInfo ERROR', e.message);
+                setInfo({ 
+                    ...defaultAuthenticationInfo,
+                    errors: [e.message], 
+                });
+            } finally {
+                setAuthInfoLoaded(true);
+            }
         })();
     }, []);
 

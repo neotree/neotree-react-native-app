@@ -20,8 +20,6 @@ export default function AppLayout() {
 
     if (errors.length) return <AppErrors errors={errors} />;
 
-    console.log(authenticated ? '(drawer)' : '(auth)')
-
     return (
         <AppContextProvider {...appData}>
             <GestureHandlerRootView style={{ flex: 1 }}>
