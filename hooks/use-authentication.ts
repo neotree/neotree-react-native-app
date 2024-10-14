@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DataResponse } from '@/types';
-import { BEARER_TOKEN } from '@/constants/async-storage';
+import { asyncStorageKeys } from '@/constants';
 import logger from '@/lib/logger';
 
 const defaultAuthenticationInfo: DataResponse<{ authenticated: boolean; }> = {
@@ -18,7 +18,7 @@ export function useAuthentication() {
     useEffect(() => {
         (async () => {
             try {
-                const bearerToken = await AsyncStorage.getItem(BEARER_TOKEN);
+                const bearerToken = await AsyncStorage.getItem(asyncStorageKeys.BEARER_TOKEN);
                 setInfo({ 
                     data: {
                         authenticated: !!bearerToken,

@@ -12,8 +12,8 @@ declare global {
 function dbInit() {
     const expo = openDatabaseSync("neotree.db");
     const db = drizzle(expo, { 
-        schema, 
-        logger: !isProd, 
+        // schema, 
+        // logger: !isProd, 
     });
     return db;
 }

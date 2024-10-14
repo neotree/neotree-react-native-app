@@ -14,9 +14,11 @@
     "dependencies": {
         "@react-native-async-storage/async-storage": "1.23.1",
         "@react-navigation/drawer": "^6.7.2",
+        "axios": "^1.7.7",
         "clsx": "^2.1.1",
         "drizzle-orm": "^0.34.1",
         "expo": "~51.0.37",
+        "expo-application": "^5.9.1",
         "expo-asset": "~10.0.10",
         "expo-constants": "~16.0.2",
         "expo-file-system": "~17.0.1",
