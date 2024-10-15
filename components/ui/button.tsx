@@ -16,7 +16,8 @@ export function Button({
             <TouchableOpacity
                 {...props}
                 className={clsx(
-                    'bg-primary py-0.5 px-1 rounded-lg',
+                    'bg-primary py-2 px-2 rounded-lg flex-row justify-center',
+                    props.disabled && 'opacity-50',
                     className,
                 )}
             >

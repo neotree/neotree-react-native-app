@@ -53,7 +53,7 @@ export function useAppInit() {
     const isReady = useMemo(() => remotedSynced && initialised, [initialised, remotedSynced]);
 
     useEffect(() => {
-        if (initialised && !initialiseErrors) sync();
+        if (initialised && !initialiseErrors.length) sync();
     }, [initialised, initialiseErrors, sync]);
 
     return {

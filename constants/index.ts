@@ -12,6 +12,7 @@ export const asyncStorageKeys = {
     HOSPITAL_ID: 'HOSPITAL_ID',
     APP_VERSION: 'APP_VERSION',
     SDK_VERSION: 'SDK_VERSION',
+    SESSIONS_COUNT: 'SESSIONS_COUNT',
 };
 
 export const assets = {

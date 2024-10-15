@@ -11,7 +11,7 @@ type Props = {
 export function Poster({ children }: Props) {
     return (
         <>
-            <View className="flex-1 p-10">
+            <View className="flex-1">
                 <View className="flex-1 justify-center items-center">
                     <Image
                         style={{
