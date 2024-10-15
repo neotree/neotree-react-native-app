@@ -58,18 +58,7 @@ function RightActions({ color, screen, confirmExit, goNext, }: { color?: string;
 	return (
 		<>
 			<Box flexDirection="row" justifyContent="flex-end" columnGap="s">
-                {/* {!!screen && (
-                    <TouchableOpacity
-                        style={{ alignItems: "center", justifyContent: 'center', }}
-                        onPress={() => goNext()}
-                    >
-                        <Text
-                            fontWeight="bold"
-                            color="grey-500"
-                        >SKIP</Text>
-                    </TouchableOpacity>
-                )} */}
-
+              
 				{!!screen?.data?.infoText && (
 					<Box marginRight="s">
 						<TouchableOpacity onPress={() => setOpenInfoModal(true)}>

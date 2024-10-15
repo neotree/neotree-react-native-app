@@ -143,6 +143,7 @@ export const getScriptUtils = ({
         if ((i !== undefined) && !isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
         
         const getTargetScreen = (i = activeScreenIndex): null | { screen: types.Screen, index: number; } => {
+           
             const index = (() => {
                 switch (direction) {
                     case 'next':
@@ -155,6 +156,8 @@ export const getScriptUtils = ({
             })();
         
             const screen = screens[index];
+
+            console.log(".......CURRENTS 1.......",screen,index)
             
             if (!screen) return null;
         
@@ -166,6 +169,8 @@ export const getScriptUtils = ({
             if (!condition) return target;
 
 			const parsedCondition = parseCondition(condition);
+
+            console.log(".......CONDITION 1.......",parsedCondition)
         
             return evaluateCondition(parsedCondition) ? target : getTargetScreen(index);
         };
