@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { View, TextInput } from "react-native";
+import { View, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,11 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 
 type Props = {
+    email: string;
     done: (params: { email: string; activated: boolean; }) => void;
 };
 
-export function VerifyEmailForm({ done }: Props) {
+export function VerifyEmailForm({ email, done }: Props) {
     const [loading, setLoading] = useState(false);
 
     const emailInputRef = useRef<TextInput>(null);
@@ -20,7 +21,7 @@ export function VerifyEmailForm({ done }: Props) {
         handleSubmit,
     } = useForm({
         defaultValues: {
-            email: '',
+            email: email || '',
         },
     });
 
@@ -36,7 +37,10 @@ export function VerifyEmailForm({ done }: Props) {
 
     return (
         <>
-            <View className="mb-3">
+            <KeyboardAvoidingView 
+                className="mb-3"
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
                 <Controller 
                     control={control}
                     name="email"
@@ -58,7 +62,7 @@ export function VerifyEmailForm({ done }: Props) {
                         );
                     }}
                 />
-            </View>
+            </KeyboardAvoidingView>
 
             <View>
                 <Button

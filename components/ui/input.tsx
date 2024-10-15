@@ -17,9 +17,9 @@ export const Input = forwardRef<TextInput, InputProps>(({
                 {...props}
                 ref={ref}
                 className={clsx(
-                    'w-full px-4 py-2 text-base font-normal rounded-md border-2 border-primary/10 bg-primary/10 text-gray-950',
+                    'w-full px-4 py-2 text-base font-normal rounded-md border-2 border-primary/20 bg-primary/10 text-gray-950',
                     focused && 'bg-transparent border-primary',
-                    props.editable === false && 'opacity-50',
+                    props.editable === false && 'opacity-40',
                 )}
                 onFocus={(...args) => {
                     setFocused(true);

@@ -17,6 +17,7 @@ export default function LoginScreen() {
                 <Content className="py-10">
                     {formType === 'verify-email' && (
                         <VerifyEmailForm 
+                            email={email}
                             done={({ email, activated }) => {
                                 setEmail(email);
                                 setFormType(activated ? 'sign-in' : 'sign-up');
@@ -31,7 +32,6 @@ export default function LoginScreen() {
                                 router.push('(drawer)');
                             }}
                             onChangeEmail={() => {
-                                setEmail('');
                                 setFormType('verify-email');
                             }}
                         />
@@ -44,7 +44,6 @@ export default function LoginScreen() {
                                 router.push('(drawer)');
                             }}
                             onChangeEmail={() => {
-                                setEmail('');
                                 setFormType('verify-email');
                             }}
                         />

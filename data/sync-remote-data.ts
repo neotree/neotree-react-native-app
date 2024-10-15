@@ -31,7 +31,7 @@ export async function syncRemoteData() {
             await AsyncStorage.setItem(asyncStorageKeys.LAST_REMOTE_SYNC_DATE, new Date().toUTCString());
         }
     } catch(e: any) {
-        logger.log('syncRemote ERROR:', e.message);
+        logger.log('syncRemoteData ERROR:', e.message);
         throw e;
     }
 }
