@@ -1,9 +1,18 @@
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import logger from "@/lib/logger";
+import { asyncStorageKeys } from "@/constants";
 
 export async function getAxiosClient() {
-    const baseURL = 'https://zim-dev-webeditor.neotree.org/api';
+    const webeditorURL = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_URL);
+    let baseURL = webeditorURL || '';
+
+    if (!baseURL) {
+        const urls = (process.env.EXPO_PUBLIC_DEV_SITES || '').split(',');
+        baseURL = urls[0];
+    }
+
     const apiKey = process.env.EXPO_PUBLIC_API_KEY || '';
 
     const axiosClient = axios.create({
@@ -15,7 +24,7 @@ export async function getAxiosClient() {
             config.headers['x-api-key'] = apiKey;
         }
 
-        logger.log(`[${config.method?.toUpperCase?.()}]`, config.url);
+        logger.log(`[${config.method?.toUpperCase?.()}]`, baseURL + config.url);
 
         return config;
     });

@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 
 export const APP_VERSION: string = Constants.expoConfig?.version!;
 export const SDK_VERSION: string = Constants.expoConfig?.sdkVersion!;
+export const APP_ENV: string = 'development';
 
 export const asyncStorageKeys = {
     BEARER_TOKEN: 'BEARER_TOKEN',
@@ -13,6 +14,8 @@ export const asyncStorageKeys = {
     APP_VERSION: 'APP_VERSION',
     SDK_VERSION: 'SDK_VERSION',
     SESSIONS_COUNT: 'SESSIONS_COUNT',
+    WEBEDITOR_URL: 'WEBEDITOR_URL',
+    WEBEDITOR_DATA_VERSION: 'WEBEDITOR_VERSION',
 };
 
 export const assets = {

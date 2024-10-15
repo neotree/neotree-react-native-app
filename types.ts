@@ -3,6 +3,19 @@ export type DataResponse<T = any> = {
     errors?: string[];
 };
 
+export type Site = {
+    id: number;
+    siteId: string;
+    name: string;
+    link: string;
+    apiKey: string;
+    type: "nodeapi" | "webeditor";
+    env: "production" | "stage" | "development" | "demo";
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+};
+
 export type ScriptItem = {
     id: string;
     label: string;
