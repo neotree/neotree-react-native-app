@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { db, hospitals as hospitalsTable } from "@/database";
+import { db, hospitals as hospitalsTable } from "@/data";
 import { DataResponse } from "@/types";
 import logger from "@/lib/logger";
 

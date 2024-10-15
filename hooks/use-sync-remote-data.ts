@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import { syncRemote } from '@/lib/sync-remote';
+import { syncRemoteData } from '@/data/sync-remote-data';
 
-export function useSyncRemote(options?: {
+export function useSyncRemoteData(options?: {
     syncOnmount?: boolean;
 }) {
     const {  syncOnmount} = { ...options };
@@ -15,7 +15,7 @@ export function useSyncRemote(options?: {
         try {
             setSyncing(true);
 
-            await syncRemote();
+            await syncRemoteData();
         } catch(e: any) {
             setSyncRemoteErrors([e.message]);
         } finally {
@@ -31,5 +31,5 @@ export function useSyncRemote(options?: {
         remotedSyncing,
         remotedSynced,
         syncRemoteErrors,
-    }
+    };
 }

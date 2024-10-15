@@ -6,7 +6,7 @@ import { getAxiosClient } from '@/lib/axios';
 import { DataResponse } from "@/types";
 import { isInternetConnected } from "@/lib/network";
 
-export async function syncRemote() {
+export async function syncRemoteData() {
     try {
         const deviceId = await AsyncStorage.getItem(asyncStorageKeys.DEVICE_ID);
         const lastSyncDate = await AsyncStorage.getItem(asyncStorageKeys.LAST_REMOTE_SYNC_DATE);

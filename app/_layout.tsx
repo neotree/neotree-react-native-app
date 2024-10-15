@@ -9,7 +9,7 @@ import { AppContextProvider } from "@/contexts/app";
 import { AppErrors } from "@/components/app-errors";
 import { ConfirmModal } from '@/components/modals/confirm';
 import { AlertModal } from '@/components/modals/alert';
-import { useSyncRemote } from '@/hooks/use-sync-remote';
+import { useSyncRemoteData } from '@/hooks/use-sync-remote-data';
 import { Splash } from '@/components/splash';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -18,24 +18,16 @@ SplashScreen.preventAutoHideAsync();
 export default function AppLayout() {
     const theme = useTheme();
 
-    const { remotedSynced, syncRemoteErrors = [], sync } = useSyncRemote({ syncOnmount: false, });
-    const appData = useAppInit({
-        onInitialisedWithoutErrors: sync, // we want to sync when the app is ready
-    });
-
-    const { initialised, errors, authenticated } = appData;
-
-    const appIsReady = useMemo(() => initialised && remotedSynced, [initialised, remotedSynced]);
+    const appData = useAppInit();
+    const { isReady, errors, authenticated } = appData;
 
     useEffect(() => {
-        if (appIsReady) SplashScreen.hideAsync();
-    }, [appIsReady]);
+        if (isReady) SplashScreen.hideAsync();
+    }, [isReady]);
 
-    const allErrors = [...errors, ...syncRemoteErrors];
+    if (!isReady) return null;
 
-    if (!appIsReady) return null;
-
-    if (allErrors.length) {
+    if (errors.length) {
         return (
             <Splash>
                 <View className="gap-y-2 items-center">
@@ -51,7 +43,7 @@ export default function AppLayout() {
                                 </CollapsibleTrigger>
 
                                 <CollapsibleContent>
-                                    <Text className="text-sm text-danger">{allErrors.join(', ')}</Text>
+                                    <Text className="text-sm text-danger">{errors.join(', ')}</Text>
                                 </CollapsibleContent>
                             </>
                         )}

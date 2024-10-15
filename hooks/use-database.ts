@@ -1,6 +1,6 @@
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 
-import { db, migrations } from '@/database';
+import { db, migrations } from '@/data';
 
 export function useDatabase() {
     const { success, error } = useMigrations(db, migrations);
