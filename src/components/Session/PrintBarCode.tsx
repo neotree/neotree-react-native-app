@@ -194,6 +194,7 @@ export function PrintBarCode({ session, isGeneric }: PrintBarCodeProps) {
             }
         } catch (e: any) {
             showPrintingError(e.message)
+            reportErrors(e)
 
         } finally {
             setPrinting(false)
