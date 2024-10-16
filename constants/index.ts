@@ -11,6 +11,7 @@ export const SDK_VERSION: string = Constants.expoConfig?.sdkVersion!;
 export const NEOTREE_BUILD_TYPE = (process.env.NEOTREE_BUILD_TYPE || 'development') as 'development' | 'stage' | 'production' | 'demo';
 
 export const asyncStorageKeys = {
+    INITIAL_SETUP_DATE: 'INITIAL_SETUP_DATE',
     BEARER_TOKEN: 'BEARER_TOKEN',
     DEVICE_ID: 'DEVICE_ID',
     DEVICE_HASH: 'DEVICE_HASH',
@@ -21,6 +22,7 @@ export const asyncStorageKeys = {
     SDK_VERSION: 'SDK_VERSION',
     SESSIONS_COUNT: 'SESSIONS_COUNT',
     WEBEDITOR_URL: 'WEBEDITOR_URL',
+    WEBEDITOR_API_KEY: 'WEBEDITOR_API_KEY',
     WEBEDITOR_DATA_VERSION: 'WEBEDITOR_VERSION',
 };
 

@@ -1,6 +1,6 @@
 import configJSON from './config/config.json';
 
-const NEOTREE_BUILD_TYPE = (process.env.NEOTREE_BUILD_TYPE || 'development') as 'development' | 'stage' | 'production' | 'demo';
+const NEOTREE_BUILD_TYPE = process.env.NEOTREE_BUILD_TYPE || 'development'
 
 const appConfig = configJSON[NEOTREE_BUILD_TYPE];
 

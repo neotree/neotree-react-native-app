@@ -6,14 +6,10 @@ import { asyncStorageKeys } from "@/constants";
 
 export async function getAxiosClient() {
     const webeditorURL = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_URL);
-    let baseURL = webeditorURL || '';
+    const webeditorApiKey = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_API_KEY);
 
-    if (!baseURL) {
-        const urls = (process.env.EXPO_PUBLIC_DEV_SITES || '').split(',');
-        baseURL = urls[0];
-    }
-
-    const apiKey = process.env.EXPO_PUBLIC_API_KEY || '';
+    const baseURL = webeditorURL!;
+    const apiKey = webeditorApiKey!;
 
     const axiosClient = axios.create({
         baseURL,
