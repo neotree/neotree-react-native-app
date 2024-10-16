@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react';
 
 import { useHospitals } from '@/hooks/use-hospitals';
-import { useSites } from '@/hooks/use-sites';
 
 export interface IAuthContext extends
     ReturnType<typeof useHospitals> {
@@ -18,9 +17,6 @@ type AuthContextProviderProps = {
 
 export function AuthContextProvider({ children }: AuthContextProviderProps) {
     const hospitals = useHospitals();
-    const { sites } = useSites();
-
-    console.log('sites found: ', sites.length);
 
     return (
         <AuthContext.Provider

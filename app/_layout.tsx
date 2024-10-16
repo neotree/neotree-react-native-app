@@ -18,6 +18,14 @@ SplashScreen.preventAutoHideAsync();
 export default function AppLayout() {
     const theme = useTheme();
 
+    /****
+     * load fonts
+     * load assets
+     * initialise database
+     * check authentication
+     * set defaults (if first time running the app)
+     * sync remote data
+     ****/
     const appData = useAppInit();
     const { isReady, errors, authenticated } = appData;
 

@@ -12,6 +12,7 @@ export const NEOTREE_BUILD_TYPE = (process.env.NEOTREE_BUILD_TYPE || 'developmen
 
 export const asyncStorageKeys = {
     INITIAL_SETUP_DATE: 'INITIAL_SETUP_DATE',
+    NEOTREE_BUILD_TYPE: 'NEOTREE_BUILD_TYPE',
     BEARER_TOKEN: 'BEARER_TOKEN',
     DEVICE_ID: 'DEVICE_ID',
     DEVICE_HASH: 'DEVICE_HASH',

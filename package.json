@@ -3,13 +3,19 @@
     "version": "1.0.0",
     "main": "expo-router/entry",
     "scripts": {
-        "start": "expo start",
-        "android": "expo start --android",
-        "ios": "expo start --ios",
-        "web": "expo start --web",
+        "start": "npx expo start",
+        "start:demo": "NEOTREE_BUILD_TYPE=demo npx expo start",
+        "start:stage": "NEOTREE_BUILD_TYPE=stage npx expo start",
+        "start:prod": "NEOTREE_BUILD_TYPE=prod npx expo start",
+        "android": "npx expo start --android",
+        "ios": "npx expo start --ios",
+        "web": "npx expo start --web",
         "db:studio": "npx drizzle-kit studio",
         "db:push": "npx drizzle-kit push",
-        "db:generate-migrations": "npx drizzle-kit generate"
+        "db:generate-migrations": "npx drizzle-kit generate",
+        "build:demo": "eas build --platform android --profile demo",
+        "build:stage": "eas build --platform android --profile stage",
+        "build:prod": "eas build --platform android --profile production"
     },
     "dependencies": {
         "@react-native-async-storage/async-storage": "1.23.1",
