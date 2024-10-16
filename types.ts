@@ -4,16 +4,22 @@ export type DataResponse<T = any> = {
 };
 
 export type Site = {
-    id: number;
-    siteId: string;
-    name: string;
-    link: string;
+    countryISO: string;
+    countryName: string;
+    webeditorURL: string;
     apiKey: string;
-    type: "nodeapi" | "webeditor";
-    env: "production" | "stage" | "development" | "demo";
-    createdAt: Date;
-    updatedAt: Date;
-    deletedAt: Date | null;
+    savePollingData: boolean;
+};
+
+export type Config = {
+    NEOTREE_BUILD_TYPE: "production" | "stage" | "development" | "demo";
+    sites: Site[];
+    eas: {
+        projectId: string;
+    };
+    router: {
+        origin: boolean;
+    };
 };
 
 export type ScriptItem = {

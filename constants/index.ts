@@ -1,8 +1,14 @@
 import Constants from 'expo-constants';
 
+import { Config } from '@/types';
+
+export const CONFIG = {
+    ...Constants.expoConfig?.extra,
+} as Config;
+
 export const APP_VERSION: string = Constants.expoConfig?.version!;
 export const SDK_VERSION: string = Constants.expoConfig?.sdkVersion!;
-export const APP_ENV: string = 'development';
+export const NEOTREE_BUILD_TYPE = (process.env.NEOTREE_BUILD_TYPE || 'development') as 'development' | 'stage' | 'production' | 'demo';
 
 export const asyncStorageKeys = {
     BEARER_TOKEN: 'BEARER_TOKEN',

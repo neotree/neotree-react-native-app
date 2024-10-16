@@ -1,6 +1,49 @@
 {
-    "url": "",
-    "apiUrl": "",
-    "apiKey": "",
-    "savePollingData": false
+    "development": {
+        "sites": [
+            {
+                "countryISO": "",
+                "countryName": "",
+                "webeditorURL": "",
+                "apiKey": "",
+                "savePollingData": false
+            }
+        ]
+    },
+
+    "demo": {
+        "sites": [
+            {
+                "countryISO": "",
+                "countryName": "",
+                "webeditorURL": "",
+                "apiKey": "",
+                "savePollingData": false
+            }
+        ]
+    },
+
+    "stage": {
+        "sites": [
+            {
+                "countryISO": "",
+                "countryName": "",
+                "webeditorURL": "",
+                "apiKey": "",
+                "savePollingData": false
+            }
+        ]
+    },
+
+    "production": {
+        "sites": [
+            {
+                "countryISO": "",
+                "countryName": "",
+                "webeditorURL": "",
+                "apiKey": "",
+                "savePollingData": false
+            }
+        ]
+    }
 }

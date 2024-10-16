@@ -15,18 +15,3 @@ export const hospitals = sqliteTable(
         deletedAt: text('deleted_at'),
     },
 );
-
-// SITES
-export const sites = sqliteTable('nt_sites', {
-    id: integer('id').primaryKey(),
-    siteId: text('site_id').notNull().unique(),
-    name: text('name').notNull().unique(),
-    link: text('link').notNull().unique(),
-    apiKey: text('api_key').notNull(),
-    type: text('type').notNull(),
-    env: text('env').notNull(),
-    
-    createdAt: text('created_at').notNull(),
-    updatedAt: text('updated_at').notNull(),
-    deletedAt: text('deleted_at'),
-});
