@@ -15,16 +15,16 @@ type DiagnosisProps = {
 
 export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
     const theme = useTheme();
-    const ctx = useContext();
+    const {getFieldPreferences,} = useContext()||{};
 
     const [openModal, setOpenModal] = React.useState(false);
     const [form, _setForm] = React.useState<types.Diagnosis>(diagnosis);
     const setForm = (s: Partial<types.Diagnosis>) => _setForm((prev: types.Diagnosis) => ({ ...prev, ...(typeof s === 'function' ? s(prev) : s) }));
 
     const instrunctions = [
-        { text: diagnosis.text1, image: diagnosis.image1, style: ctx.getFieldPreferences('text1')?.style },
-        { text: diagnosis.text2, image: diagnosis.image2, style: ctx.getFieldPreferences('text2')?.style },
-        { text: diagnosis.text3, image: diagnosis.image3, style: ctx.getFieldPreferences('text3')?.style }
+        { text: diagnosis.text1, image: diagnosis.image1, style: getFieldPreferences('text1')?.style },
+        { text: diagnosis.text2, image: diagnosis.image2, style: getFieldPreferences('text2')?.style },
+        { text: diagnosis.text3, image: diagnosis.image3, style: getFieldPreferences('text3')?.style }
     ].filter(item => item.text || item.image);
 
     const onClose = () => {

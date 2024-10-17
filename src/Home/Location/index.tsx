@@ -7,8 +7,9 @@ import * as api from '../../data';
 import * as types from '../../types';
 
 export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Location'>) {
-	const ctx = useAppContext();
+	const {setSyncDataResponse} = useAppContext();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
+
 
 	React.useEffect(() => {
 		navigation.setOptions({
@@ -35,7 +36,7 @@ export function Location({ navigation }: types.StackNavigationProps<types.HomeRo
 							(async () => {
 								setDisplayLoader(true);
 								const res = await api.syncData({ force: true, });
-								ctx.setSyncDataResponse(res);
+								setSyncDataResponse && setSyncDataResponse(res);
 								setDisplayLoader(false);
 							})();
 						}}

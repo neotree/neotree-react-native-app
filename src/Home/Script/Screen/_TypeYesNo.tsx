@@ -11,11 +11,12 @@ type TypeYesNoProps = types.ScreenTypeProps & {
 export function TypeYesNo({}: TypeYesNoProps) {
     const autoFilled = useRef(false);
     
-    const ctx = useContext();
+    const {activeScreen,mountedScreens,getPrepopulationData,setEntryValues,activeScreenEntry} = useContext()||{};
+    
 
-    const metadata = ctx.activeScreen.data.metadata;
-    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
-    const printable = ctx.activeScreen.data.printable !== false;
+    const metadata = activeScreen.data.metadata;
+    const canAutoFill = !mountedScreens[activeScreen?.id];
+    const printable = activeScreen.data.printable !== false;
 
     const _opts = [
         { value: 'true', label: metadata?.positiveLabel || 'Yes' },
@@ -24,10 +25,10 @@ export function TypeYesNo({}: TypeYesNoProps) {
 
     const opts = _opts.map(o => {
         let matched = undefined;
-        if (((ctx.getPrepopulationData()[metadata.key]?.values?.value || [])[0] === 'Yes') && (o.value === 'true')) {
-            matched = ctx.getPrepopulationData()[metadata.key];
-        } else if (((ctx.getPrepopulationData()[metadata.key]?.values?.value || [])[0] === 'No') && (o.value === 'false')) {
-            matched = ctx.getPrepopulationData()[metadata.key];
+        if (((getPrepopulationData()[metadata.key]?.values?.value || [])[0] === 'Yes') && (o.value === 'true')) {
+            matched = getPrepopulationData()[metadata.key];
+        } else if (((getPrepopulationData()[metadata.key]?.values?.value || [])[0] === 'No') && (o.value === 'false')) {
+            matched = getPrepopulationData()[metadata.key];
         }
         return {
             ...o,
@@ -35,7 +36,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
             onChange: () => {
                 const value = o.value;
                 setValue(o.value);
-                ctx.setEntryValues([{
+                setEntryValues([{
                     value,
                     printable,
                     confidential: metadata.confidential,
@@ -52,7 +53,7 @@ export function TypeYesNo({}: TypeYesNoProps) {
         };
     });
 
-    const [value, setValue] = React.useState<string | number | null>(ctx.activeScreenEntry?.values[0]?.value);
+    const [value, setValue] = React.useState<string | number | null>(activeScreenEntry?.values[0]?.value);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {

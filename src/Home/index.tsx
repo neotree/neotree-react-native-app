@@ -38,7 +38,7 @@ const HeaderTitle: DrawerNavigationOptions['headerTitle'] = props => {
 type HomeNavigatorProps = {};
 
 export function HomeNavigator({}: HomeNavigatorProps) {
-	const ctx = useAppContext();
+	const {application} = useAppContext()||{};
 	return (
 		<>
 			<Drawer.Navigator 
@@ -53,7 +53,7 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 					name="Home" 
 					component={Home} 
 					options={{
-						title: `Scripts v${ctx?.application?.webeditor_info?.version}`,
+						title: `Scripts v${application?.webeditor_info?.version}`,
 						drawerLabel: 'Home',
 					}}
 				/>
@@ -99,7 +99,7 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 function CustomDrawerContent(props: DrawerContentComponentProps) {
 	const theme = useTheme();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
-	const ctx = useAppContext();
+	const {setAuthenticatedUser} = useAppContext()||{};
 
 	return (
 		<Box 
@@ -239,7 +239,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 										setDisplayLoader(true);
 										await api.logout();
 										setDisplayLoader(false);
-										ctx?.setAuthenticatedUser(null);
+										setAuthenticatedUser && setAuthenticatedUser(null);
 									})();
 								},
 							},

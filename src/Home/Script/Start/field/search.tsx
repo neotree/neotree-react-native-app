@@ -31,8 +31,7 @@ export function Search({
     onSession,
     filterEntries
 }: SearchProps) {    
-    const ctx = useContext();
-
+ 
     const [uid, setUID] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getExportedSessionsByUID>>>([]);
     const [sessionType, setSessionType] = React.useState('admission');

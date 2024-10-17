@@ -10,11 +10,11 @@ type TypeProgressProps = types.ScreenTypeProps & {
 
 export function TypeProgress({}: TypeProgressProps) {
     const theme = useTheme();
-    const ctx = useContext();
+    const {activeScreen,setEntryValues} = useContext()||{};
 
-    const metadata = ctx.activeScreen?.data?.metadata;
+    const metadata = activeScreen?.data?.metadata;
 
-    React.useEffect(() => { ctx.setEntryValues([]); }, [metadata]);
+    React.useEffect(() => { setEntryValues([]); }, [metadata]);
 
     return (
         <Box>

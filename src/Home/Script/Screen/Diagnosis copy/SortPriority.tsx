@@ -36,10 +36,10 @@ type DiagnosisProps = types.ScreenTypeProps & {
 };
 
 export function SortPriority(props: DiagnosisProps) {
-	const { suggestedDiagnoses, hcwDiagnoses, onNext } = props;
-	const { activeScreenEntry } = useContext();
+	const { onNext } = props;
+	const { activeScreenEntry } = useContext()||{};
 
-	const [data, setData] = useState([]);
+	const [data] = useState([]);
 
 	console.log(activeScreenEntry)
 
