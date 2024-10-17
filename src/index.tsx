@@ -16,29 +16,36 @@ export * from './components';
 
 export function Navigation() {
     const [ready, setReady] = React.useState(false);
-    const ctx = useAppContext();
+    const {setSyncDataResponse,authenticatedUser} = useAppContext()||{};
 
     const initialiseApp = React.useCallback(async () => {
         try { 
-            const res = await syncData();            
-            ctx?.setSyncDataResponse(res);
+            const res = await syncData(); 
+            if(setSyncDataResponse)          
+                setSyncDataResponse(res);
         } catch (e) {
             console.log(e);
         } finally {
             setReady(true);
         } 
-    }, [ctx]);
+    }, [setSyncDataResponse]);
 
     React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
 
-    React.useEffect(() => { addSocketEventsListeners(initialiseApp); }, []);
+    React.useEffect(() => { 
+        
+        addSocketEventsListeners(initialiseApp)
+    
+      
+        ; }, []);
+      
 
     if (!ready) return <Splash />;
 
     return (
         <>
             <StatusBar style="dark" />
-            {!ctx?.authenticatedUser ? <Authentication /> : <HomeNavigator />}
+            {!authenticatedUser ? <Authentication /> : <HomeNavigator />}
         </>
     );
 }

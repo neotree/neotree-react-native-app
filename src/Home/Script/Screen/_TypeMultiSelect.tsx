@@ -11,15 +11,15 @@ type TypeMultiSelectProps = types.ScreenTypeProps & {
 export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const autoFilled = useRef(false);
     
-    const ctx = useContext();
-    const metadata = ctx.activeScreen?.data?.metadata;
-    const printable = ctx.activeScreen.data.printable !== false;
+    const {activeScreen,activeScreenEntry,mountedScreens,getPrepopulationData,setEntryValues} = useContext()||{};
+    const metadata = activeScreen?.data?.metadata;
+    const printable = activeScreen?.data?.printable !== false;
 
-    let cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value || [];
+    let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
-    const matched = ctx.getPrepopulationData();
+    const canAutoFill = !mountedScreens[activeScreen?.id];
+    const matched = getPrepopulationData();
 
     const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
         ...acc,
@@ -47,7 +47,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                 },
             ];
         }, []);
-        ctx.setEntryValues(!keys.length ? undefined : [
+        setEntryValues && setEntryValues(!keys.length ? undefined : [
 			{
                 printable,
 				value: values,

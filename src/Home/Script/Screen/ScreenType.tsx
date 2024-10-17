@@ -21,8 +21,8 @@ type ScreenTypeProps = {
 };
 
 export function ScreenType({ searchVal }: ScreenTypeProps) {
-    const ctx = useContext();
-    const highlightedText = ctx.activeScreen?.data?.contentText;
+    const {activeScreen,getFieldPreferences,entries} = useContext()||{};
+    const highlightedText = activeScreen?.data?.contentText;
 
     return (
 		<>
@@ -31,7 +31,7 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 					<Content>
 						<Text 
                             color="primary"
-                            style={ctx.getFieldPreferences('contentText')?.style}
+                            style={getFieldPreferences('contentText')?.style}
                         >{`${highlightedText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
 					</Content>
 				</Box>
@@ -42,7 +42,7 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 				let scrollable = true;
 				let useContentWidth = true;
 
-				switch (ctx.activeScreen?.type) {
+				switch (activeScreen?.type) {
 					case 'yesno':
 						Component = TypeYesNo;
 						break;
@@ -91,8 +91,8 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 				let node = !Component ? null : (
 					<Component 
 						searchVal={searchVal} 
-						entry={ctx.entries.filter(e => {
-							return e.screen.screen_id === ctx.activeScreen.screen_id;
+						entry={entries.filter(e => {
+							return e.screen.screen_id === activeScreen.screen_id;
 						})[0]}
 						setEntry={() => {
 							

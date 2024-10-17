@@ -17,23 +17,24 @@ type TypeFormProps = types.ScreenTypeProps & {
 };
 
 export function TypeForm({}: TypeFormProps) {
-    const ctx = useContext();
-    const metadata = ctx.activeScreen?.data?.metadata;
-    const cachedVal = ctx.activeScreenEntry?.values || [];
-    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
+    const {activeScreen,activeScreenEntry,mountedScreens,nuidSearchForm,evaluateCondition,
+        parseCondition,getPrepopulationData,setEntryValues} = useContext()||{};
+    const metadata = activeScreen?.data?.metadata;
+    const cachedVal = activeScreenEntry?.values || [];
+    const canAutoFill = !mountedScreens[activeScreen?.id];
 
-    const patientNUID = useMemo(() => ctx.nuidSearchForm.filter(f => f.key === 'patientNUID')[0]?.value, [ctx.nuidSearchForm]);
+    const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID')[0]?.value, [nuidSearchForm]);
 
     const evaluateFieldCondition = (f: any) => {
         let conditionMet = true;
-        if (f.condition) conditionMet = ctx.evaluateCondition(ctx.parseCondition(f.condition, [{ values }])) as boolean;
+        if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
     };
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
         const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
 
-        const matched = !shouldAutoPopulate ? null : (ctx.getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
+        const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
 
         const cached = cachedVal.filter(v => v.key === f.key)[0];
         let value = cached?.value || `${matched || ''}` || null;
@@ -74,7 +75,7 @@ export function TypeForm({}: TypeFormProps) {
         }, true);
     
         const hasErrors = values.filter(v => v.error).length;
-        ctx.setEntryValues(hasErrors || !completed ? undefined : values);
+        setEntryValues(hasErrors || !completed ? undefined : values);
     }, [values, metadata]);
 
     return (

@@ -11,15 +11,15 @@ type TypeSingleSelectProps = types.ScreenTypeProps & {
 export function TypeSingleSelect({}: TypeSingleSelectProps) {
     const autoFilled = useRef(false);
     
-    const ctx = useContext();
-    const metadata = ctx.activeScreen?.data?.metadata;
-    const printable = ctx.activeScreen.data.printable !== false;
-    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
+    const {activeScreen,mountedScreens,getPrepopulationData,setEntryValues,activeScreenEntry}= useContext()|| {};
+    const metadata = activeScreen?.data?.metadata;
+    const printable = activeScreen.data.printable !== false;
+    const canAutoFill = !mountedScreens[activeScreen?.id];
 
     const opts: any[] = metadata.items.map((item: any) => {
         let matched = undefined;
-        if ((ctx.getPrepopulationData()[metadata.key]?.values?.value || [])[0] === item.id) {
-            matched = ctx.getPrepopulationData()[metadata.key];
+        if ((getPrepopulationData()[metadata.key]?.values?.value || [])[0] === item.id) {
+            matched = getPrepopulationData()[metadata.key];
         }
 
         return {
@@ -27,7 +27,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
             matched,
             onChange: () => {
                 setValue(item.id);
-                ctx.setEntryValues([{
+                setEntryValues([{
                     printable,
                     value: item.id,
                     valueText: item.label,
@@ -44,7 +44,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
         };
     });
 
-    const [value, setValue] = React.useState<string | number | null>(ctx.activeScreenEntry?.values[0]?.value);
+    const [value, setValue] = React.useState<string | number | null>(activeScreenEntry?.values[0]?.value);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {

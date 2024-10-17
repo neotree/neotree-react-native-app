@@ -6,8 +6,13 @@ import { Field } from './field';
 import * as types from '../../../types';
 
 export function Start() {
-    const ctx = useContext();
     const { 
+        evaluateCondition,
+        parseCondition,
+        setNuidSearchForm,
+        setActiveScreen,
+        saveSession,
+        setActiveScreenIndex,
         screens, 
         matched, 
         script: { 
@@ -15,7 +20,7 @@ export function Start() {
                 nuidSearchFields = [], 
             },
         }, 
-    } = ctx;
+    } = useContext()||{};
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
 
@@ -30,7 +35,7 @@ export function Start() {
     const evaluateFieldCondition = (f: any) => {
         let conditionMet = true;
         const values = fields;
-        if (f.condition) conditionMet = ctx.evaluateCondition(ctx.parseCondition(f.condition, [{ values }])) as boolean;
+        if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
     };
 
@@ -102,10 +107,10 @@ export function Start() {
                             onPress={() => {
                                 (async () => {
 									try {
-                                        ctx.setNuidSearchForm(fields);
-										ctx.setActiveScreen(screens[0]);
-										ctx.setActiveScreenIndex(0);
-										ctx.saveSession();
+                                        setNuidSearchForm(fields);
+										setActiveScreen(screens[0]);
+										setActiveScreenIndex(0);
+										saveSession();
 									} catch(e) { /**/ }
 								})();
                             }}

@@ -38,7 +38,7 @@ const diagnosisToEntryValue = ({ selected, ...d }: types.Diagnosis): types.Scree
 });
 
 export function Diagnosis(props: DiagnosisProps) {
-	const { activeScreenEntry, activeScreen, setEntryValues, setMoreNavOptions } = useContext();
+	const { activeScreenEntry, activeScreen, setEntryValues, setMoreNavOptions } = useContext()||{};
 	const { diagnoses } = useDiagnoses();
 
 	const [section, setSection] = React.useState('select');

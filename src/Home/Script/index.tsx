@@ -9,7 +9,7 @@ import { useBackButton } from '../../hooks/useBackButton';
 import * as api from '../../data';
 
 import { Start } from './Start';
-import { Screen } from './Screen';
+import {Screen}  from './Screen';
 import { Context, MoreNavOptions, ContextType } from './Context';
 import { getScriptUtils } from './utils';
 import { Alert, TextProps } from 'react-native';

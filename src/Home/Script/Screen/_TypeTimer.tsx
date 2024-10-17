@@ -13,21 +13,21 @@ type TypeTimerProps = types.ScreenTypeProps & {
 export function TypeTimer({}: TypeTimerProps) {
     const autoFilled = useRef(false);
     
-    const ctx = useContext();
-    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
-    const matched = ctx.getPrepopulationData();
+    const {activeScreen,mountedScreens,activeScreenEntry,getPrepopulationData,setEntryValues} = useContext()||{};
+    const canAutoFill = !mountedScreens[activeScreen?.id];
+    const matched = getPrepopulationData();
 
     const timoutRef = React.useRef<any>(null);
 
-    const metadata = ctx.activeScreen?.data.metadata;
-    const printable = ctx.activeScreen.data.printable !== false;
+    const metadata = activeScreen?.data.metadata;
+    const printable = activeScreen.data.printable !== false;
 
     const multiplier = metadata.multiplier || 1;
     const timerValue = Number(metadata.timerValue || 0);
 
     const [countdown, setCountDown] = React.useState(0);
     const [formError, setFormError] = React.useState('');
-    const [value, setValue] = React.useState(ctx.activeScreenEntry?.values[0]?.value);
+    const [value, setValue] = React.useState(activeScreenEntry?.values[0]?.value);
 
     const getFormError = React.useCallback((value: string) => {
         const v = parseFloat(`${Number(value || 0) * multiplier}`);
@@ -46,7 +46,7 @@ export function TypeTimer({}: TypeTimerProps) {
         const e = getFormError(val);
         setValue(val);
         setFormError(e);
-        ctx.setEntryValues(e ? undefined : [{
+        setEntryValues(e ? undefined : [{
             printable,
             value: val,
             valueText: Number(val) * Number(multiplier || 1),
