@@ -1,13 +1,15 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import logger from "@/lib/logger";
 import { asyncStorageKeys } from "@/constants";
+import AsyncStorage from "@/data/async-storage";
 
 export async function getAxiosClient() {
-    const webeditorURL = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_URL);
-    const webeditorApiKey = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_API_KEY);
-    const bearerToken = await AsyncStorage.getItem(asyncStorageKeys.BEARER_TOKEN);
+    const { WEBEDITOR_URL, WEBEDITOR_API_KEY, BEARER_TOKEN } = await AsyncStorage.getAll();
+
+    const webeditorURL = WEBEDITOR_URL;
+    const webeditorApiKey = WEBEDITOR_API_KEY;
+    const bearerToken = BEARER_TOKEN;
 
     const baseURL = webeditorURL!;
     const apiKey = webeditorApiKey!;

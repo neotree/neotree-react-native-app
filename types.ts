@@ -248,6 +248,7 @@ export type Diagnosis = {
 };
 
 export type RemoteData = {
+    newData: boolean;
     deviceId: string;
     deviceHash: string;
     deviceScriptsCount: number;

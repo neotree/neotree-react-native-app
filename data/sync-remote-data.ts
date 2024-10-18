@@ -36,7 +36,9 @@ export async function syncRemoteData(options: SyncRemoteDataOpts = {}) {
 
             if (errors?.length) throw new Error(errors.join(', '));
 
-            console.log(data);
+            if (data.newData) {
+                
+            }
 
             // after syncing
             await AsyncStorage.setItem(asyncStorageKeys.LAST_REMOTE_SYNC_DATE, new Date().toUTCString());
