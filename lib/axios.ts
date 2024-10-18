@@ -1,7 +1,6 @@
 import axios from "axios";
 
 import logger from "@/lib/logger";
-import { asyncStorageKeys } from "@/constants";
 import AsyncStorage from "@/data/async-storage";
 
 export async function getAxiosClient() {
