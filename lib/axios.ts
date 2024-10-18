@@ -7,6 +7,7 @@ import { asyncStorageKeys } from "@/constants";
 export async function getAxiosClient() {
     const webeditorURL = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_URL);
     const webeditorApiKey = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_API_KEY);
+    const bearerToken = await AsyncStorage.getItem(asyncStorageKeys.BEARER_TOKEN);
 
     const baseURL = webeditorURL!;
     const apiKey = webeditorApiKey!;
@@ -17,7 +18,8 @@ export async function getAxiosClient() {
     
     axiosClient.interceptors.request.use(async config => {
         if (config.headers) {
-            config.headers['x-api-key'] = apiKey;
+            config.headers['x-api-key'] = apiKey || '';
+            config.headers['x-bearer-token'] = bearerToken || '';
         }
 
         logger.log(`[${config.method?.toUpperCase?.()}]`, baseURL + config.url);

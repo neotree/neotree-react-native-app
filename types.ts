@@ -246,3 +246,28 @@ export type Diagnosis = {
     updatedAt: string;
     deletedAt: string | null;
 };
+
+export type RemoteData = {
+    deviceId: string;
+    deviceHash: string;
+    deviceScriptsCount: number;
+    dataVersion: number;
+    lastPublishDate: Date;
+    latestChangesDate: Date;
+    scripts: (Script & {
+        isDraft: boolean;
+        isDeleted: boolean;
+    })[];
+    screens: (Screen & {
+        isDraft: boolean;
+        isDeleted: boolean;
+    })[];
+    diagnoses: (Diagnosis & {
+        isDraft: boolean;
+        isDeleted: boolean;
+    })[];
+    configKeys: (ConfigKey & {
+        isDraft: boolean;
+        isDeleted: boolean;
+    })[];
+}
