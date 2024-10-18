@@ -12,5 +12,7 @@ export function useNeotreeConstants() {
         return () => unsubscribe();
     }, []);
 
-    return constants;
+    return {
+        ...constants,
+    };
 }
