@@ -15,7 +15,7 @@ export function AuthContainer({ children }: {
     return (
         <Poster>
             <Content className="py-10">
-                {hasInternet ? (
+                {!hasInternet ? (
                     <View className="justify-center items-center gap-y-3">
                         <WifiOff 
                             size={36}
