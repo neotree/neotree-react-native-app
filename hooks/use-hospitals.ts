@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { db, hospitals as hospitalsTable } from "@/data";
-import { DataResponse } from "@/types";
+import { DataResponse, Hospital } from "@/types";
 import logger from "@/lib/logger";
+import { getAxiosClient } from "@/lib/axios";
 
 export function useHospitals(options?: {
     loadHospitalsOnmount?: boolean;
@@ -15,15 +15,17 @@ export function useHospitals(options?: {
 
     const [hospitalsInitialised, setHospitalsInitialised] = useState(false);
     const [hospitalsLoading, setLoading] = useState(true);
-    const [hospitals, setHospitals] = useState<DataResponse<typeof hospitalsTable.$inferSelect[]>>({
+    const [hospitals, setHospitals] = useState<DataResponse<Hospital[]>>({
         data: [],
     });
 
     const getHospitals = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await db.select().from(hospitalsTable);
-            setHospitals({ data: res, });
+            const axios = await getAxiosClient();
+            const res = await axios.get<DataResponse<Hospital[]>>('/api/hospitals');
+            const { data } = res.data;
+            setHospitals({ data: data || [], });
         } catch(e: any) {
             logger.error('getHospitals ERROR', e.message);
             setHospitals({ errors: [e.message], data: [], })

@@ -83,6 +83,7 @@ const getItem = (key: keyof typeof asyncStorageKeys, value: string) => AsyncStor
 type AsyncStorageItems = typeof defaultState;
 
 export const useAsyncStorage = create<AsyncStorageItems & {
+    itemsUpdating: boolean;
     setItem: typeof setItem;
     removeItem: typeof removeItem;
     getItem: typeof getItem;
@@ -97,13 +98,21 @@ export const useAsyncStorage = create<AsyncStorageItems & {
     }));
 
     const _setItems: typeof setItems = async (params) => {
-        await setItems(params);
-        const items = await getAllItems();
-        setItemsState({ ...items});
+        try {
+            set(prev => ({ ...prev, itemsUpdating: true, }));
+            await setItems(params);
+            const items = await getAllItems();
+            setItemsState({ ...items});
+        } catch(e) {
+            throw e;
+        } finally {
+            set(prev => ({ ...prev, itemsUpdating: false, }));
+        }
     };
 
     return {
         ...defaultState,
+        itemsUpdating: false,
         setItem,
         removeItem,
         getItem,

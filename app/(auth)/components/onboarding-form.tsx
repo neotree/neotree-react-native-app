@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { View } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { router } from "expo-router";
@@ -9,18 +9,20 @@ import { Button } from "@/components/ui/button";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
 import { CONTINUE, COUNTRIES, COUNTRY, HOSPITAL, HOSPITALS } from "@/constants/copy";
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from "@/components/ui/dropdown";
+import { useAuthentication } from "@/hooks/use-authentication";
 
 export function OnboardingForm() {
     const [loading, setLoading] = useState(false);
 
-    const { COUNTRY_ISO, HOSPITAL_ID } = useAsyncStorage();
+    const { COUNTRY_ISO, HOSPITAL_ID, itemsUpdating, setItems } = useAsyncStorage();
+    const { hospitals, loadHospitalsErrors, hospitalsLoading } = useAuthentication();
 
     const {
         control,
         handleSubmit,
     } = useForm({
         defaultValues: {
-            hospitalId: HOSPITAL_ID || '',
+            hospitalId: '',
             countryISO: COUNTRY_ISO,
         },
     });
@@ -35,10 +37,29 @@ export function OnboardingForm() {
         }
     });
 
+    const disableCountry = useMemo(() => loading || itemsUpdating || hospitalsLoading || (CONFIG.sites.length < 2), [
+        hospitalsLoading, 
+        itemsUpdating,
+        loading,
+    ]);
+
+    const disableHospitals = useMemo(() => loading || !!loadHospitalsErrors?.length || hospitalsLoading || itemsUpdating, [
+        loadHospitalsErrors, 
+        hospitalsLoading,
+        itemsUpdating,
+        loading,
+    ]);
+
+    const canSubmit = useMemo(() => !loading && !!(COUNTRY_ISO && HOSPITAL_ID), [
+        loading,
+        COUNTRY_ISO, 
+        HOSPITAL_ID,
+    ]);
+    
     return (
         <>
             <View className="mb-3">
-                <Text variant={CONFIG.sites.length > 2 ? 'label' : 'labelDisabled'}>{COUNTRY}</Text>
+                <Text variant={disableCountry ? 'labelDisabled' : 'label'}>{COUNTRY}</Text>
                 <Controller 
                     control={control}
                     name="countryISO"
@@ -48,8 +69,11 @@ export function OnboardingForm() {
                             <>
                                 <Dropdown
                                     selected={value}
-                                    onSelect={value => onChange(value)}
-                                    disabled={CONFIG.sites.length < 2}
+                                    onSelect={value => {
+                                        onChange(value);
+                                        setItems({ COUNTRY_ISO: `${value || ''}`, });
+                                    }}
+                                    disabled={disableCountry}
                                     title={COUNTRIES}
                                 >
                                     <DropdownTrigger>
@@ -70,50 +94,51 @@ export function OnboardingForm() {
             </View>
 
             <View className="mb-3">
-                <Text variant="label">{HOSPITAL}</Text>
+                <Text 
+                    variant={disableHospitals ? 'labelDisabled' : 'label'}
+                >{HOSPITAL}</Text>
                 <Controller 
                     control={control}
                     name="hospitalId"
                     rules={{ required: true, }}
+                    disabled={disableHospitals}
                     render={({ field: { value, onChange }, }) => {
                         return (
                             <>
                                 <Dropdown
                                     selected={value}
-                                    onSelect={value => onChange(value)}
+                                    onSelect={value => {
+                                        onChange(value);
+                                        setItems({ HOSPITAL_ID: `${value || ''}`, });
+                                    }}
                                     title={HOSPITALS}
                                 >
                                     <DropdownTrigger>
                                         Select hospital
                                     </DropdownTrigger>
                                     <DropdownContent>
-                                        {(() => {
-                                            const items: any[] = [];
-                                            for (let i = 0; i < 2; i++) {
-                                                items.push({ value: `${i + 1}`, label: `Item ${i + 1}`, }); 
-                                            }
-                                            return items.map(o => (
+                                        {hospitals.map(o => (
                                                 <DropdownItem 
-                                                    key={o.value} 
-                                                    value={o.value}
-                                                    searchValue={o.label}
+                                                    key={o.hospitalId} 
+                                                    value={o.hospitalId}
+                                                    searchValue={o.name}
                                                 >
-                                                    {o.label}
+                                                    {o.name}
                                                 </DropdownItem>
-                                            ));
-                                        })()}
+                                            ))}
                                     </DropdownContent>
                                 </Dropdown>
                             </>
                         );
                     }}
                 />
+                {!!loadHospitalsErrors?.length && <Text className="text-xs text-danger mt-1">{loadHospitalsErrors.join(', ')}</Text>}
             </View>
 
             <View>
                 <Button
-                    disabled={loading}
                     onPress={submit}
+                    disabled={!canSubmit}
                 >
                     {CONTINUE}
                 </Button>

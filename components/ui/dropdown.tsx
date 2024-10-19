@@ -112,7 +112,7 @@ export function DropdownTrigger({
                     setOpen(prev => !prev);
                 }}
                 className={clsx(
-                    'border border-border px-2 py-2 rounded-lg flex-row items-center',
+                    'border px-2 py-2 rounded-lg flex-row items-center border-primary/20 bg-primary/10',
                     disabled && 'opacity-50',
                     className,
                 )}
