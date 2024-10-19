@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
 import { CONTINUE } from "@/constants/copy";
+import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from "@/components/ui/dropdown";
 
 export function OnboardingForm() {
     const [loading, setLoading] = useState(false);
@@ -45,7 +46,22 @@ export function OnboardingForm() {
                     render={({ field: { value, onChange }, }) => {
                         return (
                             <>
-                            
+                                <Dropdown>
+                                    <DropdownTrigger>
+                                        Select hospital
+                                    </DropdownTrigger>
+                                    <DropdownContent>
+                                        {(() => {
+                                            const items: any[] = [];
+                                            for (let i = 0; i < 2; i++) {
+                                                items.push({ value: `${i + 1}`, label: `Item ${i + 1}`, }); 
+                                            }
+                                            return items.map(o => (
+                                                <DropdownItem key={o.value} value={o.value}>{o.label}</DropdownItem>
+                                            ));
+                                        })()}
+                                    </DropdownContent>
+                                </Dropdown>
                             </>
                         );
                     }}

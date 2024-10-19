@@ -1,12 +1,15 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Platform, TouchableOpacity, TouchableOpacityProps, TouchableWithoutFeedback, View, ViewProps } from "react-native";
 import Svg, { Path } from 'react-native-svg';
 import clsx from "clsx";
 import { Separator } from "./separator";
+import { Text } from "./text";
 
 export type DropdownProps = {
     open?: boolean;
+    selected?: string | number | (string | number)[];
     onOpenChange?: (open: boolean) => void;
+    onSelect?: (value: number | string) => void;
 };
 
 export type DropdownTriggerProps = TouchableOpacityProps & {
@@ -21,15 +24,17 @@ export type DropdownContentProps = ViewProps & {
 
 };
 
-type Items = { [key: string]: DropdownItemProps; };
+type ItemState = DropdownItemProps & { selected: boolean; };
+
+type Items = { [key: string]: ItemState; };
 
 type ContextType = DropdownProps & {
-    top: number;
     open: boolean;
     items: Items,
     containerRef: React.RefObject<View>;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
     setItems: React.Dispatch<React.SetStateAction<Items>>;
+    setItem: (id: string, item: Partial<ItemState>) => void
 };
 
 const Context = createContext<ContextType>(null!);
@@ -42,7 +47,6 @@ export function Dropdown({
 }: React.PropsWithChildren<DropdownProps>) {
     const containerRef = useRef<View>(null);
 
-    const [top, setTop] = useState(0);
     const [open, setOpen] = useState(!!openProp);
     const [items, setItems] = useState<ContextType['items']>({});
 
@@ -50,16 +54,14 @@ export function Dropdown({
 
     useEffect(() => { onOpenChange?.(open); }, [open, onOpenChange]);
 
-    useEffect(() => {
-        containerRef.current?.measure?.((x, y, width, height, pageX, pageY) => {
-            const topOffset = pageY;
-            const heightOfComponent = height;
-
-            const finalValue = topOffset + heightOfComponent + 
-                (Platform.OS === "android" ? -32 : 3);
-
-            setTop(finalValue || 0);
-        });
+    const setItem = useCallback((id: string, item: Partial<ItemState>) => {
+        setItems(prev => ({
+            ...prev,
+            [id]: {
+                ...prev[id],
+                ...item,
+            },
+        }));
     }, []);
 
     return (
@@ -67,26 +69,14 @@ export function Dropdown({
             value={{
                 ...props,
                 items,
-                top,
                 open,
                 containerRef,
                 setItems,
                 setOpen,
+                setItem,
             }}
         >
-            <View
-                ref={containerRef}
-                onLayout={e => {
-                    // const layout = e.nativeEvent.layout;
-                    // const topOffset = layout.y;
-                    // const heightOfComponent = layout.height;
-
-                    // const finalValue = topOffset + heightOfComponent + 
-                    //     (Platform.OS === "android" ? -32 : 3);
-
-                    // setTop(finalValue);
-                }}
-            >
+            <View ref={containerRef}>
                 {children}
             </View>
         </Context.Provider>
@@ -118,7 +108,11 @@ export function DropdownTrigger({
                 )}
             >
                 <View className="flex-1">
-                    {children}
+                    {typeof children !== 'string' ? children : (
+                        <>
+                            <Text>{children}</Text>
+                        </>
+                    )}
                 </View>
                 
                 <View>
@@ -141,13 +135,21 @@ export function DropdownItem(props: DropdownItemProps) {
     const {
         open,
         setOpen,
+        selected,
         setItems,
     } = useContext(Context);
 
     const [id] = useState(Math.random().toString(36));
 
     useEffect(() => {
-        setItems(prev => ({ ...prev, [id]: props, }));
+        const _selected = selected ? typeof selected === 'object' ? selected : [selected] : [];
+
+        setItems(prev => {
+            return { 
+                ...prev, 
+                [id]: { ...props, selected: _selected.includes(props.value!), }, 
+            };
+        });
         return () => setItems(prev => Object.keys(prev).reduce((acc, key) => {
             if (key === id) return acc;
             return {
@@ -155,21 +157,18 @@ export function DropdownItem(props: DropdownItemProps) {
                 [key]: prev[key],
             };
         }, {} as Items));
-    }, [id, props, setItems]);
+    }, [id, props, selected, setItems]);
 
     return null;
 }
 
-export function DropdownContent({
-    children,
-    className,
-    ...props
-}: DropdownContentProps) {
+export function DropdownContent({ children }: DropdownContentProps) {
     const {
-        top,
         open,
         items,
+        setItem,
         setOpen,
+        onSelect,
     } = useContext(Context);
 
     const data = useMemo(() => Object.keys(items).map(id => ({
@@ -180,43 +179,90 @@ export function DropdownContent({
     return (
         <>
             <Modal
+                statusBarTranslucent
                 visible={open}
                 transparent
+                onRequestClose={() => setOpen(false)}
             >
-                <TouchableWithoutFeedback 
-                    onPress={() => setOpen(false)}
-                >
+                <View className="flex-1">
+                    <TouchableWithoutFeedback 
+                        onPress={() => setOpen(false)}
+                    >
+                        <View 
+                            className="
+                                absolute
+                                flex-1
+                                bg-black/50
+                                w-full
+                                top-0
+                                bottom-0
+                            "
+                        />
+                    </TouchableWithoutFeedback>
+
                     <View
-                        className="flex-1"
+                        className="
+                            m-auto 
+                            w-[90%] 
+                            max-w-lg
+                            max-h-[90%]
+                            rounded-lg
+                            overflow-hidden
+                        "
                     >
                         <View
-                            {...props}
-                            style={{ top }}
                             className={clsx(
-                                'bg-background border border-border absolute',
-                                className,
+                                'bg-background border border-border',
                             )}
+                            style={{
+                                elevation: 24,
+                                shadowColor: 'rgba(0,0,0,.5)',
+                                shadowOffset: { width: -2, height: 4 },
+                                shadowOpacity: 0.2,
+                                shadowRadius: 3,
+                            }}
                         >
                             <FlatList
                                 keyExtractor={(item) => item.id}
                                 data={data}
                                 ItemSeparatorComponent={() => <Separator />}
-                                renderItem={({ item: { value, ...props } }) => (
-                                    <TouchableOpacity
-                                        {...props}
-                                        className={clsx(
-                                            'py-2 px-2 flex-row',
-                                            props.className
-                                        )}
-                                        onPress={(...args) => {
-                                            props.onPress?.(...args);
-                                        }}
-                                    />
-                                )}
+                                renderItem={({ item }) => {
+                                    const { value, children, ...props } = item;
+
+                                    return (
+                                        <TouchableOpacity
+                                            {...props}
+                                            className={clsx(
+                                                'py-2 px-4 flex-row items-center',
+                                                item.selected && 'bg-primary-100',
+                                                props.className
+                                            )}
+                                            onPress={(...args) => {
+                                                props.onPress?.(...args);
+                                                if (value) {
+                                                    onSelect?.(value);
+                                                    setItem(item.id, { selected: !item.selected, });
+                                                }
+                                            }}
+                                        >
+                                            {!!item.selected && (
+                                                <Svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} className="mr-2 w-4 h-4 stroke-primary">
+                                                    <Path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                                </Svg>                                    
+                                            )}
+                                            
+                                            {typeof children !== 'string' ? children : (
+                                                <>
+                                                    <Text>{children}</Text>
+                                                </>
+                                            )}
+                                        </TouchableOpacity>
+                                    );
+                                }}
                             />
                         </View>
                     </View>
-                </TouchableWithoutFeedback>
+                </View>
             </Modal>
 
             <View style={{ display: 'none', }}>
