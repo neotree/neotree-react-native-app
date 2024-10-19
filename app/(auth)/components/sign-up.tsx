@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { CHANGE_EMAIL_ADDRESS, CONFIRM_PASSWORD, EMAIL_ADDRESS, PASSWORD, SIGN_IN } from "@/constants/copy";
 
 type Props = {
     email: string;
@@ -43,7 +44,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
             <View className="mb-3">
                 <Input 
                     editable={false}
-                    placeholder="Email Address"
+                    placeholder={EMAIL_ADDRESS}
                     value={email}
                     keyboardType="email-address"
                     textContentType="username"
@@ -61,7 +62,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
                         return (
                             <Input 
                                 editable={!loading}
-                                placeholder="Password"
+                                placeholder={PASSWORD}
                                 value={value}
                                 onChangeText={password => onChange(password)}
                                 secureTextEntry
@@ -84,7 +85,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
                         return (
                             <Input 
                                 editable={!loading}
-                                placeholder="Confirm password"
+                                placeholder={CONFIRM_PASSWORD}
                                 ref={confirmPasswordInputRef}
                                 value={value}
                                 onChangeText={password2 => onChange(password2)}
@@ -104,7 +105,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
                     disabled={loading}
                     onPress={() => submit()}
                 >
-                    Sign in
+                    {SIGN_IN}
                 </Button>
             </View>
 
@@ -117,7 +118,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
                         'text-center text-sm opacity-50',
                         loading && 'opacity-50',
                     )}
-                >Change email address</Text>
+                >{CHANGE_EMAIL_ADDRESS}</Text>
             </TouchableOpacity>
         </>
     );

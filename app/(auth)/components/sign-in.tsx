@@ -6,6 +6,7 @@ import clsx from "clsx";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { CHANGE_EMAIL_ADDRESS, EMAIL_ADDRESS, PASSWORD, SIGN_IN } from "@/constants/copy";
 
 type Props = {
     email: string;
@@ -41,7 +42,7 @@ export function SignInForm({ email, done, onChangeEmail, }: Props) {
             <View className="mb-3">
                 <Input 
                     editable={false}
-                    placeholder="Email Address"
+                    placeholder={EMAIL_ADDRESS}
                     value={email}
                     keyboardType="email-address"
                     textContentType="username"
@@ -59,7 +60,7 @@ export function SignInForm({ email, done, onChangeEmail, }: Props) {
                         return (
                             <Input 
                                 editable={!loading}
-                                placeholder="Password"
+                                placeholder={PASSWORD}
                                 value={value}
                                 onChangeText={password => onChange(password)}
                                 secureTextEntry
@@ -78,7 +79,7 @@ export function SignInForm({ email, done, onChangeEmail, }: Props) {
                     disabled={loading}
                     onPress={() => submit()}
                 >
-                    Sign in
+                    {SIGN_IN}
                 </Button>
             </View>
 
@@ -91,7 +92,7 @@ export function SignInForm({ email, done, onChangeEmail, }: Props) {
                         'text-center text-sm opacity-50',
                         loading && 'opacity-50',
                     )}
-                >Change email address</Text>
+                >{CHANGE_EMAIL_ADDRESS}</Text>
             </TouchableOpacity>
         </>
     );

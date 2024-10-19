@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
+import { CONTINUE } from "@/constants/copy";
 
 export function OnboardingForm() {
     const [loading, setLoading] = useState(false);
@@ -71,7 +72,7 @@ export function OnboardingForm() {
                     disabled={loading}
                     onPress={submit}
                 >
-                    Continue
+                    {CONTINUE}
                 </Button>
             </View>
         </>

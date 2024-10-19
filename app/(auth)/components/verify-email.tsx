@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { EMAIL_ADDRESS, VERIFY_EMAIL_ADDRESS } from "@/constants/copy";
 
 type Props = {
     email: string;
@@ -49,7 +50,7 @@ export function VerifyEmailForm({ email, done }: Props) {
                         return (
                             <Input 
                                 editable={!loading}
-                                placeholder="Email Address"
+                                placeholder={EMAIL_ADDRESS}
                                 ref={emailInputRef}
                                 value={value}
                                 onChangeText={email => onChange(email)}
@@ -69,7 +70,7 @@ export function VerifyEmailForm({ email, done }: Props) {
                     disabled={loading}
                     onPress={submit}
                 >
-                    Verify email address
+                    {VERIFY_EMAIL_ADDRESS}
                 </Button>
             </View>
         </>
