@@ -11,6 +11,7 @@ import {
     ModalProps as RNModalProps, 
     View, 
     TouchableOpacity, 
+    TouchableWithoutFeedback,
     ScrollView, 
     Dimensions, 
     TouchableOpacityProps, 
@@ -120,7 +121,7 @@ export function ModalContent({ children, }: ModalContentProps) {
                 onRequestClose={() => {}}
             >
                 <View className="flex-1">
-                    <TouchableOpacity 
+                    <TouchableWithoutFeedback 
                         disabled={!closeOnClickAway}
                         className="
                             absolute
