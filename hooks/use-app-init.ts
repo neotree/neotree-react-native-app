@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAssets } from "expo-asset";
 
-import AsyncStorage from "@/data/async-storage";
 import { assets } from "@/constants";
 import { useDatabase } from "@/hooks/use-database";
 import { useFonts } from "@/hooks/use-fonts";
 import { useAuthentication } from "@/hooks/use-authentication";
 import { useSyncRemoteData } from "@/hooks/use-sync-remote-data";
 import { useNetInfo } from "@/hooks/use-netinfo";
-import { NeotreeConstantsStore } from '@/store/neotree-constants';
+import { useAsyncStorage } from '@/hooks/use-async-storage';
 
 export function useAppInit() {
     const { hasInternet, } = useNetInfo();
@@ -26,27 +25,24 @@ export function useAppInit() {
     const { authInfoLoaded, loadAuthInfoErrors, ...authInfo } = useAuthentication();
 
     /**** 
-        *** CONFIGURE APP ****
-        * set defaults (if first time running the app)
+        *** CONFIGURE ASYNC STORAGE ****
     ****/
-    const [{ configurationErrors, configured, }, setConfigState] = useState({
-        configured: false,
-        configurationErrors: [] as string[],
+    const [{ asyncStorageConfigErrors, asyncStorageConfigured, }, setAsyncStorageConfigState] = useState({
+        asyncStorageConfigured: false,
+        asyncStorageConfigErrors: [] as string[],
     });
 
     useEffect(() => {
         (async () => {
             const errors: string[] = [];
             try {
-                await AsyncStorage.init();
-                const neotreeConstants = await AsyncStorage.getAll();
-                await NeotreeConstantsStore.setState(neotreeConstants);
+                await useAsyncStorage.getState().init();
             } catch(e: any) {
                 errors.push(e.message);
             } finally {
-                setConfigState({
-                    configurationErrors: errors,
-                    configured: true,
+                setAsyncStorageConfigState({
+                    asyncStorageConfigErrors: errors,
+                    asyncStorageConfigured: true,
                 });
             }
         })();
@@ -59,13 +55,13 @@ export function useAppInit() {
         authInfoLoaded && 
         fontsLoaded &&
         databaseLoaded &&
-        configured
+        asyncStorageConfigured
     ),
     [
         authInfoLoaded, 
         fontsLoaded,
         databaseLoaded,
-        configured,
+        asyncStorageConfigured,
     ]);
 
     const initialiseErrors = useMemo(() => [
@@ -73,13 +69,13 @@ export function useAppInit() {
         ...(loadAuthInfoErrors || []),
         ...(loadDatabaseErrors || []),
         ...(loadAssetsError ? [loadAssetsError.message] : []),
-        ...configurationErrors,
+        ...asyncStorageConfigErrors,
     ], [
         loadFontsErrors, 
         loadAuthInfoErrors,
         loadDatabaseErrors,
         loadAssetsError,
-        configurationErrors,
+        asyncStorageConfigErrors,
     ]);
 
     const errors = useMemo(() => [

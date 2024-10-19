@@ -5,6 +5,7 @@ import logger from "@/lib/logger";
 import { getAxiosClient } from '@/lib/axios';
 import { DataResponse, RemoteData } from "@/types";
 import { isInternetConnected } from "@/lib/network";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
 
 type SyncRemoteDataOpts = {
     force?: true,
@@ -14,23 +15,25 @@ export async function syncRemoteData(options: SyncRemoteDataOpts = {}) {
     try {
         const axios = await getAxiosClient();
 
-        const dataVersion = await AsyncStorage.getItem(asyncStorageKeys.WEBEDITOR_DATA_VERSION);
-        const sessionsCount = await AsyncStorage.getItem(asyncStorageKeys.SESSIONS_COUNT);
-        const deviceId = await AsyncStorage.getItem(asyncStorageKeys.DEVICE_ID);
-        const lastSyncDate = await AsyncStorage.getItem(asyncStorageKeys.LAST_REMOTE_SYNC_DATE);
-        const hospitalId = await AsyncStorage.getItem(asyncStorageKeys.HOSPITAL_ID);
+        const {
+            WEBEDITOR_DATA_VERSION,
+            SESSIONS_COUNT,
+            DEVICE_ID,
+            LAST_REMOTE_SYNC_DATE,
+            HOSPITAL_ID,
+        } = await useAsyncStorage.getState().getAllItems();
         
         const hasInternet = await isInternetConnected();
 
-        if (!hasInternet && !lastSyncDate) throw new Error('No internet connection!');
+        if (!hasInternet && !LAST_REMOTE_SYNC_DATE) throw new Error('No internet connection!');
         
         if (hasInternet) {
-            const res = await axios.post<DataResponse<RemoteData>>(`/api/app/device/${deviceId}`, {
-                lastSyncDate,
-                dataVersion,
+            const res = await axios.post<DataResponse<RemoteData>>(`/api/app/device/${DEVICE_ID}`, {
+                lastSyncDate: LAST_REMOTE_SYNC_DATE,
+                dataVersion: WEBEDITOR_DATA_VERSION,
                 forceSync: options?.force,
-                sessionsCount: Number(sessionsCount || '0'),
-                hospitalId,
+                sessionsCount: Number(SESSIONS_COUNT || '0'),
+                hospitalId: HOSPITAL_ID,
             });
             const { errors, data } = res.data;
 

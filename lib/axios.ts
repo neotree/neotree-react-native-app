@@ -1,10 +1,10 @@
 import axios from "axios";
 
 import logger from "@/lib/logger";
-import AsyncStorage from "@/data/async-storage";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
 
 export async function getAxiosClient() {
-    const { WEBEDITOR_URL, WEBEDITOR_API_KEY, BEARER_TOKEN } = await AsyncStorage.getAll();
+    const { WEBEDITOR_URL, WEBEDITOR_API_KEY, BEARER_TOKEN } = await useAsyncStorage.getState().getAllItems();
 
     const webeditorURL = WEBEDITOR_URL;
     const webeditorApiKey = WEBEDITOR_API_KEY;
