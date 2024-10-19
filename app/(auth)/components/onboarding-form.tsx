@@ -3,18 +3,17 @@ import { View } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { router } from "expo-router";
 
+import { CONFIG } from '@/constants';
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
-import { CONTINUE } from "@/constants/copy";
+import { CONTINUE, COUNTRIES, COUNTRY, HOSPITAL, HOSPITALS } from "@/constants/copy";
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from "@/components/ui/dropdown";
 
 export function OnboardingForm() {
     const [loading, setLoading] = useState(false);
 
     const { COUNTRY_ISO, HOSPITAL_ID } = useAsyncStorage();
-
-    console.log('useAsyncStorage', { COUNTRY_ISO, HOSPITAL_ID, });
 
     const {
         control,
@@ -39,6 +38,39 @@ export function OnboardingForm() {
     return (
         <>
             <View className="mb-3">
+                <Text variant={CONFIG.sites.length > 2 ? 'label' : 'labelDisabled'}>{COUNTRY}</Text>
+                <Controller 
+                    control={control}
+                    name="countryISO"
+                    rules={{ required: true, }}
+                    render={({ field: { value, onChange }, }) => {
+                        return (
+                            <>
+                                <Dropdown
+                                    selected={value}
+                                    onSelect={value => onChange(value)}
+                                    disabled={CONFIG.sites.length < 2}
+                                    title={COUNTRIES}
+                                >
+                                    <DropdownTrigger>
+                                        Select country
+                                    </DropdownTrigger>
+                                    <DropdownContent>
+                                        {CONFIG.sites.map(o => (
+                                            <DropdownItem key={o.countryISO} value={o.countryISO}>
+                                                {o.countryName}
+                                            </DropdownItem>
+                                        ))}
+                                    </DropdownContent>
+                                </Dropdown>
+                            </>
+                        );
+                    }}
+                />
+            </View>
+
+            <View className="mb-3">
+                <Text variant="label">{HOSPITAL}</Text>
                 <Controller 
                     control={control}
                     name="hospitalId"
@@ -46,7 +78,11 @@ export function OnboardingForm() {
                     render={({ field: { value, onChange }, }) => {
                         return (
                             <>
-                                <Dropdown>
+                                <Dropdown
+                                    selected={value}
+                                    onSelect={value => onChange(value)}
+                                    title={HOSPITALS}
+                                >
                                     <DropdownTrigger>
                                         Select hospital
                                     </DropdownTrigger>
@@ -57,26 +93,17 @@ export function OnboardingForm() {
                                                 items.push({ value: `${i + 1}`, label: `Item ${i + 1}`, }); 
                                             }
                                             return items.map(o => (
-                                                <DropdownItem key={o.value} value={o.value}>{o.label}</DropdownItem>
+                                                <DropdownItem 
+                                                    key={o.value} 
+                                                    value={o.value}
+                                                    searchValue={o.label}
+                                                >
+                                                    {o.label}
+                                                </DropdownItem>
                                             ));
                                         })()}
                                     </DropdownContent>
                                 </Dropdown>
-                            </>
-                        );
-                    }}
-                />
-            </View>
-
-            <View className="mb-3">
-                <Controller 
-                    control={control}
-                    name="countryISO"
-                    rules={{ required: true, }}
-                    render={({ field: { value, onChange }, }) => {
-                        return (
-                            <>
-                            
                             </>
                         );
                     }}

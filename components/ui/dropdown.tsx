@@ -7,7 +7,10 @@ import { Text } from "./text";
 
 export type DropdownProps = {
     open?: boolean;
+    disabled?: boolean;
     selected?: string | number | (string | number)[];
+    selectMultiple?: boolean;
+    title?: React.ReactNode;
     onOpenChange?: (open: boolean) => void;
     onSelect?: (value: number | string) => void;
 };
@@ -18,6 +21,7 @@ export type DropdownTriggerProps = TouchableOpacityProps & {
 
 export type DropdownItemProps = TouchableOpacityProps & {
     value?: string | number;
+    searchValue?: string;
 };
 
 export type DropdownContentProps = ViewProps & {
@@ -91,28 +95,38 @@ export function DropdownTrigger({
 }: DropdownTriggerProps) {
     const {
         open,
+        items,
+        disabled,
         setOpen,
     } = useContext(Context);
+
+    const [selected] = useMemo(() => Object.values(items).filter(item => item.selected), [items]);
 
     return (
         <>
             <TouchableOpacity
                 {...props}
+                disabled={disabled || props.disabled}
                 onPress={(...args) => {
                     onPress?.(...args);
                     setOpen(prev => !prev);
                 }}
                 className={clsx(
                     'border border-border px-2 py-2 rounded-lg flex-row items-center',
+                    disabled && 'opacity-50',
                     className,
                 )}
             >
                 <View className="flex-1">
-                    {typeof children !== 'string' ? children : (
+                    {((children: React.ReactNode) => (
                         <>
-                            <Text>{children}</Text>
+                            {typeof children !== 'string' ? children : (
+                                <>
+                                    <Text>{children}</Text>
+                                </>
+                            )}
                         </>
-                    )}
+                    ))(selected?.children || children)}
                 </View>
                 
                 <View>
@@ -166,6 +180,9 @@ export function DropdownContent({ children }: DropdownContentProps) {
     const {
         open,
         items,
+        selectMultiple,
+        title,
+        setItems,
         setItem,
         setOpen,
         onSelect,
@@ -222,6 +239,20 @@ export function DropdownContent({ children }: DropdownContentProps) {
                                 shadowRadius: 3,
                             }}
                         >
+                            {!!title && (
+                                <>
+                                    <View
+                                        className="p-4"
+                                    >
+                                        {typeof title !== 'string' ? title : (
+                                            <>
+                                                <Text variant="title">{title}</Text>
+                                            </>
+                                        )}
+                                    </View>
+                                    <Separator />
+                                </>
+                            )}
                             <FlatList
                                 keyExtractor={(item) => item.id}
                                 data={data}
@@ -241,7 +272,20 @@ export function DropdownContent({ children }: DropdownContentProps) {
                                                 props.onPress?.(...args);
                                                 if (value) {
                                                     onSelect?.(value);
-                                                    setItem(item.id, { selected: !item.selected, });
+                                                    if (selectMultiple) {
+                                                        setItem(item.id, { selected: !item.selected, });
+                                                    } else {
+                                                        setItems(prev => Object.keys(prev).reduce((acc, key) => {
+                                                            return {
+                                                                ...acc,
+                                                                [key]: {
+                                                                    ...prev[key],
+                                                                    selected: key === item.id ? !item.selected : false,
+                                                                },
+                                                            };
+                                                        }, prev));
+                                                        setOpen(false);
+                                                    }
                                                 }
                                             }}
                                         >
