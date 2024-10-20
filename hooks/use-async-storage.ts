@@ -89,6 +89,8 @@ const getItem = (key: keyof typeof asyncStorageKeys) => AsyncStorage.getItem(key
 type AsyncStorageItems = typeof defaultState;
 
 export const useAsyncStorage = create<AsyncStorageItems & {
+    initialised: boolean;
+    errors: string[];
     itemsUpdating: boolean;
     setItem: typeof setItem;
     removeItem: typeof removeItem;
@@ -119,6 +121,8 @@ export const useAsyncStorage = create<AsyncStorageItems & {
     return {
         ...defaultState,
         itemsUpdating: false,
+        initialised: false,
+        errors: [],
         setItem,
         removeItem,
         getItem,
@@ -126,36 +130,42 @@ export const useAsyncStorage = create<AsyncStorageItems & {
         setItemsState,
         setItems: _setItems,
         async init() {
-            const activeSite = constants.CONFIG.sites[0];
-            if (!activeSite) throw new Error('Sites not configured');
-    
-            const INITIAL_SETUP_DATE = await AsyncStorage.getItem('INITIAL_SETUP_DATE');
+            try {
+                const activeSite = constants.CONFIG.sites[0];
+                if (!activeSite) throw new Error('Sites not configured');
+        
+                const INITIAL_SETUP_DATE = await AsyncStorage.getItem('INITIAL_SETUP_DATE');
 
-            if (INITIAL_SETUP_DATE) {
-                const items = await getAllItems();
-                setItemsState({ ...items, });
-                return;
+                if (INITIAL_SETUP_DATE) {
+                    const items = await getAllItems();
+                    setItemsState({ ...items, });
+                    return;
+                }
+        
+                const deviceId = await getDeviceID();
+                await _setItems({
+                    APP_VERSION: constants.APP_VERSION || '',
+                    SDK_VERSION: constants.SDK_VERSION || '',
+                    INITIAL_SETUP_DATE: new Date().toUTCString(),
+                    NEOTREE_BUILD_TYPE: constants.NEOTREE_BUILD_TYPE || '',
+                    DEVICE_ID: deviceId || '',
+                    WEBEDITOR_URL: activeSite.webeditorURL || '',
+                    WEBEDITOR_API_KEY: activeSite.apiKey || '',
+                    COUNTRY_ISO: activeSite.countryISO || '',
+                    COUNTRY_NAME: activeSite.countryName || '',
+                    SESSIONS_COUNT: '0',
+                    HOSPITAL_ID: '',
+                    HOSPITAL_NAME: '',
+                    WEBEDITOR_DATA_VERSION: '',
+                    BEARER_TOKEN: '',
+                    DEVICE_HASH: '',
+                    LAST_REMOTE_SYNC_DATE: '',
+                });
+            } catch(e: any) {
+                set({ errors: [e.message], });
+            } finally {
+                set({ initialised: true, });
             }
-    
-            const deviceId = await getDeviceID();
-            await _setItems({
-                APP_VERSION: constants.APP_VERSION || '',
-                SDK_VERSION: constants.SDK_VERSION || '',
-                INITIAL_SETUP_DATE: new Date().toUTCString(),
-                NEOTREE_BUILD_TYPE: constants.NEOTREE_BUILD_TYPE || '',
-                DEVICE_ID: deviceId || '',
-                WEBEDITOR_URL: activeSite.webeditorURL || '',
-                WEBEDITOR_API_KEY: activeSite.apiKey || '',
-                COUNTRY_ISO: activeSite.countryISO || '',
-                COUNTRY_NAME: activeSite.countryName || '',
-                SESSIONS_COUNT: '0',
-                HOSPITAL_ID: '',
-                HOSPITAL_NAME: '',
-                WEBEDITOR_DATA_VERSION: '',
-                BEARER_TOKEN: '',
-                DEVICE_HASH: '',
-                LAST_REMOTE_SYNC_DATE: '',
-            });
         },
     };
 });

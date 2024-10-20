@@ -27,26 +27,8 @@ export function useAppInit() {
     /**** 
         *** CONFIGURE ASYNC STORAGE ****
     ****/
-    const [{ asyncStorageConfigErrors, asyncStorageConfigured, }, setAsyncStorageConfigState] = useState({
-        asyncStorageConfigured: false,
-        asyncStorageConfigErrors: [] as string[],
-    });
-
-    useEffect(() => {
-        (async () => {
-            const errors: string[] = [];
-            try {
-                await useAsyncStorage.getState().init();
-            } catch(e: any) {
-                errors.push(e.message);
-            } finally {
-                setAsyncStorageConfigState({
-                    asyncStorageConfigErrors: errors,
-                    asyncStorageConfigured: true,
-                });
-            }
-        })();
-    }, []);
+    const { initialised: asyncStorageConfigured, errors: asyncStorageConfigErrors, } = useAsyncStorage();
+    useEffect(() => { useAsyncStorage.getState().init(); }, []);
 
     // sync remote - but only do this after everything is ready
     const { remotedSynced, syncRemoteErrors, sync } = useSyncRemoteData({ syncOnmount: false, });
