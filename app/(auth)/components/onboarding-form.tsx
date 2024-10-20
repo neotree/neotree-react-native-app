@@ -109,6 +109,8 @@ export function OnboardingForm() {
                         return (
                             <>
                                 <Dropdown
+                                    searchable
+                                    searchPlaceholder="Search hospitals"
                                     selected={value}
                                     onSelect={value => {
                                         onChange(value);
@@ -129,7 +131,6 @@ export function OnboardingForm() {
                                                 <DropdownItem 
                                                     key={o.oldHospitalId || o.hospitalId} 
                                                     value={o.hospitalId}
-                                                    searchValue={o.name}
                                                 >
                                                     {o.name}
                                                 </DropdownItem>

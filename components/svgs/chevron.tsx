@@ -1,12 +1,12 @@
 import clsx from "clsx";
 import Svg, { Line, Path, SvgProps } from "react-native-svg";
 
-export type WifiOffProps = SvgProps & {
+export type ChevronProps = SvgProps & {
     svgClassName?: string;
     direction: 'left' | 'right' | 'up' | 'down';
 };
 
-export function Chevron({ direction, svgClassName, ...props }: WifiOffProps) {
+export function Chevron({ direction, svgClassName, ...props }: ChevronProps) {
     const className = clsx(
         'w-4 h-4 stroke-black',
         props?.className,

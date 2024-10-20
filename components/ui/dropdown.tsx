@@ -1,11 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Platform, TouchableOpacity, TouchableOpacityProps, TouchableWithoutFeedback, View, ViewProps } from "react-native";
 import Svg, { Path } from 'react-native-svg';
 import clsx from "clsx";
 import { Separator } from "./separator";
 import { Text } from "./text";
+import { Search } from "../svgs/search";
+import { Input } from "./input";
+import { X } from "../svgs/X";
 
 export type DropdownProps = {
+    searchable?: boolean;
+    searchPlaceholder?: string;
     open?: boolean;
     disabled?: boolean;
     selected?: string | number | (string | number)[];
@@ -21,7 +26,6 @@ export type DropdownTriggerProps = TouchableOpacityProps & {
 
 export type DropdownItemProps = TouchableOpacityProps & {
     value?: string | number;
-    searchValue?: string;
 };
 
 export type DropdownContentProps = ViewProps & {
@@ -36,6 +40,10 @@ type ContextType = DropdownProps & {
     open: boolean;
     items: Items,
     containerRef: React.RefObject<View>;
+    showSearchInput: boolean;
+    searchValue: string;
+    setSearchValue: React.Dispatch<React.SetStateAction<string>>;
+    setShowSearchInput: React.Dispatch<React.SetStateAction<boolean>>;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
     setItems: React.Dispatch<React.SetStateAction<Items>>;
     setItem: (id: string, item: Partial<ItemState>) => void
@@ -53,10 +61,16 @@ export function Dropdown({
 
     const [open, setOpen] = useState(!!openProp);
     const [items, setItems] = useState<ContextType['items']>({});
+    const [showSearchInput, setShowSearchInput] = useState(false);
+    const [_searchValue, setSearchValue] = useState('');
+    const searchValue = useDeferredValue(_searchValue);
 
     useEffect(() => { setOpen(!!openProp); }, [openProp]);
 
-    useEffect(() => { onOpenChange?.(open); }, [open, onOpenChange]);
+    useEffect(() => { 
+        onOpenChange?.(open); 
+        setShowSearchInput(false);
+    }, [open, onOpenChange]);
 
     const setItem = useCallback((id: string, item: Partial<ItemState>) => {
         setItems(prev => ({
@@ -75,6 +89,10 @@ export function Dropdown({
                 items,
                 open,
                 containerRef,
+                showSearchInput,
+                searchValue,
+                setSearchValue,
+                setShowSearchInput,
                 setItems,
                 setOpen,
                 setItem,
@@ -182,6 +200,12 @@ export function DropdownContent({ children }: DropdownContentProps) {
         items,
         selectMultiple,
         title,
+        searchable,
+        showSearchInput,
+        searchValue,
+        searchPlaceholder,
+        setSearchValue,
+        setShowSearchInput,
         setItems,
         setItem,
         setOpen,
@@ -239,19 +263,58 @@ export function DropdownContent({ children }: DropdownContentProps) {
                                 shadowRadius: 3,
                             }}
                         >
-                            {!!title && (
+                            {(!!searchable || !!title) && (
                                 <>
-                                    <View
-                                        className="p-4"
-                                    >
-                                        {typeof title !== 'string' ? title : (
-                                            <>
-                                                <Text variant="title">{title}</Text>
-                                            </>
-                                        )}
+                                    <View className="p-4 flex-row items-center">
+                                            {showSearchInput ? (
+                                                <>
+                                                    <View className="flex-1">
+                                                        <Input 
+                                                            autoFocus
+                                                            placeholder={searchPlaceholder || 'Search'}
+                                                            value={searchValue}
+                                                            onChangeText={value => setSearchValue(value)}
+                                                        />
+                                                    </View>
+
+                                                    <View className="ml-2">
+                                                        <TouchableOpacity 
+                                                            onPress={() => {
+                                                                setShowSearchInput(false);
+                                                                setSearchValue('');
+                                                            }}
+                                                        >
+                                                            <X 
+                                                                svgClassName="stroke-primary w-6 h-6"
+                                                            />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {typeof title !== 'string' ? title : (
+                                                        <>
+                                                            <Text variant="title">{title}</Text>
+                                                        </>
+                                                    )}
+            
+                                                    {!!searchable && (
+                                                        <>
+                                                            <TouchableOpacity 
+                                                                className="ml-auto"
+                                                                onPress={() => setShowSearchInput(true)}
+                                                            >
+                                                                <Search 
+                                                                    svgClassName="stroke-primary w-6 h-6"
+                                                                />
+                                                            </TouchableOpacity>
+                                                        </>
+                                                    )}
+                                                </>
+                                            )}
                                     </View>
-                                    <Separator />
-                                </>
+                               <Separator />
+                               </>
                             )}
                             <FlatList
                                 keyExtractor={(item) => item.id}
@@ -259,6 +322,11 @@ export function DropdownContent({ children }: DropdownContentProps) {
                                 ItemSeparatorComponent={() => <Separator />}
                                 renderItem={({ item }) => {
                                     const { value, children, ...props } = item;
+
+                                    let hidden = false;
+                                    if (searchValue) hidden = !children?.toString?.().match(new RegExp(searchValue, 'gi'));
+
+                                    if (hidden) return null;
 
                                     return (
                                         <TouchableOpacity
