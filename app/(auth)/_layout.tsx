@@ -3,14 +3,16 @@ import { Redirect, Stack } from "expo-router";
 
 import { useHospitals } from "@/hooks/use-hospitals";
 import { useAuthentication } from "@/hooks/use-authentication";
+import { useNetInfo } from "@/hooks/use-netinfo";
 
 export default function AuthLayout() {
-    const { hospitalsInitialised } = useHospitals();
+    const { hospitalsInitialised, getHospitals } = useHospitals();
     const { authenticated, authInfoLoaded } = useAuthentication();
+    const { hasInternet } = useNetInfo();
 
     useEffect(() => {
-        if (authInfoLoaded && !authenticated) useHospitals.getState().getHospitals();
-    }, [authInfoLoaded, authenticated]);
+        if (hasInternet && authInfoLoaded && !authenticated) getHospitals();
+    }, [authInfoLoaded, authenticated, hasInternet, getHospitals]);
 
     if (!authInfoLoaded) return null;
 
