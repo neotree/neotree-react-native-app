@@ -1,14 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { DataResponse } from '@/types';
 import { asyncStorageKeys } from '@/constants';
 import logger from '@/lib/logger';
 
-const defaultAuthenticationInfo: DataResponse<{ authenticated: boolean; }> = {
-    data: { 
-        authenticated: false, 
-    }, 
+const defaultAuthenticationInfo: { authenticated: boolean; errors?: string[]; } = {
+    authenticated: false, 
 };
 
 export function useAuthentication() {
@@ -19,9 +16,7 @@ export function useAuthentication() {
         try {
             const bearerToken = await AsyncStorage.getItem(asyncStorageKeys.BEARER_TOKEN);
             setInfo({ 
-                data: {
-                    authenticated: !!bearerToken,
-                }, 
+                authenticated: !!bearerToken,
             });
         } catch(e: any) {
             logger.error('getAuthenticationInfo ERROR', e.message);
@@ -37,7 +32,7 @@ export function useAuthentication() {
     useEffect(() => { getAuthenticationInfo(); }, []);
 
     return {
-        ...info.data,
+        ...info,
         loadAuthInfoErrors: info.errors,
         authInfoLoaded,
         getAuthenticationInfo,

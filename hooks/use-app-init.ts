@@ -31,7 +31,7 @@ export function useAppInit() {
     useEffect(() => { useAsyncStorage.getState().init(); }, []);
 
     // sync remote - but only do this after everything is ready
-    const { remotedSynced, syncRemoteErrors, sync } = useSyncRemoteData({ syncOnmount: false, });
+    const { remoteSynced, syncRemoteErrors, sync } = useSyncRemoteData({ syncOnmount: false, });
 
     const initialised = useMemo(() => !!(
         authInfoLoaded && 
@@ -65,7 +65,7 @@ export function useAppInit() {
         ...(syncRemoteErrors || []),
     ], [initialiseErrors, syncRemoteErrors]);
 
-    const isReady = useMemo(() => remotedSynced && initialised, [initialised, remotedSynced]);
+    const isReady = useMemo(() => remoteSynced && initialised, [initialised, remoteSynced]);
 
     // after everything is loaded, run the remote data sync function
     useEffect(() => {

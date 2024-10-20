@@ -3,6 +3,10 @@ import { View, TextInput, TouchableOpacity } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import clsx from "clsx";
 
+import { getAxiosClient } from "@/lib/axios";
+import { useAlertModal } from "@/hooks/use-alert-modal";
+import { DataResponse } from "@/types";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -15,6 +19,9 @@ type Props = {
 };
 
 export function SignInForm({ email, done, onChangeEmail, }: Props) {
+    const { alert } = useAlertModal();
+    const { setItems: setAsyncStorageItems } = useAsyncStorage();
+
     const [loading, setLoading] = useState(false);
 
     const {
@@ -26,12 +33,28 @@ export function SignInForm({ email, done, onChangeEmail, }: Props) {
         },
     });
 
-    const submit = handleSubmit(async () => {
+    const submit = handleSubmit(async (data) => {
         try {
             setLoading(true);
+
+            const axios = await getAxiosClient();
+            const res = await axios.post<DataResponse<null | { bearerToken: string; }>>('/api/app/auth/sign-in', {
+                ...data,
+                email
+            });
+            const { data: info, errors } = res.data;
+
+            if (errors?.length) throw new Error(errors.join(', '));
+
+            await setAsyncStorageItems({ BEARER_TOKEN: info?.bearerToken || '', });
+            
             done();
         } catch(e: any) {
-
+            alert({
+                variant: 'error',
+                message: e.message,
+                title: 'Sign in',
+            });
         } finally {
             setLoading(false);
         }

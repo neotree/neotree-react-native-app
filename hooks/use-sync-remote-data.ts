@@ -7,8 +7,8 @@ export function useSyncRemoteData(options?: {
 }) {
     const {  syncOnmount} = { ...options };
 
-    const [remotedSyncing, setSyncing] = useState(false);
-    const [remotedSynced, setSynced] = useState(false);
+    const [remoteSyncing, setSyncing] = useState(false);
+    const [remoteSynced, setSynced] = useState(false);
     const [syncRemoteErrors, setSyncRemoteErrors] = useState<string[]>();
 
     const sync = useCallback(async () => {
@@ -28,8 +28,8 @@ export function useSyncRemoteData(options?: {
 
     return {
         sync,
-        remotedSyncing,
-        remotedSynced,
+        remoteSyncing,
+        remoteSynced,
         syncRemoteErrors,
     };
 }

@@ -33,11 +33,11 @@ export function VerifyEmailForm({ email, done }: Props) {
 
     const submit = handleSubmit(async (data) => {
         try {
+            setLoading(true);
+            
             const axios = await getAxiosClient();
             const res = await axios.post<DataResponse<null | { userId: string; isActive: boolean; }>>('/api/app/auth/verify-email', data);
             const { data: info, errors } = res.data;
-
-            console.log(info, errors, data);
 
             if (errors?.length) throw new Error(errors.join(', '));
             

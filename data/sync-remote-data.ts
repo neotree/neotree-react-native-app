@@ -39,6 +39,8 @@ export async function syncRemoteData(options: SyncRemoteDataOpts = {}) {
 
             if (errors?.length) throw new Error(errors.join(', '));
 
+            console.log('SYNC data.newData', data.newData);
+
             if (data.newData) {
                 
             }
