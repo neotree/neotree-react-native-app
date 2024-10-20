@@ -5,8 +5,9 @@ import { View } from "react-native";
 import Icon from '@expo/vector-icons/Feather';
 
 import { useAlertModal } from "@/hooks/use-alert-modal";
-import { Modal, ModalContent } from "@/components/ui/modal";
+import { Modal, ModalContent, ModalFooter, ModalClose } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
 
 export function AlertModal() {
     const { 
@@ -31,14 +32,6 @@ export function AlertModal() {
                 onOpenChange={closeModal}
                 title={title}
                 titleProps={{ textProps: { className: 'text-center', }, }}
-                actions={[
-                    {
-                        label: buttonLabel,
-                        destructive: true,
-                        color: variant === 'error' ? 'danger' : undefined,
-                        onPress: closeModal,
-                    },
-                ]}
             >
                 <ModalContent>
                     <View className="gap-y-1">
@@ -64,6 +57,14 @@ export function AlertModal() {
 
                         <Text className="text-center">{message}</Text>
                     </View>
+
+                    <ModalFooter>
+                        <ModalClose 
+                            as={Button}
+                        >
+                            {buttonLabel}
+                        </ModalClose>
+                    </ModalFooter>
                 </ModalContent>
             </Modal>
         </>

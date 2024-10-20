@@ -16,7 +16,7 @@ type Props = {
 
 export function SignUpForm({ email, done, onChangeEmail, }: Props) {
     const [loading, setLoading] = useState(false);
-	const confirmPasswordInputRef = useRef<TextInput>(null);
+	const passwordConfirmInputRef = useRef<TextInput>(null);
 
     const {
         control,
@@ -24,7 +24,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
     } = useForm({
         defaultValues: {
             password: '',
-            confirmPassword: '',
+            passwordConfirm: '',
         },
     });
 
@@ -69,7 +69,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
                                 textContentType="password"
                                 autoCapitalize="none"
                                 returnKeyType="go"
-                                onSubmitEditing={() => confirmPasswordInputRef.current?.focus?.()}
+                                onSubmitEditing={() => passwordConfirmInputRef.current?.focus?.()}
                             />
                         );
                     }}
@@ -79,14 +79,14 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
             <View className="mb-3">
                 <Controller 
                     control={control}
-                    name="confirmPassword"
+                    name="passwordConfirm"
                     rules={{ required: true, }}
                     render={({ field: { value, onChange }, }) => {
                         return (
                             <Input 
                                 editable={!loading}
                                 placeholder={CONFIRM_PASSWORD}
-                                ref={confirmPasswordInputRef}
+                                ref={passwordConfirmInputRef}
                                 value={value}
                                 onChangeText={password2 => onChange(password2)}
                                 secureTextEntry

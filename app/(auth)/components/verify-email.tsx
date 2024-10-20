@@ -2,10 +2,13 @@ import { useRef, useState } from "react";
 import { View, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 
+import { getAxiosClient } from "@/lib/axios";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { EMAIL_ADDRESS, VERIFY_EMAIL_ADDRESS } from "@/constants/copy";
+import { DataResponse } from "@/types";
+import { useAlertModal } from "@/hooks/use-alert-modal";
 
 type Props = {
     email: string;
@@ -13,6 +16,8 @@ type Props = {
 };
 
 export function VerifyEmailForm({ email, done }: Props) {
+    const { alert } = useAlertModal();
+
     const [loading, setLoading] = useState(false);
 
     const emailInputRef = useRef<TextInput>(null);
@@ -28,9 +33,21 @@ export function VerifyEmailForm({ email, done }: Props) {
 
     const submit = handleSubmit(async (data) => {
         try {
-            done({ email: data.email, activated: true, });
-        } catch(e: any) {
+            const axios = await getAxiosClient();
+            const res = await axios.post<DataResponse<null | { userId: string; isActive: boolean; }>>('/api/app/auth/verify-email', data);
+            const { data: info, errors } = res.data;
 
+            console.log(info, errors, data);
+
+            if (errors?.length) throw new Error(errors.join(', '));
+            
+            done({ email: data.email, activated: !!info?.isActive, });
+        } catch(e: any) {
+            alert({
+                variant: 'error',
+                message: e.message,
+                title: 'Verify email address',
+            });
         } finally {
             setLoading(false);
         }

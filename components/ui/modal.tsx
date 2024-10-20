@@ -11,14 +11,14 @@ import {
     ModalProps as RNModalProps, 
     View, 
     TouchableOpacity, 
-    TouchableWithoutFeedback,
     ScrollView, 
     Dimensions, 
+    TouchableWithoutFeedback,
     TouchableOpacityProps, 
     GestureResponderEvent, 
 } from "react-native";
 
-import { Card, CardContent, CardFooter, CardTitle, CardTitleProps } from "./card";
+import { Card, CardContent, CardFooter, CardTitle, CardTitleProps, CardFooterProps } from "./card";
 import { Separator } from "./separator";
 import { Text } from "./text";
 import clsx from "clsx";
@@ -27,28 +27,23 @@ import { ButtonProps } from "./button";
 const { height: windowHeight } = Dimensions.get('window');
 const MAX_CONTENT_HEIGHT = windowHeight * 0.8;
 
-export type ModalAction = {
-    label: React.ReactNode;
-    destructive?: boolean;
-    color?: 'danger' | 'secondary';
-    outlined?: boolean;
-    onPress?: () => void;
-};
-
 export type ModalProps = RNModalProps & {
     title?: React.ReactNode;
     titleProps?: CardTitleProps;
     open?: boolean;
     closeOnClickAway?: boolean;
-    actions?: ModalAction[];
     onOpenChange?: (open: boolean) => void;
 };
+
+type ModalFooterProps = CardFooterProps;
 
 interface IContext {
     isOpen: boolean;
     props: ModalProps;
+    footer: null | ModalFooterProps;
     onClose: () => void;
     onOpen: () => void;
+    setFooter: React.Dispatch<React.SetStateAction<null | ModalFooterProps>>;
 }
 
 const ModalContext = createContext<IContext>(null!);
@@ -63,6 +58,7 @@ export function Modal(props: ModalProps) {
     } = props;
 
     const [isOpen, setIsOpen] = useState(!!open);
+    const [footer, setFooter] = useState<IContext['footer']>(null);
 
     useEffect(() => { setIsOpen(!!open); }, [open]);
 
@@ -81,6 +77,8 @@ export function Modal(props: ModalProps) {
             value={{
                 isOpen,
                 props,
+                footer,
+                setFooter,
                 onClose,
                 onOpen,
             }}
@@ -97,20 +95,14 @@ export type ModalContentProps = React.PropsWithChildren<{
 export function ModalContent({ children, }: ModalContentProps) {
     const {
         isOpen,
+        footer,
         props: {
             title,
             closeOnClickAway = true,
-            actions = [],
             titleProps,
         },
         onClose,
     } = useModalContext();
-
-    const displayActions = useMemo(() => actions.map((a, i) => ({
-        ...a,
-        id: i + 1,
-        isLast: i === (actions.length - 1),
-    })), [actions]);
 
     return (
         <>
@@ -118,21 +110,24 @@ export function ModalContent({ children, }: ModalContentProps) {
                 statusBarTranslucent
                 transparent
                 visible={isOpen}
-                onRequestClose={() => {}}
+                onRequestClose={() => onClose()}
             >
                 <View className="flex-1">
                     <TouchableWithoutFeedback 
                         disabled={!closeOnClickAway}
-                        className="
-                            absolute
-                            flex-1
-                            bg-black/50
-                            w-full
-                            top-0
-                            bottom-0
-                        "
                         onPress={() => onClose()}
-                    />
+                    >
+                        <View 
+                            className="
+                                absolute
+                                flex-1
+                                bg-black/50
+                                w-full
+                                top-0
+                                bottom-0
+                            "
+                        />
+                    </TouchableWithoutFeedback>
 
                     <View 
                         className="
@@ -154,7 +149,7 @@ export function ModalContent({ children, }: ModalContentProps) {
                             }}
                         >
                             <CardContent className="p-0">
-                                {!!title && <CardTitle {...titleProps} className={clsx('py-2 px-3', titleProps?.className)}>{title}</CardTitle>}
+                                {!!title && <CardTitle {...titleProps} className={clsx('py-4 px-3', titleProps?.className)}>{title}</CardTitle>}
 
                                 <View 
                                     style={{ maxHeight: MAX_CONTENT_HEIGHT, }}
@@ -168,38 +163,16 @@ export function ModalContent({ children, }: ModalContentProps) {
                                     </ScrollView>
                                 </View>
 
-                                {!!displayActions.length && (
+                                {!!footer && (
                                     <>
                                         <Separator />
-                                        <CardFooter className="gap-x-0">
-                                            {displayActions.map(a => {
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={a.id}
-                                                        onPress={() => {
-                                                            if (a.destructive) onClose();
-                                                            a.onPress?.();
-                                                        }}
-                                                        className={clsx(
-                                                            'flex flex-row px-4 py-2 border-l border-l-border bg-primary',
-                                                            a.color === 'danger' && 'bg-danger',
-                                                            a.color === 'secondary' && 'bg-secondary',
-                                                            a.isLast && 'rounded-br-lg',
-                                                        )}
-                                                    >
-                                                        <Text
-                                                            className={clsx(
-                                                                'font-bold uppercase text-primary-foreground',
-                                                                a.color === 'danger' && 'text-danger-foreground',
-                                                                a.color === 'secondary' && 'text-secondary-foreground',
-                                                            )}
-                                                        >
-                                                            {a.label}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                )
-                                            })}
-                                        </CardFooter>
+                                        <CardFooter 
+                                            {...footer}
+                                            className={clsx(
+                                                'py-2 px-4',
+                                                footer.className,
+                                            )}
+                                        />
                                     </>
                                 )}
                             </CardContent>
@@ -261,4 +234,10 @@ export function ModalClose({
             onPress={onPress}
         />
     );
+}
+
+export function ModalFooter(props: ModalFooterProps) {
+    const { setFooter } = useContext(ModalContext);
+    useEffect(() => { setFooter(props); }, [props, setFooter]);
+    return null;
 }

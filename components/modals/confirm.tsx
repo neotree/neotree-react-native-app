@@ -4,8 +4,9 @@ import { View } from "react-native";
 import Icon from '@expo/vector-icons/Feather'
 
 import { useConfirmModal } from "@/hooks/use-confirm-modal";
-import { Modal, ModalContent } from "@/components/ui/modal";
+import { Modal, ModalContent, ModalClose, ModalFooter } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
+import { Button } from "../ui/button";
   
 export function ConfirmModal() {
     const { 
@@ -25,18 +26,6 @@ export function ConfirmModal() {
             onOpenChange={close}
             title={title}
             titleProps={{ textProps: { className: 'text-center', }, }}
-            actions={[
-                {
-                    label: negativeLabel,
-                    destructive: true,
-                    color: danger ? 'danger' : undefined,
-                },
-                {
-                    label: positiveLabel,
-                    destructive: true,
-                    onPress: onConfirm,
-                },
-            ]}
         >
             <ModalContent>
                 <View className="gap-y-1">
@@ -52,6 +41,23 @@ export function ConfirmModal() {
 
                     <Text className="text-center">{message}</Text>
                 </View>
+
+                <ModalFooter>
+                    <ModalClose
+                        as={Button}
+                        color={danger ? 'error' : undefined}
+                        variant="ghost"
+                    >
+                        {negativeLabel}
+                    </ModalClose>
+
+                    <ModalClose
+                        as={Button}
+                        onPress={onConfirm}
+                    >
+                        {positiveLabel}
+                    </ModalClose>
+                </ModalFooter>
             </ModalContent>
         </Modal>
     );

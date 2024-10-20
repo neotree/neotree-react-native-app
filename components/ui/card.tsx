@@ -16,8 +16,9 @@ export function CardTitle({ children, textProps, ...props }: CardTitleProps) {
             >
                 <Text
                     {...textProps}
+                    variant="title"
                     className={clsx(
-                        'text-lg mb-1 font-semi-bold',
+                        'mb-1',
                         textProps?.className,
                     )}
                 >{children}</Text>
