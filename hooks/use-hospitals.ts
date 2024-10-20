@@ -1,51 +1,73 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { create } from "zustand";
 
 import { DataResponse, Hospital } from "@/types";
 import logger from "@/lib/logger";
 import { getAxiosClient } from "@/lib/axios";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
+import { isInternetConnected } from "@/lib/network";
 
-export function useHospitals(options?: {
-    loadHospitalsOnmount?: boolean;
-}) {
-    const {
-        loadHospitalsOnmount,
-    } = { ...options, };
+type HospitalsState = {
+    hospitalsInitialised: boolean;
+    hospitalsLoading: boolean;
+    hospitals: DataResponse<Hospital[]>['data'];
+    loadHospitalsErrors: string[];
+    currentHospitalName: string;
+    currentHospitalId: string;
+};
 
-    const mounted = useRef(false);
+type HospitalsStore = HospitalsState & {
+    setHospitalsState: (partialState: Partial<HospitalsState>) => void;
+    getHospitals: () => Promise<void>;
+};
 
-    const [hospitalsInitialised, setHospitalsInitialised] = useState(false);
-    const [hospitalsLoading, setLoading] = useState(true);
-    const [hospitals, setHospitals] = useState<DataResponse<Hospital[]>>({
-        data: [],
-    });
+const defaultState: HospitalsState = {
+    hospitalsInitialised: false,
+    hospitalsLoading: false,
+    hospitals: [],
+    loadHospitalsErrors: [],
+    currentHospitalName: '',
+    currentHospitalId: '',
+};
 
-    const getHospitals = useCallback(async () => {
+
+export const useHospitals = create<HospitalsStore>(set => {
+    const setHospitalsState: HospitalsStore['setHospitalsState'] =  partialState => set(prev => ({
+        ...prev,
+        ...partialState,
+    }));
+
+    const getHospitals = async () => {
         try {
-            setLoading(true);
-            const axios = await getAxiosClient();
-            const res = await axios.get<DataResponse<Hospital[]>>('/api/hospitals');
-            const { data } = res.data;
-            setHospitals({ data: data || [], });
+            const hasInternet = await isInternetConnected();
+            if (hasInternet) {
+                setHospitalsState({ hospitalsLoading: true, });
+                const axios = await getAxiosClient();
+                const res = await axios.get<DataResponse<Hospital[]>>('/api/hospitals');
+                const { data, errors } = res.data;
+                setHospitalsState({ 
+                    loadHospitalsErrors: errors,
+                    hospitals: data || [], 
+                });
+            }
         } catch(e: any) {
             logger.error('getHospitals ERROR', e.message);
-            setHospitals({ errors: [e.message], data: [], })
+            setHospitalsState({ loadHospitalsErrors: [e.message], });
         } finally {
-            setLoading(false);
-            setHospitalsInitialised(true);
+            setHospitalsState({ hospitalsLoading: false, hospitalsInitialised: true, });
         }
-    }, []);
-
-    useEffect(() => {
-        if (loadHospitalsOnmount && !mounted.current) getHospitals();
-    }, [loadHospitalsOnmount, getHospitals]);
-
-    useEffect(() => { mounted.current = true; }, []);
+    };
 
     return {
-        hospitalsInitialised,
-        hospitalsLoading,
-        hospitals: hospitals.data,
-        loadHospitalsErrors: hospitals.errors,
+        ...defaultState,
+        setHospitalsState,
         getHospitals,
     };
+});
+
+export function useHospitalsInitialiser() {
+    const mounted = useRef(false);
+    useEffect(() => {
+        if (!mounted.current) useHospitals.getState().getHospitals();
+    }, []);
 }

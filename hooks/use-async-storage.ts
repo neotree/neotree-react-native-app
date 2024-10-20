@@ -12,7 +12,9 @@ export const asyncStorageKeys = {
     DEVICE_HASH: 'DEVICE_HASH',
     LAST_REMOTE_SYNC_DATE: 'LAST_REMOTE_SYNC_DATE',
     COUNTRY_ISO: 'COUNTRY_ISO',
+    COUNTRY_NAME: 'COUNTRY_NAME',
     HOSPITAL_ID: 'HOSPITAL_ID',
+    HOSPITAL_NAME: 'HOSPITAL_NAME',
     APP_VERSION: 'APP_VERSION',
     SDK_VERSION: 'SDK_VERSION',
     SESSIONS_COUNT: 'SESSIONS_COUNT',
@@ -29,7 +31,9 @@ const sanitiser = {
     DEVICE_HASH: (value: string | null) => value || '',
     LAST_REMOTE_SYNC_DATE: (value: string | null) => value ? new Date(value) : null,
     COUNTRY_ISO: (value: string | null) => value || '',
+    COUNTRY_NAME: (value: string | null) => value || '',
     HOSPITAL_ID: (value: string | null) => value || '',
+    HOSPITAL_NAME: (value: string | null) => value || '',
     APP_VERSION: (value: string | null) => value || '',
     SDK_VERSION: (value: string | null) => value || '',
     SESSIONS_COUNT: (value: string | null) => value ? Number(value) : 0,
@@ -46,7 +50,9 @@ const defaultState = {
     DEVICE_HASH: sanitiser.DEVICE_HASH(null),
     LAST_REMOTE_SYNC_DATE: sanitiser.LAST_REMOTE_SYNC_DATE(null),
     COUNTRY_ISO: sanitiser.COUNTRY_ISO(null),
+    COUNTRY_NAME: sanitiser.COUNTRY_NAME(null),
     HOSPITAL_ID: sanitiser.HOSPITAL_ID(null),
+    HOSPITAL_NAME: sanitiser.HOSPITAL_NAME(null),
     APP_VERSION: sanitiser.APP_VERSION(null),
     SDK_VERSION: sanitiser.SDK_VERSION(null),
     SESSIONS_COUNT: sanitiser.SESSIONS_COUNT(null),
@@ -78,7 +84,7 @@ async function setItems(params: Partial<Record<keyof typeof asyncStorageKeys, st
 
 const setItem = (key: keyof typeof asyncStorageKeys, value: string) => AsyncStorage.setItem(key, value);
 const removeItem = (key: keyof typeof asyncStorageKeys) => AsyncStorage.removeItem(key);
-const getItem = (key: keyof typeof asyncStorageKeys, value: string) => AsyncStorage.getItem(key);
+const getItem = (key: keyof typeof asyncStorageKeys) => AsyncStorage.getItem(key);
 
 type AsyncStorageItems = typeof defaultState;
 
@@ -141,8 +147,10 @@ export const useAsyncStorage = create<AsyncStorageItems & {
                 WEBEDITOR_URL: activeSite.webeditorURL || '',
                 WEBEDITOR_API_KEY: activeSite.apiKey || '',
                 COUNTRY_ISO: activeSite.countryISO || '',
+                COUNTRY_NAME: activeSite.countryName || '',
                 SESSIONS_COUNT: '0',
                 HOSPITAL_ID: '',
+                HOSPITAL_NAME: '',
                 WEBEDITOR_DATA_VERSION: '',
                 BEARER_TOKEN: '',
                 DEVICE_HASH: '',

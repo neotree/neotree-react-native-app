@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DataResponse } from '@/types';
 import { asyncStorageKeys } from '@/constants';
 import logger from '@/lib/logger';
-import { useHospitals } from './use-hospitals';
 
 const defaultAuthenticationInfo: DataResponse<{ authenticated: boolean; }> = {
     data: { 
@@ -15,8 +14,6 @@ const defaultAuthenticationInfo: DataResponse<{ authenticated: boolean; }> = {
 export function useAuthentication() {
     const [info, setInfo] = useState<typeof defaultAuthenticationInfo>(defaultAuthenticationInfo);
     const [authInfoLoaded, setAuthInfoLoaded] = useState(false);
-
-    const hospitals = useHospitals({ loadHospitalsOnmount: true, });
 
     const getAuthenticationInfo = useCallback(async () => {
         try {
@@ -41,7 +38,6 @@ export function useAuthentication() {
 
     return {
         ...info.data,
-       ...hospitals,
         loadAuthInfoErrors: info.errors,
         authInfoLoaded,
         getAuthenticationInfo,

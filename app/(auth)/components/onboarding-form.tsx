@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
 import { CONTINUE, COUNTRIES, COUNTRY, HOSPITAL, HOSPITALS } from "@/constants/copy";
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from "@/components/ui/dropdown";
-import { useAuthentication } from "@/hooks/use-authentication";
+import { useHospitals } from "@/hooks/use-hospitals";
 
 export function OnboardingForm() {
     const [loading, setLoading] = useState(false);
 
     const { COUNTRY_ISO, HOSPITAL_ID, itemsUpdating, setItems } = useAsyncStorage();
-    const { hospitals, loadHospitalsErrors, hospitalsLoading } = useAuthentication();
+    const { hospitals, loadHospitalsErrors, hospitalsLoading } = useHospitals();
 
     const {
         control,
@@ -71,7 +71,10 @@ export function OnboardingForm() {
                                     selected={value}
                                     onSelect={value => {
                                         onChange(value);
-                                        setItems({ COUNTRY_ISO: `${value || ''}`, });
+                                        setItems({ 
+                                            COUNTRY_ISO: `${value || ''}`, 
+                                            COUNTRY_NAME: CONFIG.sites.filter(c => c.countryISO === value)[0]?.countryName || '',
+                                        });
                                     }}
                                     disabled={disableCountry}
                                     title={COUNTRIES}
@@ -109,7 +112,12 @@ export function OnboardingForm() {
                                     selected={value}
                                     onSelect={value => {
                                         onChange(value);
-                                        setItems({ HOSPITAL_ID: `${value || ''}`, });
+                                        setItems({ 
+                                            HOSPITAL_ID: `${value || ''}`, 
+                                            HOSPITAL_NAME: hospitals
+                                                .filter(h => h.oldHospitalId === value)
+                                                .filter(h => h.hospitalId === value)[0]?.name || '',
+                                        });
                                     }}
                                     title={HOSPITALS}
                                 >
@@ -119,7 +127,7 @@ export function OnboardingForm() {
                                     <DropdownContent>
                                         {hospitals.map(o => (
                                                 <DropdownItem 
-                                                    key={o.hospitalId} 
+                                                    key={o.oldHospitalId || o.hospitalId} 
                                                     value={o.hospitalId}
                                                     searchValue={o.name}
                                                 >
