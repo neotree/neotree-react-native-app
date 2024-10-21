@@ -1,65 +1,27 @@
-import { SafeAreaView, FlatList, TouchableOpacity, View } from "react-native";
+import { useEffect } from "react";
 import { router } from "expo-router";
+import { SafeAreaView, FlatList, TouchableOpacity } from "react-native";
 
 import { useScripts } from "@/hooks/use-scripts";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
-import { Modal, ModalContent, ModalTrigger } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
-import { useConfirmModal } from "@/hooks/use-confirm-modal";
-import { useAlertModal } from "@/hooks/use-alert-modal";
 
 export default function HomeScreen() {
-    const { scripts, loading, getScripts, } = useScripts();
-    const { confirm } = useConfirmModal();
-    const { alert } = useAlertModal();
+    const { list, listLoading, listInitialised, getList, } = useScripts();
+
+    useEffect(() => { getList(); }, [getList]);
+
+    if (!listInitialised) return null;
 
     return (
         <>
             <SafeAreaView className="pt-5">
-                <View className="flex-row gap-x-2">
-                    <Modal 
-                        closeOnClickAway={false}
-                        title="Test this modal component"
-                    >
-                        <ModalTrigger as={Button}>
-                            Open modal
-                        </ModalTrigger>
-
-                        <ModalContent>
-                            <View>
-                                <Text>This is a test!</Text>
-                            </View>
-                        </ModalContent>
-                    </Modal>
-
-                    <Button
-                        onPress={() => confirm(() => {}, {
-                            title: 'Delete item?',
-                            message: 'Are you sure?',
-                            danger: true,
-                        })}
-                    >
-                        Confirm
-                    </Button>
-
-                    <Button
-                        onPress={() => alert({
-                            title: 'Item deleted',
-                            message: 'Item was deleted succefully!',
-                            variant: 'success',
-                        })}
-                    >
-                        Alert
-                    </Button>
-                </View>
-
                 <FlatList 
-                    data={scripts.data}
+                    data={list}
                     keyExtractor={item => item.scriptId}
-                    refreshing={loading}
-                    onRefresh={getScripts}
+                    refreshing={listLoading}
+                    onRefresh={getList}
                     renderItem={({ item }) => {
                         return (
                             <TouchableOpacity

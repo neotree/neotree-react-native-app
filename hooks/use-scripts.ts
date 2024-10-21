@@ -1,34 +1,51 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { create } from "zustand";
 
-import { Script } from "@/types";
+import { GetScriptsOptions, Script, ScriptListItem } from "@/types";
+import { listScripts } from '@/data/queries/scripts';
 
-export function useScripts() {
-    const mounted = useRef(false);
+type ScriptsState = {
+    listLoading: boolean;
+    listInitialised: boolean;
+    listErrors: string[];
+    list: ScriptListItem[];
+    scriptsLoading: boolean;
+    scriptsInitialised: boolean;
+    scriptsErrors: string[];
+    scripts: Script[];
+};
 
-    const [loading, setLoading] = useState(false);
-    const [scripts, setScripts] = useState<{ 
-        data: Script[]; 
-        errors?: string[]; 
-    }>({
-        data: [],
-    });
+type ScriptsStore = ScriptsState & {
+    getList: (options?: GetScriptsOptions) => Promise<void>;
+};
 
-    const getScripts = useCallback(async () => {
-        setLoading(true);
-        // TODO: get DB scripts
-        // const res = await _getScripts();
-        // setScripts(res);
-        setLoading(false);
-    }, []);
+const defaultScriptsState: ScriptsState = {
+    listLoading: false,
+    listInitialised: false,
+    listErrors: [],
+    list: [],
+    scriptsLoading: false,
+    scriptsInitialised: false,
+    scriptsErrors: [],
+    scripts: [],
+};
 
-    useEffect(() => {
-        if (!mounted.current) getScripts();
-        mounted.current = true;
-    }, [getScripts]);
-
+export const useScripts = create<ScriptsStore>(set => {
     return {
-        loading,
-        scripts,
-        getScripts,
+        ...defaultScriptsState,
+
+        async getList(options) {
+            try {
+                set({ listLoading: true, });
+                const res = await listScripts(options);
+                set({
+                    listErrors: res.errors || [],
+                    list: res.data,
+                });
+            } catch(e: any) {
+                set({ listErrors: [e.message], });
+            } finally {
+                set({ listLoading: false, listInitialised: true, });
+            }
+        },
     };
-}
+});

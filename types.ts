@@ -289,3 +289,15 @@ export type RemoteData = {
         isDeleted: boolean;
     })[];
 }
+
+export type GetScriptsOptions = {
+    scriptsIds?: string[];
+};
+
+export type ScriptListItem = {
+    type: Script['type'],
+    title: string;
+    description: string;
+    isDraft: boolean;
+    scriptId: string;
+};
