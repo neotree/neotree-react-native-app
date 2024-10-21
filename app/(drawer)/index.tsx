@@ -6,6 +6,7 @@ import { useScripts } from "@/hooks/use-scripts";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
+import ucFirst from "@/lib/ucFirst";
 
 export default function HomeScreen() {
     const { list, listLoading, listInitialised, getList, } = useScripts();
@@ -26,8 +27,12 @@ export default function HomeScreen() {
                         return (
                             <TouchableOpacity
                                 onPress={() => router.push({
-                                    pathname: `/script/${item.scriptId}?title=${item.title}`,
-                                    // params: { title: item.title, },
+                                    pathname: '/script/[scriptId]',
+                                    params: { 
+                                        scriptId: item.scriptId,
+                                        title: item.title, 
+                                        subtitle: ucFirst(item.type),
+                                    },
                                 })}
                             >
                                 <Content>

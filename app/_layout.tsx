@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, SplashScreen } from "expo-router";
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -6,10 +6,8 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppInit } from "@/hooks/use-app-init";
 import { AppContextProvider } from "@/contexts/app";
-import { AppErrors } from "@/components/app-errors";
 import { ConfirmModal } from '@/components/modals/confirm';
 import { AlertModal } from '@/components/modals/alert';
-import { useSyncRemoteData } from '@/hooks/use-sync-remote-data';
 import { Splash } from '@/components/splash';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -90,14 +88,7 @@ export default function AppLayout() {
                     />
 
                     <Stack.Screen 
-                        name="script/[scriptId]" 
-                        options={props => {
-                            const params = props.route.params as { title: string; scriptId: string; };
-                            return {
-                                headerShown: true,
-                                title: params.title || '',
-                            };
-                        }}
+                        name="script/[scriptId]"
                     />
                 </Stack>
             </GestureHandlerRootView>
