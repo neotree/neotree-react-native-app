@@ -17,12 +17,13 @@ export default function HomeScreen() {
 
     return (
         <>
-            <SafeAreaView className="pt-5">
+            <SafeAreaView>
                 <FlatList 
                     data={list}
                     keyExtractor={item => item.scriptId}
                     refreshing={listLoading}
                     onRefresh={getList}
+                    style={{ paddingTop: 20, }}
                     renderItem={({ item }) => {
                         return (
                             <TouchableOpacity

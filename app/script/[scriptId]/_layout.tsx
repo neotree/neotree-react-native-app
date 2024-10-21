@@ -21,6 +21,7 @@ export default function ScriptLayout() {
                         <Header 
                             title={title}
                             subtitle={subtitle}
+                            backButtonVisible
                         />
                     ),
                 };
