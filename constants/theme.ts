@@ -4,6 +4,8 @@ const config = { ...tailwindThemeConfig, };
 
 const theme = {
     primaryColor: config.colors.primary.DEFAULT,
+    primaryColor100: config.colors.primary['100'],
+    primaryColor500: config.colors.primary['500'],
     primaryContrastColor: config.colors.primary.foreground,
     secondaryColor: config.colors.secondary.DEFAULT,
     secondaryContrastColor: config.colors.secondary.foreground,

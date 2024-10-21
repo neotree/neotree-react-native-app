@@ -1,34 +1,34 @@
 import { create } from "zustand";
 
-import { GetScriptsOptions, ScriptListItem } from "@/types";
-import { listScripts } from '@/data/queries/scripts';
+import { GetConfigKeysOptions, ConfigKeyListItem } from "@/types";
+import { listConfigKeys } from '@/data/queries/config-keys';
 
-type ScriptsState = {
+type ConfigKeysState = {
     listLoading: boolean;
     listInitialised: boolean;
     listErrors: string[];
-    list: ScriptListItem[];
+    list: ConfigKeyListItem[];
 };
 
-type ScriptsStore = ScriptsState & {
-    getList: (options?: GetScriptsOptions) => Promise<void>;
+type ConfigKeysStore = ConfigKeysState & {
+    getList: (options?: GetConfigKeysOptions) => Promise<void>;
 };
 
-const defaultScriptsState: ScriptsState = {
+const defaultConfigKeysState: ConfigKeysState = {
     listLoading: false,
     listInitialised: false,
     listErrors: [],
     list: [],
 };
 
-export const useScripts = create<ScriptsStore>(set => {
+export const useConfigKeys = create<ConfigKeysStore>(set => {
     return {
-        ...defaultScriptsState,
+        ...defaultConfigKeysState,
 
         async getList(options) {
             try {
                 set({ listLoading: true, });
-                const res = await listScripts(options);
+                const res = await listConfigKeys(options);
                 set({
                     listErrors: res.errors || [],
                     list: res.data,

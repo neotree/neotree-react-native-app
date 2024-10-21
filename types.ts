@@ -301,3 +301,14 @@ export type ScriptListItem = {
     isDraft: boolean;
     scriptId: string;
 };
+
+export type GetConfigKeysOptions = {
+    configKeysIds?: string[];
+};
+
+export type ConfigKeyListItem = {
+    key: string;
+    label: string;
+    isDraft: boolean;
+    configKeyId: string;
+};
