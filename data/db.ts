@@ -2,6 +2,7 @@ import { SQL, sql, getTableColumns } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { openDatabaseSync } from "expo-sqlite/next";
 import { SQLiteTable } from 'drizzle-orm/sqlite-core';
+import * as schema from './schema';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -12,7 +13,7 @@ declare global {
 function dbInit() {
     const expo = openDatabaseSync("neotree.db");
     const db = drizzle(expo, { 
-        // schema, 
+        schema, 
         // logger: !isProd, 
     });
     return db;

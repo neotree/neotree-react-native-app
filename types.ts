@@ -22,6 +22,15 @@ export type Config = {
     };
 };
 
+export type Preferences = {
+    fontSize: { [key: string]: undefined | 'default' | 'xs' | 'sm' | 'lg' | 'xl'; };
+    fontWeight: { [key: string]: undefined | 'bold'; };
+    fontStyle: { [key: string]: undefined | string[]; };
+    textColor: { [key: string]: undefined | string; };
+    backgroundColor: { [key: string]: undefined | string; };
+    highlight: { [key: string]: undefined | boolean; };
+};
+
 export type ScriptItem = {
     id: string;
     label: string;
@@ -130,6 +139,8 @@ export type ConfigKey = {
     label: string;
     summary: string;
     source: string | null;
+    preferences: Preferences;
+    isDraft: boolean;
     publishDate: string;
     createdAt: string;
     updatedAt: string;
@@ -151,6 +162,8 @@ export type Script = {
     exportable: boolean;
     nuidSearchEnabled: boolean;
     nuidSearchFields: any;
+    preferences: Preferences;
+    isDraft: boolean;
     publishDate: string;
     createdAt: string;
     updatedAt: string;
@@ -213,6 +226,8 @@ export type Screen = {
     prePopulate: string[];
     fields: ScriptField[];
     items: ScriptItem[];
+    preferences: Preferences;
+    isDraft: boolean;
     publishDate: string;
     createdAt: string;
     updatedAt: string;
@@ -241,6 +256,8 @@ export type Diagnosis = {
     image1: ImageTextField | null;
     image2: ImageTextField | null;
     image3: ImageTextField | null;
+    preferences: Preferences;
+    isDraft: boolean;
     publishDate: string;
     createdAt: string;
     updatedAt: string;
@@ -258,14 +275,14 @@ export type RemoteData = {
     scripts: (Script & {
         isDraft: boolean;
         isDeleted: boolean;
-    })[];
-    screens: (Screen & {
-        isDraft: boolean;
-        isDeleted: boolean;
-    })[];
-    diagnoses: (Diagnosis & {
-        isDraft: boolean;
-        isDeleted: boolean;
+        screens: (Screen & {
+            isDraft: boolean;
+            isDeleted: boolean;
+        })[];
+        diagnoses: (Diagnosis & {
+            isDraft: boolean;
+            isDeleted: boolean;
+        })[];
     })[];
     configKeys: (ConfigKey & {
         isDraft: boolean;

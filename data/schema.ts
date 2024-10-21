@@ -34,7 +34,7 @@ export const configKeys = sqliteTable(
 
         isDraft: integer('is_draft').notNull().default(0),
         
-        publishDate: text('publish_date').notNull(),
+        publishDate: text('publish_date'),
         createdAt: text('created_at').notNull(),
         updatedAt: text('updated_at').notNull(),
         deletedAt: text('deleted_at'),
@@ -64,7 +64,7 @@ export const scripts = sqliteTable(
 
         isDraft: integer('is_draft').notNull().default(0),
         
-        publishDate: text('publish_date').notNull(),
+        publishDate: text('publish_date'),
         createdAt: text('created_at').notNull(),
         updatedAt: text('updated_at').notNull(),
         deletedAt: text('deleted_at'),
@@ -137,7 +137,7 @@ export const screens = sqliteTable(
 
         isDraft: integer('is_draft').notNull().default(0),
         
-        publishDate: text('publish_date').notNull(),
+        publishDate: text('publish_date'),
         createdAt: text('created_at').notNull(),
         updatedAt: text('updated_at').notNull(),
         deletedAt: text('deleted_at'),
@@ -174,7 +174,7 @@ export const diagnoses = sqliteTable(
 
         isDraft: integer('is_draft').notNull().default(0),
         
-        publishDate: text('publish_date').notNull(),
+        publishDate: text('publish_date'),
         createdAt: text('created_at').notNull(),
         updatedAt: text('updated_at').notNull(),
         deletedAt: text('deleted_at'),

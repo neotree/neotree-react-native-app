@@ -1,11 +1,9 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import { asyncStorageKeys } from "@/constants";
 import logger from "@/lib/logger";
 import { getAxiosClient } from '@/lib/axios';
 import { DataResponse, RemoteData } from "@/types";
 import { isInternetConnected } from "@/lib/network";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
+import * as mutations from "@/data/mutations";
 
 type SyncRemoteDataOpts = {
     force?: true,
@@ -39,14 +37,44 @@ export async function syncRemoteData(options: SyncRemoteDataOpts = {}) {
 
             if (errors?.length) throw new Error(errors.join(', '));
 
-            console.log('SYNC data.newData', data.newData);
+            logger.log('SYNC data.newData', data.newData);
 
             if (data.newData) {
-                
-            }
+                await mutations.deleteConfigKeys(data.configKeys.filter(c => c.isDeleted || c.deletedAt).map(c => c.configKeyId));
+                await mutations.saveConfigKeys(data.configKeys.filter(c => !(c.isDeleted || c.deletedAt)));
 
-            // after syncing
-            await AsyncStorage.setItem(asyncStorageKeys.LAST_REMOTE_SYNC_DATE, new Date().toUTCString());
+                const { scripts, screens, diagnoses, } = data.scripts.reduce(
+                    (acc, { screens, diagnoses, ...script }) => {
+                        return {
+                            ...acc,
+                            scripts: [...acc.scripts, script],
+                            screens: [...acc.screens, ...screens || []],
+                            diagnoses: [...acc.diagnoses, ...diagnoses || []],
+                        };
+                    }, 
+                    { scripts: [], screens: [], diagnoses: [], } as {
+                        scripts: Omit<RemoteData['scripts'][0], 'screens' | 'diagnoses'>[];
+                        screens: RemoteData['scripts'][0]['screens'];
+                        diagnoses: RemoteData['scripts'][0]['diagnoses'];
+                    }
+                );
+
+                await mutations.deleteScripts(scripts.filter(s => s.isDeleted || s.deletedAt).map(s => s.scriptId));
+                await mutations.saveScripts(scripts.filter(s => !(s.isDeleted || s.deletedAt)));
+
+                await mutations.deleteScreens(screens.filter(s => s.isDeleted || s.deletedAt).map(s => s.screenId));
+                await mutations.saveScreens(screens.filter(s => !(s.isDeleted || s.deletedAt)));
+
+                await mutations.deleteDiagnoses(diagnoses.filter(s => s.isDeleted || s.deletedAt).map(s => s.diagnosisId));
+                await mutations.saveDiagnoses(diagnoses.filter(s => !(s.isDeleted || s.deletedAt)));
+
+                // after syncing
+                useAsyncStorage.getState().setItems({
+                    LAST_REMOTE_SYNC_DATE: new Date().toUTCString(),
+                    DEVICE_HASH: data?.deviceHash || '',
+                    WEBEDITOR_DATA_VERSION: `${data?.dataVersion || ''}`,
+                });
+            }
         }
     } catch(e: any) {
         logger.log('syncRemoteData ERROR:', e.message);
