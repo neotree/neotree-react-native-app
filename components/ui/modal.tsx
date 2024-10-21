@@ -19,7 +19,6 @@ import {
 } from "react-native";
 
 import { Card, CardContent, CardFooter, CardTitle, CardTitleProps, CardFooterProps } from "./card";
-import { Separator } from "./separator";
 import { Text } from "./text";
 import clsx from "clsx";
 import { ButtonProps } from "./button";
@@ -165,11 +164,10 @@ export function ModalContent({ children, }: ModalContentProps) {
 
                                 {!!footer && (
                                     <>
-                                        <Separator />
                                         <CardFooter 
                                             {...footer}
                                             className={clsx(
-                                                'py-2 px-4',
+                                                'py-4 px-4',
                                                 footer.className,
                                             )}
                                         />

@@ -7,6 +7,7 @@ import { useConfirmModal } from "@/hooks/use-confirm-modal";
 import { Modal, ModalContent, ModalClose, ModalFooter } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { Button } from "../ui/button";
+import clsx from "clsx";
   
 export function ConfirmModal() {
     const { 
@@ -45,15 +46,15 @@ export function ConfirmModal() {
                 <ModalFooter>
                     <ModalClose
                         as={Button}
-                        color={danger ? 'error' : undefined}
                         variant="ghost"
                     >
-                        {negativeLabel}
+                        <Text>{negativeLabel}</Text>
                     </ModalClose>
 
                     <ModalClose
                         as={Button}
                         onPress={onConfirm}
+                        color={danger ? 'error' : undefined}
                     >
                         {positiveLabel}
                     </ModalClose>

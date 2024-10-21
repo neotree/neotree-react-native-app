@@ -5,6 +5,8 @@ import Constants from 'expo-constants';
 import clsx from "clsx";
 import { Href, router, usePathname } from "expo-router";
 
+import { useAsyncStorage } from "@/hooks/use-async-storage";
+import { useConfirmModal } from "@/hooks/use-confirm-modal";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { Logo } from "@/components/logo";
@@ -50,6 +52,9 @@ export function DrawerContent({ drawerContentComponentProps }: {
     drawerContentComponentProps: DrawerContentComponentProps;
 }) {
     const pathname = usePathname();
+
+    const { confirm, } = useConfirmModal();
+    const { setItems: setAsyncStorageItem, } = useAsyncStorage();
 
     return (
         <View 
@@ -106,7 +111,16 @@ export function DrawerContent({ drawerContentComponentProps }: {
                         'text-lg flex-row px-4 py-3 rounded-md bg-danger/10 items-center',
                     )}
                     onPress={() => {
-                        
+                        confirm(async () => {
+                            await setAsyncStorageItem({ BEARER_TOKEN: '', });
+                            router.push('/(auth)');
+                        }, {
+                            danger: true,
+                            title: 'Logout',
+                            message: 'Are you sure you want to logout?',
+                            positiveLabel: 'Logout',
+                            negativeLabel: 'Cancel',
+                        });
                     }}
                 >
                     <>
