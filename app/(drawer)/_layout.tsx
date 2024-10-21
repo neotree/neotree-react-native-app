@@ -1,7 +1,7 @@
-import { DrawerContent } from '@/components/drawer-content';
 import { Drawer } from 'expo-router/drawer';
 
 import { useTheme } from '@/hooks/use-theme';
+import { DrawerContent } from '@/components/drawer-content';
 
 export default function MainLayout() {
     const theme = useTheme();
@@ -12,6 +12,7 @@ export default function MainLayout() {
                 drawerContent={props => <DrawerContent drawerContentComponentProps={props} />}
                 screenOptions={{
                     headerTintColor: theme.primaryColor,
+                    headerShown: false,
                 }}
             >
                 <Drawer.Screen

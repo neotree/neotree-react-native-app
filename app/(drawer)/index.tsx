@@ -7,6 +7,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
 import ucFirst from "@/lib/ucFirst";
+import { Header } from "@/components/header";
 
 export default function HomeScreen() {
     const { list, listLoading, listInitialised, getList, } = useScripts();
@@ -17,6 +18,11 @@ export default function HomeScreen() {
 
     return (
         <>
+            <Header 
+                menuButtonVisible
+                title="Scripts"
+            />
+
             <SafeAreaView>
                 <FlatList 
                     data={list}

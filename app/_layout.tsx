@@ -69,7 +69,9 @@ export default function AppLayout() {
                     initialRouteName="/"
                     screenOptions={{
                         headerTintColor: theme.primaryColor,
-                        headerShown: false,
+                        headerShown: true,
+                        headerBackVisible: false,
+                        header: () => null,
                     }}
                 >
                     <Stack.Screen 

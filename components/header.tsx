@@ -1,25 +1,28 @@
+import { useCallback } from "react";
 import { View, TouchableOpacity } from "react-native";
 import clsx from "clsx";
 import Constants from 'expo-constants';
-import { router } from "expo-router";
+import { router, useNavigation, useFocusEffect } from "expo-router";
 
-import { useHeader, HeaderState } from "@/hooks/use-header";
+import { useHeader, HeaderState, defaultHeaderState, } from "@/hooks/use-header";
 import { Text } from "@/components/ui/text";
 import { Arrow } from "@/components/svgs/arrow";
-import { useEffect } from "react";
+import { Menu } from "@/components/svgs/menu";
 
 function HeaderComponent() {
+    const navigation = useNavigation<any>();
     const { ...state } = useHeader();
 
     const {
         title,
         subtitle,
         backButtonVisible,
+        menuButtonVisible,
     } = state;
 
     return (
         <View
-            className={clsx('flex-row items-center px-2 pb-2 bg-background border-b border-b-border')}
+            className={clsx('flex-row items-center px-3 pb-2 bg-background border-b border-b-border')}
             style={[
                 { 
                     paddingTop: Constants.statusBarHeight + 12, 
@@ -31,9 +34,22 @@ function HeaderComponent() {
                 },
             ]}
         >
+            {!!menuButtonVisible && (
+                <TouchableOpacity
+                    className="mr-3"
+                    onPress={() => {
+                        navigation?.openDrawer();
+                    }}
+                >
+                    <Menu 
+                        svgClassName="stroke-primary w-6 h-6"
+                    />
+                </TouchableOpacity>
+            )}
+
             {!!backButtonVisible && (
                 <TouchableOpacity
-                    className="mr-2"
+                    className="mr-3"
                     onPress={() => {
                         router.back();
                     }}
@@ -68,16 +84,15 @@ function HeaderComponent() {
 export function Header(props: Partial<HeaderState> & {
     children?: React.ReactNode;
 }) {
-    const { onUnmount, setState, } = useHeader();
+    const { setState, } = useHeader();
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         setState({
             ...props,
             node: props.children || null,
         });
-    }, [props]);
-
-    useEffect(() => () => onUnmount(), [onUnmount]);
+        return () => setState(defaultHeaderState);
+    }, [props]));
 
     return <HeaderComponent />;
 }
