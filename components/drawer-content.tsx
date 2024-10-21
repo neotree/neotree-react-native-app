@@ -69,7 +69,7 @@ export function DrawerContent({ drawerContentComponentProps }: {
                             <Fragment key={label}>
                                 <TouchableOpacity
                                     className={clsx(
-                                        'text-lg flex-row px-4 py-3 rounded-md',
+                                        'text-lg flex-row px-4 py-3 rounded-md items-center',
                                         isActive ? 'bg-primary-100' : '',
                                     )}
                                     onPress={() => {
@@ -103,7 +103,7 @@ export function DrawerContent({ drawerContentComponentProps }: {
             <View className="p-4">
                 <TouchableOpacity
                     className={clsx(
-                        'text-lg flex-row px-4 py-3 rounded-md bg-danger/10',
+                        'text-lg flex-row px-4 py-3 rounded-md bg-danger/10 items-center',
                     )}
                     onPress={() => {
                         
