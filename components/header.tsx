@@ -88,10 +88,11 @@ export function Header(props: Partial<HeaderState> & {
 
     useFocusEffect(useCallback(() => {
         setState({
+            ...defaultHeaderState,
             ...props,
             node: props.children || null,
         });
-        return () => setState(defaultHeaderState);
+        // return () => setState(defaultHeaderState);
     }, [props]));
 
     return <HeaderComponent />;

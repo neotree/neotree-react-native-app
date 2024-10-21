@@ -24,10 +24,26 @@ export default function MainLayout() {
                 />
 
                 <Drawer.Screen
+                    name="configuration"
+                    options={{
+                        drawerLabel: 'Configuration',
+                        title: 'Configuration',
+                    }}
+                />
+
+                <Drawer.Screen
                     name="history"
                     options={{
                         drawerLabel: 'History',
-                        title: 'History',
+                        title: 'Session history',
+                    }}
+                />
+
+                <Drawer.Screen
+                    name="location"
+                    options={{
+                        drawerLabel: 'Location',
+                        title: 'Location',
                     }}
                 />
             </Drawer>
