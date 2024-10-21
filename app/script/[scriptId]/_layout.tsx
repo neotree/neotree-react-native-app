@@ -1,9 +1,7 @@
 import { Stack } from "expo-router";
 
 import { useTheme } from "@/hooks/use-theme";
-import { Header } from "@/components/header";
-import { Text } from "@/components/ui/text";
-import { View } from "react-native";
+import { NativeStackHeader } from "@/components/header";
 
 export default function ScriptLayout() {
     const theme = useTheme();
@@ -11,19 +9,13 @@ export default function ScriptLayout() {
     return (
         <Stack
             screenOptions={({ route }) => {
-                const { title, subtitle, } = { ...route.params } as { title: string; subtitle: string; };
+                const { title, } = { ...route.params } as { title: string; };
                 return {
                     headerTintColor: theme.primaryColor,
                     headerShown: true,
                     title: title || '',
                     headerBackVisible: false,
-                    header: () => (
-                        <Header 
-                            title={title}
-                            subtitle={subtitle}
-                            backButtonVisible
-                        />
-                    ),
+                    header: () => <NativeStackHeader />,
                 };
             }}
         >

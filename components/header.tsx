@@ -3,31 +3,19 @@ import clsx from "clsx";
 import Constants from 'expo-constants';
 import { router } from "expo-router";
 
-import { useHeader } from "@/hooks/use-header";
+import { useHeader, HeaderState } from "@/hooks/use-header";
 import { Text } from "@/components/ui/text";
 import { Arrow } from "@/components/svgs/arrow";
-import { useMemo } from "react";
+import { useEffect } from "react";
 
-type Props = {
-    title: string;
-    subtitle?: string;
-    backButtonVisible?: boolean;
-};
-
-export function Header(props: Props) {
+function HeaderComponent() {
     const { ...state } = useHeader();
 
     const {
         title,
         subtitle,
         backButtonVisible,
-    } = useMemo(() => {
-        return {
-            title: state.title || props.title, 
-            subtitle: state.subtitle || props.subtitle, 
-            backButtonVisible: state.backButtonVisible || props.backButtonVisible, 
-        };
-    }, [props, state]);
+    } = state;
 
     return (
         <View
@@ -75,4 +63,26 @@ export function Header(props: Props) {
             </View>
         </View>
     );
+}
+
+export function Header(props: Partial<HeaderState> & {
+    children?: React.ReactNode;
+}) {
+    const { onUnmount, setState, } = useHeader();
+
+    useEffect(() => {
+        setState({
+            ...props,
+            node: props.children || null,
+        });
+    }, [props]);
+
+    useEffect(() => () => onUnmount(), [onUnmount]);
+
+    return <HeaderComponent />;
+}
+
+export function NativeStackHeader() {
+    const { node } = useHeader();
+    return node;
 }

@@ -1,23 +1,28 @@
 import { create } from "zustand";
 
-type HeaderState = {
+export type HeaderState = {
     title: string;
     subtitle: string;
     backButtonVisible: boolean;
+    node: React.ReactNode;
 };
 
-type HeaderStore = HeaderState & {
-
+export type HeaderStore = HeaderState & {
+    onUnmount: () => void;
+    setState: (partialState: Partial<HeaderState> | ((partialState: Partial<HeaderState>) => void)) => void;
 };
 
-const defaultHeaderState: HeaderState = {
+export const defaultHeaderState: HeaderState = {
     title: '',
     subtitle: '',
     backButtonVisible: false,
+    node: false,
 };
 
 export const useHeader = create<HeaderStore>(set => {
     return {
         ...defaultHeaderState,
+        setState: set,
+        onUnmount: () => set(defaultHeaderState),
     };
 });
