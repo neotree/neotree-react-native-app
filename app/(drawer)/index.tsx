@@ -7,10 +7,12 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
 import ucFirst from "@/lib/ucFirst";
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/index";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
 
 export default function HomeScreen() {
     const { list, listLoading, listInitialised, getList, } = useScripts();
+    const { DEVICE_HASH, WEBEDITOR_DATA_VERSION } = useAsyncStorage();
 
     useEffect(() => { getList(); }, [getList]);
 
@@ -21,6 +23,7 @@ export default function HomeScreen() {
             <Header 
                 menuButtonVisible
                 title="Scripts"
+                subtitle={`v${WEBEDITOR_DATA_VERSION} (${DEVICE_HASH})`}
             />
 
             <SafeAreaView>

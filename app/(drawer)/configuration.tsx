@@ -1,7 +1,7 @@
 import { View } from "react-native";
 
 import { Text } from "@/components/ui/text";
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/index";
 
 export default function ConfigurationScreen() {
     return (

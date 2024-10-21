@@ -54,7 +54,14 @@ export function DrawerContent({ drawerContentComponentProps }: {
     const pathname = usePathname();
 
     const { confirm, } = useConfirmModal();
-    const { setItems: setAsyncStorageItem, } = useAsyncStorage();
+    const { 
+        WEBEDITOR_DATA_VERSION, 
+        DEVICE_HASH, 
+        DEVICE_ID, 
+        HOSPITAL_NAME,
+        COUNTRY_NAME,
+        setItems: setAsyncStorageItem, 
+    } = useAsyncStorage();
 
     return (
         <View 
@@ -101,6 +108,26 @@ export function DrawerContent({ drawerContentComponentProps }: {
                         )
                     })}
                 </ScrollView>
+            </View>
+
+            <Separator />
+
+            <View className="p-4">
+                {[
+                    ['Webeditor version', WEBEDITOR_DATA_VERSION],
+                    ['Neotree ID HASH', DEVICE_HASH],
+                    ['Device ID', DEVICE_ID],
+                    ['Current hospital', [HOSPITAL_NAME, COUNTRY_NAME].filter(s => s).join(', ')],
+                ].map(([label, value]) => {
+                    return (
+                        <View key={label} className="flex-row items-center">
+                            <Text className="text-xs mr-2">{label}:</Text>
+                            <Text numberOfLines={1} className="text-primary text-xs font-bold flex-1 text-right">
+                                {value}
+                            </Text>
+                        </View>
+                    );
+                })}
             </View>
 
             <Separator />

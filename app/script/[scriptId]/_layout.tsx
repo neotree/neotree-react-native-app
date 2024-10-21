@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 
 import { useTheme } from "@/hooks/use-theme";
-import { NativeStackHeader } from "@/components/header";
+import { NativeStackHeader } from "@/components/header/index";
 
 export default function ScriptLayout() {
     const theme = useTheme();

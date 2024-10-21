@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { useLocalSearchParams, } from "expo-router";
 
-import { Header } from "@/components/header";
+import { Header } from "@/components/header/index";
 import { Text } from "@/components/ui/text";
 
 export default function ScriptScreen() {
