@@ -22,16 +22,6 @@ export default function HomeScreen() {
                     <Modal 
                         closeOnClickAway={false}
                         title="Test this modal component"
-                        actions={[
-                            {
-                                label: 'Cancel',
-                                color: 'danger',
-                                destructive: true,
-                            },
-                            {
-                                label: 'Continue',
-                            },
-                        ]}
                     >
                         <ModalTrigger as={Button}>
                             Open modal

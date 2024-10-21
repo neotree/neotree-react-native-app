@@ -25,9 +25,9 @@ export default function AppLayout() {
      * check authentication
      * set defaults (if first time running the app)
      * sync remote data
-     ****/
+    *****/
     const appData = useAppInit();
-    const { isReady, errors, authenticated } = appData;
+    const { isReady, errors } = appData;
 
     useEffect(() => {
         if (isReady) SplashScreen.hideAsync();
@@ -68,12 +68,16 @@ export default function AppLayout() {
                 <AlertModal />
 
                 <Stack
-                    initialRouteName={authenticated ? '(drawer)' : '(auth)'}
+                    initialRouteName="/"
                     screenOptions={{
                         headerTintColor: theme.primaryColor,
                         headerShown: false,
                     }}
                 >
+                    <Stack.Screen 
+                        name="index" 
+                    />
+
                     <Stack.Screen 
                         name="(drawer)" 
                         options={{

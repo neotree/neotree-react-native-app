@@ -16,7 +16,7 @@ export default function AuthLayout() {
 
     if (!authInfoLoaded) return null;
 
-    if (authenticated) return <Redirect href="(drawer)" />;
+    if (authenticated) return <Redirect href="/(drawer)" />;
 
     if (!hospitalsInitialised) return null;
 

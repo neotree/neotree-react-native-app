@@ -7,6 +7,7 @@
         "start:demo": "NEOTREE_BUILD_TYPE=demo npx expo start",
         "start:stage": "NEOTREE_BUILD_TYPE=stage npx expo start",
         "start:prod": "NEOTREE_BUILD_TYPE=prod npx expo start",
+        "dev": "NEOTREE_BUILD_TYPE=development npx expo start",
         "android": "npx expo start --android",
         "ios": "npx expo start --ios",
         "web": "npx expo start --web",

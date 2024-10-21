@@ -15,7 +15,7 @@ export default function LoginScreen() {
 
     useEffect(() => {
         if (!remoteSyncing && remoteSynced) {
-            router.replace('(drawer)')
+            router.replace('/(drawer)')
         }
     }, [remoteSyncing, remoteSynced, router.push]);
 
