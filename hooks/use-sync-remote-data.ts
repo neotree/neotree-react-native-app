@@ -1,35 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
+import { create } from 'zustand';
 
 import { syncRemoteData } from '@/data/sync-remote-data';
 
-export function useSyncRemoteData(options?: {
-    syncOnmount?: boolean;
-}) {
-    const {  syncOnmount} = { ...options };
+type SyncRemoteDataState = {
+    remoteSyncQueue: number;
+    remoteSyncing: boolean;
+    remoteSynced: boolean;
+    syncRemoteErrors: string[];
+};
 
-    const [remoteSyncing, setSyncing] = useState(false);
-    const [remoteSynced, setSynced] = useState(false);
-    const [syncRemoteErrors, setSyncRemoteErrors] = useState<string[]>();
+type SyncRemoteDataStore = SyncRemoteDataState & {
+    sync: () => Promise<void>;
+};
 
-    const sync = useCallback(async () => {
-        try {
-            setSyncing(true);
+const defaultState: SyncRemoteDataState = {
+    remoteSyncQueue: 0,
+    remoteSyncing: false,
+    remoteSynced: false,
+    syncRemoteErrors: [],
+};
 
-            await syncRemoteData();
-        } catch(e: any) {
-            setSyncRemoteErrors([e.message]);
-        } finally {
-            setSyncing(false);
-            setSynced(true);
-        }
-    }, []);
-
-    useEffect(() => { if (syncOnmount) sync(); }, [syncOnmount]);
-
+export const useSyncRemoteData = create<SyncRemoteDataStore>((set, getStore) => {
     return {
-        sync,
-        remoteSyncing,
-        remoteSynced,
-        syncRemoteErrors,
+        ...defaultState,
+        async sync() {
+            if (getStore().remoteSyncing) {
+                set(prev => ({ remoteSyncQueue: prev.remoteSyncQueue + 1, }));
+            } else {
+                const syncRemoteErrors: string[] = [];
+                try {
+                    set({ remoteSyncing: true, remoteSyncQueue: 0, });
+                    await syncRemoteData();
+                } catch(e: any) {
+                    syncRemoteErrors.push(e.message);
+                } finally {
+                    set({ remoteSyncing: false, remoteSynced: true, syncRemoteErrors, });
+                }
+            }
+        }
     };
-}
+});

@@ -11,7 +11,7 @@ type ConfigKeysState = {
 };
 
 type ConfigKeysStore = ConfigKeysState & {
-    getList: (options?: GetConfigKeysOptions) => Promise<void>;
+    getList: (options?: (GetConfigKeysOptions & { silent?: boolean; })) => Promise<void>;
 };
 
 const defaultConfigKeysState: ConfigKeysState = {
@@ -27,8 +27,9 @@ export const useConfigKeys = create<ConfigKeysStore>(set => {
 
         async getList(options) {
             try {
-                set({ listLoading: true, });
-                const res = await listConfigKeys(options);
+                const { silent, ...opts } = { ...options };
+                set({ listLoading: !silent, });
+                const res = await listConfigKeys(opts);
                 set({
                     listErrors: res.errors || [],
                     list: res.data,

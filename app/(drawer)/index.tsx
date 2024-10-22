@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
-import { SafeAreaView, FlatList, TouchableOpacity } from "react-native";
+import { SafeAreaView, FlatList, TouchableOpacity, ToastAndroid } from "react-native";
 
 import { useScripts } from "@/hooks/use-scripts";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -12,9 +12,9 @@ import { useAsyncStorage } from "@/hooks/use-async-storage";
 
 export default function HomeScreen() {
     const { list, listLoading, listInitialised, getList, } = useScripts();
-    const { DEVICE_HASH, WEBEDITOR_DATA_VERSION } = useAsyncStorage();
+    const { DEVICE_HASH, WEBEDITOR_DATA_VERSION, LAST_REMOTE_SYNC_DATE } = useAsyncStorage();
 
-    useEffect(() => { getList(); }, [getList]);
+    useEffect(() => { getList(); }, [getList, LAST_REMOTE_SYNC_DATE]);
 
     if (!listInitialised) return null;
 

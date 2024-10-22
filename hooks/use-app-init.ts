@@ -8,6 +8,7 @@ import { useAuthentication } from "@/hooks/use-authentication";
 import { useSyncRemoteData } from "@/hooks/use-sync-remote-data";
 import { useNetInfo } from "@/hooks/use-netinfo";
 import { useAsyncStorage } from '@/hooks/use-async-storage';
+import { useSocket } from "./use-socket";
 
 export function useAppInit() {
     const { hasInternet, } = useNetInfo();
@@ -27,23 +28,29 @@ export function useAppInit() {
     /**** 
         *** CONFIGURE ASYNC STORAGE ****
     ****/
-    const { initialised: asyncStorageConfigured, errors: asyncStorageConfigErrors, } = useAsyncStorage();
+    const { WEBEDITOR_URL, initialised: asyncStorageConfigured, errors: asyncStorageConfigErrors, } = useAsyncStorage();
     useEffect(() => { useAsyncStorage.getState().init(); }, []);
 
+    // Initialise socket
+    const { socketInitialised } = useSocket();
+    useEffect(() => { useSocket.getState().init(WEBEDITOR_URL); }, [WEBEDITOR_URL]);
+
     // sync remote - but only do this after everything is ready
-    const { remoteSynced, syncRemoteErrors, sync } = useSyncRemoteData({ syncOnmount: false, });
+    const { remoteSynced, syncRemoteErrors, sync } = useSyncRemoteData();
 
     const initialised = useMemo(() => !!(
         authInfoLoaded && 
         fontsLoaded &&
         databaseLoaded &&
-        asyncStorageConfigured
+        asyncStorageConfigured &&
+        socketInitialised
     ),
     [
         authInfoLoaded, 
         fontsLoaded,
         databaseLoaded,
         asyncStorageConfigured,
+        socketInitialised,
     ]);
 
     const initialiseErrors = useMemo(() => [

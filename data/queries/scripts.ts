@@ -1,4 +1,4 @@
-import { and, inArray } from 'drizzle-orm';
+import { and, asc, inArray } from 'drizzle-orm';
 
 import { db } from "../db";
 import { scripts } from "../schema";
@@ -33,6 +33,7 @@ export async function listScripts(options?: GetScriptsOptions): Promise<DataResp
                 oldScriptId: true,
                 scriptId: true,
             },
+            orderBy: asc(scripts.position),
         });
 
         const data = res.map(({ oldScriptId, scriptId, ...s }) => ({

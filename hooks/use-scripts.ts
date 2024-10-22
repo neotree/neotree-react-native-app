@@ -11,7 +11,7 @@ type ScriptsState = {
 };
 
 type ScriptsStore = ScriptsState & {
-    getList: (options?: GetScriptsOptions) => Promise<void>;
+    getList: (options?: (GetScriptsOptions & { silent?: boolean; })) => Promise<void>;
 };
 
 const defaultScriptsState: ScriptsState = {
@@ -27,8 +27,9 @@ export const useScripts = create<ScriptsStore>(set => {
 
         async getList(options) {
             try {
-                set({ listLoading: true, });
-                const res = await listScripts(options);
+                const { silent, ...opts } = { ...options };
+                set({ listLoading: !silent, });
+                const res = await listScripts(opts);
                 set({
                     listErrors: res.errors || [],
                     list: res.data,

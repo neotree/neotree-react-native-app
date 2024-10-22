@@ -1,4 +1,4 @@
-import { and, inArray } from 'drizzle-orm';
+import { and, asc, inArray } from 'drizzle-orm';
 
 import { db } from "../db";
 import { configKeys } from "../schema";
@@ -31,6 +31,7 @@ export async function listConfigKeys(options?: GetConfigKeysOptions): Promise<Da
                 oldConfigKeyId: true,
                 configKeyId: true,
             },
+            orderBy: asc(configKeys.position),
         });
 
         const data = res.map(({ oldConfigKeyId, configKeyId, ...s }) => ({
