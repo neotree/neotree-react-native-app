@@ -1,4 +1,34 @@
+import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
+import { v4 as uuidv4 } from "uuid";
+
+// SESSIONS
+export const sessions = sqliteTable(
+    'nt_sessions', 
+    {
+        id: integer('id').primaryKey(),
+        sessionId: text('session_id').notNull().$defaultFn(() => uuidv4()).unique(),
+        scriptId: text('script_id').notNull(),
+        hospitalId: text('hospital_id').notNull(),
+        countryISO: text('country_iso').notNull(),
+        data: text('data').notNull().default('{}'),
+        
+        completedAt: text('completed_at'),
+        createdAt: text('created_at').notNull().default(sql`(current_timestamp)`),
+        updatedAt: text('updated_at').notNull().default(sql`(current_timestamp)`),
+        deletedAt: text('deleted_at'),
+    },
+);
+
+// CONFIGURATION
+export const configuration = sqliteTable(
+    'nt_configuration', 
+    {
+        id: integer('id').primaryKey(),
+        key: text('key').notNull(),
+        selected: integer('selected').default(0).notNull(),
+    },
+);
 
 // HOSPITALS
 export const hospitals = sqliteTable(

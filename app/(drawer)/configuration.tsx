@@ -7,17 +7,23 @@ import { Header } from "@/components/header/index";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/hooks/use-theme";
+import { useConfiguration } from "@/hooks/use-configuration";
 
 export default function ConfigurationScreen() {
     const theme = useTheme();
     const { list, listLoading, listInitialised, getList, } = useConfigKeys();
+    const { configuration, saveConfiguration, getConfiguration } = useConfiguration();
 
-    useEffect(() => { getList(); }, [getList]);
+    useEffect(() => { 
+        getList(); 
+        getConfiguration();
+    }, [getList, getConfiguration]);
 
     const generateForm = useCallback(() => list.reduce((acc, c) => ({
         ...acc,
-        [c.configKeyId]: false,
-    }), {} as { [key: string]: boolean; }), [list]);
+        [c.key]: false,
+        ...configuration,
+    }), {} as { [key: string]: boolean; }), [list, configuration]);
 
     const [form, setForm] = useState(generateForm());
 
@@ -28,7 +34,8 @@ export default function ConfigurationScreen() {
             ...prev,
             [key]: !prev[key],
         }));
-    }, []);
+        saveConfiguration([{ key, selected: configuration[key] ? 0 : 1, }]);
+    }, [configuration, saveConfiguration]);
 
     if (!listInitialised) return null;
 
@@ -48,14 +55,14 @@ export default function ConfigurationScreen() {
                     style={{ paddingTop: 20, }}
                     renderItem={({ item }) => {
                         const disabled = false;
-                        const selected = form[item.configKeyId];
+                        const selected = form[item.key];
 
                         return (
                             <>
                                 <TouchableOpacity
                                     className="px-4 py-2"
                                     onPress={() => {
-                                        toggleValue(item.configKeyId);
+                                        toggleValue(item.key);
                                     }}
                                 >
                                     <Content className="flex-row items-center">
@@ -67,7 +74,7 @@ export default function ConfigurationScreen() {
                                                 trackColor={!selected ? undefined : { true: theme.primaryColor500, false: theme.primaryColor500, }}
                                                 thumbColor={!selected ? undefined : theme.primaryColor}
                                                 ios_backgroundColor={!selected ? undefined : theme.primaryColor}
-                                                onChange={() => toggleValue(item.configKeyId)}
+                                                onChange={() => toggleValue(item.key)}
                                             />
                                         </View>
                                     </Content>

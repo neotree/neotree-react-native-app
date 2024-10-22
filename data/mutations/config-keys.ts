@@ -3,6 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { ConfigKey } from "@/types";
 import { db } from "../db";
 import { configKeys } from '../schema';
+import { saveConfiguration } from "./configuration";
 
 export async function deleteAllConfigKeys() {
     try {
@@ -56,6 +57,8 @@ export async function saveConfigKeys(data: ConfigKey[]) {
                     .where(eq(configKeys.configKeyId, c.configKeyId));
             }
         }
+
+        await saveConfiguration(data.map(c => ({ key: c.key, })));
 
         return true;
     } catch(e: any) {
