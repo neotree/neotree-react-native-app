@@ -46,6 +46,14 @@ export default function MainLayout() {
                         title: 'Location',
                     }}
                 />
+
+                <Drawer.Screen
+                    name="qrcode"
+                    options={{
+                        drawerLabel: 'QR Code',
+                        title: 'QR Code',
+                    }}
+                />
             </Drawer>
         </>
     );

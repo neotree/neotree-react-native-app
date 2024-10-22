@@ -5,6 +5,7 @@ import { Home } from "@/components/svgs/home";
 import { Cogs } from "@/components/svgs/settings";
 import { Clock } from "@/components/svgs/clock";
 import { Location } from "@/components/svgs/Location";
+import { QrCode } from "@/components/svgs/qr-code";
 
 export function useRoutes() {
     const pathname = usePathname();
@@ -44,6 +45,13 @@ export function useRoutes() {
                 path: '/location',
                 isActive: pathname === '/location',
                 Icon: Location,
+            },
+            {
+                label: 'QR Code',
+                href: '/(drawer)/qrcode',
+                path: '/qrcode',
+                isActive: pathname === '/qrcode',
+                Icon: QrCode,
             },
         ];
 
