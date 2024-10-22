@@ -1,13 +1,10 @@
-'use client';
-
 import { View } from "react-native";
-import Icon from '@expo/vector-icons/Feather'
 
 import { useConfirmModal } from "@/hooks/use-confirm-modal";
 import { Modal, ModalContent, ModalClose, ModalFooter } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
-import { Button } from "../ui/button";
-import clsx from "clsx";
+import { Button } from "@/components/ui/button";
+import { Exclamation } from "@/components/svgs/exclamation";
   
 export function ConfirmModal() {
     const { 
@@ -32,11 +29,9 @@ export function ConfirmModal() {
                 <View className="gap-y-1">
                     {danger && (
                         <View className="flex-row justify-center">
-                            <Icon 
-                                name="alert-triangle" 
-                                color={'#ff7675'}
-                                size={48}
-                                />
+                            <Exclamation 
+                                svgClassName="stroke-danger w-20 h-20"
+                            />
                         </View>
                     )}
 
