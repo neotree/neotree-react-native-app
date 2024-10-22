@@ -35,7 +35,7 @@ export default function ConfigurationScreen() {
     return (
         <>
             <Header 
-                menuButtonVisible
+                backButtonVisible
                 title="Configuration"
             />
 

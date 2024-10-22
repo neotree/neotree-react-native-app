@@ -6,6 +6,7 @@ export type HeaderState = {
     backButtonVisible: boolean;
     menuButtonVisible: boolean;
     node: React.ReactNode;
+    onBackButtonPress?: (goBack: () => void) => void;
 };
 
 export type HeaderStore = HeaderState & {

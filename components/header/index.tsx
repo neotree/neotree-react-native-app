@@ -1,28 +1,24 @@
 import { useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import clsx from "clsx";
 import Constants from 'expo-constants';
-import { router, useNavigation, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 
 import { useHeader, HeaderState, defaultHeaderState, } from "@/hooks/use-header";
 import { Text } from "@/components/ui/text";
-import { Arrow } from "@/components/svgs/arrow";
-import { Menu } from "@/components/svgs/menu";
+import { BackButton } from "./back-button";
+import { DrawerButton } from "./drawer-button";
 
 function HeaderComponent() {
-    const navigation = useNavigation<any>();
     const { ...state } = useHeader();
 
-    const {
-        title,
-        subtitle,
-        backButtonVisible,
-        menuButtonVisible,
-    } = state;
+    const { title, subtitle } = state;
 
     return (
         <View
-            className={clsx('flex-row items-center px-3 pb-2 bg-background border-b border-b-border')}
+            className={clsx(
+                'flex-row items-center px-3 pb-2 bg-background border-b border-b-border min-h-[100px]'
+            )}
             style={[
                 { 
                     paddingTop: Constants.statusBarHeight + 12, 
@@ -34,32 +30,9 @@ function HeaderComponent() {
                 },
             ]}
         >
-            {!!menuButtonVisible && (
-                <TouchableOpacity
-                    className="mr-3"
-                    onPress={() => {
-                        navigation?.openDrawer();
-                    }}
-                >
-                    <Menu 
-                        svgClassName="stroke-primary w-6 h-6"
-                    />
-                </TouchableOpacity>
-            )}
+            <DrawerButton />
 
-            {!!backButtonVisible && (
-                <TouchableOpacity
-                    className="mr-3"
-                    onPress={() => {
-                        router.back();
-                    }}
-                >
-                    <Arrow 
-                        direction="left"
-                        svgClassName="stroke-primary w-6 h-6"
-                    />
-                </TouchableOpacity>
-            )}
+            <BackButton />
 
             <View className="flex-1">
                 <View>
@@ -71,7 +44,7 @@ function HeaderComponent() {
 
                     {!!subtitle && (
                         <Text
-                            className={clsx('opacity-50 text-sm')}
+                            className={clsx('opacity-50 text-xs')}
                             numberOfLines={1}
                         >{subtitle}</Text>
                     )}
