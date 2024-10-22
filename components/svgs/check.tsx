@@ -23,7 +23,7 @@ export function Check({ circle, svgClassName, ...props }: CheckProps) {
 
     return (
         <Svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} className={className}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            <Path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
         </Svg>         
     );
 }

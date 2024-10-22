@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
-import { SafeAreaView, FlatList, TouchableOpacity, ToastAndroid } from "react-native";
+import { SafeAreaView, FlatList, TouchableOpacity, ToastAndroid, View } from "react-native";
 
 import { useScripts } from "@/hooks/use-scripts";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,7 @@ export default function HomeScreen() {
                     refreshing={listLoading}
                     onRefresh={getList}
                     style={{ paddingTop: 20, }}
+                    ListFooterComponent={() => <View className="my-20" />}
                     renderItem={({ item }) => {
                         return (
                             <TouchableOpacity

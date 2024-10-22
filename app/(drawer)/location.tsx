@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { Controller, useForm } from "react-hook-form";
+import { router } from "expo-router";
 
+import { useAlertModal } from "@/hooks/use-alert-modal";
 import { useHospitals } from "@/hooks/use-hospitals";
 import { useNetInfo } from "@/hooks/use-netinfo";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
@@ -13,18 +15,29 @@ import { Button } from "@/components/ui/button";
 import { COUNTRIES, COUNTRY, HOSPITAL, HOSPITALS, SAVE_CHANGES } from "@/constants/copy";
 import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from "@/components/ui/dropdown";
 import { Content } from "@/components/content";
+import { Splash } from "@/components/splash";
+import { Loader } from "@/components/loader";
 
 export default function LocationScreen() {
     const [loading, setLoading] = useState(false);
-    const { sync } = useSyncRemoteData();
+    const { remoteSyncing, sync } = useSyncRemoteData();
     const { COUNTRY_ISO, COUNTRY_NAME, HOSPITAL_ID, HOSPITAL_NAME, itemsUpdating, setItems } = useAsyncStorage();
     const { hospitals, loadHospitalsErrors, hospitalsLoading, getHospitals } = useHospitals();
     const { hasInternet } = useNetInfo();
+    const { alert } = useAlertModal();
 
     useEffect(() => { if (hasInternet) getHospitals(); }, [hasInternet, getHospitals]);
 
+    const [configuredValues, setConfiguredValues] = useState({
+        COUNTRY_ISO, 
+        COUNTRY_NAME, 
+        HOSPITAL_ID, 
+        HOSPITAL_NAME,
+    })
+
     const {
         control,
+        formState: { isDirty },
         setValue,
         handleSubmit,
     } = useForm({
@@ -39,10 +52,25 @@ export default function LocationScreen() {
     const submit = handleSubmit(async (data) => {
         try {
             setLoading(true);
-            await setItems({ ...data });
-            sync({ force: true, });
-        } catch(e: any) {
 
+            await setItems({ ...data });
+            await sync({ force: true, clearData: true, });
+
+            setConfiguredValues(data);
+
+            alert({
+                message: 'Location was successfully changed!',
+                variant: 'success',
+            });
+
+            router.push('/(drawer)');
+        } catch(e: any) {
+            try { await setItems({ ...configuredValues }); } catch(e) { /**/ }
+            alert({
+                title: 'Change location',
+                message: 'Failed to change location',
+                variant: 'error',
+            });
         } finally {
             setLoading(false);
         }
@@ -75,8 +103,6 @@ export default function LocationScreen() {
                 .filter(h => h.hospitalId !== HOSPITAL_ID),
         ];
     }, [hospitals, HOSPITAL_ID, HOSPITAL_NAME]);
-
-    console.log('HOSPITAL_NAME', HOSPITAL_NAME)
     
     return (
         <>
@@ -84,6 +110,13 @@ export default function LocationScreen() {
                 backButtonVisible
                 title="Location"
             />
+
+            {(loading || remoteSyncing) && (
+                <Splash>
+                    <Loader className="mb-2" />
+                    <Text className="text-xs">Applying changes, please wait...</Text>
+                </Splash>
+            )}
 
             <View className="pt-10 flex-1 bg-background">
                 <Content>
@@ -169,7 +202,7 @@ export default function LocationScreen() {
                     <View>
                         <Button
                             onPress={submit}
-                            disabled={!canSubmit}
+                            disabled={!canSubmit || !isDirty}
                         >
                             {SAVE_CHANGES}
                         </Button>

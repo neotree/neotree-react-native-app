@@ -45,6 +45,7 @@ export function AlertModal() {
                         {variant === 'success' && (
                             <View className="flex-row justify-center">
                                 <Check 
+                                    circle
                                     svgClassName="stroke-success w-20 h-20"
                                 />
                             </View>

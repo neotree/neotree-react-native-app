@@ -6,10 +6,14 @@ import { useAsyncStorage } from "@/hooks/use-async-storage";
 import * as mutations from "@/data/mutations";
 
 type SyncRemoteDataOpts = {
-    force?: true,
+    force?: boolean;
+    clearData?: boolean;
 };
 
-export async function syncRemoteData(options: SyncRemoteDataOpts = {}) {
+export async function syncRemoteData({ 
+    clearData = false, 
+    ...options 
+}: SyncRemoteDataOpts = {}) {
     try {
         const axios = await getAxiosClient();
 
@@ -36,6 +40,12 @@ export async function syncRemoteData(options: SyncRemoteDataOpts = {}) {
             const { errors, data } = res.data;
 
             if (errors?.length) throw new Error(errors.join(', '));
+
+            if (clearData) {
+                await mutations.deleteAllScripts();
+                await mutations.deleteAllScreens();
+                await mutations.deleteAllDiagnoses();
+            }
 
             logger.log('SYNC data.newData', data.newData);
 
