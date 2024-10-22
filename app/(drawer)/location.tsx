@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { Controller, useForm } from "react-hook-form";
 import { router } from "expo-router";
 
 import { useAlertModal } from "@/hooks/use-alert-modal";
@@ -17,6 +16,7 @@ import { Dropdown, DropdownContent, DropdownItem, DropdownTrigger } from "@/comp
 import { Content } from "@/components/content";
 import { Splash } from "@/components/splash";
 import { Loader } from "@/components/loader";
+import { WifiOff } from "@/components/svgs/wifi-off";
 
 export default function LocationScreen() {
     const [loading, setLoading] = useState(false);
@@ -33,30 +33,23 @@ export default function LocationScreen() {
         COUNTRY_NAME, 
         HOSPITAL_ID, 
         HOSPITAL_NAME,
-    })
-
-    const {
-        control,
-        formState: { isDirty },
-        setValue,
-        handleSubmit,
-    } = useForm({
-        defaultValues: {
-            HOSPITAL_ID,
-            HOSPITAL_NAME,
-            COUNTRY_ISO,
-            COUNTRY_NAME,
-        },
     });
 
-    const submit = handleSubmit(async (data) => {
+    const [form, setForm] = useState(configuredValues);
+
+    const isDirty = useMemo(() => (
+        (form.COUNTRY_ISO !== COUNTRY_ISO) || 
+        ((form.HOSPITAL_ID !== HOSPITAL_ID))
+    ), [form.COUNTRY_ISO, form.HOSPITAL_ID, COUNTRY_ISO, HOSPITAL_ID]);
+
+    const submit = useCallback(async () => {
         try {
             setLoading(true);
 
-            await setItems({ ...data });
+            await setItems({ ...form });
             await sync({ force: true, clearData: true, });
 
-            setConfiguredValues(data);
+            setConfiguredValues(form);
 
             alert({
                 message: 'Location was successfully changed!',
@@ -74,7 +67,7 @@ export default function LocationScreen() {
         } finally {
             setLoading(false);
         }
-    });
+    }, [form, configuredValues, router.push, setItems, alert, sync]);
 
     const disableCountry = useMemo(() => loading || itemsUpdating || hospitalsLoading || (CONFIG.sites.length < 2), [
         hospitalsLoading, 
@@ -89,10 +82,11 @@ export default function LocationScreen() {
         loading,
     ]);
 
-    const canSubmit = useMemo(() => !loading && !!(COUNTRY_ISO && HOSPITAL_ID), [
+    const canSubmit = useMemo(() => !loading && !!(COUNTRY_ISO && HOSPITAL_ID && hasInternet), [
         loading,
         COUNTRY_ISO, 
         HOSPITAL_ID,
+        hasInternet,
     ]);
 
     const hospitalsOptions = useMemo(() => {
@@ -122,80 +116,62 @@ export default function LocationScreen() {
                 <Content>
                     <View className="mb-3">
                         <Text variant={disableCountry ? 'labelDisabled' : 'label'}>{COUNTRY}</Text>
-                        <Controller 
-                            control={control}
-                            name="COUNTRY_ISO"
-                            rules={{ required: true, }}
-                            render={({ field: { value, onChange }, }) => {
-                                return (
-                                    <>
-                                        <Dropdown
-                                            selected={value}
-                                            onSelect={value => {
-                                                onChange(value);
-                                                setValue('COUNTRY_NAME', CONFIG.sites.filter(c => c.countryISO === value)[0]?.countryName || '');
-                                            }}
-                                            disabled={disableCountry}
-                                            title={COUNTRIES}
-                                        >
-                                            <DropdownTrigger>
-                                                Select country
-                                            </DropdownTrigger>
-                                            <DropdownContent>
-                                                {CONFIG.sites.map(o => (
-                                                    <DropdownItem key={o.countryISO} value={o.countryISO}>
-                                                        {o.countryName}
-                                                    </DropdownItem>
-                                                ))}
-                                            </DropdownContent>
-                                        </Dropdown>
-                                    </>
-                                );
+                        <Dropdown
+                            selected={form.COUNTRY_ISO}
+                            onSelect={value => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    COUNTRY_ISO: `${value || COUNTRY_ISO}`,
+                                    COUNTRY_NAME: CONFIG.sites.filter(c => c.countryISO === value)[0]?.countryName || COUNTRY_NAME,
+                                }));
                             }}
-                        />
+                            disabled={disableCountry}
+                            title={COUNTRIES}
+                        >
+                            <DropdownTrigger>
+                                Select country
+                            </DropdownTrigger>
+                            <DropdownContent>
+                                {CONFIG.sites.map(o => (
+                                    <DropdownItem key={o.countryISO} value={o.countryISO}>
+                                        {o.countryName}
+                                    </DropdownItem>
+                                ))}
+                            </DropdownContent>
+                        </Dropdown>
                     </View>
 
                     <View className="mb-3">
                         <Text 
                             variant={disableHospitals ? 'labelDisabled' : 'label'}
                         >{HOSPITAL}</Text>
-                        <Controller 
-                            control={control}
-                            name="HOSPITAL_ID"
-                            rules={{ required: true, }}
-                            disabled={disableHospitals}
-                            render={({ field: { value, onChange }, }) => {
-                                return (
-                                    <>
-                                        <Dropdown
-                                            searchable
-                                            searchPlaceholder="Search hospitals"
-                                            selected={value}
-                                            onSelect={value => {
-                                                onChange(value);
-                                                setValue('HOSPITAL_NAME', hospitalsOptions
-                                                    .filter(h => h.hospitalId === value)[0]?.name || '');
-                                            }}
-                                            title={HOSPITALS}
-                                        >
-                                            <DropdownTrigger>
-                                                Select hospital
-                                            </DropdownTrigger>
-                                            <DropdownContent>
-                                                {hospitalsOptions.map(o => (
-                                                        <DropdownItem 
-                                                            key={o.hospitalId} 
-                                                            value={o.hospitalId}
-                                                        >
-                                                            {o.name}
-                                                        </DropdownItem>
-                                                    ))}
-                                            </DropdownContent>
-                                        </Dropdown>
-                                    </>
-                                );
+                        <Dropdown
+                            searchable
+                            searchPlaceholder="Search hospitals"
+                            selected={form.HOSPITAL_ID}
+                            onSelect={value => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    HOSPITAL_ID: `${value || HOSPITAL_ID}`,
+                                    HOSPITAL_NAME: hospitalsOptions.filter(h => h.hospitalId === value)[0]?.name || HOSPITAL_NAME,
+                                }));
                             }}
-                        />
+                            title={HOSPITALS}
+                        >
+                            <DropdownTrigger>
+                                Select hospital
+                            </DropdownTrigger>
+                            <DropdownContent>
+                                {hospitalsOptions.map(o => (
+                                        <DropdownItem 
+                                            key={o.hospitalId} 
+                                            value={o.hospitalId}
+                                        >
+                                            {o.name}
+                                        </DropdownItem>
+                                    ))}
+                            </DropdownContent>
+                        </Dropdown>
                         {!!loadHospitalsErrors?.length && <Text className="text-xs text-danger mt-1">{loadHospitalsErrors.join(', ')}</Text>}
                     </View>
 
@@ -207,6 +183,13 @@ export default function LocationScreen() {
                             {SAVE_CHANGES}
                         </Button>
                     </View>
+
+                    {!hasInternet && (
+                        <View className="my-10 items-center justify-center">
+                            <WifiOff svgClassName="stroke-danger opacity-50 mb-2" />
+                            <Text className="text-danger text-sm">No internet</Text>
+                        </View>
+                    )}
                 </Content>
             </View>
         </>
