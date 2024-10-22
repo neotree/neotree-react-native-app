@@ -29,7 +29,7 @@ export function OnboardingForm() {
 
     const submit = handleSubmit(async (data) => {
         try {
-            router.push('(auth)/login');
+            router.push('/(auth)/login');
         } catch(e: any) {
 
         } finally {
@@ -55,6 +55,10 @@ export function OnboardingForm() {
         COUNTRY_ISO, 
         HOSPITAL_ID,
     ]);
+
+    const hospitalsOptions = useMemo(() => {
+        return hospitals.map(o => ({ ...o, hospitalId: o.oldHospitalId || o.hospitalId, }));
+    }, [hospitals]);
     
     return (
         <>
@@ -116,9 +120,7 @@ export function OnboardingForm() {
                                         onChange(value);
                                         setItems({ 
                                             HOSPITAL_ID: `${value || ''}`, 
-                                            HOSPITAL_NAME: hospitals
-                                                .filter(h => h.oldHospitalId === value)
-                                                .filter(h => h.hospitalId === value)[0]?.name || '',
+                                            HOSPITAL_NAME: hospitalsOptions.filter(h => h.hospitalId === value)[0]?.name || '',
                                         });
                                     }}
                                     title={HOSPITALS}
@@ -127,9 +129,9 @@ export function OnboardingForm() {
                                         Select hospital
                                     </DropdownTrigger>
                                     <DropdownContent>
-                                        {hospitals.map(o => (
+                                        {hospitalsOptions.map(o => (
                                                 <DropdownItem 
-                                                    key={o.oldHospitalId || o.hospitalId} 
+                                                    key={o.hospitalId} 
                                                     value={o.hospitalId}
                                                 >
                                                     {o.name}

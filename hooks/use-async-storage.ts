@@ -65,13 +65,16 @@ async function getAllItems() {
     try {
         const keys = Object.keys(asyncStorageKeys);
         const allItems = await AsyncStorage.multiGet(keys);
-        return keys.reduce((acc, key) => {
+        
+        const parsed = keys.reduce((acc, key) => {
             const value = allItems.filter(([_key]) => _key === key).map(([, value]) => value)[0];
             return {
                 ...acc,
                 [key]: sanitiser[key as keyof typeof asyncStorageKeys]?.(value),
             };
         }, {} as typeof defaultState);
+
+        return parsed;
     } catch(e) {
         throw e;
     }

@@ -10,7 +10,7 @@ type SyncRemoteDataState = {
 };
 
 type SyncRemoteDataStore = SyncRemoteDataState & {
-    sync: () => Promise<void>;
+    sync: (options?: Parameters<typeof syncRemoteData>[0]) => Promise<void>;
 };
 
 const defaultState: SyncRemoteDataState = {
@@ -23,14 +23,14 @@ const defaultState: SyncRemoteDataState = {
 export const useSyncRemoteData = create<SyncRemoteDataStore>((set, getStore) => {
     return {
         ...defaultState,
-        async sync() {
+        async sync(options) {
             if (getStore().remoteSyncing) {
                 set(prev => ({ remoteSyncQueue: prev.remoteSyncQueue + 1, }));
             } else {
                 const syncRemoteErrors: string[] = [];
                 try {
                     set({ remoteSyncing: true, remoteSyncQueue: 0, });
-                    await syncRemoteData();
+                    await syncRemoteData(options);
                 } catch(e: any) {
                     syncRemoteErrors.push(e.message);
                 } finally {
