@@ -15,42 +15,44 @@ function HeaderComponent() {
     const { title, subtitle } = state;
 
     return (
-        <View
-            className={clsx(
-                'flex-row items-center px-3 pb-2 bg-background border-b border-b-border min-h-[100px]'
-            )}
-            style={[
-                { 
-                    paddingTop: Constants.statusBarHeight + 12, 
-                    shadowColor: 'rgba(0,0,0,.1)',
-                    shadowOffset: { width: -2, height: 4 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 3,
-                    elevation: 24,
-                },
-            ]}
-        >
-            <DrawerButton />
+        <>
+            <View
+                className={clsx(
+                    'flex-row items-center px-3 pb-2 bg-background border-b border-b-border min-h-[100px]'
+                )}
+                style={[
+                    { 
+                        paddingTop: Constants.statusBarHeight + 12, 
+                        shadowColor: 'rgba(0,0,0,.1)',
+                        shadowOffset: { width: -2, height: 4 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 3,
+                        elevation: 24,
+                    },
+                ]}
+            >
+                <DrawerButton />
 
-            <BackButton />
+                <BackButton />
 
-            <View className="flex-1">
-                <View>
-                    <Text
-                        className={clsx('text-primary text-xl')}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                    >{title}</Text>
-
-                    {!!subtitle && (
+                <View className="flex-1">
+                    <View>
                         <Text
-                            className={clsx('opacity-50 text-xs')}
+                            className={clsx('text-primary text-xl')}
                             numberOfLines={1}
-                        >{subtitle}</Text>
-                    )}
+                            ellipsizeMode="tail"
+                        >{title}</Text>
+
+                        {!!subtitle && (
+                            <Text
+                                className={clsx('opacity-50 text-xs')}
+                                numberOfLines={1}
+                            >{subtitle}</Text>
+                        )}
+                    </View>
                 </View>
             </View>
-        </View>
+        </>
     );
 }
 
