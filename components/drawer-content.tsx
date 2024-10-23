@@ -48,14 +48,14 @@ export function DrawerContent({}: {
                                         <Icon 
                                             svgClassName={clsx(
                                                 'w-6 h-6 mr-4',
-                                                isActive ? 'stroke-primary' : 'stroke-gray-950',
+                                                isActive ? 'stroke-primary' : 'stroke-gray-900',
                                             )} 
                                         />
 
                                         <Text
                                             className={clsx(
                                                 'uppercase font-bold',
-                                                isActive ? 'text-primary' : 'text-gray-950',
+                                                isActive ? 'text-primary' : 'text-gray-900',
                                             )}
                                         >{label}</Text>
                                     </>

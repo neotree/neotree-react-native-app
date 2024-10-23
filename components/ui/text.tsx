@@ -16,7 +16,7 @@ export function Text({
             <RNText
                 {...props}
                 className={clsx(
-                    'font-normal text-base text-gray-950',
+                    'font-normal text-base text-gray-900',
                     {
                         label: 'mb-1 text-xs font-bold',
                         labelDisabled: 'mb-1 text-xs font-bold opacity-50',
