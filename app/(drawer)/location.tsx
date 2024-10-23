@@ -17,6 +17,7 @@ import { Content } from "@/components/content";
 import { Splash } from "@/components/splash";
 import { Loader } from "@/components/loader";
 import { WifiOff } from "@/components/svgs/wifi-off";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function LocationScreen() {
     const [loading, setLoading] = useState(false);
@@ -112,84 +113,88 @@ export default function LocationScreen() {
                 </Splash>
             )}
 
-            <View className="pt-10 flex-1 bg-background">
+            <View className="pt-10 flex-1">
                 <Content>
-                    <View className="mb-3">
-                        <Text variant={disableCountry ? 'labelDisabled' : 'label'}>{COUNTRY}</Text>
-                        <Dropdown
-                            selected={form.COUNTRY_ISO}
-                            onSelect={value => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    COUNTRY_ISO: `${value || COUNTRY_ISO}`,
-                                    COUNTRY_NAME: CONFIG.sites.filter(c => c.countryISO === value)[0]?.countryName || COUNTRY_NAME,
-                                }));
-                            }}
-                            disabled={disableCountry}
-                            title={COUNTRIES}
-                        >
-                            <DropdownTrigger>
-                                Select country
-                            </DropdownTrigger>
-                            <DropdownContent>
-                                {CONFIG.sites.map(o => (
-                                    <DropdownItem key={o.countryISO} value={o.countryISO}>
-                                        {o.countryName}
-                                    </DropdownItem>
-                                ))}
-                            </DropdownContent>
-                        </Dropdown>
-                    </View>
+                    <Card>
+                        <CardContent>
+                            <View className="mb-3">
+                                <Text variant={disableCountry ? 'labelDisabled' : 'label'}>{COUNTRY}</Text>
+                                <Dropdown
+                                    selected={form.COUNTRY_ISO}
+                                    onSelect={value => {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            COUNTRY_ISO: `${value || COUNTRY_ISO}`,
+                                            COUNTRY_NAME: CONFIG.sites.filter(c => c.countryISO === value)[0]?.countryName || COUNTRY_NAME,
+                                        }));
+                                    }}
+                                    disabled={disableCountry}
+                                    title={COUNTRIES}
+                                >
+                                    <DropdownTrigger>
+                                        Select country
+                                    </DropdownTrigger>
+                                    <DropdownContent>
+                                        {CONFIG.sites.map(o => (
+                                            <DropdownItem key={o.countryISO} value={o.countryISO}>
+                                                {o.countryName}
+                                            </DropdownItem>
+                                        ))}
+                                    </DropdownContent>
+                                </Dropdown>
+                            </View>
 
-                    <View className="mb-3">
-                        <Text 
-                            variant={disableHospitals ? 'labelDisabled' : 'label'}
-                        >{HOSPITAL}</Text>
-                        <Dropdown
-                            searchable
-                            searchPlaceholder="Search hospitals"
-                            selected={form.HOSPITAL_ID}
-                            onSelect={value => {
-                                setForm(prev => ({
-                                    ...prev,
-                                    HOSPITAL_ID: `${value || HOSPITAL_ID}`,
-                                    HOSPITAL_NAME: hospitalsOptions.filter(h => h.hospitalId === value)[0]?.name || HOSPITAL_NAME,
-                                }));
-                            }}
-                            title={HOSPITALS}
-                        >
-                            <DropdownTrigger>
-                                Select hospital
-                            </DropdownTrigger>
-                            <DropdownContent>
-                                {hospitalsOptions.map(o => (
-                                        <DropdownItem 
-                                            key={o.hospitalId} 
-                                            value={o.hospitalId}
-                                        >
-                                            {o.name}
-                                        </DropdownItem>
-                                    ))}
-                            </DropdownContent>
-                        </Dropdown>
-                        {!!loadHospitalsErrors?.length && <Text className="text-xs text-danger mt-1">{loadHospitalsErrors.join(', ')}</Text>}
-                    </View>
+                            <View className="mb-3">
+                                <Text 
+                                    variant={disableHospitals ? 'labelDisabled' : 'label'}
+                                >{HOSPITAL}</Text>
+                                <Dropdown
+                                    searchable
+                                    searchPlaceholder="Search hospitals"
+                                    selected={form.HOSPITAL_ID}
+                                    onSelect={value => {
+                                        setForm(prev => ({
+                                            ...prev,
+                                            HOSPITAL_ID: `${value || HOSPITAL_ID}`,
+                                            HOSPITAL_NAME: hospitalsOptions.filter(h => h.hospitalId === value)[0]?.name || HOSPITAL_NAME,
+                                        }));
+                                    }}
+                                    title={HOSPITALS}
+                                >
+                                    <DropdownTrigger>
+                                        Select hospital
+                                    </DropdownTrigger>
+                                    <DropdownContent>
+                                        {hospitalsOptions.map(o => (
+                                                <DropdownItem 
+                                                    key={o.hospitalId} 
+                                                    value={o.hospitalId}
+                                                >
+                                                    {o.name}
+                                                </DropdownItem>
+                                            ))}
+                                    </DropdownContent>
+                                </Dropdown>
+                                {!!loadHospitalsErrors?.length && <Text className="text-xs text-danger mt-1">{loadHospitalsErrors.join(', ')}</Text>}
+                            </View>
 
-                    <View>
-                        <Button
-                            onPress={submit}
-                            disabled={!canSubmit || !isDirty}
-                        >
-                            {SAVE_CHANGES}
-                        </Button>
-                    </View>
+                            <View>
+                                <Button
+                                    onPress={submit}
+                                    disabled={!canSubmit || !isDirty}
+                                >
+                                    {SAVE_CHANGES}
+                                </Button>
+                            </View>
 
-                    {!hasInternet && (
-                        <View className="my-10 items-center justify-center">
-                            <WifiOff svgClassName="stroke-danger opacity-50 mb-2" />
-                            <Text className="text-danger text-sm">No internet</Text>
-                        </View>
-                    )}
+                            {!hasInternet && (
+                                <View className="my-10 items-center justify-center">
+                                    <WifiOff svgClassName="stroke-danger opacity-50 mb-2" />
+                                    <Text className="text-danger text-sm">No internet</Text>
+                                </View>
+                            )}
+                        </CardContent>
+                    </Card>
                 </Content>
             </View>
         </>

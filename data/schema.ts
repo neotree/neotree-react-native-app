@@ -11,9 +11,13 @@ export const sessions = sqliteTable(
         scriptId: text('script_id').notNull(),
         hospitalId: text('hospital_id').notNull(),
         countryISO: text('country_iso').notNull(),
+        neotreeId: text('neotree_id').notNull(),
+        title: text('title').notNull(),
         data: text('data').notNull().default('{}'),
         
+        exportedAt: text('exported_at'),
         completedAt: text('completed_at'),
+        canceledAt: text('canceled_at'),
         createdAt: text('created_at').notNull().default(sql`(current_timestamp)`),
         updatedAt: text('updated_at').notNull().default(sql`(current_timestamp)`),
         deletedAt: text('deleted_at'),

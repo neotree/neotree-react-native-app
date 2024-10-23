@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
-import { SafeAreaView, FlatList, TouchableOpacity, ToastAndroid, View } from "react-native";
+import { SafeAreaView, FlatList, TouchableOpacity, View } from "react-native";
 
 import { useScripts } from "@/hooks/use-scripts";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -26,7 +26,7 @@ export default function HomeScreen() {
                 subtitle={`v${WEBEDITOR_DATA_VERSION} (${DEVICE_HASH})`}
             />
 
-            <SafeAreaView className="bg-background flex-1">
+            <SafeAreaView className="flex-1">
                 <FlatList 
                     data={list}
                     keyExtractor={item => item.scriptId}

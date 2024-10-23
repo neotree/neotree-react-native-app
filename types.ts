@@ -3,6 +3,27 @@ export type DataResponse<T = any> = {
     errors?: string[];
 };
 
+export type SessionData = {
+
+};
+
+export type Session = {
+    id: number;
+    sessionId: string;
+    scriptId: string;
+    hospitalId: string;
+    countryISO: string;
+    neotreeId: string;
+    title: string;
+    data: SessionData;
+    exportedAt: null | string;
+    completedAt: null | string;
+    canceledAt: null | string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: null | string;
+};
+
 export type Site = {
     countryISO: string;
     countryName: string;
@@ -311,4 +332,28 @@ export type ConfigKeyListItem = {
     label: string;
     isDraft: boolean;
     configKeyId: string;
+};
+
+export type GetSessionsOptions = {
+    sessionsIds?: string[];
+    hospitalsIds?: string[];
+    countriesISOs?: string[];
+};
+
+export type SessionListItem = Omit<Session, 'id' | 'data' | 'deletedAt'> & {
+    script: null | {
+        scriptId: Script['scriptId'];
+        oldScriptId: Script['oldScriptId'];
+        title: Script['title'];
+        type: Script['type'];
+    };
+};
+
+export type FullSession = Session & {
+    script: null | {
+        scriptId: Script['scriptId'];
+        oldScriptId: Script['oldScriptId'];
+        title: Script['title'];
+        type: Script['type'];
+    };
 };
