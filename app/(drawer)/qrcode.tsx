@@ -1,7 +1,7 @@
 import { View } from "react-native";
 
 import { Text } from "@/components/ui/text";
-import { Header } from "@/components/header/index";
+import { Header } from "@/components/header";
 
 export default function QrCodeScreen() {
     return (

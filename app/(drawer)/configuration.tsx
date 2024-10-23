@@ -3,7 +3,7 @@ import { SafeAreaView, FlatList, TouchableOpacity, Switch, View } from "react-na
 
 import { useConfigKeys } from "@/hooks/use-config-keys";
 import { Content } from "@/components/content";
-import { Header } from "@/components/header/index";
+import { Header } from "@/components/header";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/hooks/use-theme";

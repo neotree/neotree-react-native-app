@@ -6,7 +6,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
 import ucFirst from "@/lib/ucFirst";
-import { Header } from "@/components/header/index";
+import { Header } from "@/components/header";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
 import { useSessions } from "@/hooks/use-sessions";
 

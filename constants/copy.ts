@@ -13,3 +13,4 @@ export const HOSPITAL = 'Hospital';
 export const COUNTRIES = 'Countries';
 export const HOSPITALS = 'Hospitals';
 export const SAVE_CHANGES = 'Save changes';
+export const NEOTREE_ID_SEARCH='Neotree ID search';
