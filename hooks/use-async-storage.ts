@@ -134,12 +134,26 @@ export const useAsyncStorage = create<AsyncStorageItems & {
         setItems: _setItems,
         async init() {
             try {
-                const activeSite = constants.CONFIG.sites[0];
+                const { COUNTRY_ISO, INITIAL_SETUP_DATE, LAST_REMOTE_SYNC_DATE } = await getAllItems();
+
+                const activeSite = constants.CONFIG.sites.filter(s => s.countryISO === COUNTRY_ISO)[0] || 
+                    constants.CONFIG.sites[0];
+
                 if (!activeSite) throw new Error('Sites not configured');
-        
-                const INITIAL_SETUP_DATE = await AsyncStorage.getItem('INITIAL_SETUP_DATE');
+
+                const siteConfig = {
+                    WEBEDITOR_URL: activeSite.webeditorURL || '',
+                    WEBEDITOR_API_KEY: activeSite.apiKey || '',
+                    COUNTRY_ISO: activeSite.countryISO || '',
+                    COUNTRY_NAME: activeSite.countryName || '',
+                };
 
                 if (INITIAL_SETUP_DATE) {
+                    await _setItems({
+                        ...siteConfig,
+                        LAST_REMOTE_SYNC_DATE: activeSite.countryISO !== COUNTRY_ISO ? 
+                            '' : (LAST_REMOTE_SYNC_DATE?.toUTCString?.() || ''),
+                    });
                     const items = await getAllItems();
                     setItemsState({ ...items, });
                     return;
@@ -147,15 +161,12 @@ export const useAsyncStorage = create<AsyncStorageItems & {
         
                 const deviceId = await getDeviceID();
                 await _setItems({
+                    ...siteConfig,
                     APP_VERSION: constants.APP_VERSION || '',
                     SDK_VERSION: constants.SDK_VERSION || '',
                     INITIAL_SETUP_DATE: new Date().toUTCString(),
                     NEOTREE_BUILD_TYPE: constants.NEOTREE_BUILD_TYPE || '',
                     DEVICE_ID: deviceId || '',
-                    WEBEDITOR_URL: activeSite.webeditorURL || '',
-                    WEBEDITOR_API_KEY: activeSite.apiKey || '',
-                    COUNTRY_ISO: activeSite.countryISO || '',
-                    COUNTRY_NAME: activeSite.countryName || '',
                     SESSIONS_COUNT: '0',
                     HOSPITAL_ID: '',
                     HOSPITAL_NAME: '',
