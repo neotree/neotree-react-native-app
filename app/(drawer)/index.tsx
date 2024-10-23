@@ -26,7 +26,7 @@ export default function HomeScreen() {
                 subtitle={`v${WEBEDITOR_DATA_VERSION} (${DEVICE_HASH})`}
             />
 
-            <SafeAreaView>
+            <SafeAreaView className="bg-background flex-1">
                 <FlatList 
                     data={list}
                     keyExtractor={item => item.scriptId}
@@ -34,6 +34,17 @@ export default function HomeScreen() {
                     onRefresh={getList}
                     style={{ paddingTop: 20, }}
                     ListFooterComponent={() => <View className="my-20" />}
+                    ListEmptyComponent={(listInitialised && !listLoading) ? (
+                        <>
+                            <Content>
+                                <Card>
+                                    <CardContent>
+                                        <Text className="text-center opacity-50">No scripts found</Text>
+                                    </CardContent>
+                                </Card>
+                            </Content>
+                        </>
+                    ) : undefined}
                     renderItem={({ item }) => {
                         return (
                             <TouchableOpacity

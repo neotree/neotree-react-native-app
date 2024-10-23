@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/hooks/use-theme";
 import { useConfiguration } from "@/hooks/use-configuration";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function ConfigurationScreen() {
     const theme = useTheme();
@@ -53,8 +54,18 @@ export default function ConfigurationScreen() {
                     refreshing={listLoading}
                     onRefresh={getList}
                     style={{ paddingTop: 20, }}
+                    ListEmptyComponent={(listInitialised && !listLoading) ? (
+                        <>
+                            <Content>
+                                <Card>
+                                    <CardContent>
+                                        <Text className="text-center opacity-50">No config keys found</Text>
+                                    </CardContent>
+                                </Card>
+                            </Content>
+                        </>
+                    ) : undefined}
                     renderItem={({ item }) => {
-                        const disabled = false;
                         const selected = form[item.key];
 
                         return (
