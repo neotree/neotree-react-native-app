@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
 import { v4 as uuidv4 } from "uuid";
 
@@ -105,6 +105,11 @@ export const scripts = sqliteTable(
     },
 );
 
+export const scriptsRelations = relations(scripts, ({ many }) => ({
+    screens: many(screens),
+    diagnoses: many(diagnoses),
+}));
+
 // SCREENS
 export const screens = sqliteTable(
     'nt_screens', 
@@ -178,6 +183,13 @@ export const screens = sqliteTable(
     },
 );
 
+export const screensRelations = relations(screens, ({ one }) => ({
+    script: one(scripts, {
+        fields: [screens.scriptId],
+        references: [scripts.scriptId],
+    }),
+}));
+
 // DIAGNOSES
 export const diagnoses = sqliteTable(
     'nt_diagnoses', 
@@ -214,3 +226,10 @@ export const diagnoses = sqliteTable(
         deletedAt: text('deleted_at'),
     },
 );
+
+export const diagnosesRelations = relations(diagnoses, ({ one }) => ({
+    script: one(scripts, {
+        fields: [diagnoses.scriptId],
+        references: [scripts.scriptId],
+    }),
+}));

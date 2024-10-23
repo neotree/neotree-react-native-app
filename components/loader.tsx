@@ -1,15 +1,21 @@
-import { ActivityIndicator, ActivityIndicatorProps } from "react-native";
+import { ActivityIndicator, ActivityIndicatorProps, Modal, View } from "react-native";
+import clsx from "clsx";
 
 import { useTheme } from "@/hooks/use-theme";
 
 type Props = ActivityIndicatorProps & {
-
+    overlay?: boolean;
+    overlayTransparent?: boolean;
 };
 
-export function Loader({ ...props }: Props) {
+export function Loader({ 
+    overlay, 
+    overlayTransparent = true, 
+    ...props 
+}: Props) {
     const theme = useTheme();
 
-    return (
+    const loader = (
         <>
             <ActivityIndicator 
                 color={theme.primaryColor}
@@ -18,4 +24,26 @@ export function Loader({ ...props }: Props) {
             />
         </>
     );
+
+    if (overlay) {
+        return (
+            <Modal
+                statusBarTranslucent
+                transparent
+                visible
+                onRequestClose={() => {}}
+            >
+                <View
+                    className={clsx(
+                        'flex-1 items-center justify-center',
+                        !overlayTransparent ? 'bg-background' : 'bg-transparent',
+                    )}
+                >
+                    {loader}
+                </View>
+            </Modal>
+        );
+    }
+
+    return loader;
 }

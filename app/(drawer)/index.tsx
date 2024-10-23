@@ -52,8 +52,8 @@ export default function HomeScreen() {
                                     pathname: '/script/[scriptId]',
                                     params: { 
                                         scriptId: item.scriptId,
-                                        title: item.title, 
-                                        subtitle: ucFirst(item.type),
+                                        scriptTitle: item.title, 
+                                        scriptSubtitle: ucFirst(item.type),
                                     },
                                 })}
                             >

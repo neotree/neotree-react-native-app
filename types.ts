@@ -3,6 +3,12 @@ export type DataResponse<T = any> = {
     errors?: string[];
 };
 
+export type ScriptRouteSearchParams = { 
+    scriptTitle: string; 
+    scriptSubtitle: string;
+    scriptId: string;
+};
+
 export type SessionData = {
 
 };
@@ -85,7 +91,7 @@ export type ScriptField = {
     values: string;
     confidential: boolean;
     optional: boolean;
-    printable: boolean;
+    printable: null | boolean;
     prePopulate: string[];
 };
 
@@ -96,7 +102,7 @@ export type DiagnosisSymptom = {
     type: string;
     position: number;
     symptomId: string;
-    printable: boolean;
+    printable: null | boolean;
 };
 
 export type ScriptImage = {
@@ -162,7 +168,7 @@ export type ConfigKey = {
     source: string | null;
     preferences: Preferences;
     isDraft: boolean;
-    publishDate: string;
+    publishDate: string | null;
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
@@ -182,10 +188,10 @@ export type Script = {
     hospitalId: string | null;
     exportable: boolean;
     nuidSearchEnabled: boolean;
-    nuidSearchFields: any;
+    nuidSearchFields: ScriptField[];
     preferences: Preferences;
     isDraft: boolean;
-    publishDate: string;
+    publishDate: string | null;
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
@@ -241,7 +247,7 @@ export type Screen = {
     minValue: number | null;
     maxValue: number | null;
     exportable: boolean;
-    printable: boolean;
+    printable: null | boolean;
     skippable: boolean;
     confidential: boolean;
     prePopulate: string[];
@@ -249,7 +255,7 @@ export type Screen = {
     items: ScriptItem[];
     preferences: Preferences;
     isDraft: boolean;
-    publishDate: string;
+    publishDate: string | null;
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
@@ -279,7 +285,7 @@ export type Diagnosis = {
     image3: ImageTextField | null;
     preferences: Preferences;
     isDraft: boolean;
-    publishDate: string;
+    publishDate: string | null;
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
@@ -321,6 +327,11 @@ export type ScriptListItem = {
     description: string;
     isDraft: boolean;
     scriptId: string;
+};
+
+export type FullScript = Script & {
+    screens: Screen[];
+    diagnoses: Diagnosis[];
 };
 
 export type GetConfigKeysOptions = {

@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1729239366034,
-      "tag": "0000_hesitant_ben_parker",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1729614038998,
-      "tag": "0001_magenta_obadiah_stane",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1729667510397,
-      "tag": "0002_little_expediter",
+      "when": 1729676232833,
+      "tag": "0000_rapid_firelord",
       "breakpoints": true
     }
   ]

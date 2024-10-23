@@ -10,7 +10,7 @@ CREATE TABLE `nt_config_keys` (
 	`source` text DEFAULT 'editor',
 	`preferences` text DEFAULT '{}' NOT NULL,
 	`is_draft` integer DEFAULT 0 NOT NULL,
-	`publish_date` text NOT NULL,
+	`publish_date` text,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
 	`deleted_at` text
@@ -20,6 +20,12 @@ CREATE UNIQUE INDEX `nt_config_keys_config_key_id_unique` ON `nt_config_keys` (`
 CREATE UNIQUE INDEX `nt_config_keys_old_config_key_id_unique` ON `nt_config_keys` (`old_config_key_id`);--> statement-breakpoint
 CREATE UNIQUE INDEX `nt_config_keys_key_unique` ON `nt_config_keys` (`key`);--> statement-breakpoint
 CREATE UNIQUE INDEX `nt_config_keys_label_unique` ON `nt_config_keys` (`label`);--> statement-breakpoint
+CREATE TABLE `nt_configuration` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`key` text NOT NULL,
+	`selected` integer DEFAULT 0 NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `nt_diagnoses` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`diagnosis_id` text NOT NULL,
@@ -44,7 +50,7 @@ CREATE TABLE `nt_diagnoses` (
 	`image3` text,
 	`preferences` text DEFAULT '{}' NOT NULL,
 	`is_draft` integer DEFAULT 0 NOT NULL,
-	`publish_date` text NOT NULL,
+	`publish_date` text,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
 	`deleted_at` text,
@@ -127,7 +133,7 @@ CREATE TABLE `nt_screens` (
 	`items` text DEFAULT '[]' NOT NULL,
 	`preferences` text DEFAULT '{}' NOT NULL,
 	`is_draft` integer DEFAULT 0 NOT NULL,
-	`publish_date` text NOT NULL,
+	`publish_date` text,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
 	`deleted_at` text,
@@ -153,11 +159,29 @@ CREATE TABLE `nt_scripts` (
 	`nuid_search_fields` text DEFAULT '[]' NOT NULL,
 	`preferences` text DEFAULT '{}' NOT NULL,
 	`is_draft` integer DEFAULT 0 NOT NULL,
-	`publish_date` text NOT NULL,
+	`publish_date` text,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
 	`deleted_at` text
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `nt_scripts_script_id_unique` ON `nt_scripts` (`script_id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `nt_scripts_old_script_id_unique` ON `nt_scripts` (`old_script_id`);
+CREATE UNIQUE INDEX `nt_scripts_old_script_id_unique` ON `nt_scripts` (`old_script_id`);--> statement-breakpoint
+CREATE TABLE `nt_sessions` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`session_id` text NOT NULL,
+	`script_id` text NOT NULL,
+	`hospital_id` text NOT NULL,
+	`country_iso` text NOT NULL,
+	`neotree_id` text NOT NULL,
+	`title` text NOT NULL,
+	`data` text DEFAULT '{}' NOT NULL,
+	`exported_at` text,
+	`completed_at` text,
+	`canceled_at` text,
+	`created_at` text DEFAULT (current_timestamp) NOT NULL,
+	`updated_at` text DEFAULT (current_timestamp) NOT NULL,
+	`deleted_at` text
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `nt_sessions_session_id_unique` ON `nt_sessions` (`session_id`);
