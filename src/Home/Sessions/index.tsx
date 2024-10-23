@@ -237,10 +237,17 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		(async () => {
 			setLoadingSessions((loader === undefined) || loader);
 			try {
+				const location = await api.getLocation();
 				const sessions: any = await api.getSessions();
-				setDBSessions(sessions || []);
-				setSessions(getFilteredSessions(sessions || []));
-				resolve(sessions || []);
+				const dbSessions = (sessions || []).filter((s: any) => {
+					return (
+						(s.data?.country === location?.country) &&
+						(s.data?.hospital_id === location?.hospital)
+					);
+				});
+				setDBSessions(dbSessions);
+				setSessions(getFilteredSessions(dbSessions));
+				resolve(dbSessions);
 			} catch (e: any) {
 				Alert.alert(
 					'Failed to load sessions',
