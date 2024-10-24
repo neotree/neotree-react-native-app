@@ -39,8 +39,6 @@ export default function ConfigurationScreen() {
         saveConfiguration([{ key, selected: configuration[key] ? 0 : 1, }]);
     }, [configuration, saveConfiguration]);
 
-    if (!listInitialised) return null;
-
     return (
         <>
             <Header 

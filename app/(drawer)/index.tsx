@@ -16,8 +16,6 @@ export default function HomeScreen() {
 
     useFocusEffect(useCallback(() => { getList(); }, [getList, LAST_REMOTE_SYNC_DATE]));
 
-    if (!listInitialised) return null;
-
     return (
         <>
             <Header 
