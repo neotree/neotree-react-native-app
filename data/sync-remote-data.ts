@@ -1,8 +1,8 @@
 import logger from "@/lib/logger";
 import { getAxiosClient } from '@/lib/axios';
 import { DataResponse, RemoteData } from "@/types";
-import { isInternetConnected } from "@/lib/network";
 import { useAsyncStorage } from "@/hooks/use-async-storage";
+import { useNetInfo } from "@/hooks/use-netinfo";
 import * as mutations from "@/data/mutations";
 
 type SyncRemoteDataOpts = {
@@ -25,7 +25,7 @@ export async function syncRemoteData({
             HOSPITAL_ID,
         } = await useAsyncStorage.getState().getAllItems();
         
-        const hasInternet = await isInternetConnected();
+        const hasInternet = useNetInfo.getState().hasInternet;
 
         if (!hasInternet && !LAST_REMOTE_SYNC_DATE) throw new Error('No internet connection!');
         

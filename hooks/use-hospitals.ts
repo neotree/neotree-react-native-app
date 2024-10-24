@@ -4,8 +4,7 @@ import { create } from "zustand";
 import { DataResponse, Hospital } from "@/types";
 import logger from "@/lib/logger";
 import { getAxiosClient } from "@/lib/axios";
-import { useAsyncStorage } from "@/hooks/use-async-storage";
-import { isInternetConnected } from "@/lib/network";
+import { useNetInfo } from "@/hooks/use-netinfo";
 
 type HospitalsState = {
     hospitalsInitialised: boolean;
@@ -40,7 +39,7 @@ export const useHospitals = create<HospitalsStore>(set => {
 
     const getHospitals = async () => {
         try {
-            const hasInternet = await isInternetConnected();
+            const hasInternet = useNetInfo.getState().hasInternet;
             if (hasInternet) {
                 setHospitalsState({ hospitalsLoading: true, });
                 const axios = await getAxiosClient();

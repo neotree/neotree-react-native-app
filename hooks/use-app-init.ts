@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useAssets } from "expo-asset";
 
 import { assets } from "@/constants";
@@ -11,7 +11,9 @@ import { useAsyncStorage } from '@/hooks/use-async-storage';
 import { useSocket } from "./use-socket";
 
 export function useAppInit() {
-    const { hasInternet, } = useNetInfo();
+    // initialise net info (addEventListener to detect network changes)
+    const { hasInternet, netInfoInitialised, init: initNetInfo } = useNetInfo();
+    useEffect(() => { initNetInfo(); }, [initNetInfo]);
     
     // load assets
     const [, loadAssetsError] = useAssets(Object.values(assets));
@@ -43,7 +45,8 @@ export function useAppInit() {
         fontsLoaded &&
         databaseLoaded &&
         asyncStorageConfigured &&
-        socketInitialised
+        socketInitialised &&
+        netInfoInitialised
     ),
     [
         authInfoLoaded, 
@@ -51,6 +54,7 @@ export function useAppInit() {
         databaseLoaded,
         asyncStorageConfigured,
         socketInitialised,
+        netInfoInitialised,
     ]);
 
     const initialiseErrors = useMemo(() => [
