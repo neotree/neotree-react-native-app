@@ -469,6 +469,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 								screen_id: activeScreen.screen_id,
 								type: activeScreen.type,
 								metadata: { label, dataType },
+								index: activeScreenIndex,
 							},
 							...otherValues
 						});
