@@ -59,11 +59,11 @@ export const getScriptUtils = ({
     script,
     activeScreen,
     activeScreenIndex,
+    activeScreenEntry,
     screens,
     diagnoses,
     entries: form,
     // cachedEntries,
-    // activeScreenEntry,
     configuration,
     application,
     location,
@@ -141,18 +141,35 @@ export const getScriptUtils = ({
         const direction = (d && ['next', 'back'].includes(d)) ? d : null;
         
         if ((i !== undefined) && !isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
+
+        let skipToScreenIndex: number | null = null;
         
         const getTargetScreen = (i = activeScreenIndex): null | { screen: types.Screen, index: number; } => {
-            const index = (() => {
+            let index = (() => {
                 switch (direction) {
                     case 'next':
+                        if (activeScreen?.data?.skipToScreenId) {
+                            skipToScreenIndex = screens.map((s, i) => {
+                                if (
+                                    (s.screen_id === activeScreen?.data?.skipToScreenId) ||
+                                    (s.screenId === activeScreen?.data?.skipToScreenId)
+                                ) return i;
+                                return null;
+                            }).filter(i => i !== null)[0] || null;
+                        }
                         return i + 1;
                     case 'back':
-                        return i - 1;
+                        const prevEntry = form[activeScreenEntry ? form.length - 2 : form.length - 1];
+                        return prevEntry?.screen?.index; // i - 1;
                     default:
                         return i;
                 }
             })();
+
+            if (activeScreen?.data?.skipToCondition && (skipToScreenIndex !== null) && (skipToScreenIndex > activeScreenIndex)) {
+                const parsedCondition = parseCondition(`${activeScreen?.data?.skipToCondition || ''}`);
+                index = evaluateCondition(parsedCondition) ? skipToScreenIndex : index;
+            }
         
             const screen = screens[index];
             
