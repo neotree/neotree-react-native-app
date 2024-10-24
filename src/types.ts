@@ -116,6 +116,7 @@ export type ScreenEntry = {
   management: any[];
   screenIndex: number;
   screen: {
+    index: number;
     title: string;
     sectionTitle: string;
     id: string | number;
