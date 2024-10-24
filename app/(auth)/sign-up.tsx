@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { View, TextInput, TouchableOpacity } from "react-native";
-import { Controller, useForm } from "react-hook-form";
 import clsx from "clsx";
+import { router, useLocalSearchParams } from "expo-router";
 
 import { getAxiosClient } from "@/lib/axios";
 import { useAlertModal } from "@/hooks/use-alert-modal";
@@ -11,37 +11,29 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { CHANGE_EMAIL_ADDRESS, CONFIRM_PASSWORD, EMAIL_ADDRESS, PASSWORD, SIGN_IN } from "@/constants/copy";
+import { AuthContainer } from "./components/container";
 
-type Props = {
-    email: string;
-    done: () => void;
-    onChangeEmail: () => void;
-};
+export default function SignUpScreen() {
+    const { email } = useLocalSearchParams<{ email: string; }>();
 
-export function SignUpForm({ email, done, onChangeEmail, }: Props) {
     const { alert } = useAlertModal();
     const { setItems: setAsyncStorageItems } = useAsyncStorage();
 
     const [loading, setLoading] = useState(false);
 	const passwordConfirmInputRef = useRef<TextInput>(null);
 
-    const {
-        control,
-        handleSubmit,
-    } = useForm({
-        defaultValues: {
-            password: '',
-            passwordConfirm: '',
-        },
+    const [form, setForm] = useState({
+        password: '',
+        passwordConfirm: '',
     });
 
-    const submit = handleSubmit(async (data) => {
+    const submit = useCallback(async () => {
         try {
             setLoading(true);
 
             const axios = await getAxiosClient();
             const res = await axios.post<DataResponse<null | { bearerToken: string; }>>('/api/app/auth/sign-up', {
-                ...data,
+                ...form,
                 email
             });
             const { data: info, errors } = res.data;
@@ -50,7 +42,7 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
 
             await setAsyncStorageItems({ BEARER_TOKEN: info?.bearerToken || '', });
             
-            done();
+            router.replace('/(auth)/welcome');
         } catch(e: any) {
             alert({
                 variant: 'error',
@@ -60,10 +52,10 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
         } finally {
             setLoading(false);
         }
-    });
+    }, [form, router.replace, setAsyncStorageItems, alert]);
 
     return (
-        <>
+        <AuthContainer>
             <View className="mb-3">
                 <Input 
                     editable={false}
@@ -77,49 +69,31 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
             </View>
 
             <View className="mb-3">
-                <Controller 
-                    control={control}
-                    name="password"
-                    rules={{ required: true, }}
-                    render={({ field: { value, onChange }, }) => {
-                        return (
-                            <Input 
-                                editable={!loading}
-                                placeholder={PASSWORD}
-                                value={value}
-                                onChangeText={password => onChange(password)}
-                                secureTextEntry
-                                textContentType="password"
-                                autoCapitalize="none"
-                                returnKeyType="go"
-                                onSubmitEditing={() => passwordConfirmInputRef.current?.focus?.()}
-                            />
-                        );
-                    }}
+                <Input 
+                    editable={!loading}
+                    placeholder={PASSWORD}
+                    value={form.password}
+                    onChangeText={password => setForm(prev => ({ ...prev, password, }))}
+                    secureTextEntry
+                    textContentType="password"
+                    autoCapitalize="none"
+                    returnKeyType="go"
+                    onSubmitEditing={() => passwordConfirmInputRef.current?.focus?.()}
                 />
             </View>
 
             <View className="mb-3">
-                <Controller 
-                    control={control}
-                    name="passwordConfirm"
-                    rules={{ required: true, }}
-                    render={({ field: { value, onChange }, }) => {
-                        return (
-                            <Input 
-                                editable={!loading}
-                                placeholder={CONFIRM_PASSWORD}
-                                ref={passwordConfirmInputRef}
-                                value={value}
-                                onChangeText={password2 => onChange(password2)}
-                                secureTextEntry
-                                textContentType="password"
-                                autoCapitalize="none"
-                                returnKeyType="go"
-                                onSubmitEditing={() => submit()}
-                            />
-                        );
-                    }}
+                <Input 
+                    editable={!loading}
+                    placeholder={CONFIRM_PASSWORD}
+                    ref={passwordConfirmInputRef}
+                    value={form.passwordConfirm}
+                    onChangeText={passwordConfirm => setForm(prev => ({ ...prev, passwordConfirm, }))}
+                    secureTextEntry
+                    textContentType="password"
+                    autoCapitalize="none"
+                    returnKeyType="go"
+                    onSubmitEditing={() => submit()}
                 />
             </View>
 
@@ -134,7 +108,10 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
 
             <TouchableOpacity
                 disabled={loading}
-                onPress={() => onChangeEmail()}
+                onPress={() => router.replace({
+                    pathname: '/(auth)/verify-email',
+                    params: { email, },
+                })}
             >
                 <Text
                     className={clsx(
@@ -143,6 +120,6 @@ export function SignUpForm({ email, done, onChangeEmail, }: Props) {
                     )}
                 >{CHANGE_EMAIL_ADDRESS}</Text>
             </TouchableOpacity>
-        </>
+        </AuthContainer>
     );
 }

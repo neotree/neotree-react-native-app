@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { ScrollView } from '@/components/scroll-view';
 import { Text } from '@/components/ui/text';
 import { Poster } from "@/components/poster";
 import { Content } from "@/components/content";
@@ -13,19 +14,21 @@ export function AuthContainer({ children }: {
     const { hasInternet } = useNetInfo();
 
     return (
-        <Poster>
-            <Content className="py-10">
-                {!hasInternet ? (
-                    <View className="justify-center items-center gap-y-3">
-                        <WifiOff 
-                            size={36}
-                            svgClassName="w-36 h-36 opacity-40"
-                        />
+        <ScrollView minHeight="full">
+            <Poster>
+                <Content className="py-10">
+                    {!hasInternet ? (
+                        <View className="justify-center items-center gap-y-3">
+                            <WifiOff 
+                                size={36}
+                                svgClassName="w-36 h-36 opacity-40"
+                            />
 
-                        <Text className='opacity-40 text-sm'>{NO_INTERNET_CONNECTION}</Text>
-                    </View>
-                ): children}
-            </Content>
-        </Poster>
+                            <Text className='opacity-40 text-sm'>{NO_INTERNET_CONNECTION}</Text>
+                        </View>
+                    ): children}
+                </Content>
+            </Poster>
+        </ScrollView>
     );
 }

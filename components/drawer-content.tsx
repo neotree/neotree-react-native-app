@@ -25,6 +25,7 @@ export function DrawerContent({}: {
         confirm(async () => {
             await setAsyncStorageItem({ 
                 BEARER_TOKEN: '', 
+                ONBOARDING_DATE: '',
                 LAST_REMOTE_SYNC_DATE: '', // this will force a fresh data sync when we log back in
             });
             router.push('/(auth)');

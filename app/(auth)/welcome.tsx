@@ -12,15 +12,18 @@ import { Exclamation } from "@/components/svgs/exclamation";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { WifiOff } from "@/components/svgs/wifi-off";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
 
 export default function WelcomeScreen() {
     const { hasInternet } = useNetInfo();
     const { syncRemoteErrors, sync } = useSyncRemoteData();
+    const { setItems } = useAsyncStorage();
 
     const setup = useCallback(async () => {
         await sync({ force: true, clearData: true, });
+        await setItems({ ONBOARDING_DATE: new Date().toUTCString(), });
         await resetStore();
-    }, [router.push, sync]);
+    }, [setItems, router.push, sync]);
 
     useFocusEffect(useCallback(() => { 
         if (hasInternet) setup(); 

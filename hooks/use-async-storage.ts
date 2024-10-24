@@ -21,6 +21,7 @@ export const asyncStorageKeys = {
     WEBEDITOR_URL: 'WEBEDITOR_URL',
     WEBEDITOR_API_KEY: 'WEBEDITOR_API_KEY',
     WEBEDITOR_DATA_VERSION: 'WEBEDITOR_DATA_VERSION',
+    ONBOARDING_DATE: 'ONBOARDING_DATE',
 } as const;
 
 const sanitiser = {
@@ -40,6 +41,7 @@ const sanitiser = {
     WEBEDITOR_URL: (value: string | null) => value || '',
     WEBEDITOR_API_KEY: (value: string | null) => value || '',
     WEBEDITOR_DATA_VERSION: (value: string | null) => value || '',
+    ONBOARDING_DATE: (value: string | null) => value ? new Date(value) : null,
 };
 
 const defaultState = {
@@ -59,6 +61,7 @@ const defaultState = {
     WEBEDITOR_URL: sanitiser.WEBEDITOR_URL(null),
     WEBEDITOR_API_KEY: sanitiser.WEBEDITOR_API_KEY(null),
     WEBEDITOR_DATA_VERSION: sanitiser.WEBEDITOR_DATA_VERSION(null),
+    ONBOARDING_DATE: sanitiser.ONBOARDING_DATE(null),
 };
 
 async function getAllItems() {
@@ -174,6 +177,7 @@ export const useAsyncStorage = create<AsyncStorageItems & {
                     BEARER_TOKEN: '',
                     DEVICE_HASH: '',
                     LAST_REMOTE_SYNC_DATE: '',
+                    ONBOARDING_DATE: '',
                 });
             } catch(e: any) {
                 set({ errors: [e.message], });
