@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { View, TouchableOpacity } from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
+import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
 import clsx from "clsx";
 import { Stack } from "expo-router";
 
@@ -36,7 +36,7 @@ export default function ScriptLayout() {
         reset: resetSessionState, 
     } = useSession();
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         if (isFocused) {
             getScript(scriptId);
         }
@@ -45,7 +45,7 @@ export default function ScriptLayout() {
             resetScriptState();
             resetSessionState();
         };
-    }, [isFocused, scriptId, getScript, resetScriptState, resetSessionState]);
+    }, [isFocused, scriptId, getScript, resetScriptState, resetSessionState]));
 
     if (!isFocused) return null;
 

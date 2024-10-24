@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { View } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
+import { resetStore } from '@/store';
 import { useAlertModal } from "@/hooks/use-alert-modal";
 import { useHospitals } from "@/hooks/use-hospitals";
 import { useNetInfo } from "@/hooks/use-netinfo";
@@ -27,7 +28,7 @@ export default function LocationScreen() {
     const { hasInternet } = useNetInfo();
     const { alert } = useAlertModal();
 
-    useEffect(() => { if (hasInternet) getHospitals(); }, [hasInternet, getHospitals]);
+    useFocusEffect(useCallback(() => { if (hasInternet) getHospitals(); }, [hasInternet, getHospitals]));
 
     const [configuredValues, setConfiguredValues] = useState({
         COUNTRY_ISO, 
@@ -49,6 +50,7 @@ export default function LocationScreen() {
 
             await setItems({ ...form });
             await sync({ force: true, clearData: true, });
+            await resetStore();
 
             setConfiguredValues(form);
 
@@ -59,7 +61,10 @@ export default function LocationScreen() {
 
             router.push('/(drawer)');
         } catch(e: any) {
-            try { await setItems({ ...configuredValues }); } catch(e) { /**/ }
+            try { 
+                await setItems({ ...configuredValues }); 
+                await resetStore();
+            } catch(e) { /**/ }
             alert({
                 title: 'Change location',
                 message: 'Failed to change location',

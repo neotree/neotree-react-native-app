@@ -29,7 +29,7 @@ export const useSyncRemoteData = create<SyncRemoteDataStore>((set, getStore) => 
             } else {
                 const syncRemoteErrors: string[] = [];
                 try {
-                    set({ remoteSyncing: true, remoteSyncQueue: 0, });
+                    set({ syncRemoteErrors, remoteSyncing: true, remoteSyncQueue: 0, });
                     await syncRemoteData(options);
                 } catch(e: any) {
                     syncRemoteErrors.push(e.message);

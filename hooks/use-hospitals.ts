@@ -17,6 +17,7 @@ type HospitalsState = {
 };
 
 type HospitalsStore = HospitalsState & {
+    reset: () => void;
     setHospitalsState: (partialState: Partial<HospitalsState>) => void;
     getHospitals: () => Promise<void>;
 };
@@ -60,6 +61,7 @@ export const useHospitals = create<HospitalsStore>(set => {
 
     return {
         ...defaultState,
+        reset: () => set(defaultState),
         setHospitalsState,
         getHospitals,
     };

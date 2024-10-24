@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { View, TextInput, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { View, TouchableOpacity } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import clsx from "clsx";
 

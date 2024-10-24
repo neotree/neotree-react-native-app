@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { router } from "expo-router";
+import { useCallback, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
 
 import { useSyncRemoteData } from "@/hooks/use-sync-remote-data";
 import { Text } from "@/components/ui/text";
@@ -16,11 +16,11 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [formType, setFormType] = useState<'verify-email' | 'sign-in' | 'sign-up'>('verify-email');
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         if (!remoteSyncing && remoteSynced && loggedIn) {
             router.replace('/(drawer)')
         }
-    }, [remoteSyncing, remoteSynced, loggedIn, router.push]);
+    }, [remoteSyncing, remoteSynced, loggedIn, router.push]));
 
     return (
         <>

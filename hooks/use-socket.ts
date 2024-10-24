@@ -7,6 +7,7 @@ export type SocketState = {
 };
 
 export type SocketStore = SocketState & {
+    reset: () => void;
     init: (url: string) => Promise<void>;
 };
 
@@ -18,6 +19,7 @@ export const defaultSocketState: SocketState = {
 export const useSocket = create<SocketStore>(set => {
     return {
         ...defaultSocketState,
+        reset: () => set(defaultSocketState),
         async init(url) {
             if (url) {
                 const socket = io(url);

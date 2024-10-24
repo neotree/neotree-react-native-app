@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { router } from "expo-router";

@@ -13,6 +13,7 @@ type ConfigurationState = {
 };
 
 type ConfigurationStore = ConfigurationState & {
+    reset: () => void;
     getConfiguration: () => Promise<void>;
     saveConfiguration: (data: Parameters<typeof saveConfiguration>[0]) => Promise<void>;
 };
@@ -45,9 +46,8 @@ export const useConfiguration = create<ConfigurationStore>(set => {
 
     return {
         ...defaultConfigurationState,
-
+        reset: () => set(defaultConfigurationState),
         getConfiguration: _getConfiguration,
-
         async saveConfiguration(data) {
             const configurationSaveErrors: string[] = [];
             try {

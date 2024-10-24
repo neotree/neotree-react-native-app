@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { router } from "expo-router";
+import { useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { SafeAreaView, FlatList, TouchableOpacity, View } from "react-native";
 
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ export default function HistoryScreen() {
     const { list, listLoading, listInitialised, getList, } = useSessions();
     const { LAST_REMOTE_SYNC_DATE } = useAsyncStorage();
 
-    useEffect(() => { getList(); }, [getList, LAST_REMOTE_SYNC_DATE]);
+    useFocusEffect(useCallback(() => { getList(); }, [getList, LAST_REMOTE_SYNC_DATE]));
 
     return (
         <>

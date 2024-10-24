@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { router } from "expo-router";
+import { useCallback } from "react";
+import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView, FlatList, TouchableOpacity, View } from "react-native";
 
 import { useScripts } from "@/hooks/use-scripts";
@@ -14,7 +14,7 @@ export default function HomeScreen() {
     const { list, listLoading, listInitialised, getList, } = useScripts();
     const { DEVICE_HASH, WEBEDITOR_DATA_VERSION, LAST_REMOTE_SYNC_DATE } = useAsyncStorage();
 
-    useEffect(() => { getList(); }, [getList, LAST_REMOTE_SYNC_DATE]);
+    useFocusEffect(useCallback(() => { getList(); }, [getList, LAST_REMOTE_SYNC_DATE]));
 
     if (!listInitialised) return null;
 

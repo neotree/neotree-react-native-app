@@ -11,6 +11,7 @@ type ConfigKeysState = {
 };
 
 type ConfigKeysStore = ConfigKeysState & {
+    reset: () => void;
     getList: (options?: (GetConfigKeysOptions & { silent?: boolean; })) => Promise<void>;
 };
 
@@ -24,7 +25,7 @@ const defaultConfigKeysState: ConfigKeysState = {
 export const useConfigKeys = create<ConfigKeysStore>(set => {
     return {
         ...defaultConfigKeysState,
-
+        reset: () => set(defaultConfigKeysState),
         async getList(options) {
             try {
                 const { silent, ...opts } = { ...options };

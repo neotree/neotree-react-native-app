@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useCallback } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { DrawerContentComponentProps } from "@react-navigation/drawer";
 import Constants from 'expo-constants';
@@ -17,9 +17,25 @@ import { useRoutes } from "@/hooks/use-routes";
 export function DrawerContent({}: {
     drawerContentComponentProps: DrawerContentComponentProps;
 }) {
+    const routes = useRoutes();
     const { confirm, } = useConfirmModal();
     const { setItems: setAsyncStorageItem, } = useAsyncStorage();
-    const routes = useRoutes();
+    
+    const logout = useCallback(() => {
+        confirm(async () => {
+            await setAsyncStorageItem({ 
+                BEARER_TOKEN: '', 
+                LAST_REMOTE_SYNC_DATE: '', // this will force a fresh data sync when we log back in
+            });
+            router.push('/(auth)');
+        }, {
+            danger: true,
+            title: 'Logout',
+            message: 'Are you sure you want to logout?',
+            positiveLabel: 'Logout',
+            negativeLabel: 'Cancel',
+        });
+    }, [router.push, confirm, setAsyncStorageItem]);
 
     return (
         <View 
@@ -79,18 +95,7 @@ export function DrawerContent({}: {
                     className={clsx(
                         'text-lg flex-row px-4 py-3 rounded-md bg-danger/10 items-center',
                     )}
-                    onPress={() => {
-                        confirm(async () => {
-                            await setAsyncStorageItem({ BEARER_TOKEN: '', });
-                            router.push('/(auth)');
-                        }, {
-                            danger: true,
-                            title: 'Logout',
-                            message: 'Are you sure you want to logout?',
-                            positiveLabel: 'Logout',
-                            negativeLabel: 'Cancel',
-                        });
-                    }}
+                    onPress={() => logout()}
                 >
                     <>
                         <Logout 

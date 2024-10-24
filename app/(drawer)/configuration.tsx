@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { SafeAreaView, FlatList, TouchableOpacity, Switch, View } from "react-native";
 
 import { useConfigKeys } from "@/hooks/use-config-keys";
@@ -9,16 +9,17 @@ import { Text } from "@/components/ui/text";
 import { useTheme } from "@/hooks/use-theme";
 import { useConfiguration } from "@/hooks/use-configuration";
 import { Card, CardContent } from "@/components/ui/card";
+import { useFocusEffect } from "expo-router";
 
 export default function ConfigurationScreen() {
     const theme = useTheme();
     const { list, listLoading, listInitialised, getList, } = useConfigKeys();
     const { configuration, saveConfiguration, getConfiguration } = useConfiguration();
 
-    useEffect(() => { 
+    useFocusEffect(useCallback(() => { 
         getList(); 
         getConfiguration();
-    }, [getList, getConfiguration]);
+    }, [getList, getConfiguration]));
 
     const generateForm = useCallback(() => list.reduce((acc, c) => ({
         ...acc,
@@ -28,7 +29,7 @@ export default function ConfigurationScreen() {
 
     const [form, setForm] = useState(generateForm());
 
-    useEffect(() => { setForm(generateForm()); }, [generateForm]);
+    useFocusEffect(useCallback(() => { setForm(generateForm()); }, [generateForm]));
 
     const toggleValue = useCallback((key: string) => {
         setForm(prev => ({
