@@ -42,7 +42,7 @@ export default function SignUpScreen() {
 
             await setAsyncStorageItems({ BEARER_TOKEN: info?.bearerToken || '', });
             
-            router.replace('/(auth)/welcome');
+            router.replace('/welcome');
         } catch(e: any) {
             alert({
                 variant: 'error',

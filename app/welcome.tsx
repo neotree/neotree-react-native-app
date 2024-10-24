@@ -23,7 +23,8 @@ export default function WelcomeScreen() {
         await sync({ force: true, clearData: true, });
         await setItems({ ONBOARDING_DATE: new Date().toUTCString(), });
         await resetStore();
-    }, [setItems, router.push, sync]);
+        router.replace('/(drawer)');
+    }, [setItems, router.replace, sync]);
 
     useFocusEffect(useCallback(() => { 
         if (hasInternet) setup(); 

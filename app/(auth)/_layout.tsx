@@ -18,7 +18,7 @@ export default function AuthLayout() {
 
     if (!authInfoLoaded) return null;
 
-    if (authenticated) return <Redirect href={ONBOARDING_DATE ? '/(drawer)' : '/(auth)/welcome'} />;
+    if (authenticated) return <Redirect href={ONBOARDING_DATE ? '/(drawer)' : '/welcome'} />;
 
     return (
         <Stack
@@ -28,10 +28,6 @@ export default function AuthLayout() {
         >
             <Stack.Screen 
                 name="index"
-            />
-
-            <Stack.Screen 
-                name="welcome"
             />
 
             <Stack.Screen 

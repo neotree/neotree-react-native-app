@@ -79,6 +79,10 @@ export default function AppLayout() {
                     />
 
                     <Stack.Screen 
+                        name="welcome"
+                    />
+
+                    <Stack.Screen 
                         name="(drawer)" 
                         options={{
                             title: 'Scripts',

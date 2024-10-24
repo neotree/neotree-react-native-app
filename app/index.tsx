@@ -1,11 +1,17 @@
 import { Redirect } from "expo-router";
 
-import { useAppContext } from "@/contexts/app";
+import { useAsyncStorage } from "@/hooks/use-async-storage";
+import { useAuthentication } from "@/hooks/use-authentication";
 
 export default function IndexScreen() {
-    const { authenticated } = useAppContext();
+    const { authenticated, authInfoLoaded } = useAuthentication();
+    const { ONBOARDING_DATE } = useAsyncStorage();
 
-    if (authenticated) return <Redirect href="/(drawer)" />;
+    if (!authInfoLoaded) return null;
+
+    if (!authenticated) return <Redirect href="/(auth)" />;
+
+    if (ONBOARDING_DATE) return <Redirect href="/(drawer)" />;
     
-    return <Redirect href="/(auth)" />;
+    return <Redirect href="/welcome" />;
 }
