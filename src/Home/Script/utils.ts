@@ -160,7 +160,14 @@ export const getScriptUtils = ({
                         return i + 1;
                     case 'back':
                         const prevEntry = form[activeScreenEntry ? form.length - 2 : form.length - 1];
-                        return prevEntry?.screen?.index; // i - 1;
+                        const index = screens.map((s, i) => {
+                            if (
+                                (s.screen_id === prevEntry?.screen?.screen_id) ||
+                                (s.screenId === prevEntry?.screen?.screen_id)
+                            ) return i;
+                            return null;
+                        }).filter(i => i !== null)[0]; 
+                        return index === null ? (i - 1) : index;
                     default:
                         return i;
                 }
