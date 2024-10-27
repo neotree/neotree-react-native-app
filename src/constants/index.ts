@@ -2,8 +2,11 @@ import Constants from 'expo-constants';
 
 import { Preferences } from '../types';
 
+export const NEOTREE_BUILD_TYPE = Constants.expoConfig?.extra?.NEOTREE_BUILD_TYPE! as 'demo' | 'development' | 'stage' | 'production';
+
 export const expoContantsExtra = {
     ...Constants.expoConfig?.extra,
+    ...require('@/config/config.json')[NEOTREE_BUILD_TYPE], // TODO: this is a band-aid - eas build is not picking up this values from app.config.js
 } as { [key: string]: any; };
 
 export const APP_CONFIG = expoContantsExtra;
