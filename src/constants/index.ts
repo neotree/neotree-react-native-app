@@ -6,7 +6,7 @@ export const NEOTREE_BUILD_TYPE = Constants.expoConfig?.extra?.NEOTREE_BUILD_TYP
 
 export const expoContantsExtra = {
     ...Constants.expoConfig?.extra,
-    ...require('@/config/config.json')[NEOTREE_BUILD_TYPE], // TODO: this is a band-aid - eas build is not picking up this values from app.config.js
+    ...require('../../config/config.json')[NEOTREE_BUILD_TYPE], // TODO: this is a band-aid - eas build is not picking up this values from app.config.js
 } as { [key: string]: any; };
 
 export const APP_CONFIG = expoContantsExtra;
