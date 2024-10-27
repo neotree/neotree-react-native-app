@@ -53,13 +53,16 @@ const getBuldConfig = (config: any) => ({
     } : null),
 });
 
-export default ({ config }: any) => ({
-    ...config,
-    ...getBuldConfig(config),
-    extra: { 
-        NEOTREE_BUILD_TYPE,
-        ...config.extra, 
-        ...appConfig,
-        ...getBuldConfig(config).extra
-    },
-});
+export default ({ config }: any) => {
+    const _config = {
+        ...config,
+        ...getBuldConfig(config),
+        extra: { 
+            ...config.extra, 
+            ...appConfig,
+            ...getBuldConfig(config).extra,
+            NEOTREE_BUILD_TYPE
+        },
+    };
+    return _config;
+};
