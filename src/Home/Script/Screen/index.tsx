@@ -4,12 +4,14 @@ import { ScreenType } from './ScreenType';
 import { useContext } from '../Context';
 
 export function Screen() {
-    const ctx = useContext();
+   
     const [searchVal, setSearchVal] = React.useState('');
+    const {activeScreen,getFieldPreferences,moreNavOptions,activeScreenEntry
+        ,summary,setMountedScreens,goNext} = useContext()||{}
     
     return (
         <Box flex={1}>
-            {!!ctx.activeScreen?.data?.actionText && (
+            {!!activeScreen?.data?.actionText && (
                 <Box backgroundColor="primary">
                     <Content>
                         <Box 
@@ -18,15 +20,15 @@ export function Screen() {
                             <Box flex={1}>
                                 <Text
                                     color="primaryContrastText"
-                                    style={ctx.getFieldPreferences('actionText')?.style}
-                                >{ctx.activeScreen?.data?.actionText}</Text>
+                                    style={getFieldPreferences('actionText')?.style}
+                                >{activeScreen?.data?.actionText}</Text>
                             </Box>
 
-                            {!!ctx.activeScreen?.data?.step && (
+                            {!!activeScreen?.data?.step && (
                                 <Box>
                                     <Text
                                         color="primaryContrastText"
-                                    >{ctx.activeScreen?.data?.step}</Text>
+                                    >{activeScreen?.data?.step}</Text>
                                 </Box>
                             )}
                         </Box>
@@ -34,7 +36,7 @@ export function Screen() {
                 </Box>
             )}
 
-            {!ctx.moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(ctx.activeScreen?.type) && (
+            {!moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(activeScreen?.type) && (
                 <Content>
                     <TextInput
                         placeholder="Search"
@@ -46,23 +48,23 @@ export function Screen() {
 
             <ScreenType searchVal={searchVal} />
 
-            {(!!ctx.activeScreenEntry || ctx.moreNavOptions?.showFAB) && (
+            {(!!activeScreenEntry || moreNavOptions?.showFAB) && (
                 <Box 
                     position="absolute"
                     bottom={10}
                     right={20}
                 >
                     <Fab 
-                        icon={ctx.summary ? 'check' : undefined}
+                        icon={summary ? 'check' : undefined}
                         onPress={() => {
-							ctx.setMountedScreens(prev => ({
+							setMountedScreens(prev => ({
 								...prev,
-								[ctx.activeScreen.id]: true,
+								[activeScreen.id]: true,
 							}));
-                            if (ctx.moreNavOptions?.goNext) {
-                                ctx.moreNavOptions.goNext();
+                            if (moreNavOptions?.goNext) {
+                                moreNavOptions.goNext();
                             } else {
-                                ctx.goNext();
+                                goNext();
                             }
                             setSearchVal('');                            
                         }} 

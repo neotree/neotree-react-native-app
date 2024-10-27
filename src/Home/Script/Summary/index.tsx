@@ -3,12 +3,11 @@ import { Box, Fab, FormAndDiagnosesSummary, PrintSession,PrintBarCode,Br} from '
 import { useContext } from '../Context';
 
 export function Summary() {
-    const ctx = useContext();
+    const {summary,setMoreNavOptions,navigation} = useContext()||{};
 
-    const summary = ctx.summary;
 
     React.useEffect(() => {
-        ctx.setMoreNavOptions({
+        setMoreNavOptions({
             title: 'SUMMARY',
             headerRight: () => <><PrintBarCode session={summary}/><Box width={120}></Box><PrintSession session={summary} showConfidential /></>,
         });
@@ -27,9 +26,9 @@ export function Summary() {
                 right={20}
             >
                 <Fab 
-                    icon={ctx.summary ? 'check' : undefined}
+                    icon={summary ? 'check' : undefined}
                     onPress={() => {
-                        ctx.navigation?.navigate('Home');                         
+                        navigation?.navigate('Home');                         
                     }} 
                 />
             </Box>

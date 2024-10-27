@@ -7,7 +7,7 @@ import * as api from '../../data';
 import { useAppContext } from "../../AppContext";
 
 export function Account() {
-    const ctx = useAppContext();
+    const {authenticatedUser,setAuthenticatedUser} = useAppContext()||{};
     const [displayLoader, setDisplayLoader] = useState(false);
 
 	return (
@@ -35,7 +35,7 @@ export function Account() {
                             </Box>
 
                             <Box>
-                                <Text>{ctx.authenticatedUser.email}</Text>
+                                <Text>{authenticatedUser?.email}</Text>
                             </Box>
                         </Box>
                         {displayLoader && <OverlayLoader />}
@@ -64,7 +64,7 @@ export function Account() {
                                             setDisplayLoader(true);
                                             await api.logout();
                                             setDisplayLoader(false);
-                                            ctx.setAuthenticatedUser(null);
+                                            setAuthenticatedUser && setAuthenticatedUser(null);
                                         })();
                                     },
                                 },
@@ -95,7 +95,7 @@ export function Account() {
                                             await api.resetApp();
                                             await api.logout();
                                             setDisplayLoader(false);
-                                            ctx.setAuthenticatedUser(null);
+                                            setAuthenticatedUser && setAuthenticatedUser(null);
                                         })();
                                     },
                                 },

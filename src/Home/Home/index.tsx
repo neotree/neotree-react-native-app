@@ -9,8 +9,8 @@ import * as types from '../../types';
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
 	const isFocused = useIsFocused();
 
-	const ctx = useAppContext();
-	const application = ctx.application;
+	const {application} = useAppContext()||{};
+
 
 	const [scriptsInitialised, setScriptsInitialised] = React.useState(false);
 	const [loadingScripts, setLoadingScripts] = React.useState(false);

@@ -17,11 +17,11 @@ export function TextField({
     patientNUID,
     onChange 
 }: TextFieldProps) {
-    const ctx = useContext();
+    const {script,generatedUID} = useContext()||{};
     const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
     
 	const prePopulatedUID = ''; // ctx.matched?.prePopulateWithUID ? ctx.matched?.uid : '';
-    const scriptType = ctx?.script?.type
+    const scriptType = script?.type
     const isScanable = scriptType==='neolab' ||scriptType==='discharge'
 
     const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? prePopulatedUID : '') || '');
@@ -66,7 +66,7 @@ const [showQR, setShowQR] = React.useState(false);
                     defaultValue={prePopulatedUID}
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
-                    generatedUID={ctx.generatedUID}
+                    generatedUID={generatedUID}
                     onChange={val => {
                         setValue(`${val || ''}`);
                         onChange({ value: val, exportType: 'text', });

@@ -70,7 +70,7 @@ type DiagnosisProps = types.ScreenTypeProps & {
 
 export function SelectHcwDiagnoses(props: DiagnosisProps) {
 	const { searchVal, hcwDiagnoses, onNext } = props;
-	const { activeScreen } = useContext();
+	const { activeScreen } = useContext()||{};
 
 	return (
 		<>
