@@ -26,7 +26,7 @@ function getSessionFacility(session: any) {
 
 
 export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {
-    const ctx = useContext();
+    const {setMatched} = useContext()||{};
 
     const [uid, setUID] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getExportedSessionsByUID>>>([]);
@@ -107,7 +107,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                         } : null;
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
-                                        ctx.setMatched(matched);
+                                        setMatched(matched);
                                         if (onSession) onSession(matched);
                                     }}
                                     label={(

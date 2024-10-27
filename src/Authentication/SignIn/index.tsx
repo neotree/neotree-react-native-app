@@ -8,7 +8,7 @@ import { useAppContext } from '../../AppContext';
 type SignInProps = { onSignIn: () => void; };
 
 export function SignIn({ onSignIn }: SignInProps) {
-	const ctx = useAppContext();
+	const {setSyncDataResponse} = useAppContext()||{};
 	const theme = useTheme();
 
 	const [loggedIn, setLoggedIn] = React.useState(false);
@@ -20,7 +20,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 				setLoggedIn(true);
 				setInitialiseDataFailed(false);
 				const res = await syncData();
-				ctx?.setSyncDataResponse(res);
+				setSyncDataResponse &&setSyncDataResponse(res);
 				onSignIn();
 			} catch(e) { 
 				console.log(e);

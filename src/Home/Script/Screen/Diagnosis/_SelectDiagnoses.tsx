@@ -16,9 +16,9 @@ export function SelectDiagnoses({
     setHcwDiagnoses, 
     setDiagnoses, 
 }: SelectDiagnosesProps) {
-    const ctx = useContext();
-    const metadata = ctx.activeScreen?.data?.metadata;
-    const allDiagnoses = ctx.diagnoses as types.Diagnosis[];
+    const {activeScreen,diagnoses:allDiagnoses,getFieldPreferences } = useContext()||{};
+
+    const metadata = activeScreen?.data?.metadata;
 
     const [customValue, setCustomValue] = React.useState('');
     const [customValueModal, setCustomValueModal] = React.useState<null | { onClose: (opts: { customValue: any; }) => void; }>(null);
@@ -62,14 +62,14 @@ export function SelectDiagnoses({
 					keyExtractor={(_, index) => `${index}`}
 					ListHeaderComponent={(
 						<>
-							{!!ctx.activeScreen?.data?.instructions && (
+							{!!activeScreen?.data?.instructions && (
 								<>
 									<Box>
 										<Text color="primary">Instructions</Text>
 										<Text 
                                             variant="caption"
-                                            style={ctx.getFieldPreferences('instructions')?.style}
-                                        >{ctx.activeScreen?.data?.instructions}</Text>
+                                            style={getFieldPreferences('instructions')?.style}
+                                        >{activeScreen?.data?.instructions}</Text>
 									</Box>
 								</>
 							)}

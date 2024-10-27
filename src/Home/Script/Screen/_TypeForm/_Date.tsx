@@ -9,7 +9,7 @@ type DateFieldProps = types.ScreenFormTypeProps & {
 };
 
 export function DateField({ field, conditionMet, entryValue, onChange, }: DateFieldProps) {
-    const ctx = useContext();
+    const {getEntryValueByKey} = useContext()||{};
 
 	const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
@@ -81,8 +81,8 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 	React.useEffect(() => { setMounted(true); }, []);
 
     const { minDate, maxDate } = useMemo(() => {
-        const { value: _minDate, type: _minDateType, } = { ...ctx.getEntryValueByKey(field.minDateKey) };
-        const { value: _maxDate, type: _maxDateType, } = { ...ctx.getEntryValueByKey(field.maxDateKey) };
+        const { value: _minDate, type: _minDateType, } = { ...getEntryValueByKey(field.minDateKey) };
+        const { value: _maxDate, type: _maxDateType, } = { ...getEntryValueByKey(field.maxDateKey) };
 
         let minDate = undefined;
         let maxDate = undefined;
@@ -104,7 +104,7 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
         }
 
         return { minDate, maxDate, };
-    }, [ctx, field]);
+    }, [getEntryValueByKey, field]);
 
     const getErrors = useCallback((date: null | string) => {
         const errors = [];

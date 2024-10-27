@@ -8,11 +8,12 @@ type TypeListProps = types.ScreenTypeProps & {
 };
 
 export function TypeList({}: TypeListProps) {
-    const ctx = useContext();
 
-    const metadata = ctx.activeScreen?.data?.metadata;
+    const {activeScreen,setEntryValues} = useContext()||{} 
 
-    React.useEffect(() => { ctx.setEntryValues([]); }, [metadata]);
+    const metadata = activeScreen?.data?.metadata;
+
+    React.useEffect(() => { setEntryValues([]); }, [metadata]);
 
     return (
         <Box>

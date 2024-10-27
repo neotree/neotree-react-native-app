@@ -55,9 +55,7 @@ export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAsse
     useEffect(() => {
         const restoreState = async () => {
             try {
-                // const savedStateString = await AsyncStorage.getItem(NAVIGATION_STATE_KEY);
-                // const state = savedStateString ? JSON.parse(savedStateString) : undefined;
-                // setInitialState(state);
+               
             } finally {
                 setIsNavigationReady(true);
             }

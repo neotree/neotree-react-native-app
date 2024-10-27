@@ -9,16 +9,16 @@ type TypeChecklistProps = types.ScreenTypeProps & {
 
 export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     const autoFilled = useRef(false);
+    const {activeScreen,activeScreenEntry,mountedScreens,getPrepopulationData,setEntryValues} = useContext()||{};
     
-    const ctx = useContext();
-    const metadata = ctx.activeScreen?.data?.metadata;
-    const printable = ctx.activeScreen.data.printable !== false;
+    const metadata = activeScreen?.data?.metadata;
+    const printable = activeScreen.data.printable !== false;
 
-    let cachedVal = (ctx.activeScreenEntry?.values || [])[0]?.value || [];
+    let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    const canAutoFill = !ctx.mountedScreens[ctx.activeScreen?.id];
-    const matched = ctx.getPrepopulationData();
+    const canAutoFill = !mountedScreens[activeScreen?.id];
+    const matched = getPrepopulationData();
 
     const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
         ...acc,
@@ -44,12 +44,12 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                 },
             ];
         }, []);
-        ctx.setEntryValues(!keys.length ? undefined : [
+        setEntryValues && setEntryValues(!keys.length ? undefined : [
 			{
                 printable,
 				value: values,
-				key: metadata.key || ctx.activeScreen.data.title,
-				label: metadata.label || ctx.activeScreen.data.title,
+				key: metadata.key || activeScreen.data.title,
+				label: metadata.label || activeScreen.data.title,
 				type: metadata.dataType,
 			}
 		]);

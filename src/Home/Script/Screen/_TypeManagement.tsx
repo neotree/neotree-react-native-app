@@ -8,20 +8,21 @@ type TypeManagementProps = types.ScreenTypeProps & {
 };
 
 export function TypeManagement({}: TypeManagementProps) {
-    const ctx = useContext();
-   
-    const metadata = ctx.activeScreen?.data?.metadata;
+    const {activeScreen,setEntryValues,getFieldPreferences} = useContext()||{};
 
-    React.useEffect(() => { ctx.setEntryValues([]); }, [metadata]);
+   
+    const metadata = activeScreen?.data?.metadata;
+
+    React.useEffect(() => { setEntryValues([]); }, [metadata]);
 
     return (
         <Box>
             <ManagementScreen 
                 data={{
                     ...metadata,
-                    text1Style: ctx.getFieldPreferences('text1')?.style,
-                    text2Style: ctx.getFieldPreferences('text2')?.style,
-                    text3Style: ctx.getFieldPreferences('text3')?.style,
+                    text1Style: getFieldPreferences('text1')?.style,
+                    text2Style: getFieldPreferences('text2')?.style,
+                    text3Style: getFieldPreferences('text3')?.style,
                 }}
             />
         </Box>

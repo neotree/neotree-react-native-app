@@ -83,9 +83,8 @@ export const Context = React.createContext<null | ContextType>(null);
 export const useContext = () => React.useContext(Context)!;
 
 export function useDiagnoses() {
-	const ctx = useContext();
-	const metadataItems = ctx.activeScreen.data.metadata.items || [];
-	const allDiagnoses = ctx.diagnoses;
+	const {activeScreen,diagnoses: allDiagnoses} = useContext()||{};
+	const metadataItems = activeScreen?.data?.metadata?.items || [];
 
 	const diagnoses: any[] = metadataItems.map((item: any) => {
         const d = allDiagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
