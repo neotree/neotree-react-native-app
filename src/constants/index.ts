@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 
-import configJSON from '@/config/config';
+import configJSON from '../config';
 import { Preferences } from '../types';
 
 export const NEOTREE_BUILD_TYPE = Constants.expoConfig?.extra?.NEOTREE_BUILD_TYPE! as 'demo' | 'development' | 'stage' | 'production';
