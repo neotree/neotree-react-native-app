@@ -9,9 +9,9 @@
       "web": "expo start --web",
       "test": "jest --watchAll",
       "lint": "expo lint",
-      "build:demo": "NEOTREE_BUILD_TYPE=demo build --platform android --profile demo",
-      "build:stage": "NEOTREE_BUILD_TYPE=stage build --platform android --profile stage",
-      "build:prod": "NEOTREE_BUILD_TYPE=production build --platform android --profile production"
+      "build:demo": "NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
+      "build:stage": "NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage",
+      "build:prod": "NEOTREE_BUILD_TYPE=production eas build --platform android --profile production"
     },
     "jest": {
       "preset": "jest-expo"
