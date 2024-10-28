@@ -80,6 +80,9 @@ export default function AppLayout() {
 
                     <Stack.Screen 
                         name="welcome"
+                        options={{
+                            headerShown: false,
+                        }}
                     />
 
                     <Stack.Screen 

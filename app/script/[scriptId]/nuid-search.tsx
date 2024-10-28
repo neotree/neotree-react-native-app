@@ -3,7 +3,6 @@ import { useLocalSearchParams } from "expo-router";
 
 import { ScriptRouteSearchParams } from "@/types";
 import { useScript } from "@/hooks/script/use-script";
-import ucFirst from "@/lib/ucFirst";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Content } from "@/components/content";

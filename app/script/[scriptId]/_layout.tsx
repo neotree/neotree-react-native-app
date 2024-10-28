@@ -127,6 +127,10 @@ export default function ScriptLayout() {
             <Stack.Screen 
                 name="nuid-search"
             />
+
+            <Stack.Screen 
+                name="screen/[screenId]"
+            />
         </Stack>
     );
 }
