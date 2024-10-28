@@ -5,16 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Content } from "@/components/content";
 import { Exclamation } from "@/components/svgs/exclamation";
 import { useScreenContext } from "@/contexts/screen";
-import { YesNo } from "./components/yesno";
-import { Checklist } from "./components/checklist";
-import { Management } from "./components/management";
-import { MultiSelect } from "./components/multi-select";
-import { Progress } from "./components/progress";
-import { SingleSelect } from "./components/single-select";
-import { Timer } from "./components/timer";
-import { Diagnosis } from "./components/diagnosis";
-import { EdlizSummary } from "./components/edliz-summary";
-import { Form } from "./components/form";
+import { YesNo } from "./components/screen-types/yesno";
+import { Checklist } from "./components/screen-types/checklist";
+import { Management } from "./components/screen-types/management";
+import { MultiSelect } from "./components/screen-types/multi-select";
+import { Progress } from "./components/screen-types/progress";
+import { SingleSelect } from "./components/screen-types/single-select";
+import { Timer } from "./components/screen-types/timer";
+import { Diagnosis } from "./components/screen-types/diagnosis";
+import { EdlizSummary } from "./components/screen-types/edliz-summary";
+import { Form } from "./components/screen-types/form";
 
 export default function ScreenIndex() {
     const { screen } = useScreenContext();

@@ -7,10 +7,12 @@ import { useConfirmModal } from "@/hooks/use-confirm-modal";
 const ScreenContext = createContext<ReturnType<typeof useScreenContextValue>>(null!);
 
 function useScreenContextValue() {
-    const { screenId } = useLocalSearchParams();
+    const searchParams = useLocalSearchParams();
     const navigation = useNavigation();
     const { script } = useScript();
     const { confirm } = useConfirmModal();
+
+    const { screenId } = searchParams;
 
     const { screen, screenIndex, } = useMemo(() => {
         const screen = script!.screens.filter(s => s.screenId === screenId)[0];
@@ -29,6 +31,24 @@ function useScreenContextValue() {
         });
     }, [screenIndex, confirm]);
 
+    const onFAB = useCallback(() => {
+        if (screenIndex === (script!.screens.length - 1)) {
+            // TODO: Go to summary
+        } else {
+            const nextIndex = screenIndex + 1;
+            const nextScreen = script!.screens[nextIndex];
+            console.log('nextIndex', nextIndex);
+            router.push({
+                pathname: '/script/[scriptId]/screen/[screenId]',
+                params: {
+                    ...searchParams,
+                    scriptId: searchParams.scriptId as string,
+                    screenId: nextScreen.screenId,
+                },
+            })
+        }
+    }, [script!.screens, screenIndex, searchParams]);
+
     useFocusEffect(useCallback(() => {
         const listener: Parameters<typeof navigation.addListener<'beforeRemove'>>[1] = e => {
             e.preventDefault();
@@ -40,11 +60,14 @@ function useScreenContextValue() {
         return () => navigation.removeListener('beforeRemove', listener);
     }, [navigation.addListener, navigation.dispatch, goBack]));
 
+    console.log('searchParams', searchParams);
+
     return {
         screen,
         screenId,
         screenIndex,
         goBack,
+        onFAB,
     };
 }
 

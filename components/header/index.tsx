@@ -10,9 +10,7 @@ import { BackButton } from "./back-button";
 import { DrawerButton } from "./drawer-button";
 
 function HeaderComponent() {
-    const { ...state } = useHeader();
-
-    const { title, subtitle } = state;
+    const { title, subtitle, node } = useHeader();
 
     return (
         <>
@@ -51,6 +49,12 @@ function HeaderComponent() {
                         )}
                     </View>
                 </View>
+
+                {!!node && (
+                    <View>
+                        {node}
+                    </View>
+                )}
             </View>
         </>
     );
