@@ -9,13 +9,13 @@ export default function ScreenLayout() {
 
     return (
         <ScreenContextProvider>
-            {({ screen, goBack }) => {
+            {({ screen, screenIndex, goBack }) => {
                 return (
                     <>
                         <Header
                             backButtonVisible
                             subtitle={script!.title}
-                            title={screen.title}
+                            title={screenIndex + '. ' + screen?.title}
                             onBackButtonPress={goBack}
                         />
             

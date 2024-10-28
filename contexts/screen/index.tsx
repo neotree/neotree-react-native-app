@@ -1,5 +1,5 @@
 import { createContext, useContext, useCallback, useMemo } from "react";
-import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
+import { router, useFocusEffect, useGlobalSearchParams, useNavigation } from "expo-router";
 
 import { useScript } from "@/hooks/script/use-script";
 import { useConfirmModal } from "@/hooks/use-confirm-modal";
@@ -7,7 +7,7 @@ import { useConfirmModal } from "@/hooks/use-confirm-modal";
 const ScreenContext = createContext<ReturnType<typeof useScreenContextValue>>(null!);
 
 function useScreenContextValue() {
-    const searchParams = useLocalSearchParams();
+    const searchParams = useGlobalSearchParams();
     const navigation = useNavigation();
     const { script } = useScript();
     const { confirm } = useConfirmModal();
@@ -16,7 +16,7 @@ function useScreenContextValue() {
 
     const { screen, screenIndex, } = useMemo(() => {
         const screen = script!.screens.filter(s => s.screenId === screenId)[0];
-        const screenIndex = script!.screens.map(s => s.screenId).indexOf(screen.screenId);
+        const screenIndex = script!.screens.map(s => s.screenId).indexOf(screen?.screenId);
         return { screen, screenIndex };
     }, [script!.screens, screenId]);
 
@@ -37,7 +37,6 @@ function useScreenContextValue() {
         } else {
             const nextIndex = screenIndex + 1;
             const nextScreen = script!.screens[nextIndex];
-            console.log('nextIndex', nextIndex);
             router.push({
                 pathname: '/script/[scriptId]/screen/[screenId]',
                 params: {
@@ -59,8 +58,6 @@ function useScreenContextValue() {
 
         return () => navigation.removeListener('beforeRemove', listener);
     }, [navigation.addListener, navigation.dispatch, goBack]));
-
-    console.log('searchParams', searchParams);
 
     return {
         screen,

@@ -1,3 +1,5 @@
+import { View } from "react-native";
+
 import { ScrollView } from "@/components/scroll-view";
 import { Text } from "@/components/ui/text";
 import { Content } from "@/components/content";
@@ -6,14 +8,16 @@ import { ScreenFAB } from "../../screen-fab";
 
 export function EdlizSummary() {
     return (
-        <ScrollView minHeight="full">
-            <ScreenDetails />
+        <View className="flex-1">
+            <ScrollView>
+                <ScreenDetails />
 
-            <Content>
-                <Text>EdlizSummary</Text>
-            </Content>
-
+                <Content>
+                    <Text>EdlizSummary</Text>
+                </Content>
+            </ScrollView>
+            
             <ScreenFAB />
-        </ScrollView>
+        </View>
     );
 }

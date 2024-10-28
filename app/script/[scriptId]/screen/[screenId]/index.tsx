@@ -19,6 +19,8 @@ import { Form } from "./components/screen-types/form";
 export default function ScreenIndex() {
     const { screen } = useScreenContext();
 
+    if (!screen) return null;
+
     return (
         <SafeAreaView className="flex-1 bg-background">
             {(() => {
