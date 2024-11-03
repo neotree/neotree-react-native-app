@@ -29,9 +29,15 @@ export async function syncData(opts?: { force?: boolean; }) {
 
         last_sync_date = app?.last_sync_date;
 
-        const shouldSync = opts?.force || 
+        const webUpdated = deviceRegJSON?.info?.last_backup_date && last_sync_date && 
+            new Date(deviceRegJSON?.info?.last_backup_date).getTime() > new Date(last_sync_date).getTime();
+
+        let shouldSync = opts?.force || 
+            webUpdated ||
             (app?.mode === 'development') ||
             !((app?.mode === 'production') && (deviceRegJSON?.info?.version === app?.webeditor_info?.version));
+
+        // shouldSync = true;
 
         if (shouldSync) {
             try{
@@ -160,6 +166,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                     }
                 }
             }catch(e: any){
+                console.log('syncData', e)
                 reportErrors('syncData', e.message);
                 throw e;
             }
