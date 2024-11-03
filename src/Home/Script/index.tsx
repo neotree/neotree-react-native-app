@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { generateUID } from '@/src/utils/uid';
 import * as types from '../../types';
@@ -19,6 +19,7 @@ import { defaultPreferences } from '@/src/constants';
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
 
+	const [isReady, setIsReady] = useState(false);
     const [generatedUID, setGeneratedUID] = React.useState('');
 
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
@@ -74,11 +75,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			setCacheEntry(entry);
 		}
 	};
-	const removeEntry = (screenId: string | number) => {
+	const removeEntry = useCallback((screenId: string | number) => {
 		setCacheEntry(entries.filter(e => e.screen.id === screenId)[0]);
 		setEntries(entries => entries.filter(e => e.screen.id !== screenId));
-	};
-	const activeScreenEntry = entries.filter(e => e.screenIndex === activeScreenIndex)[0];
+	}, [entries, setCacheEntry, setEntries]);
+
+	const activeScreenEntry = useMemo(() => entries.filter(e => e.screenIndex === activeScreenIndex)[0], [entries, activeScreenIndex]);
 
 	const utils = getScriptUtils({
 		script_id: route.params.script_id,
@@ -149,17 +151,27 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setDiagnoses(diagnoses);
 				setLoadingScript(false);
 
-				const activeScreenIndex = (route.params?.session?.data?.form || []).length;
+				if (route.params?.session?.data?.form?.length) { 
+					const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];
+					const activeScreenIndex = screens.map((s, i) => {
+						if (
+							(s.screen_id === lastEntry?.screen?.screen_id) ||
+							(s.screenId === lastEntry?.screen?.screen_id)
+						) return i;
+						return null;
+					}).filter(i => i !== null)[0]; 
 
-				if (route.params?.session || !(script.data.nuid_search_enabled)) {
-					setActiveScreen(screens[activeScreenIndex]);
-					setActiveScreenIndex(activeScreenIndex);
+					if (lastEntry && activeScreenIndex >= 0) {
+						setActiveScreen(screens[activeScreenIndex]);
+						setActiveScreenIndex(activeScreenIndex);
+					}
 				}
 			} catch (e: any) { 
 				console.log(e);
                 setLoadScriptError(e.message);
 		    } finally {
                 setLoadingScript(false);
+				setIsReady(true);
             }
 	}, [navigation, route]);
 
@@ -333,7 +345,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	if (refresh) return null;
 
-	if (loadingConfiguration || loadingScript) return <OverlayLoader transparent={false} />;
+	if (loadingConfiguration || loadingScript || !isReady) return <OverlayLoader transparent={false} />;
 
 	if (loadScriptError) {
 		return (
