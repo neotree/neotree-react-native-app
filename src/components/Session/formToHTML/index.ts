@@ -6,6 +6,8 @@ export default (session: any, showConfidential?: boolean) => {
   let { form, management } = session.data;
   management = management || [];
 
+  management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
+
   const sections: any[] = groupEntries(form);
 
   let managementHTML = management.map((screen: any) => {

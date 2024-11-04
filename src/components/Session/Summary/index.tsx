@@ -41,6 +41,8 @@ export function Summary({
                                     management = [],
                                     screen: { metadata: { label } } 
                                 }: any, entryIndex: number) => {
+                                    management = management.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
+
                                     const nodes = values
                                         .filter((e: any) => e.confidential ? showConfidential : true)
                                         .filter((v: any) => v.valueText || v.value)
