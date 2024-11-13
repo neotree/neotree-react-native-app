@@ -1,10 +1,9 @@
 import React from "react";
-import { QRcodeView } from "../QRCodeView";
 import { Box, Text } from "../../Theme";
 import { Confidentials } from "./Confidentials";
 import { ManagementScreen } from '../../ManagementScreen';
 import groupEntries from '../formToHTML/groupEntries';
-import { Content } from "../../Content";
+import { Content, } from "../../Content";
 
 type SummaryProps = {
     Wrapper?: React.ComponentType<React.PropsWithChildren<{}>>;
@@ -18,7 +17,7 @@ export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
-    session: { uid,data: { form} },
+    session: {data: { form} },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
     const excludeScreenTypes = ['edliz_summary_table'];
@@ -28,24 +27,11 @@ export function Summary({
 
     return (
         <Box>
+             <Content/>
             {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
             <Wrapper>
-            <Content>
-                    <Box
-                        flexDirection="row"
-                        columnGap="l"
-                        mb="none"
-                    >
-                        <Box flex={0.90}>
-                            <Text color={"grey-900"}>QR CODE: </Text>
-                        </Box>
-                        <Box>
-                           <QRcodeView value={uid?uid:"NO-UID"}/>
-                        </Box>
-                    </Box>
-                
-                </Content>
+            <Content/>
                 <Content>
                     {sections
                         .filter(([, entries]) => entries.length)

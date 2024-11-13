@@ -46,6 +46,9 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
 	}, [navigation]);
 
     const onQrRead = (qrtext: any) => {
+       
+      console.log('======YERRE---',JSON.stringify(qrtext))
+
         if (qrtext) {
             setUID(qrtext);
             setSession({"uid":qrtext})
