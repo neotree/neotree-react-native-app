@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, TouchableOpacity, View,Platform,PermissionsAndroid} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View,Platform,PermissionsAndroid,Animated} from "react-native";
 import {
   Camera,
   useCameraDevice,
@@ -9,51 +9,62 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 
 export function QRCodeScan (props:any){
   const [hasPermission, setHasPermission] = useState(false);
+  const animatedValue = React.useRef(new Animated.Value(0)).current;
   const [refresh, setRefresh] = useState(false);
   const device = useCameraDevice("back");
   const codeScanner = useCodeScanner({
     codeTypes: ["qr","pdf-417","aztec","data-matrix"],
     onCodeScanned: (codes) => {
+      console.log("....UIUI-...",codes)
       props.onRead(codes[0].value);
     },
   });
+  const styles = StyleSheet.create({
+    page2: {
+      flex: 1,
+      position: "absolute",
+      top: 0,
+      height: props&&props.size?props.size:"200%",
+      width: "100%",
+      borderColor:"green",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    backHeader: {
+      backgroundColor: "#00000090",
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      padding: "2%",
+      height: "5%",
+      width: "100%",
+      alignItems: "flex-start",
+      justifyContent: "center",
+    },
+    footer: {
+      backgroundColor: "#00000090",
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: "10%",
+      height: "20%",
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    laser: {
+      position: 'absolute',
+      top: '50%',
+      left: 0,
+      right: 0,
+      height: 2,
+      backgroundColor: 'red',
+      opacity: 0.8,
+  },
+  });
 
-const styles = StyleSheet.create({
-  page2: {
-    flex: 1,
-    position: "absolute",
-    top: 0,
-    height: props&&props.size?props.size:"200%",
-    width: "100%",
-    borderColor:"green",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backHeader: {
-    backgroundColor: "#00000090",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    padding: "2%",
-    height: "5%",
-    width: "100%",
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  footer: {
-    backgroundColor: "#00000090",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: "10%",
-    height: "20%",
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
 
   useEffect(() => {
     // exception case
@@ -75,12 +86,24 @@ const styles = StyleSheet.create({
     };
 
     requestCameraPermission();
-
-    //if it is idle for 15 secs, it will be closed
-    setTimeout(() => {
-      props.onRead(null);
-    }, 20 * 1000);
+    
+    Animated.loop(
+      Animated.timing(animatedValue, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: false,
+      })
+  ).start();
+   //if it is idle for 15 secs, it will be closed
+   setTimeout(() => {
+    props.onRead(null);
+  }, 20 * 1000);
   }, []);
+
+  const laserTranslateY = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 300], // Adjust according to your needs
+});
 
   if (device == null || !hasPermission) {
     return (
@@ -132,7 +155,10 @@ const styles = StyleSheet.create({
           <Text style={{ color: "white",fontWeight:'500' }}>Close</Text>
         </TouchableOpacity>
       </View>
+       <Animated.View style={[styles.laser, { transform: [{ translateY: laserTranslateY }] }]} />
     </View>
   );
+  
 };
+
 

@@ -58,10 +58,12 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 		]);
     }
 
-    const opts: any[] = metadata.items.map((item: any) => {
+    const opts: any[] = metadata.items.map((item: any,index: number) => {
+        console.log("...INDESI---",index)
         return {
             label: item.label,
             value: item.id,
+            key: index,
             hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
             exclusive: item.exclusive,
             disabled: (() => {
@@ -101,7 +103,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                 const isSelected = value[o.value];
 
                 return (
-                    <React.Fragment key={o.value}>
+                    <React.Fragment key={o.key}>
                         <TouchableOpacity 
                             disabled={o.disabled}
                             onPress={() => o.onChange()}
