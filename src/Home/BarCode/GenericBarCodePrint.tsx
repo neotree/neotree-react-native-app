@@ -46,7 +46,7 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
 	}, [navigation]);
 
     const onQrRead = (qrtext: any) => {
-       
+       console.log("---TIPS-",qrtext)
       console.log('======YERRE---',JSON.stringify(qrtext))
 
         if (qrtext) {

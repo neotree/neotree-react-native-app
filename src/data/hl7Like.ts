@@ -20,8 +20,9 @@ export function toHL7Like(data: any) {
             scriptData += `${key}|${script[key]}|`
         })
         metadata += `${scritpHeader}\n${scriptData}\n`
-        segments['metadata'] = metadata
+        
     })
+    const splittedMetadata = splitString(metadata,100,'metadata')
 
     // ENTRIES
     Object.keys(data).filter(k => (k === 'entries')).map((k) => {
@@ -43,44 +44,7 @@ export function toHL7Like(data: any) {
             
         })
     })
-
-    // SET QR LIMIT
-    if (entries && entries.length <= 1200) {
-        // IF WITHIN LIMIT, WRITE ALL
-       segments['entries']= entries
-
-    } else {
-        const lines = entries.split('\n'); // Split the string into lines
-        const splits = [];
-        let currentSegment = '';
-
-        for (const line of lines) {
-            // Check if adding this line would exceed the maxLength
-            if (currentSegment.length + line.length > 1200) {
-                splits.push(currentSegment);
-                //ADD HEADER (FIRST SEGMENT ADDED; NOW ON SUBSEQUENT SEGMENTS)
-                currentSegment= 'EMH|type|value|label|prePopulate|\n'
-                currentSegment+= line+'\n';
-
-               
-            } else {
-          
-                    currentSegment+= line+'\n';
-                
-            }
-        }
-
-        // Push the last segment if it exists
-        if (currentSegment.split('\n').length>0) {
-            splits.push(currentSegment);
-        }
-        if(splits && splits.length>0){
-            splits.map((s,i)=>{
-                segments[`entries_${i}`]=s
-            })
-        }
-
-    }
+  const splittedEntries = splitString(entries,100,'entries')
        
     // DIAGNOSES
     Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
@@ -93,11 +57,41 @@ export function toHL7Like(data: any) {
             }).join("\n");
             diagnoses += `${diagnosesHeader}${formattedDiagnoses}`
         }
-        segments['diagnoses'] = diagnoses
-    }
-    )
-
+    })
+    const splittedDiagnoses = splitString(diagnoses,100,'diagnoses')
+    
+    segments = {...splittedMetadata,...splittedEntries,...splittedDiagnoses}
+    
     return segments
+}
+
+function splitString(data: string, chunksize: number, key: string) {
+    let segments: any = {};  // Object to store the segmented data
+
+    // If the data length is less than or equal to the chunk size, return it as is
+    if (data.length <= chunksize) {
+        segments[key] = data;
+    } else {
+        const lines = data.split('\n'); 
+        let segment = '';  
+        let segmentIndex = 0;  
+
+        for (const line of lines) {
+            if (segment.length + line.length + 1 > chunksize) {  
+                segments[`${key}_${segmentIndex}`] = segment;
+                segmentIndex++; 
+                segment = ''; 
+            }
+            segment += line + '\n';
+        }
+
+        // If there's any remaining data in the segment, add it to the segments object
+        if (segment.length > 0) {
+            segments[`${key}_${segmentIndex}`] = segment;
+        }
+    }
+
+    return segments;
 }
 
 export function fromHL7Like(data: string) {
