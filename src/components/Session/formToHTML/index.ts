@@ -4,17 +4,17 @@ import groupEntries from './groupEntries';
 import RNQRGenerator from 'rn-qr-generator';
 import * as FileSystem from 'expo-file-system';
 import { reportErrors } from '../../../data/api';
-import {formatExportableSession} from '../../../data/getConvertedSession'
-import {toHL7Like} from '../../../data/hl7Like'
+import { formatExportableSession } from '../../../data/getConvertedSession'
+import { toHL7Like } from '../../../data/hl7Like'
 
 //import LZString from 'lz-string';
 //import { deflate } from 'react-native-gzip';
 
 
 
-export default  async (session: any, showConfidential?: boolean) => {
+export default async (session: any, showConfidential?: boolean) => {
   let { form, management } = session.data;
- 
+
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
   const sections: any[] = groupEntries(form);
@@ -22,49 +22,46 @@ export default  async (session: any, showConfidential?: boolean) => {
 
 
   const generateQRCode = async () => {
-    const qrCodes:any = []
-    try { 
-      const formattedSession = await formatExportableSession(session,{showConfidential:true})
+    const qrCodes: any = []
+    try {
+      const formattedSession = await formatExportableSession(session, { showConfidential: true })
       const hl7 = toHL7Like(formattedSession);
 
-      if(hl7 && Object.keys(hl7).length >0){
-     
-        Object.keys(hl7).map(async(k)=>{
-      
-      
-          console.log("---RES.....",k,'===',JSON.stringify({[k]:hl7[k]}).length)
-          try{
-        const qrcode = await RNQRGenerator.generate({
-          //value: session ? session['uid'] ? session['uid'] : "NO-SESSION" : "NO-UID",
-          value: JSON.stringify({[k]:hl7[k]}),
-          height: 80,
-          width: 80,
-          correctionLevel: 'H',
-        }).then(async response => {
-      
-          const { uri } =  response;
-          console.log("...ooo...",uri)
-          if(uri){
-          const base64 = await FileSystem.readAsStringAsync(uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-        
-          return  "data:image/png;base64,"+base64
-        }else{
-          return null;
+      if (hl7 && Object.keys(hl7).length > 0) {
+
+        for (const k of Object.keys(hl7)) {
+           console.log('....RESTA....',k,JSON.stringify(hl7[k]).length)
+          try {
+            const qrcode = await RNQRGenerator.generate({
+              //value: session ? session['uid'] ? session['uid'] : "NO-SESSION" : "NO-UID",
+              value: JSON.stringify({ [k]: hl7[k] }),
+              height: 200,
+              width: 200,
+              correctionLevel: 'H',
+            }).then(async response => {
+
+              const { uri } = response;
+              if (uri) {
+                const base64 = await FileSystem.readAsStringAsync(uri, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+
+                return "data:image/png;base64," + base64
+              } else {
+                return null;
+              }
+
+            })
+            qrCodes.push(qrcode)
+          } catch (e) {
+            console.log("-----GEN ERROR---", e)
+          }
         }
-  
-        })
-        qrCodes.push(qrcode)
-      }catch(e){
-      console.log("-----GEN ERROR---",e)
       }
-      })
-    }
-  }catch (e) {
+    } catch (e) {
       //reportErrors("QR_CODE_GENERATOR",e)
-      console.log("EEERRRRR---",e)
-      return null     
+      console.log("EEERRRRR---", e)
+      return null
     }
 
     return qrCodes;
@@ -92,53 +89,42 @@ export default  async (session: any, showConfidential?: boolean) => {
 	`;
   }).join('');
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
-let images = await generateQRCode()
-const generateImageHtml = () =>{
-        const container:any = document.getElementById('imageGrid');
-        // Clear existing content
-        container.innerHTML = '';
+  let images = await generateQRCode()
 
-        // Apply styles directly to the container
-        container.style.display = 'flex';
-        container.style.flexWrap = 'wrap';
-        container.style.border = '2px solid #ccc'; // Border around the container
-        container.style.padding = '10px';
-        container.style.gap = '10px'; // Space between images
-
-        // Create HTML for each image
-        for (let i = 0; i < images.length; i += 2) {
-            const columnDiv = document.createElement('div');
-            columnDiv.style.width = 'calc(50% - 10px)'; // Two columns with space
-            columnDiv.style.boxSizing = 'border-box';
-
-            // First image
-            const img1 = document.createElement('img');
-            img1.src = images[i];
-            img1.style.width = '100%'; // Full width inside the column
-            img1.style.height = 'auto'; // Maintain aspect ratio
-            img1.style.border = '1px solid #000'; // Border around each image
-            columnDiv.appendChild(img1);
-
-            // Second image (if it exists)
-            if (i + 1 < images.length) {
-                const img2 = document.createElement('img');
-                img2.src = images[i + 1];
-                img2.style.width = '100%';
-                img2.style.height = 'auto';
-                img2.style.border = '1px solid #000';
-                columnDiv.appendChild(img2);
-            }
-
-            // Append the column to the container
-            container.appendChild(columnDiv);
+  const generateImageHtml = () => {
+    try{
+      
+        let htmlContent = `
+          <div style="border: 5px solid green; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
+        `;
+      
+        for (let i = 0; i < images.length; i++) {
+          if (i % 10 === 0) {
+            htmlContent += '<div style="width: 100%; display: flex; justify-content: space-between;">';
+          }
+      
+          htmlContent += `
+            <img src="${images[i]}" style="width: 9%; border: 1px solid black; height: auto;" />
+          `;
+      
+          if (i % 10 === 9 || i === images.length - 1) {
+            htmlContent += '</div>';
+          }
         }
-    return container
- 
-}
+      
+        htmlContent += '</div>';
+        return htmlContent;
+      
+  }catch(e){
+    console.log('--==0000000..uyu..',e)
+    return `<div>${e}</div>`
+  }
+  }
 
-const qrcode=
-`<div id='imageGrid'>
-  ${await generateImageHtml()}/>
+
+  const qrcode =
+    `<div id='imageGrid'>
+  ${generateImageHtml()}
   </div>`
 
   const tables = sections
@@ -206,5 +192,5 @@ const qrcode=
       `;
     }).join('');
 
-  return baseHTML(`<div class="grid">${tables}</div><div>${managementHTML}</div>`, session,qrcode);
+  return baseHTML(`<div class="grid">${tables}</div><div>${managementHTML}</div>`, session, qrcode);
 };
