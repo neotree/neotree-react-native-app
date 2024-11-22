@@ -193,7 +193,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	};
 
 	const goNext = async () => {
-		const lastScreen = utils.getLastScreen();
+		const lastScreen = { ...utils.getLastScreen() };
 		const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
 
 		const next = utils.getScreen({ direction: 'next' });
