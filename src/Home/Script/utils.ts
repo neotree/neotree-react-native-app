@@ -206,7 +206,7 @@ export const getScriptUtils = ({
     
         const getLastScreen = (currentIndex: number): null | types.Screen => {    
             const nextIndex = currentIndex + 1;
-            let next = screens[nextIndex];
+            let next = nextIndex >= screens.length ? null : screens[nextIndex];
     
             if (next?.data?.condition) {
                 const parsedCondition = parseCondition(next.data.condition, form.filter(e => e.screen.id !== next.id));
@@ -216,9 +216,8 @@ export const getScriptUtils = ({
                     next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex);
                 }
             }
-    
-            const lastIndex = getScreenIndex(next);
-            return lastIndex > -1 ? getLastScreen(lastIndex) : null;
+
+            return next;
         };
     
         return getLastScreen(activeScreenIndex) || activeScreen;
