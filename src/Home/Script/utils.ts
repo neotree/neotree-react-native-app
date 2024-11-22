@@ -3,12 +3,7 @@ import * as types from '../../types';
 export const evaluateCondition = (condition: string, defaultEval = false) => {
     let conditionMet = defaultEval;
     try {
-        // TODO: Keep an eye
-        if (condition.includes('$')) {
-            return false;
-        } else {
-            conditionMet = eval(condition);
-        }
+        conditionMet = eval(condition);
     } catch (e) {
         // do nothing
     }
