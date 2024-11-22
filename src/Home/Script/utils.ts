@@ -191,8 +191,8 @@ export const getScriptUtils = ({
 
 			const parsedCondition = parseCondition(condition);
         
-            // return evaluateCondition(parsedCondition) ? target : getTargetScreen(index);
-            return evaluateCondition(parsedCondition) ? target : { screen: activeScreen, index: activeScreenIndex, };
+            return evaluateCondition(parsedCondition) ? target : getTargetScreen(index);
+            // return evaluateCondition(parsedCondition) ? target : { screen: activeScreen, index: activeScreenIndex, };
         };
         
         return getTargetScreen();
@@ -205,19 +205,19 @@ export const getScriptUtils = ({
         const activeScreenIndex = getScreenIndex(activeScreen);
     
         const getLastScreen = (currentIndex: number): null | types.Screen => {    
-            const nextIndex = currentIndex + 1;
-            let next = nextIndex >= screens.length ? null : screens[nextIndex];
+            let lastScreenIndex = currentIndex + 1;
+            let lastScreen = lastScreenIndex >= screens.length ? null : screens[lastScreenIndex];
     
-            if (next?.data?.condition) {
-                const parsedCondition = parseCondition(next.data.condition, form.filter(e => e.screen.id !== next.id));
+            if (lastScreen?.data?.condition) {
+                const parsedCondition = parseCondition(lastScreen.data.condition, form.filter(e => e.screen.id !== lastScreen.id));
                 const conditionMet = evaluateCondition(parsedCondition);
                 if (!conditionMet) {
-                    const nextNextIndex = nextIndex + 1;
-                    next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex);
+                    lastScreenIndex = lastScreenIndex + 1;
+                    lastScreen = lastScreenIndex >= screens.length ? null : getLastScreen(lastScreenIndex);
                 }
             }
 
-            return next;
+            return lastScreen;
         };
     
         return getLastScreen(activeScreenIndex) || activeScreen;
