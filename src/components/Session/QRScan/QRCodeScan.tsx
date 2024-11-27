@@ -72,8 +72,9 @@ export function QRCodeScan(props: any) {
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={true}
+        
       />
-   
+   <Overlay/>
     </SafeAreaView>
   );
 }
