@@ -2,10 +2,12 @@
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import RNQRGenerator from 'rn-qr-generator';
-import * as FileSystem from 'expo-file-system';
 import { reportErrors } from '../../../data/api';
 import { formatExportableSession } from '../../../data/getConvertedSession'
 import { toHL7Like } from '../../../data/hl7Like'
+import QRCode from 'qrcode';
+
+
 
 //import LZString from 'lz-string';
 //import { deflate } from 'react-native-gzip';
@@ -18,57 +20,52 @@ export default async (session: any, showConfidential?: boolean) => {
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
   const sections: any[] = groupEntries(form);
-
-
-
+  
   const generateQRCode = async () => {
-    const qrCodes: any = []
     try {
-      const formattedSession = await formatExportableSession(session, { showConfidential: true })
-      const hl7 = toHL7Like(formattedSession);
+     
+      const formattedData = await formatExportableSession(session, { showConfidential: true });
+      const hl7 = toHL7Like(formattedData);
 
-      if (hl7 && Object.keys(hl7).length > 0) {
-
-        for (const k of Object.keys(hl7)) {
-           console.log('....RESTA....',k,JSON.stringify(hl7[k]).length)
-          try {
-            const qrcode = await RNQRGenerator.generate({
-              //value: session ? session['uid'] ? session['uid'] : "NO-SESSION" : "NO-UID",
-              value: JSON.stringify({ [k]: hl7[k] }),
-              height: 200,
-              width: 200,
-              correctionLevel: 'H',
-            }).then(async response => {
-
-              const { uri } = response;
-              if (uri) {
-                const base64 = await FileSystem.readAsStringAsync(uri, {
-                  encoding: FileSystem.EncodingType.Base64,
-                });
-
-                return "data:image/png;base64," + base64
-              } else {
-                return null;
-              }
-
-            })
-            qrCodes.push(qrcode)
-          } catch (e) {
-            console.log("-----GEN ERROR---", e)
-          }
-        }
+      // QR code parameters
+      const dataToEncode:any = hl7
+      
+      let erc:any = 'H'
+     if(dataToEncode.length>3057 && dataToEncode.length<=3993){
+      erc='Q'
+      }else if(dataToEncode.length>3993 && dataToEncode.length<=5596){
+        erc='M'
+      }else if(dataToEncode.length>5596) {
+       erc='L'
       }
+     
+        const url = await new Promise((resolve, reject) => {
+                  QRCode.toString([{data:dataToEncode,mode:'numeric'}], 
+                    { width: 600
+                      ,version: 40,
+                    type:'svg'
+                    ,margin:10,
+                    errorCorrectionLevel:erc
+                  }, (err, url) => {
+                    if (err) {
+                      console.log("...THE ERRR..", err);
+                      reject(err); // Reject the promise if there's an error
+                    } else {
+                      resolve(url); // Resolve the promise with the URL
+                    }
+                  });
+                });       
+              return url
+      
     } catch (e) {
-      //reportErrors("QR_CODE_GENERATOR",e)
-      console.log("EEERRRRR---", e)
-      return null
+      console.log('----RERRRS---',e)
+      return null;
     }
-
-    return qrCodes;
-  }
+  };
+  
 
   let managementHTML = management.map((screen: any) => {
-    const sections = [
+    let sections = [
       { title: screen.metadata.title1, image: screen.metadata.image1?.data, text: screen.metadata.text1, },
       { title: screen.metadata.title2, image: screen.metadata.image2?.data, text: screen.metadata.text2, },
       { title: screen.metadata.title3, image: screen.metadata.image3?.data, text: screen.metadata.text3, },
@@ -89,56 +86,48 @@ export default async (session: any, showConfidential?: boolean) => {
 	`;
   }).join('');
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
-  let images = await generateQRCode()
 
-  const generateImageHtml = () => {
-    try{
+  const generateImageHtml = async () => {
+
+
+    try {
+    
+      let htmlContent = `
+              <div style="width: 100%; height: auto; text-align: center;">
+                  ${await generateQRCode()}
+              </div>
+              `;
       
-        let htmlContent = `
-          <div style="border: 5px solid green; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
-        `;
-      
-        for (let i = 0; i < images.length; i++) {
-          if (i % 10 === 0) {
-            htmlContent += '<div style="width: 100%; display: flex; justify-content: space-between;">';
-          }
-      
-          htmlContent += `
-            <img src="${images[i]}" style="width: 9%; border: 1px solid black; height: auto;" />
-          `;
-      
-          if (i % 10 === 9 || i === images.length - 1) {
-            htmlContent += '</div>';
-          }
-        }
-      
-        htmlContent += '</div>';
-        return htmlContent;
-      
-  }catch(e){
-    console.log('--==0000000..uyu..',e)
-    return `<div>${e}</div>`
+      return htmlContent;
+
+    } catch (e) {
+      console.log('--==0000000..uyu..', e);
+      return `<div>${e}</div>`;
+    }
   }
-  }
+
 
 
   const qrcode =
-    `<div id='imageGrid'>
-  ${generateImageHtml()}
-  </div>`
+    `<div style={"justify-content: center; align-items: center;"}>
+  ${await generateImageHtml()}
+  <br/>
+  </div>
+  `
 
-  const tables = sections
+
+  const tables =sections
     .filter(([, entries]) => entries.length)
     .map(([sectionTitle, entries]) => {
       entries = entries.filter((e: any) => e.values.length);
-
+     
       return `
         ${!sectionTitle ? '' : (`
           <div class="title row">
             <strong>${sectionTitle}</strong>
           </div>
         `)}
-
+      
         ${entries.filter((e: any) => e.values.length)
           .map(({
             values,
@@ -188,9 +177,14 @@ export default async (session: any, showConfidential?: boolean) => {
             // `;
 
             return `<div>${valuesHTML}</div>`;
-          }).join('')}
+          })
+          .join('')
+        }
       `;
-    }).join('');
+    }
+  ).join('');
 
-  return baseHTML(`<div class="grid">${tables}</div><div>${managementHTML}</div>`, session, qrcode);
+ 
+
+  return baseHTML(`<div>${qrcode}</div><div class="grid">${tables}</div><div>${managementHTML}</div>`, session);
 };

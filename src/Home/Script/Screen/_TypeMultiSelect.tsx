@@ -59,7 +59,6 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     }
 
     const opts: any[] = metadata.items.map((item: any,index: number) => {
-        console.log("...INDESI---",index)
         return {
             label: item.label,
             value: item.id,

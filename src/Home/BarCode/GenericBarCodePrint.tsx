@@ -46,8 +46,6 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
 	}, [navigation]);
 
     const onQrRead = (qrtext: any) => {
-       console.log("---TIPS-",qrtext)
-      console.log('======YERRE---',JSON.stringify(qrtext))
 
         if (qrtext) {
             setUID(qrtext);
@@ -69,7 +67,7 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
                 onPress={() => openQRscanner()}>
                 Scan QR
             </Button>
-            {showQR ? <QRCodeScan onRead={onQrRead} size="50%"/> : null}
+            {showQR ? <QRCodeScan onRead={onQrRead}/> : null}
             <Br spacing='l' />
             {uid &&  <PrintBarCode
                 session={session}
