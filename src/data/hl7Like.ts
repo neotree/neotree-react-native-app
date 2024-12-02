@@ -103,7 +103,10 @@ export function fromHL7Like(data: string) {
   if(backToBase64){
     const uint8Array = base64ToUint8Array(backToBase64)
     if(uint8Array){
-     return decompressDataFromQRCode(uint8Array)
+     const decompressed= decompressDataFromQRCode(uint8Array)
+     if(decompressed){
+      return convertToJSON(decompressed)
+     }
     }
     return []
   }
@@ -143,3 +146,65 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
 
   return uint8Array;
 };
+
+function convertToJSON(input:string) {
+  const lines = input.trim().split("\n");
+  const result:any = {};
+  let currentSection:any = result; // Pointer for the current section being processed
+  let ddhHeader:any = []; // Header for DDH section
+  
+  lines.forEach((line) => {
+      const parts = line.split("|");
+
+      if (parts[0] === "MDH" || parts[0] === "EDH" || parts[0] === "DDH") {
+          if (parts[0] === "EDH") {
+              result.entries = {};
+              currentSection = result.entries;
+          } else if (parts[0] === "DDH") {
+              result.diagnoses = [];
+              ddhHeader = String('Priority,Suggested,hcw_agree,hcw_follow_instructions,hcw_reason_given').split(',')
+              currentSection = result.diagnoses;
+          }
+          return; // Skip the header line
+      }
+
+      if (currentSection === result.entries) {
+          // Inside EDH section
+          const [key, value] = parts;
+          currentSection[key] = {
+              values: {
+                  value: value.split("^") // Split on "^" for multiple values
+              }
+          };
+      } else if (currentSection === result.diagnoses) {
+          // Inside DDH section
+          const [entryKey, ...values] = parts;
+          const ddhObject:any = {};
+         
+          ddhHeader.forEach((header:string, index:number) => {
+              const value:any = values[index];
+              ddhObject[header] = !value? null : toDataType(value);
+          });
+          const formattedEntry = { [entryKey]: ddhObject };
+          currentSection.push(formattedEntry);
+      } else {
+          // General keys in MDH
+          const [key, value] = parts;
+          result[key] = value;
+      }
+  });
+
+  return result;
+}
+function toDataType(value:any) {
+
+  if (!isNaN(value) && value !== null && value !== "") {
+    return Number(value);
+  }
+  else if (value === "true" || value === "false") {
+    return value === "true";
+  }
+ else{
+  return value
+ }
+}

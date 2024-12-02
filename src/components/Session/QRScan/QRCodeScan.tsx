@@ -22,8 +22,9 @@ export function QRCodeScan(props: any) {
       if(codes && codes.length>0){
       const numberValue = codes[0].value
       if(numberValue){
-        console.log('----UARAY---',fromHL7Like(numberValue))
-        props.onRead(codes[0].value);
+       const converted = fromHL7Like(numberValue)
+       if(converted)
+        props.onRead(converted['uid']);
       }    
       }
     },
