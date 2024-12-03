@@ -1,43 +1,19 @@
 /* eslint-disable indent */
+import { generateQRCode } from '@/src/utils/generate-session-qrcode';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
-import RNQRGenerator from 'rn-qr-generator';
-import * as FileSystem from 'expo-file-system';
-import { reportErrors } from '../../../data/api';
 
 
-export default  async (session: any, showConfidential?: boolean) => {
+export default  async ({ session, showConfidential, }: {
+  session: any, 
+  showConfidential?: boolean;
+}) => {
+  const qrCode = await generateQRCode({ session });
   let { form, management } = session.data;
  
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
   const sections: any[] = groupEntries(form);
-  const generateQRCode = async () => {
-    try {
-      return await RNQRGenerator.generate({
-        value: session ? session['uid'] ? session['uid'] : "NO-SESSION" : "NO-UID",
-        height: 80,
-        width: 80,
-        correctionLevel: 'H',
-      }).then(async response => {
-        const { uri } =  response;
-        if(uri){
-        const base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-      
-        return  "data:image/png;base64,"+base64
-      }else{
-        return null;
-      }
-      })
-    } catch (e) {
-      reportErrors("QR_CODE_GENERATOR",e)
-      return null
-
-      
-    }
-  }
 
   let managementHTML = management.map((screen: any) => {
     const sections = [
@@ -62,13 +38,13 @@ export default  async (session: any, showConfidential?: boolean) => {
   }).join('');
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
 
-  const qrcode = `
+  const qrcode = !qrCode ? '' : `
   <div style="display: flex; flex-wrap: wrap;">
   <div style="flex: 1; padding: 10px;">
     <h2>QR CODE:</h2>
   </div>
   <div style="flex: 1; padding: 10px;">
-  <img style="width:20%;height:auto;" src="${await generateQRCode()}"/>
+  <img style="width:20%;height:auto;" src="${await generateQRCode({ session })}"/>
   </div>
 </div>
  <br />
