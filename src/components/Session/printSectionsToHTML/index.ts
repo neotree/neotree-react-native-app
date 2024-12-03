@@ -3,9 +3,11 @@ import { getBaseHTML } from "./baseHTML";
 export async function printSectionsToHTML({
     session,
     showConfidential,
+    qrCode,
 }: {
     session: any;
     showConfidential?: boolean;
+    qrCode: string;
 }) {
     const { form, script } = session.data;
     
@@ -87,5 +89,22 @@ export async function printSectionsToHTML({
         `;
     }).join('');
 
-    return getBaseHTML(`<div class="grid">${html}</div>`, session);
+    const qrCodeHTML = !qrCode ? '' : `
+        <div>
+            <div style="display: flex; flex-wrap: wrap;">
+                <div style="flex: 1; padding: 10px;">
+                    <h2>QR CODE:</h2>
+                </div>
+                <div style="flex: 1; padding: 10px;">
+                    <img style="width:20%;height:auto;" src="${qrCode}"/>
+                </div>
+            </div>
+            <br />
+        </div>
+    `;
+
+    return getBaseHTML(`
+        ${qrCodeHTML}
+        <div class="grid">${html}</div>
+    `, session);
 }

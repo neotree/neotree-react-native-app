@@ -21,9 +21,10 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
         try {
             setPrinting(true);
         
-            let html = formToHTML(session, showConfidential);
+            const qrCode = '';
+            let html = await formToHTML(session, showConfidential);
 
-            const printSectionsHTML = await printSectionsToHTML({ session, showConfidential });
+            const printSectionsHTML = await printSectionsToHTML({ session, showConfidential, qrCode });
             if (printSectionsHTML) html = printSectionsHTML;
 
             await ExpoPrint.printAsync({ html });
