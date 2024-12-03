@@ -465,7 +465,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					// }));					
 					if (values) {
 						const screenMeta = activeScreen.data.metadata;
-						console.log('screenMeta.title1', screenMeta.title1);
 						setEntry({
 							values,
 							prePopulate: activeScreen?.data?.prePopulate,
