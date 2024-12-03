@@ -464,7 +464,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					// 	[activeScreen.id]: true,
 					// }));					
 					if (values) {
-						const { label, dataType } = activeScreen.data.metadata;
+						const screenMeta = activeScreen.data.metadata;
 						setEntry({
 							values,
 							prePopulate: activeScreen?.data?.prePopulate,
@@ -480,7 +480,19 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 								id: activeScreen.id,
 								screen_id: activeScreen.screen_id,
 								type: activeScreen.type,
-								metadata: { label, dataType },
+								metadata: { 
+									label: screenMeta.label, 
+									dataType: screenMeta.dataType,
+									title1:  screenMeta.title1,
+									text1:  screenMeta.text1,
+									image1:  screenMeta.image1,
+									title2:  screenMeta.title2,
+									text2:  screenMeta.text2,
+									image2:  screenMeta.image2,
+									title3:  screenMeta.title3,
+									text3:  screenMeta.text3,
+									image3:  screenMeta.image3,
+								},
 								index: activeScreenIndex,
 							},
 							...otherValues

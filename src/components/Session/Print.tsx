@@ -3,7 +3,7 @@ import * as ExpoPrint from 'expo-print';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { TouchableOpacity } from 'react-native';
 import formToHTML from './formToHTML';
-
+import { printSectionsToHTML } from "./printSectionsToHTML";
 import { useTheme } from "../Theme";
 
 type PrintSessionProps = {
@@ -18,14 +18,21 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
     const [, setPrintingError] = React.useState(false);
 
     const print = async () => {
-        setPrinting(true);
+        try {
+            setPrinting(true);
         
-        ExpoPrint.printAsync({ html: await formToHTML({ session, showConfidential }) })
-            .then(() => setPrinting(false))
-            .catch(e => {
-            setPrinting(false);
+            const qrCode = '';
+            let html = await formToHTML(session, showConfidential);
+
+            const printSectionsHTML = await printSectionsToHTML({ session, showConfidential, qrCode });
+            if (printSectionsHTML) html = printSectionsHTML;
+
+            await ExpoPrint.printAsync({ html });
+        } catch(e: any) {
             setPrintingError(e);
-            });
+        } finally {
+            setPrinting(false);
+        }
     };
     
     return (
