@@ -5,6 +5,7 @@ import { TouchableOpacity } from 'react-native';
 import formToHTML from './formToHTML';
 import { printSectionsToHTML } from "./printSectionsToHTML";
 import { useTheme } from "../Theme";
+import { generateQRCode } from "@/src/utils/generate-session-qrcode";
 
 type PrintSessionProps = {
     session: any;
@@ -21,8 +22,8 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
         try {
             setPrinting(true);
         
-            const qrCode = '';
-            let html = await formToHTML(session, showConfidential);
+            const qrCode = await generateQRCode({ session });
+            let html = await formToHTML({ session, showConfidential, });
 
             const printSectionsHTML = await printSectionsToHTML({ session, showConfidential, qrCode });
             if (printSectionsHTML) html = printSectionsHTML;
