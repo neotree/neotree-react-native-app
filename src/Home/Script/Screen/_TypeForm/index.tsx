@@ -24,12 +24,6 @@ export function TypeForm({}: TypeFormProps) {
 
     const patientNUID = useMemo(() => ctx.nuidSearchForm.filter(f => f.key === 'patientNUID')[0]?.value, [ctx.nuidSearchForm]);
 
-    const evaluateFieldCondition = (f: any) => {
-        let conditionMet = true;
-        if (f.condition) conditionMet = ctx.evaluateCondition(ctx.parseCondition(f.condition, [{ values }])) as boolean;
-        return conditionMet;
-    };
-
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
         const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
 
@@ -55,6 +49,12 @@ export function TypeForm({}: TypeFormProps) {
             confidential: f.confidential,
         };
     }));
+
+    const evaluateFieldCondition = (f: any) => {
+        let conditionMet = true;
+        if (f.condition) conditionMet = ctx.evaluateCondition(ctx.parseCondition(f.condition, [{ values }])) as boolean;
+        return conditionMet;
+    };
     
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
