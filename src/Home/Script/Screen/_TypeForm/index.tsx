@@ -115,6 +115,19 @@ export function TypeForm({}: TypeFormProps) {
                             const conditionMet = evaluateFieldCondition(f);
                             const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
 
+                            const _allValues = [
+                                ...values, 
+                                ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
+                                    ...acc,
+                                    ...e.values,
+                                ], []),
+                            ];
+
+                            const allValues = _allValues.filter((v, i) => {
+                                if (!v.key) return true;
+                                return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
+                            });
+
                             return (
                                 <FormItem
                                     field={f}
@@ -126,6 +139,7 @@ export function TypeForm({}: TypeFormProps) {
                                         fieldIndex={i}
                                         entryValue={values.filter(v => v.key === f.key)[0]}
                                         formValues={values}
+                                        allValues={allValues}
                                         conditionMet={conditionMet}
                                         patientNUID={patientNUID}
                                         onChange={onChange}

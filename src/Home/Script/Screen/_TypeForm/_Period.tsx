@@ -63,7 +63,7 @@ function dateToValueText(value: null | Date, format: 'days_hours' | 'years_month
     // return value ? valueText.map(t => t).join(', ') : '';
 }
 
-export function PeriodField({ field, conditionMet, onChange, entryValue, formValues }: PeriodFieldProps) {
+export function PeriodField({ field, conditionMet, onChange, entryValue, allValues }: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
@@ -84,7 +84,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
     }, [conditionMet]);
 
     React.useEffect(() => {
-        const _calcFrom = formValues.filter(v => `$${v.key}` === field.calculation)[0];
+        const _calcFrom = allValues.filter(v => `$${v.key}` === field.calculation)[0];
         if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
           setCalcFrom(_calcFrom);
           if (_calcFrom && _calcFrom.value) {
@@ -102,7 +102,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, formVal
             } catch(e) { /**/ }
           }
         }
-      }, [formValues, calcFrom, field.format]);
+      }, [allValues, calcFrom, field.format]);
 
     return (
         <Box>
