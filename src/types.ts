@@ -144,6 +144,7 @@ export type ScreenFormTypeProps = {
   conditionMet: boolean;
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
+  allValues: ScreenEntry['values'];
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {
