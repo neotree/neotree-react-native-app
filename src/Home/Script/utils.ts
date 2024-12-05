@@ -190,9 +190,12 @@ export const getScriptUtils = ({
             if (!condition) return target;
 
 			const parsedCondition = parseCondition(condition);
+
+            if (evaluateCondition(parsedCondition)) return target;
+            
+            if (index === (screens.length - 1)) return null;
         
-            return evaluateCondition(parsedCondition) ? target : getTargetScreen(index);
-            // return evaluateCondition(parsedCondition) ? target : { screen: activeScreen, index: activeScreenIndex, };
+            return getTargetScreen(index);
         };
         
         return getTargetScreen();
