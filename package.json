@@ -11,7 +11,8 @@
       "lint": "expo lint",
       "build:demo": "NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
       "build:stage": "NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage",
-      "build:prod": "NEOTREE_BUILD_TYPE=production eas build --platform android --profile production"
+      "build:prod": "NEOTREE_BUILD_TYPE=production eas build --platform android --profile production",
+      "build": "npm run build:prod && npm run build:stage && npm run build:demo"
     },
     "jest": {
       "preset": "jest-expo"
