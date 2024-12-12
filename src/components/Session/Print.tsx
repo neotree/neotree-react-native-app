@@ -6,6 +6,7 @@ import formToHTML from './formToHTML';
 import { printSectionsToHTML } from "./printSectionsToHTML";
 import { useTheme } from "../Theme";
 import { generateQRCode } from "@/src/utils/generate-session-qrcode";
+import { OverlayLoader } from "../OverlayLoader";
 
 type PrintSessionProps = {
     session: any;
@@ -15,7 +16,7 @@ type PrintSessionProps = {
 export function PrintSession({ session, showConfidential }: PrintSessionProps) {
     const theme = useTheme();
 
-    const [, setPrinting] = React.useState(false);
+    const [printing, setPrinting] = React.useState(false);
     const [, setPrintingError] = React.useState(false);
 
     const print = async () => {
@@ -37,11 +38,16 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
     };
     
     return (
-        <TouchableOpacity
-            style={{ paddingHorizontal: 10 }}
-            onPress={() => print()}
-        >
-            <Icon color={theme.colors.primary} size={24} name="print" />
-        </TouchableOpacity>
+        <>
+            {printing && <OverlayLoader transparent backgroundColor="rgba(255,255,255,.5)" />}
+
+            <TouchableOpacity
+                style={{ paddingHorizontal: 10 }}
+                onPress={() => print()}
+                disabled={printing}
+            >
+                <Icon color={theme.colors.primary} size={24} name="print" />
+            </TouchableOpacity>
+        </>
     )
 }
