@@ -38,9 +38,6 @@ export function Confidentials({ onShowConfidential }: ConfidentialsProps) {
 
     return (
         <>
-        <Br spacing="l"/>
-        <Br spacing="l"/>
-        <Br spacing="s"/>
             <Box backgroundColor="highlight">
                 <Content>
                     <Box

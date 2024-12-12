@@ -5,12 +5,13 @@ import { Box, useTheme } from './Theme';
 export type OverlayLoaderProps = {
     light?: boolean;
     transparent?: boolean;
+    backgroundColor?: string;
 };
 
-export function OverlayLoader({ light, transparent }: OverlayLoaderProps) {
+export function OverlayLoader({ light, transparent, backgroundColor: bgColor }: OverlayLoaderProps) {
     const theme = useTheme();
 
-    let backgroundColor = light ? 'rgba(255,255,255,.25)' : theme.colors['bg.active'];
+    let backgroundColor = bgColor || (light ? 'rgba(255,255,255,.25)' : theme.colors['bg.active']);
 
     return (
         <Modal

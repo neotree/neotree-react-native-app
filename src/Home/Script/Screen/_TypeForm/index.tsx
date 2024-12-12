@@ -17,8 +17,19 @@ type TypeFormProps = types.ScreenTypeProps & {
 };
 
 export function TypeForm({}: TypeFormProps) {
-    const {activeScreen,activeScreenEntry,mountedScreens,nuidSearchForm,evaluateCondition,
-        parseCondition,getPrepopulationData,setEntryValues} = useContext()||{};
+    const ctx = useContext();
+
+    const {
+        activeScreen,
+        activeScreenEntry,
+        mountedScreens,
+        nuidSearchForm,
+        evaluateCondition,
+        parseCondition,
+        getPrepopulationData,
+        setEntryValues,
+    } = ctx;
+    
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
