@@ -185,13 +185,25 @@ export const getScriptUtils = ({
             if (!direction) return { screen, index, };
         
             const target = { screen, index };
-            const condition = screen.data.condition;
+            const condition: string = screen.data.condition || '';
         
             if (!condition) return target;
 
-			const parsedCondition = parseCondition(condition);
+            const parsedCondition = parseCondition(condition);
+            let conditionMet = evaluateCondition(parsedCondition);
 
-            if (evaluateCondition(parsedCondition)) return target;
+            const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
+
+            if (conditionSplit.length > 1) {
+                conditionMet = true;
+                conditionSplit.forEach(c => {
+                    const parsedCondition = parseCondition(c);
+                    const isTrue = evaluateCondition(parsedCondition);
+                    if (!isTrue) conditionMet = false;
+                });
+            }
+
+            if (conditionMet) return target;
             
             if (index === (screens.length - 1)) return null;
         
@@ -210,10 +222,23 @@ export const getScriptUtils = ({
         const getLastScreen = (currentIndex: number): null | types.Screen => {    
             let lastScreenIndex = currentIndex + 1;
             let lastScreen = lastScreenIndex >= screens.length ? null : screens[lastScreenIndex];
+
+            const condition: string = lastScreen?.data?.condition || '';
+            const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
     
-            if (lastScreen?.data?.condition) {
-                const parsedCondition = parseCondition(lastScreen.data.condition, form.filter(e => e.screen.id !== lastScreen.id));
-                const conditionMet = evaluateCondition(parsedCondition);
+            if (condition) {
+                const parsedCondition = parseCondition(condition, form.filter(e => e.screen.id !== lastScreen.id));
+                let conditionMet = evaluateCondition(parsedCondition);
+
+                if (conditionSplit.length > 1) {
+                    conditionMet = true;
+                    conditionSplit.forEach(c => {
+                        const parsedCondition = parseCondition(c);
+                        const isTrue = evaluateCondition(parsedCondition);
+                        if (!isTrue) conditionMet = false;
+                    });
+                }
+
                 if (!conditionMet) {
                     lastScreenIndex = lastScreenIndex + 1;
                     lastScreen = lastScreenIndex >= screens.length ? null : getLastScreen(lastScreenIndex);
