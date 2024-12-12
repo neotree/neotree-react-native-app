@@ -50,7 +50,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
     React.useEffect(() => {
         const fieldCalc = field.calculation || '';
         const _calcFrom = allValues.filter(v => fieldCalc.toLowerCase().includes(`$${v.key}`.toLowerCase()));
-        if (!mounted.current || (fieldCalc && JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom))) {
+        if (fieldCalc && (!mounted.current || JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom))) {
           setCalcFrom(_calcFrom);
 
           const totalCalcItems = fieldCalc.split(',').length;
