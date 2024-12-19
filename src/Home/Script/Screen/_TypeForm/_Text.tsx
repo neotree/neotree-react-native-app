@@ -21,24 +21,25 @@ export function TextField({
     const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
     
 	const prePopulatedUID = ''; // ctx.matched?.prePopulateWithUID ? ctx.matched?.uid : '';
-    const scriptType = script?.type
-    const isScanable = scriptType==='neolab' ||scriptType==='discharge'
+    // const scriptType = script?.type
+    // const isScanable = scriptType==='neolab' ||scriptType==='discharge'
 
     const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? prePopulatedUID : '') || '');
     const [error, setError] = React.useState('');
     const [disabled, setDisabled] = React.useState(false);
-const [showQR, setShowQR] = React.useState(false);
 
-  const openQRscanner = () => {
-    setShowQR(true);
-  };
+// const [showQR, setShowQR] = React.useState(false);
 
-  const onQrRead = (qrtext: any) => {
-    if(qrtext){
-    setValue(qrtext);
-    }
-    setShowQR(false);
-  };
+//   const openQRscanner = () => {
+//     setShowQR(true);
+//   };
+
+//   const onQrRead = (qrtext: any) => {
+//     if(qrtext){
+//     setValue(qrtext);
+//     }
+//     setShowQR(false);
+//   };
 
     React.useEffect(() => { 
         if (!conditionMet) {
@@ -74,18 +75,6 @@ const [showQR, setShowQR] = React.useState(false);
                     autoGenerateValue={autoGenerateValue}
 
                 />
-                {isScanable && 
-                <>
-                <Br />
-               <Button 
-               disabled={value!=''}
-               color='primary'
-               onPress={() => openQRscanner()}>
-               Scan QR
-               </Button>
-               {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
-               </>
-                } 
                 </>
             ) : (
             

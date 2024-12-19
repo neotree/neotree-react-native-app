@@ -193,8 +193,18 @@ function convertToJSON(input:string) {
           result[key] = value;
       }
   });
+  const transformed = {
+    ...result, 
+    data: result 
+  };
+  if(transformed.entries){
+    delete transformed.entries
+  }
+  if(transformed.diagnoses){
+    delete transformed.diagnoses
+  }
 
-  return result;
+  return transformed;
 }
 function toDataType(value:any) {
 

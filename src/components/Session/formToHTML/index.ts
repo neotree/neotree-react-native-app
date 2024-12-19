@@ -101,8 +101,8 @@ export default async (session: any, showConfidential?: boolean) => {
       return htmlContent;
 
     } catch (e) {
-      console.log('--==0000000..uyu..', e);
-      return `<div>${e}</div>`;
+      reportErrors(e)
+      return null;
     }
   }
 
