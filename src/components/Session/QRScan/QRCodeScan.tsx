@@ -8,8 +8,6 @@ import {
 } from "react-native-vision-camera";
 import { fromHL7Like } from '../../../data/hl7Like'
 
-import { Overlay } from "./Overlay";
-
 export function QRCodeScan(props: any) {
   const device = useCameraDevice("back");
   const { hasPermission, requestPermission } = useCameraPermission()
@@ -18,14 +16,25 @@ export function QRCodeScan(props: any) {
 
   const codeScanner = useCodeScanner({
     codeTypes: ["qr"],
-    onCodeScanned: (codes) => {
+    onCodeScanned: (codes) => {   
       if(codes && codes.length>0){
-      const numberValue = codes[0].value
-      if(numberValue){
-       const converted = fromHL7Like(numberValue)
-       if(converted)
-        props.onRead(converted['uid']);
-      }    
+        const value = codes[0].value
+        if(value){
+        if(value.length<=12){
+          props.onRead(value);
+        }else{
+          const converted = fromHL7Like(value)
+          if(converted){
+         if(props.generic){
+          props.onRead(converted['uid']);
+         }else{
+          props.onRead(converted);
+         }
+        }
+      }
+    }else{
+      props.onRead(null);
+    }
       }
     },
   });
@@ -70,12 +79,11 @@ export function QRCodeScan(props: any) {
 
      <Camera
         codeScanner={codeScanner}
-        style={StyleSheet.absoluteFill}
+        style={StyleSheet.absoluteFillObject}
         device={device}
-        isActive={true}
+        isActive={true}  
         
       />
-   <Overlay/>
     </SafeAreaView>
   );
 }

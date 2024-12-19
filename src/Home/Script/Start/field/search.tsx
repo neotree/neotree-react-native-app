@@ -1,11 +1,14 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView } from 'react-native';
+import { ActivityIndicator, ScrollView,SafeAreaView,Dimensions} from 'react-native';
 import moment from 'moment';
 import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme } from '../../../../components';
 import * as api from '../../../../data';
 import * as types from '../../../../types';
-import { useContext } from '../../Context';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
+
+
+const { width, height } = Dimensions.get("window");
+
 
 type SearchProps = {
     label: string;
@@ -38,35 +41,47 @@ export function Search({
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
     const [searched, setSearched] = React.useState('');
     const [searching, setSearching] = React.useState(false);
-
+    const [qrSession, setQRSession]= React.useState<any>([]);
     const [showQR, setShowQR] = React.useState(false);
 
     const openQRscanner = () => {
         setShowQR(true);
     };
-
+ 
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
-            setUID(qrtext);
+            const session = qrtext
+            const sessions = []
+            if(session['uid']){
+            sessions.push(session)
+                setUID(session['uid'])
+                setQRSession(sessions)
+                
+            }else{
+                setUID(session) 
+            }
+           
         }
         setShowQR(false);
     };
-
 
   
     const search = React.useCallback(() => {
         (async () => {
             setSearching(true);
-            const sessions = await api.getExportedSessionsByUID(uid);
+            let sessions = qrSession
+            if(!sessions){
+            sessions = await api.getExportedSessionsByUID(uid);
+            }
             setSessions(sessions);
             setSearching(false);
             setSearched(uid);
         })();
     }, [uid]);
 
-    const admissionSessions = sessions.filter(s => s.data.script.title.match(/admission/gi) || (s.data.script.type === 'admission'));
-    const neolabSessions = sessions.filter(s => s.data.script.title.match(/neolab/gi) || (s.data.script.type === 'neolab'));
-    const dischargeSessions = sessions.filter(s => s.data.script.title.match(/discharge/gi) || (s.data.script.type === 'discharge'));
+    const admissionSessions = sessions.filter(s =>s?.data?.type==='admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
+    const neolabSessions = sessions.filter(s =>s?.data?.type==='neolab' || s?.data?.script?.title.match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
+    const dischargeSessions = sessions.filter(s => s?.data?.type==='discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
 
     function renderList(sessions: any[]) {
         return (
@@ -111,7 +126,7 @@ export function Search({
                                     }}
                                     label={(
                                         <>
-                                            <Text variant="title3">{s.data.script.title}</Text>
+                                            <Text variant="title3">{s?.data?.title || s?.data?.script?.title }</Text>
                                             <Text variant="caption" color="textSecondary">
                                                 {[
                                                     getSessionFacility(s).other || getSessionFacility(s).value,
@@ -132,7 +147,13 @@ export function Search({
     }
 
     return (
-        <Box>
+           <>
+           
+            {showQR===true ? <SafeAreaView
+            style={{width,height,marginLeft:-50}}
+            ><QRCodeScan onRead={onQrRead} /></SafeAreaView>      
+            :
+            <Box >
             <NeotreeIDInput
                 label={label}
                 onChange={uid => setUID(uid)}
@@ -146,7 +167,6 @@ export function Search({
                onPress={() => openQRscanner()}>
                Scan QR
                </Button>
-               {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
                </>
             <Br spacing='l' />
 
@@ -205,7 +225,11 @@ export function Search({
                         {!searched ? null : <Text textAlign="center" color="textSecondary">No results found</Text>}
                     </>
                 )}
-            </ScrollView>
-        </Box>
+            </ScrollView>   
+        </Box>}
+     </>
+
     );
 }
+
+

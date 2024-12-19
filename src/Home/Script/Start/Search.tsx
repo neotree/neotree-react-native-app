@@ -35,6 +35,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const [facility, setFacility] = React.useState<null | types.Facility>(null);
     const [searched, setSearched] = React.useState('');
     const [showQR, setShowQR] = React.useState(false);
+    const [qrSession, setQRSession]= React.useState<any>(null);
 
     const openQRscanner = () => {
         setShowQR(true);
@@ -42,7 +43,14 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
-            setUID(qrtext);
+            const session = qrtext
+            if(session['uid']){
+                setUID(session['uid'])
+                setQRSession([qrtext])
+            }else{
+                setUID(session) 
+            }
+           
         }
         setShowQR(false);
     };
@@ -53,7 +61,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const search = React.useCallback(() => {
         (async () => {
             setSearching(true);
-            const sessions = await api.getExportedSessionsByUID(uid);
+            let sessions = qrSession
+            if(!sessions){
+            sessions = await api.getExportedSessionsByUID(uid);
+            }
             setSessions(sessions);
             setSearching(false);
             setSearched(uid);
@@ -62,9 +73,9 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
 
 
-    const admissionSessions = sessions.filter(s => s.data.script.title.match(/admission/gi) || (s.data.script.type === 'admission'));
-    const neolabSessions = sessions.filter(s => s.data.script.title.match(/neolab/gi) || (s.data.script.type === 'neolab'));
-    const dischargeSessions = sessions.filter(s => s.data.script.title.match(/discharge/gi) || (s.data.script.type === 'discharge'));
+    const admissionSessions = sessions.filter(s => s.data.type==='admission' || s.data.script.title.match(/admission/gi) || (s.data.script.type === 'admission'));
+    const neolabSessions = sessions.filter(s =>s.data.type==='neolab' || s.data.script.title.match(/neolab/gi) || (s.data.script.type === 'neolab'));
+    const dischargeSessions = sessions.filter(s => s.data.type==='discharge' || s.data.script.title.match(/discharge/gi) || (s.data.script.type === 'discharge'));
 
     function renderList(sessions: any[]) {
         return (
