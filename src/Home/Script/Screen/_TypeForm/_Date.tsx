@@ -2,15 +2,12 @@ import React, { useCallback, useMemo } from 'react';
 import moment from 'moment';
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
-import { useContext } from '../../Context';
 
 type DateFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function DateField({ field, conditionMet, entryValue, onChange, }: DateFieldProps) {
-    const {getEntryValueByKey} = useContext()||{};
-
+export function DateField({ field, conditionMet, entryValue, allValues, onChange, }: DateFieldProps) {
 	const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
 
@@ -81,30 +78,51 @@ export function DateField({ field, conditionMet, entryValue, onChange, }: DateFi
 	React.useEffect(() => { setMounted(true); }, []);
 
     const { minDate, maxDate } = useMemo(() => {
-        const { value: _minDate, type: _minDateType, } = { ...getEntryValueByKey(field.minDateKey) };
-        const { value: _maxDate, type: _maxDateType, } = { ...getEntryValueByKey(field.maxDateKey) };
-
         let minDate = undefined;
         let maxDate = undefined;
 
-        if (_minDate) {
-            minDate = new Date(_minDate);
-            if (_minDateType === 'date') {
-                minDate.setHours(0);
-                minDate.setMinutes(0);
+        if (field.minDateKey) {
+            let minDateKey = `${field.minDateKey || ''}`;
+            minDateKey = `${minDateKey}`.charAt(0) === '$' ? `${minDateKey}`.substring(1, minDateKey.length) : minDateKey;
+            let _minDate: Date | null = null;
+            let _minDateType = 'datetime';
+            allValues.forEach(v => {
+                if (`${v.key}`.toLowerCase() === `${minDateKey}`.toLowerCase()) {
+                    _minDate = v.value ? new Date(v.value) : null;
+                    _minDateType = v.type!;
+                }
+            });
+            if (_minDate) {
+                minDate = new Date(_minDate);
+                if (_minDateType === 'date') {
+                    minDate.setHours(0);
+                    minDate.setMinutes(0);
+                }
             }
         }
 
-        if (_maxDate) {
-            maxDate = new Date(_maxDate);
-            if (_maxDateType === 'date') {
-                maxDate.setHours(23);
-                maxDate.setMinutes(59);
+        if (field.maxDateKey) {
+            let maxDateKey = `${field.maxDateKey || ''}`;
+            maxDateKey = `${maxDateKey}`.charAt(0) === '$' ? `${maxDateKey}`.substring(1, maxDateKey.length) : maxDateKey;
+            let _maxDate: Date | null = null;
+            let _maxDateType = 'datetime';
+            allValues.forEach(v => {
+                if (`${v.key}`.toLowerCase() === `${maxDateKey}`.toLowerCase()) {
+                    _maxDate = v.value ? new Date(v.value) : null;
+                    _maxDateType = v.type!;
+                }
+            });
+            if (_maxDate) {
+                maxDate = new Date(_maxDate);
+                if (_maxDateType === 'date') {
+                    maxDate.setHours(23);
+                    maxDate.setMinutes(59);
+                }
             }
         }
 
         return { minDate, maxDate, };
-    }, [getEntryValueByKey, field]);
+    }, [field, allValues]);
 
     const getErrors = useCallback((date: null | string) => {
         const errors = [];
