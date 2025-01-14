@@ -1,4 +1,5 @@
-import * as types from '../../types';
+import * as types from '@/src/types';
+import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 
 export const evaluateCondition = (condition: string, defaultEval = false) => {
     let conditionMet = defaultEval;
@@ -52,6 +53,7 @@ type UtilsParams = {
     matchingSession: any;
 	session?: any;
     generatedUID: string;
+    drugsLibrary: types.DrugsLibraryItem[];
 };
   
 export const getScriptUtils = ({
@@ -71,6 +73,7 @@ export const getScriptUtils = ({
     matchingSession,
 	session,
     generatedUID,
+    drugsLibrary,
 }: UtilsParams) => {
     const matches: any[] = [];
 
@@ -178,7 +181,27 @@ export const getScriptUtils = ({
                 index = evaluateCondition(parsedCondition) ? skipToScreenIndex : index;
             }
         
-            const screen = screens[index];
+            let screen = screens[index];
+
+            if (screen?.type === 'drugs') {
+                const s = evaluateDrugsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen,
+                });
+
+                screen = s;
+    
+                if (!s.data?.metadata?.drugs?.length) {
+                    const res = getTargetScreen(index);
+                    if (res) {
+                        screen = res?.screen;
+                        index = res?.index;
+                    } else {
+                        screen = null;
+                    }
+                }
+            }
             
             if (!screen) return null;
         
@@ -222,6 +245,20 @@ export const getScriptUtils = ({
         const getLastScreen = (currentIndex: number): null | types.Screen => {    
             let lastScreenIndex = currentIndex + 1;
             let lastScreen = lastScreenIndex >= screens.length ? null : screens[lastScreenIndex];
+
+            if (lastScreen?.type === 'drugs') {
+                const s = evaluateDrugsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen: lastScreen,
+                });
+
+                lastScreen = s;
+    
+                if (!s.data?.metadata?.drugs?.length) {
+                    lastScreen = getLastScreen(lastScreenIndex);
+                }
+            }
 
             const condition: string = lastScreen?.data?.condition || '';
             const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);

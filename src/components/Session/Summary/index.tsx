@@ -88,6 +88,18 @@ export function Summary({
                                                                     :
                                                                     <Text>{v.valueText || v.value || 'N/A'}</Text>
                                                             }
+
+                                                            <Box>
+                                                                {v.extraLabels && v.extraLabels.map((label: string, i: number) => {
+                                                                    return (
+                                                                        <Text
+                                                                            key={label + i}
+                                                                            color="textSecondary"
+                                                                            mt="s"
+                                                                        >{label}</Text>
+                                                                    )
+                                                                })}
+                                                            </Box>
                                                         </Box>
                                                     </Box>
 
