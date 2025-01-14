@@ -30,6 +30,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     activeScreen: types.Screen;
     activeScreenIndex: number;
     screens: types.Screen[];
+    drugsLibrary: types.DrugsLibraryItem[];
     diagnoses: types.Diagnosis[];
     navigation: NativeStackNavigationProp<types.HomeRoutes, "Script", undefined>;
     entries: types.ScreenEntry[];
