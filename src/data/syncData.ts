@@ -54,6 +54,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                 const webeditorInfo = json?.webeditorInfo || {};
                 const device = json?.device || {};
                 const configKeys = json?.configKeys || [];
+                const drugsLibrary = json?.drugsLibrary || [];
                 const scripts = json?.scripts || [];
                 const screens = json?.screens || [];
                 const diagnoses = json?.diagnoses || [];
@@ -71,6 +72,18 @@ export async function syncData(opts?: { force?: boolean; }) {
                         s.id,
                         s.config_key_id,
                         JSON.stringify(s.data || {}),
+                        s.createdAt,
+                        s.updatedAt
+                    ]);
+                });
+
+                drugsLibrary.map((s: any) => {
+                    const columns = ['id', 'item_id', 'data', 'createdAt', 'updatedAt'].join(',');
+                    const values = ['?', '?', '?', '?', '?'].join(',');
+                    return dbTransaction(`insert or replace into drugs_library (${columns}) values (${values});`, [
+                        s.id,
+                        s.itemId,
+                        JSON.stringify(s || {}),
                         s.createdAt,
                         s.updatedAt
                     ]);

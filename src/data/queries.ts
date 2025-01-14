@@ -61,6 +61,31 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
     })();
 });
 
+export const getDrugsLibrary = (options = {}) => new Promise<{ data: types.DrugsLibraryItem; }[]>((resolve, reject) => {
+    (async () => {
+        try {
+            const { _order, ..._where }: any = options || {};
+
+            let order = (_order || [['position', 'ASC']]);
+            order = (order.map ? order : [])
+                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
+                .filter((clause: any) => clause)
+                .join(',');
+
+            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
+                .join(',');
+
+            let q = 'select * from drugs_library';
+            q = where ? `${q} where ${where}` : q;
+            q = order ? `${q} order by ${order}` : q;
+
+            const rows = await dbTransaction(`${q};`.trim(), null);
+            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+        } catch (e) { 
+            reject(e); }
+    })();
+});
+
 export const getConfiguration = (options = {}) => new Promise<types.Configuration>((resolve, reject) => {
     (async () => {
         try {

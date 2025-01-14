@@ -100,6 +100,15 @@ export async function createTablesIfNotExist() {
         'updatedAt datetime',
     ].join(',');
 
+    const drugs_libraryTableColumns = [
+        'id varchar primary key not null',
+        'item_id varchar',
+        'position integer',
+        'data text',
+        'createdAt datetime',
+        'updatedAt datetime',
+    ].join(',');
+
     const configurationTableColumns = [
         'id varchar primary key not null',
         'data text',
@@ -136,6 +145,7 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists sessions (${sessionsTableColumns});`),
         dbTransaction(`create table if not exists authenticated_user (${authenticatedUserTableColumns});`),
         dbTransaction(`create table if not exists config_keys (${config_keysTableColumns});`),
+        dbTransaction(`create table if not exists drugs_library (${drugs_libraryTableColumns});`),
         dbTransaction(`create table if not exists configuration (${configurationTableColumns});`),
         dbTransaction(`create table if not exists location (${locationTableColumns});`),
         dbTransaction(`create table if not exists exports (${exportsTableColumns});`),
@@ -153,6 +163,7 @@ export const resetTables = async () => {
         // 'delete * from sessions where 1;',
         // 'delete * from authenticated_user where 1;',
         'delete * from config_keys where 1;',
+        'delete * from drugs_library where 1;',
         'delete * from configuration where 1;',
         // 'delete * from location where 1;',
         // 'delete * from exports where 1;',
@@ -167,6 +178,7 @@ export const resetApp = async () => {
         dbTransaction(`drop table sessions;`),
         dbTransaction(`drop table authenticated_user ;`),
         dbTransaction(`drop table config_keys;`),
+        dbTransaction(`drop table drugs_library;`),
         dbTransaction(`drop table configuration;`),
         dbTransaction(`drop table location;`),
         dbTransaction(`drop table exports;`),

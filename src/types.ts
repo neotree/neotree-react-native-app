@@ -82,6 +82,43 @@ export type Diagnosis = any;
 export type ConfigKey = any;
 export type Configuration = any;
 
+export type DrugField = {
+  key: string;
+  position: number;
+};
+
+export type DrugsLibraryItem = {
+  id: number;
+  itemId: string;
+  key: string;
+  drug: string;
+  minGestation: number | null;
+  maxGestation: number | null;
+  minWeight: number | null;
+  maxWeight: number | null;
+  minAge: number | null;
+  maxAge: number | null;
+  dosage: number | null;
+  dosageMultiplier: number | null;
+  dayOfLife: string;
+  dosageText: string;
+  managementText: string;
+  gestationKey: string;
+  weightKey: string;
+  diagnosisKey: string;
+  ageKey: string;
+  administrationFrequency: string;
+  drugUnit: string;
+  routeOfAdministration: string;
+  position: number;
+  condition: string;
+  version: number;
+  publishDate: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
 export type Hospital = {
 	id: number;
 	hospital_id: string;

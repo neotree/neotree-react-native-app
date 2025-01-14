@@ -50,6 +50,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [script, setScript] = React.useState<null | types.Script>(null);
 	const [screens, setScreens] = React.useState<types.Screen[]>([]);
 	const [diagnoses, setDiagnoses] = React.useState<types.Diagnosis[]>([]);
+	const [drugsLibrary, setDrugsLibrary] = React.useState<types.DrugsLibraryItem[]>([]);
 	const [loadScriptError, setLoadScriptError] = React.useState('');
 
 	const [loadingConfiguration, setLoadingConfiguration] = React.useState(false);
@@ -140,8 +141,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScreens([]);
 				setDiagnoses([]);
 				setActiveScreen(null);
+				setDrugsLibrary([]);
 
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
+				const drugsLibrary = await api.getDrugsLibrary();
 
                 const uid = await generateUID(script?.type);
                 setGeneratedUID(uid);
@@ -149,6 +152,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(screens);
 				setDiagnoses(diagnoses);
+				setDrugsLibrary(drugsLibrary.map(d => d.data));
 				setLoadingScript(false);
 
 				if (route.params?.session?.data?.form?.length) { 
@@ -378,6 +382,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
                 generatedUID,
 				script,
 				screens,
+				drugsLibrary,
 				diagnoses,
 				activeScreen,
 				activeScreenIndex,
