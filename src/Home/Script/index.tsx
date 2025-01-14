@@ -100,6 +100,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		matchingSession: matched?.session || null,
 		session: route.params?.session,
         generatedUID,
+		drugsLibrary,
 	});
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {

@@ -77,14 +77,21 @@ export default  async ({ session, showConfidential, }: {
               .map((v: any) => {
                 return `
                         <div  class="row">
-                        <span>${label || v.label}</span>
-                        <div>
-                            ${v.value && v.value.map ?
-                    v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />')
-                    :
-                    `<span>${v.valueText || v.value || 'N/A'}</span>`
-                  }
-                        </div>                  
+                          <span>${label || v.label}</span>
+                          <div>
+                              ${v.value && v.value.map ?
+                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />')
+                                  :
+                                  `<span>${v.valueText || v.value || 'N/A'}</span>`
+                                }
+
+                              <div>
+                                  ${!!v.extraLabels && '<div style="margin-top:5px;" />'}
+                                  ${!!v.extraLabels && v.extraLabels.map((label: string) => {
+                                      return `<span style="color:#999;">${label}</span>`;
+                                  })}
+                              </div>
+                          </div>                  
                         </div>
                     `;
               }).join('');

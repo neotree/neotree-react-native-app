@@ -14,6 +14,7 @@ import { TypeTimer } from './_TypeTimer';
 import { TypeYesNo } from './_TypeYesNo';
 import { TypeManagement } from './_TypeManagement';
 import { Diagnosis } from './Diagnosis';
+import { TypeDrugs } from './drugs';
 import { EdlizSummaryTable } from './EdlizSummaryTable';
 
 type ScreenTypeProps = {
@@ -43,6 +44,9 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 				let useContentWidth = true;
 
 				switch (activeScreen?.type) {
+					case 'drugs':
+						Component = TypeDrugs;
+						break;
 					case 'yesno':
 						Component = TypeYesNo;
 						break;

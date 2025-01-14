@@ -145,6 +145,7 @@ export type ScreenEntryValue = {
   diagnosis?: Diagnosis;
   prePopulate?: any[];
   printable?: boolean;
+  extraLabels?: string[];
 };
 
 export type ScreenEntry = {
