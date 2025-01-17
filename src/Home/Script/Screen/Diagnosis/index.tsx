@@ -28,7 +28,7 @@ const getDefaultDiagnosis = (d?: types.Diagnosis) => ({
 
 const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
     label: d.name,
-    key: d.name,
+    key: d.key || d.name,
     value: d.customValue || d.name,
     valueText: d.customValue || d.name,
     type: 'diagnosis',
@@ -40,8 +40,16 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 });
 
 export function Diagnosis(props: DiagnosisProps) {
-    const {navigation,activeScreenEntry,setEntryValues,goNext: ctxGoNext,getSuggestedDiagnoses,
-        goBack:ctxGoBack,setMoreNavOptions:ctxSetMoreNavOptions,activeScreen} = useContext()||{};
+    const {
+        navigation,
+        activeScreenEntry,
+        setEntryValues,
+        goNext: ctxGoNext,
+        getSuggestedDiagnoses,
+        goBack:ctxGoBack,
+        setMoreNavOptions:ctxSetMoreNavOptions,
+        activeScreen
+    } = useContext();
 
 
     const [section, setSection] = React.useState('select');

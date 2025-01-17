@@ -19,11 +19,13 @@ export function evaluateDrugsScreen({
         })
         .filter(d => d)
         .map(d => {
-            let age: number | null = null;
-            let weight: number | null = null;
-            let gestation: number | null = null;
-            let diagnosis: string | null = null;
-            let filled = [] as any[];
+            const weightKey = `${d.weightKey}`.toLowerCase();
+            const diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');
+            const ageKey = `${d.ageKey}`.toLowerCase();
+            const gestationKey = `${d.gestationKey}`.toLowerCase();
+
+            const entriesKeyVal: { [key: string]: any[]; } = {};
+            const diagnoses: string[] = [];
 
             entries.forEach(e => {
                 const values = [
@@ -31,35 +33,38 @@ export function evaluateDrugsScreen({
                     ...(e.values || []),
                 ];
 
-                filled = values.reduce((acc, v) => {
-                    return [...acc, ...(v.value?.map ? v.value : [v.value])];
-                }, [] as any[]);
-
                 values.forEach(v => {
-                    if ((v.key === d.ageKey) && (v.calculateValue || v.value)) {
-                        age = Number(v.calculateValue);
-                        if (isNaN(age)) age = null;
-                    }
+                    if (v.key) {
+                        let key = `${v.key}`.toLowerCase();
 
-                    if ((v.key === d.weightKey) && v.value) {
-                        weight = Number(v.value);
-                        if (isNaN(weight)) weight = null;
+                        let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
+                        if (v.calculateValue) value = [v.calculateValue];
+                        if (v.diagnosis?.key) {
+                            diagnoses.push(v.diagnosis.key);
+                            value = [v.diagnosis.key];
+                        }
+                        entriesKeyVal[key] = value;
                     }
-
-                    if ((v.key === d.gestationKey) && v.value) {
-                        gestation = Number(v.value);
-                        if (isNaN(gestation)) gestation = null;
-                    }
-
-                    if (filled.includes(d.diagnosisKey)) diagnosis = d.diagnosisKey;
                 });
             });
+
+            let weight: number | null = (entriesKeyVal[weightKey] || [])[0];
+            weight = weight === null ? null : (isNaN(Number(weight)) ? null : Number(weight));
+
+            let age: number | null = (entriesKeyVal[ageKey] || [])[0];
+            age = age === null ? null : (isNaN(Number(age)) ? null : Number(age));
+
+            let gestation: number | null = (entriesKeyVal[gestationKey] || [])[0];
+            gestation = gestation === null ? null : (isNaN(Number(gestation)) ? null : Number(gestation));
+
+            const matchedDiagnoses = diagnosisKeys.filter(key => 
+                diagnoses.map(d => d.toLowerCase()).includes(key.toLowerCase()));
 
             return {
                 ...d,
                 weight,
                 gestation,
-                diagnosis,
+                diagnoses: matchedDiagnoses,
                 age,
             };
         })
@@ -67,8 +72,8 @@ export function evaluateDrugsScreen({
             if (
                 (d.weight === null) ||
                 (d.gestation === null) ||
-                (d.diagnosis === null) ||
-                (d.age === null)
+                (d.age === null) ||
+                !d.diagnoses.length
             ) return false;
 
             const isCorrectWeight = (d.weight >= d.minWeight!) && (d.weight <= d.maxWeight!);

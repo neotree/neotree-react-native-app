@@ -32,6 +32,7 @@ export function SelectDiagnoses({
         const d = allDiagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
         return {
             ...item,
+            key: item.key || item.id,
             ...(!d ? null : {
                 text1: d.text1,
                 image1: d.image1,
@@ -93,23 +94,27 @@ export function SelectDiagnoses({
 						const disabled = exclusiveIsSelected && !isExclusive;
 			
 						const setValue = (val?: Partial<types.Diagnosis>) => {
-							setHcwDiagnoses([...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), {
-								...getDefaultDiagnosis({
-									name: item.label,
-									how_agree: 'Yes',
-									priority: hcwDiagnoses.length,
-									text1: item.text1,
-									image1: item.image1,
-									text2: item.text2,
-									image2: item.image2,
-									text3: item.text3,
-									image3: item.image3,
-									suggested: false,
-									isHcwDiagnosis: true,
-                                    severity_order: item.severity_order,
-									...val,
-								}),
-							}]);
+							setHcwDiagnoses([
+                                ...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
+                                {
+                                    ...getDefaultDiagnosis({
+                                        key: item.key,
+                                        name: item.label,
+                                        how_agree: 'Yes',
+                                        priority: hcwDiagnoses.length,
+                                        text1: item.text1,
+                                        image1: item.image1,
+                                        text2: item.text2,
+                                        image2: item.image2,
+                                        text3: item.text3,
+                                        image3: item.image3,
+                                        suggested: false,
+                                        isHcwDiagnosis: true,
+                                        severity_order: item.severity_order,
+                                        ...val,
+                                    }),
+                                },
+                            ]);
 						};
 
 						return (
