@@ -64,7 +64,7 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
                 },
             ];
         }, []);
-        setEntryValues && setEntryValues(!keys.length ? undefined : values);
+        setEntryValues && setEntryValues(!keys.length ? [] : values);
     }
 
     const opts = drugs.map((item) => {
