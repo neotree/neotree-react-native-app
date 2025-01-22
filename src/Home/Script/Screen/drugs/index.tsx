@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { TouchableOpacity } from 'react-native';
+
 import { Box, Br, Card, Text } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
@@ -8,7 +8,7 @@ type TypeDrugsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
+export function TypeDrugs({ entry }: TypeDrugsProps) {
     const mounted = useRef(false);
     const autoFilled = useRef(false);
     
@@ -31,20 +31,12 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const matched = getPrepopulationData();
 
-    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
-        ...acc,
-        [v.value]: true,
-    }), {}));
-
-    function onChange(_value: typeof value) {
-        setValue(_value);
-        const keys = Object.keys(_value).filter(key => _value[key]);
-		const values = keys.reduce((acc: types.ScreenEntryValue[], value) => {
-            const item = drugs.filter((item: any) => item.key === value)[0];
-            return [
-                ...acc,
-                {
-                    value,
+    const setEntry = React.useCallback((keys?: string[]) => {
+        setEntryValues(
+            drugs
+                .filter(d => !keys ? true : keys.includes(d.key))
+                .map(item => ({
+                    value: item.key,
                     valueText: `${item.drug} (${item.dosage} ${item.drugUnit})`,
                     label: item.drug,
                     key: item.key,
@@ -61,96 +53,66 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
                         `${item.managementText}`,
                         `${item.dosageText}`,
                     ],
-                },
-            ];
-        }, []);
-        setEntryValues && setEntryValues(!keys.length ? [] : values);
-    }
-
-    const opts = drugs.map((item) => {
-        return {
-            data: item,
-            label: item.drug,
-            value: item.key,
-            hide: searchVal ? !`${item.drug}`.match(new RegExp(searchVal, 'gi')) : false,
-            exclusive: false,
-            disabled: false,
-            onChange: () => {
-                let form = { ...value };
-                form = { ...value, [item.key]: !form[item.key], };                        
-                onChange(form);
-            },
-          };
-    });
+                }))
+    );
+    }, [entry, drugs, printable, setEntryValues]);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {
             const _value: any = {};
             const _matched = matched[metadata.key]?.values?.value || [];
             _matched.forEach((m: string) => { _value[m] = true; });
-            if (_matched.length) onChange(_value);
+            if (Object.keys(_value).length) setEntry(Object.keys(_value));
             autoFilled.current = true;
         }
-    }, [canAutoFill, matched, metadata]);
+    }, [canAutoFill, matched, metadata, setEntry]);
 
     React.useEffect(() => {
         if (!mounted.current) {
             mounted.current = true;
-            setEntryValues(entry?.values || []);
+            setEntry();
         }
-    }, [entry]);
+    }, [setEntry]);
 
     return (
         <Box>
-            {opts.map(o => {
-                if (o.hide) return null;
-
-                const isSelected = value[o.value];
-
+            {drugs.map(d => {
                 return (
-                    <React.Fragment key={o.value}>
-                        <TouchableOpacity 
-                            disabled={o.disabled}
-                            onPress={() => o.onChange()}
-                        >
-                            <Card 
-                                backgroundColor={o.disabled ? 'disabledBackground' : (isSelected ? 'primary' : undefined)}
-                            >
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : undefined)}
-                                    variant="title3"
-                                >{o.data.drug}</Text>
+                    <React.Fragment key={d.key}>
+                        <Card>
+                            <Text
+                                variant="title3"
+                            >{d.drug}</Text>
 
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
-                                    mt="s"
-                                >Dosage: {`${o.data.dosage} ${o.data.drugUnit}`}</Text>
+                            <Text
+                                color="textSecondary"
+                                mt="s"
+                            >Dosage: {`${d.dosage} ${d.drugUnit}`}</Text>
 
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
-                                    mt="s"
-                                >Administration frequency: {o.data.administrationFrequency}</Text>
+                            <Text
+                                color="textSecondary"
+                                mt="s"
+                            >Administration frequency: {d.administrationFrequency}</Text>
 
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
-                                    mt="s"
-                                >Route of Administration: {o.data.routeOfAdministration}</Text>
+                            <Text
+                                color="textSecondary"
+                                mt="s"
+                            >Route of Administration: {d.routeOfAdministration}</Text>
 
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
-                                    mt="s"
-                                >{o.data.managementText}</Text>
+                            <Text
+                                color="textSecondary"
+                                mt="s"
+                            >{d.managementText}</Text>
 
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
-                                    mt="s"
-                                >{o.data.dosageText}</Text>
-                            </Card>
-                        </TouchableOpacity>
+                            <Text
+                                color="textSecondary"
+                                mt="s"
+                            >{d.dosageText}</Text>
+                        </Card>
 
                         <Br spacing="l" />
                     </React.Fragment>
-                )
+                );
             })}
         </Box>
     );
