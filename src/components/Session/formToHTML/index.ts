@@ -85,12 +85,12 @@ export default  async ({ session, showConfidential, }: {
                                   `<span>${v.valueText || v.value || 'N/A'}</span>`
                                 }
 
-                              <div>
-                                  ${!!v.extraLabels && '<div style="margin-top:5px;" />'}
-                                  ${!!v.extraLabels && v.extraLabels.map((label: string) => {
+                              ${!v.extraLabels?.length ? '' : `
+                                <div style="margin-top:5px;"></div>
+                                ${v.extraLabels.map((label: string) => {
                                       return `<span style="color:#999;">${label}</span>`;
                                   })}
-                              </div>
+                              `}
                           </div>                  
                         </div>
                     `;
