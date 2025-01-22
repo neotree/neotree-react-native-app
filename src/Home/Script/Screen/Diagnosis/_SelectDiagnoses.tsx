@@ -3,6 +3,7 @@ import { TouchableOpacity, View, FlatList } from 'react-native';
 import { Box, Text, Modal, Card, Br, TextInput, CONTENT_STYLES } from '../../../../components';
 import * as types from '../../../../types';
 import { useContext } from '../../Context';
+import { position } from '@shopify/restyle';
 
 type SelectDiagnosesProps = types.DiagnosisSectionProps & {
     
@@ -94,27 +95,39 @@ export function SelectDiagnoses({
 						const disabled = exclusiveIsSelected && !isExclusive;
 			
 						const setValue = (val?: Partial<types.Diagnosis>) => {
-							setHcwDiagnoses([
-                                ...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
-                                {
-                                    ...getDefaultDiagnosis({
-                                        key: item.key,
-                                        name: item.label,
-                                        how_agree: 'Yes',
-                                        priority: hcwDiagnoses.length,
-                                        text1: item.text1,
-                                        image1: item.image1,
-                                        text2: item.text2,
-                                        image2: item.image2,
-                                        text3: item.text3,
-                                        image3: item.image3,
-                                        suggested: false,
-                                        isHcwDiagnosis: true,
-                                        severity_order: item.severity_order,
-                                        ...val,
-                                    }),
-                                },
-                            ]);
+                            const severityOrders = hcwDiagnoses
+                                .map(d => d.severity_order)
+                                .map(n => isNaN(Number(n)) ? null : Number(n))
+                                .filter(n => !((n === null) || (n === undefined)));
+
+                            const maxSeverityOrder = !severityOrders.length ? hcwDiagnoses.length : Math.max(...severityOrders);
+
+							setHcwDiagnoses(
+                                [
+                                    ...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
+                                    {
+                                        ...getDefaultDiagnosis({
+                                            key: item.key,
+                                            name: item.label,
+                                            how_agree: 'Yes',
+                                            priority: hcwDiagnoses.length,
+                                            text1: item.text1,
+                                            image1: item.image1,
+                                            text2: item.text2,
+                                            image2: item.image2,
+                                            text3: item.text3,
+                                            image3: item.image3,
+                                            suggested: false,
+                                            isHcwDiagnosis: true,
+                                            severity_order: item.severity_order || maxSeverityOrder,
+                                            position: item.position || hcwDiagnoses.length,
+                                            ...val,
+                                        }),
+                                    },
+                                ]
+                                    .sort((a, b) => a.position - b.position)
+                                    .sort((a, b) => a.severity_order - b.severity_order)
+                            );
 						};
 
 						return (
