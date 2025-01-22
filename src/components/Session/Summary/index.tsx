@@ -18,11 +18,13 @@ export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
-    session: { uid,data: { form} },
+    session: { uid, data: { form: sessionForm, } },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
-    const excludeScreenTypes = ['edliz_summary_table'];
+    // const excludeScreenTypes = ['zw_edliz_summary_table', 'mwi_edliz_summary_table'];
+    const excludeScreenTypes: string[] = [];
   
+    const form = sessionForm.filter((e: any) => !excludeScreenTypes.includes(e.screen?.type));
 
     const sections: any[] = groupEntries(form);
 
@@ -53,7 +55,7 @@ export function Summary({
                             const key = [sectionTitle, sectionIndex].join('');
 
                             const displayItems = entries
-                                .filter((e: any) => e.values.length && !excludeScreenTypes.includes(e.screen.type))
+                                .filter((e: any) => e.values.length)
                                 .map(({
                                     values,
                                     management = [],
@@ -147,7 +149,7 @@ export function Summary({
                 </Content>
 
                 {/* {form
-                    .filter(({ values, screen }: any) => values.length && !excludeScreenTypes.includes(screen.type))
+                    .filter(({ values, screen }: any) => values.length)
                     .map(({ screen, values, management }: any) => {
                         management = management || [];
 

@@ -55,11 +55,11 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
                     data: item,
                     printable,
                     extraLabels: [
-                        `Route of Administration: ${item.routeOfAdministration}`,
-                        `Administration frequency: ${item.administrationFrequency}`,
                         `Dosage: ${item.dosage} ${item.drugUnit}`,
-                        `${item.dosageText}`,
+                        `Administration frequency: ${item.administrationFrequency}`,
+                        `Route of Administration: ${item.routeOfAdministration}`,
                         `${item.managementText}`,
+                        `${item.dosageText}`,
                     ],
                 },
             ];
