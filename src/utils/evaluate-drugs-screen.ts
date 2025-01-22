@@ -101,7 +101,8 @@ export function evaluateDrugsScreen({
             };
         });
 
-    metadata.drugs = drugs;
+    metadata.drugs = drugs
+        .filter((d, i) => drugs.map(d => d.key).indexOf(d.key) === i); // remove duplicates
 
     return {
         ...screen,
