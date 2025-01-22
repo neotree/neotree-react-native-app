@@ -82,20 +82,33 @@ export function Diagnosis(props: DiagnosisProps) {
     const goNext = () => {
         if (activeDiagnosisIndex === null) {
             if (section === 'select') {
-				const suggested = (getSuggestedDiagnoses() || []) as types.Diagnosis[];        
-				const _entries = [
-					// ...values, 
-					...suggested.filter(d => !values.map(item => item.label).includes(d.name)).map(d => diagnosisToEntryValue({
-						...d,
-						suggested: true,
-					})),
-				];
+				const suggested = (getSuggestedDiagnoses() || []) as types.Diagnosis[];   
+                
+                const suggestedEntries = suggested
+                    .filter(d => !values.map(item => item.label).includes(d.name))
+                    .map(d => diagnosisToEntryValue({
+                        ...d,
+                        suggested: true,
+                    }));
 
-                const entries = [
-                    ...values,
-                    ..._entries.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
+                // sort by severyity_order
+                let entries = [
+                    ...values.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
                         .sort((a, b) => a.diagnosis.severity_order - b.diagnosis.severity_order),
-                    ..._entries.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
+                    ...values.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
+                    ...suggestedEntries.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
+                        .sort((a, b) => a.diagnosis.severity_order - b.diagnosis.severity_order),
+                    ...suggestedEntries.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
+                ];
+
+                // sort by priority
+                entries = [
+                    ...values.filter(d => d.diagnosis.priority || (d.diagnosis.priority === 0))
+                        .sort((a, b) => a.diagnosis.priority - b.diagnosis.priority),
+                    ...values.filter(d => (d.diagnosis.priority === null) || (d.diagnosis.priority === undefined) || (d.diagnosis.priority === '')),
+                    ...suggestedEntries.filter(d => d.diagnosis.priority || (d.diagnosis.priority === 0))
+                        .sort((a, b) => a.diagnosis.priority - b.diagnosis.priority),
+                    ...suggestedEntries.filter(d => (d.diagnosis.priority === null) || (d.diagnosis.priority === undefined) || (d.diagnosis.priority === '')),
                 ];
 
 				setValues(entries);
