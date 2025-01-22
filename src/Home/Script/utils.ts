@@ -299,7 +299,17 @@ export const getScriptUtils = ({
             ...diagnoses.filter(d => d.data.severity_order || (d.data.severity_order === 0))
                 .sort((a, b) => a.data.severity_order - b.data.severity_order),
             ...diagnoses.filter(d => (d.data.severity_order === null) || (d.data.severity_order === undefined) || (d.data.severity_order === '')),
-        ].map((d, position) => ({ ...d, position, }));
+        ]
+            .map((d, position) => {
+                let sevOrder = d.data.severity_order || (d.data.severity_order === 0) ? Number(d.data.severity_order) : null;
+                if (isNaN(Number(sevOrder))) sevOrder = null;
+
+                return { 
+                    ...d, 
+                    position, 
+                    severity_order: sevOrder,
+                };
+            });
         
         const diagnosesRslts = (() => {
             const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {
