@@ -14,10 +14,18 @@ export function evaluateDrugsScreen({
 
     const drugs = drugsLibrary
         .map(d => {
-            if (screenDrugs.map(d => d.key).includes(d.key)) return d;
+            const screenDrugIndex = screenDrugs.map(d => `${d.key}`.toLowerCase()).indexOf(`${d.key}`.toLowerCase());
+            const screenDrug = screenDrugs[screenDrugIndex];
+            if (screenDrug) {
+                return {
+                    ...d,
+                    position: screenDrugIndex,
+                };
+            }
             return null!;
         })
         .filter(d => d)
+        .sort((a, b) => a.position - b.position)
         .map(d => {
             const weightKey = `${d.weightKey}`.toLowerCase();
             const diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');

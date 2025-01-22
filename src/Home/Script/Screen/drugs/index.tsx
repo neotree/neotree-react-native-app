@@ -124,7 +124,7 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
                                 <Text
                                     color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
                                     mt="s"
-                                >Route of Administration: {o.data.routeOfAdministration}</Text>
+                                >Dosage: {`${o.data.dosage} ${o.data.drugUnit}`}</Text>
 
                                 <Text
                                     color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
@@ -134,17 +134,17 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
                                 <Text
                                     color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
                                     mt="s"
-                                >Dosage: {`${o.data.dosage} ${o.data.drugUnit}`}</Text>
-
-                                <Text
-                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
-                                    mt="s"
-                                >{o.data.dosageText}</Text>
+                                >Route of Administration: {o.data.routeOfAdministration}</Text>
 
                                 <Text
                                     color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
                                     mt="s"
                                 >{o.data.managementText}</Text>
+
+                                <Text
+                                    color={o.disabled ? 'grey-500' : (isSelected ? 'primaryContrastText' : 'textSecondary')}
+                                    mt="s"
+                                >{o.data.dosageText}</Text>
                             </Card>
                         </TouchableOpacity>
 
