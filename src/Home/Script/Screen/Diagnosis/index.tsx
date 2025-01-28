@@ -93,14 +93,21 @@ export function Diagnosis(props: DiagnosisProps) {
                         suggested: true,
                     }));
 
+                const allEntries = [
+                    ...values,
+                    ...suggestedEntries,
+                ];
+
                 // sort by severyity_order
+
                 let entries = [
-                    ...values.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
+                    ...allEntries.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
                         .sort((a, b) => a.diagnosis.severity_order - b.diagnosis.severity_order),
-                    ...values.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
-                    ...suggestedEntries.filter(d => d.diagnosis.severity_order || (d.diagnosis.severity_order === 0))
-                        .sort((a, b) => a.diagnosis.severity_order - b.diagnosis.severity_order),
-                    ...suggestedEntries.filter(d => (d.diagnosis.severity_order === null) || (d.diagnosis.severity_order === undefined) || (d.diagnosis.severity_order === '')),
+                    ...allEntries.filter(d => 
+                        (d.diagnosis.severity_order === null) || 
+                        (d.diagnosis.severity_order === undefined) || 
+                        (d.diagnosis.severity_order === '')
+                    ),
                 ];
 
                 // sort by priority
