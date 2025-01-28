@@ -4,11 +4,11 @@ import { Box, Br, Card, Text } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
-type TypeDrugsProps = types.ScreenTypeProps & {
+type TypeFluidsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeDrugs({ entry }: TypeDrugsProps) {
+export function TypeFluids({ entry }: TypeFluidsProps) {
     const mounted = useRef(false);
     const autoFilled = useRef(false);
     
@@ -23,7 +23,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
     const metadata = activeScreen?.data?.metadata;
     const printable = activeScreen?.data?.printable !== false;
 
-    const drugs = (metadata.drugs || []) as types.DrugsLibraryItem[];
+    const fluids = (metadata.fluids || []) as types.DrugsLibraryItem[];
 
     let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
@@ -33,7 +33,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
 
     const setEntry = React.useCallback((keys?: string[]) => {
         setEntryValues(
-            drugs
+            fluids
                 .filter(d => !keys ? true : keys.includes(d.key))
                 .map(item => ({
                     value: item.key,
@@ -48,6 +48,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     printable,
                     extraLabels: [
                         `Dosage: ${item.dosage} ${item.drugUnit}`,
+                        `Hourly dosage: ${item.hourlyDosage} ${item.drugUnit} / ${item.hourlyFeed} hours`,
                         `Administration frequency: ${item.administrationFrequency}`,
                         `Route of Administration: ${item.routeOfAdministration}`,
                         `${item.managementText}`,
@@ -55,7 +56,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     ],
                 }))
     );
-    }, [entry, drugs, printable, setEntryValues]);
+    }, [entry, fluids, printable, setEntryValues]);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {
@@ -76,7 +77,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
 
     return (
         <Box>
-            {drugs.map(d => {
+            {fluids.map(d => {
                 return (
                     <React.Fragment key={d.key}>
                         <Card>
@@ -88,6 +89,11 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                 color="textSecondary"
                                 mt="s"
                             >Dosage: {`${d.dosage} ${d.drugUnit}`}</Text>
+
+                            <Text
+                                color="textSecondary"
+                                mt="s"
+                            >Hourly dosage: {`${d.hourlyDosage} ${d.drugUnit} / ${d.hourlyFeed} hours`}</Text>
 
                             <Text
                                 color="textSecondary"

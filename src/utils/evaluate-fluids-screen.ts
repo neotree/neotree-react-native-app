@@ -1,25 +1,20 @@
-import { ScreenEntry, DrugField, DrugsLibraryItem } from "@/src/types";
+import { DrugField } from "@/src/types";
+import { EvaluateDrugsScreenParams } from '@/src/utils/evaluate-drugs-screen';
 
-export type EvaluateDrugsScreenParams = {
-    entries: ScreenEntry[];
-    drugsLibrary: DrugsLibraryItem[];
-    screen: any;
-    evaluateCondition: (condition: string) => boolean;
-};
-
-export function evaluateDrugsScreen({
+export function evaluateFluidsScreen({
     entries,
     screen,
-    drugsLibrary
+    drugsLibrary,
+    evaluateCondition,
 }: EvaluateDrugsScreenParams) {
     const metadata = { ...screen.data?.metadata, };
-    const screenDrugs = (metadata.drugs || []) as DrugField[];
+    const screenFluids = (metadata.fluids || []) as DrugField[];
 
-    const drugs = drugsLibrary
-        .filter(item => item.type === 'drug')
+    const fluids = drugsLibrary
+        .filter(item => item.type === 'fluid')
         .map(d => {
-            const screenDrugIndex = screenDrugs.map(d => `${d.key}`.toLowerCase()).indexOf(`${d.key}`.toLowerCase());
-            const screenDrug = screenDrugs[screenDrugIndex];
+            const screenDrugIndex = screenFluids.map(d => `${d.key}`.toLowerCase()).indexOf(`${d.key}`.toLowerCase());
+            const screenDrug = screenFluids[screenDrugIndex];
             if (screenDrug) {
                 return {
                     ...d,
@@ -32,12 +27,13 @@ export function evaluateDrugsScreen({
         .sort((a, b) => a.position - b.position)
         .map(d => {
             const weightKey = `${d.weightKey}`.toLowerCase();
-            const diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');
+            const condition = `${d.condition || ''}`;
             const ageKey = `${d.ageKey}`.toLowerCase();
             const gestationKey = `${d.gestationKey}`.toLowerCase();
 
+            let conditionMet = false;
+
             const entriesKeyVal: { [key: string]: any[]; } = {};
-            const diagnoses: string[] = [];
 
             entries.forEach(e => {
                 const values = [
@@ -51,9 +47,8 @@ export function evaluateDrugsScreen({
 
                         let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
                         if (v.calculateValue) value = [v.calculateValue];
-                        if (v.diagnosis?.key) {
-                            diagnoses.push(v.diagnosis.key);
-                            value = [v.diagnosis.key];
+                        if (condition) {
+                            conditionMet = evaluateCondition(condition);
                         }
                         entriesKeyVal[key] = value;
                     }
@@ -69,15 +64,12 @@ export function evaluateDrugsScreen({
             let gestation: number | null = (entriesKeyVal[gestationKey] || [])[0];
             gestation = gestation === null ? null : (isNaN(Number(gestation)) ? null : Number(gestation));
 
-            const matchedDiagnoses = diagnosisKeys.filter(key => 
-                diagnoses.map(d => d.toLowerCase()).includes(key.toLowerCase()));
-
             return {
                 ...d,
                 weight,
                 gestation,
-                diagnoses: matchedDiagnoses,
                 age,
+                conditionMet,
             };
         })
         .filter(d => {
@@ -85,7 +77,7 @@ export function evaluateDrugsScreen({
                 (d.weight === null) ||
                 (d.gestation === null) ||
                 (d.age === null) ||
-                !d.diagnoses.length
+                !d.conditionMet
             ) return false;
 
             const isCorrectWeight = (d.weight >= d.minWeight!) && (d.weight <= d.maxWeight!);
@@ -100,14 +92,19 @@ export function evaluateDrugsScreen({
         }).map(d => {
             let dosage = (d.dosage! * d.dosageMultiplier!) * d.weight!;
             dosage = isNaN(dosage) ? dosage : Number(dosage.toFixed(2));
+
+            let hourlyDosage = dosage / (d.hourlyFeedDivider || 1);
+            hourlyDosage = isNaN(hourlyDosage) ? hourlyDosage : Number(hourlyDosage.toFixed(2));
+
             return {
                 ...d,
                 dosage,
+                hourlyDosage,
             };
         });
 
-    metadata.drugs = drugs
-        .filter((d, i) => drugs.map(d => d.key).indexOf(d.key) === i); // remove duplicates
+    metadata.fluids = fluids
+        .filter((d, i) => fluids.map(d => d.key).indexOf(d.key) === i); // remove duplicates
 
     return {
         ...screen,
