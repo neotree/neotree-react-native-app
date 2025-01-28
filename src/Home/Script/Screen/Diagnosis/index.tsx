@@ -65,6 +65,8 @@ export function Diagnosis(props: DiagnosisProps) {
 
     const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState<null | number>(null);
 
+    const [orderBySeverity, setOrderBySeverity] = React.useState(true);
+
     const setDiagnoses = (diagnoses: types.Diagnosis[] = []) => {
         const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
         setValues(entryValues);
@@ -102,14 +104,16 @@ export function Diagnosis(props: DiagnosisProps) {
                 ];
 
                 // sort by priority
-                entries = [
-                    ...values.filter(d => d.diagnosis.priority || (d.diagnosis.priority === 0))
-                        .sort((a, b) => a.diagnosis.priority - b.diagnosis.priority),
-                    ...values.filter(d => (d.diagnosis.priority === null) || (d.diagnosis.priority === undefined) || (d.diagnosis.priority === '')),
-                    ...suggestedEntries.filter(d => d.diagnosis.priority || (d.diagnosis.priority === 0))
-                        .sort((a, b) => a.diagnosis.priority - b.diagnosis.priority),
-                    ...suggestedEntries.filter(d => (d.diagnosis.priority === null) || (d.diagnosis.priority === undefined) || (d.diagnosis.priority === '')),
-                ];
+                // if (!orderBySeverity) {
+                //     entries = [
+                //         ...values.filter(d => d.diagnosis.priority || (d.diagnosis.priority === 0))
+                //             .sort((a, b) => a.diagnosis.priority - b.diagnosis.priority),
+                //         ...values.filter(d => (d.diagnosis.priority === null) || (d.diagnosis.priority === undefined) || (d.diagnosis.priority === '')),
+                //         ...suggestedEntries.filter(d => d.diagnosis.priority || (d.diagnosis.priority === 0))
+                //             .sort((a, b) => a.diagnosis.priority - b.diagnosis.priority),
+                //         ...suggestedEntries.filter(d => (d.diagnosis.priority === null) || (d.diagnosis.priority === undefined) || (d.diagnosis.priority === '')),
+                //     ];
+                // }
 
 				setValues(entries);
 				setEntryValues(entries);
@@ -196,6 +200,7 @@ export function Diagnosis(props: DiagnosisProps) {
         acceptedDiagnoses,
         activeDiagnosisIndex,
         hcwDiagnoses,
+        setOrderBySeverity,
         setMoreNavOptions,
         getDefaultDiagnosis,
         setActiveDiagnosisIndex,
