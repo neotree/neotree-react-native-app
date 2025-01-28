@@ -40,15 +40,15 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                     valueText: `${item.drug}`,
                     label: item.drug,
                     key: item.key,
-                    dataType: 'drug',
+                    dataType: 'fluid',
                     exclusive: false,
                     confidential: false,
-                    exportType: 'drug',
+                    exportType: 'fluid',
                     data: item,
                     printable,
                     extraLabels: [
                         `Dosage: ${item.dosage} ${item.drugUnit}`,
-                        `Hourly dosage: ${item.hourlyDosage} ${item.drugUnit} / ${item.hourlyFeed} hours`,
+                        `Hourly dosage: ${item.hourlyDosage} ${item.drugUnit} every ${item.hourlyFeed} hours`,
                         `Administration frequency: ${item.administrationFrequency}`,
                         `Route of Administration: ${item.routeOfAdministration}`,
                         `${item.managementText}`,
@@ -93,7 +93,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                             <Text
                                 color="textSecondary"
                                 mt="s"
-                            >Hourly dosage: {`${d.hourlyDosage} ${d.drugUnit} / ${d.hourlyFeed} hours`}</Text>
+                            >Hourly dosage: {`${d.hourlyDosage} ${d.drugUnit} every ${d.hourlyFeed} hours`}</Text>
 
                             <Text
                                 color="textSecondary"
