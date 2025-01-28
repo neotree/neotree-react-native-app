@@ -16,6 +16,7 @@ import { TypeManagement } from './_TypeManagement';
 import { Diagnosis } from './Diagnosis';
 import { TypeDrugs } from './drugs';
 import { EdlizSummaryTable } from './EdlizSummaryTable';
+import { TypeFluids } from './fluids';
 
 type ScreenTypeProps = {
     searchVal: string;
@@ -44,6 +45,9 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 				let useContentWidth = true;
 
 				switch (activeScreen?.type) {
+					case 'fluids':
+						Component = TypeFluids;
+						break;
 					case 'drugs':
 						Component = TypeDrugs;
 						break;

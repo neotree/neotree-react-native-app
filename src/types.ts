@@ -89,6 +89,7 @@ export type DrugField = {
 
 export type DrugsLibraryItem = {
   id: number;
+  type: 'drug' | 'fluid' | 'feed';
   itemId: string;
   key: string;
   drug: string;
@@ -100,6 +101,9 @@ export type DrugsLibraryItem = {
   maxAge: number | null;
   dosage: number | null;
   dosageMultiplier: number | null;
+  hourlyFeed: number | null;
+  hourlyFeedDivider: number | null;
+  hourlyDosage: number | null;
   dayOfLife: string;
   dosageText: string;
   managementText: string;

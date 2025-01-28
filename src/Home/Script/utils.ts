@@ -1,5 +1,6 @@
 import * as types from '@/src/types';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
+import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
 
 export const evaluateCondition = (condition: string, defaultEval = false) => {
     let conditionMet = defaultEval;
@@ -188,11 +189,33 @@ export const getScriptUtils = ({
                     entries: form,
                     drugsLibrary,
                     screen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
                 screen = s;
     
                 if (!s.data?.metadata?.drugs?.length) {
+                    const res = getTargetScreen(index);
+                    if (res) {
+                        screen = res?.screen;
+                        index = res?.index;
+                    } else {
+                        screen = null;
+                    }
+                }
+            }
+
+            if (screen?.type === 'fluids') {
+                const s = evaluateFluidsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                });
+
+                screen = s;
+    
+                if (!s.data?.metadata?.fluids?.length) {
                     const res = getTargetScreen(index);
                     if (res) {
                         screen = res?.screen;
@@ -251,11 +274,27 @@ export const getScriptUtils = ({
                     entries: form,
                     drugsLibrary,
                     screen: lastScreen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
                 lastScreen = s;
     
                 if (!s.data?.metadata?.drugs?.length) {
+                    lastScreen = getLastScreen(lastScreenIndex);
+                }
+            }
+
+            if (lastScreen?.type === 'fluids') {
+                const s = evaluateFluidsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen: lastScreen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                });
+
+                lastScreen = s;
+    
+                if (!s.data?.metadata?.fluids?.length) {
                     lastScreen = getLastScreen(lastScreenIndex);
                 }
             }
