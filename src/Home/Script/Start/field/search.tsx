@@ -86,10 +86,10 @@ export function Search({
     function renderList(sessions: any[]) {
         return (
             <>
-                {sessions.map((s: any) => {
+                {sessions.map((s: any,index:number) => {
                     const selected = s.data.unique_key === selectedSession?.data?.unique_key;
                     return (
-                        <React.Fragment key={s.data.unique_key}>
+                        <React.Fragment key={index}>
                             <Box
                                 borderBottomColor="divider"
                                 borderBottomWidth={1}
@@ -99,7 +99,7 @@ export function Search({
                                     value={s.data.unique_key}
                                     checked={selected}
                                     onChange={() => {
-                                        const session = selected ? null : s;
+                                        const session = selected ? s : null;
 										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
 										if (autoFill) {
 											if (filterEntries) {
@@ -121,6 +121,7 @@ export function Search({
 											autoFill, 
 											prePopulateWithUID: prePopulateWithUID !== false,
 										} : null;
+                                       
                                         setSelectedSession(session);
                                         onSession(matched);
                                     }}
