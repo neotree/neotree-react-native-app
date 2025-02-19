@@ -19,6 +19,7 @@ type SearchProps = {
 };
 
 function getSessionFacility(session: any) {
+    console.log("----SESSS---",session)
     const birthFacility = session?.data?.entries?.BirthFacility?.values;
     const otherBirthFacility = session?.data?.entries?.OtherBirthFacility?.values;
     const birthFacilityLabel = birthFacility?.label ? birthFacility.label[0] : '';
@@ -73,6 +74,7 @@ export function Search({
             if(!sessions){
             sessions = await api.getExportedSessionsByUID(uid);
             }
+            console.log("...SEARCHED SESSIONS....",sessions)
             setSessions(sessions);
             setSearching(false);
             setSearched(uid);
@@ -121,6 +123,8 @@ export function Search({
 											autoFill, 
 											prePopulateWithUID: prePopulateWithUID !== false,
 										} : null;
+
+                                        console.log('####-----',matched)
                                        
                                         setSelectedSession(session);
                                         onSession(matched);
