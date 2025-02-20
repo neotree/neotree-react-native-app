@@ -29,6 +29,7 @@ export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((re
 
         try {
 			const localRes = await dbTransaction(`select * from sessions where uid='${uid}';`);
+
 			const localSessions: any = await convertSessionsToExportable((localRes || []).filter(s => s.data).map(s => ({
 				...s,
 				data: JSON.parse(s.data),

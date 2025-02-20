@@ -19,7 +19,6 @@ type SearchProps = {
 };
 
 function getSessionFacility(session: any) {
-    console.log("----SESSS---",session)
     const birthFacility = session?.data?.entries?.BirthFacility?.values;
     const otherBirthFacility = session?.data?.entries?.OtherBirthFacility?.values;
     const birthFacilityLabel = birthFacility?.label ? birthFacility.label[0] : '';
@@ -71,10 +70,10 @@ export function Search({
         (async () => {
             setSearching(true);
             let sessions = qrSession
-            if(!sessions){
+            if(!sessions || sessions.length<=0){
             sessions = await api.getExportedSessionsByUID(uid);
+          
             }
-            console.log("...SEARCHED SESSIONS....",sessions)
             setSessions(sessions);
             setSearching(false);
             setSearched(uid);
@@ -89,7 +88,7 @@ export function Search({
         return (
             <>
                 {sessions.map((s: any,index:number) => {
-                    const selected = s.data.unique_key === selectedSession?.data?.unique_key;
+                    let selected = selectedSession!=null
                     return (
                         <React.Fragment key={index}>
                             <Box
@@ -101,6 +100,11 @@ export function Search({
                                     value={s.data.unique_key}
                                     checked={selected}
                                     onChange={() => {
+                                        if(selected){
+                                         selected=false
+                                        }else{
+                                            selected=true
+                                        }
                                         const session = selected ? s : null;
 										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
 										if (autoFill) {
@@ -117,16 +121,18 @@ export function Search({
 												}, {});
 											}
 										}
+                                        if(selected){
+                                            setSelectedSession(session)
+                                        }else{
+                                            selectedSession(null)
+                                        }
                                         const matched = session ? { 
 											session, 
 											uid, 
 											autoFill, 
 											prePopulateWithUID: prePopulateWithUID !== false,
 										} : null;
-
-                                        console.log('####-----',matched)
-                                       
-                                        setSelectedSession(session);
+                                
                                         onSession(matched);
                                     }}
                                     label={(

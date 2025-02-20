@@ -48,7 +48,6 @@ export default async (session: any, showConfidential?: boolean) => {
                     errorCorrectionLevel:erc
                   }, (err, url) => {
                     if (err) {
-                      console.log("...THE ERRR..", err);
                       reject(err); // Reject the promise if there's an error
                     } else {
                       resolve(url); // Resolve the promise with the URL
@@ -58,7 +57,6 @@ export default async (session: any, showConfidential?: boolean) => {
               return url
       
     } catch (e) {
-      console.log('----RERRRS---',e)
       return null;
     }
   };
