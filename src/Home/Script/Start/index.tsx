@@ -22,9 +22,6 @@ export function Start() {
         }, 
     } = useContext()||{};
 
-    console.log('.....ERE......',matched)
-    
-
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
 
     const [fields, setFields] = useState<types.NuidSearchFormField[]>(nuidSearchFields.map((f: any) => ({

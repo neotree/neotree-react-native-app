@@ -17,6 +17,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
 
             if (exportData.length) {
                 const postData: any = await convertSessionsToExportable(exportData);
+           
                 postData.forEach((s: any, i: any) => promises.push(new Promise((resolve, reject) => {
                     (async () => {
                         try {
