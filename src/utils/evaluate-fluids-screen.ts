@@ -91,10 +91,10 @@ export function evaluateFluidsScreen({
             );
         }).map(d => {
             let dosage = (d.dosage! * d.dosageMultiplier!) * d.weight!;
-            dosage = isNaN(dosage) ? dosage : Number(dosage.toFixed(2));
+            dosage = isNaN(dosage) ? dosage : Math.round(dosage);
 
             let hourlyDosage = dosage / (d.hourlyFeedDivider || 1);
-            hourlyDosage = isNaN(hourlyDosage) ? hourlyDosage : Number(hourlyDosage.toFixed(2));
+            hourlyDosage = isNaN(hourlyDosage) ? hourlyDosage : Math.round(hourlyDosage);
 
             return {
                 ...d,

@@ -99,7 +99,7 @@ export function evaluateDrugsScreen({
             );
         }).map(d => {
             let dosage = (d.dosage! * d.dosageMultiplier!) * d.weight!;
-            dosage = isNaN(dosage) ? dosage : Number(dosage.toFixed(2));
+            dosage = isNaN(dosage) ? dosage : Math.round(dosage);
             return {
                 ...d,
                 dosage,
