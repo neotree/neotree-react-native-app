@@ -65,12 +65,16 @@ export async function printSectionsToHTML({
                     .filter((e: any) => e.printable !== false)
                     .map((v: any) => {
                         let isFlexRow = true;
+                        let hideLabel = false;
 
-                        if (['fluids', 'drugs'].includes(screenType)) isFlexRow = false;
+                        if (['fluids', 'drugs'].includes(screenType)) {
+                            isFlexRow = false;
+                            hideLabel = true;
+                        }
 
                         return `
                             <div  class="${isFlexRow ? 'row' : ''}">
-                                <span style="display:block;font-weight:bold;">${screenMeta.label || v.label}</span>
+                                <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
                                 <div>
                                     ${v.value && v.value.map ? 
                                         v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />') 
