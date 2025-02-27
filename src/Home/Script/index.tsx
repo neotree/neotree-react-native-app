@@ -261,6 +261,40 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 	};
 
+	const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
+        const preferences = {
+            ...defaultPreferences,
+            ...screen?.data?.preferences,
+        } as typeof defaultPreferences;
+
+        const fieldPreferences = {
+            fontSize: preferences.fontSize[field],
+            fontWeight: preferences.fontWeight[field],
+            fontStyle: preferences.fontStyle[field] || [],
+            textColor: preferences.textColor[field],
+            backgroundColor: preferences.backgroundColor[field],
+            highlight: preferences.highlight[field],
+        };
+
+        return {
+            ...fieldPreferences,
+            style: {
+                color: fieldPreferences?.textColor,
+                fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
+                fontWeight: !fieldPreferences?.fontWeight ? undefined : {
+                    bold: 900,
+                }[fieldPreferences.fontWeight!],
+                fontSize: !fieldPreferences?.fontSize ? undefined : {
+                    xs: 6,
+                    sm: 12,
+                    default: undefined,
+                    lg: 20,
+                    xl: 26,
+                }[fieldPreferences.fontSize!],
+            } as TextProps['style'],
+        };
+    }, [activeScreen]);
+
 	const setNavOptions = React.useCallback(() => {
 		navigation.setOptions(getNavOptions({ 
 			script, 
@@ -268,11 +302,22 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			activeScreen, 
 			activeScreenIndex,
             moreNavOptions,
+			getFieldPreferences,
             confirmExit, 
 			goBack: moreNavOptions?.goBack || goBack,
             goNext: moreNavOptions?.goNext || goNext,
 		}));
-	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions, summary]);
+	}, [
+		script, 
+		route, 
+		navigation, 
+		theme, 
+		activeScreen, 
+		activeScreenIndex, 
+		moreNavOptions, 
+		summary,
+		getFieldPreferences
+	]);
 
 	React.useEffect(() => {
         (async () => {
@@ -313,40 +358,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
         const s = screens.filter(s => ['BirthFacility'].includes(s?.data?.metadata?.key))[0]
         return (s?.data?.metadata?.items || []);
     };
-
-    const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
-        const preferences = {
-            ...defaultPreferences,
-            ...screen?.data?.preferences,
-        } as typeof defaultPreferences;
-
-        const fieldPreferences = {
-            fontSize: preferences.fontSize[field],
-            fontWeight: preferences.fontWeight[field],
-            fontStyle: preferences.fontStyle[field] || [],
-            textColor: preferences.textColor[field],
-            backgroundColor: preferences.backgroundColor[field],
-            highlight: preferences.highlight[field],
-        };
-
-        return {
-            ...fieldPreferences,
-            style: {
-                color: fieldPreferences?.textColor,
-                fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
-                fontWeight: !fieldPreferences?.fontWeight ? undefined : {
-                    bold: 900,
-                }[fieldPreferences.fontWeight!],
-                fontSize: !fieldPreferences?.fontSize ? undefined : {
-                    xs: 6,
-                    sm: 12,
-                    default: undefined,
-                    lg: 20,
-                    xl: 26,
-                }[fieldPreferences.fontSize!],
-            } as TextProps['style'],
-        };
-    }, [activeScreen]);
 
 	if (refresh) return null;
 
