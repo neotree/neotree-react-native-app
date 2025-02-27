@@ -59,7 +59,7 @@ export function Summary({
                                 .map(({
                                     values,
                                     management = [],
-                                    screen: { metadata: { label } }
+                                    screen: { metadata: { label }, type }
                                 }: any, entryIndex: number) => {
                                     management = management.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
@@ -68,18 +68,34 @@ export function Summary({
                                         .filter((v: any) => v.valueText || v.value)
                                         .filter((v: any) => v.printable !== false)
                                         .map((v: any, i: number) => {
+                                            let isFlexRow = true;
+
+                                            if (['fluids', 'drugs'].includes(type)) isFlexRow = false;
+
                                             return (
                                                 <Box key={`${entryIndex}${i}`}>
                                                     <Box
-                                                        flexDirection="row"
                                                         columnGap="l"
                                                         mb="m"
+                                                        {...(isFlexRow ? {
+                                                            flexDirection: 'row',
+                                                        } : {
+                                                            flexDirection: 'column',
+                                                        })}
                                                     >
-                                                        <Box flex={1}>
+                                                        <Box 
+                                                            {...(isFlexRow ? {
+                                                                flex: 1,
+                                                            } : {})}
+                                                        >
                                                             <Text color="textSecondary">{label || v.label}</Text>
                                                         </Box>
 
-                                                        <Box flex={1}>
+                                                        <Box
+                                                            {...(isFlexRow ? {
+                                                                flex: 1,
+                                                            } : {})}
+                                                        >
                                                             {
                                                                 v.value && v.value.map ?
                                                                     v.value.map((v: any, j: number) => (

@@ -66,7 +66,7 @@ export default  async ({ session, showConfidential, }: {
           .map(({
             values,
             // management, 
-            screen: { metadata: { label } }
+            screen: { metadata: { label }, type }
           }: any) => {
             // management = management || [];
 
@@ -75,9 +75,13 @@ export default  async ({ session, showConfidential, }: {
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
               .map((v: any) => {
+                let isFlexRow = true;
+
+                if (['fluids', 'drugs'].includes(type)) isFlexRow = false;
+
                 return `
-                        <div  class="row">
-                          <span>${label || v.label}</span>
+                        <div  class="${isFlexRow ? 'row' : ''}">
+                          <span style="display:block;font-weight:bold;">${label || v.label}</span>
                           <div>
                               ${v.value && v.value.map ?
                                   v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />')

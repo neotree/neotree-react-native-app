@@ -6,15 +6,16 @@ import { getScriptUtils } from './utils';
 import { TextProps } from 'react-native';
 
 export type MoreNavOptions = {
-    goBack?: () => void;
-    goNext?: () => void;
     title?: string;
+    titleStyle?: TextProps['style'];
     subtitle?: string;
     hideHeaderRight?: boolean;
     hideSubtitle?: boolean;
     showFAB?: boolean;
     hideSearch?: boolean;
     headerRight?: DrawerNavigationOptions['headerRight'];
+    goBack?: () => void;
+    goNext?: () => void;
 };
 
 export type PatientDetails = {
