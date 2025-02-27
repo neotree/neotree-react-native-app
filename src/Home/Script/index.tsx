@@ -276,22 +276,32 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
             highlight: preferences.highlight[field],
         };
 
+		const styleObj: { [key: string]: any; } = {
+			color: fieldPreferences?.textColor,
+			fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
+			fontWeight: !fieldPreferences?.fontWeight ? undefined : {
+				bold: 900,
+			}[fieldPreferences.fontWeight!],
+			fontSize: !fieldPreferences?.fontSize ? undefined : {
+				xs: 6,
+				sm: 12,
+				default: undefined,
+				lg: 20,
+				xl: 26,
+			}[fieldPreferences.fontSize!],
+		};
+
+		const style = Object.keys(styleObj).reduce((acc, key) => {
+			if (styleObj[key] === undefined) return acc;
+			return {
+				...acc,
+				[key]: styleObj[key],
+			};
+		}, {}) as TextProps['style'];
+
         return {
             ...fieldPreferences,
-            style: {
-                color: fieldPreferences?.textColor,
-                fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
-                fontWeight: !fieldPreferences?.fontWeight ? undefined : {
-                    bold: 900,
-                }[fieldPreferences.fontWeight!],
-                fontSize: !fieldPreferences?.fontSize ? undefined : {
-                    xs: 6,
-                    sm: 12,
-                    default: undefined,
-                    lg: 20,
-                    xl: 26,
-                }[fieldPreferences.fontSize!],
-            } as TextProps['style'],
+            style,
         };
     }, [activeScreen]);
 

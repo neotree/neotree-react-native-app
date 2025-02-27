@@ -69,24 +69,27 @@ export function Summary({
                                         .filter((v: any) => v.printable !== false)
                                         .map((v: any, i: number) => {
                                             let isFlexRow = true;
+                                            let hideLabel = false;
 
-                                            if (['fluids', 'drugs'].includes(type)) isFlexRow = false;
+                                            if (['fluids', 'drugs'].includes(type)) {
+                                                isFlexRow = false;
+                                                hideLabel = true;
+                                            }
 
                                             return (
                                                 <Box key={`${entryIndex}${i}`}>
                                                     <Box
                                                         columnGap="l"
                                                         mb="m"
-                                                        {...(isFlexRow ? {
-                                                            flexDirection: 'row',
-                                                        } : {
-                                                            flexDirection: 'column',
-                                                        })}
+                                                        style={{
+                                                            flexDirection: isFlexRow ? 'row' : undefined,
+                                                        }}
                                                     >
                                                         <Box 
-                                                            {...(isFlexRow ? {
-                                                                flex: 1,
-                                                            } : {})}
+                                                            style={{
+                                                                flex: isFlexRow ? 1 : undefined,
+                                                                display: hideLabel ? 'none' : undefined,
+                                                            }}
                                                         >
                                                             <Text color="textSecondary">{label || v.label}</Text>
                                                         </Box>
