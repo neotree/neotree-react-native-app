@@ -5,7 +5,7 @@ import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import * as types from '../../types';
 import { Theme, Text, Box, Modal, Radio } from '../../components';
-import { MoreNavOptions } from './Context';
+import { ContextType, MoreNavOptions } from './Context';
 
 type GetNavOptionsParams = {
 	script: null | types.Script;
@@ -13,6 +13,7 @@ type GetNavOptionsParams = {
 	activeScreen: null | types.Screen;
 	activeScreenIndex: number;
 	moreNavOptions: null | MoreNavOptions;
+	getFieldPreferences: ContextType['getFieldPreferences'];
     goNext: () => void;
     goBack: () => void;
 	confirmExit: () => void;
@@ -129,7 +130,9 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
         const { script, activeScreen, moreNavOptions, goBack, confirmExit, goNext } = params;
         return ({ tintColor }) => {
             const title = moreNavOptions?.title || (activeScreen ? activeScreen?.data?.title : script?.data?.title);
+			const titleStyle = params.moreNavOptions?.titleStyle || ((activeScreen && !moreNavOptions?.title) ? params.getFieldPreferences('title')?.style : undefined);
             const headerRight = moreNavOptions?.headerRight;
+
             return (
                 <View
                     style={{
@@ -151,7 +154,7 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 
                     <Box flex={1}>
                         <Text
-                            style={{ color: tintColor }}
+                            style={[{ color: tintColor }, titleStyle]}
                             variant="title3"
                             numberOfLines={1}
                         >{title}</Text>

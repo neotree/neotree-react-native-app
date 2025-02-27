@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, TextProps } from 'react-native';
 import { Box } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
@@ -43,12 +43,13 @@ export function Diagnosis(props: DiagnosisProps) {
     const {
         navigation,
         activeScreenEntry,
-        setEntryValues,
+        activeScreen,
+        getFieldPreferences,
         goNext: ctxGoNext,
-        getSuggestedDiagnoses,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
-        activeScreen
+        setEntryValues,
+        getSuggestedDiagnoses,
     } = useContext();
 
 
@@ -192,11 +193,25 @@ export function Diagnosis(props: DiagnosisProps) {
             showFAB: true,
             hideHeaderRight: false,
             hideSearch: section !== 'select',
-            title: (() => {
-                if (activeDiagnosisIndex !== null) return `${acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name}`;
-                if (section === 'agree_disagree') return `${activeScreen?.data?.title2 || ''}`;
-                if (section === 'sort_priority') return `${activeScreen?.data?.title3 || ''}`;
-                return;
+            ...(() => {
+                let title: undefined | string = undefined;
+                let titleStyle: undefined | TextProps['style'] = undefined;
+
+                if (activeDiagnosisIndex !== null) {
+                    title = `${acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name}`;
+                } else {
+                    if (section === 'agree_disagree') {
+                        title = `${activeScreen?.data?.title2 || ''}`;
+                        titleStyle = getFieldPreferences('title2')?.style;
+                    }
+
+                    if (section === 'sort_priority') {
+                        title = `${activeScreen?.data?.title3 || ''}`;
+                        titleStyle = getFieldPreferences('title3')?.style;
+                    }
+                }
+
+                return { title, titleStyle, };
             })(),
         });
     };
