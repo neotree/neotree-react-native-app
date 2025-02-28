@@ -328,7 +328,6 @@ export const getScriptUtils = ({
     }
 
     function getSuggestedDiagnoses() {
-        return diagnoses.map((d, i) => d.data).filter((d, i) => i < 4);
         diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
             return [...acc, d];
