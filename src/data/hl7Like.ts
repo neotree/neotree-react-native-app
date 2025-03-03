@@ -10,7 +10,6 @@ export function toHL7Like(data: any) {
     // METADATA
     Object.keys(data).filter(k => (k != 'entries' && k != 'diagnoses'&&k!='scriptTitle')).map((k) => {
   
-    
         if(k==='script'){
           Object.keys(data[k]).filter(ki=>ki!=='id').map((ki)=>{
             metadata+=`${ki}|${data[k][ki]}\n`
@@ -21,11 +20,15 @@ export function toHL7Like(data: any) {
           }
         }
     })
+
+    // DIAGNOSES
     Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
+    
    const diags = data[k]
    if(Array.isArray(diags) && diags.length>0){
     diags.map(d=>{
-      Object.keys(d).map(key=>{
+      Object.keys(d).map((key)=>{
+
         const {Priority,Suggested,hcw_agree,hcw_follow_instructions,hcw_reason_given}=d[key]
         const values = [
           key,
@@ -47,24 +50,41 @@ export function toHL7Like(data: any) {
     
     // ENTRIES
     Object.keys(data).filter(k => (k === 'entries')).map((k) => {
-       
+    
     const entriesArray = data[k]
-
     Object.keys(entriesArray).map((key: any) => {
-  
-            const {values,type} = entriesArray[key]
-            if(type!=='diagnosis'){
+            const {values,type,prePopulate} = entriesArray[key]
+            if(type!=='diagnosis' && Array.isArray(prePopulate) && prePopulate.length>0 ){
             const value = values?.value
              if(value &&Array.isArray(value)&& value.length>0 && value[0]!=null){
-              entries+= `${key}|${value.join('^')}\n`
+              entries+= `${key}|${value.join('^')}|${formatPrepopulate(prePopulate)}\n`
              }
             }
         })
     })
    
-   const combined = `${metadata}${entries}${diagnoses}`
-    return textToNumbers(compressDataForQRCode(combined))
+   let combined = `${metadata}${entries}`
+   let compressed = textToNumbers(compressDataForQRCode(combined))
+   while(compressed&&compressed.length>2800){
+    combined = truncateData(combined)
+    compressed = textToNumbers(compressDataForQRCode(combined))
+   }
+
+    return compressed;
 }
+
+function truncateData(data:any) {
+ 
+  let lines = data.split('\n');
+
+  if (lines.length > 0) {
+    // Remove the last line
+    lines.pop();
+  }
+
+  return lines.join('\n');
+}
+
 function compressDataForQRCode(data: any) {
   try {
 
@@ -112,6 +132,8 @@ export function fromHL7Like(data: string) {
   }
   return []
 }
+
+export 
 
 function textToNumbers(data: any) {
   return data.split('').map((char: any) => char.charCodeAt(0)).join('');
@@ -170,10 +192,11 @@ function convertToJSON(input:string) {
 
       if (currentSection === result.entries) {
           // Inside EDH section
-          const [key, value] = parts;
+          const [key, value,prePopulate] = parts;
           currentSection[key] = {
               values: {
-                  value: value.split("^") // Split on "^" for multiple values
+                  value: value.split("^"), // Split on "^" for multiple values
+                  prePopulate:reverseFormatPrepopulate(prePopulate)
               }
           };
       } else if (currentSection === result.diagnoses) {
@@ -218,3 +241,42 @@ function toDataType(value:any) {
   return value
  }
 }
+
+function reverseFormatPrepopulate(formattedString: string): string[] {
+  // Split the formatted string by '^' to get the array of aliases
+  const aliases = formattedString.split('^');
+
+  // Create a lookup map for quick access to values based on aliases
+  const valueMap = new Map(searchTypes.map(({ value, alias }) => [alias, value]));
+
+  // Map each alias to its corresponding value or keep the alias if no match is found
+  const values = aliases.map(alias => {
+    return valueMap.get(alias) || ''; // Use value or keep the alias as-is
+  });
+  
+  return values;
+}
+
+function formatPrepopulate(prePopulate: any): string {
+  // Ensure the input is an array
+  if (!Array.isArray(prePopulate)) {
+    return ''
+  }
+  // Create a lookup map for quick access to aliases
+  const aliasMap = new Map(searchTypes.map(({ value, alias }) => [value, alias]));
+
+  // Map each item to its corresponding alias or default to the first 2 characters
+  const formattedArray = prePopulate.map(item => {
+    const str = String(item); // Convert to string
+    return aliasMap.get(str) || ''
+  });
+
+  // Join the array with '^' separator
+  return formattedArray.join('^');
+}
+
+export const searchTypes = [
+  { value: 'admissionSearches', alias: 'AS', },
+  { value: 'twinSearches', alias: 'TS', },
+  { value: 'allSearches', alias: 'OS', },
+];
