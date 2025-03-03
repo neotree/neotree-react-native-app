@@ -103,6 +103,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
 		const summary = utils.createSessionSummary(params);
+	
 		(async () => {
 			try {
 				const res = await api.saveSession({
@@ -462,7 +463,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					// setMountedScreens(prev => ({
 					// 	...prev,
 					// 	[activeScreen.id]: true,
-					// }));					
+					// }));	
+							
 					if (values) {
 						const { label, dataType } = activeScreen.data.metadata;
 						setEntry({

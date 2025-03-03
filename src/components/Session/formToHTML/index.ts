@@ -1,7 +1,6 @@
 /* eslint-disable indent */
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
-import RNQRGenerator from 'rn-qr-generator';
 import { reportErrors } from '../../../data/api';
 import { formatExportableSession } from '../../../data/getConvertedSession'
 import { toHL7Like } from '../../../data/hl7Like'
@@ -15,7 +14,7 @@ import QRCode from 'qrcode';
 
 
 export default async (session: any, showConfidential?: boolean) => {
-  let { form, management } = session.data;
+  let { form, management,country } = session.data;
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
@@ -23,9 +22,9 @@ export default async (session: any, showConfidential?: boolean) => {
   
   const generateQRCode = async () => {
     try {
-     
-      const formattedData = await formatExportableSession(session, { showConfidential: true });
+      const formattedData = await formatExportableSession(session, { showConfidential: country==='mwi' });
       const hl7 = toHL7Like(formattedData);
+     
 
       // QR code parameters
       const dataToEncode:any = hl7
@@ -39,22 +38,24 @@ export default async (session: any, showConfidential?: boolean) => {
        erc='L'
       }
      
-        const url = await new Promise((resolve, reject) => {
-                  QRCode.toString([{data:dataToEncode,mode:'numeric'}], 
-                    { width: 600
-                      ,version: 40,
-                    type:'svg'
-                    ,margin:10,
-                    errorCorrectionLevel:erc
-                  }, (err, url) => {
-                    if (err) {
-                      reject(err); // Reject the promise if there's an error
-                    } else {
-                      resolve(url); // Resolve the promise with the URL
-                    }
-                  });
-                });       
-              return url
+      const url = await new Promise((resolve, reject) => {
+        QRCode.toString(
+          dataToEncode,
+          {
+            type: 'svg',
+            errorCorrectionLevel: erc,
+            margin: 2,
+          },
+          (err, url) => {
+            if (err) {
+              reject(err); // Reject the promise if there's an error
+            } else {
+              resolve(url); // Resolve the promise with the SVG string
+            }
+          }
+        );
+      });
+      return url;
       
     } catch (e) {
       return null;
@@ -184,5 +185,5 @@ export default async (session: any, showConfidential?: boolean) => {
 
  
 
-  return baseHTML(`<div>${qrcode}</div><div class="grid">${tables}</div><div>${managementHTML}</div>`, session);
+  return baseHTML(`<div class="grid">${qrcode}${tables}</div><div>${managementHTML}</div>`, session);
 };

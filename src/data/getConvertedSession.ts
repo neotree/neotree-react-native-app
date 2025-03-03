@@ -13,6 +13,8 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                 const diagnosisScreenEntry = form.filter((e: any) => e.screen.type === 'diagnosis')[0];
                 const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.map((v: any) => v.diagnosis);
 
+                
+
                 return {
                     uid: session.uid,
                     unique_key,
@@ -69,6 +71,7 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                                         exportValue,
                                         exportLabel,
                                         exportType,
+                                        prePopulate
                                     } = v;
 
                                     if (value && value.map) {
@@ -77,7 +80,7 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                                             {
                                                 [key]: {
                                                     type: exportType || dataType || type,
-													prePopulate: e.prePopulate || [],
+													prePopulate: prePopulate || e.prePopulate || [],
                                                     values: value.reduce((acc: any, item: any) => {
 														const { value, label, valueLabel, exportValue, exportLabel } = item;
 														acc.label.push(exportLabel || valueLabel || label);
@@ -94,7 +97,7 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                                         {
                                             [key]: {
 												type: exportType || dataType || type,
-												prePopulate: e.prePopulate || [],
+												prePopulate: prePopulate||e.prePopulate || [],
 												values: {
                                                     label: [exportLabel || valueLabel || label],
                                                     value: [exportValue || getVal(v)]

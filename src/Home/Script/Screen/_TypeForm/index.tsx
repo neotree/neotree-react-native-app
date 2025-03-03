@@ -54,6 +54,7 @@ export function TypeForm({}: TypeFormProps) {
             type: f.type,
             dataType: f.dataType,
             confidential: f.confidential,
+            prePopulate: f.prePopulate
         };
     }));
     
