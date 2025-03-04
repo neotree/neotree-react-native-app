@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, Modal, TouchableOpacity, Platform } from 'react-native';
+import { Dimensions, Modal, TouchableOpacity, Platform, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { Box, FormAndDiagnosesSummary, Header, PrintSession, useTheme,PrintBarCode,Text} from '../../components';
@@ -29,7 +29,7 @@ export function Session({ session, onBack }: SessionProps) {
             animationType="slide"
             onRequestClose={() => onClose()}
         >
-            <Box backgroundColor="white" flex={1} height={winH}>
+            <Box flex={1} style={{ backgroundColor: '#ffffff', }}>
                 <Header
                     left={(
                         <TouchableOpacity onPress={() => onClose()}>
@@ -67,14 +67,14 @@ export function Session({ session, onBack }: SessionProps) {
                     )}
                 />
 
-                <Box height={winH - 50}>
+                <View style={{ flex: 1, }}>
                     <FormAndDiagnosesSummary
                         session={session}
                         showConfidential={showConfidential}
                         onShowConfidential={show => setShowConfidential(show)}
                     />
                    
-                </Box>
+                </View>
             </Box>
         </Modal>
     );

@@ -17,11 +17,13 @@ export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
-    session: {data: { form} },
+    session: { uid, data: { form: sessionForm, } },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
-    const excludeScreenTypes = ['edliz_summary_table'];
+    // const excludeScreenTypes = ['zw_edliz_summary_table', 'mwi_edliz_summary_table'];
+    const excludeScreenTypes: string[] = [];
   
+    const form = sessionForm.filter((e: any) => !excludeScreenTypes.includes(e.screen?.type));
 
     const sections: any[] = groupEntries(form);
 
@@ -39,11 +41,11 @@ export function Summary({
                             const key = [sectionTitle, sectionIndex].join('');
 
                             const displayItems = entries
-                                .filter((e: any) => e.values.length && !excludeScreenTypes.includes(e.screen.type))
+                                .filter((e: any) => e.values.length)
                                 .map(({
                                     values,
                                     management = [],
-                                    screen: { metadata: { label } }
+                                    screen: { metadata: { label }, type }
                                 }: any, entryIndex: number) => {
                                     management = management.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
@@ -52,18 +54,37 @@ export function Summary({
                                         .filter((v: any) => v.valueText || v.value)
                                         .filter((v: any) => v.printable !== false)
                                         .map((v: any, i: number) => {
+                                            let isFlexRow = true;
+                                            let hideLabel = false;
+
+                                            if (['fluids', 'drugs'].includes(type)) {
+                                                isFlexRow = false;
+                                                hideLabel = true;
+                                            }
+
                                             return (
                                                 <Box key={`${entryIndex}${i}`}>
                                                     <Box
-                                                        flexDirection="row"
                                                         columnGap="l"
                                                         mb="m"
+                                                        style={{
+                                                            flexDirection: isFlexRow ? 'row' : undefined,
+                                                        }}
                                                     >
-                                                        <Box flex={1}>
+                                                        <Box 
+                                                            style={{
+                                                                flex: isFlexRow ? 1 : undefined,
+                                                                display: hideLabel ? 'none' : undefined,
+                                                            }}
+                                                        >
                                                             <Text color="textSecondary">{label || v.label}</Text>
                                                         </Box>
 
-                                                        <Box flex={1}>
+                                                        <Box
+                                                            {...(isFlexRow ? {
+                                                                flex: 1,
+                                                            } : {})}
+                                                        >
                                                             {
                                                                 v.value && v.value.map ?
                                                                     v.value.map((v: any, j: number) => (
@@ -74,6 +95,18 @@ export function Summary({
                                                                     :
                                                                     <Text>{v.valueText || v.value || 'N/A'}</Text>
                                                             }
+
+                                                            <Box>
+                                                                {v.extraLabels && v.extraLabels.map((label: string, i: number) => {
+                                                                    return (
+                                                                        <Text
+                                                                            key={label + i}
+                                                                            color="textSecondary"
+                                                                            mt="s"
+                                                                        >{label}</Text>
+                                                                    )
+                                                                })}
+                                                            </Box>
                                                         </Box>
                                                     </Box>
 
@@ -121,7 +154,7 @@ export function Summary({
                 </Content>
 
                 {/* {form
-                    .filter(({ values, screen }: any) => values.length && !excludeScreenTypes.includes(screen.type))
+                    .filter(({ values, screen }: any) => values.length)
                     .map(({ screen, values, management }: any) => {
                         management = management || [];
 

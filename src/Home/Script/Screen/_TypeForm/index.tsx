@@ -17,19 +17,24 @@ type TypeFormProps = types.ScreenTypeProps & {
 };
 
 export function TypeForm({}: TypeFormProps) {
-    const {activeScreen,activeScreenEntry,mountedScreens,nuidSearchForm,evaluateCondition,
-        parseCondition,getPrepopulationData,setEntryValues} = useContext()||{};
+    const ctx = useContext();
+
+    const {
+        activeScreen,
+        activeScreenEntry,
+        mountedScreens,
+        nuidSearchForm,
+        evaluateCondition,
+        parseCondition,
+        getPrepopulationData,
+        setEntryValues,
+    } = ctx;
+    
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
 
     const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key=== 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
-
-    const evaluateFieldCondition = (f: any) => {
-        let conditionMet = true;
-        if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
-        return conditionMet;
-    };
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
         const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
@@ -57,6 +62,12 @@ export function TypeForm({}: TypeFormProps) {
             prePopulate: f.prePopulate
         };
     }));
+
+    const evaluateFieldCondition = (f: any) => {
+        let conditionMet = true;
+        if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
+        return conditionMet;
+    };
     
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
@@ -117,6 +128,19 @@ export function TypeForm({}: TypeFormProps) {
                             const conditionMet = evaluateFieldCondition(f);
                             const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
 
+                            const _allValues = [
+                                ...values, 
+                                ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
+                                    ...acc,
+                                    ...e.values,
+                                ], []),
+                            ];
+
+                            const allValues = _allValues.filter((v, i) => {
+                                if (!v.key) return true;
+                                return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
+                            });
+
                             return (
                                 <FormItem
                                     field={f}
@@ -128,6 +152,7 @@ export function TypeForm({}: TypeFormProps) {
                                         fieldIndex={i}
                                         entryValue={values.filter(v => v.key === f.key)[0]}
                                         formValues={values}
+                                        allValues={allValues}
                                         conditionMet={conditionMet}
                                         patientNUID={patientNUID}
                                         onChange={onChange}

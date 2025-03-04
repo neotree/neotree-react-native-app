@@ -50,6 +50,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [script, setScript] = React.useState<null | types.Script>(null);
 	const [screens, setScreens] = React.useState<types.Screen[]>([]);
 	const [diagnoses, setDiagnoses] = React.useState<types.Diagnosis[]>([]);
+	const [drugsLibrary, setDrugsLibrary] = React.useState<types.DrugsLibraryItem[]>([]);
 	const [loadScriptError, setLoadScriptError] = React.useState('');
 
 	const [loadingConfiguration, setLoadingConfiguration] = React.useState(false);
@@ -99,6 +100,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		matchingSession: matched?.session || null,
 		session: route.params?.session,
         generatedUID,
+		drugsLibrary,
 	});
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
@@ -141,8 +143,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScreens([]);
 				setDiagnoses([]);
 				setActiveScreen(null);
+				setDrugsLibrary([]);
 
 				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
+				const drugsLibrary = await api.getDrugsLibrary();
 
                 const uid = await generateUID(script?.type);
                 setGeneratedUID(uid);
@@ -150,6 +154,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setScript(script);
 				setScreens(screens);
 				setDiagnoses(diagnoses);
+				setDrugsLibrary(drugsLibrary.map(d => d.data));
 				setLoadingScript(false);
 
 				if (route.params?.session?.data?.form?.length) { 
@@ -194,7 +199,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	};
 
 	const goNext = async () => {
-		const lastScreen = utils.getLastScreen();
+		const lastScreen = { ...utils.getLastScreen() };
 		const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
 
 		const next = utils.getScreen({ direction: 'next' });
@@ -257,6 +262,50 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 	};
 
+	const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
+        const preferences = {
+            ...defaultPreferences,
+            ...screen?.data?.preferences,
+        } as typeof defaultPreferences;
+
+        const fieldPreferences = {
+            fontSize: preferences.fontSize[field],
+            fontWeight: preferences.fontWeight[field],
+            fontStyle: preferences.fontStyle[field] || [],
+            textColor: preferences.textColor[field],
+            backgroundColor: preferences.backgroundColor[field],
+            highlight: preferences.highlight[field],
+        };
+
+		const styleObj: { [key: string]: any; } = {
+			color: fieldPreferences?.textColor,
+			fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
+			fontWeight: !fieldPreferences?.fontWeight ? undefined : {
+				bold: 900,
+			}[fieldPreferences.fontWeight!],
+			fontSize: !fieldPreferences?.fontSize ? undefined : {
+				xs: 6,
+				sm: 12,
+				default: undefined,
+				lg: 20,
+				xl: 26,
+			}[fieldPreferences.fontSize!],
+		};
+
+		const style = Object.keys(styleObj).reduce((acc, key) => {
+			if (styleObj[key] === undefined) return acc;
+			return {
+				...acc,
+				[key]: styleObj[key],
+			};
+		}, {}) as TextProps['style'];
+
+        return {
+            ...fieldPreferences,
+            style,
+        };
+    }, [activeScreen]);
+
 	const setNavOptions = React.useCallback(() => {
 		navigation.setOptions(getNavOptions({ 
 			script, 
@@ -264,11 +313,22 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			activeScreen, 
 			activeScreenIndex,
             moreNavOptions,
+			getFieldPreferences,
             confirmExit, 
 			goBack: moreNavOptions?.goBack || goBack,
             goNext: moreNavOptions?.goNext || goNext,
 		}));
-	}, [script, route, navigation, theme, activeScreen, activeScreenIndex, moreNavOptions, summary]);
+	}, [
+		script, 
+		route, 
+		navigation, 
+		theme, 
+		activeScreen, 
+		activeScreenIndex, 
+		moreNavOptions, 
+		summary,
+		getFieldPreferences
+	]);
 
 	React.useEffect(() => {
         (async () => {
@@ -310,40 +370,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
         return (s?.data?.metadata?.items || []);
     };
 
-    const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
-        const preferences = {
-            ...defaultPreferences,
-            ...screen?.data?.preferences,
-        } as typeof defaultPreferences;
-
-        const fieldPreferences = {
-            fontSize: preferences.fontSize[field],
-            fontWeight: preferences.fontWeight[field],
-            fontStyle: preferences.fontStyle[field] || [],
-            textColor: preferences.textColor[field],
-            backgroundColor: preferences.backgroundColor[field],
-            highlight: preferences.highlight[field],
-        };
-
-        return {
-            ...fieldPreferences,
-            style: {
-                color: fieldPreferences?.textColor,
-                fontStyle: !fieldPreferences.fontStyle.includes('italic') ? undefined : 'italic',
-                fontWeight: !fieldPreferences?.fontWeight ? undefined : {
-                    bold: 900,
-                }[fieldPreferences.fontWeight!],
-                fontSize: !fieldPreferences?.fontSize ? undefined : {
-                    xs: 6,
-                    sm: 12,
-                    default: undefined,
-                    lg: 20,
-                    xl: 26,
-                }[fieldPreferences.fontSize!],
-            } as TextProps['style'],
-        };
-    }, [activeScreen]);
-
 	if (refresh) return null;
 
 	if (loadingConfiguration || loadingScript || !isReady) return <OverlayLoader transparent={false} />;
@@ -379,6 +405,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
                 generatedUID,
 				script,
 				screens,
+				drugsLibrary,
 				diagnoses,
 				activeScreen,
 				activeScreenIndex,
@@ -466,7 +493,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					// }));	
 							
 					if (values) {
-						const { label, dataType } = activeScreen.data.metadata;
+						const screenMeta = activeScreen.data.metadata;
 						setEntry({
 							values,
 							prePopulate: activeScreen?.data?.prePopulate,
@@ -482,7 +509,19 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 								id: activeScreen.id,
 								screen_id: activeScreen.screen_id,
 								type: activeScreen.type,
-								metadata: { label, dataType },
+								metadata: { 
+									label: screenMeta.label, 
+									dataType: screenMeta.dataType,
+									title1:  screenMeta.title1,
+									text1:  screenMeta.text1,
+									image1:  screenMeta.image1,
+									title2:  screenMeta.title2,
+									text2:  screenMeta.text2,
+									image2:  screenMeta.image2,
+									title3:  screenMeta.title3,
+									text3:  screenMeta.text3,
+									image3:  screenMeta.image3,
+								},
 								index: activeScreenIndex,
 							},
 							...otherValues

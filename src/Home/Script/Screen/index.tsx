@@ -6,8 +6,15 @@ import { useContext } from '../Context';
 export function Screen() {
    
     const [searchVal, setSearchVal] = React.useState('');
-    const {activeScreen,getFieldPreferences,moreNavOptions,activeScreenEntry
-        ,summary,setMountedScreens,goNext} = useContext()||{}
+    const {
+        activeScreen,
+        moreNavOptions,
+        activeScreenEntry,
+        summary, 
+        getFieldPreferences,
+        setMountedScreens,
+        goNext
+    } = useContext();
     
     return (
         <Box flex={1}>

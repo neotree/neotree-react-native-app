@@ -13,7 +13,7 @@ export type HeaderProps = {
 
 export function Header({ left, title, right,center }: HeaderProps) {
     return (
-        <Box flex={1} backgroundColor="white">
+        <>
             <Box
                 height={90}
                 elevation={24}
@@ -21,7 +21,8 @@ export function Header({ left, title, right,center }: HeaderProps) {
                 shadowOffset={{ width: -2, height: 4 }}
                 shadowOpacity={0.2}
                 shadowRadius={3}
-                alignItems="center"
+                pb="m"
+                alignItems="flex-end"
                 flexDirection="row"
                 backgroundColor="white"
             >
@@ -46,9 +47,6 @@ export function Header({ left, title, right,center }: HeaderProps) {
                             <Box
                                 width={50}
                                 alignSelf={'center'}
-                                
-                        
-                                
                             >{center}</Box>
                         )}
 
@@ -60,6 +58,6 @@ export function Header({ left, title, right,center }: HeaderProps) {
                     </Box>
                 </SafeAreaView>
             </Box>
-        </Box>
+        </>
     );
 }

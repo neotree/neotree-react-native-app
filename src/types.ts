@@ -82,6 +82,47 @@ export type Diagnosis = any;
 export type ConfigKey = any;
 export type Configuration = any;
 
+export type DrugField = {
+  key: string;
+  position: number;
+};
+
+export type DrugsLibraryItem = {
+  id: number;
+  type: 'drug' | 'fluid' | 'feed';
+  itemId: string;
+  key: string;
+  drug: string;
+  minGestation: number | null;
+  maxGestation: number | null;
+  minWeight: number | null;
+  maxWeight: number | null;
+  minAge: number | null;
+  maxAge: number | null;
+  dosage: number | null;
+  dosageMultiplier: number | null;
+  hourlyFeed: number | null;
+  hourlyFeedDivider: number | null;
+  hourlyDosage: number | null;
+  dayOfLife: string;
+  dosageText: string;
+  managementText: string;
+  gestationKey: string;
+  weightKey: string;
+  diagnosisKey: string;
+  ageKey: string;
+  administrationFrequency: string;
+  drugUnit: string;
+  routeOfAdministration: string;
+  position: number;
+  condition: string;
+  version: number;
+  publishDate: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
 export type Hospital = {
 	id: number;
 	hospital_id: string;
@@ -108,6 +149,7 @@ export type ScreenEntryValue = {
   diagnosis?: Diagnosis;
   prePopulate?: any[];
   printable?: boolean;
+  extraLabels?: string[];
 };
 
 export type ScreenEntry = {
@@ -144,13 +186,15 @@ export type ScreenFormTypeProps = {
   conditionMet: boolean;
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
+  allValues: ScreenEntry['values'];
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {
 	getDefaultDiagnosis: (d?: Diagnosis) => Diagnosis;
 	diagnosisToEntryValue: (d?: Diagnosis) => ScreenEntryValue;
 	setActiveDiagnosisIndex: React.Dispatch<React.SetStateAction<null | number>>;
-	_setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>
+	_setHcwDiagnoses: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>;
+  setOrderBySeverity: React.Dispatch<React.SetStateAction<boolean>>;
 	setHcwDiagnoses: (diagnoses: Diagnosis[]) => void;
 	setDiagnoses: (diagnoses?: Diagnosis[]) => void;
 	setMoreNavOptions: () => void;
