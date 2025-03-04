@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { Box, Button, NeotreeIDInput, TextInput,Br} from '../../../../components';
+import { Box,NeotreeIDInput, TextInput} from '../../../../components';
 import * as types from '../../../../types';
 import { useContext } from '../../Context';
-import { QRCodeScan} from '@/src/components/Session/QRScan/QRCodeScan';
 
 
 type TextFieldProps = types.ScreenFormTypeProps & {
@@ -19,7 +18,6 @@ export function TextField({
 }: TextFieldProps) {
     const {script,generatedUID} = useContext()||{};
     const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
-    
 	const prePopulatedUID = ''; // ctx.matched?.prePopulateWithUID ? ctx.matched?.uid : '';
     // const scriptType = script?.type
     // const isScanable = scriptType==='neolab' ||scriptType==='discharge'

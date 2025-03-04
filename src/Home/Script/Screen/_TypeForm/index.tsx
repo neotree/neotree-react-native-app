@@ -23,7 +23,7 @@ export function TypeForm({}: TypeFormProps) {
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
 
-    const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID')[0]?.value, [nuidSearchForm]);
+    const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key=== 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
 
     const evaluateFieldCondition = (f: any) => {
         let conditionMet = true;
