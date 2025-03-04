@@ -1,4 +1,6 @@
-import * as types from '../../types';
+import * as types from '@/src/types';
+import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
+import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
 
 export const evaluateCondition = (condition: string, defaultEval = false) => {
     let conditionMet = defaultEval;
@@ -52,6 +54,7 @@ type UtilsParams = {
     matchingSession: any;
 	session?: any;
     generatedUID: string;
+    drugsLibrary: types.DrugsLibraryItem[];
 };
   
 export const getScriptUtils = ({
@@ -71,6 +74,7 @@ export const getScriptUtils = ({
     matchingSession,
 	session,
     generatedUID,
+    drugsLibrary,
 }: UtilsParams) => {
     const matches: any[] = [];
 
@@ -178,20 +182,78 @@ export const getScriptUtils = ({
                 index = evaluateCondition(parsedCondition) ? skipToScreenIndex : index;
             }
         
-            const screen = screens[index];
+            let screen = screens[index];
+
+            if (screen?.type === 'drugs') {
+                const s = evaluateDrugsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                });
+
+                screen = s;
+    
+                if (!s.data?.metadata?.drugs?.length) {
+                    const res = getTargetScreen(index);
+                    if (res) {
+                        screen = res?.screen;
+                        index = res?.index;
+                    } else {
+                        screen = null;
+                    }
+                }
+            }
+
+            if (screen?.type === 'fluids') {
+                const s = evaluateFluidsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                });
+
+                screen = s;
+    
+                if (!s.data?.metadata?.fluids?.length) {
+                    const res = getTargetScreen(index);
+                    if (res) {
+                        screen = res?.screen;
+                        index = res?.index;
+                    } else {
+                        screen = null;
+                    }
+                }
+            }
             
             if (!screen) return null;
         
             if (!direction) return { screen, index, };
         
             const target = { screen, index };
-            const condition = screen.data.condition;
+            const condition: string = screen.data.condition || '';
         
             if (!condition) return target;
 
-			const parsedCondition = parseCondition(condition);
+            const parsedCondition = parseCondition(condition);
+            let conditionMet = evaluateCondition(parsedCondition);
+
+            const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
+
+            if (conditionSplit.length > 1) {
+                conditionMet = true;
+                conditionSplit.forEach(c => {
+                    const parsedCondition = parseCondition(c);
+                    const isTrue = evaluateCondition(parsedCondition);
+                    if (!isTrue) conditionMet = false;
+                });
+            }
+
+            if (conditionMet) return target;
+            
+            if (index === (screens.length - 1)) return null;
         
-            return evaluateCondition(parsedCondition) ? target : getTargetScreen(index);
+            return getTargetScreen(index);
         };
         
         return getTargetScreen();
@@ -203,29 +265,69 @@ export const getScriptUtils = ({
         const getScreenIndex = (s: types.Screen) => !s ? -1 : screens.map(s => s.id).indexOf(s.id);
         const activeScreenIndex = getScreenIndex(activeScreen);
     
-        const getLastScreen = (currentIndex: number): types.Screen => {
-            const _current = screens[currentIndex];
+        const getLastScreen = (currentIndex: number): null | types.Screen => {    
+            let lastScreenIndex = currentIndex + 1;
+            let lastScreen = lastScreenIndex >= screens.length ? null : screens[lastScreenIndex];
+
+            if (lastScreen?.type === 'drugs') {
+                const s = evaluateDrugsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen: lastScreen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                });
+
+                lastScreen = s;
     
-            const nextIndex = currentIndex + 1;
-            let next = screens[nextIndex];
-    
-            if (next && next.data.condition) {
-                const conditionMet = evaluateCondition(parseCondition(next.data.condition, form.filter(e => e.screen.id !== next.id)));
-                if (!conditionMet) {
-                    const nextNextIndex = nextIndex + 1;
-                    next = nextNextIndex > screens.length ? null : getLastScreen(nextNextIndex);
+                if (!s.data?.metadata?.drugs?.length) {
+                    lastScreen = getLastScreen(lastScreenIndex);
                 }
             }
+
+            if (lastScreen?.type === 'fluids') {
+                const s = evaluateFluidsScreen({
+                    entries: form,
+                    drugsLibrary,
+                    screen: lastScreen,
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                });
+
+                lastScreen = s;
     
-            const lastIndex = getScreenIndex(next);
-            return lastIndex > -1 ? getLastScreen(lastIndex) : _current;
+                if (!s.data?.metadata?.fluids?.length) {
+                    lastScreen = getLastScreen(lastScreenIndex);
+                }
+            }
+
+            const condition: string = lastScreen?.data?.condition || '';
+            const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
+    
+            if (condition) {
+                const parsedCondition = parseCondition(condition, form.filter(e => e.screen.id !== lastScreen.id));
+                let conditionMet = evaluateCondition(parsedCondition);
+
+                if (conditionSplit.length > 1) {
+                    conditionMet = true;
+                    conditionSplit.forEach(c => {
+                        const parsedCondition = parseCondition(c);
+                        const isTrue = evaluateCondition(parsedCondition);
+                        if (!isTrue) conditionMet = false;
+                    });
+                }
+
+                if (!conditionMet) {
+                    lastScreenIndex = lastScreenIndex + 1;
+                    lastScreen = lastScreenIndex >= screens.length ? null : getLastScreen(lastScreenIndex);
+                }
+            }
+
+            return lastScreen;
         };
     
-        return getLastScreen(activeScreenIndex);
+        return getLastScreen(activeScreenIndex) || activeScreen;
     }
 
     function getSuggestedDiagnoses() {
-        // return diagnoses.map((d, i) => d.data).filter((d, i) => i < 4);
         diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
             return [...acc, d];
@@ -235,7 +337,17 @@ export const getScriptUtils = ({
             ...diagnoses.filter(d => d.data.severity_order || (d.data.severity_order === 0))
                 .sort((a, b) => a.data.severity_order - b.data.severity_order),
             ...diagnoses.filter(d => (d.data.severity_order === null) || (d.data.severity_order === undefined) || (d.data.severity_order === '')),
-        ];
+        ]
+            .map((d, position) => {
+                let sevOrder = d.data.severity_order || (d.data.severity_order === 0) ? Number(d.data.severity_order) : null;
+                if (isNaN(Number(sevOrder))) sevOrder = null;
+
+                return { 
+                    ...d, 
+                    position, 
+                    severity_order: sevOrder,
+                };
+            });
         
         const diagnosesRslts = (() => {
             const rslts = (diagnoses || []).filter(({ data: { symptoms, expression } }) => {

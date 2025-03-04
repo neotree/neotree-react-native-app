@@ -6,15 +6,16 @@ import { getScriptUtils } from './utils';
 import { TextProps } from 'react-native';
 
 export type MoreNavOptions = {
-    goBack?: () => void;
-    goNext?: () => void;
     title?: string;
+    titleStyle?: TextProps['style'];
     subtitle?: string;
     hideHeaderRight?: boolean;
     hideSubtitle?: boolean;
     showFAB?: boolean;
     hideSearch?: boolean;
     headerRight?: DrawerNavigationOptions['headerRight'];
+    goBack?: () => void;
+    goNext?: () => void;
 };
 
 export type PatientDetails = {
@@ -30,6 +31,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     activeScreen: types.Screen;
     activeScreenIndex: number;
     screens: types.Screen[];
+    drugsLibrary: types.DrugsLibraryItem[];
     diagnoses: types.Diagnosis[];
     navigation: NativeStackNavigationProp<types.HomeRoutes, "Script", undefined>;
     entries: types.ScreenEntry[];

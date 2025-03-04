@@ -30,8 +30,17 @@ export function SelectDiagnoses({
 
     const _items: any[] = metadata.items.map((item: any) => {
         const d = allDiagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
+
+        let sevOrder = d?.severity_order || (d?.severity_order === 0) ? Number(d.severity_order) : null;
+        if (isNaN(Number(sevOrder))) sevOrder = null;
+
+        let itemSevOrder = item.severity_order || (item.severity_order === 0) ? Number(item.severity_order) : null;
+        if (isNaN(Number(itemSevOrder))) itemSevOrder = null;
+
         return {
             ...item,
+            key: item.key || item.id,
+            severity_order: itemSevOrder,
             ...(!d ? null : {
                 text1: d.text1,
                 image1: d.image1,
@@ -40,7 +49,7 @@ export function SelectDiagnoses({
                 text3: d.text3,
                 image3: d.image3,
                 symptoms: d.symptoms || [],
-                severity_order: item.severity_order || d.severity_order,
+                severity_order: itemSevOrder || sevOrder,
             }),
         };
     });
@@ -93,23 +102,27 @@ export function SelectDiagnoses({
 						const disabled = exclusiveIsSelected && !isExclusive;
 			
 						const setValue = (val?: Partial<types.Diagnosis>) => {
-							setHcwDiagnoses([...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), {
-								...getDefaultDiagnosis({
-									name: item.label,
-									how_agree: 'Yes',
-									priority: hcwDiagnoses.length,
-									text1: item.text1,
-									image1: item.image1,
-									text2: item.text2,
-									image2: item.image2,
-									text3: item.text3,
-									image3: item.image3,
-									suggested: false,
-									isHcwDiagnosis: true,
-                                    severity_order: item.severity_order,
-									...val,
-								}),
-							}]);
+							setHcwDiagnoses([
+                                ...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
+                                {
+                                    ...getDefaultDiagnosis({
+                                        key: item.key,
+                                        name: item.label,
+                                        how_agree: 'Yes',
+                                        priority: null, // hcwDiagnoses.length,
+                                        text1: item.text1,
+                                        image1: item.image1,
+                                        text2: item.text2,
+                                        image2: item.image2,
+                                        text3: item.text3,
+                                        image3: item.image3,
+                                        suggested: false,
+                                        isHcwDiagnosis: true,
+                                        severity_order: item.severity_order,
+                                        ...val,
+                                    }),
+                                },
+                            ]);
 						};
 
 						return (

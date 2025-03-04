@@ -9,7 +9,7 @@ type SortPriorityProps = types.DiagnosisSectionProps & {
 };
 
 export function SortPriority(props: SortPriorityProps) {
-    const { setDiagnoses, diagnoses } = props;
+    const { setDiagnoses, diagnoses, setOrderBySeverity, } = props;
     const filterCompiled = (d: types.Diagnosis) => d.how_agree !== 'No';
 
     const [mounted, setMounted] = React.useState(false);
@@ -79,6 +79,7 @@ export function SortPriority(props: SortPriorityProps) {
                                                     const items = [...diagnoses].filter((_, j) => j !== i);
                                                     items.splice(Number(value), 0, d);
                                                     setDiagnoses(items.map((d, i) => ({ ...d, priority: i + 1, })));
+                                                    setOrderBySeverity(false);
                                                 }
                                                 setPickerValue('');
                                             }} 

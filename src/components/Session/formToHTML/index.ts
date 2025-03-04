@@ -1,4 +1,5 @@
 /* eslint-disable indent */
+import { generateQRCode } from "@/src/utils/generate-session-qrcode";
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
@@ -24,8 +25,7 @@ export default async (session: any, showConfidential?: boolean) => {
     try {
       const formattedData = await formatExportableSession(session, { showConfidential: country==='mwi' });
       const hl7 = toHL7Like(formattedData);
-     
-
+    
       // QR code parameters
       const dataToEncode:any = hl7
       
@@ -61,7 +61,6 @@ export default async (session: any, showConfidential?: boolean) => {
       return null;
     }
   };
-  
 
   let managementHTML = management.map((screen: any) => {
     let sections = [
@@ -85,7 +84,6 @@ export default async (session: any, showConfidential?: boolean) => {
 	`;
   }).join('');
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
-
   const generateImageHtml = async () => {
 
 
@@ -113,8 +111,6 @@ export default async (session: any, showConfidential?: boolean) => {
   <br/>
   </div>
   `
-
-
   const tables =sections
     .filter(([, entries]) => entries.length)
     .map(([sectionTitle, entries]) => {
@@ -131,7 +127,7 @@ export default async (session: any, showConfidential?: boolean) => {
           .map(({
             values,
             // management, 
-            screen: { metadata: { label } }
+            screen: { metadata: { label }, type }
           }: any) => {
             // management = management || [];
 
@@ -140,16 +136,31 @@ export default async (session: any, showConfidential?: boolean) => {
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
               .map((v: any) => {
+                let isFlexRow = true;
+                let hideLabel = false;
+
+                if (['fluids', 'drugs'].includes(type)) {
+                  isFlexRow = false;
+                  hideLabel = true;
+                }
+
                 return `
-                        <div  class="row">
-                        <span>${label || v.label}</span>
-                        <div>
-                            ${v.value && v.value.map ?
-                    v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />')
-                    :
-                    `<span>${v.valueText || v.value || 'N/A'}</span>`
-                  }
-                        </div>                  
+                        <div  class="${isFlexRow ? 'row' : ''}">
+                          <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
+                          <div>
+                              ${v.value && v.value.map ?
+                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />')
+                                  :
+                                  `<span>${v.valueText || v.value || 'N/A'}</span>`
+                                }
+
+                              ${!v.extraLabels?.length ? '' : `
+                                <div style="margin-top:5px;"></div>
+                                ${v.extraLabels.map((label: string) => {
+                                      return `<span style="color:#999;">${label}</span>`;
+                                  })}
+                              `}
+                          </div>                  
                         </div>
                     `;
               }).join('');
