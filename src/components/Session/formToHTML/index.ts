@@ -1,5 +1,4 @@
 /* eslint-disable indent */
-import { generateQRCode } from "@/src/utils/generate-session-qrcode";
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
@@ -15,7 +14,8 @@ import QRCode from 'qrcode';
 
 
 export default async (session: any, showConfidential?: boolean) => {
-  let { form, management,country } = session.data;
+
+  let { form, management,country } = session?.data;
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 

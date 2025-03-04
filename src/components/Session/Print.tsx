@@ -18,14 +18,13 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
 
     const [printing, setPrinting] = React.useState(false);
     const [, setPrintingError] = React.useState(false);
-
+  
     const print = async () => {
         try {
             setPrinting(true);
         
             const qrCode = await generateQRCode({ session });
-            let html = await formToHTML({ session, showConfidential, });
-
+            let html = await formToHTML(session, showConfidential);
             const printSectionsHTML = await printSectionsToHTML({ session, showConfidential, qrCode });
             if (printSectionsHTML) html = printSectionsHTML;
 
@@ -46,7 +45,7 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
                 onPress={() => print()}
                 disabled={printing}
             >
-                <Icon color={theme.colors.primary} size={24} name="print" />
+                <Icon color={theme.colors.secondary} size={24} name="print" />
             </TouchableOpacity>
         </>
     )
