@@ -38,6 +38,7 @@ export function Transfer({}: TransferProps) {
 				<Search 
 					label="Search patient's NUID" 
 					autofillKeys={['BirthFacility', 'OtherBirthFacility']}
+                    prePopulateWithUID={true}
 				/>
 			)}
         </Box>

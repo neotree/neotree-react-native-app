@@ -116,6 +116,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                             autoFill,
                                             prePopulateWithUID: prePopulateWithUID !== false,
                                         } : null;
+
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));
                                         setMatched(matched);
