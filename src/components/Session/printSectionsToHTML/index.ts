@@ -10,7 +10,6 @@ export async function printSectionsToHTML({
     qrCode: string;
 }) {
     const { form, script } = session.data;
-    
     const sections = (script?.data?.printSections || [])
         .map((s: any) => {
             return {
