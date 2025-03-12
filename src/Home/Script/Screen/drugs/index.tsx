@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Box, Br, Card, Text, Radio } from '@/src/components';
 import * as types from '@/src/types';
@@ -8,7 +8,9 @@ type TypeDrugsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeDrugs({ entry }: TypeDrugsProps) {    
+export function TypeDrugs({ entry }: TypeDrugsProps) {   
+    const mounted = useRef(false);
+
     const {
         activeScreen,
         activeScreenEntry,
@@ -24,42 +26,37 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
     const [entryUpdated, setEntryUpdated] = useState(true);
-    const [values, setValues] = useState(
-        drugs
-            .map(item => {
-                const val = (entry?.values || []).filter(v => v.key === item.key)[0];
+    const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
 
-                if (val) return val;
-
-                return {
-                    value: item.key,
-                    valueText: `${item.drug}`,
-                    label: item.drug,
-                    key: item.key,
-                    dataType: 'drug',
-                    exclusive: false,
-                    confidential: false,
-                    exportType: 'drug',
-                    data: item,
-                    printable,
-                    selected: false,
-                    extraLabels: [
-                        `Dosage: ${item.dosage} ${item.drugUnit}`,
-                        `Administration frequency: ${item.administrationFrequency}`,
-                        `Route of Administration: ${item.routeOfAdministration}`,
-                        `${item.managementText}`,
-                        `${item.dosageText}`,
-                    ],
-                };
-            })
-    );
-
-    const onSelect = React.useCallback((key: string, isSelected: boolean) => {
+    const onSelect = React.useCallback((drug: types.DrugsLibraryItem, isSelected: boolean) => {
         setValues(prev => {
-            return prev.map(v => {
-                if (v.key !== key) return v;
-                return { ...v, selected: isSelected, };
-            });
+            if (isSelected) {
+                return [
+                    ...prev.filter(v => v.key !== drug.key),
+                    {
+                        value: drug.key,
+                        valueText: `${drug.drug}`,
+                        label: drug.drug,
+                        key: drug.key,
+                        dataType: 'drug',
+                        exclusive: false,
+                        confidential: false,
+                        exportType: 'drug',
+                        data: drug,
+                        printable,
+                        selected: true,
+                        extraLabels: [
+                            `Dosage: ${drug.dosage} ${drug.drugUnit}`,
+                            `Administration frequency: ${drug.administrationFrequency}`,
+                            `Route of Administration: ${drug.routeOfAdministration}`,
+                            `${drug.managementText}`,
+                            `${drug.dosageText}`,
+                        ],
+                    },
+                ];
+            } else {
+                return prev.filter(v => v.key !== drug.key);
+            }
         });
         setTimeout(() => setEntryUpdated(false), 0);
     }, []);
@@ -71,7 +68,10 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         }
     }, [entryUpdated, values, setEntryValues]);
 
-    console.log((entry?.values || []).map(e => e.selected));
+    useEffect(() => {
+        if (!mounted.current) setEntryValues([]);
+        mounted.current = true;
+    }, [setEntryValues]);
 
     return (
         <Box>
@@ -120,7 +120,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                         <Radio
                                             label="Yes"
                                             checked={isSelected}
-                                            onChange={() => onSelect(d.key, true)}
+                                            onChange={() => onSelect(d, true)}
                                             disabled={false}
                                         />
                                     </Box>
@@ -129,7 +129,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                         <Radio
                                             label="No"
                                             checked={!isSelected}
-                                            onChange={() => onSelect(d.key, false)}
+                                            onChange={() => onSelect(d, false)}
                                             disabled={false}
                                         />
                                     </Box>

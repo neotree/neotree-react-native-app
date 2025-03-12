@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Box, Br, Card, Text, Radio } from '../../../../components';
 import { useContext } from '../../Context';
@@ -9,6 +9,7 @@ type TypeFluidsProps = types.ScreenTypeProps & {
 };
 
 export function TypeFluids({ entry }: TypeFluidsProps) {    
+    const mounted = useRef(false);
     const {
         activeScreen,
         setEntryValues
@@ -20,36 +21,37 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
     const fluids = (metadata.fluids || []) as types.DrugsLibraryItem[];
 
     const [entryUpdated, setEntryUpdated] = useState(true);
-    const [values, setValues] = useState(
-        fluids
-            .map(item => ({
-                value: item.key,
-                valueText: `${item.drug}`,
-                label: item.drug,
-                key: item.key,
-                dataType: 'fluid',
-                exclusive: false,
-                confidential: false,
-                exportType: 'fluid',
-                data: item,
-                printable,
-                selected: false,
-                extraLabels: [
-                    `Hourly volume: ${item.hourlyDosage} ${item.drugUnit} every ${item.hourlyFeed} hours`,
-                    `Administration frequency: ${item.administrationFrequency}`,
-                    `Route of Administration: ${item.routeOfAdministration}`,
-                    `${item.managementText}`,
-                    `${item.dosageText}`,
-                ],
-            }))
-    );
+    const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
 
-    const onSelect = React.useCallback((key: string, isSelected: boolean) => {
+    const onSelect = React.useCallback((fluid: types.DrugsLibraryItem, isSelected: boolean) => {
         setValues(prev => {
-            return prev.map(v => {
-                if (v.key !== key) return v;
-                return { ...v, selected: isSelected, };
-            });
+            if (isSelected) {
+                return [
+                    ...prev.filter(v => v.key !== fluid.key),
+                    {
+                        value: fluid.key,
+                        valueText: `${fluid.drug}`,
+                        label: fluid.drug,
+                        key: fluid.key,
+                        dataType: 'fluid',
+                        exclusive: false,
+                        confidential: false,
+                        exportType: 'fluid',
+                        data: fluid,
+                        printable,
+                        selected: true,
+                        extraLabels: [
+                            `Hourly volume: ${fluid.hourlyDosage} ${fluid.drugUnit} every ${fluid.hourlyFeed} hours`,
+                            `Administration frequency: ${fluid.administrationFrequency}`,
+                            `Route of Administration: ${fluid.routeOfAdministration}`,
+                            `${fluid.managementText}`,
+                            `${fluid.dosageText}`,
+                        ],
+                    },
+                ];
+            } else {
+                return prev.filter(v => v.key !== fluid.key);
+            }
         });
         setTimeout(() => setEntryUpdated(false), 0);
     }, []);
@@ -61,7 +63,10 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
         }
     }, [entryUpdated, values, setEntryValues]);
 
-    console.log((entry?.values || []).map(e => e.selected));
+    useEffect(() => {
+        if (!mounted.current) setEntryValues([]);
+        mounted.current = true;
+    }, [setEntryValues]);
 
     return (
         <Box>
@@ -110,7 +115,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                         <Radio
                                             label="Yes"
                                             checked={isSelected}
-                                            onChange={() => onSelect(d.key, true)}
+                                            onChange={() => onSelect(d, true)}
                                             disabled={false}
                                         />
                                     </Box>
@@ -119,7 +124,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                         <Radio
                                             label="No"
                                             checked={!isSelected}
-                                            onChange={() => onSelect(d.key, false)}
+                                            onChange={() => onSelect(d, false)}
                                             disabled={false}
                                         />
                                     </Box>
