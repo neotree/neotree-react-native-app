@@ -1,22 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { Box, Br, Card, Text } from '../../../../components';
+import { Box, Br, Card, Text, Radio } from '@/src/components';
+import * as types from '@/src/types';
 import { useContext } from '../../Context';
-import * as types from '../../../../types';
 
 type TypeDrugsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeDrugs({ entry }: TypeDrugsProps) {
+export function TypeDrugs({ entry }: TypeDrugsProps) {   
     const mounted = useRef(false);
-    const autoFilled = useRef(false);
-    
+
     const {
         activeScreen,
         activeScreenEntry,
-        mountedScreens,
-        getPrepopulationData,
         setEntryValues
     } = useContext();
 
@@ -28,55 +25,59 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
     let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    const canAutoFill = !mountedScreens[activeScreen?.id];
-    const matched = getPrepopulationData();
+    const [entryUpdated, setEntryUpdated] = useState(true);
+    const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
 
-    const setEntry = React.useCallback((keys?: string[]) => {
-        setEntryValues(
-            drugs
-                .filter(d => !keys ? true : keys.includes(d.key))
-                .map(item => ({
-                    value: item.key,
-                    valueText: `${item.drug}`,
-                    label: item.drug,
-                    key: item.key,
-                    dataType: 'drug',
-                    exclusive: false,
-                    confidential: false,
-                    exportType: 'drug',
-                    data: item,
-                    printable,
-                    extraLabels: [
-                        `Dosage: ${item.dosage} ${item.drugUnit}`,
-                        `Administration frequency: ${item.administrationFrequency}`,
-                        `Route of Administration: ${item.routeOfAdministration}`,
-                        `${item.managementText}`,
-                        `${item.dosageText}`,
-                    ],
-                }))
-    );
-    }, [entry, drugs, printable, setEntryValues]);
+    const onSelect = React.useCallback((drug: types.DrugsLibraryItem, isSelected: boolean) => {
+        setValues(prev => {
+            if (isSelected) {
+                return [
+                    ...prev.filter(v => v.key !== drug.key),
+                    {
+                        value: drug.key,
+                        valueText: `${drug.drug}`,
+                        label: drug.drug,
+                        key: drug.key,
+                        dataType: 'drug',
+                        exclusive: false,
+                        confidential: false,
+                        exportType: 'drug',
+                        data: drug,
+                        printable,
+                        selected: true,
+                        extraLabels: [
+                            `Dosage: ${drug.dosage} ${drug.drugUnit}`,
+                            `Administration frequency: ${drug.administrationFrequency}`,
+                            `Route of Administration: ${drug.routeOfAdministration}`,
+                            `${drug.managementText}`,
+                            `${drug.dosageText}`,
+                        ],
+                    },
+                ];
+            } else {
+                return prev.filter(v => v.key !== drug.key);
+            }
+        });
+        setTimeout(() => setEntryUpdated(false), 0);
+    }, []);
 
-    React.useEffect(() => {
-        if (canAutoFill && !autoFilled.current) {
-            const _value: any = {};
-            const _matched = matched[metadata.key]?.values?.value || [];
-            _matched.forEach((m: string) => { _value[m] = true; });
-            if (Object.keys(_value).length) setEntry(Object.keys(_value));
-            autoFilled.current = true;
+    useEffect(() => {
+        if (!entryUpdated) {
+            setEntryUpdated(true);
+            setEntryValues(values);
         }
-    }, [canAutoFill, matched, metadata, setEntry]);
+    }, [entryUpdated, values, setEntryValues]);
 
-    React.useEffect(() => {
-        if (!mounted.current) {
-            mounted.current = true;
-            setEntry();
-        }
-    }, [setEntry]);
+    useEffect(() => {
+        if (!mounted.current) setEntryValues([]);
+        mounted.current = true;
+    }, [setEntryValues]);
 
     return (
         <Box>
             {drugs.map(d => {
+                const isSelected = values.filter(v => v.key === d.key)[0]?.selected === true;
+                
                 return (
                     <React.Fragment key={d.key}>
                         <Card>
@@ -108,6 +109,32 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                 color="textSecondary"
                                 mt="s"
                             >{d.dosageText}</Text>
+
+                            <Box mt="l">
+                                <Text variant="title3">Would you like to administer this drug?</Text>
+    
+                                <Br spacing='s'/>
+    
+                                <Box flexDirection="row" justifyContent="flex-end">
+                                    <Box>
+                                        <Radio
+                                            label="Yes"
+                                            checked={isSelected}
+                                            onChange={() => onSelect(d, true)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+    
+                                    <Box paddingLeft="xl">
+                                        <Radio
+                                            label="No"
+                                            checked={!isSelected}
+                                            onChange={() => onSelect(d, false)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+                                </Box>
+                            </Box>
                         </Card>
 
                         <Br spacing="l" />
