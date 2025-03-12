@@ -150,6 +150,8 @@ export type ScreenEntryValue = {
   prePopulate?: any[];
   printable?: boolean;
   extraLabels?: string[];
+  selected?: boolean;
+  data?: any;
 };
 
 export type ScreenEntry = {
