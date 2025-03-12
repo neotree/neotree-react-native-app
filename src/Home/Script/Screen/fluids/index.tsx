@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { Box, Br, Card, Text } from '../../../../components';
+import { Box, Br, Card, Text, Radio } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
@@ -8,15 +8,9 @@ type TypeFluidsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeFluids({ entry }: TypeFluidsProps) {
-    const mounted = useRef(false);
-    const autoFilled = useRef(false);
-    
+export function TypeFluids({ entry }: TypeFluidsProps) {    
     const {
         activeScreen,
-        activeScreenEntry,
-        mountedScreens,
-        getPrepopulationData,
         setEntryValues
     } = useContext();
 
@@ -25,58 +19,55 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
 
     const fluids = (metadata.fluids || []) as types.DrugsLibraryItem[];
 
-    let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
-	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
-
-    const canAutoFill = !mountedScreens[activeScreen?.id];
-    const matched = getPrepopulationData();
-
-    const setEntry = React.useCallback((keys?: string[]) => {
-        setEntryValues(
-            fluids
-                .filter(d => !keys ? true : keys.includes(d.key))
-                .map(item => ({
-                    value: item.key,
-                    valueText: `${item.drug}`,
-                    label: item.drug,
-                    key: item.key,
-                    dataType: 'fluid',
-                    exclusive: false,
-                    confidential: false,
-                    exportType: 'fluid',
-                    data: item,
-                    printable,
-                    extraLabels: [
-                        `Hourly volume: ${item.hourlyDosage} ${item.drugUnit} every ${item.hourlyFeed} hours`,
-                        `Administration frequency: ${item.administrationFrequency}`,
-                        `Route of Administration: ${item.routeOfAdministration}`,
-                        `${item.managementText}`,
-                        `${item.dosageText}`,
-                    ],
-                }))
+    const [entryUpdated, setEntryUpdated] = useState(true);
+    const [values, setValues] = useState(
+        fluids
+            .map(item => ({
+                value: item.key,
+                valueText: `${item.drug}`,
+                label: item.drug,
+                key: item.key,
+                dataType: 'fluid',
+                exclusive: false,
+                confidential: false,
+                exportType: 'fluid',
+                data: item,
+                printable,
+                selected: false,
+                extraLabels: [
+                    `Hourly volume: ${item.hourlyDosage} ${item.drugUnit} every ${item.hourlyFeed} hours`,
+                    `Administration frequency: ${item.administrationFrequency}`,
+                    `Route of Administration: ${item.routeOfAdministration}`,
+                    `${item.managementText}`,
+                    `${item.dosageText}`,
+                ],
+            }))
     );
-    }, [entry, fluids, printable, setEntryValues]);
 
-    React.useEffect(() => {
-        if (canAutoFill && !autoFilled.current) {
-            const _value: any = {};
-            const _matched = matched[metadata.key]?.values?.value || [];
-            _matched.forEach((m: string) => { _value[m] = true; });
-            if (Object.keys(_value).length) setEntry(Object.keys(_value));
-            autoFilled.current = true;
-        }
-    }, [canAutoFill, matched, metadata, setEntry]);
+    const onSelect = React.useCallback((key: string, isSelected: boolean) => {
+        setValues(prev => {
+            return prev.map(v => {
+                if (v.key !== key) return v;
+                return { ...v, selected: isSelected, };
+            });
+        });
+        setTimeout(() => setEntryUpdated(false), 0);
+    }, []);
 
-    React.useEffect(() => {
-        if (!mounted.current) {
-            mounted.current = true;
-            setEntry();
+    useEffect(() => {
+        if (!entryUpdated) {
+            setEntryUpdated(true);
+            setEntryValues(values);
         }
-    }, [setEntry]);
+    }, [entryUpdated, values, setEntryValues]);
+
+    console.log((entry?.values || []).map(e => e.selected));
 
     return (
         <Box>
             {fluids.map(d => {
+                const isSelected = values.filter(v => v.key === d.key)[0]?.selected === true;
+
                 return (
                     <React.Fragment key={d.key}>
                         <Card>
@@ -108,6 +99,32 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                 color="textSecondary"
                                 mt="s"
                             >{d.dosageText}</Text>
+
+                            <Box mt="l">
+                                <Text variant="title3">Would you like to administer this fluid?</Text>
+    
+                                <Br spacing='s'/>
+    
+                                <Box flexDirection="row" justifyContent="flex-end">
+                                    <Box>
+                                        <Radio
+                                            label="Yes"
+                                            checked={isSelected}
+                                            onChange={() => onSelect(d.key, true)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+    
+                                    <Box paddingLeft="xl">
+                                        <Radio
+                                            label="No"
+                                            checked={!isSelected}
+                                            onChange={() => onSelect(d.key, false)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+                                </Box>
+                            </Box>
                         </Card>
 
                         <Br spacing="l" />
