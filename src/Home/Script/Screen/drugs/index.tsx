@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Box, Br, Card, Text, Radio } from '@/src/components';
 import * as types from '@/src/types';
@@ -8,15 +8,10 @@ type TypeDrugsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeDrugs({ entry }: TypeDrugsProps) {
-    const mounted = useRef(false);
-    const autoFilled = useRef(false);
-    
+export function TypeDrugs({ entry }: TypeDrugsProps) {    
     const {
         activeScreen,
         activeScreenEntry,
-        mountedScreens,
-        getPrepopulationData,
         setEntryValues
     } = useContext();
 
@@ -28,14 +23,15 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
     let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    const canAutoFill = !mountedScreens[activeScreen?.id];
-    const matched = getPrepopulationData();
+    const [entryUpdated, setEntryUpdated] = useState(true);
+    const [values, setValues] = useState(
+        drugs
+            .map(item => {
+                const val = (entry?.values || []).filter(v => v.key === item.key)[0];
 
-    const setEntry = React.useCallback((keys?: string[]) => {
-        setEntryValues(
-            drugs
-                .filter(d => !keys ? true : keys.includes(d.key!))
-                .map(item => ({
+                if (val) return val;
+
+                return {
                     value: item.key,
                     valueText: `${item.drug}`,
                     label: item.drug,
@@ -46,7 +42,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     exportType: 'drug',
                     data: item,
                     printable,
-                    selected: (entry?.values || []).filter(v => v.key === item.key)[0]?.selected,
+                    selected: false,
                     extraLabels: [
                         `Dosage: ${item.dosage} ${item.drugUnit}`,
                         `Administration frequency: ${item.administrationFrequency}`,
@@ -54,40 +50,33 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                         `${item.managementText}`,
                         `${item.dosageText}`,
                     ],
-                }))
-        );
-    }, [drugs, entry, setEntryValues]);
-
-    React.useEffect(() => {
-        if (canAutoFill && !autoFilled.current) {
-            const _value: any = {};
-            const _matched = matched[metadata.key]?.values?.value || [];
-            _matched.forEach((m: string) => { _value[m] = true; });
-            if (Object.keys(_value).length) setEntry(Object.keys(_value));
-            autoFilled.current = true;
-        }
-    }, [canAutoFill, matched, metadata, setEntry]);
-
-    React.useEffect(() => {
-        if (!mounted.current) {
-            mounted.current = true;
-            setEntry();
-        }
-    }, [setEntry]);
+                };
+            })
+    );
 
     const onSelect = React.useCallback((key: string, isSelected: boolean) => {
-        setEntryValues(
-            (entry?.values || []).map(v => {
+        setValues(prev => {
+            return prev.map(v => {
                 if (v.key !== key) return v;
                 return { ...v, selected: isSelected, };
-            })
-        );
-    }, [entry, setEntryValues]);
+            });
+        });
+        setTimeout(() => setEntryUpdated(false), 0);
+    }, []);
+
+    useEffect(() => {
+        if (!entryUpdated) {
+            setEntryUpdated(true);
+            setEntryValues(values);
+        }
+    }, [entryUpdated, values, setEntryValues]);
+
+    console.log((entry?.values || []).map(e => e.selected));
 
     return (
         <Box>
             {drugs.map(d => {
-                const isSelected = (entry?.values || []).filter(v => v.key === d.key)[0]?.selected === true;
+                const isSelected = values.filter(v => v.key === d.key)[0]?.selected === true;
                 
                 return (
                     <React.Fragment key={d.key}>
