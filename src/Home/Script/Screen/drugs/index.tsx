@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 
-import { Box, Br, Card, Text } from '../../../../components';
+import { Box, Br, Card, Text, Radio } from '@/src/components';
+import * as types from '@/src/types';
 import { useContext } from '../../Context';
-import * as types from '../../../../types';
 
 type TypeDrugsProps = types.ScreenTypeProps & {
     
@@ -34,7 +34,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
     const setEntry = React.useCallback((keys?: string[]) => {
         setEntryValues(
             drugs
-                .filter(d => !keys ? true : keys.includes(d.key))
+                .filter(d => !keys ? true : keys.includes(d.key!))
                 .map(item => ({
                     value: item.key,
                     valueText: `${item.drug}`,
@@ -46,6 +46,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     exportType: 'drug',
                     data: item,
                     printable,
+                    selected: (entry?.values || []).filter(v => v.key === item.key)[0]?.selected,
                     extraLabels: [
                         `Dosage: ${item.dosage} ${item.drugUnit}`,
                         `Administration frequency: ${item.administrationFrequency}`,
@@ -54,8 +55,8 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                         `${item.dosageText}`,
                     ],
                 }))
-    );
-    }, [entry, drugs, printable, setEntryValues]);
+        );
+    }, [drugs, entry, setEntryValues]);
 
     React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {
@@ -74,9 +75,20 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         }
     }, [setEntry]);
 
+    const onSelect = React.useCallback((key: string, isSelected: boolean) => {
+        setEntryValues(
+            (entry?.values || []).map(v => {
+                if (v.key !== key) return v;
+                return { ...v, selected: isSelected, };
+            })
+        );
+    }, [entry, setEntryValues]);
+
     return (
         <Box>
             {drugs.map(d => {
+                const isSelected = (entry?.values || []).filter(v => v.key === d.key)[0]?.selected === true;
+                
                 return (
                     <React.Fragment key={d.key}>
                         <Card>
@@ -108,6 +120,32 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                 color="textSecondary"
                                 mt="s"
                             >{d.dosageText}</Text>
+
+                            <Box mt="l">
+                                <Text variant="title3">Would you like to administer this drug?</Text>
+    
+                                <Br spacing='s'/>
+    
+                                <Box flexDirection="row" justifyContent="flex-end">
+                                    <Box>
+                                        <Radio
+                                            label="Yes"
+                                            checked={isSelected}
+                                            onChange={() => onSelect(d.key, true)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+    
+                                    <Box paddingLeft="xl">
+                                        <Radio
+                                            label="No"
+                                            checked={!isSelected}
+                                            onChange={() => onSelect(d.key, false)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+                                </Box>
+                            </Box>
                         </Card>
 
                         <Br spacing="l" />

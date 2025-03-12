@@ -50,7 +50,7 @@ export function evaluateDrugsScreen({
                         let key = `${v.key}`.toLowerCase();
 
                         let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
-                        if (v.calculateValue) value = [v.calculateValue];
+                        if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
                         if (v.diagnosis?.key) {
                             diagnoses.push(v.diagnosis.key);
                             value = [v.diagnosis.key];
