@@ -45,8 +45,7 @@ export async function generateUID(scriptType?: string) {
         const { uid_prefix, total_sessions_recorded, device_id } = await getApplication();
 
         // https://neotree.atlassian.net/browse/NEOAPP-790?atlOrigin=eyJpIjoiZGY0NjQyYjk3NTg1NDVmY2I1YTgxNGZiMzk0OTNjYzkiLCJwIjoiaiJ9
-        let extraChars = '';
-        if (scriptType === 'admission') extraChars = generateDeviceHash('0123456789', 3);
+        const extraChars = generateDeviceHash('0123456789', 3);
 
         let suffix = `${`000${(total_sessions_recorded || 0) + 1}`.slice(-4)}`;
         suffix = [extraChars, suffix].join('');

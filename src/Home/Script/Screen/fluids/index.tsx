@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { Box, Br, Card, Text } from '../../../../components';
+import { Box, Br, Card, Text, Radio } from '../../../../components';
 import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
@@ -8,15 +8,10 @@ type TypeFluidsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeFluids({ entry }: TypeFluidsProps) {
+export function TypeFluids({ entry }: TypeFluidsProps) {    
     const mounted = useRef(false);
-    const autoFilled = useRef(false);
-    
     const {
         activeScreen,
-        activeScreenEntry,
-        mountedScreens,
-        getPrepopulationData,
         setEntryValues
     } = useContext();
 
@@ -25,58 +20,59 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
 
     const fluids = (metadata.fluids || []) as types.DrugsLibraryItem[];
 
-    let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
-	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
+    const [entryUpdated, setEntryUpdated] = useState(true);
+    const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
 
-    const canAutoFill = !mountedScreens[activeScreen?.id];
-    const matched = getPrepopulationData();
+    const onSelect = React.useCallback((fluid: types.DrugsLibraryItem, isSelected: boolean) => {
+        setValues(prev => {
+            if (isSelected) {
+                return [
+                    ...prev.filter(v => v.key !== fluid.key),
+                    {
+                        value: fluid.key,
+                        valueText: `${fluid.drug}`,
+                        label: fluid.drug,
+                        key: fluid.key,
+                        dataType: 'fluid',
+                        exclusive: false,
+                        confidential: false,
+                        exportType: 'fluid',
+                        data: fluid,
+                        printable,
+                        selected: true,
+                        extraLabels: [
+                            `Hourly volume: ${fluid.hourlyDosage} ${fluid.drugUnit} every ${fluid.hourlyFeed} hours`,
+                            `Administration frequency: ${fluid.administrationFrequency}`,
+                            `Route of Administration: ${fluid.routeOfAdministration}`,
+                            `${fluid.managementText}`,
+                            `${fluid.dosageText}`,
+                        ],
+                    },
+                ];
+            } else {
+                return prev.filter(v => v.key !== fluid.key);
+            }
+        });
+        setTimeout(() => setEntryUpdated(false), 0);
+    }, []);
 
-    const setEntry = React.useCallback((keys?: string[]) => {
-        setEntryValues(
-            fluids
-                .filter(d => !keys ? true : keys.includes(d.key))
-                .map(item => ({
-                    value: item.key,
-                    valueText: `${item.drug}`,
-                    label: item.drug,
-                    key: item.key,
-                    dataType: 'fluid',
-                    exclusive: false,
-                    confidential: false,
-                    exportType: 'fluid',
-                    data: item,
-                    printable,
-                    extraLabels: [
-                        `Hourly volume: ${item.hourlyDosage} ${item.drugUnit} every ${item.hourlyFeed} hours`,
-                        `Administration frequency: ${item.administrationFrequency}`,
-                        `Route of Administration: ${item.routeOfAdministration}`,
-                        `${item.managementText}`,
-                        `${item.dosageText}`,
-                    ],
-                }))
-    );
-    }, [entry, fluids, printable, setEntryValues]);
-
-    React.useEffect(() => {
-        if (canAutoFill && !autoFilled.current) {
-            const _value: any = {};
-            const _matched = matched[metadata.key]?.values?.value || [];
-            _matched.forEach((m: string) => { _value[m] = true; });
-            if (Object.keys(_value).length) setEntry(Object.keys(_value));
-            autoFilled.current = true;
+    useEffect(() => {
+        if (!entryUpdated) {
+            setEntryUpdated(true);
+            setEntryValues(values);
         }
-    }, [canAutoFill, matched, metadata, setEntry]);
+    }, [entryUpdated, values, setEntryValues]);
 
-    React.useEffect(() => {
-        if (!mounted.current) {
-            mounted.current = true;
-            setEntry();
-        }
-    }, [setEntry]);
+    useEffect(() => {
+        if (!mounted.current) setEntryValues([]);
+        mounted.current = true;
+    }, [setEntryValues]);
 
     return (
         <Box>
             {fluids.map(d => {
+                const isSelected = values.filter(v => v.key === d.key)[0]?.selected === true;
+
                 return (
                     <React.Fragment key={d.key}>
                         <Card>
@@ -108,6 +104,32 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                 color="textSecondary"
                                 mt="s"
                             >{d.dosageText}</Text>
+
+                            <Box mt="l">
+                                <Text variant="title3">Would you like to administer this fluid?</Text>
+    
+                                <Br spacing='s'/>
+    
+                                <Box flexDirection="row" justifyContent="flex-end">
+                                    <Box>
+                                        <Radio
+                                            label="Yes"
+                                            checked={isSelected}
+                                            onChange={() => onSelect(d, true)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+    
+                                    <Box paddingLeft="xl">
+                                        <Radio
+                                            label="No"
+                                            checked={!isSelected}
+                                            onChange={() => onSelect(d, false)}
+                                            disabled={false}
+                                        />
+                                    </Box>
+                                </Box>
+                            </Box>
                         </Card>
 
                         <Br spacing="l" />
