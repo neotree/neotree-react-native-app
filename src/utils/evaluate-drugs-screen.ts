@@ -10,7 +10,8 @@ export type EvaluateDrugsScreenParams = {
 export function evaluateDrugsScreen({
     entries,
     screen,
-    drugsLibrary
+    drugsLibrary,
+    evaluateCondition
 }: EvaluateDrugsScreenParams) {
     const metadata = { ...screen.data?.metadata, };
     const screenDrugs = (metadata.drugs || []) as DrugField[];
@@ -31,10 +32,13 @@ export function evaluateDrugsScreen({
         .filter(d => d)
         .sort((a, b) => a.position - b.position)
         .map(d => {
-            const weightKey = `${d.weightKey}`.toLowerCase();
+            const weightKeys = `${d.weightKey}`.toLowerCase().split(',').map(key => key.trim());
+            const condition = `${d.condition || ''}`;
             const diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');
-            const ageKey = `${d.ageKey}`.toLowerCase();
+            const ageKeys = `${d.ageKey}`.toLowerCase().split(',').map(key => key.trim());
             const gestationKey = `${d.gestationKey}`.toLowerCase();
+
+            let conditionMet = !condition ? true : false;
 
             const entriesKeyVal: { [key: string]: any[]; } = {};
             const diagnoses: string[] = [];
@@ -55,16 +59,31 @@ export function evaluateDrugsScreen({
                             diagnoses.push(v.diagnosis.key);
                             value = [v.diagnosis.key];
                         }
+                        if (condition) {
+                            conditionMet = evaluateCondition(condition);
+                        }
                         entriesKeyVal[key] = value;
                     }
                 });
             });
 
-            let weight: number | null = (entriesKeyVal[weightKey] || [])[0];
-            weight = weight === null ? null : (isNaN(Number(weight)) ? null : Number(weight));
+            const weights = weightKeys.map(key => (entriesKeyVal[key] || [])[0])
+                .filter(n => (n !== undefined) || (n !== null) || (n !== ''))
+                .map(n => Number(n))
+                .filter(n => !isNaN(n));
 
-            let age: number | null = (entriesKeyVal[ageKey] || [])[0];
-            age = age === null ? null : (isNaN(Number(age)) ? null : Number(age));
+            const weight: number | null = !weights.length ? null : Math.max(...weights);
+            // let weight: number | null = (entriesKeyVal[weightKey] || [])[0];
+            // weight = weight === null ? null : (isNaN(Number(weight)) ? null : Number(weight));
+
+            const ages = ageKeys.map(key => (entriesKeyVal[key] || [])[0])
+                .filter(n => (n !== undefined) || (n !== null) || (n !== ''))
+                .map(n => Number(n))
+                .filter(n => !isNaN(n));
+
+            const age: number | null = !ages.length ? null : Math.max(...ages);
+            // let age: number | null = (entriesKeyVal[ageKey] || [])[0];
+            // age = age === null ? null : (isNaN(Number(age)) ? null : Number(age));
 
             let gestation: number | null = (entriesKeyVal[gestationKey] || [])[0];
             gestation = gestation === null ? null : (isNaN(Number(gestation)) ? null : Number(gestation));
@@ -78,14 +97,18 @@ export function evaluateDrugsScreen({
                 gestation,
                 diagnoses: matchedDiagnoses,
                 age,
+                conditionMet,
             };
         })
         .filter(d => {
+            if (d.validationType === 'condition') return d.conditionMet;
+
             if (
                 (d.weight === null) ||
                 (d.gestation === null) ||
                 (d.age === null) ||
-                !d.diagnoses.length
+                !d.diagnoses.length ||
+                !d.conditionMet
             ) return false;
 
             const isCorrectWeight = (d.weight >= d.minWeight!) && (d.weight <= d.maxWeight!);
@@ -98,8 +121,11 @@ export function evaluateDrugsScreen({
                 isCorrectGestation
             );
         }).map(d => {
-            let dosage = (d.dosage! * d.dosageMultiplier!) * d.weight!;
+            let dosage = d.dosage! * d.dosageMultiplier!;
+            if (!d.weight !== null) dosage = dosage * d.weight!
+
             dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+
             return {
                 ...d,
                 dosage,
