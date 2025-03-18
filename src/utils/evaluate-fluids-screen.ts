@@ -31,7 +31,7 @@ export function evaluateFluidsScreen({
             const ageKey = `${d.ageKey}`.toLowerCase();
             const gestationKey = `${d.gestationKey}`.toLowerCase();
 
-            let conditionMet = false;
+            let conditionMet = !condition ? true : false;
 
             const entriesKeyVal: { [key: string]: any[]; } = {};
 
@@ -73,6 +73,8 @@ export function evaluateFluidsScreen({
             };
         })
         .filter(d => {
+            if (d.validationType === 'condition') return d.conditionMet;
+
             if (
                 (d.weight === null) ||
                 (d.gestation === null) ||
@@ -90,7 +92,9 @@ export function evaluateFluidsScreen({
                 isCorrectGestation
             );
         }).map(d => {
-            let dosage = (d.dosage! * d.dosageMultiplier!) * d.weight!;
+            let dosage = d.dosage! * d.dosageMultiplier!;
+            if (!d.weight !== null) dosage = dosage * d.weight!
+
             dosage = isNaN(dosage) ? dosage : Math.round(dosage);
 
             let hourlyDosage = dosage / (d.hourlyFeedDivider || 1);
