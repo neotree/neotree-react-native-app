@@ -99,6 +99,7 @@ export function Dropdown({
 
             <Modal
                 open={openModal}
+                onRequestClose={() => setOpenModal(false)}
                 onClose={() => setOpenModal(true)}
                 title={(title || searchable) ? (
                     <>
