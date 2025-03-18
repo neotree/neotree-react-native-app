@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 
-import { Box, Br, Card, Text, Radio } from '@/src/components';
+import { Box, Br, Card, Dropdown, TextInput, Modal, Text, Radio } from '@/src/components';
 import * as types from '@/src/types';
 import { useContext } from '../../Context';
 
@@ -8,15 +8,17 @@ type TypeDrugsProps = types.ScreenTypeProps & {
     
 };
 
-export function TypeDrugs({ entry }: TypeDrugsProps) {   
-    const mounted = useRef(false);
-
+export function TypeDrugs({ entry }: TypeDrugsProps) {
     const {
         activeScreen,
         activeScreenEntry,
-        setEntryValues
+        setEntryValues,
     } = useContext();
 
+    const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
+        value: item.key,
+        label: item.value,
+    }));
     const metadata = activeScreen?.data?.metadata;
     const printable = activeScreen?.data?.printable !== false;
 
@@ -25,58 +27,123 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
     let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    const [entryUpdated, setEntryUpdated] = useState(true);
     const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
+    const [currentDrug, setCurrentDrug] = useState<null | { key: string; reason: string; other?: boolean; }>(null);
 
     const onSelect = React.useCallback((drug: types.DrugsLibraryItem, isSelected: boolean) => {
+        let _values: typeof values = []; 
         setValues(prev => {
-            if (isSelected) {
-                return [
-                    ...prev.filter(v => v.key !== drug.key),
-                    {
-                        value: drug.key,
-                        valueText: `${drug.drug}`,
-                        label: drug.drug,
-                        key: drug.key,
-                        dataType: 'drug',
-                        exclusive: false,
-                        confidential: false,
-                        exportType: 'drug',
-                        data: drug,
-                        printable,
-                        selected: true,
-                        extraLabels: [
-                            `Dosage: ${drug.dosage} ${drug.drugUnit}`,
-                            `Administration frequency: ${drug.administrationFrequency}`,
-                            `Route of Administration: ${drug.routeOfAdministration}`,
-                            `${drug.managementText}`,
-                            `${drug.dosageText}`,
-                        ],
-                    },
-                ];
-            } else {
-                return prev.filter(v => v.key !== drug.key);
-            }
+            _values = [
+                ...prev.filter(v => v.key !== drug.key),
+                {
+                    value: drug.key,
+                    valueText: `${drug.drug}`,
+                    label: drug.drug,
+                    key: drug.key,
+                    dataType: 'drug',
+                    exclusive: false,
+                    confidential: false,
+                    exportType: 'drug',
+                    data: drug,
+                    printable: printable && isSelected,
+                    selected: isSelected,
+                    extraLabels: [
+                        `Dosage: ${drug.dosage} ${drug.drugUnit}`,
+                        `Administration frequency: ${drug.administrationFrequency}`,
+                        `Route of Administration: ${drug.routeOfAdministration}`,
+                        `${drug.managementText}`,
+                        `${drug.dosageText}`,
+                    ],
+                },
+            ];
+            return _values;
         });
-        setTimeout(() => setEntryUpdated(false), 0);
-    }, []);
+        setTimeout(() => {
+            const completed = drugs.length === _values.length;
+            setEntryValues(completed ? _values : undefined);
+        }, 0);
+    }, [drugs, setEntryValues]);
 
-    useEffect(() => {
-        if (!entryUpdated) {
-            setEntryUpdated(true);
-            setEntryValues(values);
-        }
-    }, [entryUpdated, values, setEntryValues]);
-
-    useEffect(() => {
-        if (!mounted.current) setEntryValues([]);
-        mounted.current = true;
-    }, [setEntryValues]);
+    const closeModal = React.useCallback(() => {
+        let _values: typeof values = []; 
+        setCurrentDrug(null);
+        setValues(prev => {
+            if (!currentDrug?.reason) {
+                _values = prev.filter(d => d.key !== currentDrug?.key);
+            } else {
+                _values = prev.map(v => {
+                    if (v !== currentDrug.key) return v;
+                    const valueText = `${v.valueText} (${currentDrug.reason})`;
+                    return {
+                        ...v,
+                        valueText,
+                    };
+                });
+            }
+            return _values;
+        });
+        setTimeout(() => {
+            const completed = drugs.length === _values.length;
+            setEntryValues(completed ? _values : undefined);
+        }, 0);
+    }, [currentDrug, drugs, setValues, setEntryValues]);
 
     return (
         <Box>
+            <Modal
+                open={!!currentDrug}
+                title={<Text>Reason for not administering drug</Text>}
+                onClose={closeModal}
+                onRequestClose={closeModal}
+                actions={[
+                    {
+                        label: 'Close',
+                        onPress: () => closeModal(),
+                    },
+                ]}
+            >
+                <Box>
+                    <Dropdown
+                        disabled={!reasons.length}
+                        label=""
+                        title=""
+                        searchable={false}
+                        value={currentDrug?.reason}
+                        options={reasons}
+                        onChange={(val) => {
+                            setCurrentDrug(prev => ({ ...prev!, reason: `${val}`, other: undefined, }));
+                            setTimeout(closeModal, 0);
+                        }}
+                    />
+
+                    <Box mt="l">
+                        {!!currentDrug?.other ? (
+                            <Box mt="l">
+                                <TextInput
+                                    editable={!reasons.filter(r => r.value === currentDrug?.reason)[0]}
+                                    label="Other (Optional)"
+                                    value={currentDrug.reason}
+                                    numberOfLines={3}
+                                    onChangeText={v => setCurrentDrug(prev => ({ ...prev!, reason: v, }))}
+                                />
+                            </Box>
+                        ) : (
+                            <Radio
+                                label="Other"
+                                checked={currentDrug?.other}
+                                onChange={() => {
+                                    setCurrentDrug(prev => ({ ...prev!, reason: '', other: true, }));
+                                }}
+                                disabled={false}
+                            />
+                        )}
+                    </Box>
+                </Box>
+            </Modal>
+
             {drugs.map(d => {
                 const isSelected = values.filter(v => v.key === d.key)[0]?.selected === true;
+                const isNotSelected = values.filter(v => v.key === d.key)[0]?.selected === false;
                 
                 return (
                     <React.Fragment key={d.key}>
@@ -128,8 +195,11 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                     <Box paddingLeft="xl">
                                         <Radio
                                             label="No"
-                                            checked={!isSelected}
-                                            onChange={() => onSelect(d, false)}
+                                            checked={isNotSelected}
+                                            onChange={() => {
+                                                onSelect(d, false);
+                                                setCurrentDrug({ key: d.key, reason: '', other: !reasons.length, });
+                                            }}
                                             disabled={false}
                                         />
                                     </Box>

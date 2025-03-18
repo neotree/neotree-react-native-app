@@ -24,20 +24,21 @@ type ScreenTypeProps = {
 
 export function ScreenType({ searchVal }: ScreenTypeProps) {
     const {activeScreen,getFieldPreferences,entries} = useContext()||{};
-    const highlightedText = activeScreen?.data?.contentText;
+
+	let highlightedText = !activeScreen?.data?.contentText ? null : (
+		<Box backgroundColor="highlight">
+			<Content>
+				<Text 
+					color="primary"
+					style={getFieldPreferences('contentText')?.style}
+				>{`${activeScreen?.data?.contentText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
+			</Content>
+		</Box>
+	);
 
     return (
 		<>
-			{!!highlightedText && (
-				<Box backgroundColor="highlight">
-					<Content>
-						<Text 
-                            color="primary"
-                            style={getFieldPreferences('contentText')?.style}
-                        >{`${highlightedText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
-					</Content>
-				</Box>
-			)}
+			{/* {highlightedText} */}
 
 			{(() => {
 				let Component: null | React.ComponentType<types.ScreenTypeProps> = null;
@@ -110,9 +111,22 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 
 				if (useContentWidth) node = <Content>{node}</Content>;
 
-				if (scrollable) node = <ScrollView>{node}</ScrollView>;
+				if (scrollable) {
+					node = (
+						<ScrollView>
+							{highlightedText}
+							{node}
+						</ScrollView>
+					);
+					highlightedText = null;
+				}
 
-				return node;
+				return (
+					<>
+						{highlightedText}
+						{node}
+					</>
+				);
 			})()}
 		</>
     );
