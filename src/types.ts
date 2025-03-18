@@ -116,6 +116,7 @@ export type DrugsLibraryItem = {
   routeOfAdministration: string;
   position: number;
   condition: string;
+  validationType: 'default' | 'condition';
   version: number;
   publishDate: string;
   createdAt: string;
