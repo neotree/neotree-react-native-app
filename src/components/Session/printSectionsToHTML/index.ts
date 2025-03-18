@@ -81,17 +81,9 @@ export async function printSectionsToHTML({
                                         `<span>${v.valueText || v.value || 'N/A'}</span>`
                                     }
 
-                                    <div>
-                                        ${v.extraLabels && v.extraLabels.map((label: string) => {
-                                            return `<span style="opacity:0.8;">${label}</span>`;
-                                        })}
-                                    </div>
-                                    ${!v.extraLabels?.length ? '' : `
-                                        <div style="margin-top:5px;"></div>
-                                        ${v.extraLabels.map((label: string) => {
-                                            return `<span style="color:#999;">${label}</span>`;
-                                        })}
-                                    `}
+                                    ${!v.extraLabels ? '' : `<div>${v.extraLabels.map((label: string) => {
+                                        return `<span style="opacity:0.7;">${label}</span>`;
+                                    })}</div>`}
                                 </div>                  
                             </div>
                         `;

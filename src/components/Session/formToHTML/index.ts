@@ -157,7 +157,7 @@ export default async (session: any, showConfidential?: boolean) => {
                               ${!v.extraLabels?.length ? '' : `
                                 <div style="margin-top:5px;"></div>
                                 ${v.extraLabels.map((label: string) => {
-                                      return `<span style="color:#999;">${label}</span>`;
+                                      return `<span style="opacity:0.7;">${label}</span>`;
                                   })}
                               `}
                           </div>                  
