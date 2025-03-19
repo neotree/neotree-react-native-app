@@ -71,7 +71,8 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                                         exportValue,
                                         exportLabel,
                                         exportType,
-                                        prePopulate
+                                        prePopulate,
+                                        comments,
                                     } = v;
 
                                     if (value && value.map) {
@@ -80,6 +81,7 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                                             {
                                                 [key]: {
                                                     type: exportType || dataType || type,
+                                                    comments: comments || [],
 													prePopulate: prePopulate || e.prePopulate || [],
                                                     values: value.reduce((acc: any, item: any) => {
 														const { value, label, valueLabel, exportValue, exportLabel } = item;
@@ -97,6 +99,7 @@ export function formatExportableSession(session: any = {},opts: any = {}) {
                                         {
                                             [key]: {
 												type: exportType || dataType || type,
+                                                comments: comments || [],
 												prePopulate: prePopulate||e.prePopulate || [],
 												values: {
                                                     label: [exportLabel || valueLabel || label],
