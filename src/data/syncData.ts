@@ -1,12 +1,14 @@
 // import * as Network from 'expo-network';
 import NetInfo from '@react-native-community/netinfo';
 import queryString from 'query-string';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { createTablesIfNotExist, dbTransaction } from './db';
 import { makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
+import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
@@ -22,20 +24,27 @@ export async function syncData(opts?: { force?: boolean; }) {
 
 	// if (authenticatedUser && networkState?.isConnected && networkState?.isInternetReachable) {
     if (authenticatedUser && netInfo?.isConnected && netInfo?.isInternetReachable) {
-        const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
-        const deviceRegJSON = await deviceReg.json();
-
         const app = await getApplication();
+
+        let webUpdated = false;
+        let versionUpdated = false;
+
+        try {
+            const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
+            const deviceRegJSON = await deviceReg.json();
+
+            webUpdated = deviceRegJSON?.info?.last_backup_date && last_sync_date && 
+                new Date(deviceRegJSON?.info?.last_backup_date).getTime() > new Date(last_sync_date).getTime();
+
+            versionUpdated = deviceRegJSON?.info?.version === app?.webeditor_info?.version;
+        } catch(e: any) {
+            if (!app?.webeditor_info?.version) throw new Error(e);
+            AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
+        }
 
         last_sync_date = app?.last_sync_date;
 
-        const webUpdated = deviceRegJSON?.info?.last_backup_date && last_sync_date && 
-            new Date(deviceRegJSON?.info?.last_backup_date).getTime() > new Date(last_sync_date).getTime();
-
-        let shouldSync = opts?.force || 
-            webUpdated ||
-            (app?.mode === 'development') ||
-            !((app?.mode === 'production') && (deviceRegJSON?.info?.version === app?.webeditor_info?.version));
+        let shouldSync = opts?.force || webUpdated;
 
         // shouldSync = true;
 
@@ -178,10 +187,11 @@ export async function syncData(opts?: { force?: boolean; }) {
                     
                     }
                 }
-            }catch(e: any){
+            } catch(e: any) {
                 console.log('syncData', e)
                 reportErrors('syncData', e.message);
-                throw e;
+                if (!app?.webeditor_info?.version) throw new Error(e);
+                AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
             }
         }
     }
