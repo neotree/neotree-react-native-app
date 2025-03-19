@@ -153,6 +153,7 @@ export type ScreenEntryValue = {
   extraLabels?: string[];
   selected?: boolean;
   data?: any;
+  comments?: { key?: string; label: string; }[]
 };
 
 export type ScreenEntry = {

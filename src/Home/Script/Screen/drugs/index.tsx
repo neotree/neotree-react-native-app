@@ -28,7 +28,11 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
 	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
     const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
-    const [currentDrug, setCurrentDrug] = useState<null | { key: string; reason: string; other?: boolean; }>(null);
+    const [currentDrug, setCurrentDrug] = useState<null | { 
+        key: string; 
+        other?: boolean;
+        comment: { key?: string, label: string, }; 
+    }>(null);
 
     const onSelect = React.useCallback((drug: types.DrugsLibraryItem, isSelected: boolean) => {
         let _values: typeof values = []; 
@@ -66,22 +70,15 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
 
     const closeModal = React.useCallback(() => {
         let _values: typeof values = []; 
-        setCurrentDrug(null);
         setValues(prev => {
-            if (!currentDrug?.reason) {
-                _values = prev.filter(d => d.key !== currentDrug?.key);
-            } else {
-                _values = prev.map(v => {
-                    if (v !== currentDrug.key) return v;
-                    const valueText = `${v.valueText} (${currentDrug.reason})`;
-                    return {
-                        ...v,
-                        valueText,
-                    };
-                });
-            }
+            const comments = currentDrug?.comment?.label ? [currentDrug?.comment] : undefined;
+            _values = prev.map(v => {
+                if (v.key !== currentDrug?.key) return v;
+                return { ...v, comments, };
+            });
             return _values;
         });
+        setCurrentDrug(null);
         setTimeout(() => {
             const completed = drugs.length === _values.length;
             setEntryValues(completed ? _values : undefined);
@@ -108,10 +105,14 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                         label=""
                         title=""
                         searchable={false}
-                        value={currentDrug?.reason}
+                        value={currentDrug?.comment?.key}
                         options={reasons}
-                        onChange={(val) => {
-                            setCurrentDrug(prev => ({ ...prev!, reason: `${val}`, other: undefined, }));
+                        onChange={(_, o) => {
+                            setCurrentDrug(prev => ({ 
+                                ...prev!, 
+                                other: undefined,
+                                comment: { key: `${o.value}`, label: `${o.label}`, }, 
+                            }));
                             setTimeout(closeModal, 0);
                         }}
                     />
@@ -120,11 +121,10 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                         {!!currentDrug?.other ? (
                             <Box mt="l">
                                 <TextInput
-                                    editable={!reasons.filter(r => r.value === currentDrug?.reason)[0]}
                                     label="Other (Optional)"
-                                    value={currentDrug.reason}
+                                    value={currentDrug.comment?.label || ''}
                                     numberOfLines={3}
-                                    onChangeText={v => setCurrentDrug(prev => ({ ...prev!, reason: v, }))}
+                                    onChangeText={v => setCurrentDrug(prev => ({ ...prev!, comment: { label: v, }, }))}
                                 />
                             </Box>
                         ) : (
@@ -142,8 +142,10 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
             </Modal>
 
             {drugs.map(d => {
-                const isSelected = values.filter(v => v.key === d.key)[0]?.selected === true;
-                const isNotSelected = values.filter(v => v.key === d.key)[0]?.selected === false;
+                const val = values.filter(v => v.key === d.key)[0];
+                const isSelected = val?.selected === true;
+                const isNotSelected = val?.selected === false;
+                const comments = val?.comments || [];
                 
                 return (
                     <React.Fragment key={d.key}>
@@ -198,12 +200,24 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                             checked={isNotSelected}
                                             onChange={() => {
                                                 onSelect(d, false);
-                                                setCurrentDrug({ key: d.key, reason: '', other: !reasons.length, });
+                                                setCurrentDrug({ 
+                                                    key: d.key, 
+                                                    other: !reasons.length,
+                                                    comment: comments[0] || { label: '', }, 
+                                                });
                                             }}
                                             disabled={false}
                                         />
                                     </Box>
                                 </Box>
+                                
+                                {!!comments.length && (
+                                    <Box mt="s" alignItems="flex-end">
+                                        <Text
+                                            color="error"
+                                        >{comments[0].label}</Text>
+                                    </Box>
+                                )}
                             </Box>
                         </Card>
 
