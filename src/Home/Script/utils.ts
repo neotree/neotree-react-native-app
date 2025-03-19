@@ -385,7 +385,11 @@ export const getScriptUtils = ({
         
         let uid = form.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
-            if (`${key}`.match(/uid/gi)) return value;
+            key = `${key}`.toLowerCase();
+            if (
+                ['uid', 'nuid'].includes(key) ||
+                key.match(/nuid_/gi)
+            ) return value;
             return acc;
             }, null);
         
