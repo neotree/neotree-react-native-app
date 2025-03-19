@@ -6,6 +6,7 @@ import { HomeNavigator } from './Home';
 import { syncData, addSocketEventsListeners } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
+import { SyncStatus } from './components/sync-status';
 
 export const assets = Object.values(registerdAssets);
 
@@ -46,6 +47,7 @@ export function Navigation() {
         <>
             <StatusBar style="dark" />
             {!authenticatedUser ? <Authentication /> : <HomeNavigator />}
+            <SyncStatus />
         </>
     );
 }
