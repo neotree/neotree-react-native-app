@@ -93,7 +93,7 @@ export function evaluateFluidsScreen({
             );
         }).map(d => {
             let dosage = d.dosage! * d.dosageMultiplier!;
-            if (!d.weight !== null) dosage = dosage * d.weight!
+            if (d.weight !== null) dosage = dosage * d.weight!
 
             dosage = isNaN(dosage) ? dosage : Math.round(dosage);
 

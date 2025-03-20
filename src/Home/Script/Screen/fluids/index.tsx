@@ -68,10 +68,12 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
             let _values: typeof values = []; 
             setValues(prev => {
                 const comments = currentDrug?.comment?.label ? [currentDrug?.comment] : undefined;
-                _values = prev.map(v => {
-                    if (v.key !== currentDrug?.key) return v;
-                    return { ...v, comments, };
-                });
+                _values = prev
+                    .map(v => {
+                        if (v.key !== currentDrug?.key) return v;
+                        return { ...v, comments, };
+                    })
+                    .filter(v => v.selected ? true : !!v.comments?.length);
                 return _values;
             });
             setCurrentDrug(null);
@@ -109,7 +111,6 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                 other: undefined,
                                 comment: { key: `${o.value}`, label: `${o.label}`, }, 
                             }));
-                            setTimeout(closeModal, 0);
                         }}
                     />
 
