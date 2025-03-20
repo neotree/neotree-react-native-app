@@ -25,11 +25,10 @@ const fonts: LoadAssetsProps['fonts'] = {
 };
 
 export default function App() {
-
     const errorHandler = (error: Error, stackTrace: string) => {
         const customError = ({message: error.message,stack: stackTrace} as CustomError)   
         handleAppCrush(customError)
-      }
+    };
       
     return (
         <ErrorBoundary onError={errorHandler}>
