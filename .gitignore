@@ -82,3 +82,6 @@ expo-env.d.ts
 android
 
 src/config.ts
+
+.env*
+!.env.example
