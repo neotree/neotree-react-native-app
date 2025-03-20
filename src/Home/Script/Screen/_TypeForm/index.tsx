@@ -11,10 +11,9 @@ import { TextField } from './_Text';
 import { DropDownField } from './_DropDown';
 import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
+import Repeatable from './Repeatable';
 
-type TypeFormProps = types.ScreenTypeProps & {
-    
-};
+type TypeFormProps = types.ScreenTypeProps & {};
 
 export function TypeForm({}: TypeFormProps) {
     const ctx = useContext();
@@ -29,12 +28,12 @@ export function TypeForm({}: TypeFormProps) {
         getPrepopulationData,
         setEntryValues,
     } = ctx;
-    
+
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
 
-    const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key=== 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
+    const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
         const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
@@ -46,10 +45,10 @@ export function TypeForm({}: TypeFormProps) {
         let valueText = cached?.valueText || matched || null;
 
         if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
-            value = cached?.value || patientNUID; 
-            valueText = cached?.valueText || patientNUID; 
+            value = cached?.value || patientNUID;
+            valueText = cached?.valueText || patientNUID;
         }
-        
+
         return {
             printable: f.printable !== false,
             value,
@@ -68,7 +67,7 @@ export function TypeForm({}: TypeFormProps) {
         if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
     };
-    
+
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
             return `${index}` !== `${i}` ? v : {
@@ -82,15 +81,19 @@ export function TypeForm({}: TypeFormProps) {
         const completed = values.reduce((acc, { value }, i) => {
             const field = metadata.fields[i];
             const conditionMet = evaluateFieldCondition(metadata.fields[i]);
-            if (conditionMet && !field.optional && !value) return false;            
+            if (conditionMet && !field.optional && !value) return false;
             return acc;
         }, true);
-    
+
         const hasErrors = values.filter(v => v.error).length;
         setEntryValues(hasErrors || !completed ? undefined : values);
     }, [values, metadata]);
 
-    return (
+    const repeatable = metadata?.repeatable;
+    const collectionName = metadata?.collectionName;
+    const collectionField= metadata?.collectionLabel;
+
+    const returnable = (
         <Box>
             {metadata.fields.map((f: any, i: number) => {
                 return (
@@ -98,29 +101,29 @@ export function TypeForm({}: TypeFormProps) {
                         {(() => {
                             let Component: null | React.ComponentType<types.ScreenFormTypeProps & { patientNUID?: string | null; }> = null;
                             switch (f.type) {
-                            case fieldsTypes.NUMBER:
-                                Component = NumberField;
-                                break;
-                            case fieldsTypes.DATE:
-                                Component = DateField;
-                                break;
-                            case fieldsTypes.DATETIME:
-                                Component = DateField;
-                                break;
-                            case fieldsTypes.DROPDOWN:
-                                Component = DropDownField;
-                                break;
-                            case fieldsTypes.PERIOD:
-                                Component = PeriodField;
-                                break;
-                            case fieldsTypes.TEXT:
-                                Component = TextField;
-                                break;
-                            case fieldsTypes.TIME:
-                                Component = TimeField;
-                                break;
-                            default:
-                            // do nothing
+                                case fieldsTypes.NUMBER:
+                                    Component = NumberField;
+                                    break;
+                                case fieldsTypes.DATE:
+                                    Component = DateField;
+                                    break;
+                                case fieldsTypes.DATETIME:
+                                    Component = DateField;
+                                    break;
+                                case fieldsTypes.DROPDOWN:
+                                    Component = DropDownField;
+                                    break;
+                                case fieldsTypes.PERIOD:
+                                    Component = PeriodField;
+                                    break;
+                                case fieldsTypes.TEXT:
+                                    Component = TextField;
+                                    break;
+                                case fieldsTypes.TIME:
+                                    Component = TimeField;
+                                    break;
+                                default:
+                                // do nothing
                             }
 
                             if (!Component) return null;
@@ -129,7 +132,7 @@ export function TypeForm({}: TypeFormProps) {
                             const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
 
                             const _allValues = [
-                                ...values, 
+                                ...values,
                                 ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
                                     ...acc,
                                     ...e.values,
@@ -147,7 +150,7 @@ export function TypeForm({}: TypeFormProps) {
                                     onChange={onChange}
                                     conditionMet={conditionMet}
                                 >
-                                    <Component 
+                                    <Component
                                         field={f}
                                         fieldIndex={i}
                                         entryValue={values.filter(v => v.key === f.key)[0]}
@@ -162,8 +165,12 @@ export function TypeForm({}: TypeFormProps) {
                             );
                         })()}
                     </React.Fragment>
-                )
-            })}            
+                );
+            })}
         </Box>
+    );
+
+    return (
+        repeatable ? <Repeatable collectionName={collectionName} collectionField={collectionField} returnable={returnable} /> : returnable
     );
 }
