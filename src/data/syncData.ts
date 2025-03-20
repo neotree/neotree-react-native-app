@@ -16,6 +16,8 @@ export async function syncData(opts?: { force?: boolean; }) {
 
     await createTablesIfNotExist();
 
+    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.SYNC_ERROR);
+
     const authenticatedUser = await getAuthenticatedUser();
 
     const deviceId = await getDeviceID();
@@ -26,6 +28,8 @@ export async function syncData(opts?: { force?: boolean; }) {
     if (authenticatedUser && netInfo?.isConnected && netInfo?.isInternetReachable) {
         const app = await getApplication();
 
+        last_sync_date = app?.last_sync_date;
+
         let webUpdated = false;
         let versionUpdated = false;
 
@@ -33,18 +37,19 @@ export async function syncData(opts?: { force?: boolean; }) {
             const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
             const deviceRegJSON = await deviceReg.json();
 
-            webUpdated = deviceRegJSON?.info?.last_backup_date && last_sync_date && 
-                new Date(deviceRegJSON?.info?.last_backup_date).getTime() > new Date(last_sync_date).getTime();
+            webUpdated = deviceRegJSON?.info?.last_backup_date && 
+                last_sync_date && 
+                (new Date(deviceRegJSON?.info?.last_backup_date).getTime() !== new Date(last_sync_date).getTime());
 
-            versionUpdated = deviceRegJSON?.info?.version === app?.webeditor_info?.version;
+            last_sync_date = deviceRegJSON?.info?.last_backup_date;
+
+            versionUpdated = deviceRegJSON?.info?.version !== app?.webeditor_info?.version;
         } catch(e: any) {
             if (!app?.webeditor_info?.version) throw new Error(e);
             AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
         }
 
-        last_sync_date = app?.last_sync_date;
-
-        let shouldSync = opts?.force || webUpdated;
+        let shouldSync = opts?.force || versionUpdated || webUpdated;
 
         // shouldSync = true;
 
@@ -52,7 +57,7 @@ export async function syncData(opts?: { force?: boolean; }) {
             try{
                 const location = await getLocation();
 
-                last_sync_date = new Date().toISOString();
+                last_sync_date = last_sync_date ? new Date(last_sync_date).toISOString() : new Date().toISOString();
 
                 const res = await makeApiCall(
                     'webeditor',
