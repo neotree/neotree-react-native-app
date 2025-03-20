@@ -154,7 +154,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                             <Text
                                 color="textSecondary"
                                 mt="s"
-                            >Hourly volume: {`${d.hourlyDosage} ${d.drugUnit} every ${d.hourlyFeed} hours`}</Text>
+                            >Volume: {`${d.hourlyDosage} ${d.drugUnit} every ${d.hourlyFeed} hours`}</Text>
 
                             <Text
                                 color="textSecondary"
