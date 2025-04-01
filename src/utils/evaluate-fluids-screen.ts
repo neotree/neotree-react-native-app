@@ -26,9 +26,9 @@ export function evaluateFluidsScreen({
         .filter(d => d)
         .sort((a, b) => a.position - b.position)
         .map(d => {
-            const weightKey = `${d.weightKey}`.toLowerCase();
+            const weightKeys = `${d.weightKey}`.toLowerCase().split(',').map(key => key.trim());
             const condition = `${d.condition || ''}`;
-            const ageKey = `${d.ageKey}`.toLowerCase();
+            const ageKeys = `${d.ageKey}`.toLowerCase().split(',').map(key => key.trim());
             const gestationKey = `${d.gestationKey}`.toLowerCase();
 
             let conditionMet = !condition ? true : false;
@@ -55,11 +55,23 @@ export function evaluateFluidsScreen({
                 });
             });
 
-            let weight: number | null = (entriesKeyVal[weightKey] || [])[0];
-            weight = weight === null ? null : (isNaN(Number(weight)) ? null : Number(weight));
+            const weights = weightKeys.map(key => (entriesKeyVal[key] || [])[0])
+                .filter(n => (n !== undefined) || (n !== null) || (n !== ''))
+                .map(n => Number(n))
+                .filter(n => !isNaN(n));
 
-            let age: number | null = (entriesKeyVal[ageKey] || [])[0];
-            age = age === null ? null : (isNaN(Number(age)) ? null : Number(age));
+            const weight: number | null = !weights.length ? null : Math.max(...weights);
+            // let weight: number | null = (entriesKeyVal[weightKey] || [])[0];
+            // weight = weight === null ? null : (isNaN(Number(weight)) ? null : Number(weight));
+
+            const ages = ageKeys.map(key => (entriesKeyVal[key] || [])[0])
+                .filter(n => (n !== undefined) || (n !== null) || (n !== ''))
+                .map(n => Number(n))
+                .filter(n => !isNaN(n));
+
+            const age: number | null = !ages.length ? null : Math.max(...ages);
+            // let age: number | null = (entriesKeyVal[ageKey] || [])[0];
+            // age = age === null ? null : (isNaN(Number(age)) ? null : Number(age));
 
             let gestation: number | null = (entriesKeyVal[gestationKey] || [])[0];
             gestation = gestation === null ? null : (isNaN(Number(gestation)) ? null : Number(gestation));
@@ -92,13 +104,24 @@ export function evaluateFluidsScreen({
                 isCorrectGestation
             );
         }).map(d => {
-            let dosage = d.dosage! * d.dosageMultiplier!;
-            if (d.weight !== null) dosage = dosage * d.weight!
+            let dosage = 0;
+            let hourlyDosage = 0;
+            const dosageMultiplier = d.dosageMultiplier || 1;
+            const hourlyFeedDivider = d.hourlyFeedDivider || 1;
 
-            dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+            if (d.dosage) {
+                if (d.validationType === 'condition') {
+                    dosage = Number((d.dosage * dosageMultiplier).toFixed(2));
+                } else {
+                    dosage = d.dosage! * dosageMultiplier!;
+                    if (d.weight !== null) dosage = dosage * d.weight!
 
-            let hourlyDosage = dosage / (d.hourlyFeedDivider || 1);
-            hourlyDosage = isNaN(hourlyDosage) ? hourlyDosage : Math.round(hourlyDosage);
+                    dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+                }
+
+                hourlyDosage = dosage / hourlyFeedDivider;
+                hourlyDosage = isNaN(hourlyDosage) ? hourlyDosage : Math.round(hourlyDosage);
+            }
 
             return {
                 ...d,

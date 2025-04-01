@@ -12,7 +12,7 @@ export function validateUID(value = '') {
     const firstHalfIsValid = !firstHalfInvalidLength && !firstHalfHasForbiddenChars;
 
     const lastHalfMaxLength: number = 7; // value.length === 12 ? 7 : 4;
-    const lastHalfMinLength: number = 4;
+    const lastHalfMinLength: number = 7; // used to be 4: https://neotree.atlassian.net/browse/NEOAPP-949
     const allowedLastHalf = /^[0-9]*$/gi;
     const lastHalfHasForbiddenChars = !(allowedLastHalf.test(_lastHalf));
     const lastHalfInvalidLength = !((_lastHalf.length === lastHalfMinLength) || (_lastHalf.length === lastHalfMaxLength));

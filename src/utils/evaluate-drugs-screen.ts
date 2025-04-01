@@ -121,10 +121,19 @@ export function evaluateDrugsScreen({
                 isCorrectGestation
             );
         }).map(d => {
-            let dosage = d.dosage! * d.dosageMultiplier!;
-            if (d.weight !== null) dosage = dosage * d.weight!
+            let dosage = 0;
+            const dosageMultiplier = d.dosageMultiplier || 1;
+            
+            if (d.dosage) {
+                if (d.validationType === 'condition') {
+                    dosage = Number((d.dosage * dosageMultiplier).toFixed(2));
+                } else {
+                    dosage = d.dosage! * dosageMultiplier!;
+                    if (d.weight !== null) dosage = dosage * d.weight!
 
-            dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+                    dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+                }
+            }
 
             return {
                 ...d,

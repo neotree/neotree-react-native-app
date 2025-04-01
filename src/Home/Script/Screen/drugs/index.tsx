@@ -91,7 +91,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         <Box>
             <Modal
                 open={!!currentDrug}
-                title={<Text>Reason for not administering drug</Text>}
+                title={<Text>Reason for not prescribing drug</Text>}
                 onClose={closeModal}
                 onRequestClose={closeModal}
                 actions={[
@@ -181,7 +181,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                             >{d.dosageText}</Text>
 
                             <Box mt="l">
-                                <Text variant="title3">Would you like to administer this drug?</Text>
+                                <Text variant="title3">Do you plan to prescribe this drug?</Text>
     
                                 <Br spacing='s'/>
     
