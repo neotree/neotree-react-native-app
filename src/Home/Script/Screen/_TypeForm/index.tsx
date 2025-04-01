@@ -68,6 +68,11 @@ export function TypeForm({}: TypeFormProps) {
         return conditionMet;
     };
 
+    const handleRepeatablesChange = (data: Record<string, any[]>) => {
+        console.log("Updated Repeatables:", data);
+    };
+    
+
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
             return `${index}` !== `${i}` ? v : {
@@ -92,6 +97,21 @@ export function TypeForm({}: TypeFormProps) {
     const repeatable = metadata?.repeatable;
     const collectionName = metadata?.collectionName;
     const collectionField= metadata?.collectionLabel;
+    const getAllValues = ()=>{
+
+        const _allValues = [
+            ...values,
+            ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
+                ...acc,
+                ...e.values,
+            ], []),
+        ];
+
+         return _allValues.filter((v, i) => {
+            if (!v.key) return true;
+            return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
+        });
+    }
 
     const returnable = (
         <Box>
@@ -123,6 +143,7 @@ export function TypeForm({}: TypeFormProps) {
                                     Component = TimeField;
                                     break;
                                 default:
+                                   
                                 // do nothing
                             }
 
@@ -131,18 +152,8 @@ export function TypeForm({}: TypeFormProps) {
                             const conditionMet = evaluateFieldCondition(f);
                             const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
 
-                            const _allValues = [
-                                ...values,
-                                ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
-                                    ...acc,
-                                    ...e.values,
-                                ], []),
-                            ];
 
-                            const allValues = _allValues.filter((v, i) => {
-                                if (!v.key) return true;
-                                return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
-                            });
+                            const allValues = getAllValues()
 
                             return (
                                 <FormItem
@@ -171,6 +182,12 @@ export function TypeForm({}: TypeFormProps) {
     );
 
     return (
-        repeatable ? <Repeatable collectionName={collectionName} collectionField={collectionField} returnable={returnable} /> : returnable
+        repeatable ? <Repeatable collectionName={collectionName} 
+                                 fields={metadata.fields} 
+                                 onChange={handleRepeatablesChange} 
+                                 evaluateCondition ={evaluateFieldCondition}
+                                 collectionField={collectionField}
+                                 allValues={getAllValues()}
+                                 /> : returnable
     );
 }
