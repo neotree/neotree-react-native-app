@@ -87,7 +87,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
         <Box>
             <Modal
                 open={!!currentDrug}
-                title="Reason for not administering fluid"
+                title={<Text>Reason for not agreeing</Text>}
                 onClose={closeModal}
                 onRequestClose={closeModal}
                 actions={[
@@ -177,7 +177,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                             >{d.dosageText}</Text>
 
                             <Box mt="l">
-                                <Text variant="title3">Would you like to administer this fluid?</Text>
+                                <Text variant="title3">Do you agree with this fluid or feed advice?</Text>
     
                                 <Br spacing='s'/>
     
