@@ -156,7 +156,6 @@ export type ScreenEntryValue = {
 export type ScreenEntry = {
   value?: ScreenEntryValue[];
   values: ScreenEntryValue[];
-  repeatables?:Repeatable;
   management: any[];
   screenIndex: number;
   screen: {
@@ -190,7 +189,6 @@ export type ScreenFormTypeProps = {
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
   allValues: ScreenEntry['values'];
-  repeatables?: ScreenEntry['repeatables'];
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {

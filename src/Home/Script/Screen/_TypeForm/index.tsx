@@ -15,7 +15,7 @@ import Repeatable from './Repeatable';
 
 type TypeFormProps = types.ScreenTypeProps & {};
 
-export function TypeForm({}: TypeFormProps) {
+export function TypeForm({ }: TypeFormProps) {
     const ctx = useContext();
 
     const {
@@ -32,10 +32,13 @@ export function TypeForm({}: TypeFormProps) {
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
+    const repeatable = metadata?.repeatable;
 
     const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
+    const [values, setValues] =React.useState<types.ScreenEntryValue[]>(metadata.fields.map((f: any) => {
+     
+       
         const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
 
         const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
@@ -58,7 +61,8 @@ export function TypeForm({}: TypeFormProps) {
             type: f.type,
             dataType: f.dataType,
             confidential: f.confidential,
-            prePopulate: f.prePopulate
+            prePopulate: f.prePopulate,
+            editable: f.editable
         };
     }));
 
@@ -68,10 +72,41 @@ export function TypeForm({}: TypeFormProps) {
         return conditionMet;
     };
 
-    const handleRepeatablesChange = (data: Record<string, any[]>) => {
-        console.log("Updated Repeatables:", data);
-    };
+    const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
+        const key = Object.keys(data)[0];
     
+        if (data[key].length > 0 && key) {
+            // Find the repeatables object in the existing values
+            const repeatablesIndex = values.findIndex(item => item.key === 'repeatables');
+            let repeatables;
+    
+            if (repeatablesIndex === -1) {
+                // Create a new repeatables object if it doesn't exist
+                repeatables = {
+                    key: 'repeatables',
+                    value: {
+                        [key]: data[key], // Use the correct data structure
+                    }
+                };
+                setValues([...values, repeatables]);
+            } else {
+                // Update the existing repeatables object
+                repeatables = { ...values[repeatablesIndex] };
+    
+                // Replace or add the incoming data for the given key
+                repeatables.value[key] = data[key];
+    
+                // Create a new array with the updated repeatables
+                const updatedValues = [
+                    ...values.slice(0, repeatablesIndex),
+                    repeatables,
+                    ...values.slice(repeatablesIndex + 1)
+                ];
+                console.log('....UPDTED...',updatedValues)
+                setValues(updatedValues);
+            }
+        }
+    };
 
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
@@ -83,6 +118,7 @@ export function TypeForm({}: TypeFormProps) {
     };
 
     React.useEffect(() => {
+      if(!repeatable){
         const completed = values.reduce((acc, { value }, i) => {
             const field = metadata.fields[i];
             const conditionMet = evaluateFieldCondition(metadata.fields[i]);
@@ -92,12 +128,16 @@ export function TypeForm({}: TypeFormProps) {
 
         const hasErrors = values.filter(v => v.error).length;
         setEntryValues(hasErrors || !completed ? undefined : values);
+    }else{
+        console.log("-----VVV---",JSON.stringify(values.filter(v=>v.value!=null)))
+        setEntryValues(values.filter(v=>v.value!=null))
+    }
     }, [values, metadata]);
 
-    const repeatable = metadata?.repeatable;
+   
     const collectionName = metadata?.collectionName;
-    const collectionField= metadata?.collectionLabel;
-    const getAllValues = ()=>{
+    const collectionField = metadata?.collectionLabel;
+    const getAllValues = () => {
 
         const _allValues = [
             ...values,
@@ -107,7 +147,7 @@ export function TypeForm({}: TypeFormProps) {
             ], []),
         ];
 
-         return _allValues.filter((v, i) => {
+        return _allValues.filter((v, i) => {
             if (!v.key) return true;
             return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
         });
@@ -143,7 +183,7 @@ export function TypeForm({}: TypeFormProps) {
                                     Component = TimeField;
                                     break;
                                 default:
-                                   
+
                                 // do nothing
                             }
 
@@ -182,12 +222,12 @@ export function TypeForm({}: TypeFormProps) {
     );
 
     return (
-        repeatable ? <Repeatable collectionName={collectionName} 
-                                 fields={metadata.fields} 
-                                 onChange={handleRepeatablesChange} 
-                                 evaluateCondition ={evaluateFieldCondition}
-                                 collectionField={collectionField}
-                                 allValues={getAllValues()}
-                                 /> : returnable
+        repeatable ? <Repeatable collectionName={collectionName}
+            fields={metadata.fields}
+            onChange={handleRepeatablesChange}
+            evaluateCondition={evaluateFieldCondition}
+            collectionField={collectionField}
+            allValues={getAllValues()}
+        /> : returnable
     );
 }
