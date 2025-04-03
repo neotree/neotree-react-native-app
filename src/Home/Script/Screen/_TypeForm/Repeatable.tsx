@@ -8,29 +8,23 @@ import { DropDownField } from './_DropDown';
 import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
 import { fieldsTypes } from '../../../../constants';
-import { backgroundColor } from '@shopify/restyle';
 
-type FieldType = "number" | "date" | "datetime" | "dropdown" | "period" | "text" | "time";
 
-type Field = {
-    key: string;
-    type: FieldType;
-    label: string;
-};
 
 type Repeatable = Record<string, any>;
 
 type RepeatableProps = {
     collectionName: string;
     collectionField: string;
-    fields: Field[];
-    onChange: (updatedRepeatables: Record<string, Repeatable[]>) => void;
+    fields: any[];
+    onChange: (updatedRepeatables: Record<string, Repeatable[]>,key:string) => void;
     evaluateCondition: (f: any) => boolean;
     allValues: any;
 };
 
 const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluateCondition, allValues }: RepeatableProps) => {
     const [forms, setForms] = useState<{
+        createdAt: Date;
         id: number;
         isCollapsed: boolean;
         values: Record<string, any>;
@@ -43,7 +37,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         if (forms.length === 0) {
             addNewForm();
         }
-    }, []);
+    }, [forms]);
+
 
     const addNewForm = () => {
         const initialValues = fields.reduce((acc, field) => {
@@ -52,6 +47,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         }, {} as Record<string, any>);
 
         const newForm = {
+            createdAt: new Date(),
             id: Date.now(),
             isCollapsed: false,
             values: initialValues,
@@ -80,35 +76,39 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     }
 
     const handleChange = (id: number, key: string, value: any) => {
-        setForms(prev => prev.map(form => {
-            console.log(form.id,id)
+        const updatedForms = forms.map(form => {
             if (form.id !== id) return form;
-
+    
             const newValues = { ...form.values, [key]: value };
-       
-            console.log("----NEW VALS...",newValues)
-            //FILTER OUT CONDITION MET AND SKIPPABLE FIELDS
-            const isComplete = fields.every(field => {
+
+            const isComplete = fields.filter(f => !f.editable).every(field => {
                 const val = newValues[field.key];
                 return val !== undefined && val !== null && val !== '';
             });
-
-            setDisabled(forms.filter(f=>!f.isComplete).length>0)
-
+    
+            setDisabled(forms.filter(f => !f.isComplete).length > 0);
             return { ...form, values: newValues, isComplete };
-        }));
+        });
+
+        setForms(updatedForms);
+        notifyParent(updatedForms);
     };
 
     const notifyParent = (formsList = forms) => {
         const completedForms = formsList
             .filter(form => form.isComplete)
-            .map(({ values, id }) => ({ ...values, id }));
-
-        onChange({ [collectionName]: completedForms });
+            .map(({ values, id,createdAt }) => ({ ...values, id ,createdAt}));
+            
+        onChange({ [collectionName]: completedForms },collectionName);
+        
     };
 
+    const dateIsToday = (date: Date)=>{
+    return date.getDate()=== new Date().getDate()
+    }
 
-    const renderFieldComponent = (field: Field, formId: number, value: any, index: number) => {
+
+    const renderFieldComponent = (field: any, formId: number, value: any, index: number) => {
         const conditionMet = evaluateCondition(field);
         
         const fieldProps = {
@@ -149,7 +149,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     <View key={form.id} style={styles.formContainer}>
                         <View style={styles.header}>
                             <Button
-                                style={{ backgroundColor: 'maroon', margin: 2 }}
+                                disabled={!dateIsToday(form.createdAt)}
+                                style={{ backgroundColor: dateIsToday(form.createdAt)?'maroon':'pink', margin: 2 }}
                                 onPress={() => removeForm(form.id)}
                             >
                                 <Text style={{ fontWeight: '300', color: 'white' }}>Remove</Text>
