@@ -14,6 +14,8 @@ export function TextField({
     conditionMet, 
     entryValue, 
     patientNUID,
+    repeatable,
+    editable ,
     onChange 
 }: TextFieldProps) {
     const {script,generatedUID} = useContext()||{};
@@ -25,6 +27,7 @@ export function TextField({
     const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? prePopulatedUID : '') || '');
     const [error, setError] = React.useState('');
     const [disabled, setDisabled] = React.useState(false);
+    const canEdit = repeatable?editable:true
 
 // const [showQR, setShowQR] = React.useState(false);
 
@@ -77,7 +80,7 @@ export function TextField({
             ) : (
             
                 <TextInput
-                    editable={conditionMet}
+                    editable={conditionMet && canEdit}
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
                     errors={error ? [error] : []}
