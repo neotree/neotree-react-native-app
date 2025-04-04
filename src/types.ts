@@ -172,7 +172,6 @@ export type ScreenEntry = {
   }; 
   lastSection?: any;
   lastActiveDiagnosisIndex?: any; 
-  createdAt?: Date
 };
 
 export type ScreenTypeProps = {
@@ -189,6 +188,8 @@ export type ScreenFormTypeProps = {
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
   allValues: ScreenEntry['values'];
+  repeatable?:boolean,
+  editable?:boolean
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {

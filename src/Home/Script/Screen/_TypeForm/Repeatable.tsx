@@ -21,16 +21,44 @@ type RepeatableProps = {
     evaluateCondition: (f: any) => boolean;
     allValues: any;
 };
+type FormItem = {
+    createdAt: Date;
+    id: number;
+    isCollapsed: boolean;
+    values: Record<string, any>;
+    isComplete: boolean;
+  }
+  
 
 const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluateCondition, allValues }: RepeatableProps) => {
-    const [forms, setForms] = useState<{
-        createdAt: Date;
-        id: number;
-        isCollapsed: boolean;
-        values: Record<string, any>;
-        isComplete: boolean;
-    }[]>([]);
-
+  
+  
+      const transformAllValuesToForms = (allValues: Array<Record<string, any>>): FormItem[] => {
+        if (!allValues?.length) return [];
+      
+        return allValues.map((item) => {
+         
+          const { createdAt, id, ...dynamicFields } = item;
+      
+          const values: Record<string, any> = { ...dynamicFields };
+      
+          const isComplete = fields.filter(f => !f.editable).every(field => {
+            const val = values[field.key];
+            return val !== undefined && val !== null && val !== '';
+        });
+      
+          return {
+            createdAt: new Date(createdAt),
+            id,
+            isCollapsed: true,
+            values,
+            isComplete
+          };
+        });
+      };
+    const [initialRender,setInitialRender] = useState(0)  
+    
+    const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allValues));
     const [disabled,setDisabled] =  useState(false)
 
     useEffect(() => {
@@ -89,8 +117,9 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             setDisabled(forms.filter(f => !f.isComplete).length > 0);
             return { ...form, values: newValues, isComplete };
         });
-
+        
         setForms(updatedForms);
+        setInitialRender(initialRender+1)
         notifyParent(updatedForms);
     };
 
@@ -103,22 +132,25 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         
     };
 
+
     const dateIsToday = (date: Date)=>{
-    return date.getDate()=== new Date().getDate()
+      const today= new Date()
+     return (date.getDate()==today.getDate() && date.getMonth()=== today.getMonth() && date.getFullYear()== today.getFullYear())
     }
 
 
-    const renderFieldComponent = (field: any, formId: number, value: any, index: number) => {
-        const conditionMet = evaluateCondition(field);
-        
+    const renderFieldComponent = (field: any, formId: number, value: any, index: number,createdAt: Date) => {
+        const conditionMet = evaluateCondition(field)
+        const editable = field.editable || dateIsToday(createdAt)
         const fieldProps = {
             field,
             fieldIndex: index,
             entryValue: value,
             formValues: [],
             allValues,
-            repeatables: true,
+            repeatable: true,
             conditionMet,
+            editable,
             onChange: (val: any) => handleChange(formId, field.key, val)
         };
 
@@ -171,7 +203,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         {!form.isCollapsed && (
                             <View style={styles.formContent}>
                                 {fields.map((field, i) => 
-                                    renderFieldComponent(field, form.id, form.values[field.key], i)
+                                    renderFieldComponent(field, form.id, form.values[field.key], i,form.createdAt)
                                 )}
                             </View>
                         )}
