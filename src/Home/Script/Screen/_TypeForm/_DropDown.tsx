@@ -9,7 +9,6 @@ type DropDownFieldProps = types.ScreenFormTypeProps & {
 export function DropDownField({ field, entryValue, onChange, conditionMet,repeatable,editable }: DropDownFieldProps) {
     const [value, setValue] = React.useState(entryValue?.value);
     const canEdit = repeatable?editable:true
-    console.log('####....RE..',canEdit,repeatable,editable)
     React.useEffect(() => { 
         if (!conditionMet) {
             onChange({ value: null, valueText: null, valueLabel: null, exportType: 'dropdown', }); 

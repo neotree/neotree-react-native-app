@@ -380,6 +380,24 @@ export const getScriptUtils = ({
         return diagnosesRslts;
     };
 
+    function restructureForm() {
+        return form.map(section => {
+          const newSection = { ...section };
+          const newValues = [];
+          
+          for (const item of section.values || []) {
+            if (item.key === "repeatables") {
+              newSection.repeatables = item.value; // Move the value out
+            } else {
+              newValues.push(item); // Keep the rest
+            }
+          }
+      
+          newSection.values = newValues;
+          return newSection;
+        });
+      }
+      
     function createSessionSummary(_payload: any = {}) {        
         const { completed, cancelled, ...payload } = _payload;
         
@@ -395,7 +413,7 @@ export const getScriptUtils = ({
         uid = uid || generatedUID;
         
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
-        
+    
         return {
             ...payload,
             uid, //: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
@@ -414,7 +432,7 @@ export const getScriptUtils = ({
 					.filter(s => s.type === 'management')
 					.filter(s => s.printable),
 				diagnoses: [],
-				form,
+				form:restructureForm(),
 				matchingSession: session?.data?.matchingSession || matchingSession,
 				matched: session?.data?.matched || (script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
 					if (s.data.script.type !== 'discharge') {

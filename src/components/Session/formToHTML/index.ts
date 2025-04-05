@@ -24,6 +24,7 @@ export default async (session: any, showConfidential?: boolean) => {
   const generateQRCode = async () => {
     try {
       const formattedData = await formatExportableSession(session, { showConfidential: country==='mwi' });
+      console.log("---FORMARED----",JSON.stringify(formattedData))
       const hl7 = toHL7Like(formattedData);
     
       // QR code parameters
