@@ -56,7 +56,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
           };
         });
       };
-    const [initialRender,setInitialRender] = useState(0)  
     
     const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allValues));
     const [disabled,setDisabled] =  useState(false)
@@ -103,11 +102,16 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
       }
     }
 
-    const handleChange = (id: number, key: string, value: any) => {
+    const handleChange = (id: number, key: string, value: any,field:any) => {
         const updatedForms = forms.map(form => {
             if (form.id !== id) return form;
-    
-            const newValues = { ...form.values, [key]: value };
+            const enhancedValue = {
+                ...value,
+                printable: field.printable,
+                label: field.label,
+                prePopulate:field.prePopulate
+              };       
+            const newValues = { ...form.values, [key]: enhancedValue };
 
             const isComplete = fields.filter(f => !f.editable).every(field => {
                 const val = newValues[field.key];
@@ -119,7 +123,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         });
         
         setForms(updatedForms);
-        setInitialRender(initialRender+1)
         notifyParent(updatedForms);
     };
 
@@ -139,7 +142,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     }
 
 
-    const renderFieldComponent = (field: any, formId: number, value: any, index: number,createdAt: Date) => {
+     const renderFieldComponent = (field: any, formId: number, value: any, index: number,createdAt: Date) => {
         const conditionMet = evaluateCondition(field)
         const editable = field.editable || dateIsToday(createdAt)
         const fieldProps = {
@@ -151,10 +154,9 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             repeatable: true,
             conditionMet,
             editable,
-            onChange: (val: any) => handleChange(formId, field.key, val)
-        };
 
-
+            onChange: (val: any) => handleChange(formId, field.key, val,field)
+        }
         switch (field.type) {
             case fieldsTypes.NUMBER:
                 return <NumberField key={field.key} {...fieldProps} />;

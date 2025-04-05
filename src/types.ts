@@ -156,6 +156,7 @@ export type ScreenEntryValue = {
 export type ScreenEntry = {
   value?: ScreenEntryValue[];
   values: ScreenEntryValue[];
+  repeatables:  ScreenEntryValue[];
   management: any[];
   screenIndex: number;
   screen: {

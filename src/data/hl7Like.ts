@@ -21,6 +21,8 @@ export function toHL7Like(data: any) {
         }
     })
 
+    console.log('.....###HL7....',JSON.stringify(data))
+
     // DIAGNOSES
     Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
     
@@ -54,7 +56,7 @@ export function toHL7Like(data: any) {
     const entriesArray = data[k]
     Object.keys(entriesArray).map((key: any) => {
             const {values,type,prePopulate} = entriesArray[key]
-            if(type!=='diagnosis' && Array.isArray(prePopulate) && prePopulate.length>0 ){
+            if(key!=='repeatables' && type!=='diagnosis' && Array.isArray(prePopulate) && prePopulate.length>0 ){
             const value = values?.value
              if(value &&Array.isArray(value)&& value.length>0 && value[0]!=null){
               entries+= `${key}|${value.join('^')}|${formatPrepopulate(prePopulate)}\n`
