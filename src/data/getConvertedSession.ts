@@ -45,11 +45,13 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
                         exportValue?: any;
                         exportLabel?: string;
                         printable?: boolean;
+                        prePopulate?:any
                       };
                       acc[k] = {
                         value: valObj.exportValue ?? valObj.value,
                         label: valObj.exportLabel ?? valObj.label ?? valObj.valueLabel ?? '',
                         printable: valObj.printable ?? true,
+                        prePopulate:valObj.prePopulate
                       };
                     } else {
                       acc[k] = v;

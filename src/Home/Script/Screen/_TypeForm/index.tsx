@@ -74,7 +74,6 @@ export function TypeForm({ }: TypeFormProps) {
 
     const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
         const key = Object.keys(data)[0];
-        console.log('....UPDTED...',JSON.stringify(values))
         if (data[key].length > 0 && key) {
             // Find the repeatables object in the existing values
             const repeatablesIndex = values.findIndex(item => item.key === 'repeatables');
@@ -102,7 +101,6 @@ export function TypeForm({ }: TypeFormProps) {
                     repeatables,
                     ...values.slice(repeatablesIndex + 1)
                 ];
-                console.log('....UPDTED...',updatedValues)
                 setValues(updatedValues);
             }
         }
@@ -119,19 +117,16 @@ export function TypeForm({ }: TypeFormProps) {
 
     React.useEffect(() => {
     
-      if(!repeatable){
-        const completed = values.reduce((acc, { value }, i) => {
+        const completed = repeatable?(values.length>0):values.reduce((acc, { value }, i) => {
             const field = metadata.fields[i];
             const conditionMet = evaluateFieldCondition(metadata.fields[i]);
             if (conditionMet && !field.optional && !value) return false;
             return acc;
         }, true);
-
+      
         const hasErrors = values.filter(v => v.error).length;
         setEntryValues(hasErrors || !completed ? undefined : values);
-    }else{
-        setEntryValues(values.filter(v=>v.value!=null))
-    }
+
     }, [values, metadata]);
 
    
