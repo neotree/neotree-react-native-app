@@ -13,6 +13,9 @@ import { fieldsTypes } from '../../../../constants';
 
 type Repeatable = Record<string, any>;
 
+type Operation = 'add' | 'remove';
+
+
 type RepeatableProps = {
     collectionName: string;
     collectionField: string;
@@ -58,13 +61,17 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
       };
     
     const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allValues));
-    const [disabled,setDisabled] =  useState(false)
+    const [disabled,setDisabled] =  useState(forms.filter(f => !f.isComplete).length > 0)
 
     useEffect(() => {
         if (forms.length === 0) {
             addNewForm();
         }
     }, [forms]);
+
+    useEffect(()=>{
+        setDisabled(forms?.filter(f => !f.isComplete).length > 0);
+    })
 
 
     const addNewForm = () => {
@@ -73,6 +80,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             return acc;
         }, {} as Record<string, any>);
 
+
         const newForm = {
             createdAt: new Date(),
             id: Date.now(),
@@ -80,7 +88,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             values: initialValues,
             isComplete: false,
         };
-
+       
         setForms(prev => [
             ...prev.map(form => ({ ...form, isCollapsed: true })), // Collapse previous forms
             newForm,
@@ -90,7 +98,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     const removeForm = (id: number) => {
         const updatedForms = forms.filter(form => form.id !== id);
         setForms(updatedForms);
-        notifyParent(updatedForms);
+        notifyParent(updatedForms,'remove');
     };
 
     const formatFieldLabel = (value:any)=>{
@@ -115,24 +123,32 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             const isComplete = fields.filter(f => !f.editable).every(field => {
                 const val = newValues[field.key];
-                return val !== undefined && val !== null && val !== '';
+               
+                return val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null;
             });
-    
-            setDisabled(forms.filter(f => !f.isComplete).length > 0);
             return { ...form, values: newValues, isComplete };
         });
-        
+        setDisabled(updatedForms.filter(f => !f.isComplete).length > 0);
         setForms(updatedForms);
-        notifyParent(updatedForms);
+       
+        notifyParent(updatedForms,'add');
+        
     };
 
-    const notifyParent = (formsList = forms) => {
+    const notifyParent = (formsList = forms,operation:Operation) => {
+    
+       
         const completedForms = formsList
             .filter(form => form.isComplete)
             .map(({ values, id,createdAt }) => ({ ...values, id ,createdAt}));
-            
-        onChange({ [collectionName]: completedForms },collectionName);
-        
+            if(operation==='add'){
+                if(completedForms.length>0){
+              onChange({ [collectionName]: completedForms },collectionName);
+                }
+            }
+            else{
+                onChange({ [collectionName]: completedForms },collectionName); 
+            }
     };
 
 
