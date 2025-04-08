@@ -89,6 +89,9 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				<Drawer.Screen 
 					name="QrCode" 
 					component={PrintGenericBarCode} 
+					options={{
+						drawerItemStyle: { display: 'none' },
+					}}
 				/>	
 	
 			</Drawer.Navigator>
