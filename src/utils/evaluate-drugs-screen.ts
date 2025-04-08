@@ -101,7 +101,9 @@ export function evaluateDrugsScreen({
             };
         })
         .filter(d => {
-            if (d.validationType === 'condition') return d.conditionMet;
+            if (d.validationType === 'condition') {
+                return d.conditionMet || !!d.diagnoses.length;
+            }
 
             if (
                 (d.weight === null) ||
