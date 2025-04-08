@@ -254,7 +254,7 @@ function convertToJSON(input: string) {
     // RR Header
     if (parts[0] === "RR") {
       currentRepeatKey = parts[1];
-      currentRepeatFields = parts.slice(2, -1); // remove PP
+      currentRepeatFields = parts.slice(2, -1);
       repeatables[currentRepeatKey] = [];
       return;
     }
@@ -330,18 +330,6 @@ function convertToJSON(input: string) {
   return transformed;
 }
 
-function toDataType(value: any) {
-
-  if (!isNaN(value) && value !== null && value !== "") {
-    return Number(value);
-  }
-  else if (value === "true" || value === "false") {
-    return value === "true";
-  }
-  else {
-    return value
-  }
-}
 
 function reverseFormatPrepopulate(formattedString: string): string[] {
   // Split the formatted string by '^' to get the array of aliases

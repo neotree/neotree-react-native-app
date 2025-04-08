@@ -1,5 +1,6 @@
 import React from "react";
 import {TouchableOpacity, Platform} from "react-native";
+import { View, Text, Button as Btn, StyleSheet } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { Button } from "../../components/Button";
 import { Br } from "../../components/Br";
@@ -46,7 +47,7 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
 	}, [navigation]);
 
     const onQrRead = (qrtext: any) => {
-
+       //TODO VALIDATE INCOMING SESSION TO TAKE ONLY THE UID FOR PRINTING
         if (qrtext) {
             setUID(qrtext);
             setSession({"uid":qrtext})
@@ -54,28 +55,50 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
         setShowQR(false);
     };
 
-    return (
-        <>
-            <NeotreeIDInput
-                label="NEOTREE ID"
-                onChange={uid => setUID(uid)}
-                value={uid}
-            />
-            <Br spacing='l' />
-            <Button 
-                color="primary"
-                onPress={() => openQRscanner()}>
-                Scan QR
-            </Button>
-            {showQR ? <QRCodeScan onRead={onQrRead} generic={true}/> : null}
-            <Br spacing='l' />
-            {uid &&  <PrintBarCode
-                session={session}
-                isGeneric={true}
+    // return (
+    //     <>
+    //         <NeotreeIDInput
+    //             label="NEOTREE ID"
+    //             onChange={uid => setUID(uid)}
+    //             value={uid}
+    //         />
+    //         <Br spacing='l' />
+    //         <Button 
+    //             color="primary"
+    //             onPress={() => openQRscanner()}>
+    //             Scan QR
+    //         </Button>
+    //         {showQR ? <QRCodeScan onRead={onQrRead} generic={true}/> : null}
+    //         <Br spacing='l' />
+    //         {uid &&  <PrintBarCode
+    //             session={session}
+    //             isGeneric={true}
 
-            />}
+    //         />}
             
-        </>
-    );
+    //     </>
+    // );
+        return (
+            <View style={styles.container}>
+              <Text style={styles.message}>🚧 This feature is going to be used to print QR CODES.It is coming soon! 🚧</Text>
+              <Btn color={'maroon'} title="GET ME OUT OF HERE!!" onPress={() => navigation.navigate('Home')} />
+            </View>
+          );
+
 
 }
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+      backgroundColor: '#ffeeba',
+      borderRadius: 8,
+      margin: 20,
+    },
+    message: {
+      fontSize: 24, 
+      marginBottom: 10,
+    }
+  });
