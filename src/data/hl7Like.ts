@@ -1,5 +1,6 @@
 import pako from 'pako'
 import Base64 from 'react-native-base64';
+import {formatDate,parseStringToDate} from '../utils/formatDate'
 
 export function toHL7Like(data: any) {
 
@@ -20,8 +21,6 @@ export function toHL7Like(data: any) {
       }
     }
   })
-
-  console.log('.....###HL7....', JSON.stringify(data))
 
   // DIAGNOSES
   Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
@@ -78,7 +77,8 @@ export function toHL7Like(data: any) {
 
               repeatList.forEach((item) => {
                 const rowValues = fieldKeys.map((field) => {
-                  const val = item[field];
+        
+                  const val = field==='createdAt'?formatDate(item[field]):item[field];
                   if (val && typeof val === 'object' && 'value' in val) {
                     return Array.isArray(val.value) ? val.value.join('^') : val.value;
                   } else {
@@ -111,8 +111,6 @@ export function toHL7Like(data: any) {
   })
 
   let combined = `${metadata}${entries}`
-  console.log("-----RERRR", combined)
-  console.log("-----HREER....",JSON.stringify(convertToJSON(combined)) )
   let compressed = textToNumbers(compressDataForQRCode(combined))
   while (compressed && compressed.length > 2800) {
     combined = truncateData(combined)
@@ -270,9 +268,14 @@ function convertToJSON(input: string) {
       currentRepeatFields.forEach((field, i) => {
         const value = values[i] ?? "";
 
-        if (field === "id" || field === "createdAt") {
+        if (field === "id" ) {
           repeatableItem[field] = value;
-        } else {
+         
+        } else if(field==="createdAt"){
+         repeatableItem[field] = formatDate(value)
+        }
+        
+        else {
           repeatableItem[field] = {
             value: value.includes("^") ? value.split("^") : value,
             prePopulate,

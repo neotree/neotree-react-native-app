@@ -56,6 +56,9 @@ export function Search({
             sessions.push(session)
                 setUID(session['uid'])
                 setQRSession(sessions)
+                if(sessions.filter(s => s.data.type==='drecord').length>0){
+                    setSessionType('drecord')
+                }
                 
             }else{
                 setUID(session) 
@@ -63,6 +66,7 @@ export function Search({
            
         }
         setShowQR(false);
+      
     };
 
   
@@ -83,7 +87,8 @@ export function Search({
     const admissionSessions = sessions.filter(s =>s?.data?.type==='admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
     const neolabSessions = sessions.filter(s =>s?.data?.type==='neolab' || s?.data?.script?.title.match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
     const dischargeSessions = sessions.filter(s => s?.data?.type==='discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-
+    const dailyRecordsSessions = sessions.filter(s => s.data.type==='drecord' || s.data.script.title.match(/daily record/gi) || (s.data.script.type === 'drecord'));
+  
     function renderList(sessions: any[]) {
         return (
             <>
@@ -106,19 +111,24 @@ export function Search({
                                             selected=true
                                         }
                                         const session = selected ? s : null;
+                                        
 										let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
+                                    
 										if (autoFill) {
 											if (filterEntries) {
+                                               
 												autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
 													if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
 													return acc;
 												}, {});
+                                 
 											}
 											if (autofillKeys) {
-												autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
+                                              	autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
 													if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
 													return acc;
 												}, {});
+                                            
 											}
 										}
                                         if(selected){
@@ -197,6 +207,7 @@ export function Search({
                         <Text color="textDisabled" variant="caption">{admissionSessions.length} Admission sessions found</Text>
                         <Text color="textDisabled" variant="caption">{neolabSessions.length} Neolab sessions found</Text>
                         <Text color="textDisabled" variant="caption">{dischargeSessions.length} Discharge sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{dailyRecordsSessions.length} Daily Records sessions found</Text>
 
                         <Br spacing="xl" />
 
@@ -218,6 +229,10 @@ export function Search({
                                         value: 'discharge',
                                         label: 'Discharge',
                                     },
+                                    {
+                                        value: 'drecord',
+                                        label: 'Daily Records',
+                                    },
                                 ]}
                             />
                         </Box>
@@ -228,6 +243,7 @@ export function Search({
                             if (sessionType === 'admission') return admissionSessions;
                             if (sessionType === 'neolab') return neolabSessions;
                             if (sessionType === 'discharge') return dischargeSessions;
+                            if (sessionType === 'drecord') return dailyRecordsSessions;
                             return [];
                         })())}
                     </>

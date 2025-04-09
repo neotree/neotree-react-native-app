@@ -3,7 +3,6 @@ import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 
 export const exportSession = async (s: any) => {
-    console.log('-PARAM---',JSON.stringify(s))
     try {
         const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
             method: 'POST',

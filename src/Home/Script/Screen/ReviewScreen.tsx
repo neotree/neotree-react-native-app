@@ -1,8 +1,6 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Box, Br, Card, Text } from '../../../components';
-import { useContext } from '../Context';
-import { ScreenEntry } from '@/src/types';
 import * as types from '../../../types';
 
 type ReviewProps = {
@@ -29,7 +27,6 @@ export function ReviewScreen({screens,onChange,lastPage,lastPageIndex}:ReviewPro
     });
 
     const notifyParent = (ind:number) => {
-        console.log("--LAS LASTAS..-----",JSON.stringify(lastPage))
           if(ind!=-1){
                 onChange(ind,lastPage,lastPageIndex); 
             }

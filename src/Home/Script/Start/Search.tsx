@@ -76,6 +76,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const admissionSessions = sessions.filter(s => s.data.type==='admission' || s.data.script.title.match(/admission/gi) || (s.data.script.type === 'admission'));
     const neolabSessions = sessions.filter(s =>s.data.type==='neolab' || s.data.script.title.match(/neolab/gi) || (s.data.script.type === 'neolab'));
     const dischargeSessions = sessions.filter(s => s.data.type==='discharge' || s.data.script.title.match(/discharge/gi) || (s.data.script.type === 'discharge'));
+    const dailyRecordsSessions = sessions.filter(s => s.data.type==='drecord' || s.data.script.title.match(/daily record/gi) || (s.data.script.type === 'drecord'));
 
     function renderList(sessions: any[]) {
         return (
@@ -150,6 +151,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 label={label}
                 onChange={uid => setUID(uid)}
                 value={uid}
+            
             />
 
             <Br spacing='s' />
@@ -181,7 +183,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                         <Text color="textDisabled" variant="caption">{admissionSessions.length} Admission sessions found</Text>
                         <Text color="textDisabled" variant="caption">{neolabSessions.length} Neolab sessions found</Text>
                         <Text color="textDisabled" variant="caption">{dischargeSessions.length} Discharge sessions found</Text>
-
+                        <Text color="textDisabled" variant="caption">{dailyRecordsSessions.length} Daily Record sessions found</Text>
                         <Br spacing="xl" />
 
                         <Box width={200}>
@@ -202,6 +204,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                         value: 'discharge',
                                         label: 'Discharge',
                                     },
+                                    {
+                                        value: 'drecord',
+                                        label: 'Daily Records',
+                                    },
                                 ]}
                             />
                         </Box>
@@ -212,6 +218,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                             if (sessionType === 'admission') return admissionSessions;
                             if (sessionType === 'neolab') return neolabSessions;
                             if (sessionType === 'discharge') return dischargeSessions;
+                            if (sessionType === 'drecord') return dailyRecordsSessions;
                             return [];
                         })())}
                     </>

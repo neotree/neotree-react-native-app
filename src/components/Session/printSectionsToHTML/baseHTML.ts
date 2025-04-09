@@ -5,10 +5,9 @@ export function getBaseHTML (html: any, session: any) {
   const creationDate = completed_at || canceled_at;
 
   const formatScriptType = (type:string)=>{
-   
     if(type==='discharge'){
       return "Discharge"
-    }else if(type==='daily_records'){
+    }else if(type==='drecord'){
       return "Daily Records"
     } else{
       return "Admission"

@@ -39,8 +39,8 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                         exportType: 'dropdown',
 						value: val, 
 						valueLabel: !val ? null : field.label,
-          				valueText: !val ? null : o.label,
-						exportLabel: !val ? null : o.label,
+          				valueText: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
+						exportLabel: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
                         exportValue: !val ? null : val,
 					});
                 }}
