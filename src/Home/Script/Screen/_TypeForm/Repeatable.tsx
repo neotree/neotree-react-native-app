@@ -43,7 +43,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
          
           const { createdAt, id, ...dynamicFields } = item;
       
-          const values: Record<string, any> = { ...dynamicFields };
+          const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
       
           const isComplete = fields.filter(f => !f.editable).every(field => {
             const val = values[field.key];
@@ -64,10 +64,9 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     const [disabled,setDisabled] =  useState(forms.filter(f => !f.isComplete).length > 0)
 
     useEffect(() => {
-        if (forms.length === 0) {
-            addNewForm();
-        }
-    }, [forms]);
+        addNewForm();
+        
+    }, []);
 
     useEffect(()=>{
         setDisabled(forms?.filter(f => !f.isComplete).length > 0);
@@ -88,11 +87,12 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             values: initialValues,
             isComplete: false,
         };
-       
+       if(forms.filter(f=>!f.isComplete).length===0){
         setForms(prev => [
             ...prev.map(form => ({ ...form, isCollapsed: true })), // Collapse previous forms
             newForm,
         ]);
+    }
     };
 
     const removeForm = (id: number) => {
@@ -111,6 +111,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     }
 
     const handleChange = (id: number, key: string, value: any,field:any) => {
+      
         const updatedForms = forms.map(form => {
             if (form.id !== id) return form;
             const enhancedValue = {
@@ -130,7 +131,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         });
         setDisabled(updatedForms.filter(f => !f.isComplete).length > 0);
         setForms(updatedForms);
-       
         notifyParent(updatedForms,'add');
         
     };
@@ -156,6 +156,57 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
       const today= new Date()
      return (date.getDate()==today.getDate() && date.getMonth()=== today.getMonth() && date.getFullYear()== today.getFullYear())
     }
+
+    // Utility to get valueLabel and valueText for dropdowns
+function getValueLabelAndText(field:any, value:any) {
+    const opts = (field.values || '').split('\n')
+    .map((v = '') => v.trim())
+    .filter((v: any) => v)
+    .map((v: any) => {
+        v = v.split(',');
+        return { value: v[0], label: v[1], };
+    });
+
+    if (field.type === 'dropdown' && Array.isArray(opts)) {
+      const match = opts.find((v:any) => v.value === value);
+      if (match) {
+        return {
+          valueLabel: match.label,
+          valueText: match.label,
+          exportLabel: match.label,
+          exportValue: value
+        };
+      }
+    }
+    return null;
+  }
+  
+  function transformToFullFieldObject(partial:any) {
+    const transformed :any = {};
+    for (const key in partial) {
+      const valueObj = partial[key];
+      const field = fields.filter(f=>f.key===key)[0];
+  
+      if (!field) continue;
+  
+      const base = {
+        ...{'label':field.label},
+        ...{'exportType':field.type},
+        ...valueObj,
+      };
+  
+      if (field.type === 'dropdown') {
+        const dropdownInfo = getValueLabelAndText(field, valueObj.value);
+        if(dropdownInfo!==null)
+        Object.assign(base, dropdownInfo);
+      }
+  
+      transformed[key] = base;
+    }
+  
+    return transformed;
+  }
+  
 
 
      const renderFieldComponent = (field: any, formId: number, value: any, index: number,createdAt: Date) => {

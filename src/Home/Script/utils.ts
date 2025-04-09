@@ -464,6 +464,6 @@ export const getScriptUtils = ({
 
         getSuggestedDiagnoses,    
         
-        getScreenIndex,
+        getScreenIndex
     };
 }  

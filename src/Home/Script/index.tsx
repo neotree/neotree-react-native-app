@@ -110,7 +110,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
 		const summary = utils.createSessionSummary(params);
-
 		(async () => {
 			try {
 				const res = await api.saveSession({
@@ -119,10 +118,9 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				});
 				setSessionID(res?.sessionID);
 				resolve(summary);
-			} catch (e) {
-
-				reject(e);
-			}
+			} catch (e) { 
+				
+				reject(e); }
 		})();
 	});
 
@@ -236,6 +234,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					setActiveScreen(lastPage);
 					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
 					setTimeout(() => setRefresh(false), 2);
+	
 				} else {
 					setRefresh(true);
 					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${nextScreenIndex}`)[0]);
@@ -278,7 +277,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setActiveScreenIndex(prev.index);
 				setActiveScreen(prev.screen);
 				setTimeout(() => setRefresh(false), 10);
-
 				saveSession();
 			}
 		}
@@ -356,7 +354,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		
 		let as = screens[index]       
 		if (as) {
-			console.log("...MY LAST....",JSON.stringify(lastPage))
 			setRefresh(true);
 			removeEntry(activeScreen?.id);
 			as.review = true				
@@ -498,7 +495,22 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setEntry,
 				removeEntry,
 				getEntryValueByKey,
+				getRepeatablesPrepopulation(){
+					try {
+						const autoFill = nuidSearchForm?.[0]?.results?.session?.data?.entries?.repeatables
+						  ?? nuidSearchForm?.[0]?.results?.autoFill?.data?.entries?.repeatables;
+					
+						if (autoFill && typeof autoFill === 'object') {
+						  return autoFill
+						}
+					
+						return null;
+					  } catch {
+						return null;
+					  }
+				},
 				getPrepopulationData(prePopulationRules?: string[]) {
+					
 					const results = nuidSearchForm
 						.filter(f => f.results)
 						.filter(f => {

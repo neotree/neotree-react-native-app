@@ -26,6 +26,7 @@ export function TypeForm({ }: TypeFormProps) {
         evaluateCondition,
         parseCondition,
         getPrepopulationData,
+        getRepeatablesPrepopulation,
         setEntryValues,
     } = ctx;
 
@@ -44,6 +45,7 @@ export function TypeForm({ }: TypeFormProps) {
         const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
         
         const cached = cachedVal.filter(v => v.key === f.key)[0];
+    
         let value = cached?.value || `${matched || ''}` || null;
         let valueText = cached?.valueText || matched || null;
 
@@ -101,6 +103,7 @@ export function TypeForm({ }: TypeFormProps) {
                     repeatables,
                     ...values.slice(repeatablesIndex + 1)
                 ];
+
                 setValues(updatedValues);
             }
         }
@@ -123,7 +126,7 @@ export function TypeForm({ }: TypeFormProps) {
             if (conditionMet && !field.optional && !value) return false;
             return acc;
         }, true);
-      
+        
         const hasErrors = values.filter(v => v.error).length;
         setEntryValues(hasErrors || !completed ? undefined : values);
 
@@ -150,7 +153,8 @@ export function TypeForm({ }: TypeFormProps) {
 
     const getRepeatableValues =()=>{
         const values = getAllValues()
-       return values.filter(v => v.key === 'repeatables')[0]?.value?.[collectionName] || [];
+        const autoFill = getRepeatablesPrepopulation()?getRepeatablesPrepopulation()[collectionName]:[]
+       return values.filter(v => v.key === 'repeatables')[0]?.value?.[collectionName] || autoFill;
     }
 
     const returnable = (

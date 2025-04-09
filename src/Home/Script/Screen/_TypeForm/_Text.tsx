@@ -50,7 +50,7 @@ export function TextField({
     }, [conditionMet]);
 
     React.useEffect(() => {
-        if (`${field.key}`.match(/NUID_/gi) && conditionMet && patientNUID) {
+        if (isNeotreeID && conditionMet && patientNUID) {
             onChange({ value: patientNUID, valueText: patientNUID, exportType: 'text', }); 
             setValue(patientNUID);
             setDisabled(true);
@@ -71,7 +71,7 @@ export function TextField({
                     generatedUID={generatedUID}
                     onChange={val => {
                         setValue(`${val || ''}`);
-                        onChange({ value: val, exportType: 'text', });
+                        onChange({ value: val,valueText:val, exportType: 'text', });
                     }}
                     autoGenerateValue={autoGenerateValue}
 
@@ -88,7 +88,7 @@ export function TextField({
                         let err = '';
                         setValue(value);
                         setError(err);
-                        onChange({ value: err ? null : value, exportType: 'text', });
+                        onChange({ value: err ? null : value, valueText:value,exportType: 'text', });
                     }}
                 />
             

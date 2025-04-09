@@ -7,7 +7,7 @@ export default (html: any, session: any) => {
    
     if(type==='discharge'){
       return "Discharge"
-    }else if(type==='daily_records'){
+    }else if(type==='drecord'){
       return "Daily Records"
     } else{
       return "Admission"
