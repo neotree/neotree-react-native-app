@@ -102,7 +102,7 @@ export function evaluateDrugsScreen({
         })
         .filter(d => {
             if (d.validationType === 'condition') {
-                return d.conditionMet || !!d.diagnoses.length;
+                return d.conditionMet && (!d.diagnosisKey ? true : !!d.diagnoses.length);
             }
 
             if (
