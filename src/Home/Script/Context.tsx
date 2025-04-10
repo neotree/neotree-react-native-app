@@ -68,6 +68,7 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     setNavOptions: () => void;
     setMoreNavOptions: React.Dispatch<React.SetStateAction<null | MoreNavOptions>>;
     getPrepopulationData: (prePopulationRules?: string[]) => any;
+    getRepeatablesPrepopulation: () => any;
     getEntryValueByKey: (key: string) => null | types.ScreenEntryValue;
     getFieldPreferences: (field: string, screen?: any) => {
         fontSize: "xl" | "default" | "xs" | "sm" | "lg" | undefined;

@@ -15,7 +15,6 @@ export function FormAndDiagnosesSummary({
     ...props
 }: FormAndDiagnosesSummaryProps) {
     const RootComponent = scrollable !== false ? ScrollView : React.Fragment;
-    
     return (
         <Box>
             <RootComponent>

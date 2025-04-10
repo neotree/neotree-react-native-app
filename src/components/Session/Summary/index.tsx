@@ -22,8 +22,8 @@ export function Summary({
     Wrapper = Wrapper || React.Fragment;
     // const excludeScreenTypes = ['zw_edliz_summary_table', 'mwi_edliz_summary_table'];
     const excludeScreenTypes: string[] = [];
-  
-    const form = sessionForm.filter((e: any) => !excludeScreenTypes.includes(e.screen?.type));
+
+    const form = sessionForm?.filter((e: any) => !excludeScreenTypes.includes(e.screen?.type));
 
     const sections: any[] = groupEntries(form);
 
@@ -36,21 +36,21 @@ export function Summary({
             <Content/>
                 <Content>
                     {sections
-                        .filter(([, entries]) => entries.length)
+                        ?.filter(([, entries]) => entries.length)
                         .map(([sectionTitle, entries], sectionIndex) => {
                             const key = [sectionTitle, sectionIndex].join('');
 
                             const displayItems = entries
-                                .filter((e: any) => e.values.length)
+                                ?.filter((e: any) => e.values.length)
                                 .map(({
                                     values,
                                     management = [],
                                     screen: { metadata: { label }, type }
                                 }: any, entryIndex: number) => {
-                                    management = management.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
+                                    management = management?.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
                                     const nodes = values
-                                        .filter((e: any) => e.confidential ? showConfidential : true)
+                                        ?.filter((e: any) => e.confidential ? showConfidential : true)
                                         .filter((v: any) => v.valueText || v.value)
                                         .filter((v: any) => v.printable !== false)
                                         .map((v: any, i: number) => {
@@ -135,7 +135,7 @@ export function Summary({
                                         </Box>
                                     );
                                 })
-                                .filter((item: any) => item);
+                                ?.filter((item: any) => item);
 
                             if (!displayItems.length) return null;
 

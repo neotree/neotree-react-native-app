@@ -14,6 +14,8 @@ export function TextField({
     conditionMet, 
     entryValue, 
     patientNUID,
+    repeatable,
+    editable ,
     onChange 
 }: TextFieldProps) {
     const {script,generatedUID} = useContext()||{};
@@ -25,6 +27,7 @@ export function TextField({
     const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? prePopulatedUID : '') || '');
     const [error, setError] = React.useState('');
     const [disabled, setDisabled] = React.useState(false);
+    const canEdit = repeatable?editable:true
 
 // const [showQR, setShowQR] = React.useState(false);
 
@@ -47,7 +50,7 @@ export function TextField({
     }, [conditionMet]);
 
     React.useEffect(() => {
-        if (`${field.key}`.match(/NUID_/gi) && conditionMet && patientNUID) {
+        if (isNeotreeID && conditionMet && patientNUID) {
             onChange({ value: patientNUID, valueText: patientNUID, exportType: 'text', }); 
             setValue(patientNUID);
             setDisabled(true);
@@ -68,7 +71,7 @@ export function TextField({
                     generatedUID={generatedUID}
                     onChange={val => {
                         setValue(`${val || ''}`);
-                        onChange({ value: val, exportType: 'text', });
+                        onChange({ value: val,valueText:val, exportType: 'text', });
                     }}
                     autoGenerateValue={autoGenerateValue}
 
@@ -77,7 +80,7 @@ export function TextField({
             ) : (
             
                 <TextInput
-                    editable={conditionMet}
+                    editable={conditionMet && canEdit}
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
                     errors={error ? [error] : []}
@@ -85,7 +88,7 @@ export function TextField({
                         let err = '';
                         setValue(value);
                         setError(err);
-                        onChange({ value: err ? null : value, exportType: 'text', });
+                        onChange({ value: err ? null : value, valueText:value,exportType: 'text', });
                     }}
                 />
             

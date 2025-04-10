@@ -7,9 +7,10 @@ type DateFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function DateField({ field, conditionMet, entryValue, allValues, onChange, }: DateFieldProps) {
+export function DateField({ field, conditionMet, entryValue, allValues, onChange,repeatable,editable }: DateFieldProps) {
 	const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
+    const canEdit = repeatable?editable:true
 
     React.useEffect(() => { 
         if (!conditionMet) {
@@ -144,7 +145,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 errors={getErrors(entryValue.value)}
                 mode={field.type === 'date' ? 'date' : 'datetime'}
                 value={value}
-                disabled={!conditionMet}
+                disabled={!conditionMet || !canEdit}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
                 onChange={date => {
                     const error = getErrors(date?.toISOString() || null)[0] || null;

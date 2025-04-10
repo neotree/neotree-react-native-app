@@ -6,9 +6,9 @@ type DropDownFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function DropDownField({ field, entryValue, onChange, conditionMet }: DropDownFieldProps) {
+export function DropDownField({ field, entryValue, onChange, conditionMet,repeatable,editable }: DropDownFieldProps) {
     const [value, setValue] = React.useState(entryValue?.value);
-
+    const canEdit = repeatable?editable:true
     React.useEffect(() => { 
         if (!conditionMet) {
             onChange({ value: null, valueText: null, valueLabel: null, exportType: 'dropdown', }); 
@@ -27,7 +27,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
     return (
         <Box>
             <Dropdown
-                disabled={!conditionMet}
+                disabled={!conditionMet || !canEdit}
                 label={`${field.label || ''}${field.optional ? '' : ' *'}`}
                 title={`${field.label || ''}`}
                 searchable={opts.length > 5}
@@ -39,8 +39,8 @@ export function DropDownField({ field, entryValue, onChange, conditionMet }: Dro
                         exportType: 'dropdown',
 						value: val, 
 						valueLabel: !val ? null : field.label,
-          				valueText: !val ? null : o.label,
-						exportLabel: !val ? null : o.label,
+          				valueText: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
+						exportLabel: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
                         exportValue: !val ? null : val,
 					});
                 }}

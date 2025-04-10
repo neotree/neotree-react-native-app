@@ -81,6 +81,7 @@ export type Screen = any;
 export type Diagnosis = any;
 export type ConfigKey = any;
 export type Configuration = any;
+export type Repeatable=any;
 
 export type DrugField = {
   key: string;
@@ -159,6 +160,7 @@ export type ScreenEntryValue = {
 export type ScreenEntry = {
   value?: ScreenEntryValue[];
   values: ScreenEntryValue[];
+  repeatables:  ScreenEntryValue[];
   management: any[];
   screenIndex: number;
   screen: {
@@ -191,6 +193,8 @@ export type ScreenFormTypeProps = {
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
   allValues: ScreenEntry['values'];
+  repeatable?:boolean,
+  editable?:boolean
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {
@@ -206,6 +210,16 @@ export type DiagnosisSectionProps = ScreenTypeProps & {
 	acceptedDiagnoses: Diagnosis[];
 	activeDiagnosisIndex: null | number;
 	hcwDiagnoses: Diagnosis[];
+};
+
+export type RepeatableProps = ScreenTypeProps & {
+	getDefaultRepeatables: (r?: Repeatable) => Repeatable;
+	repeatableToEntryValue: (d?: Repeatable) => ScreenEntryValue;
+	setActiveRepeatableIndex: React.Dispatch<React.SetStateAction<null | number>>;
+	setRepeatables: (repeatables?: Repeatable[]) => void;
+	setMoreNavOptions: () => void;
+	repeatables: Repeatable[];
+	activeRepeatableIndex: null | number;
 };
 
 export interface StackNavigationProps<

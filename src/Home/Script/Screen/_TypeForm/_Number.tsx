@@ -7,7 +7,7 @@ type NumberFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function NumberField({ field, onChange, conditionMet, entryValue, allValues }: NumberFieldProps) {
+export function NumberField({ field, onChange, conditionMet, entryValue, allValues,repeatable,editable }: NumberFieldProps) {
     const mounted = React.useRef(false);
     let maxDecimals = 0;
     if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '').length;
@@ -15,6 +15,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
     const [value, setValue] = React.useState(entryValue?.value);
     const [error, setError] = React.useState('');
     const [calcFrom, setCalcFrom] = React.useState<types.ScreenEntryValue[]>([]);
+    const canEdit = repeatable?editable:true
     
     const onValueChange = React.useCallback((_value: string | number) => {
         const value = `${_value}`;
@@ -38,7 +39,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
         }
         setValue(value);
         setError(err);
-        onChange({ value: err ? null : value, exportType: 'number', });
+        onChange({ value: err ? null : value,valueText:value, exportType: 'number', });
     }, [onChange, field, maxDecimals]);
 
     React.useEffect(() => { 
@@ -69,7 +70,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
                 value={value}
                 keyboardType="numeric"
                 errors={error ? [error] : []}
-                editable={conditionMet}
+                editable={conditionMet && canEdit}
                 onChangeText={value => {                    
                     onValueChange(value);
                 }}

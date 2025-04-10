@@ -3,6 +3,17 @@ import moment from 'moment';
 export default (html: any, session: any) => {
   const { completed_at, canceled_at, script, } = session.data;
   const creationDate = completed_at || canceled_at;
+  const formatScriptType = (type:string)=>{
+   
+    if(type==='discharge'){
+      return "Discharge"
+    }else if(type==='drecord'){
+      return "Daily Records"
+    } else{
+      return "Admission"
+    }
+
+  }
 
   return `
   <!DOCTYPE html>
@@ -89,7 +100,7 @@ export default (html: any, session: any) => {
       <div id="header">
         <div id="headerImg">
           <h3 id="headerTitle">${script.data.printTitle || script.data.title}</h3>
-          <p id="headerSubtitle">Ministry of Health - National ${script.data.type === 'discharge' ? 'Discharge' : 'Admission'} Form</p>
+          <p id="headerSubtitle">Ministry of Health - National ${formatScriptType(script.data.type)} Form</p>
         </div>
       </div>
       <div id"content-wrap">

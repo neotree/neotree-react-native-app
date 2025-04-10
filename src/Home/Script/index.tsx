@@ -9,26 +9,29 @@ import { useBackButton } from '../../hooks/useBackButton';
 import * as api from '../../data';
 
 import { Start } from './Start';
-import {Screen}  from './Screen';
+import { Screen } from './Screen';
 import { Context, MoreNavOptions, ContextType } from './Context';
 import { getScriptUtils } from './utils';
 import { Alert, TextProps } from 'react-native';
 import { Summary } from './Summary';
 import { defaultPreferences } from '@/src/constants';
+import { ReviewScreen } from './Screen/ReviewScreen'
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
 
 	const [isReady, setIsReady] = useState(false);
-    const [generatedUID, setGeneratedUID] = React.useState('');
+	const [generatedUID, setGeneratedUID] = React.useState('');
 
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
+	const [shouldReview, setShouldReview] = React.useState(false);
+	const [review, setReview] = React.useState(false)
 	const [moreNavOptions, setMoreNavOptions] = React.useState<null | MoreNavOptions>(null);
 
 	const [startTime] = React.useState(new Date().toISOString());
 	const [refresh, setRefresh] = React.useState(false);
 
-    const [nuidSearchForm, setNuidSearchForm] = React.useState<types.NuidSearchFormField[]>([]);
+	const [nuidSearchForm, setNuidSearchForm] = React.useState<types.NuidSearchFormField[]>([]);
 	const [matched, setMatched] = React.useState<types.MatchedSession | null>(null);
 	const [patientDetails, setPatientDetails] = React.useState({
 		isTwin: false,
@@ -58,10 +61,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [, setLoadConfigurationError] = React.useState('');
 
 	const [activeScreen, setActiveScreen] = React.useState<null | types.Screen>(null);
+	const [lastPage, setLastPage] = React.useState<null | types.Screen>(null);
+	const [lastPageIndex, setLastPageIndex] = React.useState<null | types.Screen>(null);
 	const [activeScreenIndex, setActiveScreenIndex] = React.useState((route.params?.session?.data?.form || []).length);
 
 	const [entries, setEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
-  	const [cachedEntries, setCachedEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
+	const [cachedEntries, setCachedEntries] = React.useState<types.ScreenEntry[]>(route.params?.session?.data?.form || []);
 	const setCacheEntry = (entry: types.ScreenEntry) => !entry ? null : setCachedEntries(entries => {
 		const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
 		return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
@@ -99,13 +104,12 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		startTime,
 		matchingSession: matched?.session || null,
 		session: route.params?.session,
-        generatedUID,
+		generatedUID,
 		drugsLibrary,
 	});
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
 		const summary = utils.createSessionSummary(params);
-	
 		(async () => {
 			try {
 				const res = await api.saveSession({
@@ -125,72 +129,74 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		(async () => {
 			try {
 				const summary = await saveSession(params);
-				api.exportSessions().then(() => {}).catch(() => {});
+				api.exportSessions().then(() => { }).catch(() => { });
 				setSummary(summary);
 				resolve(summary);
-			} catch (e) { 
-				
-				reject(e); }
+			} catch (e) {
+
+				reject(e);
+			}
 			setDisplayLoader(false);
 		})();
 	});
 
 	const loadScript = React.useCallback(async () => {
-			try {
-				setLoadingScript(true);
-				setLoadScriptError('');
-				setScript(null);
-				setScreens([]);
-				setDiagnoses([]);
-				setActiveScreen(null);
-				setDrugsLibrary([]);
+		try {
+			setLoadingScript(true);
+			setLoadScriptError('');
+			setScript(null);
+			setScreens([]);
+			setDiagnoses([]);
+			setActiveScreen(null);
+			setDrugsLibrary([]);
 
-				const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
-				const drugsLibrary = await api.getDrugsLibrary();
+			const { script, screens, diagnoses, } = await getScript({ script_id: route.params.script_id, });
+			const drugsLibrary = await api.getDrugsLibrary();
 
-                const uid = await generateUID(script?.type);
-                setGeneratedUID(uid);
-				
-				setScript(script);
-				setScreens(screens);
-				setDiagnoses(diagnoses);
-				setDrugsLibrary(drugsLibrary.map(d => d.data));
-				setLoadingScript(false);
+			const uid = await generateUID(script?.type);
+			setGeneratedUID(uid);
 
-				if (route.params?.session?.data?.form?.length) { 
-					const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];
-					const activeScreenIndex = screens.map((s, i) => {
-						if (
-							(s.screen_id === lastEntry?.screen?.screen_id) ||
-							(s.screenId === lastEntry?.screen?.screen_id)
-						) return i;
-						return null;
-					}).filter(i => i !== null)[0]; 
+			setScript(script);
+			setScreens(screens);
+			setDiagnoses(diagnoses);
+			setDrugsLibrary(drugsLibrary.map(d => d.data));
+			setLoadingScript(false);
 
-					if (lastEntry && activeScreenIndex >= 0) {
-						setActiveScreen(screens[activeScreenIndex]);
-						setActiveScreenIndex(activeScreenIndex);
-					}
+			if (route.params?.session?.data?.form?.length) {
+				const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];
+				const activeScreenIndex = screens.map((s, i) => {
+					if (
+						(s.screen_id === lastEntry?.screen?.screen_id) ||
+						(s.screenId === lastEntry?.screen?.screen_id)
+					) return i;
+					return null;
+				}).filter(i => i !== null)[0];
+
+				if (lastEntry && activeScreenIndex >= 0) {
+					setActiveScreen(screens[activeScreenIndex]);
+					setActiveScreenIndex(activeScreenIndex);
 				}
-			} catch (e: any) { 
-				console.log(e);
-                setLoadScriptError(e.message);
-		    } finally {
-                setLoadingScript(false);
-				setIsReady(true);
-            }
+			}
+		} catch (e: any) {
+			console.log(e);
+			setLoadScriptError(e.message);
+		} finally {
+			setLoadingScript(false);
+			setIsReady(true);
+		}
 	}, [navigation, route]);
 
 	const loadConfiguration = React.useCallback(() => {
 		(async () => {
 			try {
 				setLoadingConfiguration(true);
-				const configuration = await getConfiguration();				
+				const configuration = await getConfiguration();
 				setConfiguration({ ...configuration?.data });
 				setLoadingConfiguration(false);
-			} catch (e: any) { 
-				
-				setLoadConfigurationError(e.message); }
+			} catch (e: any) {
+
+				setLoadConfigurationError(e.message);
+			}
 		})();
 	}, []);
 
@@ -212,27 +218,42 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 
 		if (activeScreen?.id === lastScreen?.id) {
-			const summary = await createSummaryAndSaveSession({ completed: true });
-			setSummary(summary);
+			setShouldReview(true)
+			setLastPage(lastScreen)
+			setLastPageIndex(lastScreenIndex)
+
 		} else {
 			if (nextScreen) {
-				setRefresh(true);
-				setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${nextScreenIndex}`)[0]);			
-				setActiveScreenIndex(nextScreenIndex);
-				setActiveScreen(nextScreen);
-				setTimeout(() => setRefresh(false), 10);
+				
+				if (activeScreen.review) {
+				
+					setRefresh(true)
+					setShouldReview(false)
+					setActiveScreenIndex(lastPageIndex);
+					lastPage.review=false
+					setActiveScreen(lastPage);
+					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
+					setTimeout(() => setRefresh(false), 2);
+	
+				} else {
+					setRefresh(true);
+					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${nextScreenIndex}`)[0]);
+					setActiveScreenIndex(nextScreenIndex);
+					setActiveScreen(nextScreen);
+					setTimeout(() => setRefresh(false), 10);
+					saveSession();
+				}
 
-				saveSession();
 			} else {
 				Alert.alert(
 					'ERROR',
 					'Failed to load next screen. Screen condition might be invalid',
 					[
-					{
-						text: 'Exit',
-						onPress: () => navigation.navigate('Home'),
-						style: 'cancel'
-					},
+						{
+							text: 'Exit',
+							onPress: () => navigation.navigate('Home'),
+							style: 'cancel'
+						},
 					]
 				);
 			}
@@ -256,26 +277,25 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setActiveScreenIndex(prev.index);
 				setActiveScreen(prev.screen);
 				setTimeout(() => setRefresh(false), 10);
-
 				saveSession();
 			}
 		}
 	};
 
 	const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
-        const preferences = {
-            ...defaultPreferences,
-            ...screen?.data?.preferences,
-        } as typeof defaultPreferences;
+		const preferences = {
+			...defaultPreferences,
+			...screen?.data?.preferences,
+		} as typeof defaultPreferences;
 
-        const fieldPreferences = {
-            fontSize: preferences.fontSize[field],
-            fontWeight: preferences.fontWeight[field],
-            fontStyle: preferences.fontStyle[field] || [],
-            textColor: preferences.textColor[field],
-            backgroundColor: preferences.backgroundColor[field],
-            highlight: preferences.highlight[field],
-        };
+		const fieldPreferences = {
+			fontSize: preferences.fontSize[field],
+			fontWeight: preferences.fontWeight[field],
+			fontStyle: preferences.fontStyle[field] || [],
+			textColor: preferences.textColor[field],
+			backgroundColor: preferences.backgroundColor[field],
+			highlight: preferences.highlight[field],
+		};
 
 		const styleObj: { [key: string]: any; } = {
 			color: fieldPreferences?.textColor,
@@ -300,75 +320,104 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			};
 		}, {}) as TextProps['style'];
 
-        return {
-            ...fieldPreferences,
-            style,
-        };
-    }, [activeScreen]);
+		return {
+			...fieldPreferences,
+			style,
+		};
+	}, [activeScreen]);
 
 	const setNavOptions = React.useCallback(() => {
-		navigation.setOptions(getNavOptions({ 
-			script, 
-			theme, 
-			activeScreen, 
+		navigation.setOptions(getNavOptions({
+			script,
+			theme,
+			activeScreen,
 			activeScreenIndex,
-            moreNavOptions,
+			moreNavOptions,
 			getFieldPreferences,
-            confirmExit, 
+			confirmExit,
 			goBack: moreNavOptions?.goBack || goBack,
-            goNext: moreNavOptions?.goNext || goNext,
+			goNext: moreNavOptions?.goNext || goNext,
 		}));
 	}, [
-		script, 
-		route, 
-		navigation, 
-		theme, 
-		activeScreen, 
-		activeScreenIndex, 
-		moreNavOptions, 
+		script,
+		route,
+		navigation,
+		theme,
+		activeScreen,
+		activeScreenIndex,
+		moreNavOptions,
 		summary,
 		getFieldPreferences
 	]);
 
+	const handleReviewChange = (index: number,lastPage: types.Screen,lastPageIndex:number)=>{
+		
+		let as = screens[index]       
+		if (as) {
+			setRefresh(true);
+			removeEntry(activeScreen?.id);
+			as.review = true				
+			setActiveScreenIndex(index);
+			setActiveScreen(as);
+			setTimeout(() => setRefresh(false), 10);
+			setReview(false)
+			setShouldReview(false)
+			setLastPage(lastPage)
+			setLastPageIndex(lastPageIndex)
+			
+			
+		}
+	}
+
 	React.useEffect(() => {
-        (async () => {
-            const app = await getApplication();
-            setApplication(app);
-            
+		(async () => {
+			const app = await getApplication();
+			setApplication(app);
+
 			const location = await getLocation();
 			setLocation(location);
 
 			loadConfiguration();
-			loadScript(); 
-        })();
-    }, []);
+			loadScript();
+		})();
+	}, []);
 
 	React.useEffect(() => { setNavOptions(); }, [script, activeScreen, moreNavOptions]);
 
-	useBackButton(() => { 
+	useBackButton(() => {
 		if (moreNavOptions?.goBack) {
 			moreNavOptions.goBack();
 		} else {
-			goBack(); 
+			goBack();
 		}
 	});
 
-    const getEntryValueByKey = React.useCallback((key: string) => {
-        key = `${key || ''}`.replace('$', '');
-        let value: null | types.ScreenEntryValue = null;
-        entries.forEach(e => e.values.forEach(v => {
-            if (`${v.key}`.toLowerCase() === `${key}`.toLowerCase()) {
-                value = v;
-            }
-        }));
-        return value;
-    }, [entries]);
+	const getEntryValueByKey = React.useCallback((key: string) => {
+		key = `${key || ''}`.replace('$', '');
+		let value: null | types.ScreenEntryValue = null;
+		entries.forEach(e => e.values.forEach(v => {
+			if (`${v.key}`.toLowerCase() === `${key}`.toLowerCase()) {
+				value = v;
+			}
+		}));
+		return value;
+	}, [entries]);
 
 	const getBirthFacilities = (): any[] => {
-        // ["ReferredFrom", 'BirthFacility']
-        const s = screens.filter(s => ['BirthFacility'].includes(s?.data?.metadata?.key))[0]
-        return (s?.data?.metadata?.items || []);
-    };
+		// ["ReferredFrom", 'BirthFacility']
+		const s = screens.filter(s => ['BirthFacility'].includes(s?.data?.metadata?.key))[0]
+		return (s?.data?.metadata?.items || []);
+	};
+
+	const handleReviewNoPress = async () => {
+		const summary = await createSummaryAndSaveSession({ completed: true });
+		setShouldReview(false);
+		setSummary(summary);
+	};
+
+	const handleReviewYesPress = () => {
+		setReview(true);
+	};
 
 	if (refresh) return null;
 
@@ -378,7 +427,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		return (
 			<Modal
 				open
-				onClose={() => {}}
+				onClose={() => { }}
 				title="Error"
 				actions={[
 					{
@@ -402,7 +451,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		<Context.Provider
 			value={{
 				...utils,
-                generatedUID,
+				generatedUID,
 				script,
 				screens,
 				drugsLibrary,
@@ -417,19 +466,19 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				application,
 				location,
 				moreNavOptions,
-				summary,	
+				summary,
 				matched,
-				mountedScreens,		
+				mountedScreens,
 				sessionID,
 				script_id: route.params.script_id,
 				patientDetails,
-                nuidSearchForm,
-                getFieldPreferences,
-                setNuidSearchForm,
+				nuidSearchForm,
+				getFieldPreferences,
+				setNuidSearchForm,
 				setPatientDetails,
 				saveSession,
 				createSummaryAndSaveSession,
-				setSessionID,		
+				setSessionID,
 				setMountedScreens,
 				setMatched,
 				getBirthFacilities,
@@ -445,53 +494,68 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				getCachedEntry,
 				setEntry,
 				removeEntry,
-                getEntryValueByKey,
-                getPrepopulationData(prePopulationRules?: string[]) {
-                    const results = nuidSearchForm
-                        .filter(f => f.results)
-                        .filter(f => {
-                            const metadata = activeScreen.data.metadata;
-                            const fields: any[] = metadata.fields || [];
-                            const items: any[] = metadata.items || [];
-                        
-                            const canPrePopulate = (rules: string[]) => {
-                                const prePopulate = rules;
-                                if (!prePopulate.length) return false;
-                                if (prePopulate.includes('allSearches')) return true;
-                                const isTwinSearch = f.key === 'BabyTwinNUID';
-                                if (!prePopulate.includes('twinSearches') && isTwinSearch) return false;
-                                return true;
-                            };
+				getEntryValueByKey,
+				getRepeatablesPrepopulation(){
+					try {
+						const autoFill = nuidSearchForm?.[0]?.results?.session?.data?.entries?.repeatables
+						  ?? nuidSearchForm?.[0]?.results?.autoFill?.data?.entries?.repeatables;
+					
+						if (autoFill && typeof autoFill === 'object') {
+						  return autoFill
+						}
+					
+						return null;
+					  } catch {
+						return null;
+					  }
+				},
+				getPrepopulationData(prePopulationRules?: string[]) {
+					
+					const results = nuidSearchForm
+						.filter(f => f.results)
+						.filter(f => {
+							const metadata = activeScreen.data.metadata;
+							const fields: any[] = metadata.fields || [];
+							const items: any[] = metadata.items || [];
 
-                            let isPrePopulatable = canPrePopulate(prePopulationRules || activeScreen.data.prePopulate || activeScreen.data.metadata.prePopulate || []);
+							const canPrePopulate = (rules: string[]) => {
+								const prePopulate = rules;
+								if (!prePopulate.length) return false;
+								if (prePopulate.includes('allSearches')) return true;
+								const isTwinSearch = f.key === 'BabyTwinNUID';
+								if (!prePopulate.includes('twinSearches') && isTwinSearch) return false;
+								return true;
+							};
 
-                            fields.forEach(f => {
-                                const isTrue = canPrePopulate(f.prePopulate || []);
-                                if (isTrue) isPrePopulatable = true;
-                            });
+							let isPrePopulatable = canPrePopulate(prePopulationRules || activeScreen.data.prePopulate || activeScreen.data.metadata.prePopulate || []);
 
-                            items.forEach(f => {
-                                const isTrue = canPrePopulate(f.prePopulate || []);
-                                if (isTrue) isPrePopulatable = true;
-                            });
+							fields.forEach(f => {
+								const isTrue = canPrePopulate(f.prePopulate || []);
+								if (isTrue) isPrePopulatable = true;
+							});
 
-                            return isPrePopulatable;
-                        });
-                    const twin = results.filter(item => item.key === 'BabyTwinNUID')[0];
-                    return {
-                        ...results.reduce((acc, item) => ({
-                            ...acc,
-                            ...item?.results?.autoFill?.data?.entries,
-                        }), {}),
-                        ...twin?.results?.autoFill?.data?.entries,
-                    };
-                },
+							items.forEach(f => {
+								const isTrue = canPrePopulate(f.prePopulate || []);
+								if (isTrue) isPrePopulatable = true;
+							});
+
+							return isPrePopulatable;
+						});
+					const twin = results.filter(item => item.key === 'BabyTwinNUID')[0];
+					return {
+						...results.reduce((acc, item) => ({
+							...acc,
+							...item?.results?.autoFill?.data?.entries,
+						}), {}),
+						...twin?.results?.autoFill?.data?.entries,
+					};
+				},
 				setEntryValues: (values?: types.ScreenEntry['values'], otherValues?: any) => {
 					// setMountedScreens(prev => ({
 					// 	...prev,
 					// 	[activeScreen.id]: true,
 					// }));	
-							
+
 					if (values) {
 						const screenMeta = activeScreen.data.metadata;
 						setEntry({
@@ -509,18 +573,18 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 								id: activeScreen.id,
 								screen_id: activeScreen.screen_id,
 								type: activeScreen.type,
-								metadata: { 
-									label: screenMeta.label, 
+								metadata: {
+									label: screenMeta.label,
 									dataType: screenMeta.dataType,
-									title1:  screenMeta.title1,
-									text1:  screenMeta.text1,
-									image1:  screenMeta.image1,
-									title2:  screenMeta.title2,
-									text2:  screenMeta.text2,
-									image2:  screenMeta.image2,
-									title3:  screenMeta.title3,
-									text3:  screenMeta.text3,
-									image3:  screenMeta.image3,
+									title1: screenMeta.title1,
+									text1: screenMeta.text1,
+									image1: screenMeta.image1,
+									title2: screenMeta.title2,
+									text2: screenMeta.text2,
+									image2: screenMeta.image2,
+									title3: screenMeta.title3,
+									text3: screenMeta.text3,
+									image3: screenMeta.image3,
 								},
 								index: activeScreenIndex,
 							},
@@ -540,14 +604,14 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 						<>
 							<Box flex={1} paddingBottom="m" backgroundColor="white">
 								{!activeScreen ? (
-									<Start /> 
-								): (
+									<Start />
+								) : (
 									<Screen />
 								)}
 							</Box>
 
-							<Modal 
-								open={shouldConfirmExit} 
+							<Modal
+								open={shouldConfirmExit}
 								onClose={() => setShoultConfirmExit(false)}
 								title="Cancel Script?"
 								actions={[
@@ -569,6 +633,35 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 							>
 								<Text>Are you sure you want to cancel script?</Text>
 							</Modal>
+							<Modal
+								open={shouldReview}
+								onClose={() => setShouldReview(false)}
+								title="Review Previous Screens?"
+								actions={review ? [] : [
+									{
+										label: 'No',
+										onPress: handleReviewNoPress,
+									},
+									{
+										label: 'Yes',
+										onPress: handleReviewYesPress,
+									},
+								]}
+							>
+								{review ? (
+									<ReviewScreen 
+									screens={screens} 
+			                        onChange={handleReviewChange}
+									lastPage={lastPage}
+									lastPageIndex={lastPageIndex}
+									/>
+								) : (
+									<Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
+										Do you want to review any previous screens?
+									</Text>
+								)}
+							</Modal>
+
 						</>
 					);
 				})()}

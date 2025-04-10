@@ -1,122 +1,166 @@
 import { APP_ENV, APP_VERSION } from '@/src/constants';
 import { getApplication } from './queries';
 
-export function formatExportableSession(session: any = {},opts: any = {}) {
-    return new Promise((resolve, reject) => {
-        (async () => {
-            try {
-            const { showConfidential } = opts;
-            const application = await getApplication();
-              const data = ()=>{
-                const { script, form, app_mode, country, hospital_id, started_at, completed_at, canceled_at, unique_key, } = session.data;
+export function formatExportableSession(session: any = {}, opts: any = {}) {
+  return new Promise((resolve, reject) => {
+    (async () => {
+      try {
+        const { showConfidential } = opts;
+        const application = await getApplication();
 
-                const diagnosisScreenEntry = form.filter((e: any) => e.screen.type === 'diagnosis')[0];
-                const diagnoses = !diagnosisScreenEntry ? [] : diagnosisScreenEntry.values.map((v: any) => v.diagnosis);
+        const {
+          script,
+          form,
+          app_mode,
+          country,
+          hospital_id,
+          started_at,
+          completed_at,
+          canceled_at,
+          unique_key,
+        } = session.data;
 
-                
+        const diagnosisScreenEntry = form.find((e: any) => e.screen.type === 'diagnosis');
+        const diagnoses = diagnosisScreenEntry
+          ? diagnosisScreenEntry.values.map((v: any) => v.diagnosis)
+          : [];
 
-                return {
-                    uid: session.uid,
-                    unique_key,
-                    appVersion: APP_VERSION,
-                    appEnv: APP_ENV,
-                    scriptVersion: application.webeditor_info.version,
-                    scriptTitle: script.script_id,
-                    script: { id: script.script_id, title: script.data.title, type: script.type, },
-                    started_at,
-                    completed_at,
-                    canceled_at,
-                    app_mode,
-                    country,
-                    hospital_id,
-                    diagnoses: diagnoses.map((d: any) => ({
-                        [d.name]: {
-                        hcw_agree: d.how_agree,
-                        hcw_follow_instructions: d.hcw_follow_instructions,
-                        Suggested: d.suggested,
-                        Priority: d.priority,
-                        hcw_reason_given: d.hcw_reason_given,
-                        }
-                    })),
-                    entries: form
-                        .map((e: any) => ({
-                            ...e,
-                            values: e.values.filter((v: any) =>
-                                v.confidential ? showConfidential : true
-                            ),
-                        }))
-                        .reduce((acc: any, e: any) => {
-                            const getVal = ({ value, dataType, type }: any) => {
-                                const t = dataType || type;
-                                switch (t) {
-                                case 'number':
-                                    return Number(value) || null;
-                                case 'boolean':
-                                    return value === 'false' ? false : Boolean(value);
-                                default:
-                                    return value;
-                                }
-                            };
+        // Helper: convert repeatable item values
+        const extractValueObject = (item: any) => {
+          return Object.entries(item).reduce((acc, [k, v]) => {
+            if (typeof v === 'object' && v !== null && 'value' in v) {
+              const valObj = v as any;
+              acc[k] = {
+                value: valObj.exportValue ?? valObj.value,
+                label: valObj.exportLabel ?? valObj.label ?? valObj.valueLabel ?? '',
+                printable: valObj.printable ?? true,
+                prePopulate: valObj.prePopulate,
+              };
+            } else {
+              acc[k] = v;
+            }
+            return acc;
+          }, {} as any);
+        };
 
-                            return [
-                                ...acc,
-                                ...e.values.reduce((acc: any, v: any) => {
-                                    const {
-                                        key,
-                                        type,
-                                        dataType,
-                                        value,
-                                        label,
-                                        valueLabel,
-                                        exportValue,
-                                        exportLabel,
-                                        exportType,
-                                        prePopulate,
-                                        comments,
-                                    } = v;
+        // Process repeatables
+        const repeatables: Record<string, any[]> = {};
+        form.forEach((entry: any) => {
+          const repeatablesGroup = entry.repeatables || {};
+          Object.entries(repeatablesGroup as Record<string, any[]>).forEach(
+            ([repeatKey, repeatItems]) => {
+            repeatables[repeatKey] = repeatables[repeatKey] || [];
 
-                                    if (value && value.map) {
-                                        return [
-                                            ...acc,
-                                            {
-                                                [key]: {
-                                                    type: exportType || dataType || type,
-                                                    comments: comments || [],
-													prePopulate: prePopulate || e.prePopulate || [],
-                                                    values: value.reduce((acc: any, item: any) => {
-														const { value, label, valueLabel, exportValue, exportLabel } = item;
-														acc.label.push(exportLabel || valueLabel || label);
-														acc.value.push(exportValue || value);
-														return acc;
-													}, { label: [], value: [], })
-                                                }
-                                            }
-                                        ];
-                                    }
+            repeatItems.forEach((item: any) => {
+              repeatables[repeatKey].push({
+                ...extractValueObject(item),
+                id: item.id,
+                createdAt: item.createdAt,
+              });
+            });
+          });
+        });
 
-                                    return [
-                                        ...acc,
-                                        {
-                                            [key]: {
-												type: exportType || dataType || type,
-                                                comments: comments || [],
-												prePopulate: prePopulate||e.prePopulate || [],
-												values: {
-                                                    label: [exportLabel || valueLabel || label],
-                                                    value: [exportValue || getVal(v)]
-                                                },
-                                            }
-                                        }
-                                    ];
-                                }, []),
-                            ];
-                        }, []).reduce((acc: any, e: any) => ({ ...acc, ...e }), {}),
-                    }
-                }
-                
-               resolve(data());
-            } catch (e) { 
-                reject(e); }
-        })();
-    });
+        // Helper: process individual value
+        const transformValue = (v: any, parentPrePopulate: any) => {
+          const {
+            key,
+            type,
+            dataType,
+            value,
+            label,
+            valueLabel,
+            exportValue,
+            exportLabel,
+            exportType,
+            prePopulate,
+            comments,
+          } = v;
+
+          const valType = exportType || dataType || type;
+          const common = {
+            type: valType,
+            comments: comments || [],
+            prePopulate: prePopulate || parentPrePopulate || [],
+          };
+
+          if (Array.isArray(value)) {
+            const multi = value.reduce(
+              (acc: any, item: any) => {
+                acc.label.push(item.exportLabel || item.valueLabel || item.label);
+                acc.value.push(item.exportValue || item.value);
+                return acc;
+              },
+              { label: [], value: [] }
+            );
+            return { [key]: { ...common, values: multi } };
+          }
+
+          const parsedValue =
+            valType === 'number'
+              ? Number(value) || null
+              : valType === 'boolean'
+              ? value === 'false' ? false : Boolean(value)
+              : value;
+
+          return {
+            [key]: {
+              ...common,
+              values: {
+                label: [exportLabel || valueLabel || label],
+                value: [exportValue ?? parsedValue],
+              },
+            },
+          };
+        };
+
+        // Process standard entries
+        const flatEntries = form
+          .map((entry: any) => ({
+            ...entry,
+            values: entry.values.filter((v: any) => (v.confidential ? showConfidential : true)),
+          }))
+          .flatMap((entry: any) =>
+            entry.values.map((v: any) => transformValue(v, entry.prePopulate))
+          )
+          .reduce((acc: any, curr: any) => ({ ...acc, ...curr }), {});
+
+        flatEntries.repeatables = repeatables;
+
+        const exportData = {
+          uid: session.uid,
+          unique_key,
+          appVersion: APP_VERSION,
+          appEnv: APP_ENV,
+          scriptVersion: application.webeditor_info.version,
+          scriptTitle: script.script_id,
+          script: {
+            id: script.script_id,
+            title: script.data.title,
+            type: script.type,
+          },
+          started_at,
+          completed_at,
+          canceled_at,
+          app_mode,
+          country,
+          hospital_id,
+          diagnoses: diagnoses.map((d: any) => ({
+            [d.name]: {
+              hcw_agree: d.how_agree,
+              hcw_follow_instructions: d.hcw_follow_instructions,
+              Suggested: d.suggested,
+              Priority: d.priority,
+              hcw_reason_given: d.hcw_reason_given,
+            },
+          })),
+          entries: flatEntries,
+        };
+
+        resolve(exportData);
+      } catch (e) {
+        reject(e);
+      }
+    })();
+  });
 }
