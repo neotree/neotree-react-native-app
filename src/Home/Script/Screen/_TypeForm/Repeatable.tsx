@@ -5,7 +5,7 @@ import { NumberField } from './_Number';
 import { DateField } from './_Date';
 import { TextField } from './_Text';
 import { DropDownField } from './_DropDown';
-import { PeriodField } from './_Period';
+import { PeriodField,dateToValueText } from './_Period';
 import { TimeField } from './_Time';
 import { fieldsTypes } from '../../../../constants';
 
@@ -30,6 +30,7 @@ type FormItem = {
     isCollapsed: boolean;
     values: Record<string, any>;
     isComplete: boolean;
+    requiredComplete: boolean;
   }
   
 
@@ -49,13 +50,20 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             const val = values[field.key];
             return val !== undefined && val !== null && val !== '';
         });
+
+        const requiredComplete = fields.every(field => {
+            const val = values[field.key];
+           
+            return  evaluateCondition(field) && (val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null);
+        });
       
           return {
             createdAt: new Date(createdAt),
             id,
             isCollapsed: true,
             values,
-            isComplete
+            isComplete,
+            requiredComplete
           };
         });
       };
@@ -86,6 +94,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             isCollapsed: false,
             values: initialValues,
             isComplete: false,
+            requiredComplete:false,
         };
        if(forms.filter(f=>!f.isComplete).length===0){
         setForms(prev => [
@@ -101,9 +110,20 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         notifyParent(updatedForms,'remove');
     };
 
-    const formatFieldLabel = (value:any)=>{
+    const formatFieldLabel = (value:any,form:FormItem)=>{
 
       if(value){
+        const field = fields.find(field => field.key === collectionField)
+        if(field && field.type==='dropdown'){
+            if(value['value']==='other'){
+            const otherField = fields.find(field=>String(field.key).toLocaleLowerCase()===String('other'+collectionField).toLocaleLowerCase())
+            if(otherField){
+                return form.values[collectionField]?.['value']
+            }else{
+            return ''
+            }         
+            }
+        }
        return value['valueText'] || value['value'] 
       }else{
        return ''
@@ -127,7 +147,13 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                
                 return val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null;
             });
-            return { ...form, values: newValues, isComplete };
+         
+            const requiredComplete = fields.every(field => {
+                const val = newValues[field.key];
+               
+                return  evaluateCondition(field) && (val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null);
+            });
+            return { ...form, values: newValues, isComplete,requiredComplete };
         });
         setDisabled(updatedForms.filter(f => !f.isComplete).length > 0);
         setForms(updatedForms);
@@ -180,6 +206,17 @@ function getValueLabelAndText(field:any, value:any) {
     }
     return null;
   }
+
+  function getPeriodValueText(field:any, value:any){
+    const formatedValue = dateToValueText(value,field.format)
+    return {
+        valueLabel: formatedValue,
+        valueText: formatedValue,
+        exportLabel: formatedValue,
+        exportValue: formatedValue
+      };
+  
+  }
   
   function transformToFullFieldObject(partial:any) {
     const transformed :any = {};
@@ -199,8 +236,12 @@ function getValueLabelAndText(field:any, value:any) {
         const dropdownInfo = getValueLabelAndText(field, valueObj.value);
         if(dropdownInfo!==null)
         Object.assign(base, dropdownInfo);
+      }else if(field.type==='period'){
+        const periodInfo = getPeriodValueText(field, valueObj.value);
+        if(periodInfo && periodInfo!==null)
+        Object.assign(base, periodInfo);
       }
-  
+
       transformed[key] = base;
     }
   
@@ -257,7 +298,9 @@ function getValueLabelAndText(field:any, value:any) {
                                 <Text style={{ fontWeight: '300', color: 'white' }}>Remove</Text>
                             </Button>
                             <Button 
-                            style={{width:'80%',margin:'auto',alignItems:'center'}}
+                            style={{width:'80%',margin:'auto'
+                                ,alignItems:'center' ,
+                                backgroundColor: form.requiredComplete ? 'grey' : 'rgba(112,164,135,255)'}}
                             onPress={() => setForms(prev => 
                                 prev.map(f => f.id === form.id 
                                     ? { ...f, isCollapsed: !f.isCollapsed } 
@@ -265,7 +308,7 @@ function getValueLabelAndText(field:any, value:any) {
                                 ))}
                             >
                                 <Text style={styles.headerText}>
-                                    {formatFieldLabel(form.values[collectionField])}
+                                    {formatFieldLabel(form.values[collectionField],form)}
                                 </Text>
                             </Button>
                         </View>

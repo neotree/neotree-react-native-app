@@ -11,6 +11,7 @@ import { Content } from './Content';
 import { Box, Text, useTheme } from './Theme';
 
 type ModalAction = {
+    color?:any;
     label: React.ReactNode;
     onPress?: TouchableOpacityProps['onPress'];
 };
@@ -87,11 +88,11 @@ export function Modal({
                                             <TouchableOpacity 
                                                 key={i}
                                                 onPress={action.onPress}
-                                                style={{ paddingHorizontal: theme.spacing.m }}
+                                                style={{ paddingHorizontal: theme.spacing.xl }}
                                             >
                                                 {typeof action.label !== 'string' ? action.label : (
                                                     <Text
-                                                        color="primary"
+                                                        color={action.color ||'primary'}
                                                         textTransform="uppercase"
                                                         fontWeight="bold"
                                                     >{action.label}</Text>

@@ -9,7 +9,7 @@ type PeriodFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-function dateToValueText(value: null | Date, format: 'days_hours' | 'years_months' = 'days_hours') {
+export function dateToValueText(value: null | Date, format: 'days_hours' | 'years_months' = 'days_hours') {
     format = format || 'days_hours';
     
     if (value) {
