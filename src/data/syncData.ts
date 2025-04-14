@@ -77,6 +77,8 @@ export async function syncData(opts?: { force?: boolean; }) {
                     `delete from ${table} where 1;`
                 )));
 
+                console.log('###SYNC-DATA-',JSON.stringify(scripts))
+
                 const promises: Promise<any>[] = [];
 
                 configKeys.map((s: any) => {

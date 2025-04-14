@@ -29,19 +29,6 @@ export function TextField({
     const [disabled, setDisabled] = React.useState(false);
     const canEdit = repeatable?editable:true
 
-// const [showQR, setShowQR] = React.useState(false);
-
-//   const openQRscanner = () => {
-//     setShowQR(true);
-//   };
-
-//   const onQrRead = (qrtext: any) => {
-//     if(qrtext){
-//     setValue(qrtext);
-//     }
-//     setShowQR(false);
-//   };
-
     React.useEffect(() => { 
         if (!conditionMet) {
             onChange({ value: null, valueText: null, exportType: 'text', }); 

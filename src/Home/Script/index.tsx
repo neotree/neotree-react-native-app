@@ -15,7 +15,6 @@ import { getScriptUtils } from './utils';
 import { Alert, TextProps } from 'react-native';
 import { Summary } from './Summary';
 import { defaultPreferences } from '@/src/constants';
-import { ReviewScreen } from './Screen/ReviewScreen'
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
@@ -26,6 +25,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
 	const [shouldReview, setShouldReview] = React.useState(false);
 	const [review, setReview] = React.useState(false)
+	const [reviewIndex, setReviewIndex] = React.useState(0)
 	const [moreNavOptions, setMoreNavOptions] = React.useState<null | MoreNavOptions>(null);
 
 	const [startTime] = React.useState(new Date().toISOString());
@@ -71,6 +71,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		const isAlreadyEntered = entries.map(e => e.screen.id).includes(entry.screen.id);
 		return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
 	});
+	const [reviewConfigurations, setReviewConfigurations] = React.useState<any[]>([]);
 	const getCachedEntry = (screenIndex: number): types.ScreenEntry | undefined => cachedEntries.filter(e => `${e.screenIndex}` === `${screenIndex}`)[0];
 	const setEntry = (entry?: types.ScreenEntry) => {
 		if (entry) {
@@ -118,9 +119,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				});
 				setSessionID(res?.sessionID);
 				resolve(summary);
-			} catch (e) { 
-				
-				reject(e); }
+			} catch (e) {
+
+				reject(e);
+			}
 		})();
 	});
 
@@ -155,12 +157,13 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 			const uid = await generateUID(script?.type);
 			setGeneratedUID(uid);
-
 			setScript(script);
 			setScreens(screens);
 			setDiagnoses(diagnoses);
 			setDrugsLibrary(drugsLibrary.map(d => d.data));
 			setLoadingScript(false);
+			setReviewConfigurations(script?.data?.reviewConfigurations)
+            setShouldReview(script.data?.reviewable)
 
 			if (route.params?.session?.data?.form?.length) {
 				const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];
@@ -216,25 +219,44 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			navigation.navigate('Home');
 			return;
 		}
+		if(activeScreen.review){
+			setReviewIndex(reviewIndex+1)
+		}
 
 		if (activeScreen?.id === lastScreen?.id) {
-			setShouldReview(true)
-			setLastPage(lastScreen)
-			setLastPageIndex(lastScreenIndex)
+			
+			const lastReviewIndex = reviewConfigurations?.length
 
+			if (shouldReview && lastReviewIndex && reviewIndex<lastReviewIndex) {
+				setReview(true)
+				setLastPage(lastScreen)
+				setLastPageIndex(lastScreenIndex)
+			} else {
+				const summary = await createSummaryAndSaveSession({ completed: true });
+				setReview(false)
+				setShouldReview(false);
+				setSummary(summary);
+			}
+			
 		} else {
 			if (nextScreen) {
-				
+
 				if (activeScreen.review) {
-				
+					const lastReviewIndex = reviewConfigurations?.length
+
 					setRefresh(true)
-					setShouldReview(false)
-					setActiveScreenIndex(lastPageIndex);
-					lastPage.review=false
-					setActiveScreen(lastPage);
-					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
-					setTimeout(() => setRefresh(false), 2);
-	
+					if (shouldReview && lastReviewIndex && reviewIndex<lastReviewIndex){
+						setShouldReview(true)
+						setReview(true)
+					} else{
+						setActiveScreenIndex(lastPageIndex);
+						lastPage.review = false
+						setActiveScreen(lastPage);
+						setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
+						setTimeout(() => setRefresh(false), 2);
+					}
+					
+
 				} else {
 					setRefresh(true);
 					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${nextScreenIndex}`)[0]);
@@ -350,22 +372,20 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		getFieldPreferences
 	]);
 
-	const handleReviewChange = (index: number,lastPage: types.Screen,lastPageIndex:number)=>{
-		
-		let as = screens[index]       
+	const handleReviewChange = () => {
+        
+		let as = reviewConfigurations[reviewIndex]
 		if (as) {
-			setRefresh(true);
-			removeEntry(activeScreen?.id);
-			as.review = true				
-			setActiveScreenIndex(index);
-			setActiveScreen(as);
-			setTimeout(() => setRefresh(false), 10);
+			const filtered = screens.find(s=>s.screen_id===as.screen)
+		   if(filtered){
 			setReview(false)
-			setShouldReview(false)
-			setLastPage(lastPage)
-			setLastPageIndex(lastPageIndex)
-			
-			
+			setRefresh(true);
+			filtered.review=true
+            removeEntry(activeScreen?.id);  
+            setActiveScreenIndex(screens.indexOf(filtered));
+            setActiveScreen(filtered);
+            setTimeout(() => setRefresh(false), 2);    
+		   }
 		}
 	}
 
@@ -409,15 +429,27 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		return (s?.data?.metadata?.items || []);
 	};
 
-	const handleReviewNoPress = async () => {
-		const summary = await createSummaryAndSaveSession({ completed: true });
-		setShouldReview(false);
-		setSummary(summary);
+	const handleReviewNoPress = async() => {
+		const lastReviewIndex = reviewConfigurations?.length
+      setReviewIndex(reviewIndex+1)
+	  const rIndex =reviewIndex+1
+	  if (shouldReview && rIndex && rIndex<lastReviewIndex){
+		setShouldReview(true)
+		setReview(true)
+	} else{
+		setShouldReview(false)
+		setReview(false)
+	}
+	
 	};
 
 	const handleReviewYesPress = () => {
-		setReview(true);
+		handleReviewChange();
 	};
+	const closeReviewModal = () =>{
+		setReview(false)
+		setShouldReview(false)
+	}
 
 	if (refresh) return null;
 
@@ -495,22 +527,22 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 				setEntry,
 				removeEntry,
 				getEntryValueByKey,
-				getRepeatablesPrepopulation(){
+				getRepeatablesPrepopulation() {
 					try {
 						const autoFill = nuidSearchForm?.[0]?.results?.session?.data?.entries?.repeatables
-						  ?? nuidSearchForm?.[0]?.results?.autoFill?.data?.entries?.repeatables;
-					
+							?? nuidSearchForm?.[0]?.results?.autoFill?.data?.entries?.repeatables;
+
 						if (autoFill && typeof autoFill === 'object') {
-						  return autoFill
+							return autoFill
 						}
-					
+
 						return null;
-					  } catch {
+					} catch {
 						return null;
-					  }
+					}
 				},
 				getPrepopulationData(prePopulationRules?: string[]) {
-					
+
 					const results = nuidSearchForm
 						.filter(f => f.results)
 						.filter(f => {
@@ -634,32 +666,26 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 								<Text>Are you sure you want to cancel script?</Text>
 							</Modal>
 							<Modal
-								open={shouldReview}
-								onClose={() => setShouldReview(false)}
-								title="Review Previous Screens?"
-								actions={review ? [] : [
+								open={shouldReview && review}
+								onClose={() => {closeReviewModal()}}
+								title="Review Screens"
+								actions={[
 									{
-										label: 'No',
+	                                    color:'error',
+										label: 'Skip',
 										onPress: handleReviewNoPress,
 									},
 									{
-										label: 'Yes',
+										color:'secondary',
+										label: 'Go To',
 										onPress: handleReviewYesPress,
+									
 									},
 								]}
 							>
-								{review ? (
-									<ReviewScreen 
-									screens={screens} 
-			                        onChange={handleReviewChange}
-									lastPage={lastPage}
-									lastPageIndex={lastPageIndex}
-									/>
-								) : (
 									<Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
-										Do you want to review any previous screens?
+										{reviewConfigurations?.[reviewIndex]?.label  ||''}
 									</Text>
-								)}
 							</Modal>
 
 						</>
