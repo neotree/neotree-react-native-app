@@ -173,7 +173,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             
             return { ...form, values: newValues, isComplete,requiredComplete };
         });
-        console.log("@@@---PWEME---",JSON.stringify(updatedForms))
         setDisabled(updatedForms.filter(f => !f.isComplete).length > 0);
         setForms(updatedForms);
         notifyParent(updatedForms,'add');

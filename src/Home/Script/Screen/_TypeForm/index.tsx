@@ -103,8 +103,7 @@ export function TypeForm({ }: TypeFormProps) {
                     repeatables,
                     ...values.slice(repeatablesIndex + 1)
                 ];
-                console.log("---###---PRESSASA...",JSON.stringify(updatedValues))
-
+            
                 setValues(updatedValues);
             }
         }
