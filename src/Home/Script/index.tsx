@@ -21,7 +21,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const [isReady, setIsReady] = useState(false);
 	const [generatedUID, setGeneratedUID] = React.useState('');
-
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
 	const [shouldReview, setShouldReview] = React.useState(false);
 	const [review, setReview] = React.useState(false)
@@ -163,7 +162,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			setDrugsLibrary(drugsLibrary.map(d => d.data));
 			setLoadingScript(false);
 			setReviewConfigurations(script?.data?.reviewConfigurations)
-            setShouldReview(script.data?.reviewable)
+			setShouldReview(script.data?.reviewable)
 
 			if (route.params?.session?.data?.form?.length) {
 				const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];
@@ -219,43 +218,47 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			navigation.navigate('Home');
 			return;
 		}
-		if(activeScreen.review){
-			setReviewIndex(reviewIndex+1)
-		}
 
 		if (activeScreen?.id === lastScreen?.id) {
-			
 			const lastReviewIndex = reviewConfigurations?.length
 
-			if (shouldReview && lastReviewIndex && reviewIndex<lastReviewIndex) {
+			if (shouldReview && lastReviewIndex && reviewIndex < lastReviewIndex) {
+				setShouldReview(true)
 				setReview(true)
-				setLastPage(lastScreen)
-				setLastPageIndex(lastScreenIndex)
+				if (lastPage === null) {
+					setLastPage(lastScreen)
+					setLastPageIndex(lastScreenIndex)
+				}
 			} else {
+				console.log("----NOT EQUALS EGWALS---", shouldReview, lastReviewIndex, reviewIndex)
 				const summary = await createSummaryAndSaveSession({ completed: true });
 				setReview(false)
 				setShouldReview(false);
 				setSummary(summary);
 			}
-			
+
 		} else {
 			if (nextScreen) {
 
 				if (activeScreen.review) {
 					const lastReviewIndex = reviewConfigurations?.length
-
+					console.log("---####----$$$----", reviewIndex)
 					setRefresh(true)
-					if (shouldReview && lastReviewIndex && reviewIndex<lastReviewIndex){
+					if (shouldReview && lastReviewIndex && reviewIndex < lastReviewIndex) {
 						setShouldReview(true)
 						setReview(true)
-					} else{
 						setActiveScreenIndex(lastPageIndex);
 						lastPage.review = false
 						setActiveScreen(lastPage);
 						setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
-						setTimeout(() => setRefresh(false), 2);
+						setTimeout(() => setRefresh(false), 10);
+						saveSession();
+					} else {
+						const summary = await createSummaryAndSaveSession({ completed: true });
+						setReview(false)
+						setShouldReview(false);
+						setSummary(summary);
 					}
-					
 
 				} else {
 					setRefresh(true);
@@ -373,19 +376,20 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	]);
 
 	const handleReviewChange = () => {
-        
+
 		let as = reviewConfigurations[reviewIndex]
 		if (as) {
-			const filtered = screens.find(s=>s.screen_id===as.screen)
-		   if(filtered){
-			setReview(false)
-			setRefresh(true);
-			filtered.review=true
-            removeEntry(activeScreen?.id);  
-            setActiveScreenIndex(screens.indexOf(filtered));
-            setActiveScreen(filtered);
-            setTimeout(() => setRefresh(false), 2);    
-		   }
+			const filtered = screens.find(s => s.screen_id === as.screen)
+			if (filtered) {
+				setReview(false)
+				setRefresh(true);
+				filtered.review = true
+				setActiveScreenIndex(screens.indexOf(filtered));
+				setActiveScreen(filtered);
+				setReviewIndex(reviewIndex + 1)
+				setTimeout(() => setRefresh(false), 10);
+
+			}
 		}
 	}
 
@@ -429,24 +433,27 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		return (s?.data?.metadata?.items || []);
 	};
 
-	const handleReviewNoPress = async() => {
+	const handleReviewNoPress = async () => {
 		const lastReviewIndex = reviewConfigurations?.length
-      setReviewIndex(reviewIndex+1)
-	  const rIndex =reviewIndex+1
-	  if (shouldReview && rIndex && rIndex<lastReviewIndex){
-		setShouldReview(true)
-		setReview(true)
-	} else{
-		setShouldReview(false)
-		setReview(false)
-	}
-	
+		setReviewIndex(reviewIndex + 1)
+		const rIndex = reviewIndex + 1
+		if (shouldReview && rIndex && rIndex < lastReviewIndex) {
+			setShouldReview(true)
+			setReview(true)
+		} else {
+
+			const summary = await createSummaryAndSaveSession({ completed: true });
+			setReview(false)
+			setShouldReview(false);
+			setSummary(summary);
+		}
+
 	};
 
 	const handleReviewYesPress = () => {
 		handleReviewChange();
 	};
-	const closeReviewModal = () =>{
+	const closeReviewModal = () => {
 		setReview(false)
 		setShouldReview(false)
 	}
@@ -667,25 +674,25 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 							</Modal>
 							<Modal
 								open={shouldReview && review}
-								onClose={() => {closeReviewModal()}}
+								onClose={() => { closeReviewModal() }}
 								title="Review Screens"
 								actions={[
 									{
-	                                    color:'error',
+										color: 'error',
 										label: 'Skip',
 										onPress: handleReviewNoPress,
 									},
 									{
-										color:'secondary',
+										color: 'secondary',
 										label: 'Go To',
 										onPress: handleReviewYesPress,
-									
+
 									},
 								]}
 							>
-									<Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
-										{reviewConfigurations?.[reviewIndex]?.label  ||''}
-									</Text>
+								<Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
+									{reviewConfigurations?.[reviewIndex]?.label || ''}
+								</Text>
 							</Modal>
 
 						</>

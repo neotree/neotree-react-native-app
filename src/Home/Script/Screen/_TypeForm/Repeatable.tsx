@@ -54,7 +54,13 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         const requiredComplete = fields.every(field => {
             const val = values[field.key];
            
-            return  evaluateCondition(field) && (val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null);
+            return  evaluateCondition(field) && (val !== undefined 
+                && val !== null 
+                && val !== '' 
+                && val['value']!==undefined 
+                && val['value']!==null
+                && val['value']!==''
+            );
         });
       
           return {
@@ -145,16 +151,29 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             const isComplete = fields.filter(f => !f.editable).every(field => {
                 const val = newValues[field.key];
                
-                return val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null;
+                return (val !== undefined 
+                    && val !== null 
+                    && val !== '' 
+                    && val['value']!==undefined 
+                    && val['value']!==null  
+                    && val['value']!=='');
             });
          
             const requiredComplete = fields.every(field => {
                 const val = newValues[field.key];
                
-                return  evaluateCondition(field) && (val !== undefined && val !== null && val !== '' && val['value']!==undefined && val['value']!==null);
+                return  evaluateCondition(field) && (val !== undefined 
+                    && val !== null 
+                    && val !== '' 
+                    && val['value']!==undefined 
+                    && val['value']!==null
+                    && val['value']!==''
+                );
             });
+            
             return { ...form, values: newValues, isComplete,requiredComplete };
         });
+        console.log("@@@---PWEME---",JSON.stringify(updatedForms))
         setDisabled(updatedForms.filter(f => !f.isComplete).length > 0);
         setForms(updatedForms);
         notifyParent(updatedForms,'add');
