@@ -19,8 +19,11 @@ export function toHL7Like(data: any) {
       if (k === 'uid') {
         metadata += `${k}|${data[k]}\n`
       }
-    }
-  })
+      else if (k==='completed_at') {
+     metadata += `${k}|${formatDate(data[k])}\n`
+}
+}
+})
 
   // DIAGNOSES
   Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
@@ -272,7 +275,7 @@ function convertToJSON(input: string) {
           repeatableItem[field] = value;
          
         } else if(field==="createdAt"){
-         repeatableItem[field] = formatDate(value)
+         repeatableItem[field] = parseStringToDate(value)
         }
         
         else {
@@ -290,12 +293,13 @@ function convertToJSON(input: string) {
     // Regular EDH entry
     if (currentSection === result.entries) {
       const [key, value, prePopulate] = parts;
+      let formatted =  value.split("^")
       currentSection[key] = {
         values: {
-          value: value.split("^"),
+          value: formatted,
           prePopulate: reverseFormatPrepopulate(prePopulate),
         },
-      };
+    }
     }
 
     // DDH diagnoses section
@@ -313,7 +317,11 @@ function convertToJSON(input: string) {
     // MDH top-level fields
     else {
       const [key, value] = parts;
+      if(key==='completed_at'){
+        result[key] = parseStringToDate(value);
+      }else{
       result[key] = value;
+      }
     }
   });
 

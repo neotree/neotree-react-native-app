@@ -230,7 +230,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					setLastPageIndex(lastScreenIndex)
 				}
 			} else {
-				console.log("----NOT EQUALS EGWALS---", shouldReview, lastReviewIndex, reviewIndex)
 				const summary = await createSummaryAndSaveSession({ completed: true });
 				setReview(false)
 				setShouldReview(false);
@@ -242,7 +241,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 				if (activeScreen.review) {
 					const lastReviewIndex = reviewConfigurations?.length
-					console.log("---####----$$$----", reviewIndex)
 					setRefresh(true)
 					if (shouldReview && lastReviewIndex && reviewIndex < lastReviewIndex) {
 						setShouldReview(true)
