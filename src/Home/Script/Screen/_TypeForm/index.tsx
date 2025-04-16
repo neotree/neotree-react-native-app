@@ -68,11 +68,35 @@ export function TypeForm({ }: TypeFormProps) {
         };
     }):cachedVal);
 
-    const evaluateFieldCondition = (f: any) => {
+    const evaluateFieldCondition = (f: any, formId?: number) => {
         let conditionMet = true;
-        if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
+        let formatedvalues = values;
+      
+        if (repeatable) {
+    
+          formatedvalues = values.find(v => v.key === 'repeatables')?.value?.[collectionName];
+      
+          if (formatedvalues && formatedvalues.length > 0) {
+
+            const filtered = typeof formId === 'number' ? [formatedvalues[formId]] : [];
+    
+            if (filtered.length > 0) {
+              formatedvalues = moveKeysInside(filtered);
+            } else {
+              formatedvalues = [];
+            }
+          }
+        }
+      
+        if (f.condition) {
+          conditionMet = evaluateCondition(
+            parseCondition(f.condition, [{ values: formatedvalues }])
+          ) as boolean;
+        }
+      
         return conditionMet;
-    };
+      };
+      
 
     const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
         const key = Object.keys(data)[0];
@@ -103,11 +127,30 @@ export function TypeForm({ }: TypeFormProps) {
                     repeatables,
                     ...values.slice(repeatablesIndex + 1)
                 ];
-            
+               
                 setValues(updatedValues);
             }
         }
     };
+    function moveKeysInside(input: any[]): any[] {
+        if (!Array.isArray(input) || input.length === 0 || input[0] === undefined) {
+          return [];
+        }
+      
+        return Object.entries(input[0])
+          .filter(([key]) => key !== 'id' && key !== 'createdAt')
+          .map(([key, value]) => {
+            if (typeof value === 'object' && value !== null) {
+              return { ...value, key };
+            } else {
+              return { key, value };
+            }
+          });
+      }
+      
+      
+      
+      
 
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {

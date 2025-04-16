@@ -78,67 +78,92 @@ export const getScriptUtils = ({
 }: UtilsParams) => {
     const matches: any[] = [];
 
-    function parseCondition(_condition = '', entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []) {    
+    function parseCondition(
+        _condition = '',
+        entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
+      ) {
         _condition = (_condition || '').toString();
-    
+      
         const _form = entries.reduce((acc, e) => {
-            const index = !e.screen ? -1 : acc.map(e => e.screen.id).indexOf(e.screen.id);
-            if (index > -1) return acc.map((_e, i) => i === index ? { ..._e, ...e } : _e) as types.ScreenEntry[];
-            return [...acc, e] as types.ScreenEntry[];
-        }, form);
-    
-        const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
-            value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
-            value = ((value === null) || (value === undefined)) ? 'no value' : value;
-            const t = dataType || type;
-    
-            switch (t) {
-            // case 'number':
-            //   value = value || null;
-            //   break;
+          const index = !e.screen ? -1 : acc.map(e => e.screen?.id).indexOf(e.screen?.id);
+          if (index > -1) return acc.map((_e, i) => (i === index ? { ..._e, ...e } : _e)) as types.ScreenEntry[];
+          return [...acc, e] as types.ScreenEntry[];
+        }, [] as types.ScreenEntry[]);
+      
+        const flattenRepeatables = (values: any[]): types.ScreenEntryValue[] => {
+            const flat: types.ScreenEntryValue[] = [];
+          
+            values.forEach(v => {
+              if (v?.key === 'repeatables' && typeof v.value === 'object') {
+                const repeatables = v.value as Record<string, any[]>;
+                Object.values(repeatables).forEach((repeatableGroup: any[]) => {
+                  repeatableGroup.forEach(entry => {
+                    Object.entries(entry).forEach(([_, fieldValue]: [string, any]) => {
+                      if (fieldValue && typeof fieldValue === 'object' && 'value' in fieldValue) {
+                        flat.push(fieldValue as types.ScreenEntryValue);
+                      }
+                    });
+                  });
+                });
+              } else {
+                flat.push(v);
+              }
+            });
+          
+            return flat;
+          };
+             
+        const parseValue = (
+          condition = '',
+          { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue
+        ) => {
+          value = (calculateValue === null || calculateValue === undefined) ? value : calculateValue;
+          value = (value === null || value === undefined) ? 'no value' : value;
+      
+          const t = dataType || type;
+          switch (t) {
             case 'boolean':
-                value = value === 'false' ? false : Boolean(value);
-                break;
+              value = value === 'false' ? false : Boolean(value);
+              break;
             default:
-                value = JSON.stringify(value);
-            }
-    
-            return parseConditionString(condition, inputKey || key, value);
+              value = JSON.stringify(value);
+          }
+      
+          return parseConditionString(condition, inputKey || key, value);
         };
-    
+      
         let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
-			values = value || values || [];
-            values = values.filter(e => (e.value !== null) || (e.value !== undefined));
-			values = values.reduce((acc: types.ScreenEntryValue[], e) => [
-				...acc,
-				...(e.value && e.value.map ? e.value : [e]),
-			], []);
-    
-            let c = values.reduce((acc, v) => parseValue(acc, v), condition);
-    
-            if (screen) {
-				let chunks = [];
-				switch (screen.type) {
-					case 'multi_select':
-						chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
-						c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
-					break;
-					default:
-					// do nothing
-				}
+          values = value || values || [];
+      
+          // Flatten values including repeatables
+          const flatValues = flattenRepeatables(values).filter(v => v?.value !== null && v?.value !== undefined);
+      
+          let c = flatValues.reduce((acc, v) => parseValue(acc, v), condition);
+      
+          if (screen) {
+            let chunks = [];
+            switch (screen.type) {
+              case 'multi_select':
+                chunks = flatValues.map(v => parseValue(condition, v)).filter(c => c !== condition);
+                c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
+                break;
+              default:
+              // No extra handling needed for other screen types
             }
-    
-            return c || condition;
+          }
+      
+          return c || condition;
         }, _condition);
-    
-        if (configuration) {
-            parsedCondition = Object.keys(configuration).reduce((acc, key) => {
-            	return parseConditionString(acc, key, configuration[key] ? true : false);
-            }, parsedCondition);
+      
+        if (typeof configuration !== 'undefined') {
+          parsedCondition = Object.keys(configuration).reduce((acc, key) => {
+            return parseConditionString(acc, key, !!configuration[key]);
+          }, parsedCondition);
         }
-    
+      
         return sanitizeCondition(parsedCondition);
-    }
+      }
+      
 
     function getScreen(opts?: { direction?: 'next' | 'back', index?: number; }) {
         const { index: i, direction: d } = { ...opts };
