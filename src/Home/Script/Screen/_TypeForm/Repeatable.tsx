@@ -13,15 +13,13 @@ import { fieldsTypes } from '../../../../constants';
 
 type Repeatable = Record<string, any>;
 
-type Operation = 'add' | 'remove';
-
 
 type RepeatableProps = {
     collectionName: string;
     collectionField: string;
     fields: any[];
     onChange: (updatedRepeatables: Record<string, Repeatable[]>,key:string) => void;
-    evaluateCondition: (f: any) => boolean;
+    evaluateCondition: (f: any,form?:any) => boolean;
     allValues: any;
 };
 type FormItem = {
@@ -39,28 +37,43 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
   
       const transformAllValuesToForms = (allValues: Array<Record<string, any>>): FormItem[] => {
         if (!allValues?.length) return [];
-      
-        return allValues.map((item) => {
+    
+        return allValues.map((item,index) => {
          
           const { createdAt, id, ...dynamicFields } = item;
       
           const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
       
-          const isComplete = fields.filter(f => !f.editable).every(field => {
-            const val = values[field.key];
-            return val !== undefined && val !== null && val !== '';
-        });
-
-        const requiredComplete = fields.every(field => {
+          const isComplete = fields.every(field => {
             const val = values[field.key];
            
-            return  evaluateCondition(field) && (val !== undefined 
+            const conditionMet = evaluateCondition(field,index)
+            if(!conditionMet){
+                return true
+            }
+            
+            return (val !== undefined 
+                && val !== null 
+                && val !== ''  
+                && val['value']!==undefined 
+                && val['value']!==null
+                && val['value']!=='');
+        });
+
+        const requiredComplete = fields.filter(f=>!f.editable).every(field => {
+            const val = values[field.key];
+            const conditionMet = evaluateCondition(field,index)
+            if(!conditionMet){
+                return true
+            }   
+            console.log("....COND---",requiredComplete, field.editable,val,field.key)    
+            return (val !== undefined 
                 && val !== null 
                 && val !== '' 
                 && val['value']!==undefined 
                 && val['value']!==null
                 && val['value']!==''
-            );
+            )
         });
       
           return {
@@ -73,58 +86,64 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
           };
         });
       };
-    
+
     const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allValues));
-    const [disabled,setDisabled] =  useState(forms.filter(f => !f.isComplete).length > 0)
+    const [disabled,setDisabled] =  useState(forms.filter(f => !f.requiredComplete).length > 0)
 
     useEffect(() => {
-        addNewForm();
-        
-    }, []);
+        const shouldDisable = forms.some(f => !f.requiredComplete);
+        console.log("...MY CURRENT....",JSON.stringify(forms))
+        setDisabled(shouldDisable);
+    }, [forms]);
 
-    useEffect(()=>{
-        setDisabled(forms?.filter(f => !f.isComplete).length > 0);
-    })
-
-
+    useEffect (()=>{
+        addNewForm()
+    },[])
+    
     const addNewForm = () => {
+        const hasUncollapsedOrIncomplete = forms.some(f => !f.requiredComplete);
+        if (hasUncollapsedOrIncomplete) return;
         const initialValues = fields.reduce((acc, field) => {
-            acc[field.key] = ''; // Initialize with empty values
+            acc[field.key] = '';
             return acc;
         }, {} as Record<string, any>);
-
-
-        const newForm = {
+    
+        const newForm: FormItem = {
             createdAt: new Date(),
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             isCollapsed: false,
             values: initialValues,
             isComplete: false,
-            requiredComplete:false,
+            requiredComplete: false,
         };
-       if(forms.filter(f=>!f.isComplete).length===0){
-        setForms(prev => [
-            ...prev.map(form => ({ ...form, isCollapsed: true })), // Collapse previous forms
-            newForm,
-        ]);
-    }
+        const collapsedForms = forms.map(f=>{
+            return {...f,isCollapsed:true}
+        })
+        setForms([...collapsedForms, newForm]);
     };
+    
+
+    useEffect(()=>{
+        setDisabled(forms?.filter(f => !f.requiredComplete).length > 0);
+    })
 
     const removeForm = (id: number) => {
         const updatedForms = forms.filter(form => form.id !== id);
         setForms(updatedForms);
-        notifyParent(updatedForms,'remove');
+    
+        notifyParent(updatedForms);
     };
 
-    const formatFieldLabel = (value:any,form:FormItem)=>{
+    const formatFieldLabel = (value:any,form:any)=>{
 
       if(value){
         const field = fields.find(field => field.key === collectionField)
         if(field && field.type==='dropdown'){
             if(value['value']==='other'){
-            const otherField = fields.find(field=>String(field.key).toLocaleLowerCase()===String('other'+collectionField).toLocaleLowerCase())
+            const otherField = fields.find(f=>String(f.key).toLocaleLowerCase()===String('other'+field.key).toLocaleLowerCase())
+
             if(otherField){
-                return form.values[collectionField]?.['value']
+                return form.values[otherField.key]?.['value']
             }else{
             return ''
             }         
@@ -138,7 +157,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
     const handleChange = (id: number, key: string, value: any,field:any) => {
       
-        const updatedForms = forms.map(form => {
+        const updatedForms = forms.map((form) => {
             if (form.id !== id) return form;
             const enhancedValue = {
                 ...value,
@@ -148,52 +167,51 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
               };       
             const newValues = { ...form.values, [key]: enhancedValue };
 
-            const isComplete = fields.filter(f => !f.editable).every(field => {
+            const isComplete = fields.every(field => {
                 const val = newValues[field.key];
-               
+                const conditionMet = form?evaluateCondition(field,forms.indexOf(form)):true
+               if(!conditionMet){
+                return true
+               }
                 return (val !== undefined 
                     && val !== null 
                     && val !== '' 
                     && val['value']!==undefined 
                     && val['value']!==null  
-                    && val['value']!=='');
+                    && val['value']!=='')
             });
          
-            const requiredComplete = fields.every(field => {
+            const requiredComplete = fields.filter(f=>!f.editable).every(field => {
                 const val = newValues[field.key];
-               
-                return  evaluateCondition(field) && (val !== undefined 
+                const conditionMet = form?evaluateCondition(field,forms.indexOf(form)):true
+                if (!conditionMet){
+                    return true
+                }
+                return  (val !== undefined 
                     && val !== null 
                     && val !== '' 
                     && val['value']!==undefined 
                     && val['value']!==null
-                    && val['value']!==''
-                );
+                    && val['value']!=='')
+                ;
             });
-            
-            return { ...form, values: newValues, isComplete,requiredComplete };
+         
+            return { ...form, values: newValues, isComplete,requiredComplete};
         });
-        setDisabled(updatedForms.filter(f => !f.isComplete).length > 0);
+        setDisabled(updatedForms.filter(f => !f.requiredComplete).length > 0);
         setForms(updatedForms);
-        notifyParent(updatedForms,'add');
-        
+         
+        notifyParent(updatedForms);     
     };
 
-    const notifyParent = (formsList = forms,operation:Operation) => {
+    const notifyParent = (formsList = forms) => {
     
-       
+    
         const completedForms = formsList
-            .filter(form => form.isComplete)
             .map(({ values, id,createdAt }) => ({ ...values, id ,createdAt}));
-            if(operation==='add'){
-                if(completedForms.length>0){
-              onChange({ [collectionName]: completedForms },collectionName);
-                }
-            }
-            else{
+             
                 onChange({ [collectionName]: completedForms },collectionName); 
             }
-    };
 
 
     const dateIsToday = (date: Date)=>{
@@ -269,7 +287,8 @@ function getValueLabelAndText(field:any, value:any) {
 
 
      const renderFieldComponent = (field: any, formId: number, value: any, index: number,createdAt: Date) => {
-        const conditionMet = evaluateCondition(field)
+        const form = forms.find(f=>f.id===formId)
+        const conditionMet = form? evaluateCondition(field,forms.indexOf(form)): true
         const editable = field.editable || dateIsToday(createdAt)
         const fieldProps = {
             field,
@@ -318,7 +337,7 @@ function getValueLabelAndText(field:any, value:any) {
                             <Button 
                             style={{width:'80%',margin:'auto'
                                 ,alignItems:'center' ,
-                                backgroundColor: form.requiredComplete ? 'grey' : 'rgba(112,164,135,255)'}}
+                                backgroundColor: form.isComplete ? 'grey' : 'rgba(112,164,135,255)'}}
                             onPress={() => setForms(prev => 
                                 prev.map(f => f.id === form.id 
                                     ? { ...f, isCollapsed: !f.isCollapsed } 
