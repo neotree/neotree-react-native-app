@@ -66,7 +66,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             if(!conditionMet){
                 return true
             }   
-            console.log("....COND---",requiredComplete, field.editable,val,field.key)    
+       
             return (val !== undefined 
                 && val !== null 
                 && val !== '' 
@@ -92,7 +92,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
     useEffect(() => {
         const shouldDisable = forms.some(f => !f.requiredComplete);
-        console.log("...MY CURRENT....",JSON.stringify(forms))
         setDisabled(shouldDisable);
     }, [forms]);
 
@@ -288,6 +287,7 @@ function getValueLabelAndText(field:any, value:any) {
 
      const renderFieldComponent = (field: any, formId: number, value: any, index: number,createdAt: Date) => {
         const form = forms.find(f=>f.id===formId)
+        const formIndex = form?forms.indexOf(form):0
         const conditionMet = form? evaluateCondition(field,forms.indexOf(form)): true
         const editable = field.editable || dateIsToday(createdAt)
         const fieldProps = {
@@ -299,6 +299,7 @@ function getValueLabelAndText(field:any, value:any) {
             repeatable: true,
             conditionMet,
             editable,
+            formIndex:formIndex,
 
             onChange: (val: any) => handleChange(formId, field.key, val,field)
         }

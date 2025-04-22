@@ -195,6 +195,7 @@ export type ScreenFormTypeProps = {
   allValues: ScreenEntry['values'];
   repeatable?:boolean,
   editable?:boolean
+  formIndex?: number
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {

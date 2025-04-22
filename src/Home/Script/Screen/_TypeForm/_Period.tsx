@@ -63,7 +63,7 @@ export function dateToValueText(value: null | Date, format: 'days_hours' | 'year
     // return value ? valueText.map(t => t).join(', ') : '';
 }
 
-export function PeriodField({ field, conditionMet, onChange, entryValue, allValues }: PeriodFieldProps) {
+export function PeriodField({ field, conditionMet, onChange, entryValue, allValues,formIndex }: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
@@ -83,8 +83,38 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
         }
     }, [conditionMet]);
 
+    function getValuesFromIndex<T>(array: T[], startIndex: number = 0): T[] {
+        console.log("...SINDEX...",startIndex)
+        return array.slice(startIndex);
+      }
+
+    function getCalculationEntry(data: any[],fieldCalc:any): any | null {
+      
+        const result = getValuesFromIndex(data,formIndex)?.find(v => {
+            // Case 1: Object has explicit key property
+            if (v.key && `$${v.key}` === fieldCalc) return true;
+            
+            // Case 2: Object is keyed by property name
+            const objectKey = Object.keys(v).find(k => 
+              typeof v[k] === 'object' && 
+              `$${k}` === fieldCalc
+            );
+            return !!objectKey;
+          });
+          
+          if (result && !result.key && fieldCalc) {
+            const key = fieldCalc.substring(1); // Remove the '$' prefix
+            if (result[key] && typeof result[key] === 'object') {
+              return { key, ...result[key] };
+            }
+          }
+          
+          return result;
+      }
+
     React.useEffect(() => {
-        const _calcFrom = allValues.filter(v => `$${v.key}` === field.calculation)[0];
+        const _calcFrom =getCalculationEntry(allValues,field.calculation)
+
         if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
           setCalcFrom(_calcFrom);
           if (_calcFrom && _calcFrom.value) {

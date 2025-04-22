@@ -15,16 +15,17 @@ import { getScriptUtils } from './utils';
 import { Alert, TextProps } from 'react-native';
 import { Summary } from './Summary';
 import { defaultPreferences } from '@/src/constants';
+import { ReviewScreen } from './Screen/ReviewScreen'
 
 function ScriptComponent({ navigation, route }: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const theme = useTheme();
 
 	const [isReady, setIsReady] = useState(false);
 	const [generatedUID, setGeneratedUID] = React.useState('');
+
 	const [shouldConfirmExit, setShoultConfirmExit] = React.useState(false);
 	const [shouldReview, setShouldReview] = React.useState(false);
 	const [review, setReview] = React.useState(false)
-	const [reviewIndex, setReviewIndex] = React.useState(0)
 	const [moreNavOptions, setMoreNavOptions] = React.useState<null | MoreNavOptions>(null);
 
 	const [startTime] = React.useState(new Date().toISOString());
@@ -156,6 +157,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 			const uid = await generateUID(script?.type);
 			setGeneratedUID(uid);
+
 			setScript(script);
 			setScreens(screens);
 			setDiagnoses(diagnoses);
@@ -163,7 +165,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			setLoadingScript(false);
 			setReviewConfigurations(script?.data?.reviewConfigurations)
 			setShouldReview(script.data?.reviewable)
-
 			if (route.params?.session?.data?.form?.length) {
 				const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];
 				const activeScreenIndex = screens.map((s, i) => {
@@ -206,6 +207,10 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		setShoultConfirmExit(true);
 	};
 
+	React.useEffect(() => {
+
+	}, [review])
+
 	const goNext = async () => {
 		const lastScreen = { ...utils.getLastScreen() };
 		const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
@@ -220,43 +225,26 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 
 		if (activeScreen?.id === lastScreen?.id) {
-			const lastReviewIndex = reviewConfigurations?.length
-
-			if (shouldReview && lastReviewIndex && reviewIndex < lastReviewIndex) {
-				setShouldReview(true)
+			if (reviewConfigurations.length > 0) {
 				setReview(true)
-				if (lastPage === null) {
-					setLastPage(lastScreen)
-					setLastPageIndex(lastScreenIndex)
-				}
+				setLastPage(lastScreen)
+				setLastPageIndex(lastScreenIndex)
 			} else {
-				const summary = await createSummaryAndSaveSession({ completed: true });
-				setReview(false)
-				setShouldReview(false);
-				setSummary(summary);
+				await handleReviewNoPress()
 			}
 
 		} else {
 			if (nextScreen) {
 
 				if (activeScreen.review) {
-					const lastReviewIndex = reviewConfigurations?.length
+
 					setRefresh(true)
-					if (shouldReview && lastReviewIndex && reviewIndex < lastReviewIndex) {
-						setShouldReview(true)
-						setReview(true)
-						setActiveScreenIndex(lastPageIndex);
-						lastPage.review = false
-						setActiveScreen(lastPage);
-						setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
-						setTimeout(() => setRefresh(false), 10);
-						saveSession();
-					} else {
-						const summary = await createSummaryAndSaveSession({ completed: true });
-						setReview(false)
-						setShouldReview(false);
-						setSummary(summary);
-					}
+					setReview(false)
+					setActiveScreenIndex(lastPageIndex);
+					lastPage.review = false
+					setActiveScreen(lastPage);
+					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
+					setTimeout(() => setRefresh(false), 2);
 
 				} else {
 					setRefresh(true);
@@ -296,7 +284,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			if (prev?.screen) {
 				setRefresh(true);
 				removeEntry(activeScreen?.id);
-				// setEntry(getCachedEntry(prev.index));				
+				setEntry(getCachedEntry(prev.index));
 				setActiveScreenIndex(prev.index);
 				setActiveScreen(prev.screen);
 				setTimeout(() => setRefresh(false), 10);
@@ -373,21 +361,20 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		getFieldPreferences
 	]);
 
-	const handleReviewChange = () => {
+	const handleReviewChange = (index: any, lastPage: types.Screen, lastPageIndex: number) => {
 
-		let as = reviewConfigurations[reviewIndex]
+		let as = screens.find(f => f.screen_id === index)
 		if (as) {
-			const filtered = screens.find(s => s.screen_id === as.screen)
-			if (filtered) {
-				setReview(false)
-				setRefresh(true);
-				filtered.review = true
-				setActiveScreenIndex(screens.indexOf(filtered));
-				setActiveScreen(filtered);
-				setReviewIndex(reviewIndex + 1)
-				setTimeout(() => setRefresh(false), 10);
+			setRefresh(true);
+			removeEntry(activeScreen?.id);
+			as.review = true
+			setActiveScreenIndex(index);
+			setActiveScreen(as);
+			setTimeout(() => setRefresh(false), 10);
+			setReview(false)
+			setLastPage(lastPage)
+			setLastPageIndex(lastPageIndex)
 
-			}
 		}
 	}
 
@@ -432,29 +419,11 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	};
 
 	const handleReviewNoPress = async () => {
-		const lastReviewIndex = reviewConfigurations?.length
-		setReviewIndex(reviewIndex + 1)
-		const rIndex = reviewIndex + 1
-		if (shouldReview && rIndex && rIndex < lastReviewIndex) {
-			setShouldReview(true)
-			setReview(true)
-		} else {
-
-			const summary = await createSummaryAndSaveSession({ completed: true });
-			setReview(false)
-			setShouldReview(false);
-			setSummary(summary);
-		}
-
+		const summary = await createSummaryAndSaveSession({ completed: true });
+		setShouldReview(true);
+		setReview(true);
+		setSummary(summary);
 	};
-
-	const handleReviewYesPress = () => {
-		handleReviewChange();
-	};
-	const closeReviewModal = () => {
-		setReview(false)
-		setShouldReview(false)
-	}
 
 	if (refresh) return null;
 
@@ -646,6 +615,34 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 									<Screen />
 								)}
 							</Box>
+							{reviewConfigurations.length > 0 && review && shouldReview && (
+								<Box
+									position="absolute"
+									top={0}
+									bottom={0}
+									left={0}
+									right={0}
+									zIndex={10}
+									justifyContent="center" 
+									style={{
+										backgroundColor: 'rgba(0,0,0,0.8)',
+									  }}
+								>
+									<Box
+										width="90%"  
+										borderRadius="l" 
+										padding="m"
+									>
+										<ReviewScreen
+											screens={reviewConfigurations}
+											onChange={handleReviewChange}
+											lastPage={lastPage}
+											lastPageIndex={lastPageIndex}
+											onSkip={handleReviewNoPress}
+										/>
+									</Box>
+								</Box>
+							)}
 
 							<Modal
 								open={shouldConfirmExit}
@@ -670,28 +667,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 							>
 								<Text>Are you sure you want to cancel script?</Text>
 							</Modal>
-							<Modal
-								open={shouldReview && review}
-								onClose={() => { closeReviewModal() }}
-								title="Review Screens"
-								actions={[
-									{
-										color: 'error',
-										label: 'Skip',
-										onPress: handleReviewNoPress,
-									},
-									{
-										color: 'secondary',
-										label: 'Go To',
-										onPress: handleReviewYesPress,
 
-									},
-								]}
-							>
-								<Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
-									{reviewConfigurations?.[reviewIndex]?.label || ''}
-								</Text>
-							</Modal>
 
 						</>
 					);

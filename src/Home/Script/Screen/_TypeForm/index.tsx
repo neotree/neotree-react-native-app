@@ -96,7 +96,6 @@ export function TypeForm({ }: TypeFormProps) {
       
         return conditionMet;
       };
-      
 
     const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
         const key = Object.keys(data)[0];
