@@ -23,9 +23,8 @@ export default async (session: any, showConfidential?: boolean) => {
   
   const generateQRCode = async () => {
     try {
-      const formattedData = await formatExportableSession(session, { showConfidential: country==='mwi' });
+      const formattedData = await formatExportableSession(session, { showConfidential: true });
       const hl7 = toHL7Like(formattedData);
-    
       // QR code parameters
       const dataToEncode:any = hl7
       
@@ -62,6 +61,7 @@ export default async (session: any, showConfidential?: boolean) => {
     }
   };
 
+ 
   let managementHTML = management.map((screen: any) => {
     let sections = [
       { title: screen.metadata.title1, image: screen.metadata.image1?.data, text: screen.metadata.text1, },
@@ -86,7 +86,7 @@ export default async (session: any, showConfidential?: boolean) => {
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
   const generateImageHtml = async () => {
 
-
+  
     try {
     
       let htmlContent = `
@@ -114,6 +114,7 @@ export default async (session: any, showConfidential?: boolean) => {
   const tables =sections
     .filter(([, entries]) => entries.length)
     .map(([sectionTitle, entries]) => {
+   
       entries = entries.filter((e: any) => e.values.length);
      
       return `
@@ -165,27 +166,6 @@ export default async (session: any, showConfidential?: boolean) => {
                     `;
               }).join('');
 
-            // let managementHTML = management.map((s: any) => {
-            //   const sections = [
-            //     { title: s.metadata.title1, image: s.metadata.image1?.data, text: s.metadata.text1, },
-            //     { title: s.metadata.title2, image: s.metadata.image2?.data, text: s.metadata.text2, },
-            //     { title: s.metadata.title3, image: s.metadata.image3?.data, text: s.metadata.text3, },
-            //   ].filter(s => s.title || s.text || s.image);
-            //   return sections.map(s => {
-            //     return [
-            //       !s.title ? '' : `<div>${s.title}</div>`,
-            //       !s.image ? '' : `<div><img style="width:auto;height:auto;max-width:100%;" src="${s.image}" /></div>`,
-            //       !s.text ? '' : `<div>${s.text}</div>`,
-            //     ].filter(s => s).join('');
-            //   }).join('');
-            // }).join('');
-            // managementHTML = !managementHTML ? '' : `<div>${managementHTML}</div>`;
-
-            // return `
-            //   <div>${valuesHTML}</div> 
-            //   <div>${managementHTML}</div>
-            // `;
-
             return `<div>${valuesHTML}</div>`;
           })
           .join('')
@@ -193,8 +173,6 @@ export default async (session: any, showConfidential?: boolean) => {
       `;
     }
   ).join('');
-
- 
 
   return baseHTML(`<div class="grid">${qrcode}${tables}</div><div>${managementHTML}</div>`, session);
 };

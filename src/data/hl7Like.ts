@@ -115,6 +115,7 @@ export function toHL7Like(data: any) {
 
   let combined = `${metadata}${entries}`
   let compressed = textToNumbers(compressDataForQRCode(combined))
+
   while (compressed && compressed.length > 2800) {
     combined = truncateData(combined)
     compressed = textToNumbers(compressDataForQRCode(combined))

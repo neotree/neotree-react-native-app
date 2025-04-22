@@ -11,7 +11,6 @@ export type SessionProps = {
     onBack: () => void;
 };
 
-const { height: winH } = Dimensions.get('window');
 
 export function Session({ session, onBack }: SessionProps) {
     const theme = useTheme();
