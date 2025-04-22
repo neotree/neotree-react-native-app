@@ -420,8 +420,8 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const handleReviewNoPress = async () => {
 		const summary = await createSummaryAndSaveSession({ completed: true });
-		setShouldReview(true);
-		setReview(true);
+		setShouldReview(false);
+		setReview(false);
 		setSummary(summary);
 	};
 
