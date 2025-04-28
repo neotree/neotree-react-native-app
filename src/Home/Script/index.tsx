@@ -361,19 +361,22 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		getFieldPreferences
 	]);
 
-	const handleReviewChange = (index: any, lastPage: types.Screen, lastPageIndex: number) => {
+	const handleReviewChange = (screen_id: any, lastPage: types.Screen, lastPageIndex: number) => {
 
-		let as = screens.find(f => f.screen_id === index)
+		let as = screens.find(f => f.screen_id === screen_id)
+	
 		if (as) {
+			let index = screens.indexOf(as)
 			setRefresh(true);
-			removeEntry(activeScreen?.id);
 			as.review = true
-			setActiveScreenIndex(index);
 			setActiveScreen(as);
+			setActiveScreenIndex(index);	
+			setEntry(getCachedEntry(index));
 			setTimeout(() => setRefresh(false), 10);
 			setReview(false)
 			setLastPage(lastPage)
 			setLastPageIndex(lastPageIndex)
+			
 
 		}
 	}

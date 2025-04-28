@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity,StyleSheet } from 'react-native';
 import { Box, Br, Card, Text } from '../../../components';
 import * as types from '../../../types';
+import { Keyboard } from 'react-native';
 
 
 type ReviewProps = {
@@ -38,6 +39,11 @@ export function ReviewScreen({ screens, onChange, lastPage, lastPageIndex,onSkip
             notifyParent(ind)
         }
     }
+
+    React.useEffect(() => {
+        Keyboard.dismiss();
+    }, []);
+    
 
 
     return (

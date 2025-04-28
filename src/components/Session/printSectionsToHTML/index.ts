@@ -152,7 +152,7 @@ export async function printSectionsToHTML({
                 }).join('');
 
               return `
-                              <div style="border:1px solid #ddd;border-radius:8px;padding:10px;margin:10px 0;">
+                              <div>
                                   ${repeatableFields}
                               </div>
                           `;

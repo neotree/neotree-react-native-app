@@ -84,7 +84,6 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
     }, [conditionMet]);
 
     function getValuesFromIndex<T>(array: T[], startIndex: number = 0): T[] {
-        console.log("...SINDEX...",startIndex)
         return array.slice(startIndex);
       }
 
