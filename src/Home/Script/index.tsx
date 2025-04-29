@@ -111,6 +111,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 	const saveSession = (params?: any) => new Promise((resolve, reject) => {
 		const summary = utils.createSessionSummary(params);
+
 		(async () => {
 			try {
 				const res = await api.saveSession({
@@ -157,7 +158,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 
 			const uid = await generateUID(script?.type);
 			setGeneratedUID(uid);
-
 			setScript(script);
 			setScreens(screens);
 			setDiagnoses(diagnoses);
@@ -245,6 +245,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 					setActiveScreen(lastPage);
 					setEntry(cachedEntries.filter(e => `${e.screenIndex}` === `${lastPageIndex}`)[0]);
 					setTimeout(() => setRefresh(false), 2);
+					saveSession();
 
 				} else {
 					setRefresh(true);
@@ -375,8 +376,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 			setTimeout(() => setRefresh(false), 10);
 			setReview(false)
 			setLastPage(lastPage)
-			setLastPageIndex(lastPageIndex)
-			
+			setLastPageIndex(lastPageIndex)				
 
 		}
 	}
