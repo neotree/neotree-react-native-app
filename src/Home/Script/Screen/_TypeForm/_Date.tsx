@@ -87,7 +87,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
             minDateKey = `${minDateKey}`.charAt(0) === '$' ? `${minDateKey}`.substring(1, minDateKey.length) : minDateKey;
             let _minDate: Date | null = null;
             let _minDateType = 'datetime';
-            allValues.forEach(v => {
+            allValues?.forEach(v => {
                 if (`${v.key}`.toLowerCase() === `${minDateKey}`.toLowerCase()) {
                     _minDate = v.value ? new Date(v.value) : null;
                     _minDateType = v.type!;
@@ -107,7 +107,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
             maxDateKey = `${maxDateKey}`.charAt(0) === '$' ? `${maxDateKey}`.substring(1, maxDateKey.length) : maxDateKey;
             let _maxDate: Date | null = null;
             let _maxDateType = 'datetime';
-            allValues.forEach(v => {
+            allValues?.forEach(v => {
                 if (`${v.key}`.toLowerCase() === `${maxDateKey}`.toLowerCase()) {
                     _maxDate = v.value ? new Date(v.value) : null;
                     _maxDateType = v.type!;

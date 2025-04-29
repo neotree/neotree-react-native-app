@@ -84,7 +84,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
     }, [conditionMet]);
 
     function getValuesFromIndex<T>(array: T[], startIndex: number = 0): T[] {
-        return array.slice(startIndex);
+        return array?.slice(startIndex);
       }
 
     function getCalculationEntry(data: any[],fieldCalc:any): any | null {

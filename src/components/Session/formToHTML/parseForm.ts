@@ -2,6 +2,8 @@ import { fieldsTypes } from '../../../constants';
 import moment from 'moment';
 
 export default (form: any) => {
+
+  console.log("---MWI..FORM...",JSON.stringify(form))
   const entries = form
     .filter(({ values }: any) => values.length)
     .map(({ screen, values }: any) => {

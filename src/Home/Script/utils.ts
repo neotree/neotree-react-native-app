@@ -505,20 +505,48 @@ export const getScriptUtils = ({
           
           for (const item of section.values || []) {
             if (item.key === "repeatables") {
-              newSection.repeatables = item.value; // Move the value out
+              // Apply dropEmptyValueObjects only to repeatables
+              newSection.repeatables = dropEmptyValueObjects(item.value);
             } else {
-              newValues.push(item); // Keep the rest
+              newValues.push(item);
             }
           }
       
           newSection.values = newValues;
           return newSection;
         });
-      }
+      } 
+            /**
+       * Recursively removes all properties where 'value' is an empty object
+       * @param data Input data (object or array)
+       * @returns Cleaned data with empty value objects removed
+       */
+            function dropEmptyValueObjects<T>(data: T): T {
+                if (Array.isArray(data)) {
+                  return data.map(item => dropEmptyValueObjects(item)).filter(Boolean) as T;
+                }
+              
+                if (typeof data === 'object' && data !== null) {
+                  const result: any = {};
+                  
+                  for (const [key, value] of Object.entries(data)) {
+                    // Skip if this is a 'value' property that's an empty object
+                    if (key === 'value' && typeof value === 'object' && value !== null && Object.keys(value).length === 0) {
+                      continue;
+                    }
+                    
+                    // Recursively process nested objects/arrays
+                    result[key] = dropEmptyValueObjects(value);
+                  }
+                  
+                  return result;
+                }
+              
+                return data;
+              } 
       
     function createSessionSummary(_payload: any = {}) {        
         const { completed, cancelled, ...payload } = _payload;
-        
         let uid = form.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
             key = `${key}`.toLowerCase();
@@ -554,7 +582,7 @@ export const getScriptUtils = ({
 					.filter(s => s.type === 'management')
 					.filter(s => s.printable),
 				diagnoses: [],
-				form:restructureForm(),
+				form: restructureForm(),
 				matchingSession: session?.data?.matchingSession || matchingSession,
 				matched: session?.data?.matched || (script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
 					if (s.data.script.type !== 'discharge') {
@@ -569,7 +597,9 @@ export const getScriptUtils = ({
 				}, [])),
             },
         };
-    };      
+    };   
+    
+
 
     const getScreenIndex = (screenId: string | number) => !screenId ? -1 : screens.map(s => s.id).indexOf(screenId);
 
