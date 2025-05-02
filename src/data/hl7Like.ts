@@ -9,21 +9,22 @@ export function toHL7Like(data: any) {
   let diagnoses = 'DDH\n'
 
   // METADATA
-  Object.keys(data).filter(k => (k != 'entries' && k != 'diagnoses' && k != 'scriptTitle')).map((k) => {
-
-    if (k === 'script') {
-      Object.keys(data[k]).filter(ki => ki !== 'id').map((ki) => {
-        metadata += `${ki}|${data[k][ki]}\n`
-      })
-    } else {
-      if (k === 'uid') {
-        metadata += `${k}|${data[k]}\n`
+  Object.keys(data).forEach((k) => {
+    if (k !== 'entries' && k !== 'diagnoses' && k !== 'scriptTitle') {
+      if (k === 'script' && typeof data[k] === 'object') {
+        Object.entries(data[k]).forEach(([ki, value]) => {
+          if(ki==='id'){
+            //skip
+          }
+          metadata += `${ki}|${value}\n`;
+        });
+      } else if (k === 'uid') {
+        metadata += `${k}|${data[k]}\n`;
+      } else if (k === 'completed_at') {
+        metadata += `${k}|${formatDate(data[k])}\n`;
       }
-      else if (k==='completed_at') {
-     metadata += `${k}|${formatDate(data[k])}\n`
-}
-}
-})
+    }
+  });
 
   // DIAGNOSES
   Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
@@ -277,6 +278,8 @@ function convertToJSON(input: string) {
          
         } else if(field==="createdAt"){
          repeatableItem[field] = parseStringToDate(value)
+        }else if(field==="requiredComplete"){
+          // do nothing
         }
         
         else {
@@ -381,3 +384,4 @@ export const searchTypes = [
   { value: 'twinSearches', alias: 'TS', },
   { value: 'allSearches', alias: 'OS', },
 ];
+
