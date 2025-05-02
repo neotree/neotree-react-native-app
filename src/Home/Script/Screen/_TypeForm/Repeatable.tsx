@@ -60,7 +60,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     && val['value'] !== '');
             });
 
-            const requiredComplete = fields.filter(f => !f.editable).every(field => {
+            const requiredComplete = fields.filter(f => !f.editable && !f.optional).every(field => {
                 const val = values[field.key];
                 if (val['value'] === 'other') {
                     const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
@@ -192,7 +192,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     && val['value'] !== '')
             });
 
-            const requiredComplete = fields.filter(f => !f.editable).every(field => {
+            const requiredComplete = fields.filter(f => !f.editable && !f.optional).every(field => {
                 const val = newValues[field.key];
                 if (val['value'] === 'other') {
                     const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
