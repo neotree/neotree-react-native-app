@@ -27,6 +27,7 @@ export function Screen() {
                   ? group.every(item => item?.requiredComplete !== false)
                   : true
               );
+
               setRepeatableComplete(allComplete)
         }else{
             setRepeatableComplete(true)
