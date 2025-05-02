@@ -34,6 +34,7 @@ export function TypeForm({ }: TypeFormProps) {
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const repeatable = metadata?.repeatable;
+    const skippable = activeScreen?.data?.skippable
 
     const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
 
@@ -274,6 +275,7 @@ export function TypeForm({ }: TypeFormProps) {
             evaluateCondition={evaluateFieldCondition}
             collectionField={collectionField}
             allValues={getRepeatableValues()}
+            skippable={skippable}
         /> : returnable
     );
 }
