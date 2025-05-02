@@ -137,6 +137,14 @@ export async function createTablesIfNotExist() {
         'editor_version varchar'
     ].join(',');
 
+    const aliasesTableColumns = [
+        'id integer primary key not null',
+        'scriptid varchar',
+        'old_script_id varchar',
+        'data text',
+        
+    ].join(',');
+
     return await Promise.all([
         dbTransaction(`create table if not exists application (${applicationTableColumns});`),
         dbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
@@ -150,6 +158,7 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists location (${locationTableColumns});`),
         dbTransaction(`create table if not exists exports (${exportsTableColumns});`),
         dbTransaction(`create table if not exists exceptions (${exceptionTableColumns});`),
+        dbTransaction(`create table if not exists aliases (${aliasesTableColumns});`),
     ]);
 }
 
@@ -165,6 +174,7 @@ export const resetTables = async () => {
         'delete * from config_keys where 1;',
         'delete * from drugs_library where 1;',
         'delete * from configuration where 1;',
+        'delete * from aliases where 1;',
         // 'delete * from location where 1;',
         // 'delete * from exports where 1;',
     ].map(q => dbTransaction(q))); 
@@ -183,6 +193,7 @@ export const resetApp = async () => {
         dbTransaction(`drop table location;`),
         dbTransaction(`drop table exports;`),
         dbTransaction(`drop table exceptions;`),
+        dbTransaction(`drop table aliases;`),
     ]); 
     await createTablesIfNotExist();
 };

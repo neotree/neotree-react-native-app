@@ -56,6 +56,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
                 ...extractValueObject(item),
                 id: item.id,
                 createdAt: item.createdAt,
+                requiredComplete: item.requiredComplete
               });
             });
           });

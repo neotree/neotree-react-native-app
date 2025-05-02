@@ -6,6 +6,8 @@ import { useContext } from '../Context';
 export function Screen() {
    
     const [searchVal, setSearchVal] = React.useState('');
+    const [repeatableComplete,setRepeatableComplete]= React.useState(false)
+
     const {
         activeScreen,
         moreNavOptions,
@@ -15,6 +17,21 @@ export function Screen() {
         setMountedScreens,
         goNext
     } = useContext();
+    const metadata = activeScreen?.data?.metadata;
+    React.useEffect(()=>{
+        if(metadata?.repeatable){
+            const allComplete = Object.values(
+                activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value || {}
+              ).every((group: any) =>
+                Array.isArray(group)
+                  ? group.every(item => item?.requiredComplete !== false)
+                  : true
+              );
+              setRepeatableComplete(allComplete)
+        }else{
+            setRepeatableComplete(true)
+        }
+    },[activeScreenEntry])
     
     return (
         <Box flex={1}>
@@ -55,7 +72,7 @@ export function Screen() {
 
             <ScreenType searchVal={searchVal} />
 
-            {(!!activeScreenEntry || moreNavOptions?.showFAB) && (
+            {((!!activeScreenEntry && !!repeatableComplete) || moreNavOptions?.showFAB) && (
                 <Box 
                     position="absolute"
                     bottom={10}

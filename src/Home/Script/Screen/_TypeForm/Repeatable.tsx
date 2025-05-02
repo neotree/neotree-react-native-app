@@ -62,6 +62,14 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             const requiredComplete = fields.filter(f => !f.editable).every(field => {
                 const val = values[field.key];
+                if (val['value'] === 'other') {
+                    const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
+
+                    if (otherField) {
+                        return values[otherField?.key]?.['value'] || values[otherField]?.['value'] || ''
+                    }
+                }
+
                 const conditionMet = evaluateCondition(field, index)
                 if (!conditionMet) {
                     return true
@@ -93,7 +101,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     useEffect(() => {
         const shouldDisable = forms.some(f => !f.requiredComplete);
         setDisabled(shouldDisable);
-        console.log("####-----FORMS...", forms[0]?.values?.otherNewProb)
     }, [forms]);
 
     useEffect(() => {
@@ -187,6 +194,13 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             const requiredComplete = fields.filter(f => !f.editable).every(field => {
                 const val = newValues[field.key];
+                if (val['value'] === 'other') {
+                    const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
+
+                    if (otherField) {
+                        return newValues[otherField?.key]?.['value'] || newValues[otherField]?.['value'] || ''
+                    }
+                }
                 const conditionMet = form ? evaluateCondition(field, forms.indexOf(form)) : true
                 if (!conditionMet) {
                     return true
@@ -212,7 +226,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
 
         const completedForms = formsList
-            .map(({ values, id, createdAt }) => ({ ...values, id, createdAt }));
+            .map(({ values, id, createdAt,requiredComplete }) => ({ ...values, id, createdAt,requiredComplete }));
 
         onChange({ [collectionName]: completedForms }, collectionName);
     }
