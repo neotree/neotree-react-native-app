@@ -8,6 +8,7 @@ import { DropDownField } from './_DropDown';
 import { PeriodField, dateToValueText } from './_Period';
 import { TimeField } from './_Time';
 import { fieldsTypes } from '../../../../constants';
+import { formatDate } from '@/src/utils/formatDate';
 
 
 
@@ -29,7 +30,7 @@ type FormItem = {
     values: Record<string, any>;
     isComplete: boolean;
     requiredComplete: boolean;
-
+    hasCollectionField: boolean
 }
 
 
@@ -44,6 +45,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
           
             const collectionFieldValue = values?.[collectionField]; 
+            const hasCollectionField =  (!collectionFieldValue && !collectionFieldValue['value'])
             if (!collectionFieldValue || !collectionFieldValue['value'] || !createdAt) {
               return []; 
             }
@@ -81,6 +83,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
               values,
               isComplete,
               requiredComplete,
+              hasCollectionField: hasCollectionField
             }];
           });          
       };
@@ -144,6 +147,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
               values: initialValues,
               isComplete: false,
               requiredComplete: false,
+              hasCollectionField: false
             };
           
             setForms([...collapsedForms, newForm]);
@@ -204,6 +208,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             });
 
             const collectionFieldValue = newValues?.[collectionField];
+            const hasCollectionField =  (!collectionFieldValue && !collectionFieldValue['value'])
             const requiredComplete = (!collectionFieldValue && !collectionFieldValue['value'])
                  || fields.filter(f => !f.editable && !f.optional).every(field => {
                 const val = newValues[field.key];
@@ -224,7 +229,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     && !!val['value']
                 )
             });
-            const updatedValue = { ...form, values: newValues, isComplete, requiredComplete}
+            const updatedValue = { ...form, values: newValues, isComplete, requiredComplete,hasCollectionField:hasCollectionField}
             return updatedValue;
         });
         setDisabled(updatedForms?.filter(f => !f.requiredComplete).length > 0);
@@ -237,7 +242,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
 
         const completedForms = formsList
-            .map(({ values, id, createdAt,requiredComplete }) => ({ ...values, id, createdAt,requiredComplete }));
+            .map(({ values, id, createdAt,requiredComplete,hasCollectionField }) => ({ ...values, id, createdAt,requiredComplete,hasCollectionField}));
 
         onChange({ [collectionName]: completedForms }, collectionName);
     }
@@ -309,7 +314,10 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const periodInfo = getPeriodValueText(field, valueObj.value);
                 if (periodInfo && periodInfo !== null)
                     Object.assign(base, periodInfo);
-            }
+            } else if (base && (field.type ==='date'|| field.type==='datetime')){
+                const dateInfo = formatDate(valueObj.value);
+                Object.assign(base, dateInfo);
+              }
 
             transformed[key] = base || null;
         }
