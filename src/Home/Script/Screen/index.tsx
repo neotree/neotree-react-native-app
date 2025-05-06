@@ -18,8 +18,15 @@ export function Screen() {
         goNext
     } = useContext();
     const metadata = activeScreen?.data?.metadata;
+    const skippable = activeScreen?.data?.skippable
     React.useEffect(()=>{
         if(metadata?.repeatable){
+            if(skippable && !activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
+                if(!activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
+                    setRepeatableComplete(true)
+                }
+             
+            }else{
             const allComplete = Object.values(
                 activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value || {}
               ).every((group: any) =>
@@ -27,11 +34,15 @@ export function Screen() {
                   ? group.every(item => item?.requiredComplete !== false)
                   : true
               );
-
+             
               setRepeatableComplete(allComplete)
-        }else{
-            setRepeatableComplete(true)
+            }
         }
+        else{
+        setRepeatableComplete(true)
+        
+    }
+    
     },[activeScreenEntry])
     
     return (
@@ -73,7 +84,7 @@ export function Screen() {
 
             <ScreenType searchVal={searchVal} />
 
-            {((!!activeScreenEntry && !!repeatableComplete) || moreNavOptions?.showFAB) && (
+            {((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete) || moreNavOptions?.showFAB) && (
                 <Box 
                     position="absolute"
                     bottom={10}

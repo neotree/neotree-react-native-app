@@ -50,6 +50,7 @@ export function TypeTimer({}: TypeTimerProps) {
             printable,
             value: val,
             valueText: Number(val) * Number(multiplier || 1),
+            exportLabel: Number(val) * Number(multiplier || 1),
             calculateValue: Number(val) * Number(multiplier || 1),
             label: metadata.label,
             key: metadata.key,
