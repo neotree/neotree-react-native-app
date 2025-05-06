@@ -183,7 +183,12 @@ export const getScriptUtils = ({
                 value = value === 'false' ? false : Boolean(value);
                 break;
             default:
-                value = JSON.stringify(value);
+                if(key==='createdAt'){
+                    value=value
+                }else{
+                    value = JSON.stringify(value)
+                }
+               ;
             }
     
             return parseConditionString(condition, inputKey || key, value);
@@ -236,14 +241,16 @@ export const getScriptUtils = ({
         values.forEach(v => {
             if (v?.key === 'repeatables' && typeof v.value === 'object') {
                 const repeatables = v.value as Record<string, any[]>;
+               
                 Object.values(repeatables).forEach((repeatableGroup: any[]) => {
                     repeatableGroup.forEach(entry => {
                         Object.entries(entry).forEach(([_, fieldValue]: [string, any]) => {
+                            
                             if (fieldValue && typeof fieldValue === 'object' && 'value' in fieldValue) {
                                 flat.push({
                                     ...fieldValue,
                                     // Preserve the original key structure for repeatables
-                                    key: `${v.key}.${fieldValue.key}`
+                                    key: `${_}`
                                 } as types.ScreenEntryValue);
                             }
                         });
@@ -252,8 +259,8 @@ export const getScriptUtils = ({
             } else {
                 flat.push(v);
             }
+         
         });
-      
         return flat;
     };
 
@@ -499,10 +506,11 @@ export const getScriptUtils = ({
     };
 
     function restructureForm() {
+
+       
         return form.map(section => {
           const newSection = { ...section };
           const newValues = [];
-          
           for (const item of section.values || []) {
             if (item.key === "repeatables") {
               // Apply dropEmptyValueObjects only to repeatables
@@ -510,8 +518,9 @@ export const getScriptUtils = ({
             } else {
               newValues.push(item);
             }
+            
           }
-      
+          
           newSection.values = newValues;
           return newSection;
         });
@@ -525,10 +534,12 @@ export const getScriptUtils = ({
                 if (Array.isArray(data)) {
                   return data.map(item => dropEmptyValueObjects(item)).filter(Boolean) as T;
                 }
-              
+               
                 if (typeof data === 'object' && data !== null) {
                   const result: any = {};
-                  
+                if(Object.keys(data).length<=0){
+                    return data
+                }
                   for (const [key, value] of Object.entries(data)) {
                     // Skip if this is a 'value' property that's an empty object
                     if (key === 'value' && typeof value === 'object' && value !== null && Object.keys(value).length === 0) {

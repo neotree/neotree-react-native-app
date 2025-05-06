@@ -34,6 +34,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
                     // exportValue: item.label,
                     label: metadata.label,
                     valueLabel: item.label,
+                    exportLabel: item.label,
                     key: metadata.key,
                     type: item.type,
                     dataType: metadata.dataType,

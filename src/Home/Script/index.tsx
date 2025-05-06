@@ -113,6 +113,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		const summary = utils.createSessionSummary(params);
 
 		(async () => {
+
 			try {
 				const res = await api.saveSession({
 					id: sessionID,
