@@ -61,8 +61,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
 
             repeatables[repeatKey] = repeatables[repeatKey] || [];
 
-            repeatItems.forEach((item: any) => {
-             
+            repeatItems.filter(it=>!!it.hasCollectionField).forEach((item: any) => {  
               repeatables[repeatKey].push({
                 ...extractValueObject(item),
                 id: item.id,

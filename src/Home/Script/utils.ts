@@ -250,7 +250,7 @@ export const getScriptUtils = ({
                                 flat.push({
                                     ...fieldValue,
                                     // Preserve the original key structure for repeatables
-                                    key: `${_}`
+                                    key: `${v.key}.${fieldValue.key}`
                                 } as types.ScreenEntryValue);
                             }
                         });
