@@ -36,6 +36,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                     value,
                     valueText: item.label,
                     label: item.label,
+                    exportLabel:item.label,
                     key: item.key,
                     type: item.type,
                     dataType: item.dataType,

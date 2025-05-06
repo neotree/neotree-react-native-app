@@ -28,7 +28,8 @@ export function TimeField({ field, conditionMet, onChange, entryValue,repeatable
                     onChange({
                         exportType: 'time',
                         value: !d ? null : d.toISOString(),
-                        valueText: d ? require('moment')(new Date(d)).format('HH:mm') : ''
+                        valueText: d ? require('moment')(new Date(d)).format('HH:mm') : '',
+                        exportLabel: d ? require('moment')(new Date(d)).format('HH:mm') : ''
                     });
                 }}
             />
