@@ -58,7 +58,7 @@ export function TextField({
                     generatedUID={generatedUID}
                     onChange={val => {
                         setValue(`${val || ''}`);
-                        onChange({ value: val,valueText:val, exportType: 'text', });
+                        onChange({ value: val,valueText:val, exportType: 'text',exportLabel:value  });
                     }}
                     autoGenerateValue={autoGenerateValue}
 
@@ -75,7 +75,7 @@ export function TextField({
                         let err = '';
                         setValue(value);
                         setError(err);
-                        onChange({ value: err ? null : value, valueText:value,exportType: 'text', });
+                        onChange({ value: err ? null : value, valueText:value,exportType: 'text',exportLabel:value });
                     }}
                 />
             

@@ -12,6 +12,17 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const canEdit = repeatable?editable:true
 
+    const getformattedDate = (type:any,value: Date)=>{
+        switch(type) {
+            case 'date':
+                return require('moment')(new Date(value)).format('DD MMM, YYYY') ;
+            case 'datetime':
+                return require('moment')(new Date(value)).format('DD MMM, YYYY HH:mm');
+            default:
+                return null;
+        }
+    }
+
     React.useEffect(() => { 
         if (!conditionMet) {
             onChange({ value: null, valueText: null, exportType: 'date', }); 
@@ -19,19 +30,14 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
         } else {
 			if (!mounted && (field.defaultValue === 'date_now')) {
 				const date = new Date();
+                const formatedDate = getformattedDate(field.type,date)
 				onChange({ 
                     exportType: 'date',
 					value: date,
-					valueText: (() => {
-						switch(field.type) {
-							case 'date':
-								return require('moment')(new Date(date)).format('DD MMM, YYYY') ;
-							case 'datetime':
-								return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
-							default:
-								return null;
-						}
-					})(),
+					valueText: formatedDate,
+                    valueLabel: formatedDate,
+                    exportValue: formatedDate,
+                    exportLabel: formatedDate,
 				}); 
 				setValue(date);
 			}

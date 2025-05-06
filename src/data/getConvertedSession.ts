@@ -27,17 +27,25 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
 
         // Helper: convert repeatable item values
         const extractValueObject = (item: any) => {
+          
           return Object.entries(item).reduce((acc, [k, v]) => {
-            if (typeof v === 'object' && v !== null && 'value' in v) {
+            if (
+              typeof v === 'object' &&
+              v !== null &&
+              'value' in v &&
+              v.value
+            ){
               const valObj = v as any;
               acc[k] = {
                 value: valObj.exportValue ?? valObj.value,
-                label: valObj.exportLabel ?? valObj.label ?? valObj.valueLabel ?? '',
+                label: valObj.exportLabel ?? valObj.valueLabel ??  valObj.value?? '',
                 printable: valObj.printable ?? true,
                 prePopulate: valObj.prePopulate,
               };
             } else {
+              if(v){
               acc[k] = v;
+              }
             }
             return acc;
           }, {} as any);
@@ -47,11 +55,13 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
         const repeatables: Record<string, any[]> = {};
         form.forEach((entry: any) => {
           const repeatablesGroup = entry.repeatables || {};
-          Object.entries(repeatablesGroup as Record<string, any[]>).forEach(
+          Object.entries(repeatablesGroup as Record<string, any[]>).forEach( 
+          
             ([repeatKey, repeatItems]) => {
+
             repeatables[repeatKey] = repeatables[repeatKey] || [];
 
-            repeatItems.forEach((item: any) => {
+            repeatItems.filter(it=>!!it.hasCollectionField).forEach((item: any) => {  
               repeatables[repeatKey].push({
                 ...extractValueObject(item),
                 id: item.id,
@@ -108,7 +118,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             [key]: {
               ...common,
               values: {
-                label: [exportLabel || valueLabel || label],
+                label: [exportLabel || exportLabel || valueLabel],
                 value: [exportValue ?? parsedValue],
               },
             },

@@ -11,7 +11,6 @@ type PeriodFieldProps = types.ScreenFormTypeProps & {
 
 export function dateToValueText(value: null | Date, format: 'days_hours' | 'years_months' = 'days_hours') {
     format = format || 'days_hours';
-    
     if (value) {
         const d = new Date(value).getTime();
         const hrs = moment().diff(d, 'hours', true);
@@ -125,6 +124,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                     exportType: 'number',
 					value: val.toISOString(), 
 					valueText: dateToValueText(val, field.format), 
+                    exportLabel:dateToValueText(val, field.format),
 					exportValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
       				calculateValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
 				});
@@ -146,6 +146,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                         exportType: 'number',
                         value: !date ? null : date.toISOString(),
                         valueText: dateToValueText(date, field.format),
+                        exportLabel:dateToValueText(date, field.format),
 						exportValue: date ? diffHours(date, new Date()) : null,
       					calculateValue: date ? diffHours(date, new Date()) : null,
                     });
