@@ -30,7 +30,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                 disabled={!conditionMet || !canEdit}
                 label={`${field.label || ''}${field.optional ? '' : ' *'}`}
                 title={`${field.label || ''}`}
-                searchable={opts.length > 5}
+                searchable={opts?.length > 5}
                 value={value}
                 options={opts}
                 onChange={(val, o) => {

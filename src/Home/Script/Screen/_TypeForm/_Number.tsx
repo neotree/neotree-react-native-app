@@ -10,7 +10,7 @@ type NumberFieldProps = types.ScreenFormTypeProps & {
 export function NumberField({ field, onChange, conditionMet, entryValue, allValues,repeatable,editable }: NumberFieldProps) {
     const mounted = React.useRef(false);
     let maxDecimals = 0;
-    if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '').length;
+    if (field.format) maxDecimals = `${field.format}`.replace(/[^#]+/gi, '')?.length;
 
     const [value, setValue] = React.useState(entryValue?.value);
     const [error, setError] = React.useState('');

@@ -20,11 +20,11 @@ export async function printSectionsToHTML({
       // QR code parameters
       const dataToEncode: any = hl7
       let erc: any = 'H'
-      if (dataToEncode.length > 3057 && dataToEncode.length <= 3993) {
+      if (dataToEncode?.length > 3057 && dataToEncode?.length <= 3993) {
         erc = 'Q'
-      } else if (dataToEncode.length > 3993 && dataToEncode.length <= 5596) {
+      } else if (dataToEncode?.length > 3993 && dataToEncode?.length <= 5596) {
         erc = 'M'
-      } else if (dataToEncode.length > 5596) {
+      } else if (dataToEncode?.length > 5596) {
         erc = 'L'
       }
 
