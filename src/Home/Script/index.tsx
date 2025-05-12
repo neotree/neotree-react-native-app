@@ -226,7 +226,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		}
 
 		if (activeScreen?.id === lastScreen?.id) {
-			if (reviewConfigurations.length > 0) {
+			if (reviewConfigurations?.length > 0) {
 				setReview(true)
 				setLastPage(lastScreen)
 				setLastPageIndex(lastScreenIndex)
@@ -619,7 +619,7 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 									<Screen />
 								)}
 							</Box>
-							{reviewConfigurations.length > 0 && review && shouldReview && (
+							{reviewConfigurations?.length > 0 && review && shouldReview && (
 								<Box
 									position="absolute"
 									top={0}
