@@ -44,6 +44,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
             const session = qrtext
+            console.log("---KINGI...",qrtext)
             if(session['uid']){
                 setUID(session['uid'])
                 setQRSession([qrtext])
@@ -60,6 +61,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
     const search = React.useCallback(() => {
         (async () => {
+            try{
             setSearching(true);
             let sessions = qrSession
             if(!sessions){
@@ -68,6 +70,9 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
             setSessions(sessions);
             setSearching(false);
             setSearched(uid);
+        }catch(err){
+           
+        }
         })();
     }, [uid]);
 
@@ -116,7 +121,12 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                             facility: facility as types.Facility,
                                             autoFill,
                                             prePopulateWithUID: prePopulateWithUID !== false,
-                                        } : null;
+                                        } : {
+                                            session:{uid},
+                                            uid,
+                                            facility: facility as types.Facility,
+                                            prePopulateWithUID: prePopulateWithUID
+                                        };
 
                                         setSelectedSession(session);
                                         setFacility(session ? null : getSessionFacility(session));

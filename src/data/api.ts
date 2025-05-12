@@ -49,7 +49,7 @@ export async function makeApiCall(
 
         return res;
     } catch(e) {
-        if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
+        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
 }
 

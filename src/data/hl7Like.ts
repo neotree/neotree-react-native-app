@@ -1,5 +1,4 @@
 import pako from 'pako'
-import Base64 from 'react-native-base64';
 import {formatDate,parseStringToDate} from '../utils/formatDate'
 
 export function toHL7Like(data: any) {
@@ -115,11 +114,11 @@ export function toHL7Like(data: any) {
   })
 
   let combined = `${metadata}${entries}`
-  let compressed = textToNumbers(compressDataForQRCode(combined))
-
-  while (compressed && compressed.length > 2800) {
+  let compressed = encodeOptimisedData(combined)
+  
+  while (compressed && compressed.length > 1800) {
     combined = truncateData(combined)
-    compressed = textToNumbers(compressDataForQRCode(combined))
+    compressed = encodeOptimisedData(combined)
   }
 
   return compressed;
@@ -137,89 +136,22 @@ function truncateData(data: any) {
   return lines.join('\n');
 }
 
-function compressDataForQRCode(data: any) {
-  try {
-
-    const compressed = pako.deflate(data, { level: 9 });
-    const base64String = uint8ArrayToBase64(compressed);
-
-    return base64String
-  } catch (error) {
-    console.error('Compression error:', error);
-    return null;
-  }
-};
-
-function decompressDataFromQRCode(compressedData: Uint8Array): string {
-  try {
-    const decompressed = pako.inflate(compressedData, { to: 'string' });
-    return decompressed;
-  } catch (error) {
-    console.error('Decompression error:', error);
-    return '';
-  }
-};
-
-const uint8ArrayToBase64 = (uint8Array: any) => {
-  let binary = '';
-  const length = uint8Array.length;
-  for (let i = 0; i < length; i++) {
-    binary += String.fromCharCode(uint8Array[i]);
-  }
-  return Base64.encodeFromByteArray(uint8Array);
-}
-
-
 export function fromHL7Like(data: string) {
-  const backToBase64 = numbersToText(data)
-  if (backToBase64) {
-    const uint8Array = base64ToUint8Array(backToBase64)
-    if (uint8Array) {
-      const decompressed = decompressDataFromQRCode(uint8Array)
+  const decompressed = decodeOptimisedData(data)
+  if (decompressed) {
       if (decompressed) {
         return convertToJSON(decompressed)
-      }
     }
     return []
   }
   return []
 }
-
 export
 
   function textToNumbers(data: any) {
   return data.split('').map((char: any) => char.charCodeAt(0)).join('');
 }
 
-function numbersToText(data: string): string {
-  let result = '';
-  let currentNumber = '';
-
-  // Iterate through each character of the numeric string
-  for (let char of data) {
-    currentNumber += char; // Add character to the current number string
-
-    // Check if current number forms a valid char code
-    const charCode = parseInt(currentNumber, 10);
-    if (charCode >= 32 && charCode <= 126) { // ASCII printable range
-      result += String.fromCharCode(charCode);
-      currentNumber = ''; // Reset current number for next character
-    }
-  }
-
-  return result;
-}
-const base64ToUint8Array = (base64: string): Uint8Array => {
-  const binaryString = atob(base64); // Decode Base64 to a binary string
-  const length = binaryString.length;
-  const uint8Array = new Uint8Array(length);
-
-  for (let i = 0; i < length; i++) {
-    uint8Array[i] = binaryString.charCodeAt(i); // Convert binary string to Uint8Array
-  }
-
-  return uint8Array;
-};
 
 function convertToJSON(input: string) {
   const lines = input.trim().split("\n");
@@ -385,3 +317,77 @@ export const searchTypes = [
   { value: 'allSearches', alias: 'OS', },
 ];
 
+
+function encodeOptimisedData(input: string): string {
+  const compressed = pako.deflate(input); // Uint8Array
+
+  // ===== 2. Convert bytes to base-10 efficiently (no BigInt literals) =====
+  let bigInt = BigInt(0);
+  for (let i = 0; i < compressed.length; i++) {
+    bigInt = (bigInt << BigInt(8)) | BigInt(compressed[i]);
+  }
+  const base10Str = bigInt.toString(10);
+
+  // ===== 3. Apply RLE only if it reduces size =====
+  const rleCompressed = tryRLE(base10Str);
+  return rleCompressed.length < base10Str.length ? rleCompressed : base10Str;
+}
+
+// Helper: Apply RLE only if beneficial (unchanged)
+function tryRLE(str: string): string {
+  let compressed = '';
+  let count = 1;
+  for (let i = 1; i <= str.length; i++) {
+    if (i < str.length && str[i] === str[i - 1]) {
+      count++;
+    } else {
+      compressed += count >= 4 ? `${count}:${str[i - 1]},` : str[i - 1].repeat(count);
+      count = 1;
+    }
+  }
+  return compressed.length < str.length ? compressed : str;
+}
+
+function decodeOptimisedData(encodedStr: string): string {
+  // ===== 1. Reverse Run-Length Encoding (RLE) if present =====
+  const base10Str = undoRLE(encodedStr);
+
+  // ===== 2. Convert base-10 string back to BigInt =====
+  const bigInt = BigInt(base10Str);
+
+  // ===== 3. Extract original bytes from BigInt =====
+  const byteArray = [];
+  let tempBigInt = bigInt;
+
+  while (tempBigInt > BigInt(0)) {
+    // Extract the last 8 bits (1 byte)
+    const byte = Number(tempBigInt & BigInt(0xFF));
+    byteArray.unshift(byte); // Insert at start to maintain order
+    tempBigInt = tempBigInt >> BigInt(8); // Right-shift by 8 bits
+  }
+
+  // ===== 4. Decompress with pako.inflate =====
+  const compressedData = new Uint8Array(byteArray);
+  return pako.inflate(compressedData, { to: 'string' });
+}
+
+// Helper: Reverse RLE (e.g., "4:1,2:0" → "111100")
+function undoRLE(str: string): string {
+  // If no RLE patterns exist, return as-is
+  if (!str.includes(':')) return str;
+
+  let result = '';
+  const segments = str.split(',');
+
+  for (const segment of segments) {
+    if (segment.includes(':')) {
+      const [countStr, digit] = segment.split(':');
+      const count = parseInt(countStr, 10);
+      result += digit.repeat(count);
+    } else {
+      result += segment;
+    }
+  }
+
+  return result;
+}
