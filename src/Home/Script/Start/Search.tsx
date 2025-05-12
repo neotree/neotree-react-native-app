@@ -190,10 +190,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
                 {sessions.length ? (
                     <>
-                        <Text color="textDisabled" variant="caption">{admissionSessions.length} Admission sessions found</Text>
-                        <Text color="textDisabled" variant="caption">{neolabSessions.length} Neolab sessions found</Text>
-                        <Text color="textDisabled" variant="caption">{dischargeSessions.length} Discharge sessions found</Text>
-                        <Text color="textDisabled" variant="caption">{dailyRecordsSessions.length} Daily Record sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{admissionSessions?.length} Admission sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{dischargeSessions?.length} Discharge sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{dailyRecordsSessions?.length} Daily Record sessions found</Text>
                         <Br spacing="xl" />
 
                         <Box width={200}>

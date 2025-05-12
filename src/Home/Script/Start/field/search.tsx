@@ -307,10 +307,10 @@ export function Search({
 
                         {sessions.length ? (
                             <>
-                                <Text color="textDisabled" variant="caption">{admissionSessions.length} Admission sessions found</Text>
-                                <Text color="textDisabled" variant="caption">{neolabSessions.length} Neolab sessions found</Text>
-                                <Text color="textDisabled" variant="caption">{dischargeSessions.length} Discharge sessions found</Text>
-                                <Text color="textDisabled" variant="caption">{dailyRecordsSessions.length} Daily Records sessions found</Text>
+                                <Text color="textDisabled" variant="caption">{admissionSessions?.length} Admission sessions found</Text>
+                                <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>
+                                <Text color="textDisabled" variant="caption">{dischargeSessions?.length} Discharge sessions found</Text>
+                                <Text color="textDisabled" variant="caption">{dailyRecordsSessions?.length} Daily Records sessions found</Text>
 
                                 <Br spacing="xl" />
 
