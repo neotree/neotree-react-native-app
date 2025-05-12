@@ -27,6 +27,8 @@ export default async (session: any, showConfidential?: boolean) => {
       const hl7 = toHL7Like(formattedData);
       // QR code parameters
       const dataToEncode:any = hl7
+
+      console.log("...MUTI....",hl7.length)
       
       let erc:any = 'H'
      if(dataToEncode.length>3057 && dataToEncode.length<=3993){

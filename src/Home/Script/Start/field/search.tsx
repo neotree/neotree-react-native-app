@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import moment from 'moment';
-import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme ,Modal} from '../../../../components';
+import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '../../../../components';
 import * as api from '../../../../data';
 import * as types from '../../../../types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
@@ -94,6 +94,7 @@ export function Search({
 
             } else {
                 setToClear(false)
+
                 onSession(matched)
             }
         } else {
@@ -106,29 +107,61 @@ export function Search({
     const search = React.useCallback(() => {
         (async () => {
             setSearching(true);
-            let sessions = qrSession
+            let sessions = qrSession;
+
             if (!sessions || sessions.length <= 0) {
                 sessions = await api.getExportedSessionsByUID(uid);
-
             }
-            setSessions(sessions);
-            setSearching(false);
-            setSearched(uid);
+
+            const error = sessions?.[0]
+
+            if (error && error.error) {
+                setToClear(true)
+                setValidationMessage(
+                    `${error.error} error occured. Do you want to proceed auto populating with the current Neotree-ID?`
+                )
+                setSearching(false);
+            }
+            else if (sessions) {
+
+                setSessions(sessions);
+                setSearching(false);
+                setSearched(uid);
+            } else {
+                setToClear(true)
+                setSearching(false);
+                setValidationMessage(
+                    "No Matched Sessions Found. Do you want to proceed auto populating with the current Neotree-ID?"
+                );
+            }
+
         })();
-    }, [uid]);
+    }, [uid, toClear]);
+
 
     const handleYesPress = () => {
-		setToClear(false)
-        onSession(selectedSession)
-	};
-
-    const handleNoPress = () =>{
         setToClear(false)
-        setUID('')
-        setSelectedSession(null)
-        setSearched('')
+        if (selectedSession) {
+            onSession(selectedSession)
+        } else {
+            onSession({
+                session: { uid },
+                uid,
+                autoFill: { uid },
+                prePopulateWithUID: prePopulateWithUID !== false,
+            })
+        }
+    };
+
+    const handleNoPress = (error?: boolean) => {
+        setToClear(false)
+        if (!error) {
+            setUID('')
+            setSearched('')
+        }
         setSessions([])
         setQRSession([])
+        setSelectedSession(null)
     }
 
     const admissionSessions = sessions.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
@@ -188,7 +221,7 @@ export function Search({
                                             uid,
                                             autoFill,
                                             prePopulateWithUID: prePopulateWithUID !== false,
-                                        } : null;
+                                        } : null
 
                                         validateSearchResultDates(matched);
                                     }}
@@ -205,14 +238,14 @@ export function Search({
                                     )}
                                 />
                                 <Modal
-                                    open={toClear}
+                                    open={toClear && !searching}
                                     onClose={() => { setToClear(false) }}
                                     title="Validate Selected Session."
                                     actions={[
                                         {
                                             color: 'error',
                                             label: 'RE-SCAN',
-                                            onPress: handleNoPress,
+                                            onPress: () => handleNoPress(),
                                         },
                                         {
                                             color: 'primary',
@@ -319,7 +352,29 @@ export function Search({
                             </>
                         ) : (
                             <>
-                                {!searched ? null : <Text textAlign="center" color="textSecondary">No results found</Text>}
+                                <Modal
+                                    open={toClear && !searching}
+                                    onClose={() => { setToClear(false) }}
+                                    title="Continue With Current Neotree ID."
+                                    actions={[
+                                        {
+                                            color: 'error',
+                                            label: 'RE-SCAN',
+                                            onPress:()=> handleNoPress(true),
+                                        },
+                                        {
+                                            color: 'primary',
+                                            label: 'Continue',
+                                            onPress: handleYesPress,
+
+                                        },
+                                    ]}
+                                >
+                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
+                                        {validationMessage || ''}
+                                    </Text>
+                                </Modal>
+                                {!searched && !toClear ? null : <Text textAlign="center" color="textSecondary">No results found</Text>}
                             </>
                         )}
                     </ScrollView>

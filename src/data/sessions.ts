@@ -23,7 +23,7 @@ export const exportSession = async (s: any) => {
     }
 };
 
-export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((resolve, reject) => {
+export const getExportedSessionsByUID = (uid: string) => new Promise<any[]>((resolve, reject) => {
     (async () => {
         if (!uid) return reject(new Error('UID is required'));
 
@@ -48,14 +48,16 @@ export const getExportedSessionsByUID = (uid: string) => new Promise<any []>((re
 						[s.data.unique_key]: s,
 					}), {})
 			}));
-        } catch (e) { /**/ }
+        } catch (e:any) {
+        
+              resolve([{'error':e?.message}]) 
+         }
 
         try {
             const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);
             resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e) {
-            
-             console.log(e); reject(e); }
+        } catch (e:any) {
+         resolve([{'error':e?.message}]) }
     })();
 });
 
