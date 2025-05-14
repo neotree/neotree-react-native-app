@@ -80,9 +80,9 @@ export function DatePicker({
 
     React.useEffect(() => {
         setDate(date => {
-            let _value = value ? value.toString() : value;
-            let _date = date ? date.toString() : date;
-            if (value && (_value !== _date)) return value;
+            let _value = value?.toString?.() || value;
+            let _date = date?.toString?.() || date;
+            if (value && (_value !== _date)) return new Date(value);
             return date;
         });
     }, [value]);
@@ -146,7 +146,14 @@ export function DatePicker({
                         if (!selectedDate) return setShowDatePicker(false);
                         setShowDatePicker(false);
                         // setTimeout(() => setDate(selectedDate), 0);
-                        setDate(selectedDate);
+                        // setDate(selectedDate);
+
+                        // exceptions
+                        const hour = moment(selectedDate).hours();
+                        const minute = moment(selectedDate).minutes();
+                        const newDate = moment(selectedDate).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
+                        setDate(newDate);
+
                         if (mode === 'datetime') {
                             setShowTimePicker(true);
                         }
@@ -165,7 +172,13 @@ export function DatePicker({
                         if (!selectedDate) return setShowTimePicker(false);
                         setShowTimePicker(false);
                         // setTimeout(() => setDate(selectedDate), 0);
-                        setDate(selectedDate);
+                        // setDate(selectedDate);
+
+                        // exceptions
+                        const hour = moment(selectedDate).hours();
+                        const minute = moment(selectedDate).minutes();
+                        const newDate = moment(selectedDate).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
+                        setDate(newDate);
                     }}
                 />
             )}
