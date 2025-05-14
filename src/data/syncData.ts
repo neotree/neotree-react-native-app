@@ -64,7 +64,6 @@ export async function syncData(opts?: { force?: boolean; }) {
                     `/sync-data?${queryString.stringify({ deviceId, hospitalId: location?.hospital, })}`,
                 );
                 const json = await res.json();
-        
                 const webeditorInfo = json?.webeditorInfo || {};
                 const device = json?.device || {};
                 const configKeys = json?.configKeys || [];

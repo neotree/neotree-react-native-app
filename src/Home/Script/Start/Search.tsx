@@ -44,7 +44,6 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
             const session = qrtext
-            console.log("---KINGI...",qrtext)
             if(session['uid']){
                 setUID(session['uid'])
                 setQRSession([qrtext])
