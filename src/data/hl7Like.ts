@@ -52,6 +52,7 @@ export function toHL7Like(data: any) {
 
   })
 
+
   // ENTRIES
   Object.keys(data).filter(k => (k === 'entries')).map((k) => {
 
@@ -116,7 +117,6 @@ export function toHL7Like(data: any) {
 
   let combined = `${metadata}${entries}`
   let compressed = textToNumbers(compressDataForQRCode(combined))
-
   while (compressed && compressed.length > 2800) {
     combined = truncateData(combined)
     compressed = textToNumbers(compressDataForQRCode(combined))

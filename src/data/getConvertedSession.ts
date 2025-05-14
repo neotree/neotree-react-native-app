@@ -61,7 +61,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
 
             repeatables[repeatKey] = repeatables[repeatKey] || [];
 
-            repeatItems.filter(it=>!!it.hasCollectionField).forEach((item: any) => {  
+            repeatItems.forEach((item: any) => {  
               repeatables[repeatKey].push({
                 ...extractValueObject(item),
                 id: item.id,
@@ -71,7 +71,6 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             });
           });
         });
-
         // Helper: process individual value
         const transformValue = (v: any, parentPrePopulate: any) => {
           const {
