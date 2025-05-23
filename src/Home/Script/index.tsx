@@ -113,7 +113,6 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 		const summary = utils.createSessionSummary(params);
 
 		(async () => {
-
 			try {
 				const res = await api.saveSession({
 					id: sessionID,
@@ -369,15 +368,19 @@ function ScriptComponent({ navigation, route }: types.StackNavigationProps<types
 	
 		if (as) {
 			let index = screens.indexOf(as)
+			const prev = utils.getScreen({ direction: 'back',index });
+	
+			if(prev?.screen){
 			setRefresh(true);
-			as.review = true
-			setActiveScreen(as);
-			setActiveScreenIndex(index);	
-			setEntry(getCachedEntry(index));
+			prev.screen.review = true
+			setActiveScreen(prev.screen);
+			setActiveScreenIndex(prev.index);	
+			setEntry(getCachedEntry(prev.index));
 			setTimeout(() => setRefresh(false), 10);
 			setReview(false)
 			setLastPage(lastPage)
-			setLastPageIndex(lastPageIndex)				
+			setLastPageIndex(lastPageIndex)	
+			}			
 
 		}
 	}
