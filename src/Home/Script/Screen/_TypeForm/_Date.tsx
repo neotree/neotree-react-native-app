@@ -153,13 +153,19 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 value={value}
                 disabled={!conditionMet || !canEdit}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
-                onChange={date => {
-                    const error = getErrors(date?.toISOString() || null)[0] || null;
+                onChange={value => {
+                    let date: null | Date = null;
+                    if (value) {
+                        const hour = moment(value).hours();
+                        const minute = moment(value).minutes();
+                        date = moment(value).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
+                    }
+                    const error = getErrors(date?.toISOString?.() || null)[0] || null;
                     setValue(date);
                     onChange({
                         error,
                         exportType: 'date',
-                        value: date ? date.toISOString() : null,
+                        value: date ? date.toISOString?.() : null,
                         valueText: (() => {
                             if (!date) return null;
                             switch(field.type) {
