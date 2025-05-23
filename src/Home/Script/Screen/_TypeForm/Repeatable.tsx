@@ -45,8 +45,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
           
             const collectionFieldValue = values?.[collectionField]; 
-            const hasCollectionField =  (!collectionFieldValue && !collectionFieldValue['value'])
-            if (!collectionFieldValue || !collectionFieldValue['value'] || !createdAt) {
+            const hasCollectionField =  (!!collectionFieldValue && !!collectionFieldValue['value'])
+            if (!hasCollectionField || !createdAt) {
               return []; 
             }
           
@@ -94,6 +94,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     useEffect(() => {
         const shouldDisable = forms.some(f => !f.requiredComplete);
         setDisabled(shouldDisable);
+         notifyParent(forms)
     }, [forms]);
 
    
@@ -164,6 +165,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         notifyParent(updatedForms);
     };
 
+
     const formatFieldLabel = (value: any, form: any) => {
 
         if (value) {
@@ -208,8 +210,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             });
 
             const collectionFieldValue = newValues?.[collectionField];
-            const hasCollectionField =  (!collectionFieldValue && !collectionFieldValue['value'])
-            const requiredComplete = (!collectionFieldValue && !collectionFieldValue['value'])
+            const hasCollectionField =  (!!collectionFieldValue && !!collectionFieldValue['value'])
+            const requiredComplete = (hasCollectionField)
                  || fields.filter(f => !f.editable && !f.optional).every(field => {
                 const val = newValues[field.key];
                 if (val?.['value'] === 'other') {
@@ -239,8 +241,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     };
 
     const notifyParent = (formsList = forms) => {
-
-
         const completedForms = formsList
             .map(({ values, id, createdAt,requiredComplete,hasCollectionField }) => ({ ...values, id, createdAt,requiredComplete,hasCollectionField}));
 
