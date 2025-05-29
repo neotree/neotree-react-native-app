@@ -140,12 +140,13 @@ export async function createTablesIfNotExist() {
     const aliasesTableColumns = [
         'id integer primary key not null',
         'scriptid varchar',
-        'old_script_id varchar',
-        'data text',
-        
+        'old_script varchar',
+        'alias varchar',
+        'name varchar',    
     ].join(',');
 
     return await Promise.all([
+        dbTransaction(`drop table if exists aliases;`),
         dbTransaction(`create table if not exists application (${applicationTableColumns});`),
         dbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
         dbTransaction(`create table if not exists screens (${screensTableColumns});`),
@@ -158,7 +159,7 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists location (${locationTableColumns});`),
         dbTransaction(`create table if not exists exports (${exportsTableColumns});`),
         dbTransaction(`create table if not exists exceptions (${exceptionTableColumns});`),
-        dbTransaction(`create table if not exists aliases (${aliasesTableColumns});`),
+        dbTransaction(`create table if not exists nt_aliases (${aliasesTableColumns});`),
     ]);
 }
 
@@ -181,19 +182,19 @@ export const resetTables = async () => {
 };
 export const resetApp = async () => {
     await Promise.all([
-        dbTransaction(`drop table application;`),
-        dbTransaction(`drop table scripts;`),
-        dbTransaction(`drop table screens;`),
-        dbTransaction(`drop table diagnoses;`),
-        dbTransaction(`drop table sessions;`),
-        dbTransaction(`drop table authenticated_user ;`),
-        dbTransaction(`drop table config_keys;`),
-        dbTransaction(`drop table drugs_library;`),
-        dbTransaction(`drop table configuration;`),
-        dbTransaction(`drop table location;`),
-        dbTransaction(`drop table exports;`),
-        dbTransaction(`drop table exceptions;`),
-        dbTransaction(`drop table aliases;`),
+        dbTransaction(`drop table if exists application;`),
+        dbTransaction(`drop table if exists scripts;`),
+        dbTransaction(`drop table if exists screens;`),
+        dbTransaction(`drop table if exists diagnoses;`),
+        dbTransaction(`drop table if exists sessions;`),
+        dbTransaction(`drop table if exists authenticated_user ;`),
+        dbTransaction(`drop table if exists config_keys;`),
+        dbTransaction(`drop table if exists drugs_library;`),
+        dbTransaction(`drop table if exists configuration;`),
+        dbTransaction(`drop table if exists location;`),
+        dbTransaction(`drop table if exists exports;`),
+        dbTransaction(`drop table if exists exceptions;`),
+        dbTransaction(`drop table if exists aliases;`),
     ]); 
     await createTablesIfNotExist();
 };

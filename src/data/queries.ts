@@ -61,6 +61,44 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
     })();
 });
 
+export const getAliasFromKeyAndScriptId = (options:{
+    script:string,
+    name: string
+
+} ) => new Promise<types.Alias>((resolve, reject) => {
+    (async () => {
+        try {
+         
+
+            let q = `select alias from nt_aliases where (scriptid='${options.script}'
+             or old_script='${options.script}') and name='${options.name}' limit 1`;
+
+            const rows = await dbTransaction(`${q};`.trim(), null);
+            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+        } catch (e) { 
+            reject(e); }
+    })();
+});
+
+export const getAliasKeyFromAliasAndScript= (options:{
+    script:string,
+    alias: string
+
+} ) => new Promise<types.Alias>((resolve, reject) => {
+    (async () => {
+        try {
+         
+
+            let q = `select alias from nt_aliases where (scriptid='${options.script}'
+             or old_script='${options.script}') and alias='${options.alias}' limit 1`;
+
+            const rows = await dbTransaction(`${q};`.trim(), null);
+            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+        } catch (e) { 
+            reject(e); }
+    })();
+});
+
 export const getDrugsLibrary = (options = {}) => new Promise<{ data: types.DrugsLibraryItem; }[]>((resolve, reject) => {
     (async () => {
         try {
