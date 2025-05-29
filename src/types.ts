@@ -82,6 +82,7 @@ export type Diagnosis = any;
 export type ConfigKey = any;
 export type Configuration = any;
 export type Repeatable=any;
+export type Alias=any;
 
 export type DrugField = {
   key: string;

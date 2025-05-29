@@ -36,7 +36,7 @@ export async function syncData(opts?: { force?: boolean; }) {
         try {
             const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
             const deviceRegJSON = await deviceReg.json();
-
+          
             webUpdated = deviceRegJSON?.info?.last_backup_date && 
                 last_sync_date && 
                 (new Date(deviceRegJSON?.info?.last_backup_date).getTime() !== new Date(last_sync_date).getTime());
@@ -71,6 +71,10 @@ export async function syncData(opts?: { force?: boolean; }) {
                 const scripts = json?.scripts || [];
                 const screens = json?.screens || [];
                 const diagnoses = json?.diagnoses || [];
+                const aliases = json?.aliases || []
+
+                  console.log("---PESE..",json)
+                  console.log("---IO..",aliases)
                 
                 await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
                     `delete from ${table} where 1;`
@@ -117,6 +121,19 @@ export async function syncData(opts?: { force?: boolean; }) {
                     ]));
                 });
 
+                    aliases.map((s: any) => {
+                    s.data = { ...s.data };
+                    const columns = ['id', 'scriptid', 'old_script', 'alias', 'name'].join(',');
+                    const values = ['?', '?', '?', '?', '?'].join(',');
+                    promises.push(dbTransaction(`insert or replace into nt_aliases (${columns}) values (${values});`, [
+                        s.id,
+                        s.script,
+                        s.oldScript,
+                        s.alias,
+                        s.name
+                    ]));
+                });
+
                 screens.map((s: any) => {
                     const columns = ['id', 'screen_id', 'script_id', 'position', 'type', 'data', 'createdAt', 'updatedAt'].join(',');
                     const values = ['?', '?', '?', '?', '?', '?', '?', '?'].join(',');
@@ -154,7 +171,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                     id: 1,
                     mode: _application?.mode || 'production',
                     last_sync_date,
-                    uid_prefix: _application?.uid_prefix || device?.device_hash,
+                    uid_prefix: _application?.uid_prefix || device?.device_hash||'FB8E',
                     total_sessions_recorded: Math.max(_application?.total_sessions_recorded || 0, device?.details?.scripts_count || 0),
                     device_id: _application?.device_id || device?.device_id || deviceId,
                     webeditor_info: JSON.stringify(webeditorInfo),
@@ -162,6 +179,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                     version: APP_VERSION,
                     updatedAt: new Date().toISOString(),
                 };
+
 
                 await dbTransaction(
                     `insert or replace into application (${Object.keys(application).join(',')}) values (${Object.keys(application).map(() => '?').join(',')});`,
