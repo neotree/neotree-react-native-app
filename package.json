@@ -31,6 +31,7 @@
     "appcenter": "^5.0.1",
     "axios": "^1.7.3",
     "cross-env": "^7.0.3",
+    "date-fns": "^4.1.0",
     "expo": "~51.0.31",
     "expo-application": "~5.9.1",
     "expo-av": "~14.0.7",

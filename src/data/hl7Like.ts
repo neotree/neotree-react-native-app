@@ -1,12 +1,14 @@
 import pako from 'pako'
 import Base64 from 'react-native-base64';
 import {formatDate,parseStringToDate} from '../utils/formatDate'
+import {getAliasKeyFromAliasAndScript,getAliasFromKeyAndScriptId } from '../data/queries';
+import { parse, isValid, format } from 'date-fns';
 
-export function toHL7Like(data: any) {
+export async function toHL7Like(data: any) {
 
   let metadata = "MDH\n"
-  let entries = 'EDH\n'
-  let diagnoses = 'DDH\n'
+ 
+  let scritpid: any=''
 
   // METADATA
   Object.keys(data).forEach((k) => {
@@ -14,7 +16,7 @@ export function toHL7Like(data: any) {
       if (k === 'script' && typeof data[k] === 'object') {
         Object.entries(data[k]).forEach(([ki, value]) => {
           if(ki==='id'){
-            //skip
+           scritpid=value
           }
           metadata += `${ki}|${value}\n`;
         });
@@ -25,113 +27,108 @@ export function toHL7Like(data: any) {
       }
     }
   });
-
-  // DIAGNOSES
-  Object.keys(data).filter(k => (k === 'diagnoses')).map((k) => {
-
-    const diags = data[k]
-    if (Array.isArray(diags) && diags.length > 0) {
-      diags.map(d => {
-        Object.keys(d).map((key) => {
-
-          const { Priority, Suggested, hcw_agree, hcw_follow_instructions, hcw_reason_given } = d[key]
-          const values = [
-            key,
-            Priority !== null ? Priority : '',
-            Suggested !== null ? Suggested : '',
-            hcw_agree !== null ? hcw_agree : '',
-            hcw_follow_instructions !== null ? hcw_follow_instructions : '',
-            hcw_reason_given !== null ? hcw_reason_given : ''
-          ]
-
-          diagnoses += `${values.join('|')}\n`
-        })
-      })
-    }
-
-
-  })
-
-
-  // ENTRIES
-  Object.keys(data).filter(k => (k === 'entries')).map((k) => {
-
-    const entriesArray = data[k]
-
-    Object.keys(entriesArray).map((key: any) => {
-      const { values, type, prePopulate } = entriesArray[key]
-      if (key !== 'repeatables' && type !== 'diagnosis' && Array.isArray(prePopulate) && prePopulate.length > 0) {
-        const value = values?.value
-        if (value && Array.isArray(value) && value.length > 0 && value[0] != null) {
-          entries += `${key}|${value.join('^')}|${formatPrepopulate(prePopulate)}\n`
-        }
-      }
-      else if (key === 'repeatables') {
-        // Handle repeatables
-        if (key === 'repeatables') {
-          const repeatableTypes = entriesArray[key];
-
-          Object.keys(repeatableTypes).forEach((repeatKey) => {
-            const repeatList = repeatableTypes[repeatKey];
-            if (Array.isArray(repeatList) && repeatList.length > 0) {
-              const firstItem = repeatList[0];
-              const fieldKeys = Object.keys(firstItem);
-
-              // RR header with PP
-              entries += `RR|${repeatKey}|${fieldKeys.join('|')}|PP\n`;
-
-              repeatList.forEach((item) => {
-                const rowValues = fieldKeys.map((field) => {
-        
-                  const val = field==='createdAt'?formatDate(item[field]):item[field];
-                  if (val && typeof val === 'object' && 'value' in val) {
-                    return Array.isArray(val.value) ? val.value.join('^') : val.value;
-                  } else {
-                    return Array.isArray(val) ? val.join('^') : val ?? '';
-                  }
-                });
-
-                // Collect and format prePopulate for the row
-                let rowPrePopulates: string[] = [];
-                fieldKeys.forEach((field) => {
-                  const val = item[field];
-                  if (val && typeof val === 'object' && Array.isArray(val.prePopulate)) {
-                    rowPrePopulates.push(...[formatPrepopulate(val.prePopulate)]);
-                  }
-                });
-
-                const uniquePrePop = [...new Set(rowPrePopulates)];
-                const prePopStr = uniquePrePop.join('^');
-
-                // Prepend empty values to match "RR|" structure (2 empty columns)
-                entries += `|  |${rowValues.join('|')}|${prePopStr}\n`;
-              });
-            }
-          });
-        }
-
-
-      }
-    })
-  })
-
-  let combined = `${metadata}${entries}`
+  let entries = 'EDH\n'
+  const optimised = await processEntries(data,scritpid)
+  let combined = `${metadata}${entries}${optimised}`
   let compressed = textToNumbers(compressDataForQRCode(combined))
+  if(compressed && compressed.length > 2800){
+    combined = truncateData(combined)
+    compressed = textToNumbers(compressDataForQRCode(combined))
+  }
+ 
   while (compressed && compressed.length > 2800) {
     combined = truncateData(combined)
     compressed = textToNumbers(compressDataForQRCode(combined))
   }
-
   return compressed;
 }
 
-function truncateData(data: any) {
+async function processEntries(data:any, scriptid:string) {
+  let entries = '';
+  await Promise.all(
+    Object.keys(data)
+      .filter(k => k === 'entries')
+      .map(async (k) => {
+        const entriesArray = data[k];
 
-  let lines = data.split('\n');
+        await Promise.all(
+          Object.keys(entriesArray).map(async (key: any) => {
+            const { values, type, prePopulate } = entriesArray[key];
 
-  if (lines.length > 0) {
-    // Remove the last line
-    lines.pop();
+            if (key !== 'repeatables' && type !== 'diagnosis' && Array.isArray(prePopulate) && prePopulate.length > 0) {
+              const value = values?.value;
+              if (value && Array.isArray(value) && value.length > 0 && value[0] != null) {
+                const aliasObj = await getAliasFromKeyAndScriptId({ script: scriptid, name: key });
+                const formattedKey = aliasObj?.alias ?? key;
+                entries += `${formattedKey}|${value.join('^')}|${formatPrepopulate(prePopulate)}\n`;
+              }
+            } else if (key === 'repeatables') {
+              const repeatableTypes = entriesArray[key];
+
+              await Promise.all(
+                Object.keys(repeatableTypes).map(async (repeatKey) => {
+                  const repeatList = repeatableTypes[repeatKey];
+                  if (Array.isArray(repeatList) && repeatList.length > 0) {
+                    const firstItem = repeatList[0];
+                    const fieldKeys = Object.keys(firstItem);
+
+                    const aliasPromises = await Promise.all(
+                      fieldKeys.map((fk) => getAliasFromKeyAndScriptId({ script: scriptid, name: fk }))
+                    );
+                    const aliasKeys = aliasPromises.map((res, i) => res?.alias ?? fieldKeys[i]);
+
+                    entries += `RR|${repeatKey}|${aliasKeys.join('|')}|PP\n`;
+
+                    repeatList.forEach((item) => {
+                      const rowValues = fieldKeys.filter(f=>f!='requiredComplete').map((field) => {
+                        const val = field === 'createdAt' ? formatDate(item[field]) : item[field];
+                        if (val && typeof val === 'object' && 'value' in val) {
+                          return Array.isArray(val.value) ? val.value.join('^') : val.value;
+                        } else {
+                          return Array.isArray(val) ? val.join('^') : val ?? '';
+                        }
+                      });
+
+                      // Collect and format prePopulate for the row
+                      let rowPrePopulates: string[] = [];
+                      fieldKeys.forEach((field) => {
+                        const val = item[field];
+                        if (val && typeof val === 'object' && Array.isArray(val.prePopulate)) {
+                          rowPrePopulates.push(...[formatPrepopulate(val.prePopulate)]);
+                        }
+                      });
+
+                      const uniquePrePop = [...new Set(rowPrePopulates)];
+                      const prePopStr = uniquePrePop.join('^');
+
+                      entries += `|  |${rowValues.join('|')}|${prePopStr}\n`;
+                    });
+                  }
+                })
+              );
+            }
+          })
+        );
+      })
+  );
+
+  return entries;
+}
+
+function truncateData(data: any): string {
+  const lines = data.split('\n');
+
+  const excludedPrefixes = ['RR', '|', 'MDH', 'EDH'];
+
+  while (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim();
+    const shouldRemove = excludedPrefixes.some(prefix => lastLine.startsWith(prefix));
+    
+    if (shouldRemove) {
+      lines.pop();
+    } else {
+      break;
+    }
   }
 
   return lines.join('\n');
@@ -170,13 +167,13 @@ const uint8ArrayToBase64 = (uint8Array: any) => {
 }
 
 
-export function fromHL7Like(data: string) {
+export async function fromHL7Like(data: string) {
 try {
   // Attempt the first decoding method
   try {
     const newUncompressed = decodeOptimisedData(data);
     if (newUncompressed) {
-      return convertToJSON(newUncompressed);
+      return await convertToJSON(newUncompressed);
     }
   } catch (e) {
   }
@@ -190,7 +187,7 @@ try {
           try {
             const decompressed = decompressDataFromQRCode(uint8Array);
             if (decompressed) {
-              return convertToJSON(decompressed);
+              return await convertToJSON(decompressed);
             }
           } catch (e) {
     
@@ -247,37 +244,35 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return uint8Array;
 };
 
-function convertToJSON(input: string) {
+function getScriptId(data: string): string | null {
+  const line = data
+    .split('\n')
+    .find(line => line.startsWith('id|'));
+
+  return line ? line.split('|')[1] || null : null;
+}
+
+async function convertToJSON(input: string) {
   const lines = input.trim().split("\n");
   const result: any = {};
   let currentSection: any = result;
-  let ddhHeader: string[] = [];
 
   // Repeatables state
   let repeatables: Record<string, any[]> = {};
   let currentRepeatKey: string | null = null;
   let currentRepeatFields: string[] = [];
 
-  const toDataType = (val: string) => {
-    if (val === "true") return true;
-    if (val === "false") return false;
-    if (!isNaN(Number(val))) return Number(val);
-    return val;
-  };
+  const scriptId = getScriptId(input) || '';
 
-  lines.forEach((line) => {
+  for (const line of lines) {
     const parts = line.trim().split("|");
 
     if (parts[0] === "MDH" || parts[0] === "EDH" || parts[0] === "DDH") {
       if (parts[0] === "EDH") {
         result.entries = {};
         currentSection = result.entries;
-      } else if (parts[0] === "DDH") {
-        result.diagnoses = [];
-        ddhHeader = "Priority,Suggested,hcw_agree,hcw_follow_instructions,hcw_reason_given".split(",");
-        currentSection = result.diagnoses;
       }
-      return;
+      continue;
     }
 
     // RR Header
@@ -285,7 +280,7 @@ function convertToJSON(input: string) {
       currentRepeatKey = parts[1];
       currentRepeatFields = parts.slice(2, -1);
       repeatables[currentRepeatKey] = [];
-      return;
+      continue;
     }
 
     // Repeatable Data Row
@@ -296,64 +291,65 @@ function convertToJSON(input: string) {
       const values = rowParts;
 
       const repeatableItem: any = {};
-      currentRepeatFields.forEach((field, i) => {
+      for (let i = 0; i < currentRepeatFields.length; i++) {
+        const field = currentRepeatFields[i];
         const value = values[i] ?? "";
 
-        if (field === "id" ) {
+        if (field === "id") {
           repeatableItem[field] = value;
-         
-        } else if(field==="createdAt"){
-         repeatableItem[field] = parseStringToDate(value)
-        }else if(field==="requiredComplete"){
+
+        } else if (field === "createdAt") {
+          repeatableItem[field] = parseStringToDate(value);
+
+        } else if (field === "requiredComplete") {
           // do nothing
-        }
-        
-        else {
-          repeatableItem[field] = {
-            value: value.includes("^") ? value.split("^") : value,
+
+        } else {
+          const aliasResult = await getAliasKeyFromAliasAndScript({
+            script: scriptId,
+            alias: field,
+          });
+          const formattedField = aliasResult?.name || field;
+
+          repeatableItem[formattedField] = {
+            value: value.includes("^") ? value.split("^") : formatReturnValue(value),
             prePopulate,
           };
         }
-      });
+      }
 
       repeatables[currentRepeatKey].push(repeatableItem);
-      return;
+      continue;
     }
 
     // Regular EDH entry
     if (currentSection === result.entries) {
       const [key, value, prePopulate] = parts;
-      let formatted =  value.split("^")
-      currentSection[key] = {
+      const formatted = formatReturnValue(value).split("^");
+
+      const aliasResult = await getAliasKeyFromAliasAndScript({
+        script: scriptId,
+        alias: key,
+      });
+      const formattedField = aliasResult?.name || key;
+
+      currentSection[formattedField] = {
         values: {
           value: formatted,
           prePopulate: reverseFormatPrepopulate(prePopulate),
         },
-    }
-    }
-
-    // DDH diagnoses section
-    else if (currentSection === result.diagnoses) {
-      const [entryKey, ...values] = parts;
-      const ddhObject: any = {};
-      ddhHeader.forEach((header: string, index: number) => {
-        const value: any = values[index];
-        ddhObject[header] = !value ? null : toDataType(value);
-      });
-      const formattedEntry = { [entryKey]: ddhObject };
-      currentSection.push(formattedEntry);
+      };
+      continue;
     }
 
     // MDH top-level fields
-    else {
-      const [key, value] = parts;
-      if(key==='completed_at'){
-        result[key] = parseStringToDate(value);
-      }else{
+    const [key, value] = parts;
+    if (key === 'completed_at') {
+      result[key] = parseStringToDate(value);
+    } else {
       result[key] = value;
-      }
     }
-  });
+  }
 
   // Attach repeatables to entries
   if (!result.entries) result.entries = {};
@@ -370,7 +366,24 @@ function convertToJSON(input: string) {
 
   return transformed;
 }
+function formatReturnValue(value: any): string {
+ if (typeof value !== 'string') return value;
 
+  // Try parsing with time
+  let parsed = parse(value, 'd MMM, yyyy HH:mm', new Date());
+  if (isValid(parsed)) {
+    // Format using local time (not UTC)
+    return format(parsed, "yyyy-MM-dd'T'HH:mm:ss.SSS");
+  }
+
+  // Try parsing with just the date
+  parsed = parse(value, 'd MMM, yyyy', new Date());
+  if (isValid(parsed)) {
+    return format(parsed, 'yyyy-MM-dd');
+  }
+
+  return value; // Not a valid date string
+}
 
 function reverseFormatPrepopulate(formattedString: string): string[] {
   // Split the formatted string by '^' to get the array of aliases

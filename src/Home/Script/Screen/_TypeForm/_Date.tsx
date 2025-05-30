@@ -4,18 +4,18 @@ import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
 
 type DateFieldProps = types.ScreenFormTypeProps & {
-    
+
 };
 
-export function DateField({ field, conditionMet, entryValue, allValues, onChange,repeatable,editable }: DateFieldProps) {
-	const [mounted, setMounted] = React.useState(false);
+export function DateField({ field, conditionMet, entryValue, allValues, onChange, repeatable, editable }: DateFieldProps) {
+    const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
-    const canEdit = repeatable?editable:true
+    const canEdit = repeatable ? editable : true
 
-    const getformattedDate = (type:any,value: Date)=>{
-        switch(type) {
+    const getformattedDate = (type: any, value: Date) => {
+        switch (type) {
             case 'date':
-                return require('moment')(new Date(value)).format('DD MMM, YYYY') ;
+                return require('moment')(new Date(value)).format('DD MMM, YYYY');
             case 'datetime':
                 return require('moment')(new Date(value)).format('DD MMM, YYYY HH:mm');
             default:
@@ -23,66 +23,66 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
         }
     }
 
-    React.useEffect(() => { 
+    React.useEffect(() => {
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, exportType: 'date', }); 
+            onChange({ value: null, valueText: null, exportType: 'date', });
             setValue(null);
         } else {
-			if (!mounted && (field.defaultValue === 'date_now')) {
-				const date = new Date();
-                const formatedDate = getformattedDate(field.type,date)
-				onChange({ 
+            if (!mounted && (field.defaultValue === 'date_now')) {
+                const date = new Date();
+                const formatedDate = getformattedDate(field.type, date)
+                onChange({
                     exportType: 'date',
-					value: date,
-					valueText: formatedDate,
+                    value: date,
+                    valueText: formatedDate,
                     valueLabel: formatedDate,
                     exportValue: formatedDate,
                     exportLabel: formatedDate,
-				}); 
-				setValue(date);
-			}
-	
-			if (!mounted && (field.defaultValue === 'date_noon')) {
-				const date = moment(new Date()).startOf('day').hour(12).minute(0).toDate();
-				onChange({ 
+                });
+                setValue(date);
+            }
+
+            if (!mounted && (field.defaultValue === 'date_noon')) {
+                const date = moment(new Date()).startOf('day').hour(12).minute(0).toDate();
+                onChange({
                     exportType: 'date',
-					value: date,
-					valueText: (() => {
-						switch(field.type) {
-							case 'date':
-								return require('moment')(new Date(date)).format('DD MMM, YYYY') ;
-							case 'datetime':
-								return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
-							default:
-								return null;
-						}
-					})(),
-				}); 
-				setValue(date);
-			}
-	
-			if (!mounted && (field.defaultValue === 'date_midnight')) {
-				const date = moment(new Date()).startOf('day').hour(0).minute(0).toDate();
-				onChange({ 
+                    value: date,
+                    valueText: (() => {
+                        switch (field.type) {
+                            case 'date':
+                                return require('moment')(new Date(date)).format('DD MMM, YYYY');
+                            case 'datetime':
+                                return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
+                            default:
+                                return null;
+                        }
+                    })(),
+                });
+                setValue(date);
+            }
+
+            if (!mounted && (field.defaultValue === 'date_midnight')) {
+                const date = moment(new Date()).startOf('day').hour(0).minute(0).toDate();
+                onChange({
                     exportType: 'date',
-					value: date,
-					valueText: (() => {
-						switch(field.type) {
-							case 'date':
-								return require('moment')(new Date(date)).format('DD MMM, YYYY') ;
-							case 'datetime':
-								return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
-							default:
-								return null;
-						}
-					})(),
-				}); 
-				setValue(date);
-			}
-		}
+                    value: date,
+                    valueText: (() => {
+                        switch (field.type) {
+                            case 'date':
+                                return require('moment')(new Date(date)).format('DD MMM, YYYY');
+                            case 'datetime':
+                                return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
+                            default:
+                                return null;
+                        }
+                    })(),
+                });
+                setValue(date);
+            }
+        }
     }, [conditionMet, field, mounted]);
 
-	React.useEffect(() => { setMounted(true); }, []);
+    React.useEffect(() => { setMounted(true); }, []);
 
     const { minDate, maxDate } = useMemo(() => {
         let minDate = undefined;
@@ -160,17 +160,19 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                         const minute = moment(value).minutes();
                         date = moment(value).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
                     }
-                    const error = getErrors(date?.toISOString?.() || null)[0] || null;
-                    setValue(date);
+                    const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
+                    const validDate = isValidDate(date) ? date : null;
+                    const error = getErrors(validDate ? validDate.toISOString() : null)[0] || null;
+                    setValue(validDate);
                     onChange({
                         error,
                         exportType: 'date',
-                        value: date ? date.toISOString?.() : null,
+                        value: validDate ? validDate.toISOString() : null,
                         valueText: (() => {
                             if (!date) return null;
-                            switch(field.type) {
+                            switch (field.type) {
                                 case 'date':
-                                    return require('moment')(new Date(date)).format('DD MMM, YYYY') ;
+                                    return require('moment')(new Date(date)).format('DD MMM, YYYY');
                                 case 'datetime':
                                     return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
                                 default:
