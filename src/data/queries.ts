@@ -72,13 +72,13 @@ export const getAliasFromKeyAndScriptId = (options:{
 
             let q = `select alias from nt_aliases where (scriptid='${options.script}'
              or old_script='${options.script}') and name='${options.name}' limit 1`;
-
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows?.[0]);
         } catch (e) { 
             reject(e); }
     })();
 });
+
 
 export const getAliasKeyFromAliasAndScript= (options:{
     script:string,
@@ -89,11 +89,11 @@ export const getAliasKeyFromAliasAndScript= (options:{
         try {
          
 
-            let q = `select alias from nt_aliases where (scriptid='${options.script}'
+            let q = `select name from nt_aliases where (scriptid='${options.script}'
              or old_script='${options.script}') and alias='${options.alias}' limit 1`;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows?.[0]);
         } catch (e) { 
             reject(e); }
     })();
@@ -118,7 +118,7 @@ export const getDrugsLibrary = (options = {}) => new Promise<{ data: types.Drugs
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            resolve(rows);
         } catch (e) { 
             reject(e); }
     })();

@@ -16,14 +16,14 @@ export function QRCodeScan(props: any) {
 
   const codeScanner = useCodeScanner({
     codeTypes: ["qr"],
-    onCodeScanned: (codes) => {   
+    onCodeScanned: async (codes) => {   
       if(codes && codes.length>0){
         const value = codes[0].value
         if(value){
         if(value.length<=12){
           props.onRead(value);
         }else{
-          const converted = fromHL7Like(value)
+          const converted = await fromHL7Like(value)
           if(converted){
          if(props.generic){
           props.onRead(converted['uid']);

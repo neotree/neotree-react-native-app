@@ -138,14 +138,16 @@ export async function createTablesIfNotExist() {
     ].join(',');
 
     const aliasesTableColumns = [
-        'id integer primary key not null',
-        'scriptid varchar',
-        'old_script varchar',
-        'alias varchar',
-        'name varchar',    
+    'id INTEGER PRIMARY KEY AUTOINCREMENT',
+    'scriptid TEXT',
+    'old_script TEXT',
+    'alias TEXT',
+    'name TEXT',
+    'UNIQUE(scriptid, name)'   
     ].join(',');
 
     return await Promise.all([
+        //DROP OLD ALIASES TABLE IF EXISTS IN FAVOR OF nt_aliases
         dbTransaction(`drop table if exists aliases;`),
         dbTransaction(`create table if not exists application (${applicationTableColumns});`),
         dbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
@@ -175,7 +177,6 @@ export const resetTables = async () => {
         'delete * from config_keys where 1;',
         'delete * from drugs_library where 1;',
         'delete * from configuration where 1;',
-        'delete * from aliases where 1;',
         // 'delete * from location where 1;',
         // 'delete * from exports where 1;',
     ].map(q => dbTransaction(q))); 

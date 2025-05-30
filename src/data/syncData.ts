@@ -72,9 +72,6 @@ export async function syncData(opts?: { force?: boolean; }) {
                 const screens = json?.screens || [];
                 const diagnoses = json?.diagnoses || [];
                 const aliases = json?.aliases || []
-
-                  console.log("---PESE..",json)
-                  console.log("---IO..",aliases)
                 
                 await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
                     `delete from ${table} where 1;`
@@ -120,13 +117,10 @@ export async function syncData(opts?: { force?: boolean; }) {
                         s.updatedAt
                     ]));
                 });
-
-                    aliases.map((s: any) => {
-                    s.data = { ...s.data };
-                    const columns = ['id', 'scriptid', 'old_script', 'alias', 'name'].join(',');
-                    const values = ['?', '?', '?', '?', '?'].join(',');
+                    aliases?.data?.map((s: any) => {
+                    const columns = ['scriptid', 'old_script', 'alias', 'name'].join(',');
+                    const values = ['?', '?', '?', '?'].join(',');
                     promises.push(dbTransaction(`insert or replace into nt_aliases (${columns}) values (${values});`, [
-                        s.id,
                         s.script,
                         s.oldScript,
                         s.alias,
