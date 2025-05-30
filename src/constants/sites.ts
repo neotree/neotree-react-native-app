@@ -3,8 +3,8 @@
         "env": "stage",
         "countryISO": "zw",
         "countryName": "Zimbabwe",
-        "webEditorUrl": "http://192.168.254.155:8500",
-        "webEditorApiUrl": "http://192.168.254.155:8500/api",
+        "webEditorUrl": "https://zim-dev-webeditor.neotree.org",
+        "webEditorApiUrl": "https://zim-dev-webeditor.neotree.org/api",
         "nodeapiUrl": "https://zim-dev-nodeapi.neotree.org",
         "nodeapiApiUrl": "https://zim-dev-nodeapi.neotree.org",
         "savePollingData": false
