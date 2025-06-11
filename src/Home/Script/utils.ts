@@ -210,6 +210,37 @@ export const getScriptUtils = ({
             ], []);
     
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+
+            const keyValueMap = values.reduce((acc, v) => {
+                const key = v.key || v.inputKey;
+
+                if (key) {
+                    acc[key] = v.calculateValue || v.value || 'no value'; 
+
+                    const t = v.dataType || v.type;
+    
+                    switch (t) {
+                        case 'boolean':
+                            acc[key] = `${acc[key]}` === 'false' ? false : Boolean(value);
+                            break;
+
+                        default:
+                            acc[key] = JSON.stringify(acc[key]);
+                    }
+                }
+                
+                return acc;
+            }, {} as Record<string, any>);
+
+            let _cond = condition;
+
+            Object.keys(keyValueMap).forEach(key => {
+                _cond = parseConditionString(_cond, key, keyValueMap[key]);
+            });
+
+            _cond = sanitizeCondition(_cond);
+
+            console.log(_cond);
     
             if (screen) {
                 let chunks = [];
@@ -525,7 +556,7 @@ export const getScriptUtils = ({
           return newSection;
         });
       } 
-            /**
+        /**
        * Recursively removes all properties where 'value' is an empty object
        * @param data Input data (object or array)
        * @returns Cleaned data with empty value objects removed

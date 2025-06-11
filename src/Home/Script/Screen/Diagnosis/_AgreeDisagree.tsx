@@ -1,7 +1,7 @@
 import React from 'react';
-// import { Box } from '../../../../components';
+
+import { useScriptContext } from '@/src/contexts/script';
 import * as types from '../../../../types';
-import { useContext } from '../../Context';
 import { DiagnosesList } from './components/DiagnosesList';
 import { ScrollView } from 'react-native';
 
@@ -10,7 +10,7 @@ type AgreeDisagreeProps = types.DiagnosisSectionProps & {
 };
 
 export function AgreeDisagree(props: AgreeDisagreeProps) {
-    const {activeScreen,} = useContext()||{};
+    const { activeScreen, } = useScriptContext();
 
     return (
         <ScrollView>

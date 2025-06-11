@@ -1,6 +1,7 @@
 import React from 'react';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Card, Text, Br } from '../../../components';
-import { useContext } from '../Context';
 import * as types from '../../../types';
 
 type TypeListProps = types.ScreenTypeProps & {
@@ -9,7 +10,7 @@ type TypeListProps = types.ScreenTypeProps & {
 
 export function TypeList({}: TypeListProps) {
 
-    const {activeScreen,setEntryValues} = useContext()||{} 
+    const { activeScreen, setEntryValues } = useScriptContext();
 
     const metadata = activeScreen?.data?.metadata;
 

@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity } from 'react-native';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Text } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
 type TypeDrugsProps = types.ScreenTypeProps & {
@@ -18,7 +19,7 @@ export function TypeDrugs({ searchVal, entry }: TypeDrugsProps) {
         mountedScreens,
         getPrepopulationData,
         setEntryValues
-    } = useContext();
+    } = useScriptContext();
 
     const metadata = activeScreen?.data?.metadata;
     const printable = activeScreen?.data?.printable !== false;

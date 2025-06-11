@@ -1,7 +1,8 @@
 import React from 'react';
 import Icon from '@expo/vector-icons/MaterialIcons';
+import { useScriptContext } from '@/src/contexts/script';
+
 import { Box, useTheme, Text } from '../../../components';
-import { useContext } from '../Context';
 import * as types from '../../../types';
 
 type TypeProgressProps = types.ScreenTypeProps & {
@@ -10,7 +11,7 @@ type TypeProgressProps = types.ScreenTypeProps & {
 
 export function TypeProgress({}: TypeProgressProps) {
     const theme = useTheme();
-    const {activeScreen,setEntryValues} = useContext()||{};
+    const { activeScreen,setEntryValues } = useScriptContext();
 
     const metadata = activeScreen?.data?.metadata;
 

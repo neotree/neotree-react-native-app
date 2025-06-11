@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Dropdown, Modal, Text, TextInput, Radio } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 
 type TypeFluidsProps = types.ScreenTypeProps & {
@@ -12,7 +12,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
     const {
         activeScreen,
         setEntryValues
-    } = useContext();
+    } = useScriptContext();
 
     const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
         value: item.key,

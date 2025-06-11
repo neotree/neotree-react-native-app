@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 import { fieldsTypes } from '../../../../constants';
 import { FormItem } from './FormItem';
-
 import { NumberField } from './_Number';
 import { DateField } from './_Date';
 import { TextField } from './_Text';
@@ -16,7 +16,7 @@ import Repeatable from './Repeatable';
 type TypeFormProps = types.ScreenTypeProps & {};
 
 export function TypeForm({ }: TypeFormProps) {
-    const ctx = useContext();
+    const ctx = useScriptContext();
 
     const {
         activeScreen,

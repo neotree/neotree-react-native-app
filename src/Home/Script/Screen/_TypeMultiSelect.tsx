@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity } from 'react-native';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Text } from '../../../components';
-import { useContext } from '../Context';
 import * as types from '../../../types';
 
 type TypeMultiSelectProps = types.ScreenTypeProps & {
@@ -11,7 +12,13 @@ type TypeMultiSelectProps = types.ScreenTypeProps & {
 export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const autoFilled = useRef(false);
     
-    const {activeScreen,activeScreenEntry,mountedScreens,getPrepopulationData,setEntryValues} = useContext()||{};
+    const {
+        activeScreen,
+        activeScreenEntry,
+        mountedScreens,
+        getPrepopulationData,
+        setEntryValues
+    } = useScriptContext();
     const metadata = activeScreen?.data?.metadata;
     const printable = activeScreen?.data?.printable !== false;
 

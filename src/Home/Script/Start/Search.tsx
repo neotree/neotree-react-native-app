@@ -1,10 +1,11 @@
 import React from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import moment from 'moment';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme } from '../../../components';
 import * as api from '../../../data';
 import * as types from '../../../types';
-import { useContext } from '../Context';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 
 type SearchProps = {
@@ -26,7 +27,7 @@ function getSessionFacility(session: any) {
 
 
 export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {
-    const {setMatched} = useContext()||{};
+    const { setMatched } = useScriptContext();
 
     const [uid, setUID] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getExportedSessionsByUID>>>([]);
