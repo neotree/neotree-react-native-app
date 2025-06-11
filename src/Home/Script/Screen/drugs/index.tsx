@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Dropdown, TextInput, Modal, Text, Radio } from '@/src/components';
 import * as types from '@/src/types';
-import { useContext } from '../../Context';
 
 type TypeDrugsProps = types.ScreenTypeProps & {
     
@@ -13,7 +13,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         activeScreen,
         activeScreenEntry,
         setEntryValues,
-    } = useContext();
+    } = useScriptContext();
 
     const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
         value: item.key,

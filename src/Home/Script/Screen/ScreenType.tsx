@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
-import { useContext } from '../Context';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Content, Text } from '../../../components';
 import * as types from '../../../types';
 
@@ -23,7 +24,7 @@ type ScreenTypeProps = {
 };
 
 export function ScreenType({ searchVal }: ScreenTypeProps) {
-    const {activeScreen,getFieldPreferences,entries} = useContext()||{};
+    const { activeScreen, getFieldPreferences, entries } = useScriptContext();
 
 	let highlightedText = !activeScreen?.data?.contentText ? null : (
 		<Box backgroundColor="highlight">

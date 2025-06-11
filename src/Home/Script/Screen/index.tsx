@@ -1,7 +1,8 @@
 import React from 'react';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Content, Fab, Text, TextInput } from '../../../components';
 import { ScreenType } from './ScreenType';
-import { useContext } from '../Context';
 
 export function Screen() {
    
@@ -16,7 +17,7 @@ export function Screen() {
         getFieldPreferences,
         setMountedScreens,
         goNext
-    } = useContext();
+    } = useScriptContext();
     const metadata = activeScreen?.data?.metadata;
     const skippable = activeScreen?.data?.skippable
     React.useEffect(()=>{

@@ -1,9 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, Modal, Platform, ScrollView, Dimensions } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Button, Content, Fab, Header, Text, TextInput, useTheme, Image } from '../../../../../components';
 import * as types from '../../../../../types';
-import { useContext } from '../../../Context';
 
 const { height: winH } = Dimensions.get('window');
 
@@ -15,7 +16,7 @@ type DiagnosisProps = {
 
 export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
     const theme = useTheme();
-    const {getFieldPreferences,} = useContext()||{};
+    const { getFieldPreferences, } = useScriptContext();
 
     const [openModal, setOpenModal] = React.useState(false);
     const [form, _setForm] = React.useState<types.Diagnosis>(diagnosis);

@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity } from 'react-native';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Text } from '../../../components';
-import { useContext } from '../Context';
 import * as types from '../../../types';
 
 type TypeYesNoProps = types.ScreenTypeProps & {
@@ -11,7 +12,13 @@ type TypeYesNoProps = types.ScreenTypeProps & {
 export function TypeYesNo({}: TypeYesNoProps) {
     const autoFilled = useRef(false);
     
-    const {activeScreen,mountedScreens,getPrepopulationData,setEntryValues,activeScreenEntry} = useContext()||{};
+    const {
+        activeScreen,
+        mountedScreens,
+        getPrepopulationData,
+        setEntryValues,
+        activeScreenEntry,
+    } = useScriptContext();
     
 
     const metadata = activeScreen.data.metadata;

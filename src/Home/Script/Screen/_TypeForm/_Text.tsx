@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box,NeotreeIDInput, TextInput} from '../../../../components';
 import * as types from '../../../../types';
-import { useContext } from '../../Context';
 
 
 type TextFieldProps = types.ScreenFormTypeProps & {
@@ -18,7 +19,7 @@ export function TextField({
     editable ,
     onChange 
 }: TextFieldProps) {
-    const {script,generatedUID} = useContext()||{};
+    const { generatedUID } = useScriptContext();
     const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
 	const prePopulatedUID = ''; // ctx.matched?.prePopulateWithUID ? ctx.matched?.uid : '';
     // const scriptType = script?.type

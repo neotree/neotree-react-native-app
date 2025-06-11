@@ -1,6 +1,7 @@
 import React from 'react';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Text, Select, Br } from '../../../../components';
-import { useContext } from '../../Context';
 import * as types from '../../../../types';
 import ucFirst from '../../../../utils/ucFirst';
 
@@ -9,7 +10,7 @@ type EdlizSummaryTableProps = types.ScreenTypeProps & {
 };
 
 export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
-    const {activeScreen,activeScreenEntry,setEntryValues} = useContext()||{};
+    const { activeScreen, activeScreenEntry, setEntryValues } = useScriptContext();
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = (activeScreenEntry?.values || [])[0]?.value;
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Alert, TextProps } from 'react-native';
-import { Box } from '../../../../components';
-import { useContext } from '../../Context';
-import * as types from '../../../../types';
 
+import { useScriptContext } from '@/src/contexts/script';
+import { Box } from '../../../../components';
+import * as types from '../../../../types';
 import { SelectDiagnoses } from './_SelectDiagnoses';
 import { AgreeDisagree } from './_AgreeDisagree';
 import { SortPriority } from './_SortPriority';
@@ -50,7 +50,7 @@ export function Diagnosis(props: DiagnosisProps) {
         setMoreNavOptions:ctxSetMoreNavOptions,
         setEntryValues,
         getSuggestedDiagnoses,
-    } = useContext();
+    } = useScriptContext();
 
 
     const [section, setSection] = React.useState('select');
@@ -66,7 +66,7 @@ export function Diagnosis(props: DiagnosisProps) {
 
     const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState<null | number>(null);
 
-    const [orderBySeverity, setOrderBySeverity] = React.useState(true);
+    const [, setOrderBySeverity] = React.useState(true);
 
     const setDiagnoses = (diagnoses: types.Diagnosis[] = []) => {
         const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));

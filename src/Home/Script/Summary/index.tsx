@@ -1,10 +1,10 @@
 import React from 'react';
-import { Box, Fab, FormAndDiagnosesSummary, PrintSession,PrintBarCode,Br} from '../../../components';
-import { useContext } from '../Context';
+
+import { useScriptContext } from '@/src/contexts/script';
+import { Box, Fab, FormAndDiagnosesSummary, PrintSession,PrintBarCode } from '../../../components';
 
 export function Summary() {
-    const {summary,setMoreNavOptions,navigation} = useContext()||{};
-
+    const { summary, navigation, setMoreNavOptions } = useScriptContext();
 
     React.useEffect(() => {
         setMoreNavOptions({

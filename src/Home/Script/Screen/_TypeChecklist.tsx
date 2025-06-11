@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Text, Radio } from '../../../components';
-import { useContext } from '../Context';
 import * as types from '../../../types';
 
 type TypeChecklistProps = types.ScreenTypeProps & {
@@ -9,7 +10,13 @@ type TypeChecklistProps = types.ScreenTypeProps & {
 
 export function TypeChecklist({ searchVal }: TypeChecklistProps) {
     const autoFilled = useRef(false);
-    const {activeScreen,activeScreenEntry,mountedScreens,getPrepopulationData,setEntryValues} = useContext()||{};
+    const {
+        activeScreen,
+        activeScreenEntry,
+        mountedScreens,
+        getPrepopulationData,
+        setEntryValues,
+    } = useScriptContext();
     
     const metadata = activeScreen?.data?.metadata;
     const printable = activeScreen.data.printable !== false;

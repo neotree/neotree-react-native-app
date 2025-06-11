@@ -1,8 +1,9 @@
 import React from 'react';
 import { TouchableOpacity, View, FlatList } from 'react-native';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Text, Modal, Card, Br, TextInput, CONTENT_STYLES } from '../../../../components';
 import * as types from '../../../../types';
-import { useContext } from '../../Context';
 
 type SelectDiagnosesProps = types.DiagnosisSectionProps & {
     
@@ -16,7 +17,7 @@ export function SelectDiagnoses({
     setHcwDiagnoses, 
     setDiagnoses, 
 }: SelectDiagnosesProps) {
-    const {activeScreen,diagnoses:allDiagnoses,getFieldPreferences } = useContext()||{};
+    const {activeScreen,diagnoses:allDiagnoses,getFieldPreferences } = useScriptContext();
 
     const metadata = activeScreen?.data?.metadata;
 

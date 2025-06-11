@@ -1,7 +1,8 @@
 import React, { Fragment, useState } from 'react';
 import { Keyboard, ScrollView } from 'react-native';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Button, Content, Text } from '../../../components';
-import { useContext } from '../Context';
 import { Field } from './field';
 import * as types from '../../../types';
 
@@ -20,7 +21,7 @@ export function Start() {
                 nuidSearchFields = [], 
             },
         }, 
-    } = useContext()||{};
+    } = useScriptContext();
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
 

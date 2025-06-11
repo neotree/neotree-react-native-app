@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { TouchableWithoutFeedback, Vibration } from 'react-native';
+
+import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Text, TextInput } from '../../../components';
-import { useContext } from '../Context';
 import * as types from '../../../types';
 import assets from '../../../assets';
 import playSound from '../../../utils/playSound';
@@ -13,7 +14,13 @@ type TypeTimerProps = types.ScreenTypeProps & {
 export function TypeTimer({}: TypeTimerProps) {
     const autoFilled = useRef(false);
     
-    const {activeScreen,mountedScreens,activeScreenEntry,getPrepopulationData,setEntryValues} = useContext()||{};
+    const {
+        activeScreen,
+        mountedScreens,
+        activeScreenEntry,
+        getPrepopulationData,
+        setEntryValues
+    } = useScriptContext();
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const matched = getPrepopulationData();
 
