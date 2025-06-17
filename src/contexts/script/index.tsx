@@ -887,7 +887,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             ...fieldPreferences,
             style,
         };
-    }, [activeScreen, screen]);
+    }, [activeScreen]);
 
     const setNavOptions = useCallback(() => {
         navigation.setOptions(getNavOptions({
