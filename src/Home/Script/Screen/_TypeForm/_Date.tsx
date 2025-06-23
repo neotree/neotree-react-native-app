@@ -15,9 +15,9 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
     const getformattedDate = (type: any, value: Date) => {
         switch (type) {
             case 'date':
-                return require('moment')(new Date(value)).format('DD MMM, YYYY');
+                return require('moment')(new Date(value)).format('YYYY-MM-DD');
             case 'datetime':
-                return require('moment')(new Date(value)).format('DD MMM, YYYY HH:mm');
+                return require('moment')(new Date(value)).format('YYYY-MM-DD HH:mm');
             default:
                 return null;
         }
@@ -50,9 +50,9 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                     valueText: (() => {
                         switch (field.type) {
                             case 'date':
-                                return require('moment')(new Date(date)).format('DD MMM, YYYY');
+                                return require('moment')(new Date(date)).format('YYYY-MM-DD');
                             case 'datetime':
-                                return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
+                                return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
                             default:
                                 return null;
                         }
@@ -69,9 +69,9 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                     valueText: (() => {
                         switch (field.type) {
                             case 'date':
-                                return require('moment')(new Date(date)).format('DD MMM, YYYY');
+                                return require('moment')(new Date(date)).format('YYYY-MM-DD');
                             case 'datetime':
-                                return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
+                                return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
                             default:
                                 return null;
                         }
@@ -172,9 +172,9 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                             if (!date) return null;
                             switch (field.type) {
                                 case 'date':
-                                    return require('moment')(new Date(date)).format('DD MMM, YYYY');
+                                    return require('moment')(new Date(date)).format('YYYY-MM-DD');
                                 case 'datetime':
-                                    return require('moment')(new Date(date)).format('DD MMM, YYYY HH:mm');
+                                    return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
                                 default:
                                     return null;
                             }

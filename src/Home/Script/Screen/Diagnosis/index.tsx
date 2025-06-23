@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Alert, TextProps } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
@@ -8,6 +8,7 @@ import { SelectDiagnoses } from './_SelectDiagnoses';
 import { AgreeDisagree } from './_AgreeDisagree';
 import { SortPriority } from './_SortPriority';
 import { FullDiagnosis } from './_FullDiagnosis';
+import { SectionContainer } from './section-container';
 
 type DiagnosisProps = types.ScreenTypeProps & {
     
@@ -41,13 +42,12 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 
 export function Diagnosis(props: DiagnosisProps) {
     const {
-        navigation,
         activeScreenEntry,
         activeScreen,
-        getFieldPreferences,
         goNext: ctxGoNext,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
+        getFieldPreferences,
         setEntryValues,
         getSuggestedDiagnoses,
     } = useScriptContext();
@@ -61,28 +61,37 @@ export function Diagnosis(props: DiagnosisProps) {
 		(activeScreenEntry?.values || []).filter(v => v?.diagnosis?.isHcwDiagnosis).map(v => v.diagnosis)
 	); // React.useState<types.Diagnosis[]>(ctx.getSuggestedDiagnoses() || []);
 
-    const diagnoses = values.map(v => v.diagnosis);
-    const acceptedDiagnoses = diagnoses.filter(d => d.how_agree !== 'No');
+    const diagnoses = useMemo(() => values.map(v => v.diagnosis), [values]);
+    const acceptedDiagnoses = useMemo(() => diagnoses.filter(d => d.how_agree !== 'No'), [diagnoses]);
 
     const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState<null | number>(null);
 
     const [, setOrderBySeverity] = React.useState(true);
+    const [loading, setLoading] = React.useState(false);
 
-    const setDiagnoses = (diagnoses: types.Diagnosis[] = []) => {
+    const setDiagnoses = useCallback((diagnoses: types.Diagnosis[] = []) => {
         const entryValues = diagnoses.map(d => diagnosisToEntryValue(d));
         setValues(entryValues);
         setEntryValues(entryValues);
-    };
+    }, [setEntryValues]);
 
-    const done = () => {
+    const done = useCallback(() => {
         setEntryValues(values, {
             lastSection: section, 
             lastActiveDiagnosisIndex: activeDiagnosisIndex, 
         });
         ctxGoNext();
-    };
+    }, [section, activeDiagnosisIndex, setEntryValues, ctxGoNext]);
 
-    const goNext = () => {
+    const goNext = React.useCallback((opts?: {
+        force?: boolean;
+    }) => {
+        if ((opts?.force !== true) && !loading) {
+            setLoading(true);
+            setTimeout(() => goNext({ force: true, }), 500);
+            return;
+        }
+
         if (activeDiagnosisIndex === null) {
             if (section === 'select') {
 				const suggested = (getSuggestedDiagnoses() || []) as types.Diagnosis[];   
@@ -168,9 +177,24 @@ export function Diagnosis(props: DiagnosisProps) {
                 done();
             }
         }
-    };
+    }, [
+        loading,
+        activeDiagnosisIndex,
+        acceptedDiagnoses,
+        getSuggestedDiagnoses,
+        setEntryValues,
+        done,
+    ]);
 
-    const goBack = () => {
+    const goBack = useCallback((opts?: {
+        force?: boolean;
+    }) => {
+        if ((opts?.force !== true) && !loading) {
+            setLoading(true);
+            setTimeout(() => goBack({ force: true, }), 0);
+            return;
+        }
+
         if (activeDiagnosisIndex === null) {
             // if (section === 'manage') return setSection('sort_priority');
             if (section === 'sort_priority') return setSection('agree_disagree');
@@ -184,9 +208,14 @@ export function Diagnosis(props: DiagnosisProps) {
             	setActiveDiagnosisIndex(nextIndex);
             }
         }
-    };
+    }, [
+        loading,
+        activeDiagnosisIndex,
+        acceptedDiagnoses,
+        ctxGoBack,
+    ]);
 
-    const setMoreNavOptions = () => {
+    const setMoreNavOptions = useCallback(() => {
         ctxSetMoreNavOptions({
             goBack,
             goNext,
@@ -214,14 +243,22 @@ export function Diagnosis(props: DiagnosisProps) {
                 return { title, titleStyle, };
             })(),
         });
-    };
+    }, [
+        section,
+        activeDiagnosisIndex,
+        goBack,
+        goNext,
+        ctxSetMoreNavOptions,
+    ]);
 
-    const sectionProps: types.DiagnosisSectionProps = {
+    const sectionProps: types.DiagnosisSectionProps = useMemo(() => ({
         ...props,        
         diagnoses,
         acceptedDiagnoses,
         activeDiagnosisIndex,
         hcwDiagnoses,
+        loading,
+        setLoading,
         setOrderBySeverity,
         setMoreNavOptions,
         getDefaultDiagnosis,
@@ -236,36 +273,48 @@ export function Diagnosis(props: DiagnosisProps) {
             setValues(entries);
             setEntryValues(entries);
         },
-    };
+    }), [
+        props,
+        diagnoses,
+        acceptedDiagnoses,
+        activeDiagnosisIndex,
+        hcwDiagnoses,
+        loading,
+        setOrderBySeverity,
+        setMoreNavOptions,
+        getDefaultDiagnosis,
+        setDiagnoses,
+        setEntryValues,
+    ]);
 
-    React.useEffect(() => { setMoreNavOptions(); }, [navigation, hcwDiagnoses, section, values, activeDiagnosisIndex]);
+    React.useEffect(() => { setMoreNavOptions(); }, [setMoreNavOptions]);
 
     React.useEffect(() => () => ctxSetMoreNavOptions(null), []);
 
     return (
         <Box>
             {activeDiagnosisIndex !== null ? (
-                <FullDiagnosis 
-                    {...sectionProps} 
-                />
+                <SectionContainer {...sectionProps} >
+                    <FullDiagnosis {...sectionProps} />
+                </SectionContainer>
             ) : (
                 <>
                     {section === 'select' && (
-                        <SelectDiagnoses 
-                            {...sectionProps} 
-                        />
+                        <SectionContainer {...sectionProps} >
+                            <SelectDiagnoses {...sectionProps} />
+                        </SectionContainer>
                     )}
 
                     {section === 'agree_disagree' && (
-                        <AgreeDisagree 
-                            {...sectionProps} 
-                        />
+                        <SectionContainer {...sectionProps} >
+                            <AgreeDisagree {...sectionProps} />
+                        </SectionContainer>
                     )}
 
                     {section === 'sort_priority' && (
-                        <SortPriority 
-                            {...sectionProps} 
-                        />
+                        <SectionContainer {...sectionProps} >
+                            <SortPriority {...sectionProps} />
+                        </SectionContainer>
                     )}
                 </>
             )}

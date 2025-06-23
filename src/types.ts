@@ -208,6 +208,8 @@ export type DiagnosisSectionProps = ScreenTypeProps & {
 	setHcwDiagnoses: (diagnoses: Diagnosis[]) => void;
 	setDiagnoses: (diagnoses?: Diagnosis[]) => void;
 	setMoreNavOptions: () => void;
+  setLoading: (loading: boolean) => void;
+  loading: boolean;
 	diagnoses: Diagnosis[];
 	acceptedDiagnoses: Diagnosis[];
 	activeDiagnosisIndex: null | number;
