@@ -11,6 +11,7 @@ import { TextField } from './_Text';
 import { DropDownField } from './_DropDown';
 import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
+import { MultiSelectField } from './_MultiSelect';
 import Repeatable from './Repeatable';
 
 type TypeFormProps = types.ScreenTypeProps & {};
@@ -244,6 +245,9 @@ export function TypeForm({ }: TypeFormProps) {
                                     break;
                                 case fieldsTypes.TIME:
                                     Component = TimeField;
+                                    break;
+                                case fieldsTypes.MULTI_SELECT:
+                                    Component = MultiSelectField;
                                     break;
                                 default:
 
