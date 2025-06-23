@@ -32,7 +32,8 @@ export const fieldsTypes = {
     NUMBER: 'number',
     PERIOD: 'period',
     TEXT: 'text',
-    TIME: 'time'
+    TIME: 'time',
+    MULTI_SELECT: 'multi_select',
 };
 
 export const screenTypes = {
