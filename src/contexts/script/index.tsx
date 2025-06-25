@@ -334,6 +334,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 screen = s;
+
+                console.log('XOXO', screen?.type, s.data?.metadata?.drugs?.length);
     
                 if (!s.data?.metadata?.drugs?.length) {
                     const res = getTargetScreen(index);
@@ -398,7 +400,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         };
         
         return getTargetScreen();
-    }, [entries, activeScreen, activeScreenIndex, drugsLibrary, evaluateCondition, parseCondition]);
+    }, [entries, activeScreen, activeScreenEntry, activeScreenIndex, drugsLibrary, screens, evaluateCondition, parseCondition]);
 
     const getLastScreen = useCallback(() => {
         if (!activeScreen) return null;
@@ -466,7 +468,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         };
     
         return getLastScreen(activeScreenIndex) || activeScreen;
-    }, [entries, drugsLibrary, activeScreen, activeScreenIndex, evaluateCondition, parseCondition]);
+    }, [entries, drugsLibrary, activeScreen, activeScreenIndex, screens, evaluateCondition, parseCondition]);
 
     const getSuggestedDiagnoses = useCallback(() => {
         let _diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
