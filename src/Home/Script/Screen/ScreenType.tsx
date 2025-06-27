@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
-import { Box, Content, Text } from '../../../components';
+import { Box, Content, Text, Image } from '../../../components';
 import * as types from '../../../types';
 
 import { TypeForm } from './_TypeForm';
@@ -26,15 +26,33 @@ type ScreenTypeProps = {
 export function ScreenType({ searchVal }: ScreenTypeProps) {
     const { activeScreen, getFieldPreferences, entries } = useScriptContext();
 
-	let highlightedText = !activeScreen?.data?.contentText ? null : (
-		<Box backgroundColor="highlight">
-			<Content>
-				<Text 
-					color="primary"
-					style={getFieldPreferences('contentText')?.style}
-				>{`${activeScreen?.data?.contentText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
-			</Content>
-		</Box>
+	const contentTextImage = activeScreen?.data?.contentTextImage?.data;
+
+	let highlightedText = !(activeScreen?.data?.contentText || contentTextImage) ? null : (
+		<>
+			<Box backgroundColor="highlight">
+				<Content>
+					{!!activeScreen?.data?.contentText && (
+						<Text 
+							color="primary"
+							style={getFieldPreferences('contentText')?.style}
+						>{`${activeScreen?.data?.contentText || ''}`.replace(/^\s+|\s+$/g, '')}</Text>
+					)}
+
+					{!!contentTextImage && (
+						<Box 
+							mt={!activeScreen?.data?.contentText ? undefined : 'm'}
+						>
+							<Image
+								fullWidth
+								resizeMode="contain"
+								source={{ uri: contentTextImage }}
+							/>
+						</Box>
+					)}
+				</Content>
+			</Box>
+		</>
 	);
 
     return (
