@@ -20,7 +20,7 @@ import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
 
 type ScriptContextProviderProps = types.StackNavigationProps<types.HomeRoutes, 'Script'>;
 
-type ScriptContextType = ReturnType<typeof useScriptContextValue> & ScriptContextProviderProps;
+export type ScriptContextType = ReturnType<typeof useScriptContextValue> & ScriptContextProviderProps;
 
 export const ScriptContext = createContext<null | ScriptContextType>(null);
 
@@ -75,6 +75,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     const [startTime] = useState(new Date().toISOString());
     const [refresh, setRefresh] = useState(false);
 
+    const [loadingScreen, setLoadingScreen] = useState(false);
     const [nuidSearchForm, setNuidSearchForm] = useState<types.NuidSearchFormField[]>([]);
     const [matched, setMatched] = useState<types.MatchedSession | null>(null);
     const [patientDetails, setPatientDetails] = useState({
@@ -334,8 +335,6 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 screen = s;
-
-                console.log('XOXO', screen?.type, s.data?.metadata?.drugs?.length);
     
                 if (!s.data?.metadata?.drugs?.length) {
                     const res = getTargetScreen(index);
@@ -400,7 +399,16 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         };
         
         return getTargetScreen();
-    }, [entries, activeScreen, activeScreenEntry, activeScreenIndex, drugsLibrary, screens, evaluateCondition, parseCondition]);
+    }, [
+        entries, 
+        activeScreen, 
+        activeScreenEntry, 
+        activeScreenIndex, 
+        drugsLibrary, 
+        screens, 
+        evaluateCondition, 
+        parseCondition,
+    ]);
 
     const getLastScreen = useCallback(() => {
         if (!activeScreen) return null;
@@ -767,6 +775,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [createSummaryAndSaveSession]);
 
     const goNext = useCallback(async () => {
+        await new Promise((resolve) => {
+            setLoadingScreen(true);
+            setTimeout(() => resolve(null), 0);
+        });
+
         const lastScreen = { ...getLastScreen() };
         const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
 
@@ -776,6 +789,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
         if (summary) {
             navigation.navigate('Home');
+            setLoadingScreen(false);
             return;
         }
 
@@ -787,7 +801,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             } else {
                 await handleReviewNoPress()
             }
-
+            setLoadingScreen(false);
         } else {
             if (nextScreen) {
                 if (activeScreen.review) {
@@ -808,8 +822,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     setTimeout(() => setRefresh(false), 10);
                     saveSession();
                 }
-
+                setLoadingScreen(false);
             } else {
+                setLoadingScreen(false);
                 Alert.alert(
                     'ERROR',
                     'Failed to load next screen. Screen condition might be invalid',
@@ -825,13 +840,22 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         }
     }, [activeScreen, navigation, handleReviewNoPress, getLastScreen, getScreen]);
 
-    const goBack = useCallback(() => {
+    const goBack = useCallback(async () => {
+        const loadingScreenState = activeScreenIndex > 0;
+
+        await new Promise((resolve) => {
+            setLoadingScreen(loadingScreenState);
+            setTimeout(() => resolve(null), 0);
+        });
+
         if (summary || !activeScreen) {
             navigation.navigate('Home');
+            setLoadingScreen(false);
             return;
         }
 
         if (activeScreenIndex === 0) {
+            setLoadingScreen(false);
             confirmExit();
         } else {
             const prev = getScreen({ direction: 'back' });
@@ -845,6 +869,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 saveSession();
             }
         }
+
+        setLoadingScreen(false);
     }, [summary, activeScreen, navigation, removeEntry, setEntry, saveSession, confirmExit, getScreen]);
 
     const getFieldPreferences = useCallback((field: string, screen = activeScreen) => {
@@ -1100,6 +1126,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         cachedEntries,
         activeScreenEntry,
         reviewConfigurations,
+        loadingScreen,
         init,
         setIsReady,
         setGeneratedUID,

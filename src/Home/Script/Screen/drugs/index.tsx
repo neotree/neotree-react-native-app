@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Dropdown, TextInput, Modal, Text, Radio } from '@/src/components';
@@ -15,17 +15,27 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         setEntryValues,
     } = useScriptContext();
 
-    const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
-        value: item.key,
-        label: item.value,
-    }));
-    const metadata = activeScreen?.data?.metadata;
-    const printable = activeScreen?.data?.printable !== false;
+    const { 
+        reasons,
+        printable,
+        drugs,
+    } = useMemo(() => {
+        const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
+            value: item.key,
+            label: item.value,
+        }));
 
-    const drugs = (metadata.drugs || []) as types.DrugsLibraryItem[];
+        let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
+	    if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
 
-    let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
-	if (cachedVal && !cachedVal.map) cachedVal = [cachedVal];
+        return {
+            cachedVal,
+            reasons,
+            metadata: activeScreen?.data?.metadata,
+            printable: activeScreen?.data?.printable !== false,
+            drugs: (activeScreen?.data?.metadata?.drugs || []) as types.DrugsLibraryItem[],
+        };
+    }, [activeScreen, activeScreenEntry]);
 
     const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
     const [currentDrug, setCurrentDrug] = useState<null | { 
@@ -34,7 +44,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         comment: { key?: string, label: string, }; 
     }>(null);
 
-    const onSelect = React.useCallback((drug: types.DrugsLibraryItem, isSelected: boolean) => {
+    const onSelect = useCallback((drug: types.DrugsLibraryItem, isSelected: boolean) => {
         let _values: typeof values = []; 
         setValues(prev => {
             _values = [
@@ -68,7 +78,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         }, 0);
     }, [drugs, setEntryValues]);
 
-    const closeModal = React.useCallback(() => {
+    const closeModal = useCallback(() => {
         let _values: typeof values = []; 
         setValues(prev => {
             const comments = currentDrug?.comment?.label ? [currentDrug?.comment] : undefined;

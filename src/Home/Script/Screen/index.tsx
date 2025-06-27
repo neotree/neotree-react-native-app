@@ -1,25 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
-import { Box, Content, Fab, Text, TextInput } from '../../../components';
+import { Box, Content, Fab, Text, TextInput, OverlayLoader } from '@/src/components';
 import { ScreenType } from './ScreenType';
 
 export function Screen() {
-   
     const [searchVal, setSearchVal] = React.useState('');
     const [repeatableComplete,setRepeatableComplete]= React.useState(false)
+
+    const ctx = useScriptContext();
 
     const {
         activeScreen,
         moreNavOptions,
         activeScreenEntry,
         summary, 
+        loadingScreen,
         getFieldPreferences,
         setMountedScreens,
-        goNext
-    } = useScriptContext();
+        goNext,
+    } = ctx;
+
     const metadata = activeScreen?.data?.metadata;
     const skippable = activeScreen?.data?.skippable
+
     React.useEffect(()=>{
         if(metadata?.repeatable){
             if(skippable && !activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
@@ -47,67 +51,71 @@ export function Screen() {
     },[activeScreenEntry])
     
     return (
-        <Box flex={1}>
-            {!!activeScreen?.data?.actionText && (
-                <Box backgroundColor="primary">
-                    <Content>
-                        <Box 
-                            flexDirection="row"                            
-                        >
-                            <Box flex={1}>
-                                <Text
-                                    color="primaryContrastText"
-                                    style={getFieldPreferences('actionText')?.style}
-                                >{activeScreen?.data?.actionText}</Text>
-                            </Box>
-
-                            {!!activeScreen?.data?.step && (
-                                <Box>
+        <>
+            {loadingScreen && <OverlayLoader transparent />}
+            
+            <Box flex={1}>
+                {!!activeScreen?.data?.actionText && (
+                    <Box backgroundColor="primary">
+                        <Content>
+                            <Box 
+                                flexDirection="row"                            
+                            >
+                                <Box flex={1}>
                                     <Text
                                         color="primaryContrastText"
-                                    >{activeScreen?.data?.step}</Text>
+                                        style={getFieldPreferences('actionText')?.style}
+                                    >{activeScreen?.data?.actionText}</Text>
                                 </Box>
-                            )}
-                        </Box>
+
+                                {!!activeScreen?.data?.step && (
+                                    <Box>
+                                        <Text
+                                            color="primaryContrastText"
+                                        >{activeScreen?.data?.step}</Text>
+                                    </Box>
+                                )}
+                            </Box>
+                        </Content>
+                    </Box>
+                )}
+
+                {!moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(activeScreen?.type) && (
+                    <Content>
+                        <TextInput
+                            placeholder="Search"
+                            onChangeText={val => setSearchVal(val)}
+                            returnKeyType="search"
+                        />
                     </Content>
-                </Box>
-            )}
+                )}
 
-            {!moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(activeScreen?.type) && (
-                <Content>
-                    <TextInput
-                        placeholder="Search"
-                        onChangeText={val => setSearchVal(val)}
-                        returnKeyType="search"
-                    />
-                </Content>
-            )}
+                <ScreenType searchVal={searchVal} />
 
-            <ScreenType searchVal={searchVal} />
-
-            {((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete) || moreNavOptions?.showFAB) && (
-                <Box 
-                    position="absolute"
-                    bottom={10}
-                    right={20}
-                >
-                    <Fab 
-                        icon={summary ? 'check' : undefined}
-                        onPress={() => {
-							setMountedScreens(prev => ({
-								...prev,
-								[activeScreen.id]: true,
-							}));
-                            if (moreNavOptions?.goNext) {
-                                moreNavOptions.goNext();
-                            } else {
-                                goNext();
-                            }
-                            setSearchVal('');                            
-                        }} 
-                    />
-                </Box>
-            )}
-        </Box>
+                {((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete) || moreNavOptions?.showFAB) && (
+                    <Box 
+                        position="absolute"
+                        bottom={10}
+                        right={20}
+                    >
+                        <Fab 
+                            icon={summary ? 'check' : undefined}
+                            onPress={() => {
+                                setMountedScreens(prev => ({
+                                    ...prev,
+                                    [activeScreen.id]: true,
+                                }));
+                                if (moreNavOptions?.goNext) {
+                                    moreNavOptions.goNext();
+                                } else {
+                                    goNext();
+                                }
+                                setSearchVal('');  
+                            }} 
+                        />
+                    </Box>
+                )}
+            </Box>
+        </>
     );
 }
