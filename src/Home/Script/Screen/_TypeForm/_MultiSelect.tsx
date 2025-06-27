@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useEffect, useState, Fragment, } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { Box, Card, Text, Br, TextInput } from '../../../../components';
-import * as types from '../../../../types';
+import { Box, Card, Text, Br, TextInput } from '@/src/components';
+import * as types from '@/src/types';
+import { fieldsTypes } from '@/src/constants';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
@@ -53,12 +54,12 @@ export function MultiSelectField({ field, entryValue, onChange, conditionMet,rep
 
     const [value, setValue] = useState(getValue());
 
-    // useEffect(() => { 
-    //     if (!conditionMet) {
-    //         onChange({ value: null, valueText: null, valueLabel: null, exportType: 'dropdown', }); 
-    //         setValue('');
-    //     }
-    // }, [conditionMet]);
+    useEffect(() => { 
+        if (!conditionMet) {
+            onChange({ value: null, valueText: null, valueLabel: null, exportType: fieldsTypes.MULTI_SELECT, }); 
+            setValue(getValue());
+        }
+    }, [conditionMet, getValue]);
 
     useEffect(() => {
         setValue(getValue());
