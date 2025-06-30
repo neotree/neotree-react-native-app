@@ -251,10 +251,23 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             values = flattenRepeatables(values);
             
             // Handle both array and non-array values
-            values = values.reduce((acc: types.ScreenEntryValue[], e) => [
-                ...acc,
-                ...(e.value && Array.isArray(e.value) ? e.value : [e]),
-            ], []);
+            values = values
+                .reduce((acc: types.ScreenEntryValue[], e) => {
+                    acc = [
+                        ...acc,
+                        ...(e.value && Array.isArray(e.value) ? e.value : [e]),
+                    ];
+                    if (e.value2 && e.key2) {
+                        acc.push({
+                            ...e,
+                            value: e.value2,
+                            key: e.key2,
+                            value2: undefined,
+                            key2: undefined,
+                        });
+                    }
+                    return acc;
+                }, []);
     
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
     
