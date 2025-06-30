@@ -13,7 +13,10 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
         let opts: { 
             value: string; 
             label: string; 
-            option?: { label: string; },
+            option?: { 
+                label: string; 
+                key: string;
+            },
         }[] = (field.values || '').split('\n')
             .map((v = '') => v.trim())
             .filter((v: any) => v)
@@ -24,6 +27,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                     value: v[0], 
                     label: v[1], 
                     option: !option ? undefined : {
+                        key: option.optionKey,
                         label: option.optionLabel,
                     },
                 };
@@ -39,14 +43,21 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
     const [{ value, value2 }, setValue] = React.useState({
         value: `${entryValue?.value || ''}`,
         value2: `${entryValue?.value2 || ''}`,
+        key2: `${entryValue?.key2 || ''}`,
     });
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, valueLabel: null, exportType: 'dropdown', }); 
+            onChange({ 
+                value: null, 
+                valueText: null, 
+                valueLabel: null, 
+                exportType: 'dropdown', 
+            }); 
             setValue({
                 value: '',
                 value2: '',
+                key2: '',
             });
         }
     }, [conditionMet]);
@@ -66,6 +77,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                     setValue({
                         value: `${val || ''}`,
                         value2: '',
+                        key2: '',
                     });
                     onChange({ 
                         exportType: 'dropdown',
@@ -89,6 +101,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                             onChangeText={value2 => setValue(prev => ({
                                 ...prev,
                                 value2,
+                                key2: !value2 ? '' : (selected?.option?.key || ''),
                             }))}
                         />
                     </Box>

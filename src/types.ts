@@ -136,6 +136,7 @@ export type Hospital = {
 export type ScreenEntryValue = {
   value?: any;
   value2?: any;
+  key2?: any;
   valueText?: any;
   valueLabel?: any;
   label?: string;
