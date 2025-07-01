@@ -35,24 +35,23 @@ export function evaluateFluidsScreen({
 
             const entriesKeyVal: { [key: string]: any[]; } = {};
 
-            entries.forEach(e => {
-                const values = [
-                    ...(e.value || []),
-                    ...(e.values || []),
-                ];
+            const values = entries.reduce((acc: any[], e) => [
+                ...acc,
+                ...(e.value || []),
+                ...(e.values || []),
+            ], []);
 
-                values.forEach(v => {
-                    if (v.key) {
-                        let key = `${v.key}`.toLowerCase();
+            values.forEach(v => {
+                if (v.key) {
+                    let key = `${v.key}`.toLowerCase();
 
-                        let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
-                        if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
-                        if (condition) {
-                            conditionMet = evaluateCondition(condition);
-                        }
-                        entriesKeyVal[key] = value;
+                    let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
+                    if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
+                    if (condition) {
+                        conditionMet = evaluateCondition(condition);
                     }
-                });
+                    entriesKeyVal[key] = value;
+                }
             });
 
             const weights = weightKeys.map(key => (entriesKeyVal[key] || [])[0])
