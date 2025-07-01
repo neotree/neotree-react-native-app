@@ -51,7 +51,7 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
         }, {}) as {
             [key: string]: undefined | (typeof formValues[0]);
         };
-    }, [opts, formValues]);
+    }, [opts, formValues, conditionMet]);
 
     const [value, setValue] = useState(getValue());
 
@@ -65,11 +65,11 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
             }); 
             setValue(getValue());
         }
-    }, [conditionMet, getValue]);
+    }, [conditionMet]);
 
-    useEffect(() => {
-        setValue(getValue());
-    }, [getValue]);
+    // useEffect(() => {
+    //     setValue(getValue());
+    // }, [getValue]);
 
     return (
         <Box>
