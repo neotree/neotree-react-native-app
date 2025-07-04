@@ -65,7 +65,13 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
     const selected = useMemo(() => opts.find(o => o.value == value), [value, opts]);
 
     return (
-        <Box>
+        <Box
+            {...(!selected?.option ? undefined : {
+                backgroundColor: 'bg.active',
+                p: 'l',
+                borderRadius: 's',
+            })}
+        >
             <Dropdown
                 disabled={!conditionMet || !canEdit}
                 label={`${field.label || ''}${field.optional ? '' : ' *'}`}
@@ -90,13 +96,13 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                 }}
             />
 
-            {!!selected && selected?.option && (
+            {!!selected?.option && (
                 <>
                     <Br spacing="m" />
                     
                     <Box>
                         <TextInput
-                            label={`${selected.option.label || ''} *`}
+                            label={`${selected.option.label || ''}`}
                             value={value2 || ''}
                             onChangeText={value2 => setValue(prev => ({
                                 ...prev,
