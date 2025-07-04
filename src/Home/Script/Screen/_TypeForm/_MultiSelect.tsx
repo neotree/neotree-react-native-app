@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect, useState, Fragment, } from 'react';
+import { useCallback, useMemo, useEffect, useState, } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
@@ -82,7 +82,14 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
                 const { value2, key2, } = { ...value[o.value] };
 
                 return (
-                    <Fragment key={o.value}>
+                    <Box 
+                        key={o.value}
+                        {...(!(isSelected && o.option) ? undefined : {
+                            backgroundColor: 'bg.active',
+                            p: 'l',
+                            borderRadius: 's',
+                        })}
+                    >
                         <TouchableOpacity 
                             disabled={disabled}
                             onPress={() => {
@@ -97,10 +104,12 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
 
                                 setValue(state);
 
+                                const values = Object.values(state).filter(v => v).map(v => ({
+                                    ...v,
+                                }));
+
                                 onChange({
-                                    value: Object.values(state).filter(v => v).map(v => ({
-                                        ...v,
-                                    })),
+                                    value: !values.length ? undefined : values,
                                 });
                             }}
                         >
@@ -121,7 +130,7 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option.label || ''} *`}
+                                        label={`${o.option.label || ''}`}
                                         value={value2 || ''}
                                         onChangeText={text => setValue(prev => ({
                                             ...prev,
@@ -138,7 +147,7 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
 
                         <Br spacing="l" />
 
-                    </Fragment>
+                    </Box>
                 )
             })}
         </Box>

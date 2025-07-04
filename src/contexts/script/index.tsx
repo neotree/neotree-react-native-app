@@ -243,6 +243,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     
         let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
             values = value || values || [];
+
+            values = values.reduce((acc: typeof values, v) => {
+                acc = [...acc, v];
+                if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
+                return acc;
+            }, []);
             
             // First filter out null/undefined values
             values = values.filter(e => (e.value !== null) && (e.value !== undefined));
