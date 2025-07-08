@@ -1,7 +1,7 @@
 import { Box, Radio, Text } from '../../../../components';
 import { Search } from './search';
 
-export function Field({ field, value, onChange }: {
+export function Field({ field, value, onChange,script_type }: {
     field: {
         key: string;
         condition: string;
@@ -11,6 +11,7 @@ export function Field({ field, value, onChange }: {
     },
     value: any,
     onChange: (value: any) => void;
+    script_type?:string
 }) {
     const opts = (field.values || '').split('\n')
         .map((v = '') => v.trim())
@@ -56,6 +57,7 @@ export function Field({ field, value, onChange }: {
                         label={field.label}
                         prePopulateWithUID={true}
                         onSession={value => onChange(value)}
+                        script_type={script_type}
                     />
                 </>
             )}

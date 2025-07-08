@@ -1,6 +1,7 @@
-import { makeApiCall } from './api';
+import { makeApiCall, makeLocalGetApiCall } from './api';
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
+
 
 export const exportSession = async (s: any) => {
     try {
@@ -58,6 +59,27 @@ export const getExportedSessionsByUID = (uid: string) => new Promise<any[]>((res
             resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
         } catch (e:any) {
          resolve([{'error':e?.message}]) }
+    })();
+});
+
+export const getLocalSessionsByUID = (uid: string,hospital:string) => new Promise<any[]>((resolve, reject) => {
+    (async () => {
+        if (!uid) return reject(new Error('UID is required'));
+
+        try {
+		
+            const res = await makeLocalGetApiCall( `/localByUid?uid=${uid}&hospital=${hospital}`);
+            resolve(Object.values({
+				...(res || [])
+					.reduce((acc: any, s: any) => ({
+						...acc,
+						[s.data.unique_key]: s,
+					}), {})
+			}));
+        } catch (e:any) {
+        
+              resolve([{'error':e?.message}]) 
+         }
     })();
 });
 

@@ -19,6 +19,7 @@ export function QRCodeScan(props: any) {
     onCodeScanned: async (codes) => {   
       if(codes && codes.length>0){
         const value = codes[0].value
+        console.log("--VALUES--VALUES--",value)
         if(value){
         if(value.length<=12){
           props.onRead(value);

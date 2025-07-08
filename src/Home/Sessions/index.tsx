@@ -422,8 +422,21 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 															textAlign="center"
 															variant="caption"
 															color="successContrastText"
-														>Exported</Text>
-													</Box>												
+														>Exported Online</Text>
+													</Box>
+													{item.local_export && (	
+													<Box 
+														backgroundColor="highlight"
+														paddingVertical="s"
+														paddingHorizontal="xl"
+														borderRadius="xl"
+													>
+														<Text
+															textAlign="center"
+															variant="caption"
+															color="grey-900"
+														>Exported Locally</Text>
+													</Box>)}															
 												</Box>
 												<Br spacing="m" />
 											</>

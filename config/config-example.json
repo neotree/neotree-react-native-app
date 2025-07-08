@@ -22,6 +22,14 @@
                 "api_endpoint":"",
                 "api_key":""
             }
+            , "local":[ {
+                "host":"",
+                "api_endpoint":"",
+                "api_key":"",
+                "hospital":"",
+                "secret":""
+            }
+        ]
         },
         "mwi": {
             "savePollingData": false,
@@ -34,7 +42,15 @@
                 "host":"",
                 "api_endpoint":"",
                 "api_key":""
+            },
+            "local":[ {
+                "host":"",
+                "api_endpoint":"",
+                "api_key":"",
+                "hospital":"",
+                "secret":""
             }
+        ]
         }
     },
 
@@ -99,7 +115,15 @@
                 "host":"",
                 "api_endpoint":"",
                 "api_key":""
+            },
+            "local":[ {
+                "host":"",
+                "api_endpoint":"",
+                "api_key":"",
+                "hospital":"",
+                "secret":""
             }
+        ]
         },
         "mwi": {
             "savePollingData": false,
@@ -112,7 +136,15 @@
                 "host":"",
                 "api_endpoint":"",
                 "api_key":""
+            },
+            "local":[ {
+                "host":"",
+                "api_endpoint":"",
+                "api_key":"",
+                "hospital":"",
+                "secret":""
             }
+        ]
         }
     },
 

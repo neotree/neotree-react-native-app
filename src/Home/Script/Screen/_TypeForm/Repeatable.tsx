@@ -39,54 +39,54 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
     const transformAllValuesToForms = (allValues: Array<Record<string, any>>): FormItem[] => {
         if (!allValues?.length) return [];
-       
+
         return allValues.flatMap((item, index) => {
             const { createdAt, id, ...dynamicFields } = item;
             const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
-          
-            const collectionFieldValue = values?.[collectionField]; 
-            const hasCollectionField =  (!!collectionFieldValue && !!collectionFieldValue['value'])
+
+            const collectionFieldValue = values?.[collectionField];
+            const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
             if (!hasCollectionField || !createdAt) {
-              return []; 
+                return [];
             }
-          
+
             const isComplete = fields.every(field => {
-              const val = values[field.key];
-              const conditionMet = evaluateCondition(field, index);
-              if (!conditionMet) return true;
-              return !!val?.['value'];
+                const val = values[field.key];
+                const conditionMet = evaluateCondition(field, index);
+                if (!conditionMet) return true;
+                return !!val?.['value'];
             });
-          
+
             const requiredComplete =
-              (!collectionFieldValue?.['value']) ||
-              fields
-                .filter(f => !f.editable && !f.optional)
-                .every(field => {
-                  const val = values[field.key];
-                  if (val?.['value'] === 'other') {
-                    const otherField = fields.find(f =>
-                      String(f.key).toLowerCase() === `other${field.key}`.toLowerCase()
-                    );
-                    return !!values[otherField?.key]?.['value'];
-                  }
-          
-                  const conditionMet = evaluateCondition(field, index);
-                  if (!conditionMet) return true;
-          
-                  return !!val?.['value'];
-                });
-                
+                (!!collectionFieldValue?.['value']) &&
+                fields
+                    .filter(f => !f.editable && !f.optional)
+                    .every(field => {
+                        const val = values[field.key];
+                        if (val?.['value'] === 'other') {
+                            const otherField = fields.find(f =>
+                                String(f.key).toLowerCase() === `other${field.key}`.toLowerCase()
+                            );
+                            return !!values[otherField?.key]?.['value'];
+                        }
+
+                        const conditionMet = evaluateCondition(field, index);
+                        if (!conditionMet) return true;
+
+                        return !!val?.['value'];
+                    });
+
             return [{
-              createdAt: new Date(createdAt),
-              id,
-              isCollapsed: true,
-              values,
-              isComplete,
-              requiredComplete,
-              hasCollectionField: hasCollectionField
+                createdAt: new Date(createdAt),
+                id,
+                isCollapsed: true,
+                values,
+                isComplete,
+                requiredComplete,
+                hasCollectionField: hasCollectionField
             }];
-          });          
-      };
+        });
+    };
 
     const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allValues));
     const [disabled, setDisabled] = useState(false)
@@ -94,65 +94,62 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     useEffect(() => {
         const shouldDisable = forms.some(f => !f.requiredComplete);
         setDisabled(shouldDisable);
-         notifyParent(forms)
+        notifyParent(forms)
     }, [forms]);
 
-   
-        const addNewForm = () => {
-            // Collapse forms in memory (not set yet)
-            const collapsedForms = forms.map(f => ({
-              ...f,
-              isCollapsed: f.requiredComplete,
-            }));
-            
-            // Now perform logic using collapsedForms (not stale forms state)
-            const hasUncollapsedOrIncomplete =
-              Array.isArray(collapsedForms) &&
-              collapsedForms.some(f => !f.requiredComplete || !f.isCollapsed);
-            if (hasUncollapsedOrIncomplete) {
-              setForms(collapsedForms); // Apply collapsing if needed
-              setDisabled(true)
-              return;
-            }
-           
-            
-            const lastForm = collapsedForms[collapsedForms.length - 1];
-            const values = lastForm?.values || {};
-            const dynamicField = collectionField; // assumed dynamic
-            const dynamicValue = values?.[dynamicField];
-          
-            const isDynamicEmpty =
-              dynamicValue === undefined ||
-              dynamicValue === null ||
-              (typeof dynamicValue === 'string' && dynamicValue.trim() === '') ||
-              (typeof dynamicValue === 'object' && !dynamicValue?.value);
-          
-            if (isDynamicEmpty && collapsedForms.length>0) {
-              const reopenedForms = collapsedForms.map((f, i) =>
+
+    const addNewForm = () => {
+        // Collapse forms in memory (not set yet)
+        const collapsedForms = forms.map(f => ({
+            ...f,
+            isCollapsed: f.requiredComplete,
+        }));
+        // Now perform logic using collapsedForms (not stale forms state)
+        const hasUncollapsedOrIncomplete =
+            Array.isArray(collapsedForms) &&
+            collapsedForms.some(f => !f.requiredComplete || !f.isCollapsed);
+        if (hasUncollapsedOrIncomplete) {
+            setForms(collapsedForms);
+            setDisabled(true)
+            return;
+        }
+        const lastForm = collapsedForms[collapsedForms.length - 1];
+        const values = lastForm?.values || {};
+        const dynamicField = collectionField;
+        const dynamicValue = values?.[dynamicField];
+
+        const isDynamicEmpty =
+            dynamicValue === undefined ||
+            dynamicValue === null ||
+            (typeof dynamicValue === 'string' && dynamicValue.trim() === '') ||
+            (typeof dynamicValue === 'object' && !dynamicValue?.value);
+
+        if (isDynamicEmpty && collapsedForms.length > 0) {
+            const reopenedForms = collapsedForms.map((f, i) =>
                 i === collapsedForms.length - 1 ? { ...f, isCollapsed: false } : f
-              );
-              setDisabled(true)
-              setForms(reopenedForms);
-              return;
-            }
-          
-            const initialValues = fields.reduce((acc, field) => {
-              acc[field.key] = '';
-              return acc;
-            }, {} as Record<string, any>);
-          
-            const newForm: FormItem = {
-              createdAt: new Date(),
-              id: Date.now() + Math.floor(Math.random() * 1000),
-              isCollapsed: false,
-              values: initialValues,
-              isComplete: false,
-              requiredComplete: false,
-              hasCollectionField: false
-            };
-          
-            setForms([...collapsedForms, newForm]);
-          };         
+            );
+            setDisabled(true)
+            setForms(reopenedForms);
+            return;
+        }
+
+        const initialValues = fields.reduce((acc, field) => {
+            acc[field.key] = '';
+            return acc;
+        }, {} as Record<string, any>);
+
+        const newForm: FormItem = {
+            createdAt: new Date(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            isCollapsed: false,
+            values: initialValues,
+            isComplete: false,
+            requiredComplete: false,
+            hasCollectionField: false
+        };
+
+        setForms([...collapsedForms, newForm]);
+    };
 
     useEffect(() => {
         setDisabled(forms?.filter(f => !f.requiredComplete).length > 0);
@@ -210,28 +207,28 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             });
 
             const collectionFieldValue = newValues?.[collectionField];
-            const hasCollectionField =  (!!collectionFieldValue && !!collectionFieldValue['value'])
-            const requiredComplete = (hasCollectionField)
-                 || fields.filter(f => !f.editable && !f.optional).every(field => {
-                const val = newValues[field.key];
-                if (val?.['value'] === 'other') {
-                    const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
+            const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
+            const requiredComplete = hasCollectionField
+                && fields.filter(f => !f.editable && !f.optional).every(field => {
+                    const val = newValues[field.key];
+                    if (val?.['value'] === 'other') {
+                        const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
 
-                    if (otherField) {
-                        return !!newValues[otherField?.key]?.['value'] || !!newValues[otherField]?.['value']
+                        if (otherField) {
+                            return !!newValues[otherField?.key]?.['value'] || !!newValues[otherField]?.['value']
+                        }
                     }
-                }
 
-                const conditionMet = evaluateCondition(field, forms.indexOf(form))
-                if (!conditionMet) {
-                    return true
-                }
+                    const conditionMet = evaluateCondition(field, forms.indexOf(form))
+                    if (!conditionMet) {
+                        return true
+                    }
 
-                return (!!val
-                    && !!val['value']
-                )
-            });
-            const updatedValue = { ...form, values: newValues, isComplete, requiredComplete,hasCollectionField:hasCollectionField}
+                    return (!!val
+                        && !!val['value']
+                    )
+                });
+            const updatedValue = { ...form, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
             return updatedValue;
         });
         setDisabled(updatedForms?.filter(f => !f.requiredComplete).length > 0);
@@ -242,7 +239,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
     const notifyParent = (formsList = forms) => {
         const completedForms = formsList
-            .map(({ values, id, createdAt,requiredComplete,hasCollectionField }) => ({ ...values, id, createdAt,requiredComplete,hasCollectionField}));
+            .map(({ values, id, createdAt, requiredComplete, hasCollectionField }) => ({ ...values, id, createdAt, requiredComplete, hasCollectionField }));
 
         onChange({ [collectionName]: completedForms }, collectionName);
     }
@@ -300,11 +297,11 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             if (!field) continue;
 
-            const base = valueObj?Object.keys(valueObj).length > 0 ? {
+            const base = valueObj ? Object.keys(valueObj).length > 0 ? {
                 ...{ 'label': field?.label },
                 ...{ 'exportType': field?.type },
                 ...valueObj,
-            } : null:null;
+            } : null : null;
 
             if (field.type === 'dropdown' && base) {
                 const dropdownInfo = getValueLabelAndText(field, valueObj.value);
@@ -314,10 +311,10 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const periodInfo = getPeriodValueText(field, valueObj.value);
                 if (periodInfo && periodInfo !== null)
                     Object.assign(base, periodInfo);
-            } else if (base && (field.type ==='date'|| field.type==='datetime')){
+            } else if (base && (field.type === 'date' || field.type === 'datetime')) {
                 const dateInfo = formatDate(valueObj.value);
                 Object.assign(base, dateInfo);
-              }
+            }
 
             transformed[key] = base || null;
         }

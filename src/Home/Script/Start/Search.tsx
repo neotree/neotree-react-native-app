@@ -78,10 +78,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
 
 
-    const admissionSessions = sessions.filter(s => s?.data?.type==='admission' || s?.data?.script?.title.match(/admission/gi) || (s?.data?.script?.type === 'admission'));
-    const neolabSessions = sessions.filter(s =>s?.data?.type==='neolab' || s?.data?.script?.title.match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
-    const dischargeSessions = sessions.filter(s => s?.data?.type==='discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = sessions.filter(s => s?.data?.type==='drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const admissionSessions = sessions?.filter(s => s?.data?.type==='admission' || s?.data?.script?.title.match(/admission/gi) || (s?.data?.script?.type === 'admission'));
+    const neolabSessions = sessions?.filter(s =>s?.data?.type==='neolab' || s?.data?.script?.title.match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
+    const dischargeSessions = sessions?.filter(s => s?.data?.type==='discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
+    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type==='drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
 
     function renderList(sessions: any[]) {
         return (
@@ -188,7 +188,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
             <ScrollView>
                 <Br spacing="xl" />
 
-                {sessions.length ? (
+                {sessions?.length ? (
                     <>
                         <Text color="textDisabled" variant="caption">{admissionSessions?.length} Admission sessions found</Text>
                         <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>

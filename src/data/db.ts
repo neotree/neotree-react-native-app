@@ -164,6 +164,17 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists nt_aliases (${aliasesTableColumns});`),
     ]);
 }
+ export const addNewColumns = async()=>{
+ //ADD COLUMNS TO SESSIONS TABLE
+  const sessionsTableInfo = await dbTransaction(`PRAGMA table_info(sessions);`);
+  if(sessionsTableInfo && sessionsTableInfo.length>0){
+     const localExportExists = sessionsTableInfo.some((col: any) => col.name === 'local_export');
+     if(!localExportExists){
+          await dbTransaction(`ALTER TABLE sessions ADD COLUMN local_export BOOLEAN DEFAULT 0;`);
+
+     }
+  }
+}
 
 export const resetTables = async () => {
     await createTablesIfNotExist();

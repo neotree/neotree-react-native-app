@@ -598,6 +598,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             ...payload,
             uid, //: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
             script_id: activeScreen?.script_id || route.params.script_id,
+            type: script?.type,
             data: {
 				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
 				app_mode: application?.mode,

@@ -11,12 +11,15 @@ export async function printSectionsToHTML({
   showConfidential?: boolean;
 }) {
   const { form, script } = session.data;
-
+let qrSmall = false
 
   const generateQRCode = async () => {
     try {
       const formattedData = await formatExportableSession(session, { showConfidential: true });
       const hl7 = await  toHL7Like(formattedData);
+        if(hl7.length<100) {
+        qrSmall = true
+      }
       // QR code parameters
       const dataToEncode: any = hl7
       let erc: any = 'H'
@@ -35,6 +38,7 @@ export async function printSectionsToHTML({
             type: 'svg',
             errorCorrectionLevel: erc,
             margin: 2,
+            width:qrSmall?100:undefined
           },
           (err, url) => {
             if (err) {
@@ -196,8 +200,13 @@ export async function printSectionsToHTML({
       <br/>
       </div>`
 
-
+  if(!!qrSmall){
   return getBaseHTML(`
-        <div class="grid">${qrcode}${html}</div>
+       <div class="grid">${qrcode}${html}</div>
     `, session);
+  }else{
+    return getBaseHTML(`
+        <div class="grid">${html}</div>${qrcode}
+    `, session);
+  }
 }
