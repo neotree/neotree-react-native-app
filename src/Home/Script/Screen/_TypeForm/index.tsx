@@ -142,7 +142,7 @@ export function TypeForm({ }: TypeFormProps) {
                 }
             }
         } catch (ex) {
-            console.log("---MY EX.....", ex)
+         
         }
     };
     function deepSanitize(input: any): any {
