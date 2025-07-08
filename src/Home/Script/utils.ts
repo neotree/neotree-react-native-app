@@ -256,8 +256,6 @@ export const getScriptUtils = ({
             });
 
             _cond = sanitizeCondition(_cond);
-
-            console.log(_cond);
     
             if (screen) {
                 let chunks = [];

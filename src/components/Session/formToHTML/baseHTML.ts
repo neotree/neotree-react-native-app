@@ -47,6 +47,7 @@ export default (html: any, session: any) => {
         .title {
           padding: 3px;
           border: 1px solid #000;
+          margin-bottom: 10px;
         }
         .row {
           webkit-column-break-inside: avoid;
@@ -109,7 +110,7 @@ export default (html: any, session: any) => {
         <div>
       </div>
       <footer>
-        <span>Session ID: ${session.id}</span>
+        <span>Session ID: ${session.uid}</span>
         <span style="margin:auto;" id="pageNo"></span>
         <span>Creation date: ${moment(creationDate).format('DD MMM, YYYY')}</span>
       </footer>

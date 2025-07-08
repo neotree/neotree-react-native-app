@@ -90,10 +90,14 @@ export function Summary({
                                                                     v.value.map((v: any, j: number) => (
                                                                         <Box key={`${entryIndex}${i}${j}`} mb="s">
                                                                             <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                                            {!v.value2 ? null : <Text>({v.value2})</Text>}
                                                                         </Box>
                                                                     ))
                                                                     :
-                                                                    <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                                    <>
+                                                                        <Text>{v.valueText || v.value || 'N/A'}</Text>
+                                                                        {!v.value2 ? null : <Text>({v.value2})</Text>}
+                                                                    </>
                                                             }
 
                                                             <Box>
@@ -157,8 +161,6 @@ export function Summary({
                     .filter(({ values, screen }: any) => values.length)
                     .map(({ screen, values, management }: any) => {
                         management = management || [];
-
-                        console.log(JSON.stringify(values, null, 4));
 
                         values = values
                             // .filter((e: any) => e.printable)

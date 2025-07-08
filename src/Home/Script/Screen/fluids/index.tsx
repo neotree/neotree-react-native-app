@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Dropdown, Modal, Text, TextInput, Radio } from '../../../../components';
@@ -14,14 +14,23 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
         setEntryValues
     } = useScriptContext();
 
-    const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
-        value: item.key,
-        label: item.value,
-    }));
-    const metadata = activeScreen?.data?.metadata;
-    const printable = activeScreen?.data?.printable !== false;
+    const { 
+            reasons,
+            printable,
+            fluids,
+    } = useMemo(() => {
+        const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
+            value: item.key,
+            label: item.value,
+        }));
 
-    const fluids = (metadata.fluids || []) as types.DrugsLibraryItem[];
+        return {
+            reasons,
+            metadata: activeScreen?.data?.metadata,
+            printable: activeScreen?.data?.printable !== false,
+            fluids: (activeScreen?.data?.metadata?.fluids || []) as types.DrugsLibraryItem[],
+        };
+    }, [activeScreen]);
 
     const [values, setValues] = useState<types.ScreenEntryValue[]>(entry?.values || []);
     const [currentDrug, setCurrentDrug] = useState<null | { 
@@ -30,7 +39,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
         comment: { key?: string, label: string, }; 
     }>(null);
 
-    const onSelect = React.useCallback((fluid: types.DrugsLibraryItem, isSelected: boolean) => {
+    const onSelect = useCallback((fluid: types.DrugsLibraryItem, isSelected: boolean) => {
         let _values: typeof values = []; 
         setValues(prev => {
             _values = [
@@ -64,24 +73,24 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
         }, 0);
     }, [fluids, setEntryValues]);
 
-    const closeModal = React.useCallback(() => {
-            let _values: typeof values = []; 
-            setValues(prev => {
-                const comments = currentDrug?.comment?.label ? [currentDrug?.comment] : undefined;
-                _values = prev
-                    .map(v => {
-                        if (v.key !== currentDrug?.key) return v;
-                        return { ...v, comments, };
-                    })
-                    .filter(v => v.selected ? true : !!v.comments?.length);
-                return _values;
-            });
-            setCurrentDrug(null);
-            setTimeout(() => {
-                const completed = fluids.length === _values.length;
-                setEntryValues(completed ? _values : undefined);
-            }, 0);
-        }, [currentDrug, fluids, setValues, setEntryValues]);
+    const closeModal = useCallback(() => {
+        let _values: typeof values = []; 
+        setValues(prev => {
+            const comments = currentDrug?.comment?.label ? [currentDrug?.comment] : undefined;
+            _values = prev
+                .map(v => {
+                    if (v.key !== currentDrug?.key) return v;
+                    return { ...v, comments, };
+                })
+                .filter(v => v.selected ? true : !!v.comments?.length);
+            return _values;
+        });
+        setCurrentDrug(null);
+        setTimeout(() => {
+            const completed = fluids.length === _values.length;
+            setEntryValues(completed ? _values : undefined);
+        }, 0);
+    }, [currentDrug, fluids, setValues, setEntryValues]);
 
     return (
         <Box>

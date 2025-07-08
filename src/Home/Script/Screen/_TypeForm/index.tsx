@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br } from '../../../../components';
@@ -37,38 +37,45 @@ export function TypeForm({ }: TypeFormProps) {
     const repeatable = metadata?.repeatable;
 
 
-    const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
+    const patientNUID = useMemo(() => {
+        return nuidSearchForm
+            .filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value;
+    }, [nuidSearchForm]);
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(!repeatable ? metadata.fields.map((f: any) => {
+    const getValues = useCallback(() => {
+        if (repeatable) return cachedVal;
 
+        return metadata.fields.map((f: any) => {
+            const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
 
-        const shouldAutoPopulate = (canAutoFill || !!f.prePopulate?.length) && (f.defaultValue !== 'uid');
+            const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
 
-        const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
+            const cached = cachedVal.filter(v => v.key === f.key)[0];
 
-        const cached = cachedVal.filter(v => v.key === f.key)[0];
+            let value = cached?.value || `${matched || ''}` || null;
+            let valueText = cached?.valueText || matched || null;
 
-        let value = cached?.value || `${matched || ''}` || null;
-        let valueText = cached?.valueText || matched || null;
+            if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
+                value = cached?.value || patientNUID;
+                valueText = cached?.valueText || patientNUID;
+            }
 
-        if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
-            value = cached?.value || patientNUID;
-            valueText = cached?.valueText || patientNUID;
-        }
+            return {
+                printable: f.printable !== false,
+                value,
+                valueText,
+                label: f.label,
+                key: f.key,
+                type: f.type,
+                dataType: f.dataType,
+                confidential: f.confidential,
+                prePopulate: f.prePopulate,
+                editable: f.editable
+            };
+        });
+    }, [repeatable, metadata, canAutoFill, cachedVal, getPrepopulationData]);
 
-        return {
-            printable: f.printable !== false,
-            value,
-            valueText,
-            label: f.label,
-            key: f.key,
-            type: f.type,
-            dataType: f.dataType,
-            confidential: f.confidential,
-            prePopulate: f.prePopulate,
-            editable: f.editable
-        };
-    }) : cachedVal);
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
     const evaluateFieldCondition = (f: any, formId?: number) => {
         let conditionMet = true;
@@ -201,14 +208,14 @@ export function TypeForm({ }: TypeFormProps) {
 
     }
 
-    const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
+    const setValue = useCallback((index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
             return `${index}` !== `${i}` ? v : {
                 ...v,
                 ...val
             };
         }));
-    };
+    }, []);
 
     React.useEffect(() => {
 

@@ -118,7 +118,10 @@ export const getDrugsLibrary = (options = {}) => new Promise<{ data: types.Drugs
             q = order ? `${q} order by ${order}` : q;
 
             const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows);
+            resolve(rows.map(r => ({
+                ...r,
+                data: JSON.parse(r.data || '{}'),
+            })));
         } catch (e) { 
             reject(e); }
     })();
