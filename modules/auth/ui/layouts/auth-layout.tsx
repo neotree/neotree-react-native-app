@@ -4,7 +4,7 @@ type Props = {
     children: React.ReactNode;
 };
 
-export function SessionsLayout({ children }: Props) {
+export function AuthLayout({ children }: Props) {
     return (
         <>
             <SafeAreaView 
