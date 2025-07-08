@@ -59,7 +59,9 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                     multiple
                     value={values.map(e => e.value)}
                     options={items.map(item => {
-                        const exclusiveValue = values.find(v => v.exclusive);
+                        const exclusiveValue = values
+                            .filter(e => items.map(item => item.id).includes(e.value))
+                            .find(v => v.exclusive);
 
                         return {
                             label: item.label,
@@ -91,7 +93,10 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                         setValues(prev => {
                             let values = _checked ? 
                                 (
-                                    item.exclusive ? [_entry] : [...prev, _entry]
+                                    item.exclusive ? 
+                                        [...prev.filter(e => !items.map(item => item.id).includes(e.value)), _entry] 
+                                        : 
+                                        [...prev, _entry]
                                 )
                                 : 
                                 prev.filter(s => s.value !== value);

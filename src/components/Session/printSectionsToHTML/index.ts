@@ -117,20 +117,32 @@ export async function printSectionsToHTML({
             }
 
             return `
-                          <div class="${isFlexRow ? 'row' : ''}">
-                              <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
-                              <div>
-                                  ${v.value && v.value.map ?
-                v.value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>`).join('<br />')
-                :
-                `<span>${v.valueText || v.value || 'N/A'}</span>`
-              }
-                                  ${!v.extraLabels ? '' : `<div>${v.extraLabels.map((label: string) => {
-                return `<span style="opacity:0.7;">${label}</span>`;
-              })}</div>`}
-                              </div>                  
-                          </div>
-                      `;
+              <div class="${isFlexRow ? 'row' : ''}">
+                  <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
+                  <div>
+                      ${v.value && v.value.map ?
+                      v.value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<div>(${val.value2})</div>`}`).join('<br />')
+                      :
+                      `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<div>(${v.value2})</div>`}`
+                    }
+                    ${!v.extraLabels?.length ? '' : `
+                      <div style="margin:10px 0;">
+                        ${v.extraLabels.map((label: string) => {
+                          label = label
+                            .replace(new RegExp('Hourly volume'), '<b>Hourly volume</b>')
+                            .replace(new RegExp('Administration frequency'), '<b>Administration frequency</b>')
+                            .replace(new RegExp('Route of Administration'), '<b>Route of Administration</b>')
+                            .replace(new RegExp('Dosage'), '<b>Dosage</b>');
+                          return `
+                            <div style="margin-bottom:5px;">
+                              <div style="opacity:0.7;">${label}</div>
+                            </div>`;
+                        }).join('')}
+                      </div>
+                    `}
+                  </div>                  
+              </div>
+            `;
           }).join('');
 
         // Handle repeatables
@@ -141,20 +153,20 @@ export async function printSectionsToHTML({
                 .filter(([k, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
                 .map(([k, v]: [string, any]) => {
                   return `
-                                      <div class="row">
-                                          <span style="font-weight:bold;">${v.label || k}</span>
-                                          <div>
-                                              <span>${v.valueText || v.value || 'N/A'}</span>
-                                          </div>
-                                      </div>
-                                  `;
+                      <div class="row">
+                          <span style="font-weight:bold;">${v.label || k}</span>
+                          <div>
+                              <span>${v.valueText || v.value || 'N/A'}</span>
+                          </div>
+                      </div>
+                  `;
                 }).join('');
 
               return `
-                              <div>
-                                  ${repeatableFields}
-                              </div>
-                          `;
+                  <div>
+                      ${repeatableFields}
+                  </div>
+              `;
             }).join('');
           }).join('')
           : '';
@@ -176,7 +188,7 @@ export async function printSectionsToHTML({
     try {
 
       let htmlContent = `
-                  <div style="width: 100%; height: auto; text-align: center;">
+                  <div style="width: 150px; height: 150px; text-align: center; margin: 0 auto;">
                       ${await generateQRCode()}
                   </div>
                   `;
