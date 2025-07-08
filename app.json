@@ -1,76 +1,42 @@
 {
-    "expo": {
-        "name": "NeoTree",
-        "slug": "neotree",
-        "version": "2.5.12",
-        "orientation": "portrait",
-        "icon": "./assets/images/icon.png",
-        "scheme": "myapp",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/images/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#ffffff"
-        },
-        "updates": {
-            "fallbackToCacheTimeout": 0
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "org.neotree",
-            "buildNumber": "1.0.0",
-            "infoPlist": {
-                "NSAppTransportSecurity": { 
-                    "NSAllowsArbitraryLoads": true 
-                }
-            }
-        },
-        "android": {
-            "usesCleartextTraffic": true,
-            "package": "org.neotree",
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/images/icon.png",
-                "backgroundColor": "#FFFFFF"
-            }
-        },
-        "web": {
-            "favicon": "./assets/images/icon.png",
-            "bundler": "metro",
-            "output": "static"
-        },
-        "plugins": [
-            "expo-router",
-            "expo-font",
-            [
-              "react-native-vision-camera",
-              {
-                "cameraPermissionText": "$(PRODUCT_NAME) needs access to your Camera.",
-                "enableCodeScanner": true
-              }
-            ],
-      
-              [
-                "./plugins/withAndroidMainActivityAttributes",
-                {
-                  "android:showWhenLocked": true,
-                  "android:turnScreenOn": true
-                }
-              ],
-              [
-                "expo-build-properties",
-                {
-                  "android": {
-                    "enableProguardInReleaseBuilds": true,
-                    "usesCleartextTraffic": true
-                  }
-                }
-              ]
-        ],
-        "experiments": {
-            "typedRoutes": true
+  "expo": {
+    "name": "Neotree",
+    "slug": "neotree",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "neotree",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#2b304a"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 1024,
+          "resizeMode": "cover",
+          "backgroundColor": "#2b304a"
         }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
     }
+  }
 }

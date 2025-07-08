@@ -1,67 +1,50 @@
-# Neotree App
+# Welcome to your Expo app 👋
 
-[![DOI](https://zenodo.org/badge/262277859.svg)](https://zenodo.org/badge/latestdoi/262277859)
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-App designed for managing neonatal patients in low resource settings, providing a digital admission form for real time data collection and a platform for neonatal training.
+## Get started
 
-Note that this project is part of the overall [Neotree System](https://github.com/neotree/neotree), an open source technology platform for supporting health care workers provide neonatal care in low resource settings. For more information see the [main repo](https://github.com/neotree/neotree) .
+1. Install dependencies
 
-## Enviroment Setup
+   ```bash
+   npm install
+   ```
 
-https://reactnative.dev/docs/environment-setup
+2. Start the app
 
+   ```bash
+   npx expo start
+   ```
 
-***
+In the output, you'll find options to open the app in a
 
-## App Setup
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-`git clone https://github.com/neotree/neotree-react-native-app.git`
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-***
+## Get a fresh project
 
-## API config
+When you're ready, run:
 
-### Web editor
-`neotree-webeditor-api.json`
-
-1. Log into the web editor
-2. Go to settings
-3. Generate API Key
-4. Download API Key
-
-### NODE API (for data exports)
-`neotree-nodeapi-api.json`
-
-```javascript
-{
-  "host": "nodeapi host url (eg. example.com)",
-  "endpoint": "endpoint used by the app to post data(eg. example.com)",
-  "api_key": "api key here",
-}
+```bash
+npm run reset-project
 ```
 
-**Place the config files into `<project folder>/config`**
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-```
-  <project folder>/config/neotree-webeditor-api.json
-  <project folder>/config/neotree-nodeapi-api.json
-```
+## Learn more
 
-***
+To learn more about developing your project with Expo, look at the following resources:
 
-## Scripts
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-**DEV**
-* `yarn install` - install dependencies
-* `yarn android` - run android app
-* `yarn ios` - run ios
+## Join the community
 
-**Builds**
-* `npm run build-dev-android` - Builds Neotree (DEV) apk - staging build
-* `npm run build-dev-ios` - Neotree (DEV) ios build - staging build
-* `npm run build-prod-android` - Builds Neotree apk - production build
-* `npm run build-prod-ios` - Neotree ios build - production build
+Join our community of developers creating universal apps.
 
-## Disclaimer
-
-PLEASE NOTE: In its compiled form, Neotree code may be a regulated medical device in some jurisdictions. Modification of the code and / or subsequently placing that modified code on the market may make that entity a legal manufacturer of a medical device and so subject to the requirements of the relevant legislation. Failure to comply with such legislation can often result in criminal and civil penalties. Neotree does not intend this code to be used for a medical purpose as a regulated medical device (or within a regulated medical device) where such requirements apply. Those deploying, implementing, or modifying this code should ensure that they meet all local regulatory requirements.
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

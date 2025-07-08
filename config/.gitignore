@@ -1,4 +1,0 @@
-*.json
-config.ts
-!.gitignore
-!*-example*
