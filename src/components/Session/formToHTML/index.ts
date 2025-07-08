@@ -95,7 +95,7 @@ export default async (session: any, showConfidential?: boolean) => {
     try {
     
       let htmlContent = `
-              <div style="width: 100%; height: auto; text-align: center;">
+              <div style="width: 150px; height: 150px; text-align: center; margin: 0 auto;">
                   ${await generateQRCode()}
               </div>
               `;
@@ -155,16 +155,25 @@ export default async (session: any, showConfidential?: boolean) => {
                           <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
                           <div>
                               ${v.value && v.value.map ?
-                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>`).join('<br />')
+                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<div>(${v.value2})</div>`}`).join('<br />')
                                   :
-                                  `<span>${v.valueText || v.value || 'N/A'}</span>`
+                                  `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<div>(${v.value2})</div>`}`
                                 }
 
                               ${!v.extraLabels?.length ? '' : `
-                                <div style="margin-top:5px;"></div>
-                                ${v.extraLabels.map((label: string) => {
-                                      return `<span style="opacity:0.7;">${label}</span>`;
-                                  })}
+                                <div style="margin:10px 0;">
+                                  ${v.extraLabels.map((label: string) => {
+                                    label = label
+                                      .replace(new RegExp('Hourly volume'), '<b>Hourly volume</b>')
+                                      .replace(new RegExp('Administration frequency'), '<b>Administration frequency</b>')
+                                      .replace(new RegExp('Route of Administration'), '<b>Route of Administration</b>')
+                                      .replace(new RegExp('Dosage'), '<b>Dosage</b>');
+                                    return `
+                                      <div style="margin-bottom:5px;">
+                                        <div style="opacity:0.7;">${label}</div>
+                                      </div>`;
+                                  }).join('')}
+                                </div>
                               `}
                           </div>                  
                         </div>

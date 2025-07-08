@@ -1,20 +1,24 @@
-import { useCallback, useMemo, useEffect, useState, Fragment, } from 'react';
+import { useCallback, useMemo, useEffect, useState, } from 'react';
 import { TouchableOpacity } from 'react-native';
-import { Box, Card, Text, Br, TextInput } from '../../../../components';
-import * as types from '../../../../types';
+import { Box, Card, Text, Br, TextInput } from '@/src/components';
+import * as types from '@/src/types';
+import { fieldsTypes } from '@/src/constants';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function MultiSelectField({ field, entryValue, onChange, conditionMet,repeatable,editable }: MultiSelectFieldProps) {
+export function MultiSelectField({ field, formValues, conditionMet, repeatable, editable, onChange, }: MultiSelectFieldProps) {
     const canEdit = repeatable ? editable : true;
 
     const { opts, } = useMemo(() => {
         let opts: { 
             value: string; 
             label: string; 
-            option?: { label: string; },
+            option?: { 
+                key: string;
+                label: string; 
+            },
         }[] = (field.values || '').split('\n')
             .map((v = '') => v.trim())
             .filter((v: any) => v)
@@ -26,6 +30,7 @@ export function MultiSelectField({ field, entryValue, onChange, conditionMet,rep
                     label: v[1], 
                     option: !option ? undefined : {
                         label: option.optionLabel,
+                        key: option.optionKey,
                     },
                 };
             });
@@ -41,28 +46,30 @@ export function MultiSelectField({ field, entryValue, onChange, conditionMet,rep
         return opts.reduce((acc, o) => {
             return {
                 ...acc,
-                [o.value]: undefined,
+                [o.value]: formValues.find(v => v.key == o.value),
             };
         }, {}) as {
-            [key: string]: undefined | {
-                value: string;
-                value2?: string;
-            };
+            [key: string]: undefined | (typeof formValues[0]);
         };
-    }, [opts]);
+    }, [opts, formValues, conditionMet]);
 
     const [value, setValue] = useState(getValue());
 
-    // useEffect(() => { 
-    //     if (!conditionMet) {
-    //         onChange({ value: null, valueText: null, valueLabel: null, exportType: 'dropdown', }); 
-    //         setValue('');
-    //     }
-    // }, [conditionMet]);
+    useEffect(() => { 
+        if (!conditionMet) {
+            onChange({ 
+                value: null, 
+                valueText: null, 
+                valueLabel: null, 
+                exportType: fieldsTypes.MULTI_SELECT, 
+            }); 
+            setValue(getValue());
+        }
+    }, [conditionMet]);
 
-    useEffect(() => {
-        setValue(getValue());
-    }, [getValue]);
+    // useEffect(() => {
+    //     setValue(getValue());
+    // }, [getValue]);
 
     return (
         <Box>
@@ -72,24 +79,37 @@ export function MultiSelectField({ field, entryValue, onChange, conditionMet,rep
                 const isSelected = value[o.value];
                 const disabled = !canEdit;
 
-                const { value2 } = { ...value[o.value] };
+                const { value2, key2, } = { ...value[o.value] };
 
                 return (
-                    <Fragment key={o.value}>
+                    <Box 
+                        key={o.value}
+                        {...(!(isSelected && o.option) ? undefined : {
+                            backgroundColor: 'bg.active',
+                            p: 'l',
+                            borderRadius: 's',
+                        })}
+                    >
                         <TouchableOpacity 
                             disabled={disabled}
                             onPress={() => {
-                                setValue(prev => ({
-                                    ...prev,
-                                    [o.value]: prev[o.value] ? undefined : {
+                                const state = {
+                                    ...value,
+                                    [o.value]: value[o.value] ? undefined : {
                                         value: o.value,
                                         value2: o.option ? '' : undefined,
+                                        key2: o.option ? '' : undefined,
                                     },
+                                };
+
+                                setValue(state);
+
+                                const values = Object.values(state).filter(v => v).map(v => ({
+                                    ...v,
                                 }));
 
                                 onChange({
-                                    value: [],
-                                    exportType: 'multi_select',
+                                    value: !values.length ? undefined : values,
                                 });
                             }}
                         >
@@ -110,13 +130,14 @@ export function MultiSelectField({ field, entryValue, onChange, conditionMet,rep
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option.label || ''} *`}
+                                        label={`${o.option.label || ''}`}
                                         value={value2 || ''}
                                         onChangeText={text => setValue(prev => ({
                                             ...prev,
                                             [o.value]: !prev[o.value] ? undefined : {
                                                 ...prev[o.value]!,
                                                 value2: text,
+                                                key2: !text ? '' : (key2 || ''),
                                             },
                                         }))}
                                     />
@@ -126,7 +147,7 @@ export function MultiSelectField({ field, entryValue, onChange, conditionMet,rep
 
                         <Br spacing="l" />
 
-                    </Fragment>
+                    </Box>
                 )
             })}
         </Box>

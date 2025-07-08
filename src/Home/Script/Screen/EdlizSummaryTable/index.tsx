@@ -29,19 +29,27 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                 return acc;
             }, 0);
         }
-        setEntryValues([{
-            key: metadata.key,
-            type: metadata.dataType,
-            value: values,
-        }], {
-            value: [{
-                value: score,
-                label: metadata.label,
-                key: metadata.key,
-                type: metadata.dataType ? metadata.dataType : null,
-                valueText: score,
-            }],
-        });
+
+        if (values?.length) {
+            setEntryValues(
+                [{
+                    key: metadata.key,
+                    type: metadata.dataType,
+                    value: values,
+                }], 
+                {
+                    value: [{
+                        value: score,
+                        label: metadata.label,
+                        key: metadata.key,
+                        type: metadata.dataType ? metadata.dataType : null,
+                        valueText: score,
+                    }],
+                }
+            );
+        } else {
+            setEntryValues(undefined);
+        }
     }, [values, activeScreen]);
 
     const renderItems = (items: any[] = []) => {
@@ -50,13 +58,20 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                 <Select
                     multiple
                     value={values.map(e => e.value)}
-                    options={items.map(item => ({
-                        label: item.label,
-                        value: item.id,
-                        hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
-                        textVariant: 'body',
-                        data: item,
-                    }))}
+                    options={items.map(item => {
+                        const exclusiveValue = values
+                            .filter(e => items.map(item => item.id).includes(e.value))
+                            .find(v => v.exclusive);
+
+                        return {
+                            label: item.label,
+                            value: item.id,
+                            hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
+                            textVariant: 'body',
+                            data: item,
+                            disabled: !exclusiveValue ? false : exclusiveValue?.value !== item.id,
+                        };
+                    })}
                     onChange={({ index: i }) => {
                         const { index } = items[i];
                         const item = (metadata.items || [])[index];
@@ -76,7 +91,15 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                         };
 
                         setValues(prev => {
-                            const values = _checked ? [...prev, _entry] : prev.filter(s => s.value !== value);
+                            let values = _checked ? 
+                                (
+                                    item.exclusive ? 
+                                        [...prev.filter(e => !items.map(item => item.id).includes(e.value)), _entry] 
+                                        : 
+                                        [...prev, _entry]
+                                )
+                                : 
+                                prev.filter(s => s.value !== value);
                             return values;
                         });
                     }}

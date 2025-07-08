@@ -31,6 +31,44 @@ export function evaluateDrugsScreen({
         })
         .filter(d => d)
         .sort((a, b) => a.position - b.position)
+        // .filter(d => {
+        //     const condition = `${d.condition || ''}`;
+        //     const diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');
+
+        //     let conditionMet = !condition ? true : false;
+
+        //     const entriesKeyVal: { [key: string]: any[]; } = {};
+        //     const diagnoses: string[] = [];
+
+        //     entries.forEach(e => {
+        //         const values = [
+        //             ...(e.value || []),
+        //             ...(e.values || []),
+        //         ];
+
+        //         values.forEach(v => {
+        //             if (v.key) {
+        //                 let key = `${v.key}`.toLowerCase();
+
+        //                 let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
+        //                 if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
+        //                 if (v.diagnosis?.key) {
+        //                     diagnoses.push(v.diagnosis.key);
+        //                     value = [v.diagnosis.key];
+        //                 }
+        //                 if (condition) {
+        //                     conditionMet = evaluateCondition(condition);
+        //                 }
+        //                 entriesKeyVal[key] = value;
+        //             }
+        //         });
+        //     });
+
+        //     const matchedDiagnoses = diagnosisKeys.filter(key => 
+        //         diagnoses.map(d => d.toLowerCase()).includes(key.toLowerCase()));
+
+        //     return !!matchedDiagnoses.length || conditionMet;
+        // })
         .map(d => {
             const weightKeys = `${d.weightKey}`.toLowerCase().split(',').map(key => key.trim());
             const condition = `${d.condition || ''}`;
@@ -43,28 +81,27 @@ export function evaluateDrugsScreen({
             const entriesKeyVal: { [key: string]: any[]; } = {};
             const diagnoses: string[] = [];
 
-            entries.forEach(e => {
-                const values = [
-                    ...(e.value || []),
-                    ...(e.values || []),
-                ];
+            const values = entries.reduce((acc: any[], e) => [
+                ...acc,
+                ...(e.value || []),
+                ...(e.values || []),
+            ], []);
 
-                values.forEach(v => {
-                    if (v.key) {
-                        let key = `${v.key}`.toLowerCase();
+            values.forEach(v => {
+                if (v.key) {
+                    let key = `${v.key}`.toLowerCase();
 
-                        let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
-                        if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
-                        if (v.diagnosis?.key) {
-                            diagnoses.push(v.diagnosis.key);
-                            value = [v.diagnosis.key];
-                        }
-                        if (condition) {
-                            conditionMet = evaluateCondition(condition);
-                        }
-                        entriesKeyVal[key] = value;
+                    let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
+                    if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
+                    if (v.diagnosis?.key) {
+                        diagnoses.push(v.diagnosis.key);
+                        value = [v.diagnosis.key];
                     }
-                });
+                    if (condition) {
+                        conditionMet = evaluateCondition(condition);
+                    }
+                    entriesKeyVal[key] = value;
+                }
             });
 
             const weights = weightKeys.map(key => (entriesKeyVal[key] || [])[0])
