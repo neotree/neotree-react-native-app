@@ -35,7 +35,7 @@ export function TypeForm({ }: TypeFormProps) {
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const repeatable = metadata?.repeatable;
-    
+
 
     const patientNUID = useMemo(() => nuidSearchForm.filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value, [nuidSearchForm]);
 
@@ -102,38 +102,74 @@ export function TypeForm({ }: TypeFormProps) {
     };
 
     const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
-        const key = Object.keys(data)[0];
-        if (data[key].length > 0 && key) {
-            // Find the repeatables object in the existing values
-            const repeatablesIndex = values.findIndex(item => item.key === 'repeatables');
-            let repeatables;
+        try {
+            const key = Object.keys(data)[0];
+            if (data[key].length > 0 && key) {
+                // Find the repeatables object in the existing values
+                const repeatablesIndex = values.findIndex(item => item.key === 'repeatables');
+                let repeatables;
 
-            if (repeatablesIndex === -1) {
-                // Create a new repeatables object if it doesn't exist
-                repeatables = {
-                    key: 'repeatables',
-                    value: {
-                        [key]: data[key], // Use the correct data structure
+                if (repeatablesIndex === -1) {
+                    // Create a new repeatables object if it doesn't exist
+                    repeatables = {
+                        key: 'repeatables',
+                        value: {
+                            [key]: data[key],
+                        }
+                    };
+                    const updated = [...values, repeatables]
+                    setValues(updated);
+                    if (updated && updated.length > 0) {
+                        setEntryValues(updated)
                     }
-                };
-                setValues([...values, repeatables]);
-            } else {
-                // Update the existing repeatables object
-                repeatables = { ...values[repeatablesIndex] };
+                } else {
+                    // Update the existing repeatables object
+                    repeatables = { ...values[repeatablesIndex] };
 
-                // Replace or add the incoming data for the given key
-                repeatables.value[key] = data[key];
+                    // Replace or add the incoming data for the given key
+                    repeatables.value[key] = data[key];
 
-                // Create a new array with the updated repeatables
-                const updatedValues = [
-                    ...values.slice(0, repeatablesIndex),
-                    repeatables,
-                    ...values.slice(repeatablesIndex + 1)
-                ];
-                setValues(updatedValues);
+                    // Create a new array with the updated repeatables
+                    const updatedValues = [
+                        ...values.slice(0, repeatablesIndex),
+                        repeatables,
+                        ...values.slice(repeatablesIndex + 1)
+                    ];
+                    setValues(updatedValues);
+                    if (updatedValues && updatedValues.length > 0) {
+                        setEntryValues(deepSanitize(updatedValues))
+                    }
+                }
             }
+        } catch (ex) {
+            console.log("---MY EX.....", ex)
         }
     };
+    function deepSanitize(input: any): any {
+        if (input == null) {
+            // handles both null and undefined
+            return input;
+        }
+
+        if (Array.isArray(input)) {
+            return input.map(deepSanitize);
+        }
+
+        if (typeof input === 'object' && Object.prototype.toString.call(input) === '[object Object]') {
+            const clean: Record<string, any> = {};
+            for (const [key, value] of Object.entries(input)) {
+                if (!/^\d+$/.test(key)) {
+                    clean[key] = deepSanitize(value);
+                }
+            }
+            return clean;
+        }
+
+        // Primitives, functions, Dates, etc. are returned as-is
+        return input;
+    }
+
+
     function moveKeysInside(input: any[]): any[] {
         if (!Array.isArray(input) || input.length === 0 || input[0] === undefined) {
             return [];
@@ -144,7 +180,7 @@ export function TypeForm({ }: TypeFormProps) {
         return Object.entries(first)
             .map(([key, value]) => {
                 if (key === 'id' || key === 'createdAt' || key === 'requiredComplete') {
-                    return {[key]: value };
+                    return { [key]: value };
                 }
 
                 if (typeof value === 'object' && value !== null && 'value' in value) {
@@ -159,15 +195,11 @@ export function TypeForm({ }: TypeFormProps) {
                     return { [key]: value };
                 }
 
-                return null; 
+                return null;
             })
-            .filter(Boolean); 
+            .filter(Boolean);
 
     }
-
-
-
-
 
     const setValue = (index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
@@ -188,7 +220,9 @@ export function TypeForm({ }: TypeFormProps) {
         }, true);
 
         const hasErrors = values.filter(v => v.error).length;
-        setEntryValues(hasErrors || !completed ? undefined : values);
+        if (!repeatable) {
+            setEntryValues(hasErrors || !completed ? undefined : values);
+        }
 
     }, [values, metadata]);
 
@@ -197,13 +231,39 @@ export function TypeForm({ }: TypeFormProps) {
     const collectionField = metadata?.collectionLabel;
     const getAllValues = () => {
 
-        const _allValues = [
+        let _allValues = [
             ...values,
             ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
                 ...acc,
                 ...e.values,
             ], []),
         ];
+
+        if (repeatable && !values.find(v => v.key === 'repeatables')?.value) {
+            const repeatablesGrouped: Record<string, any[]> = {};
+
+            ctx.entries.forEach(entry => {
+                const repeatables = entry.repeatables || {};
+                Object.entries(repeatables).forEach(([key, items]) => {
+                    if (!repeatablesGrouped[key]) {
+                        repeatablesGrouped[key] = [];
+                    }
+                    if (Array.isArray(items)) {
+                        repeatablesGrouped[key].push(...items);
+                    } else {
+                        repeatablesGrouped[key].push(items);
+                    }
+                });
+            });
+
+            _allValues = [
+                ...values,
+                {
+                    key: 'repeatables',
+                    value: repeatablesGrouped,
+                },
+            ];
+        }
 
         return _allValues.filter((v, i) => {
             if (!v.key) return true;

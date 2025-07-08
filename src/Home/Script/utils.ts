@@ -1,6 +1,7 @@
 import * as types from '@/src/types';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
+import {merge} from 'lodash'
 
 export const evaluateCondition = (condition: string, defaultEval = false) => {
     let conditionMet = defaultEval;
@@ -22,6 +23,11 @@ const sanitizeCondition = (condition: string) => {
     return sanitized;
 };
 
+type Session = {
+  entries?: Record<string, unknown>;
+  [key: string]: any;          // all other top-level keys
+};
+
 const parseConditionString = (condition: string, _key = '', value: any) => {
     const s = (condition || '').toLowerCase().split('$').join(' $');
     const key = (_key || '').toLowerCase();
@@ -36,6 +42,16 @@ const parseConditionString = (condition: string, _key = '', value: any) => {
         .split(`$${key} !`).join(`${value} !`);
     return parsed;
 };
+
+
+  export const mergeSessions = (first: any | null | undefined,
+                       second: any | null | undefined): any | null | undefined => {
+
+  if (!first || !second) return first ?? second;
+
+ return merge(second,first)
+ 
+}
 
 type UtilsParams = {
 	script_id: string | number;
@@ -56,6 +72,7 @@ type UtilsParams = {
     generatedUID: string;
     drugsLibrary: types.DrugsLibraryItem[];
 };
+
   
 export const getScriptUtils = ({
 	script_id,
@@ -641,9 +658,7 @@ export const getScriptUtils = ({
         };
     };   
     
-
-
-    const getScreenIndex = (screenId: string | number) => !screenId ? -1 : screens.map(s => s.id).indexOf(screenId);
+const getScreenIndex = (screenId: string | number) => !screenId ? -1 : screens.map(s => s.id).indexOf(screenId);
 
     return {
         evaluateCondition,
@@ -658,6 +673,6 @@ export const getScriptUtils = ({
 
         getSuggestedDiagnoses,    
         
-        getScreenIndex
+        getScreenIndex,
     };
 }  

@@ -17,6 +17,7 @@ export function Start() {
         screens, 
         matched, 
         script: { 
+            type,
             data: {
                 nuidSearchFields = [], 
             },
@@ -65,6 +66,7 @@ export function Start() {
                                 <Field 
                                     field={field}
                                     value={fields[i].value}
+                                    script_type ={type}
                                     onChange={value => {
                                         let results = null;
 
@@ -78,7 +80,10 @@ export function Start() {
                                             return f;
                                         });
                                         setFields(newState);
-                                    }}
+                                        
+                                    }
+                                  
+                                }
                                 />
                                 <Box marginVertical="l" />
                             </Fragment>

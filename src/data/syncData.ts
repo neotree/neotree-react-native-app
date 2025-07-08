@@ -5,16 +5,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
-import { createTablesIfNotExist, dbTransaction } from './db';
+import { createTablesIfNotExist, dbTransaction,addNewColumns } from './db';
 import { makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
+import { exportSessions } from './exportSessions';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
     // const networkState = await Network.getNetworkStateAsync(); 
 
     await createTablesIfNotExist();
+    await addNewColumns()
+    await exportSessions()
 
     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.SYNC_ERROR);
 

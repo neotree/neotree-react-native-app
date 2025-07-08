@@ -138,6 +138,9 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
         flatEntries.repeatables = repeatables;
 
         const exportData = {
+          id: session?.id,
+          exported:session.exported,
+          local_export:session.local_export,
           uid: session.uid,
           unique_key,
           appVersion: APP_VERSION,

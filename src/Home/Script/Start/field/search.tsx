@@ -6,6 +6,8 @@ import * as api from '../../../../data';
 import * as types from '../../../../types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
+import { mergeSessions } from '../../utils'
+
 
 
 const { width, height } = Dimensions.get("window");
@@ -17,6 +19,7 @@ type SearchProps = {
     prePopulateWithUID?: boolean;
     onSession: (data: null | types.MatchedSession) => void;
     filterEntries?: (entry: any) => any;
+    script_type?: string;
 };
 
 function getSessionFacility(session: any) {
@@ -33,11 +36,13 @@ export function Search({
     autofillKeys,
     prePopulateWithUID,
     onSession,
-    filterEntries
+    filterEntries,
+    script_type
 }: SearchProps) {
 
     const [uid, setUID] = React.useState('');
-    const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getExportedSessionsByUID>>>([]);
+    const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getLocalSessionsByUID>>>([]);
+    const [merged, setMerged] = React.useState<any>([])
     const [sessionType, setSessionType] = React.useState('admission');
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
     const [searched, setSearched] = React.useState('');
@@ -56,11 +61,28 @@ export function Search({
             const session = qrtext
             const sessions = []
             if (session['uid']) {
-                sessions.push(session)
                 setUID(session['uid'])
-                setQRSession(sessions)
-                if (sessions.filter(s => s.data.type === 'drecord').length > 0) {
-                    setSessionType('drecord')
+                if (Object.keys(session).length > 1) {
+                    sessions.push(session)
+                    setQRSession(sessions)
+                }
+
+                if (script_type == 'discharge') {
+                    if (sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0
+                        && sessions?.filter(s => s?.data?.script?.type === 'admission').length > 0) {
+                            {
+                                const mergedSessions = [mergeSessions(sessions?.filter((s: any) => s?.data?.script?.type === 'drecord')[0],
+                                    sessions?.filter((s: any) => s?.data?.script?.type === 'admission')[0])]
+                                      
+                                setMerged(mergedSessions)
+                                setSessionType('merged')
+                            }
+                    }
+                } else {
+
+                    if (script_type == 'drecord' && sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0) {
+                        setSessionType('drecord')
+                    }
                 }
 
             } else {
@@ -74,7 +96,6 @@ export function Search({
 
     const validateSearchResultDates = React.useCallback((matched: any) => {
         if (matched != null) {
-
             const completedDate = matched?.session?.completed_at
             const type = matched?.session?.type
             setSelectedSession(matched)
@@ -101,19 +122,27 @@ export function Search({
             onSession(matched)
         }
 
+
     }, []);
 
 
     const search = React.useCallback(() => {
         (async () => {
             setSearching(true);
-            let sessions = qrSession;
+            let searched = qrSession;
 
-            if (!sessions || sessions.length <= 0) {
-                sessions = await api.getExportedSessionsByUID(uid);
+            if (!searched || searched.length <= 0) {
+                const location = await api.getLocation();
+                if (location && location.hospital) {
+                    searched = await api.getLocalSessionsByUID(uid, location.hospital)
+
+                } else {
+                    searched = await api.getExportedSessionsByUID(uid);
+                }
+
             }
 
-            const error = sessions?.[0]
+            const error = searched?.[0]
 
             if (error && error.error) {
                 setToClear(true)
@@ -122,9 +151,10 @@ export function Search({
                 )
                 setSearching(false);
             }
-            else if (sessions) {
+            else if (searched) {
+                searched = filterDataWithPrePopulatedEntries(searched)
 
-                setSessions(sessions);
+                setSessions(searched);
                 setSearching(false);
                 setSearched(uid);
             } else {
@@ -133,6 +163,21 @@ export function Search({
                 setValidationMessage(
                     "No Matched Sessions Found. Do you want to proceed auto populating with the current Neotree-ID?"
                 );
+            }
+            if (script_type == 'discharge') {
+                if (searched?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0
+                    && searched?.filter((s: any) => s?.data?.script?.type === 'admission').length > 0) {
+                    const mergedSessions = [mergeSessions(searched?.filter((s: any) => s?.data?.script?.type === 'drecord')[0],
+                        searched?.filter((s: any) => s?.data?.script?.type === 'admission')[0])]
+
+                    setMerged(mergedSessions)
+              
+                    setSessionType('merged')
+                }
+            } else {
+                if (script_type == 'drecord' && searched?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0) {
+                    setSessionType('drecord')
+                }
             }
 
         })();
@@ -164,11 +209,11 @@ export function Search({
         setSelectedSession(null)
     }
 
-    const admissionSessions = sessions.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
-    const neolabSessions = sessions.filter(s => s?.data?.type === 'neolab' || s?.data?.script?.title.match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
-    const dischargeSessions = sessions.filter(s => s?.data?.type === 'discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = sessions.filter(s => s?.data?.type === 'drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
-
+    const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
+    const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || s?.data?.script?.title.match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
+    const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
+    const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+   
     function renderList(sessions: any[]) {
         return (
             <>
@@ -227,7 +272,7 @@ export function Search({
                                     }}
                                     label={(
                                         <>
-                                            <Text variant="title3">{s?.data?.title || s?.data?.script?.title}</Text>
+                                            <Text variant="title3">{(merged.length>0)?'Merged Records':s?.data?.title || s?.data?.script?.title}</Text>
                                             <Text variant="caption" color="textSecondary">
                                                 {[
                                                     getSessionFacility(s).other || getSessionFacility(s).value,
@@ -268,6 +313,21 @@ export function Search({
                 {!sessions.length && <Text textAlign="center" color="textSecondary">{`No ${sessionType} sessions found`}</Text>}
             </>
         );
+    }
+
+    function filterDataWithPrePopulatedEntries(items: any[]): any[] {
+        return items.map(item => ({
+            data: {
+                ...item.data,
+                entries: Object.fromEntries(
+                    Object.entries(item.data.entries)
+                        .filter(([key, entry]) =>
+                            key === 'repeatables' ||
+                            (entry as any)?.prePopulate?.length > 0
+                        )
+                )
+            }
+        }));
     }
 
     return (
@@ -311,7 +371,7 @@ export function Search({
                                 <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>
                                 <Text color="textDisabled" variant="caption">{dischargeSessions?.length} Discharge sessions found</Text>
                                 <Text color="textDisabled" variant="caption">{dailyRecordsSessions?.length} Daily Records sessions found</Text>
-
+                                <Text color="textDisabled" variant="caption">{merged?.length} Merged sessions found</Text>
                                 <Br spacing="xl" />
 
                                 <Box width={200}>
@@ -336,6 +396,10 @@ export function Search({
                                                 value: 'drecord',
                                                 label: 'Daily Records',
                                             },
+                                            {
+                                                value: 'merged',
+                                                label: 'Merged Records',
+                                            },
                                         ]}
                                     />
                                 </Box>
@@ -347,6 +411,7 @@ export function Search({
                                     if (sessionType === 'neolab') return neolabSessions;
                                     if (sessionType === 'discharge') return dischargeSessions;
                                     if (sessionType === 'drecord') return dailyRecordsSessions;
+                                    if (sessionType === 'merged') return merged;
                                     return [];
                                 })())}
                             </>
@@ -360,7 +425,7 @@ export function Search({
                                         {
                                             color: 'error',
                                             label: 'RE-SCAN',
-                                            onPress:()=> handleNoPress(true),
+                                            onPress: () => handleNoPress(true),
                                         },
                                         {
                                             color: 'primary',

@@ -148,7 +148,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
     return (
         <Box>
             <DatePicker
-                errors={getErrors(entryValue.value)}
+                errors={getErrors(entryValue?.value)}
                 mode={field.type === 'date' ? 'date' : 'datetime'}
                 value={value}
                 disabled={!conditionMet || !canEdit}

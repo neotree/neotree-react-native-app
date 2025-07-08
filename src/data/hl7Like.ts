@@ -3,8 +3,29 @@ import Base64 from 'react-native-base64';
 import {formatDate,parseStringToDate} from '../utils/formatDate'
 import {getAliasKeyFromAliasAndScript,getAliasFromKeyAndScriptId } from '../data/queries';
 import { parse, isValid, format } from 'date-fns';
+import { APP_CONFIG } from '@/src/constants';
+import * as types from '../types';
+import { getLocation } from './queries';
 
 export async function toHL7Like(data: any) {
+
+   const location = await getLocation();
+   const country =  location?.country||'';
+
+   if(!data){
+    return ''
+   }
+
+   if(country && country.length>0 ||  hasNeotreeIdOnly(data)){
+    const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
+    const hospital = location?.hospital
+    const localConfig = config?.filter(c=>c.hospital===hospital?.trim())
+    if(localConfig && localConfig?.[0]?.hospital?.length>0){
+  
+     return textToNumbers(compressDataForQRCode(JSON.stringify({uid:data['uid']})))     
+    }
+
+   }
 
   let metadata = "MDH\n"
  
@@ -114,6 +135,25 @@ async function processEntries(data:any, scriptid:string) {
 
   return entries;
 }
+function hasNeotreeIdOnly(data: any): boolean {
+  if (!data || typeof data !== 'object') return false;
+
+  const entries = data['entries'];
+  if (!entries || typeof entries !== 'object') return false;
+
+  // Find all keys with a non-empty prePopulate array
+  const keysWithPrePopulate = Object.keys(entries).filter(key => {
+    const entry = entries[key];
+    return Array.isArray(entry?.prePopulate) && entry.prePopulate.length > 0;
+  });
+  if (keysWithPrePopulate.length === 1) {
+    const onlyKey = keysWithPrePopulate[0];
+    return onlyKey.toLowerCase().includes('uid');
+  }
+
+  return false;
+}
+
 
 function truncateData(data: any): string {
   const lines = data.split('\n');
@@ -139,7 +179,6 @@ function compressDataForQRCode(data: any) {
 
     const compressed = pako.deflate(data, { level: 9 });
     const base64String = uint8ArrayToBase64(compressed);
-
     return base64String
   } catch (error) {
     console.error('Compression error:', error);
@@ -187,6 +226,7 @@ try {
           try {
             const decompressed = decompressDataFromQRCode(uint8Array);
             if (decompressed) {
+      
               return await convertToJSON(decompressed);
             }
           } catch (e) {
@@ -211,13 +251,13 @@ try {
 export
 
   function textToNumbers(data: any) {
-  return data.split('').map((char: any) => char.charCodeAt(0)).join('');
+    const aft = data.split('').map((char: any) => char.charCodeAt(0)).join('');
+  return aft
 }
 
 function numbersToText(data: string): string {
   let result = '';
   let currentNumber = '';
-
   // Iterate through each character of the numeric string
   for (let char of data) {
     currentNumber += char; // Add character to the current number string
@@ -252,7 +292,24 @@ function getScriptId(data: string): string | null {
   return line ? line.split('|')[1] || null : null;
 }
 
+function isJsonString(str:string) {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function convertToJSON(input: string) {
+  if(!input.includes('MDH') &&!input.includes('EDH') ){
+    if(isJsonString(input)){
+      return JSON.parse(input)
+    } else{
+      return {}
+    }
+   
+  }
   const lines = input.trim().split("\n");
   const result: any = {};
   let currentSection: any = result;

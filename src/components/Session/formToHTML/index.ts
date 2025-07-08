@@ -16,6 +16,7 @@ import QRCode from 'qrcode';
 export default async (session: any, showConfidential?: boolean) => {
 
   let { form, management,country } = session?.data;
+  let qrSmall = false
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
@@ -28,6 +29,9 @@ export default async (session: any, showConfidential?: boolean) => {
       // QR code parameters
       const dataToEncode:any = hl7
       
+      if(dataToEncode.length<100) {
+        qrSmall = true
+      }
       let erc:any = 'H'
      if(dataToEncode.length>3057 && dataToEncode.length<=3993){
       erc='Q'
@@ -44,6 +48,7 @@ export default async (session: any, showConfidential?: boolean) => {
             type: 'svg',
             errorCorrectionLevel: erc,
             margin: 2,
+            width:qrSmall?100:undefined
           },
           (err, url) => {
             if (err) {
@@ -173,6 +178,9 @@ export default async (session: any, showConfidential?: boolean) => {
       `;
     }
   ).join('');
-
+  if(!!qrSmall){
   return baseHTML(`<div class="grid">${qrcode}${tables}</div><div>${managementHTML}</div>`, session);
+  }else{
+    return baseHTML(`<div>${qrcode}<\div><div class="grid">${tables}</div><div>${managementHTML}</div>`, session);
+  }
 };
