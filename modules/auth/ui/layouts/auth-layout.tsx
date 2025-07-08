@@ -4,10 +4,13 @@ type Props = {
     children: React.ReactNode;
 };
 
-export function AuthLayout({ children }: Props) {
+export function SessionsLayout({ children }: Props) {
     return (
         <>
-            <SafeAreaView style={{ flex: 1, }}>
+            <SafeAreaView 
+                style={{ flex: 1, }}
+                className="bg-red-200"
+            >
                 {children}
             </SafeAreaView>
         </>
