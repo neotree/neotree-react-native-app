@@ -1,4 +1,4 @@
-import { SafeAreaView } from "react-native";
+import { View } from "react-native";
 
 type Props = {
     children: React.ReactNode;
@@ -7,12 +7,9 @@ type Props = {
 export function AuthLayout({ children }: Props) {
     return (
         <>
-            <SafeAreaView 
-                style={{ flex: 1, }}
-                className="bg-red-200"
-            >
+            <View style={{ flex: 1, }}>
                 {children}
-            </SafeAreaView>
+            </View>
         </>
     );
 }
