@@ -68,6 +68,7 @@ export function TextField({
             ) : (
             
                 <TextInput
+                    multiline
                     editable={conditionMet && canEdit}
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
