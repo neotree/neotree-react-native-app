@@ -4,7 +4,6 @@ import { Box, Text } from "../../Theme";
 import { TextInput } from "../../Form";
 import { Modal } from "../../Modal";
 import { Content } from "../../Content";
-import {Br} from "../../../components/Br"
 
 
 type ConfidentialsProps = {

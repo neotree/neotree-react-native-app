@@ -15,7 +15,7 @@ import QRCode from 'qrcode';
 
 export default async (session: any, showConfidential?: boolean) => {
 
-  let { form, management,country } = session?.data;
+  let { form, management } = session?.data;
   let qrSmall = false
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
@@ -155,9 +155,9 @@ export default async (session: any, showConfidential?: boolean) => {
                           <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
                           <div>
                               ${v.value && v.value.map ?
-                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<div>(${v.value2})</div>`}`).join('<br />')
+                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
                                   :
-                                  `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<div>(${v.value2})</div>`}`
+                                  `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                                 }
 
                               ${!v.extraLabels?.length ? '' : `

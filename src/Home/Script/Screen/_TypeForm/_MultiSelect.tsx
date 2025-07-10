@@ -8,7 +8,7 @@ type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function MultiSelectField({ field, formValues, conditionMet, repeatable, editable, onChange, }: MultiSelectFieldProps) {
+export function MultiSelectField({ field, conditionMet, repeatable, editable, entryValue, onChange, }: MultiSelectFieldProps) {
     const canEdit = repeatable ? editable : true;
 
     const { opts, } = useMemo(() => {
@@ -46,19 +46,19 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
         return opts.reduce((acc, o) => {
             return {
                 ...acc,
-                [o.value]: formValues.find(v => v.key == o.value),
+                [o.value]: (entryValue?.value || []).find((v: types.ScreenEntryValue) => v.key == o.value),
             };
         }, {}) as {
-            [key: string]: undefined | (typeof formValues[0]);
+            [key: string]: undefined | types.ScreenEntryValue;
         };
-    }, [opts, formValues, conditionMet]);
+    }, [opts, entryValue, conditionMet]);
 
     const [value, setValue] = useState(getValue());
 
     useEffect(() => { 
         if (!conditionMet) {
             onChange({ 
-                value: null, 
+                value: null,
                 valueText: null, 
                 valueLabel: null, 
                 exportType: fieldsTypes.MULTI_SELECT, 
@@ -97,6 +97,7 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
                                     ...value,
                                     [o.value]: value[o.value] ? undefined : {
                                         value: o.value,
+                                        key: o.value,
                                         value2: o.option ? '' : undefined,
                                         key2: o.option ? '' : undefined,
                                     },
@@ -132,14 +133,26 @@ export function MultiSelectField({ field, formValues, conditionMet, repeatable, 
                                     <TextInput
                                         label={`${o.option.label || ''}`}
                                         value={value2 || ''}
-                                        onChangeText={text => setValue(prev => ({
-                                            ...prev,
-                                            [o.value]: !prev[o.value] ? undefined : {
-                                                ...prev[o.value]!,
-                                                value2: text,
-                                                key2: !text ? '' : (key2 || ''),
-                                            },
-                                        }))}
+                                        onChangeText={value2 => {
+                                            setValue(prev => ({
+                                                ...prev,
+                                                [o.value]: !prev[o.value] ? undefined : {
+                                                    ...prev[o.value]!,
+                                                    value2,
+                                                    key2: !value2 ? '' : (key2 || ''),
+                                                },
+                                            }));
+
+                                            if (entryValue) {
+                                                onChange({
+                                                    value: (entryValue?.value || []).map((v: types.ScreenEntryValue) => v.key !== o.value ? v : {
+                                                        ...v,
+                                                        value2,
+                                                        key2,
+                                                    })
+                                                });
+                                            }
+                                        }}
                                     />
                                 </Box>
                             </>

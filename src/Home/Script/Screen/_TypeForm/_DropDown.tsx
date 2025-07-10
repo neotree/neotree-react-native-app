@@ -104,11 +104,15 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                         <TextInput
                             label={`${selected.option.label || ''}`}
                             value={value2 || ''}
-                            onChangeText={value2 => setValue(prev => ({
-                                ...prev,
-                                value2,
-                                key2: !value2 ? '' : (selected?.option?.key || ''),
-                            }))}
+                            onChangeText={value2 => {
+                                const key2 = !value2 ? '' : (selected?.option?.key || '');
+                                setValue(prev => ({
+                                    ...prev,
+                                    value2,
+                                    key2,
+                                }));
+                                onChange({ ...entryValue, value2, key2, });
+                            }}
                         />
                     </Box>
                 </>

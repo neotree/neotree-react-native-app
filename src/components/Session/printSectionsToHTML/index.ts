@@ -125,9 +125,9 @@ let qrSmall = false
                   <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
                   <div>
                       ${v.value && v.value.map ?
-                      v.value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<div>(${val.value2})</div>`}`).join('<br />')
+                      v.value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
                       :
-                      `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<div>(${v.value2})</div>`}`
+                      `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                     }
                     ${!v.extraLabels?.length ? '' : `
                       <div style="margin:10px 0;">
@@ -154,7 +154,7 @@ let qrSmall = false
           ? (Object.entries(repeatables) as [string, any[]][]).map(([_, groupItems]) => {
             return groupItems.map((item: any) => {
               const repeatableFields = Object.entries(item)
-                .filter(([k, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
+                .filter(([, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
                 .map(([k, v]: [string, any]) => {
                   return `
                       <div class="row">
