@@ -1,4 +1,4 @@
-import React, { useDeferredValue } from 'react';
+import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
 import * as MediaLibrary from 'expo-media-library';
@@ -424,19 +424,21 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 															color="successContrastText"
 														>Exported Online</Text>
 													</Box>
-													{item.local_export && (	
-													<Box 
-														backgroundColor="highlight"
-														paddingVertical="s"
-														paddingHorizontal="xl"
-														borderRadius="xl"
-													>
-														<Text
-															textAlign="center"
-															variant="caption"
-															color="grey-900"
-														>Exported Locally</Text>
-													</Box>)}															
+													
+													{!!item.local_export && (	
+														<Box 
+															backgroundColor="highlight"
+															paddingVertical="s"
+															paddingHorizontal="xl"
+															borderRadius="xl"
+														>
+															<Text
+																textAlign="center"
+																variant="caption"
+																color="grey-900"
+															>Exported Locally</Text>
+														</Box>
+													)}															
 												</Box>
 												<Br spacing="m" />
 											</>

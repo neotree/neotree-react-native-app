@@ -31,7 +31,7 @@ const renderReactNode = (node: React.ReactNode, opts?: RenderReactNodeOptions) =
             variant={opts?.textVariant} 
             fontWeight={opts?.fontWeight}
             color={opts?.textColor}
-        >{node}</Text>
+        >{`${node}`}</Text>
       ) : node
 );
 
@@ -68,10 +68,10 @@ export function DatePicker({
                 case 'datetime':
                     return moment(value).format('ll HH:mm');
                 default:
-                    return null;
+                    return '';
             }
         }
-        return null;
+        return '';
     }, [value, valueText]);
 
     React.useEffect(() => {
@@ -192,7 +192,7 @@ export function DatePicker({
                             color="error"
                             mb="s"
                         >
-                            {e}
+                            {`${e}`}
                         </Text>
                     ))}
                 </Box>
