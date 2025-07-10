@@ -226,16 +226,15 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             const t = dataType || type;
     
             switch (t) {
-            case 'boolean':
-                value = value === 'false' ? false : Boolean(value);
-                break;
-            default:
-                if(key==='createdAt'){
-                    value=value
-                }else{
-                    value = JSON.stringify(value)
-                }
-                ;
+                case 'boolean':
+                    value = value === 'false' ? false : Boolean(value);
+                    break;
+                default:
+                    if(key==='createdAt'){
+                        value=value
+                    }else{
+                        value = JSON.stringify(value)
+                    }
             }
     
             return parseConditionString(condition, inputKey || key, value);
