@@ -17,7 +17,7 @@ export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
-    session: { uid, data: { form: sessionForm, } },
+    session: { data: { form: sessionForm, } },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
     // const excludeScreenTypes = ['zw_edliz_summary_table', 'mwi_edliz_summary_table'];
@@ -77,7 +77,7 @@ export function Summary({
                                                                 display: hideLabel ? 'none' : undefined,
                                                             }}
                                                         >
-                                                            <Text color="textSecondary">{label || v.label}</Text>
+                                                            <Text color="textSecondary">{label || v.label || ''}</Text>
                                                         </Box>
 
                                                         <Box
@@ -89,15 +89,11 @@ export function Summary({
                                                                 v.value && v.value.map ?
                                                                     v.value.map((v: any, j: number) => (
                                                                         <Box key={`${entryIndex}${i}${j}`} mb="s">
-                                                                            <Text>{v.valueText || v.value || 'N/A'}</Text>
-                                                                            {!v.value2 ? null : <Text>({v.value2})</Text>}
+                                                                            <Text>{`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}</Text>
                                                                         </Box>
                                                                     ))
                                                                     :
-                                                                    <>
-                                                                        <Text>{v.valueText || v.value || 'N/A'}</Text>
-                                                                        {!v.value2 ? null : <Text>({v.value2})</Text>}
-                                                                    </>
+                                                                    <Text>{`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}</Text>
                                                             }
 
                                                             <Box>
@@ -107,7 +103,7 @@ export function Summary({
                                                                             key={label + i}
                                                                             color="textSecondary"
                                                                             mt="s"
-                                                                        >{label}</Text>
+                                                                        >{label || ''}</Text>
                                                                     )
                                                                 })}
                                                             </Box>
@@ -147,7 +143,7 @@ export function Summary({
                                 <Box key={key} mb="l">
                                     {!!sectionTitle && (
                                         <Box mb="s">
-                                            <Text variant="title3">{sectionTitle}</Text>
+                                            <Text variant="title3">{sectionTitle || ''}</Text>
                                         </Box>
                                     )}
 

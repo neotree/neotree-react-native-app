@@ -55,6 +55,8 @@ export function TypeForm({ }: TypeFormProps) {
             let value = cached?.value || `${matched || ''}` || null;
             let valueText = cached?.valueText || matched || null;
 
+            let value2 = cached?.value2 || null;
+
             if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
                 value = cached?.value || patientNUID;
                 valueText = cached?.valueText || patientNUID;
@@ -63,6 +65,7 @@ export function TypeForm({ }: TypeFormProps) {
             return {
                 printable: f.printable !== false,
                 value,
+                value2,
                 valueText,
                 label: f.label,
                 key: f.key,
@@ -210,10 +213,11 @@ export function TypeForm({ }: TypeFormProps) {
 
     const setValue = useCallback((index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {
-            return `${index}` !== `${i}` ? v : {
+            const state = `${index}` !== `${i}` ? v : {
                 ...v,
                 ...val
             };
+            return state;
         }));
     }, []);
 
