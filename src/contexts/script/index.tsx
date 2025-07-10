@@ -798,9 +798,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         });
 
         const lastScreen = { ...getLastScreen() };
-        
         const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
-        console.log("....ERE...",lastScreenIndex)
+        //Set This For Review Screen
+        if(lastScreen){
+        setLastPage(lastScreen)
+        setLastPageIndex(lastScreenIndex)
+        }
         const next = getScreen({ direction: 'next' });
         const nextScreen = next?.screen || lastScreen;
         const nextScreenIndex = next?.screen ? next?.index : lastScreenIndex;
@@ -815,8 +818,6 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
          cachedEntries?.filter(e => `${e.screenIndex}` === `${lastScreenIndex}`).length>0) {
             if (reviewConfigurations?.length > 0) {
                 setReview(true)
-                setLastPage(lastScreen)
-                setLastPageIndex(lastScreenIndex)
             } else {
                 await handleReviewNoPress()
             }
