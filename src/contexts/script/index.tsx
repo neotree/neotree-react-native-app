@@ -470,7 +470,6 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
             const condition: string = lastScreen?.data?.condition || '';
             const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
-    
             if (condition) {
                 const parsedCondition = parseCondition(condition, entries.filter(e => e.screen.id !== lastScreen.id));
                 let conditionMet = evaluateCondition(parsedCondition);
@@ -483,14 +482,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         if (!isTrue) conditionMet = false;
                     });
                 }
-
                 if (!conditionMet) {
                     lastScreenIndex = lastScreenIndex + 1;
                     lastScreen = lastScreenIndex >= screens.length ? null : getLastScreen(lastScreenIndex);
                 }
             }
-
-            return lastScreen;
+            
+            return screens[lastScreenIndex];
         };
     
         return getLastScreen(activeScreenIndex) || activeScreen;
@@ -801,7 +799,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
         const lastScreen = { ...getLastScreen() };
         const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
-
+        //Set This For Review Screen
+        if(lastScreen){
+        setLastPage(lastScreen)
+        setLastPageIndex(lastScreenIndex)
+        }
         const next = getScreen({ direction: 'next' });
         const nextScreen = next?.screen || lastScreen;
         const nextScreenIndex = next?.screen ? next?.index : lastScreenIndex;
@@ -811,12 +813,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             setLoadingScreen(false);
             return;
         }
-
-        if (activeScreen?.id === lastScreen?.id) {
+       
+        if ((activeScreen?.id === lastScreen?.id) && 
+         cachedEntries?.filter(e => `${e.screenIndex}` === `${lastScreenIndex}`).length>0) {
             if (reviewConfigurations?.length > 0) {
                 setReview(true)
-                setLastPage(lastScreen)
-                setLastPageIndex(lastScreenIndex)
             } else {
                 await handleReviewNoPress()
             }
