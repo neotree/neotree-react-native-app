@@ -9,15 +9,13 @@ import { createTablesIfNotExist, dbTransaction,addNewColumns } from './db';
 import { makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
-import { exportSessions } from './exportSessions';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
     // const networkState = await Network.getNetworkStateAsync(); 
 
     await createTablesIfNotExist();
-    await addNewColumns()
-    await exportSessions()
+    await addNewColumns();
 
     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.SYNC_ERROR);
 
