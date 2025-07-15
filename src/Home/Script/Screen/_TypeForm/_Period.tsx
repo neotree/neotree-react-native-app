@@ -141,14 +141,17 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
                 onChange={date => {
-                    setValue(date);
+                   const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
+                    const validDate = isValidDate(date) ? date : null;
+                    setValue(validDate);
                     onChange({
+                        
                         exportType: 'number',
-                        value: !date ? null : date.toISOString(),
-                        valueText: dateToValueText(date, field.format),
-                        exportLabel:dateToValueText(date, field.format),
-						exportValue: date ? diffHours(date, new Date()) : null,
-      					calculateValue: date ? diffHours(date, new Date()) : null,
+                        value: !validDate ? null : validDate.toISOString(),
+                        valueText: dateToValueText(validDate, field.format),
+                        exportLabel:dateToValueText(validDate, field.format),
+						exportValue: validDate ? diffHours(validDate, new Date()) : null,
+      					calculateValue: validDate ? diffHours(validDate, new Date()) : null,
                     });
                 }}
                 valueText={valueText}

@@ -26,7 +26,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 				setLoadingScripts(false);
 				setScriptsInitialised(true);
 			} catch(err) {
-				console.log("---MI ERROR---",err)
+			
 			}
 		})();
 	}, []);
