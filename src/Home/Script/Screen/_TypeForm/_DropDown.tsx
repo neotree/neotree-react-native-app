@@ -79,18 +79,18 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                 searchable={opts?.length > 5}
                 value={value}
                 options={opts}
-                onChange={(val) => {
+                onChange={(val, o) => {
                     setValue({
                         value: `${val || ''}`,
                         value2: '',
                         key2: '',
                     });
-                    onChange({ 
+                    onChange({
                         exportType: 'dropdown',
 						value: val, 
-						valueLabel: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
-          				valueText: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
-						exportLabel: !val ? null : opts.filter((o:any)=>o.value===val)[0]?.label,
+						valueLabel: !val ? null : field.label,
+          				valueText: !val ? null : o.label,
+						exportLabel: !val ? null : o.label,
                         exportValue: !val ? null : val,
 					});
                 }}
@@ -102,6 +102,7 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                     
                     <Box>
                         <TextInput
+                            multiline
                             label={`${selected.option.label || ''}`}
                             value={value2 || ''}
                             onChangeText={value2 => {
