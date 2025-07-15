@@ -132,6 +132,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                         {!!currentDrug?.other ? (
                             <Box mt="l">
                                 <TextInput
+                                    multiline
                                     label="Other (Optional)"
                                     value={currentDrug.comment?.label || ''}
                                     numberOfLines={3}

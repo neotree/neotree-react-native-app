@@ -98,6 +98,9 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
                                     [o.value]: value[o.value] ? undefined : {
                                         value: o.value,
                                         key: o.value,
+                                        // valueLabel: o.label,
+                                        valueText: o.label,
+                                        exportLabel: o.label,
                                         value2: o.option ? '' : undefined,
                                         key2: o.option ? '' : undefined,
                                     },
