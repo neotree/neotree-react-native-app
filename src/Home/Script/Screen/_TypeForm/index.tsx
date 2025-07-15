@@ -84,7 +84,7 @@ export function TypeForm({ }: TypeFormProps) {
         let conditionMet = true;
         let formatedvalues = values;
 
-
+    
 
         if (repeatable) {
             formatedvalues = values.find(v => v.key === 'repeatables')?.value?.[collectionName];
@@ -114,7 +114,8 @@ export function TypeForm({ }: TypeFormProps) {
     const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
         try {
             const key = Object.keys(data)[0];
-            if (data[key].length > 0 && key) {
+           
+            if (data[key].length && data[key]?.[0]?.requiredComplete > 0 && values) {
                 // Find the repeatables object in the existing values
                 const repeatablesIndex = values.findIndex(item => item.key === 'repeatables');
                 let repeatables;
@@ -128,8 +129,8 @@ export function TypeForm({ }: TypeFormProps) {
                         }
                     };
                     const updated = [...values, repeatables]
-                    setValues(updated);
                     if (updated && updated.length > 0) {
+                         setValues(updated);
                         setEntryValues(updated)
                     }
                 } else {
@@ -145,8 +146,8 @@ export function TypeForm({ }: TypeFormProps) {
                         repeatables,
                         ...values.slice(repeatablesIndex + 1)
                     ];
-                    setValues(updatedValues);
                     if (updatedValues && updatedValues.length > 0) {
+                         setValues(updatedValues);
                         setEntryValues(deepSanitize(updatedValues))
                     }
                 }
@@ -249,7 +250,6 @@ export function TypeForm({ }: TypeFormProps) {
                 ...e.values,
             ], []),
         ];
-
         if (repeatable && !values.find(v => v.key === 'repeatables')?.value) {
             const repeatablesGrouped: Record<string, any[]> = {};
 

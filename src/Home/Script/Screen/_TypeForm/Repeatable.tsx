@@ -54,7 +54,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const val = values[field.key];
                 const conditionMet = evaluateCondition(field, index);
                 if (!conditionMet) return true;
-                return !!val?.['value'];
+                return field.optional || !!val?.['value'];
             });
 
             const requiredComplete =
@@ -202,14 +202,15 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 if (!conditionMet) {
                     return true
                 }
-                return (!!val
+                return field.optional || (!!val
                     && !!val?.['value'])
             });
 
             const collectionFieldValue = newValues?.[collectionField];
             const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
+           
             const requiredComplete = hasCollectionField
-                && fields.filter(f => !f.editable && !f.optional).every(field => {
+                && fields.filter(f => (!f.editable && !f.optional)).every(field => {
                     const val = newValues[field.key];
                     if (val?.['value'] === 'other') {
                         const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
