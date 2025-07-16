@@ -133,11 +133,14 @@ export function Search({
 
             if (!searched || searched.length <= 0) {
                 const location = await api.getLocation();
+                //Prioritise Local Search
                 if (location && location.hospital) {
                     searched = await api.getLocalSessionsByUID(uid, location.hospital)
 
-                } else {
-                    searched = await api.getExportedSessionsByUID(uid);
+                }
+               //If Still No Records Found, Check on Local Database And Online Database
+                if(!searched || searched.length<=0){
+                 searched = await api.getExportedSessionsByUID(uid);
                 }
 
             }
