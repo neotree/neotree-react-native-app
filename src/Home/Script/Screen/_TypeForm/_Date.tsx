@@ -38,6 +38,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                     valueLabel: formatedDate,
                     exportValue: formatedDate,
                     exportLabel: formatedDate,
+                    label: field?.label
                 });
                 setValue(date);
             }
@@ -47,6 +48,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 onChange({
                     exportType: 'date',
                     value: date,
+                    label: field?.label,
                     valueText: (() => {
                         switch (field.type) {
                             case 'date':
@@ -66,6 +68,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 onChange({
                     exportType: 'date',
                     value: date,
+                     label: field?.label,
                     valueText: (() => {
                         switch (field.type) {
                             case 'date':
@@ -165,6 +168,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                     const error = getErrors(validDate ? validDate.toISOString() : null)[0] || null;
                     setValue(validDate);
                     onChange({
+                        label:field?.label,
                         error,
                         exportType: 'date',
                         value: validDate ? validDate.toISOString() : null,

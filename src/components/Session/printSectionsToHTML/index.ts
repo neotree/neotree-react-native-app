@@ -119,15 +119,19 @@ let qrSmall = false
               isFlexRow = false;
               hideLabel = true;
             }
+             let value = v.valueText || v.value || 'N/A'
+            if(v.type=='datetime' ||v.type=='date'){
+              value= formatDate(value,v.type)
+            }
 
             return `
               <div class="${isFlexRow ? 'row' : ''}">
                   <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
                   <div>
-                      ${v.value && v.value.map ?
-                      v.value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
+                      ${value && value.map ?
+                      value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
                       :
-                      `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
+                      `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                     }
                     ${!v.extraLabels?.length ? '' : `
                       <div style="margin:10px 0;">
@@ -156,11 +160,16 @@ let qrSmall = false
               const repeatableFields = Object.entries(item)
                 .filter(([, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
                 .map(([k, v]: [string, any]) => {
+                  let value = v.valueText || v.value || 'N/A'
+
+                  if(v.exportType=='datetime' ||v.exportType=='date'){
+                  value = formatDate(value,v.exportType)
+                   }
                   return `
                       <div class="row">
                           <span style="font-weight:bold;">${v.label || k}</span>
                           <div>
-                              <span>${v.valueText || v.value || 'N/A'}</span>
+                              <span>${value}</span>
                           </div>
                       </div>
                   `;
@@ -172,6 +181,7 @@ let qrSmall = false
                   </div>
               `;
             }).join('');
+            
           }).join('')
           : '';
 
@@ -186,16 +196,35 @@ let qrSmall = false
       `;
   }).join('');
 
+  function formatDate(input: string | null | undefined, type: 'date' | 'datetime'): string {
+    if (!input) return '';
+
+    const parsedDate = new Date(input);
+
+    // Check if date is valid
+    if (isNaN(parsedDate.getTime())) return '';
+
+    const options: Intl.DateTimeFormatOptions =
+        type === 'datetime'
+            ? { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }
+            : { day: '2-digit', month: 'long', year: 'numeric' };
+
+    return parsedDate.toLocaleString('en-GB', options).replace(',', '');
+}
+
   const generateImageHtml = async () => {
 
 
     try {
-
-      let htmlContent = `
-                  <div style="width: 300px; height: 300px; text-align: center; margin: 0 auto;">
-                      ${await generateQRCode()}
-                  </div>
-                  `;
+      
+      const generatedQR = await generateQRCode()
+      let htmlContent = !!qrSmall? `<div style="text-align: center; margin: 0 auto;">
+                  ${generatedQR}
+              </div>`:
+              `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
+                  ${generatedQR}
+              </div>
+              `;
       return htmlContent;
 
     } catch (e) {
@@ -207,7 +236,7 @@ let qrSmall = false
 
 
   const qrcode =
-    `<div style="justify-content: center; align-items: center;">
+    `<div style="justify-content: center; align-items: left;">
       ${await generateImageHtml()}
       <br/>
       </div>`
@@ -218,7 +247,7 @@ let qrSmall = false
     `, session);
   }else{
     return getBaseHTML(`
-        <div class="grid">${html}</div>${qrcode}
+        <div class="grid">${html}${qrcode}</div>
     `, session);
   }
 }

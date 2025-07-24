@@ -24,7 +24,7 @@ type RepeatableProps = {
     allValues: any;
 };
 type FormItem = {
-    createdAt: Date;
+    createdAt: string;
     id: number;
     isCollapsed: boolean;
     values: Record<string, any>;
@@ -77,7 +77,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     });
 
             return [{
-                createdAt: new Date(createdAt),
+                createdAt: new Date(createdAt).toISOString(),
                 id,
                 isCollapsed: true,
                 values,
@@ -139,7 +139,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         }, {} as Record<string, any>);
 
         const newForm: FormItem = {
-            createdAt: new Date(),
+            createdAt: new Date().toISOString(),
             id: Date.now() + Math.floor(Math.random() * 1000),
             isCollapsed: false,
             values: initialValues,
@@ -188,6 +188,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
         const updatedForms = forms.map((form) => {
             if (form.id !== id) return form;
+            const createAt = form.createdAt
             const enhancedValue = {
                 ...value,
                 printable: field.printable,
@@ -229,25 +230,33 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         && !!val['value']
                     )
                 });
-            const updatedValue = { ...form, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
+            const updatedValue = { ...form,createAt, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
+
             return updatedValue;
         });
         setDisabled(updatedForms?.filter(f => !f.requiredComplete).length > 0);
         setForms(updatedForms);
-
         notifyParent(updatedForms);
     };
 
     const notifyParent = (formsList = forms) => {
         const completedForms = formsList
             .map(({ values, id, createdAt, requiredComplete, hasCollectionField }) => ({ ...values, id, createdAt, requiredComplete, hasCollectionField }));
-
-        onChange({ [collectionName]: completedForms }, collectionName);
+         
+         const formatted = completedForms?.map(cf=>{
+        
+          return cleanNumericKeys(cf)
+         })
+  
+        onChange({ [collectionName]: formatted }, collectionName);
     }
 
 
     const dateIsToday = (date: Date) => {
         const today = new Date()
+        if(!date){
+            return false
+        }
         return (date.getDate() == today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() == today.getFullYear())
     }
 
@@ -268,7 +277,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     valueLabel: match.label,
                     valueText: match.label,
                     exportLabel: match.label,
-                    exportValue: value
+                    exportValue: value,
+                    label:field.label
                 };
             }
         }
@@ -281,17 +291,31 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             valueLabel: formatedValue,
             valueText: formatedValue,
             exportLabel: formatedValue,
-            exportValue: formatedValue
+            exportValue: formatedValue,
+            label:field.label
         };
 
     }
+
+    function cleanNumericKeys(obj: any): any {
+    if (Array.isArray(obj)) {
+        return obj.map(cleanNumericKeys);
+    } else if (obj && typeof obj === 'object') {
+        return Object.fromEntries(
+            Object.entries(obj)
+                .filter(([key]) => !/^\d+$/.test(key)) // remove numeric string keys
+                .map(([key, value]) => [key, cleanNumericKeys(value)])
+        );
+    }
+    return obj;
+}
+
 
     function transformToFullFieldObject(partial: any) {
         const transformed: any = {};
         for (const key in partial) {
             let valueObj = partial[key];
             const field = fields.filter(f => f.key === key)[0];
-
             if (valueObj?.value === '[object Object]') {
                 valueObj.value = null;
             }
@@ -309,7 +333,9 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 if (dropdownInfo !== null)
                     Object.assign(base, dropdownInfo);
             } else if (field.type === 'period' && base) {
-                const periodInfo = getPeriodValueText(field, valueObj.value);
+                const calc = String(field?.calculation)?.replace("$","")
+                const calValue = partial[calc]?.value
+                const periodInfo = getPeriodValueText(field, calValue);
                 if (periodInfo && periodInfo !== null)
                     Object.assign(base, periodInfo);
             } else if (base && (field.type === 'date' || field.type === 'datetime')) {
@@ -325,11 +351,11 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
 
 
-    const renderFieldComponent = (field: any, formId: number, value: any, index: number, createdAt: Date) => {
+    const renderFieldComponent = (field: any, formId: number, value: any, index: number, createdAt: string) => {
         const form = forms.find(f => f.id === formId)
         const formIndex = form ? forms.indexOf(form) : 0
         const conditionMet = form ? evaluateCondition(field, forms.indexOf(form)) : true
-        const editable = field.editable || dateIsToday(createdAt)
+        const editable = field.editable || dateIsToday(new Date(createdAt))
         const fieldProps = {
             field,
             fieldIndex: index,
@@ -369,8 +395,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     <View key={form.id} style={styles.formContainer}>
                         <View style={styles.header}>
                             <Button
-                                disabled={!dateIsToday(form.createdAt)}
-                                style={{ backgroundColor: dateIsToday(form.createdAt) ? 'maroon' : 'pink', margin: 2 }}
+                                disabled={!dateIsToday(new Date(form.createdAt))}
+                                style={{ backgroundColor: dateIsToday(new Date(form.createdAt)) ? 'maroon' : 'pink', margin: 2 }}
                                 onPress={() => removeForm(form.id)}
                             >
                                 <Text style={{ fontWeight: '300', color: 'white' }}>Remove</Text>

@@ -11,7 +11,7 @@ export function TimeField({ field, conditionMet, onChange, entryValue,repeatable
     const canEdit = repeatable?editable:true
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, exportType: 'time', }); 
+            onChange({ value: null, valueText: null, exportType: 'time',label: field?.label}); 
             setValue(null);
         }
     }, [conditionMet]);
@@ -29,7 +29,8 @@ export function TimeField({ field, conditionMet, onChange, entryValue,repeatable
                         exportType: 'time',
                         value: !d ? null : d.toISOString(),
                         valueText: d ? require('moment')(new Date(d)).format('HH:mm') : '',
-                        exportLabel: d ? require('moment')(new Date(d)).format('HH:mm') : ''
+                        exportLabel: d ? require('moment')(new Date(d)).format('HH:mm') : '',
+                        label: field?.label
                     });
                 }}
             />

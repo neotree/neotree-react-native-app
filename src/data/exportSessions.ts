@@ -92,7 +92,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
 
                            }
                            }catch(ex){
-                           console.log("FELLA---",ex)
+                         
                           }
                             }
 							resolve(true);

@@ -156,7 +156,6 @@ export function Search({
             }
             else if (searched) {
                 searched = filterDataWithPrePopulatedEntries(searched)
-
                 setSessions(searched);
                 setSearching(false);
                 setSearched(uid);
@@ -319,19 +318,29 @@ export function Search({
     }
 
     function filterDataWithPrePopulatedEntries(items: any[]): any[] {
-        return items.map(item => ({
-            data: {
-                ...item.data,
-                entries: Object.fromEntries(
-                    Object.entries(item.data.entries)
-                        .filter(([key, entry]) =>
-                            key === 'repeatables' ||
-                            (entry as any)?.prePopulate?.length > 0
-                        )
+    return items.map(item => ({
+        data: {
+            ...item.data,
+            entries: Object.fromEntries(
+                Object.entries(item.data.entries).filter(([key, entry]) =>
+                    key === 'repeatables' ||
+                    hasPrePopulate(entry)
                 )
-            }
-        }));
-    }
+            )
+        }
+    }));
+}
+
+function hasPrePopulate(entry: any): boolean {
+    // Check for top-level prePopulate
+    const topLevel = Array.isArray(entry?.prePopulate) && entry.prePopulate.length > 0;
+
+    // Check for nested in values.prePopulate
+    const nested = Array.isArray(entry?.values?.prePopulate) && entry.values.prePopulate.length > 0;
+
+    return topLevel || nested;
+}
+
 
     return (
         <>
