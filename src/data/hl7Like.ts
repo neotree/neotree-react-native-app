@@ -368,6 +368,7 @@ async function convertToJSON(input: string) {
           });
           const formattedField = aliasResult?.name || field;
 
+
           repeatableItem[formattedField] = {
             value: value.includes("^") ? value.split("^") : formatReturnValue(value),
             prePopulate,
@@ -383,11 +384,12 @@ async function convertToJSON(input: string) {
     if (currentSection === result.entries) {
       const [key, value, prePopulate] = parts;
       const formatted = formatReturnValue(value).split("^");
-
       const aliasResult = await getAliasKeyFromAliasAndScript({
         script: scriptId,
         alias: key,
       });
+     
+
       const formattedField = aliasResult?.name || key;
 
       currentSection[formattedField] = {
@@ -396,6 +398,7 @@ async function convertToJSON(input: string) {
           prePopulate: reverseFormatPrepopulate(prePopulate),
         },
       };
+        
       continue;
     }
 
@@ -418,7 +421,7 @@ async function convertToJSON(input: string) {
     data: result,
   };
 
-  delete transformed.entries;
+  delete transformed.repeatables;
   delete transformed.diagnoses;
 
   return transformed;

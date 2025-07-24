@@ -32,14 +32,14 @@ export function TextField({
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, exportType: 'text', }); 
+            onChange({ value: null, valueText: null, exportType: 'text',label: field?.label }); 
             setValue('');
         }
     }, [conditionMet]);
 
     React.useEffect(() => {
         if (isNeotreeID && conditionMet && patientNUID) {
-            onChange({ value: patientNUID, valueText: patientNUID, exportType: 'text', }); 
+            onChange({ value: patientNUID, valueText: patientNUID, exportType: 'text',label: field?.label }); 
             setValue(patientNUID);
             setDisabled(true);
         }
@@ -59,7 +59,7 @@ export function TextField({
                     generatedUID={generatedUID}
                     onChange={val => {
                         setValue(`${val || ''}`);
-                        onChange({ value: val,valueText:val, exportType: 'text',exportLabel:value  });
+                        onChange({ value: val,valueText:val, exportType: 'text',exportLabel:value,label: field?.label });
                     }}
                     autoGenerateValue={autoGenerateValue}
 
@@ -77,7 +77,7 @@ export function TextField({
                         let err = '';
                         setValue(value);
                         setError(err);
-                        onChange({ value: err ? null : value, valueText:value,exportType: 'text',exportLabel:value });
+                        onChange({ value: err ? null : value, valueText:value,exportType: 'text',exportLabel:value,label: field?.label});
                     }}
                 />
             

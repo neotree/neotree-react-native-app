@@ -79,7 +79,6 @@ export const getAliasFromKeyAndScriptId = (options:{
     })();
 });
 
-
 export const getAliasKeyFromAliasAndScript= (options:{
     script:string,
     alias: string

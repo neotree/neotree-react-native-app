@@ -21,26 +21,25 @@ export default async (session: any, showConfidential?: boolean) => {
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
   const sections: any[] = groupEntries(form);
-  
+
   const generateQRCode = async () => {
     try {
       const formattedData = await formatExportableSession(session, { showConfidential: true });
       const hl7 = await toHL7Like(formattedData);
       // QR code parameters
-      const dataToEncode:any = hl7
-      
-      if(dataToEncode.length<100) {
+      const dataToEncode: any = hl7
+      if (dataToEncode.length < 200) {
         qrSmall = true
       }
-      let erc:any = 'H'
-     if(dataToEncode.length>3057 && dataToEncode.length<=3993){
-      erc='Q'
-      }else if(dataToEncode.length>3993 && dataToEncode.length<=5596){
-        erc='M'
-      }else if(dataToEncode.length>5596) {
-       erc='L'
+      let erc: any = 'H'
+      if (dataToEncode.length > 3057 && dataToEncode.length <= 3993) {
+        erc = 'Q'
+      } else if (dataToEncode.length > 3993 && dataToEncode.length <= 5596) {
+        erc = 'M'
+      } else if (dataToEncode.length > 5596) {
+        erc = 'L'
       }
-     
+
       const url = await new Promise((resolve, reject) => {
         QRCode.toString(
           dataToEncode,
@@ -48,7 +47,7 @@ export default async (session: any, showConfidential?: boolean) => {
             type: 'svg',
             errorCorrectionLevel: erc,
             margin: 2,
-            width:qrSmall?100:undefined
+            width: qrSmall ? 100 : undefined
           },
           (err, url) => {
             if (err) {
@@ -60,13 +59,13 @@ export default async (session: any, showConfidential?: boolean) => {
         );
       });
       return url;
-      
+
     } catch (e) {
       return null;
     }
   };
 
- 
+
   let managementHTML = management.map((screen: any) => {
     let sections = [
       { title: screen.metadata.title1, image: screen.metadata.image1?.data, text: screen.metadata.text1, },
@@ -91,15 +90,17 @@ export default async (session: any, showConfidential?: boolean) => {
   managementHTML = !managementHTML ? '' : `<div style="page-break-before:always;">${managementHTML}</div>`;
   const generateImageHtml = async () => {
 
-  
+
     try {
-    
-      let htmlContent = `
-              <div style="width: 250px; height: 300px; text-align: center; margin: 0 auto;">
-                  ${await generateQRCode()}
+      const generatedQR = await generateQRCode()
+      let htmlContent = !!qrSmall ? `<div style="text-align: center; margin: 0 auto;">
+                  ${generatedQR}
+              </div>`:
+        `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
+                  ${generatedQR}
               </div>
               `;
-      
+
       return htmlContent;
 
     } catch (e) {
@@ -111,17 +112,17 @@ export default async (session: any, showConfidential?: boolean) => {
 
 
   const qrcode =
-    `<div style="justify-content: center; align-items: center;">
+    `<div style="justify-content: center; align-items: left;">
   ${await generateImageHtml()}
   <br/>
   </div>
   `
-  const tables =sections
+  const tables = sections
     .filter(([, entries]) => entries.length)
     .map(([sectionTitle, entries]) => {
-   
+
       entries = entries.filter((e: any) => e.values.length);
-     
+
       return `
         ${!sectionTitle ? '' : (`
           <div class="title row">
@@ -149,30 +150,35 @@ export default async (session: any, showConfidential?: boolean) => {
                   isFlexRow = false;
                   hideLabel = true;
                 }
+                let value = v.valueText || v.value || 'N/A'
+                const exportType = v.type ||v.exportType
+                if (exportType == 'datetime' || exportType == 'date') {
+                  value = formatDate(value, exportType)
+                }
 
                 return `
                         <div  class="${isFlexRow ? 'row' : ''}">
                           <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
                           <div>
-                              ${v.value && v.value.map ?
-                                  v.value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
-                                  :
-                                  `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
-                                }
+                              ${value && value.map ?
+                    value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
+                    :
+                    `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
+                  }
 
                               ${!v.extraLabels?.length ? '' : `
                                 <div style="margin:10px 0;">
                                   ${v.extraLabels.map((label: string) => {
-                                    label = label
-                                      .replace(new RegExp('Hourly volume'), '<b>Hourly volume</b>')
-                                      .replace(new RegExp('Administration frequency'), '<b>Administration frequency</b>')
-                                      .replace(new RegExp('Route of Administration'), '<b>Route of Administration</b>')
-                                      .replace(new RegExp('Dosage'), '<b>Dosage</b>');
-                                    return `
+                    label = label
+                      .replace(new RegExp('Hourly volume'), '<b>Hourly volume</b>')
+                      .replace(new RegExp('Administration frequency'), '<b>Administration frequency</b>')
+                      .replace(new RegExp('Route of Administration'), '<b>Route of Administration</b>')
+                      .replace(new RegExp('Dosage'), '<b>Dosage</b>');
+                    return `
                                       <div style="margin-bottom:5px;">
                                         <div style="opacity:0.7;">${label}</div>
                                       </div>`;
-                                  }).join('')}
+                  }).join('')}
                                 </div>
                               `}
                           </div>                  
@@ -186,10 +192,26 @@ export default async (session: any, showConfidential?: boolean) => {
         }
       `;
     }
-  ).join('');
-  if(!!qrSmall){
-  return baseHTML(`<div class="grid">${qrcode}${tables}</div><div>${managementHTML}</div>`, session);
-  }else{
-    return baseHTML(`<div>${qrcode}<\div><div class="grid">${tables}</div><div>${managementHTML}</div>`, session);
+    ).join('');
+
+  function formatDate(input: string | null | undefined, type: 'date' | 'datetime'): string {
+    if (!input) return '';
+
+    const parsedDate = new Date(input);
+
+    // Check if date is valid
+    if (isNaN(parsedDate.getTime())) return '';
+
+    const options: Intl.DateTimeFormatOptions =
+      type === 'datetime'
+        ? { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }
+        : { day: '2-digit', month: 'long', year: 'numeric' };
+
+    return parsedDate.toLocaleString('en-GB', options).replace(',', '');
+  }
+  if (!!qrSmall) {
+    return baseHTML(`<div class="grid">${qrcode}${tables}</div><div>${managementHTML}</div>`, session);
+  } else {
+    return baseHTML(`<div class="grid">${tables}${qrcode}</div><div>${managementHTML}</div>`, session);
   }
 };

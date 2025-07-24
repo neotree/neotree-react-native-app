@@ -39,7 +39,7 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
         }
         setValue(value);
         setError(err);
-        onChange({ value: err ? null : value,valueText:value, exportType: 'number',exportValue:value,exportLabel:value });
+        onChange({ value: err ? null : value,valueText:value, exportType: 'number',exportValue:value,exportLabel:value, label: field?.label });
     }, [onChange, field, maxDecimals]);
 
     React.useEffect(() => { 

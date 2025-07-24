@@ -35,23 +35,26 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
                 };
             });
 
-        opts = opts.filter((o, i) => i === opts.map(o => o.value).indexOf(o.value));
+        opts = opts?.filter((o, i) => i === opts?.map(o => o.value).indexOf(o.value));
 
         return {
             opts,
         };
     }, [field]);
 
-    const getValue = useCallback(() => {
-        return opts.reduce((acc, o) => {
-            return {
-                ...acc,
-                [o.value]: (entryValue?.value || []).find((v: types.ScreenEntryValue) => v.key == o.value),
-            };
-        }, {}) as {
-            [key: string]: undefined | types.ScreenEntryValue;
+   const getValue = useCallback(() => {
+    return opts.reduce((acc, o) => {
+        const values = Array.isArray(entryValue?.value) ? entryValue.value : [];
+        const match = values.find((v: types.ScreenEntryValue) => v?.key === o.value);
+        return {
+            ...acc,
+            [o.value]: match,
         };
-    }, [opts, entryValue, conditionMet]);
+    }, {} as {
+        [key: string]: undefined | types.ScreenEntryValue;
+    });
+}, [opts, entryValue, conditionMet]);
+
 
     const [value, setValue] = useState(getValue());
 
