@@ -7,6 +7,8 @@ import * as types from '../../../../types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
 import { mergeSessions } from '../../utils'
+import { APP_CONFIG } from '@/src/constants';
+
 
 
 
@@ -138,8 +140,9 @@ export function Search({
                     searched = await api.getLocalSessionsByUID(uid, location.hospital)
 
                 }
+                const localError = searched?.[0]
                //If Still No Records Found, Check on Local Database And Online Database
-                if(!searched || searched.length<=0){
+                if(localError|| !searched || searched.length<=0){
                  searched = await api.getExportedSessionsByUID(uid);
                 }
 
@@ -234,6 +237,7 @@ export function Search({
                                     onChange={() => {
                                         if (selected) {
                                             selected = false
+                                            setSelectedSession(null)
                                         } else {
                                             selected = true
                                         }
@@ -261,7 +265,7 @@ export function Search({
                                         if (selected) {
                                             setSelectedSession(session)
                                         } else {
-                                            selectedSession(null)
+                                            setSelectedSession(null)
                                         }
                                         const matched = session ? {
                                             session,
