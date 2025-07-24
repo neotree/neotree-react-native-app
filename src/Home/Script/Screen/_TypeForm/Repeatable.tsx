@@ -257,7 +257,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         if(!date){
             return false
         }
-        return (date.getDate() == today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() == today.getFullYear())
+        return (date?.getDate() == today.getDate() && date?.getMonth() === today.getMonth() && date?.getFullYear() == today.getFullYear())
     }
 
     // Utility to get valueLabel and valueText for dropdowns
