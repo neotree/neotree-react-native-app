@@ -35,8 +35,34 @@ export async function makeApiCall(
         url = [api_endpoint, endpoint].join('/');
 
         console.log('[API]: ', url);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 45000);
 
-        const res = await fetch(url, {
+        const method = options?.method?.toUpperCase() || 'GET';
+
+        if(method==='GET'){
+            try {
+               const res = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers,
+                'x-api-key': config.api_key,
+            },
+            
+        });
+        clearTimeout(timeout);
+        return res;
+      }
+        catch (err:any) {
+        if (err.name === 'AbortError') {
+            throw new Error('Network Request Taking Too Longer than the expected 45 Seconds!!');
+        }
+        throw err;
+       }
+        } else{
+               const res = await fetch(url, {
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -51,6 +77,9 @@ export async function makeApiCall(
         }
 
         return res;
+        }
+
+     
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
@@ -117,11 +146,17 @@ export async function makeLocalGetApiCall(
         if (!country) throw new Error('Location not set');
 
         const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-        if(!config){
+        const queryString = endpoint.split('?')[1];
+        const params = new URLSearchParams(queryString);
+        const hospitalId = params.get("hospital");
+
+        if(!config || !Array.isArray(config) || config.length<=0){
             return null
         }
-        if(Array.isArray(config)){
-
+        if(config.length>0 && config[0]['hospital']!=hospitalId){
+            return null
+        }
+        else{
         let api_endpoint =  config?.[0].host;
         api_endpoint[api_endpoint.length - 1] === '/' ? 
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
@@ -133,24 +168,36 @@ export async function makeLocalGetApiCall(
     
        const sec = config?.[0].secret
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+          try {
+
         const res = await fetch(url, {
             method:'GET',
+            signal: controller.signal,
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers,
                 'x-api-key': config?.[0].api_key,
             }
         });
-
+        
         if (res.status !== 200) {
             console.log(res);
         }
        
         const sessions = decryptInReactNative(await res?.json(),sec)
-       
+        clearTimeout(timeout);
         return sessions;
+    }catch (err:any) {
+        if (err.name === 'AbortError') {
+            throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
+        }
+        throw err;
+       }
     }
-    return null
+   
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
