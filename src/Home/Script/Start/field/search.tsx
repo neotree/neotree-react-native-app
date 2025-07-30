@@ -153,7 +153,7 @@ export function Search({
             if (error && error.error) {
                 setToClear(true)
                 setValidationMessage(
-                    `${error.error} error occured. Do you want to proceed auto populating with the current Neotree-ID?`
+                    `${error.error}. Do you want to proceed with the current Neotree-ID?(NO DATA AUTO-POPULATION)`
                 )
                 setSearching(false);
             }
@@ -166,7 +166,7 @@ export function Search({
                 setToClear(true)
                 setSearching(false);
                 setValidationMessage(
-                    "No Matched Sessions Found. Do you want to proceed auto populating with the current Neotree-ID?"
+                    "No Matched Sessions Found. Do you want to proceed with the current Neotree-ID?(NO DATA AUTO-POPULATION)"
                 );
             }
             if (script_type == 'discharge') {
