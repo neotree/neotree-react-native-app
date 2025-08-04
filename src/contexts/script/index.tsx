@@ -286,10 +286,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 }, []);
     
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
-            let chunks: string[] = values.filter(v => v.parentKey).map(v => parseValue(condition, {
-                ...v,
-                key: v.parentKey,
-            }));
+            let chunks: string[] = values.filter(v => v.parentKey)
+                .map(v => parseValue(condition, {
+                    ...v,
+                    key: v.parentKey,
+                }));
 
             if (screen) {
                 switch (screen.type) {
@@ -300,6 +301,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     // do nothing
                 }
             }
+
+            chunks = chunks.filter(c => c !== condition);
 
             c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
     
