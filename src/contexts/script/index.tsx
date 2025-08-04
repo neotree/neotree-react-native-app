@@ -216,7 +216,17 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     
         const _form = _entries.reduce((acc, e) => {
             const index = !e.screen ? -1 : acc.map(e => e.screen.id).indexOf(e.screen.id);
-            if (index > -1) return acc.map((_e, i) => i === index ? { ..._e, ...e } : _e) as types.ScreenEntry[];
+
+            if (index > -1) {
+                return acc.map((accEntry, i) => {
+                    if (i === index)  {
+                        return { ...accEntry, ...e, }; 
+                    } else { 
+                        return accEntry;
+                    }
+                }) as types.ScreenEntry[];
+            }
+
             return [...acc, e] as types.ScreenEntry[];
         }, entries);
     
@@ -262,31 +272,36 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         ...acc,
                         ...(e.value && Array.isArray(e.value) ? e.value : [e]),
                     ];
-                    if (e.value2 && e.key2) {
-                        acc.push({
-                            ...e,
-                            value: e.value2,
-                            key: e.key2,
-                            value2: undefined,
-                            key2: undefined,
-                        });
-                    }
+
+                    acc.forEach(v => {
+                        if (v.value2) {
+                            acc.push({
+                                ...v,
+                                value: v.value2,
+                            });
+                        }
+                    });
+
                     return acc;
                 }, []);
     
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
-    
+            let chunks: string[] = values.filter(v => v.parentKey).map(v => parseValue(condition, {
+                ...v,
+                key: v.parentKey,
+            }));
+
             if (screen) {
-                let chunks = [];
                 switch (screen.type) {
                     case 'multi_select':
                         chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
-                        c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
                         break;
                     default:
                     // do nothing
                 }
             }
+
+            c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
     
             return c || condition;
         }, _condition);

@@ -82,7 +82,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
                 const isSelected = value[o.value];
                 const disabled = !canEdit;
 
-                const { value2, key2, } = { ...value[o.value] };
+                const { value2, } = { ...value[o.value] };
 
                 return (
                     <Box 
@@ -106,6 +106,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
                                         exportLabel: o.label,
                                         value2: o.option ? '' : undefined,
                                         key2: o.option ? '' : undefined,
+                                        parentKey: field.key,
                                     },
                                 };
 
@@ -145,7 +146,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
                                                 [o.value]: !prev[o.value] ? undefined : {
                                                     ...prev[o.value]!,
                                                     value2,
-                                                    key2: !value2 ? '' : (key2 || ''),
+                                                    key2: !value2 ? '' : (o.option?.key || ''),
                                                 },
                                             }));
 
@@ -154,7 +155,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
                                                     value: (entryValue?.value || []).map((v: types.ScreenEntryValue) => v.key !== o.value ? v : {
                                                         ...v,
                                                         value2,
-                                                        key2,
+                                                        key2: o.option?.key || '',
                                                     })
                                                 });
                                             }
