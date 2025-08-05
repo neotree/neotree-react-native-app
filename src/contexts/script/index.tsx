@@ -286,12 +286,14 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 }, []);
     
             let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+
             let chunks: string[] = values.filter(v => v.parentKey)
                 .map(v => parseValue(condition, {
                     ...v,
                     key: v.parentKey,
-                }));
-
+                }))
+                .filter(c => c !== condition);
+    
             if (screen) {
                 switch (screen.type) {
                     case 'multi_select':
@@ -302,9 +304,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 }
             }
 
-            chunks = chunks.filter(c => c !== condition);
-
-            c = (chunks.length > 1 ? chunks.map(c => `(${c})`) : chunks).join(' || ');
+            if (chunks.length) {
+                c = chunks.map(c => `(${c})`).join(' || ');
+            }
     
             return c || condition;
         }, _condition);
