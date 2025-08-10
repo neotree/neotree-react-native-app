@@ -1,7 +1,35 @@
 import moment from 'moment';
 
+import { ScreenEntry } from '@/src/types';
+
 export function getBaseHTML (html: any, session: any) {
-  const { completed_at, canceled_at, script, form } = session.data;
+  const { completed_at, canceled_at, script, form, } = session.data;
+
+  const printConfig = script?.data?.printConfig || {
+    headerFields: [] as string[],
+    footerFields: [] as string[],
+    sections: [] as any[],
+  };
+
+  const headerFields: { key: string; value: string; label: string; }[] = [];
+  
+  form.forEach((e: ScreenEntry) => {
+    let values = Array.isArray(e.value) ? e.value : (e.value ? [e.value] : []);
+    values = Array.isArray(e.values) ? e.values : (e.values ? [e.values] : []);
+
+    values
+      .filter(v => printConfig.headerFields.includes(v.key))
+      .forEach(v => {
+        const key = v.key;
+        const label = v.valueLabel || v.label;
+
+        let value = v.valueText || v.value || '';
+        if (v.value2) value = `${value || ''} (${v.value2})`.trim();
+
+        if (value && key) headerFields.push({ key, value, label, });
+      });
+  });
+
   const creationDate = completed_at || canceled_at;
 
   const formatScriptType = (type:string)=>{
@@ -22,8 +50,7 @@ export function getBaseHTML (html: any, session: any) {
       <style>
         body {
           font-size: 14px;
-          padding-left: 20px;
-          padding-right: 20px;
+          padding: 0px 20px;
         }
         #header {
           text-align: center;
@@ -65,12 +92,20 @@ export function getBaseHTML (html: any, session: any) {
           padding: 3px;
         }
 
-        footer {
+        tfoot, thead {
           font-size: 9px;
           color: #999;
+        }
+
+        thead {
+          margin-bottom: 20px;
+        }
+
+        #footer-meta {
           text-align: center;
           display: flex;
           align-items: center;
+          column-gap: 5px;
         }
 
         @page {
@@ -79,41 +114,70 @@ export function getBaseHTML (html: any, session: any) {
         }
 
         @media print {
-          footer {
+          /* tfoot {
             position: fixed;
             bottom: 0px;
             left: 0;
             width: 100%;
+          } */
+
+          .content-wrap {
+            page-break-inside: avoid;
           }
 
           /*#pageNo::after {
             counter-increment: page;
             content: "Page " counter(page) " of " counter(pages);
           }*/
-
-          .content-wrap {
-            page-break-inside: avoid;
-          }
         }
       </style>
     </header>
     <body>
-      <div id="header">
-        <div id="headerImg">
-          <h3 id="headerTitle">${script.data.printTitle || script.data.title}</h3>
-          <p id="headerSubtitle">Ministry of Health - National ${formatScriptType(script.data.type)} Form</p>
-        </div>
-      </div>
-      <div id"content-wrap">
-        <div id="content">
-            ${html || ''}
-        <div>
-      </div>
-      <footer>
-        <span>Session ID: ${session.uid}</span>
-        <span style="margin:auto;" id="pageNo"></span>
-        <span>Creation date: ${moment(creationDate).format('DD MMM, YYYY')}</span>
-      </footer>
+      <table>
+        ${!headerFields.length ? '' : `
+          <thead>
+              <tr>
+                  <td>
+                    <div>
+                      ${headerFields.map(f => `
+                        <div><b>${f.label}</b>: ${f.value}</div>  
+                      `).join('')}
+                    </div>  
+                  </td>
+              </tr>
+          </thead>
+        `}
+
+        <tbody>
+            <tr>
+                <td>
+                  <div id="header">
+                    <div id="headerImg">
+                      <h3 id="headerTitle">${script.data.printTitle || script.data.title}</h3>
+                      <p id="headerSubtitle">Ministry of Health - National ${formatScriptType(script.data.type)} Form</p>
+                    </div>
+                  </div>
+                  <div id"content-wrap">
+                    <div id="content">
+                        ${html || ''}
+                    <div>
+                  </div>
+                </td>
+            </tr>
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <td>
+                  <div id="footer-meta">
+                    <span>Session ID: ${session.uid}</span>                    
+                    ${!creationDate ? '' : `<span>Creation date: ${moment(creationDate).format('DD MMM, YYYY')}</span>`}
+                    <span style="margin:auto;" id="pageNo"></span>
+                  </div>
+                </td>
+            </tr>
+        </tfoot>
+      </table>
     </body>
   </html>
   `;

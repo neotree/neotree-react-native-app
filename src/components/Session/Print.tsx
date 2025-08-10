@@ -25,7 +25,7 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
             const printSectionsHTML = await printSectionsToHTML({ session, showConfidential });
             if (printSectionsHTML) html = printSectionsHTML;
 
-            await ExpoPrint.printAsync({ html });
+            await ExpoPrint.printAsync({ html, height: 1122, });
         } catch(e: any) {
             setPrintingError(e);
         } finally {
