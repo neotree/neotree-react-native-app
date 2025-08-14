@@ -99,6 +99,9 @@ export default (html: any, session: any) => {
 
         thead {
           margin-bottom: 20px;
+          text-align: center;
+          background-color: red;
+          display: none;
         }
 
         #footer-meta {
@@ -137,8 +140,8 @@ export default (html: any, session: any) => {
         ${!headerFields.length ? '' : `
           <thead>
               <tr>
-                  <td>
-                    <div>
+                  <td style="text-align:center;">
+                    <div style="display:inline-block;text-align:left;">
                       ${headerFields.map(f => `
                         <div><b>${f.label}</b>: ${f.value}</div>  
                       `).join('')}
