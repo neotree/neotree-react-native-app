@@ -137,8 +137,8 @@ export function getBaseHTML (html: any, session: any) {
         ${!headerFields.length ? '' : `
           <thead>
               <tr>
-                  <td>
-                    <div>
+                  <td style="text-align:center;">
+                    <div style="display:inline-block;text-align:left;">
                       ${headerFields.map(f => `
                         <div><b>${f.label}</b>: ${f.value}</div>  
                       `).join('')}
