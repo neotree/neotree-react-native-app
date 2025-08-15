@@ -57,11 +57,24 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                     printable: printable && isSelected,
                     selected: isSelected,
                     extraLabels: [
-                        `Hourly volume: ${fluid.hourlyDosage} ${fluid.drugUnit} every ${fluid.hourlyFeed} hours`,
-                        `Administration frequency: ${fluid.administrationFrequency}`,
-                        `Route of Administration: ${fluid.routeOfAdministration}`,
-                        `${fluid.managementText}`,
-                        `${fluid.dosageText}`,
+                        {
+                            title: 'Hourly volume',
+                            label: `${fluid.hourlyDosage} ${fluid.drugUnit} every ${fluid.hourlyFeed} hours`,
+                        },
+                        {
+                            title: 'Administration frequency',
+                            label: fluid.administrationFrequency,
+                        },
+                        {
+                            title: 'Route of Administration',
+                            label: fluid.routeOfAdministration,
+                        },
+                        {
+                            label: fluid.managementText,
+                        },
+                        {
+                            label: fluid.dosageText,
+                        },
                     ],
                 },
             ];

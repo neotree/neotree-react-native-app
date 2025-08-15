@@ -1,7 +1,8 @@
+import QRCode from 'qrcode';
+import { ScreenEntryValue } from '@/src/types';
 import { getBaseHTML } from "./baseHTML";
 import { toHL7Like } from '../../../data/hl7Like'
 import { formatExportableSession } from '../../../data/getConvertedSession'
-import QRCode from 'qrcode';
 
 export async function printSectionsToHTML({
   session,
@@ -115,6 +116,8 @@ let qrSmall = false
             let isFlexRow = true;
             let hideLabel = false;
 
+            const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+
             if (['fluids', 'drugs'].includes(screenType)) {
               isFlexRow = false;
               hideLabel = true;
@@ -126,29 +129,29 @@ let qrSmall = false
 
             return `
               <div class="${isFlexRow ? 'row' : ''}">
-                  <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
-                  <div>
-                      ${value && value.map ?
+                <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
+                <div>
+                  <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
+                    ${value && value.map ?
                       value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
                       :
                       `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                     }
-                    ${!v.extraLabels?.length ? '' : `
-                      <div style="margin:10px 0;">
-                        ${v.extraLabels.map((label: string) => {
-                          label = label
-                            .replace(new RegExp('Hourly volume'), '<b>Hourly volume</b>')
-                            .replace(new RegExp('Administration frequency'), '<b>Administration frequency</b>')
-                            .replace(new RegExp('Route of Administration'), '<b>Route of Administration</b>')
-                            .replace(new RegExp('Dosage'), '<b>Dosage</b>');
-                          return `
-                            <div style="margin-bottom:5px;">
-                              <div style="opacity:0.7;">${label}</div>
-                            </div>`;
-                        }).join('')}
-                      </div>
-                    `}
-                  </div>                  
+                  </div>
+                  ${!extraLabels.length ? '' : `
+                    <div>
+                      ${extraLabels.map((item) => {
+                      const label = typeof item === 'string' ? item : (
+                        [item.title ? `<b>${item.title}</b>` : '', item.label].join(':')
+                      );
+                      return `
+                        <div style="margin-bottom:5px;">
+                          <div style="opacity:0.7;">${label}</div>
+                          </div>`;
+                      }).join('')}
+                    </div>
+                  `}
+                </div>                  
               </div>
             `;
           }).join('');
