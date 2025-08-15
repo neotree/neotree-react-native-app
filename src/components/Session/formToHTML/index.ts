@@ -1,10 +1,12 @@
 /* eslint-disable indent */
+
+import QRCode from 'qrcode';
+import { ScreenEntryValue } from '@/src/types';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
 import { formatExportableSession } from '../../../data/getConvertedSession'
 import { toHL7Like } from '../../../data/hl7Like'
-import QRCode from 'qrcode';
 
 
 
@@ -146,6 +148,8 @@ export default async (session: any, showConfidential?: boolean) => {
                 let isFlexRow = true;
                 let hideLabel = false;
 
+                const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+
                 if (['fluids', 'drugs'].includes(type)) {
                   isFlexRow = false;
                   hideLabel = true;
@@ -157,32 +161,32 @@ export default async (session: any, showConfidential?: boolean) => {
                 }
 
                 return `
-                        <div  class="${isFlexRow ? 'row' : ''}">
-                          <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
-                          <div>
-                              ${value && value.map ?
-                    value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
-                    :
-                    `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
-                  }
+                  <div  class="${isFlexRow ? 'row' : ''}">
+                    <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
+                    <div>
+                      <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
+                        ${value && value.map ?
+                          value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
+                          :
+                          `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
+                        }
+                      </div>
 
-                              ${!v.extraLabels?.length ? '' : `
-                                <div style="margin:10px 0;">
-                                  ${v.extraLabels.map((label: string) => {
-                    label = label
-                      .replace(new RegExp('Hourly volume'), '<b>Hourly volume</b>')
-                      .replace(new RegExp('Administration frequency'), '<b>Administration frequency</b>')
-                      .replace(new RegExp('Route of Administration'), '<b>Route of Administration</b>')
-                      .replace(new RegExp('Dosage'), '<b>Dosage</b>');
-                    return `
-                                      <div style="margin-bottom:5px;">
-                                        <div style="opacity:0.7;">${label}</div>
-                                      </div>`;
-                  }).join('')}
-                                </div>
-                              `}
-                          </div>                  
+                      ${!extraLabels?.length ? '' : `
+                        <div>
+                          ${extraLabels.map((item) => {
+                            const label = typeof item === 'string' ? item : (
+                              [item.title ? `<b>${item.title}</b>` : '', item.label].join(':')
+                            );
+                            return `
+                              <div style="margin-bottom:5px;">
+                                <div style="opacity:0.7;">${label}</div>
+                              </div>`;
+                          }).join('')}
                         </div>
+                      `}
+                    </div>                  
+                  </div>
                     `;
               }).join('');
 

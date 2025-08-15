@@ -62,11 +62,24 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     printable: printable && isSelected,
                     selected: isSelected,
                     extraLabels: [
-                        `Dosage: ${drug.dosage} ${drug.drugUnit}`,
-                        `Administration frequency: ${drug.administrationFrequency}`,
-                        `Route of Administration: ${drug.routeOfAdministration}`,
-                        `${drug.managementText}`,
-                        `${drug.dosageText}`,
+                        {
+                            title: 'Dosage',
+                            label: `${drug.dosage} ${drug.drugUnit}`,
+                        },
+                        {
+                            title: 'Administration frequency',
+                            label: drug.administrationFrequency,
+                        },
+                        {
+                            title: 'Route of Administration',
+                            label: drug.routeOfAdministration,
+                        },
+                        {
+                            label: `${drug.managementText}`,
+                        },
+                        {
+                            label: drug.dosageText,
+                        },
                     ],
                 },
             ];

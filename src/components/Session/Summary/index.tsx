@@ -1,4 +1,5 @@
 import React from "react";
+import { ScreenEntryValue } from '@/src/types';
 import { Box, Text } from "../../Theme";
 import { Confidentials } from "./Confidentials";
 import { ManagementScreen } from '../../ManagementScreen';
@@ -57,6 +58,8 @@ export function Summary({
                                             let isFlexRow = true;
                                             let hideLabel = false;
 
+                                            const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+
                                             if (['fluids', 'drugs'].includes(type)) {
                                                 isFlexRow = false;
                                                 hideLabel = true;
@@ -89,21 +92,60 @@ export function Summary({
                                                                 v.value && v.value.map ?
                                                                     v.value.map((v: any, j: number) => (
                                                                         <Box key={`${entryIndex}${i}${j}`} mb="s">
-                                                                            <Text>{`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}</Text>
+                                                                            <Text
+                                                                                style={[
+                                                                                    !extraLabels.length ? undefined : {
+                                                                                        fontWeight: 'bold',
+                                                                                    },
+                                                                                ]}
+                                                                            >
+                                                                                {`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}
+                                                                            </Text>
                                                                         </Box>
                                                                     ))
                                                                     :
-                                                                    <Text>{`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}</Text>
+                                                                    (
+                                                                        <Text
+                                                                            style={[
+                                                                                !extraLabels.length ? undefined : {
+                                                                                    fontWeight: 'bold',
+                                                                                },
+                                                                            ]}
+                                                                        >
+                                                                            {`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}
+                                                                        </Text>
+                                                                    )
                                                             }
 
                                                             <Box>
-                                                                {v.extraLabels && v.extraLabels.map((label: string, i: number) => {
+                                                                {extraLabels && extraLabels.map((item, i: number) => {
+                                                                    let title: null | React.ReactNode = null;
+
+                                                                    if ((typeof item !== 'string') && item?.title) {
+                                                                        title = (
+                                                                            <>
+                                                                                <Text
+                                                                                    color="textSecondary"
+                                                                                    mt="s"
+                                                                                    fontWeight="bold"
+                                                                                >{item.title}:</Text>
+                                                                            </>
+                                                                        );
+                                                                    }
+
+                                                                    const label = typeof item === 'string' ? item : item.label;
+
                                                                     return (
-                                                                        <Text
+                                                                        <Box 
                                                                             key={label + i}
-                                                                            color="textSecondary"
-                                                                            mt="s"
-                                                                        >{label || ''}</Text>
+                                                                            flexDirection="row"
+                                                                        >
+                                                                            {title}
+                                                                            <Text
+                                                                                color="textSecondary"
+                                                                                mt="s"
+                                                                            >{label || ''}</Text>
+                                                                        </Box>
                                                                     )
                                                                 })}
                                                             </Box>
