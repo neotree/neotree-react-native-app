@@ -48,7 +48,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
         const match = values.find((v: types.ScreenEntryValue) => v?.key === o.value);
         return {
             ...acc,
-            [o.value]: match,
+            [o.value]: !conditionMet ? undefined : match,
         };
     }, {} as {
         [key: string]: undefined | types.ScreenEntryValue;
@@ -80,7 +80,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
 
             {opts.map(o => {
                 const isSelected = value[o.value];
-                const disabled = !canEdit;
+                const disabled = !canEdit || !conditionMet;
 
                 const { value2, } = { ...value[o.value] };
 
