@@ -329,7 +329,7 @@ export function TypeForm({ }: TypeFormProps) {
 
                             const conditionMet = evaluateFieldCondition(f);
 
-                            // if (!conditionMet) return null;
+                            if (!conditionMet) return null;
 
                             const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
 
