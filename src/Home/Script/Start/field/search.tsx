@@ -117,7 +117,6 @@ export function Search({
 
             } else {
                 setToClear(false)
-
                 onSession(matched)
             }
         } else {
@@ -140,14 +139,14 @@ export function Search({
                     searched = await api.getLocalSessionsByUID(uid, location.hospital)
 
                 }
-                const localError = searched?.[0]
+                const localError = searched?.[0]?.['error']
                //If Still No Records Found, Check on Local Database And Online Database
                 if(localError|| !searched || searched.length<=0){
+                   
                  searched = await api.getExportedSessionsByUID(uid);
                 }
-
             }
-
+           
             const error = searched?.[0]
 
             if (error && error.error) {
@@ -158,7 +157,9 @@ export function Search({
                 setSearching(false);
             }
             else if (searched) {
+               
                 searched = filterDataWithPrePopulatedEntries(searched)
+                 console.log("AFRA===",JSON.stringify(searched))
                 setSessions(searched);
                 setSearching(false);
                 setSearched(uid);

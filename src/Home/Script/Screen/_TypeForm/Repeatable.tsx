@@ -184,6 +184,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         }
     }
 
+    
+
     const handleChange = (id: number, key: string, value: any, field: any) => {
 
         const updatedForms = forms.map((form) => {
@@ -195,7 +197,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 label: field.label,
                 prePopulate: field.prePopulate
             };
-            const newValues = { ...form.values, [key]: enhancedValue };
+            let newValues = { ...form.values, [key]: enhancedValue };
 
             const isComplete = fields.every(field => {
                 const val = newValues[field.key];
@@ -209,28 +211,33 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             const collectionFieldValue = newValues?.[collectionField];
             const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
-           
+            
             const requiredComplete = hasCollectionField
                 && fields.filter(f => (!f.editable && !f.optional)).every(field => {
                     const val = newValues[field.key];
                     if (val?.['value'] === 'other') {
-                        const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
-
+                       const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
                         if (otherField) {
                             return !!newValues[otherField?.key]?.['value'] || !!newValues[otherField]?.['value']
                         }
-                    }
-
+                    } 
+                    
                     const conditionMet = evaluateCondition(field, forms.indexOf(form))
                     if (!conditionMet) {
                         return true
                     }
-
                     return (!!val
                         && !!val['value']
                     )
                 });
-            const updatedValue = { ...form,createAt, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
+            // Clear Stale Data
+            const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
+             const val = newValues[field?.key];
+            if(otherField &&otherField?.key && newValues[otherField.key]&& val?.['value'] != 'other'){
+             newValues[otherField?.key]=null
+            }
+    
+            const updatedValue = { ...form, createAt, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
 
             return updatedValue;
         });
@@ -242,19 +249,19 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     const notifyParent = (formsList = forms) => {
         const completedForms = formsList
             .map(({ values, id, createdAt, requiredComplete, hasCollectionField }) => ({ ...values, id, createdAt, requiredComplete, hasCollectionField }));
-         
-         const formatted = completedForms?.map(cf=>{
-        
-          return cleanNumericKeys(cf)
-         })
-  
+
+        const formatted = completedForms?.map(cf => {
+
+            return cleanNumericKeys(cf)
+        })
+
         onChange({ [collectionName]: formatted }, collectionName);
     }
 
 
     const dateIsToday = (date: Date) => {
         const today = new Date()
-        if(!date){
+        if (!date) {
             return false
         }
         return (date?.getDate() == today.getDate() && date?.getMonth() === today.getMonth() && date?.getFullYear() == today.getFullYear())
@@ -278,7 +285,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     valueText: match.label,
                     exportLabel: match.label,
                     exportValue: value,
-                    label:field.label
+                    label: field.label
                 };
             }
         }
@@ -292,23 +299,23 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             valueText: formatedValue,
             exportLabel: formatedValue,
             exportValue: formatedValue,
-            label:field.label
+            label: field.label
         };
 
     }
 
     function cleanNumericKeys(obj: any): any {
-    if (Array.isArray(obj)) {
-        return obj.map(cleanNumericKeys);
-    } else if (obj && typeof obj === 'object') {
-        return Object.fromEntries(
-            Object.entries(obj)
-                .filter(([key]) => !/^\d+$/.test(key)) // remove numeric string keys
-                .map(([key, value]) => [key, cleanNumericKeys(value)])
-        );
+        if (Array.isArray(obj)) {
+            return obj.map(cleanNumericKeys);
+        } else if (obj && typeof obj === 'object') {
+            return Object.fromEntries(
+                Object.entries(obj)
+                    .filter(([key]) => !/^\d+$/.test(key)) // remove numeric string keys
+                    .map(([key, value]) => [key, cleanNumericKeys(value)])
+            );
+        }
+        return obj;
     }
-    return obj;
-}
 
 
     function transformToFullFieldObject(partial: any) {
@@ -333,7 +340,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 if (dropdownInfo !== null)
                     Object.assign(base, dropdownInfo);
             } else if (field.type === 'period' && base) {
-                const calc = String(field?.calculation)?.replace("$","")
+                const calc = String(field?.calculation)?.replace("$", "")
                 const calValue = partial[calc]?.value
                 const periodInfo = getPeriodValueText(field, calValue);
                 if (periodInfo && periodInfo !== null)
@@ -366,8 +373,12 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             conditionMet,
             editable,
             formIndex: formIndex,
-
             onChange: (val: any) => handleChange(formId, field.key, val, field)
+        }
+
+
+        if (!conditionMet) {
+            return null
         }
         switch (field.type) {
             case fieldsTypes.NUMBER:

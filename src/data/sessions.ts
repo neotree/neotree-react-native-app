@@ -110,7 +110,7 @@ export const getLocalSessionsByUID = (uid: string, hospital: string) => new Prom
             }));
         } catch (e: any) {
 
-            resolve([{ 'error': e?.message }])
+            resolve([{'error': e?.message }])
         }
     })();
 });
