@@ -159,7 +159,6 @@ export function Search({
             else if (searched) {
                
                 searched = filterDataWithPrePopulatedEntries(searched)
-                 console.log("AFRA===",JSON.stringify(searched))
                 setSessions(searched);
                 setSearching(false);
                 setSearched(uid);
