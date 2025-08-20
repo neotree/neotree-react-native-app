@@ -80,11 +80,12 @@ export function TypeForm({ }: TypeFormProps) {
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
+
     const evaluateFieldCondition = (f: any, formId?: number) => {
         let conditionMet = true;
         let formatedvalues = values;
 
-    
+
 
         if (repeatable) {
             formatedvalues = values.find(v => v.key === 'repeatables')?.value?.[collectionName];
@@ -106,6 +107,7 @@ export function TypeForm({ }: TypeFormProps) {
             conditionMet = evaluateCondition(
                 parseCondition(f.condition, [{ values: formatedvalues }])
             ) as boolean;
+
         }
 
         return conditionMet;
@@ -114,46 +116,57 @@ export function TypeForm({ }: TypeFormProps) {
     const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
         try {
             const key = Object.keys(data)[0];
-           
-            if (data[key].length && data[key]?.[0]?.requiredComplete > 0 && values) {
-                // Find the repeatables object in the existing values
-                const repeatablesIndex = values.findIndex(item => item.key === 'repeatables');
-                let repeatables;
 
-                if (repeatablesIndex === -1) {
-                    // Create a new repeatables object if it doesn't exist
-                    repeatables = {
-                        key: 'repeatables',
-                        value: {
-                            [key]: data[key],
+            if (data) {
+                {
+                    // Find the repeatables object in the existing values
+                    const formattedValues = values || []
+                    const repeatablesIndex = formattedValues.findIndex(item => item.key === 'repeatables');
+                    let repeatables;
+
+                    if (repeatablesIndex === -1) {
+                        // Create a new repeatables object if it doesn't exist
+                        repeatables = {
+                            key: 'repeatables',
+                            value: {
+                                [key]: data[key],
+                            }
+                        };
+                        const updated = [...formattedValues, repeatables]
+                        if (updated && updated.length > 0) {
+                            setValues(deepSanitize(updated));
+                            if (data[key]?.length && data[key].every(item =>
+                                item.requiredComplete === true ||
+                                item.requiredComplete > 0)) {
+                                setEntryValues(deepSanitize(updated))
+                            }
+
                         }
-                    };
-                    const updated = [...values, repeatables]
-                    if (updated && updated.length > 0) {
-                         setValues(updated);
-                        setEntryValues(updated)
-                    }
-                } else {
-                    // Update the existing repeatables object
-                    repeatables = { ...values[repeatablesIndex] };
+                    } else {
+                        // Update the existing repeatables object
+                        repeatables = { ...formattedValues[repeatablesIndex] };
 
-                    // Replace or add the incoming data for the given key
-                    repeatables.value[key] = data[key];
+                        repeatables.value[key] = data[key];
 
-                    // Create a new array with the updated repeatables
-                    const updatedValues = [
-                        ...values.slice(0, repeatablesIndex),
-                        repeatables,
-                        ...values.slice(repeatablesIndex + 1)
-                    ];
-                    if (updatedValues && updatedValues.length > 0) {
-                         setValues(updatedValues);
-                        setEntryValues(deepSanitize(updatedValues))
+                        // Create a new array with the updated repeatables
+                        const updatedValues = [
+                            ...formattedValues.slice(0, repeatablesIndex),
+                            repeatables,
+                            ...formattedValues.slice(repeatablesIndex + 1)
+                        ];
+                        if (updatedValues && updatedValues.length > 0) {
+                            setValues(deepSanitize(updatedValues));
+                            if (data[key]?.length && data[key].every(item =>
+                                item.requiredComplete === true ||
+                                item.requiredComplete > 0)) {
+                            setEntryValues(deepSanitize(updatedValues))
+                                }
+                        }
                     }
                 }
             }
         } catch (ex) {
-         
+
         }
     };
     function deepSanitize(input: any): any {
