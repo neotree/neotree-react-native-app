@@ -136,17 +136,16 @@ export function Search({
                 const location = await api.getLocation();
                 //Prioritise Local Search
                 if (location && location.hospital) {
+                
                     searched = await api.getLocalSessionsByUID(uid, location.hospital)
 
                 }
                 const localError = searched?.[0]?.['error']
-               //If Still No Records Found, Check on Local Database And Online Database
                 if(localError|| !searched || searched.length<=0){
-                   
                  searched = await api.getExportedSessionsByUID(uid);
                 }
             }
-           
+         
             const error = searched?.[0]
 
             if (error && error.error) {
