@@ -246,7 +246,17 @@ export function TypeForm({ }: TypeFormProps) {
 
         const hasErrors = values.filter(v => v.error).length;
         if (!repeatable) {
-            setEntryValues(hasErrors || !completed ? undefined : values);
+            const entryVals = values.filter(v => {
+                if (
+                    (v?.value === null) || 
+                    (v?.value === undefined) || 
+                    (v?.value === '')
+                ) return false;
+
+                return true;
+            });
+
+            setEntryValues(hasErrors || !completed ? undefined : entryVals);
         }
 
     }, [values, metadata]);
