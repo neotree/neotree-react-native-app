@@ -78,6 +78,13 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                     ],
                 },
             ];
+
+            _values = _values.sort((a, b) => {
+                const aPos = fluids.map(f => f.key).indexOf(a.key!);
+                const bPos = fluids.map(f => f.key).indexOf(b.key!);
+                return aPos - bPos;
+            });
+
             return _values;
         });
         setTimeout(() => {
