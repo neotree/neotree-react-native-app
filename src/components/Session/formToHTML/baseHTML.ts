@@ -99,9 +99,6 @@ export default (html: any, session: any) => {
 
         thead {
           margin-bottom: 20px;
-          text-align: center;
-          background-color: red;
-          display: none;
         }
 
         #footer-meta {
