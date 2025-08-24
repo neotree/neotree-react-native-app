@@ -45,7 +45,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                     label: item.label,
                     exportLabel:item.label,
                     key: item.key,
-                    type: item.type,
+                    type: item.type || 'checklist',
                     dataType: item.dataType,
                     exclusive: item.exclusive,
                     exportType: 'checklist',
@@ -58,7 +58,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
 				value: values,
 				key: metadata.key || activeScreen.data.title,
 				label: metadata.label || activeScreen.data.title,
-				type: metadata.dataType,
+				type: 'checklist',
 			}
 		]);
     }
