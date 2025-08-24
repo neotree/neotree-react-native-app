@@ -142,7 +142,7 @@ let qrSmall = false
                     <div>
                       ${extraLabels.map((item) => {
                       const label = typeof item === 'string' ? item : (
-                        [item.title ? `<b>${item.title}</b>` : '', item.label].join(':')
+                        [item.title ? `<b>${item.title}</b>` : '', item.label].filter(s => s).join(':')
                       );
                       return `
                         <div style="margin-bottom:5px;">
