@@ -83,6 +83,13 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     ],
                 },
             ];
+            
+            _values = _values.sort((a, b) => {
+                const aPos = drugs.map(d => d.key).indexOf(a.key!);
+                const bPos = drugs.map(d => d.key).indexOf(b.key!);
+                return aPos - bPos;
+            });
+            
             return _values;
         });
         setTimeout(() => {
