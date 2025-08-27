@@ -57,7 +57,8 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
           setCalcFrom(_calcFrom);
 
           const { result } = evalMath(fieldCalc, allValues);
-          const value = result === null ? '' : (!maxDecimals ? Math.round(result!) : result!);
+          let value = result === null ? '' : (!maxDecimals ? Math.round(result!) : result!);
+          if (value && Number(value) && maxDecimals) value = Number(value).toFixed(maxDecimals);
           onValueChange(value);
         }
         mounted.current = true;

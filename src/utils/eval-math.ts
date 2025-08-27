@@ -7,6 +7,9 @@ export function evalMath(
     if( condition.match(/MATH\(([^)]+)\)/)){
         return evaluateFormula(condition,values)
     }
+
+    condition = condition.toLowerCase();
+
     if (condition.toLowerCase().includes('sum')) {
         condition = condition
             .replace(/sum/gi, '')
@@ -43,7 +46,7 @@ export function evalMath(
             .replaceAll('/ ', '')
             .replaceAll('* ', '');
 
-        const entry = values.filter(v => `${v.key}`.toLowerCase().includes(key))[0];
+        const entry = values.filter(v => v.key?.toLowerCase?.() == key?.toLowerCase?.())[0];
 
         const valueIsValidNumber = !entry || (entry?.value === null) || isNaN(Number(entry?.value)) ? false : true;
         let value: number | null = valueIsValidNumber ? Number(entry?.value!) : null;
