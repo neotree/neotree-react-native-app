@@ -5,13 +5,16 @@ import { ScreenEntry } from '@/src/types';
 export default (html: any, session: any) => {
   const { completed_at, canceled_at, script, form, } = session.data;
 
-  const printConfig = script?.data?.printConfig || {
+  const printConfig ={
+    headerFormat: '',
     headerFields: [] as string[],
     footerFields: [] as string[],
     sections: [] as any[],
+    ...script?.data?.printConfig,
   };
 
   const headerFields: { key: string; value: string; label: string; }[] = [];
+  const headerFormat = printConfig.headerFormat || '';
     
   form.forEach((e: ScreenEntry) => {
     let values = Array.isArray(e.value) ? e.value : (e.value ? [e.value] : []);
@@ -29,6 +32,13 @@ export default (html: any, session: any) => {
         if (value && key) headerFields.push({ key, value, label, });
       });
   });
+
+  let formattedHeader = !headerFormat ? '' : headerFields.reduce((acc, f) => {
+    acc = acc.replaceAll(`[${f.key}]`, f.value);
+    return acc;
+  }, headerFormat);
+
+  formattedHeader = formattedHeader.replace(/\[(.*?)\]/gi, '');
 
   const creationDate = completed_at || canceled_at;
   const formatScriptType = (type:string)=>{
@@ -134,12 +144,12 @@ export default (html: any, session: any) => {
     </header>
     <body>
       <table>
-        ${!headerFields.length ? '' : `
+        ${!(headerFields.length || formattedHeader) ? '' : `
           <thead>
               <tr>
                   <td style="text-align:center;">
                     <div style="display:inline-block;text-align:left;">
-                      ${headerFields.map(f => `
+                      ${formattedHeader || headerFields.map(f => `
                         <div><b>${f.label}</b>: ${f.value}</div>  
                       `).join('')}
                     </div>  
