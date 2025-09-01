@@ -170,7 +170,10 @@ export function evaluateDrugsScreen({
                     dosage = d.dosage! * dosageMultiplier!;
                     if (d.weight !== null) dosage = dosage * d.weight!
 
-                    dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+                    // dosage = isNaN(dosage) ? dosage : Math.round(dosage);
+                    if (!isNaN(dosage) && dosage > 1) {
+                        dosage = Math.round(dosage);
+                    }
                 }
             }
 
