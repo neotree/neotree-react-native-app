@@ -74,7 +74,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                 const diagnoses = json?.diagnoses || [];
                 const aliases = json?.aliases || []
                 
-                await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys'].map(table => dbTransaction(
+                await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys', 'drugs_library'].map(table => dbTransaction(
                     `delete from ${table} where 1;`
                 )));
 
