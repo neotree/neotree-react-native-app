@@ -469,7 +469,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 lastScreen = s;
     
                 if (!s.data?.metadata?.drugs?.length) {
-                    lastScreen = getLastScreen(lastScreenIndex);
+                    // lastScreen = getLastScreen(lastScreenIndex);
+                    return null;
                 }
             }
 
@@ -484,7 +485,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 lastScreen = s;
     
                 if (!s.data?.metadata?.fluids?.length) {
-                    lastScreen = getLastScreen(lastScreenIndex);
+                    // lastScreen = getLastScreen(lastScreenIndex);
+                    return null;
                 }
             }
 
@@ -821,8 +823,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
         //Set This For Review Screen
         if(lastScreen){
-        setLastPage(lastScreen)
-        setLastPageIndex(lastScreenIndex)
+            setLastPage(lastScreen)
+            setLastPageIndex(lastScreenIndex)
         }
         const next = getScreen({ direction: 'next' });
         const nextScreen = next?.screen || lastScreen;
