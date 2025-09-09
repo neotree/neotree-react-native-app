@@ -210,8 +210,6 @@ function evaluateFormula(formula: string, values: types.ScreenEntryValue[]) {
       safeExpression = safeExpression.replace(regex, String(value));
     }
     
-    console.log("AFTER REPLACEMENT:", safeExpression);
-    
     let result: number;
 
     // Validate expression safety

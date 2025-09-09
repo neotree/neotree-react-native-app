@@ -95,7 +95,7 @@ export default async (session: any, showConfidential?: boolean) => {
 
     try {
       const generatedQR = await generateQRCode()
-      let htmlContent = !!qrSmall ? `<div style="text-align: center; margin: 0 auto;">
+      let htmlContent = !!qrSmall ? `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
                   ${generatedQR}
               </div>`:
         `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
@@ -114,11 +114,10 @@ export default async (session: any, showConfidential?: boolean) => {
 
 
   const qrcode =
-    `<div style="justify-content: center; align-items: left;">
+    `<div style="text-align: right;">
   ${await generateImageHtml()}
   <br/>
-  </div>
-  `
+</div>`
   const tables = sections
     .filter(([, entries]) => entries.length)
     .map(([sectionTitle, entries]) => {
