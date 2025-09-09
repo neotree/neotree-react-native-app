@@ -221,7 +221,7 @@ let qrSmall = false
     try {
       
       const generatedQR = await generateQRCode()
-      let htmlContent = !!qrSmall? `<div style="text-align: center; margin: 0 auto;">
+      let htmlContent = !!qrSmall? `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
                   ${generatedQR}
               </div>`:
               `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
@@ -237,12 +237,11 @@ let qrSmall = false
   }
 
 
-
-  const qrcode =
-    `<div style="justify-content: center; align-items: left;">
-      ${await generateImageHtml()}
-      <br/>
-      </div>`
+const qrcode =
+  `<div style="text-align: right;">
+  ${await generateImageHtml()}
+  <br/>
+</div>`
 
   if(!!qrSmall){
   return getBaseHTML(`

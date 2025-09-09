@@ -243,7 +243,7 @@ export function Search({
                                         const session = selected ? s : null;
 
                                         let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
-
+                                        console.log("----SESSION-SESSION-::::->",JSON.stringify(autoFill))
                                         if (autoFill) {
                                             if (filterEntries) {
 

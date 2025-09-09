@@ -304,6 +304,17 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
     }
 
+    function getDateValue(field:any,value:any){
+       const  formatedValue= formatDate(value);
+       return {
+            valueLabel: formatedValue,
+            valueText: formatedValue,
+            exportLabel: formatedValue,
+            exportValue: formatedValue,
+            label: field.label
+        };
+    }
+
     function cleanNumericKeys(obj: any): any {
         if (Array.isArray(obj)) {
             return obj.map(cleanNumericKeys);
@@ -346,7 +357,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 if (periodInfo && periodInfo !== null)
                     Object.assign(base, periodInfo);
             } else if (base && (field.type === 'date' || field.type === 'datetime')) {
-                const dateInfo = formatDate(valueObj.value);
+                const dateInfo = getDateValue(field,valueObj.value);
                 Object.assign(base, dateInfo);
             }
 
