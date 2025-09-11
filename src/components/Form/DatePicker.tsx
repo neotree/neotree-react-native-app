@@ -143,7 +143,7 @@ export function DatePicker({
                     maximumDate={!maxDate ? undefined : (maxDate === 'date_now' ? new Date() : new Date(maxDate))}
                     minimumDate={!minDate ? undefined : (minDate === 'date_now' ? new Date() : new Date(minDate))}
                     onChange={(e, selectedDate) => {
-                        if (!selectedDate) return setShowDatePicker(false);
+                        if (!selectedDate ||e.type==='dismissed') return setShowDatePicker(false);
                         setShowDatePicker(false);
                         // setTimeout(() => setDate(selectedDate), 0);
                         // setDate(selectedDate);
@@ -169,7 +169,7 @@ export function DatePicker({
                     is24Hour={true}
                     display="default"
                     onChange={(e, selectedDate) => {
-                        if (!selectedDate) return setShowTimePicker(false);
+                        if (!selectedDate||e.type==='dismissed') return setShowTimePicker(false);
                         setShowTimePicker(false);
                         // setTimeout(() => setDate(selectedDate), 0);
                         // setDate(selectedDate);
