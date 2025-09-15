@@ -20,7 +20,7 @@ type RepeatableProps = {
     collectionField: string;
     fields: any[];
     onChange: (updatedRepeatables: Record<string, Repeatable[]>, key: string) => void;
-    evaluateCondition: (f: any, form?: any) => boolean;
+    evaluateCondition: (f: any,form?:any) => boolean;
     allValues: any;
 };
 type FormItem = {
@@ -52,15 +52,15 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             const isComplete = fields.every(field => {
                 const val = values[field.key];
-                const conditionMet = evaluateCondition(field, index);
+                const conditionMet = evaluateCondition(field,forms?.[index]);
                 if (!conditionMet) return true;
                 return field.optional || !!val?.['value'];
             });
-
+            
             const requiredComplete =
                 (!!collectionFieldValue?.['value']) &&
                 fields
-                    .filter(f => !f.editable && !f.optional)
+                    .filter(f => !f.optional)
                     .every(field => {
                         const val = values[field.key];
                         if (val?.['value'] === 'other') {
@@ -69,8 +69,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                             );
                             return !!values[otherField?.key]?.['value'];
                         }
-
-                        const conditionMet = evaluateCondition(field, index);
+                        const conditionMet = evaluateCondition(field,forms?.[index]);
                         if (!conditionMet) return true;
 
                         return !!val?.['value'];
@@ -201,28 +200,36 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             const isComplete = fields.every(field => {
                 const val = newValues[field.key];
-                const conditionMet = form ? evaluateCondition(field, forms.indexOf(form)) : true
+                const conditionMet = form ? evaluateCondition(field,newValues) : true
+               
                 if (!conditionMet) {
                     return true
                 }
                 return field.optional || (!!val
                     && !!val?.['value'])
             });
-
+        
             const collectionFieldValue = newValues?.[collectionField];
             const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
-            
             const requiredComplete = hasCollectionField
-                && fields.filter(f => (!f.editable && !f.optional)).every(field => {
+                && fields.filter(f => (!f.optional)).every(field => {
                     const val = newValues[field.key];
+                    if(field.type==='dropdown'){
                     if (val?.['value'] === 'other') {
                        const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
                         if (otherField) {
                             return !!newValues[otherField?.key]?.['value'] || !!newValues[otherField]?.['value']
                         }
+                    } else{
+                        const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
+                        const val = newValues[field?.key];
+                        if(otherField &&otherField?.key && newValues[otherField.key]&& val?.['value'] != 'other'){
+                        newValues[otherField?.key]=null
                     } 
-                    
-                    const conditionMet = evaluateCondition(field, forms.indexOf(form))
+                    } 
+                   }
+                  
+                    const conditionMet = evaluateCondition(field,newValues)
                     if (!conditionMet) {
                         return true
                     }
@@ -230,13 +237,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         && !!val['value']
                     )
                 });
-            // Clear Stale Data
-            const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
-             const val = newValues[field?.key];
-            if(otherField &&otherField?.key && newValues[otherField.key]&& val?.['value'] != 'other'){
-             newValues[otherField?.key]=null
-            }
-    
+           
             const updatedValue = { ...form, createAt, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
 
             return updatedValue;
@@ -372,7 +373,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     const renderFieldComponent = (field: any, formId: number, value: any, index: number, createdAt: string) => {
         const form = forms.find(f => f.id === formId)
         const formIndex = form ? forms.indexOf(form) : 0
-        const conditionMet = form ? evaluateCondition(field, forms.indexOf(form)) : true
+        const conditionMet = form ? evaluateCondition(field,form) : true
         const editable = field.editable || dateIsToday(new Date(createdAt))
         const fieldProps = {
             field,
