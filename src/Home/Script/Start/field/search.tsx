@@ -7,13 +7,8 @@ import * as types from '../../../../types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
 import { mergeSessions } from '../../utils'
-import { APP_CONFIG } from '@/src/constants';
-
-
-
 
 const { width, height } = Dimensions.get("window");
-
 
 type SearchProps = {
     label: string;
@@ -41,7 +36,6 @@ export function Search({
     filterEntries,
     script_type
 }: SearchProps) {
-
     const [uid, setUID] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getLocalSessionsByUID>>>([]);
     const [merged, setMerged] = React.useState<any>([])
@@ -243,7 +237,7 @@ export function Search({
                                         const session = selected ? s : null;
 
                                         let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
-                                        console.log("----SESSION-SESSION-::::->",JSON.stringify(autoFill))
+
                                         if (autoFill) {
                                             if (filterEntries) {
 
