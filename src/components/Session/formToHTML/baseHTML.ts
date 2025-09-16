@@ -103,8 +103,7 @@ export default (html: any, session: any) => {
         }
 
         tfoot, thead {
-          font-size: 9px;
-          color: #999;
+          color: #333;
         }
 
         thead {
