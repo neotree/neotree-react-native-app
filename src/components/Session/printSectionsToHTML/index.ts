@@ -11,8 +11,9 @@ export async function printSectionsToHTML({
   session: any;
   showConfidential?: boolean;
 }) {
-  const { form, script } = session.data;
-let qrSmall = false
+  const { form, script, } = { ...session?.data };
+
+  let qrSmall = false
 
   const generateQRCode = async () => {
     try {
@@ -134,6 +135,7 @@ let qrSmall = false
                   <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
                     ${value && value.map ?
                       value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
+                      // value.map((val: any) => `<span>&#x2022; ${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
                       :
                       `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                     }

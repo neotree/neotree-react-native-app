@@ -17,7 +17,7 @@ import { toHL7Like } from '../../../data/hl7Like'
 
 export default async (session: any, showConfidential?: boolean) => {
 
-  let { form, management } = session?.data;
+  let { form, management, } = { ...session?.data };
   let qrSmall = false
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
@@ -166,6 +166,7 @@ export default async (session: any, showConfidential?: boolean) => {
                       <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
                         ${value && value.map ?
                           value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
+                          // value.map((v: any) => `<span>&#x2022; ${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
                           :
                           `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                         }

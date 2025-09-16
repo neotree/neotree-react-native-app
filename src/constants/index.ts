@@ -60,3 +60,9 @@ export const DefaultValueType = {
     UID: 'uid'
 };
   
+export const scriptPrintConfig = {
+    headerFormat: '',
+    headerFields: [] as string[],
+    footerFields: [] as string[],
+    sections: [] as any[],
+};
