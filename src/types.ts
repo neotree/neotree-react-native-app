@@ -161,7 +161,8 @@ export type ScreenEntryValue = {
   }[];
   selected?: boolean;
   data?: any;
-  comments?: { key?: string; label: string; }[]
+  comments?: { key?: string; label: string; }[];
+  listStyle?: 'none' | 'number' | 'bullet';
 };
 
 export type ScreenEntry = {

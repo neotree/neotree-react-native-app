@@ -3,13 +3,25 @@ import { TouchableOpacity } from 'react-native';
 import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
 import { fieldsTypes } from '@/src/constants';
+import { useScriptContext } from '@/src/contexts/script';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function MultiSelectField({ field, conditionMet, repeatable, editable, entryValue, onChange, }: MultiSelectFieldProps) {
+export function MultiSelectField({ 
+    field, 
+    conditionMet, 
+    repeatable, 
+    editable, 
+    entryValue, 
+    onChange, 
+}: MultiSelectFieldProps) {
     const canEdit = repeatable ? editable : true;
+
+    const ctx = useScriptContext();
+
+    const listStyle = ctx?.activeScreen?.data?.listStyle || 'none';
 
     const { opts, } = useMemo(() => {
         let opts: { 
@@ -118,6 +130,7 @@ export function MultiSelectField({ field, conditionMet, repeatable, editable, en
 
                                 onChange({
                                     value: !values.length ? undefined : values,
+                                    listStyle,
                                 });
                             }}
                         >
