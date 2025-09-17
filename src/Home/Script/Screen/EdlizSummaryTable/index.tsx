@@ -20,6 +20,8 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
         let score = 0;
         if (values) {
             score = values.reduce((acc, v) => {
+                if (v.score >= 0) return acc + v.score;
+
                 if (activeScreen.type === 'mwi_edliz_summary_table') {
 					acc += 1;
 				} else {
@@ -36,6 +38,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                     key: metadata.key,
                     type: metadata.dataType,
                     value: values,
+                    score,
                 }], 
                 {
                     value: [{
@@ -44,6 +47,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                         key: metadata.key,
                         type: metadata.dataType ? metadata.dataType : null,
                         valueText: score,
+                        score,
                     }],
                 }
             );
@@ -78,6 +82,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                         const checked = values.map(s => s.value).indexOf(item.id) > -1;
                         const value = item.id;
                         const _checked = !checked;
+                        const score = isNaN(Number(item.score)) ? undefined : Number(item.score);
 
                         const _entry = {
                             value,
@@ -88,6 +93,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                             dataType: item.dataType,
                             exclusive: item.exclusive,
                             confidential: item.confidential,
+                            score,
                         };
 
                         setValues(prev => {

@@ -149,8 +149,9 @@ export function Diagnosis(props: DiagnosisProps) {
                         {
                             text: 'Yes',
                             onPress: () => {
-                                setEntryValues(values);
-                                setTimeout(() => done(), 10);
+                                // setEntryValues(values);
+                                // setTimeout(() => done(), 10);
+                                ctxGoNext();
                             },
                             style: 'cancel'
                         },
