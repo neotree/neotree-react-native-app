@@ -17,7 +17,7 @@ import { toHL7Like } from '../../../data/hl7Like'
 
 export default async (session: any, showConfidential?: boolean) => {
 
-  let { form, management } = session?.data;
+  let { form, management, } = { ...session?.data };
   let qrSmall = false
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
@@ -148,6 +148,8 @@ export default async (session: any, showConfidential?: boolean) => {
                 let hideLabel = false;
 
                 const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+                let listStyle = v.listStyle || 'none';
+                if (v.type !== 'multi_select') listStyle = 'none';
 
                 if (['fluids', 'drugs'].includes(type)) {
                   isFlexRow = false;
@@ -165,7 +167,11 @@ export default async (session: any, showConfidential?: boolean) => {
                     <div>
                       <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
                         ${value && value.map ?
-                          value.map((v: any) => `<span>${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`).join('<br />')
+                          value.map((v: any, i: number) => {
+                            let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
+                            if (listStyle === 'none') bullet = '';
+                            return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`;
+                          }).join('<br />')
                           :
                           `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                         }

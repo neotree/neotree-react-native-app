@@ -215,7 +215,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         _condition = (_condition || '').toString();
     
         const _form = _entries.reduce((acc, e) => {
-            const index = !e.screen ? -1 : acc.map(e => e.screen.id).indexOf(e.screen.id);
+            const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
 
             if (index > -1) {
                 return acc.map((accEntry, i) => {
@@ -228,7 +228,19 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
 
             return [...acc, e] as types.ScreenEntry[];
-        }, entries);
+        }, [
+            ...entries,
+            ...nuidSearchForm.map(f => {
+                const entry = {
+                    value: [{
+                        value: f.value,
+                        key: f.key,
+                    }],
+                } as types.ScreenEntry;
+                
+                return entry;
+            }),
+        ]);
     
         const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
             value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
@@ -318,7 +330,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         }
     
         return sanitizeCondition(parsedCondition);
-    }, [entries, configuration, parseConditionString, flattenRepeatables, sanitizeCondition]);
+    }, [entries, configuration, nuidSearchForm, parseConditionString, flattenRepeatables, sanitizeCondition]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
@@ -517,6 +529,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [entries, drugsLibrary, activeScreen, activeScreenIndex, screens, evaluateCondition, parseCondition]);
 
     const getSuggestedDiagnoses = useCallback(() => {
+        const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
+        const score = (edlizSummary?.value || [])[0]?.score;
+        
+        if (score === 0) return [] as any[]; 
+
         let _diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
             return [...acc, d];
