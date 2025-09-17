@@ -11,8 +11,9 @@ export async function printSectionsToHTML({
   session: any;
   showConfidential?: boolean;
 }) {
-  const { form, script } = session.data;
-let qrSmall = false
+  const { form, script, } = { ...session?.data };
+
+  let qrSmall = false
 
   const generateQRCode = async () => {
     try {
@@ -117,6 +118,8 @@ let qrSmall = false
             let hideLabel = false;
 
             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+            let listStyle = v.listStyle || 'none';
+            if (v.type !== 'multi_select') listStyle = 'none';
 
             if (['fluids', 'drugs'].includes(screenType)) {
               isFlexRow = false;
@@ -133,7 +136,11 @@ let qrSmall = false
                 <div>
                   <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
                     ${value && value.map ?
-                      value.map((val: any) => `<span>${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`).join('<br />')
+                      value.map((val: any, i: any) => {
+                        let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
+                        if (listStyle === 'none') bullet = '';
+                        return `<span>${bullet}${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`;
+                      }).join('<br />')
                       :
                       `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
                     }

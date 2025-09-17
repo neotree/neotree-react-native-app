@@ -1,15 +1,13 @@
 import moment from 'moment';
 
 import { ScreenEntry } from '@/src/types';
+import { scriptPrintConfig } from '@/src/constants';
 
 export default (html: any, session: any) => {
   const { completed_at, canceled_at, script, form, } = session.data;
 
   const printConfig ={
-    headerFormat: '',
-    headerFields: [] as string[],
-    footerFields: [] as string[],
-    sections: [] as any[],
+    ...scriptPrintConfig,
     ...script?.data?.printConfig,
   };
 
@@ -103,8 +101,7 @@ export default (html: any, session: any) => {
         }
 
         tfoot, thead {
-          font-size: 9px;
-          color: #999;
+          color: #333;
         }
 
         thead {

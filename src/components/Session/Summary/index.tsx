@@ -59,6 +59,8 @@ export function Summary({
                                             let hideLabel = false;
 
                                             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+                                            let listStyle = v.listStyle || 'none';
+                                            if (v.type !== 'multi_select') listStyle = 'none';
 
                                             if (['fluids', 'drugs'].includes(type)) {
                                                 isFlexRow = false;
@@ -90,19 +92,24 @@ export function Summary({
                                                         >
                                                             {
                                                                 v.value && v.value.map ?
-                                                                    v.value.map((v: any, j: number) => (
-                                                                        <Box key={`${entryIndex}${i}${j}`} mb="s">
-                                                                            <Text
-                                                                                style={[
-                                                                                    !extraLabels.length ? undefined : {
-                                                                                        fontWeight: 'bold',
-                                                                                    },
-                                                                                ]}
-                                                                            >
-                                                                                {`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}
-                                                                            </Text>
-                                                                        </Box>
-                                                                    ))
+                                                                    v.value.map((v: any, j: number) => {
+                                                                        let bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+                                                                        if (listStyle === 'none') bullet = '';
+
+                                                                        return (
+                                                                            <Box key={`${entryIndex}${i}${j}`} mb="s">
+                                                                                <Text
+                                                                                    style={[
+                                                                                        !extraLabels.length ? undefined : {
+                                                                                            fontWeight: 'bold',
+                                                                                        },
+                                                                                    ]}
+                                                                                >
+                                                                                    {`${bullet}${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}
+                                                                                </Text>
+                                                                            </Box>
+                                                                        );
+                                                                    })
                                                                     :
                                                                     (
                                                                         <Text
