@@ -479,9 +479,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 lastScreen = s;
-    
+                
                 if (!s.data?.metadata?.drugs?.length) {
-                    // lastScreen = getLastScreen(lastScreenIndex);
+                     //lastScreen = getLastScreen(lastScreenIndex);
                     return null;
                 }
             }
@@ -839,7 +839,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         const lastScreen = { ...getLastScreen() };
         const lastScreenIndex = screens.map(s => `${s.id}`).indexOf(`${lastScreen?.id}`);
         //Set This For Review Screen
-        if(lastScreen){
+        if(lastScreen && reviewConfigurations?.length > 0){
             setLastPage(lastScreen)
             setLastPageIndex(lastScreenIndex)
         }
