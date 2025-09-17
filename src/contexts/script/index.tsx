@@ -529,6 +529,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [entries, drugsLibrary, activeScreen, activeScreenIndex, screens, evaluateCondition, parseCondition]);
 
     const getSuggestedDiagnoses = useCallback(() => {
+        const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
+        const score = (edlizSummary?.value || [])[0]?.score;
+        
+        if (score === 0) return [] as any[]; 
+
         let _diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
             return [...acc, d];

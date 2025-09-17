@@ -163,6 +163,7 @@ export type ScreenEntryValue = {
   data?: any;
   comments?: { key?: string; label: string; }[];
   listStyle?: 'none' | 'number' | 'bullet';
+  score?: number;
 };
 
 export type ScreenEntry = {
