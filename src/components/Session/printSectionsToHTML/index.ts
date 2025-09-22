@@ -119,7 +119,6 @@ export async function printSectionsToHTML({
 
             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
             let listStyle = v.listStyle || 'none';
-            if (v.type !== 'multi_select') listStyle = 'none';
 
             if (['fluids', 'drugs'].includes(screenType)) {
               isFlexRow = false;
