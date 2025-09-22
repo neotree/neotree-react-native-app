@@ -853,8 +853,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             return;
         }
        
-        if ((activeScreen?.id === lastScreen?.id) && 
-         cachedEntries?.filter(e => `${e.screenIndex}` === `${lastScreenIndex}`).length>0) {
+        if ((activeScreen?.id === lastScreen?.id)) {
             if (reviewConfigurations?.length > 0) {
                 setReview(true)
             } else {
