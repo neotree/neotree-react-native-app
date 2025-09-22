@@ -116,8 +116,12 @@ export function evaluateFluidsScreen({
                     if (d.weight !== null) dosage = dosage * d.weight!
 
                     // dosage = isNaN(dosage) ? dosage : Math.round(dosage);
-                    if (!isNaN(dosage) && dosage > 1) {
-                        dosage = Math.round(dosage);
+                    if (!isNaN(dosage)) {
+                        if (dosage > 1) {
+                            dosage = Math.round(dosage);
+                        } else {
+                            dosage = Number(dosage.toFixed(2));
+                        }
                     }
                 }
 

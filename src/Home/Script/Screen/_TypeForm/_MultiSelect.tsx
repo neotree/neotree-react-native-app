@@ -4,6 +4,7 @@ import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
 import { fieldsTypes } from '@/src/constants';
 import { useScriptContext } from '@/src/contexts/script';
+import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
@@ -23,35 +24,15 @@ export function MultiSelectField({
 
     const listStyle = ctx?.activeScreen?.data?.listStyle || 'none';
 
-    const { opts, } = useMemo(() => {
-        let opts: { 
-            value: string; 
-            label: string; 
-            option?: { 
-                key: string;
-                label: string; 
-            },
-        }[] = (field.values || '').split('\n')
-            .map((v = '') => v.trim())
-            .filter((v: any) => v)
-            .map((v: any) => {
-                v = v.split(',');
-                const option = (field.valuesOptions || []).find((o: any) => `${o.key}` === `${v[0]}`);
-                return { 
-                    value: v[0], 
-                    label: v[1], 
-                    option: !option ? undefined : {
-                        label: option.optionLabel,
-                        key: option.optionKey,
-                    },
-                };
+    const opts = useMemo(() => {
+        if (!field?.items) {
+            return parseFieldValues({
+                values: field.values,
+                options: field.valuesOptions,
             });
-
-        opts = opts?.filter((o, i) => i === opts?.map(o => o.value).indexOf(o.value));
-
-        return {
-            opts,
-        };
+        } else {
+            return parseFieldItems({ items: field.items, });
+        }
     }, [field]);
 
    const getValue = useCallback(() => {
@@ -91,14 +72,16 @@ export function MultiSelectField({
             <Text mb="m">{`${field.label || ''}${field.optional ? '' : ' *'}`}</Text>
 
             {opts.map(o => {
+                const exclusiveSelected = Object.values(value).find(o => o?.exclusive);
+
                 const isSelected = value[o.value];
-                const disabled = !canEdit || !conditionMet;
+                const disabled = !canEdit || !conditionMet || (exclusiveSelected && !isSelected);
 
                 const { value2, } = { ...value[o.value] };
 
                 return (
                     <Box 
-                        key={o.value}
+                        key={o.itemId}
                         {...(!(isSelected && o.option) ? undefined : {
                             backgroundColor: 'bg.active',
                             p: 'l',
@@ -109,7 +92,7 @@ export function MultiSelectField({
                             disabled={disabled}
                             onPress={() => {
                                 const state = {
-                                    ...value,
+                                    ...(o.exclusive ? {} : value),
                                     [o.value]: value[o.value] ? undefined : {
                                         value: o.value,
                                         key: o.value,
@@ -119,6 +102,8 @@ export function MultiSelectField({
                                         value2: o.option ? '' : undefined,
                                         key2: o.option ? '' : undefined,
                                         parentKey: field.key,
+                                        exclusive: o.exclusive,
+                                        enterValueManually: o.enterValueManually,
                                     },
                                 };
 
@@ -145,13 +130,13 @@ export function MultiSelectField({
                             </Card>
                         </TouchableOpacity>
 
-                        {isSelected && o.option && (
+                        {isSelected && o.enterValueManually && (
                             <>
                                 <Br spacing="m" />
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option.label || ''}`}
+                                        label={`${o.option?.label || ''}`}
                                         value={value2 || ''}
                                         onChangeText={value2 => {
                                             setValue(prev => ({

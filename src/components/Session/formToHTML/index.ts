@@ -149,7 +149,6 @@ export default async (session: any, showConfidential?: boolean) => {
 
                 const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 let listStyle = v.listStyle || 'none';
-                if (v.type !== 'multi_select') listStyle = 'none';
 
                 if (['fluids', 'drugs'].includes(type)) {
                   isFlexRow = false;
