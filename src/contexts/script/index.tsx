@@ -853,13 +853,17 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             return;
         }
        
-        if ((activeScreen?.id === lastScreen?.id) && 
-         cachedEntries?.filter(e => `${e.screenIndex}` === `${lastScreenIndex}`).length>0) {
-            if (reviewConfigurations?.length > 0) {
-                setReview(true)
-            } else {
-                await handleReviewNoPress()
-            }
+        if (
+            (activeScreen?.id === lastScreen?.id) 
+            // && cachedEntries?.filter(e => `${e.screenIndex}` === `${lastScreenIndex}`).length > 0
+        ) {
+            // if (reviewConfigurations?.length > 0) {
+            //     setReview(true)
+            // } else {
+            //     await handleReviewNoPress()
+            // }
+            const summary = await createSummaryAndSaveSession({ completed: true });
+			setSummary(summary);
             setLoadingScreen(false);
         } else {
             if (nextScreen) {
