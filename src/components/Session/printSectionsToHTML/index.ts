@@ -165,18 +165,23 @@ export async function printSectionsToHTML({
         // Handle repeatables
         const repeatablesHTML = repeatables
           ? (Object.entries(repeatables) as [string, any[]][]).map(([_, groupItems]) => {
-            return groupItems.map((item: any) => {
+            return groupItems.map((item: any,groupIndex:number) => {
               const repeatableFields = Object.entries(item)
                 .filter(([, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
-                .map(([k, v]: [string, any]) => {
+                .map(([k, v]: [string, any],itemIndex:number) => {
                   let value = v.valueText || v.value || 'N/A'
+                  let index =''
+                  if(itemIndex===0){
+                    index=`<strong>${groupIndex +1}.</strong>`
+                    value=`<i><strong>${value}</strong></i>`
+                  } 
 
                   if(v.exportType=='datetime' ||v.exportType=='date'){
                   value = formatDate(value,v.exportType)
                    }
                   return `
                       <div class="row">
-                          <span style="font-weight:bold;">${v.label || k}</span>
+                          <span style="font-weight:bold;">${index} ${v.label || k}</span>
                           <div>
                               <span>${value}</span>
                           </div>
