@@ -54,7 +54,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const val = values[field.key];
                 const conditionMet = evaluateCondition(field,forms?.[index]);
                 if (!conditionMet) return true;
-                return field.optional || !!val?.['value'];
+                return !!val?.['value'];
             });
             
             const requiredComplete =
@@ -197,17 +197,19 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 prePopulate: field.prePopulate
             };
             let newValues = { ...form.values, [key]: enhancedValue };
-
+            
             const isComplete = fields.every(field => {
                 const val = newValues[field.key];
                 const conditionMet = form ? evaluateCondition(field,newValues) : true
-               
+        
                 if (!conditionMet) {
                     return true
                 }
-                return field.optional || (!!val
-                    && !!val?.['value'])
+                return !!val
+                    && !!val?.['value']
             });
+
+
         
             const collectionFieldValue = newValues?.[collectionField];
             const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
