@@ -16,11 +16,12 @@ export function QRCodeScan(props: any) {
     Alert.alert(
       'Invalid QR Code',
       'The scanned QR code is not valid or cannot be processed. Please try again.',
-      [
-        {
-          text: 'OK',
-        }
-      ]
+       [
+            {
+                text: 'Retry',
+                style: 'cancel'
+            },
+        ]
     );
   }
 
