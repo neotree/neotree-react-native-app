@@ -98,8 +98,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
       }
 
     React.useEffect(() => {
-        const _calcFrom =getCalculationEntry(allValues,field.calculation)
-
+        const _calcFrom =getCalculationEntry(allValues,field.calculation||field.refKey)
         if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
           setCalcFrom(_calcFrom);
           if (_calcFrom && _calcFrom.value) {

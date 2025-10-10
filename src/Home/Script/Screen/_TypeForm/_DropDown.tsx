@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
 import { Box, Dropdown, Br, TextInput } from '../../../../components';
 import * as types from '../../../../types';
 
@@ -6,38 +7,25 @@ type DropDownFieldProps = types.ScreenFormTypeProps & {
     
 };
 
-export function DropDownField({ field, entryValue, onChange, conditionMet,repeatable,editable }: DropDownFieldProps) {
+export function DropDownField({ 
+    field, 
+    entryValue,
+    conditionMet,
+    repeatable,
+    editable,
+    onChange,
+}: DropDownFieldProps) {
     const canEdit = repeatable?editable:true
 
-    const { opts, } = useMemo(() => {
-        let opts: { 
-            value: string; 
-            label: string; 
-            option?: { 
-                label: string; 
-                key: string;
-            },
-        }[] = (field.values || '').split('\n')
-            .map((v = '') => v.trim())
-            .filter((v: any) => v)
-            .map((v: any) => {
-                v = v.split(',');
-                const option = (field.valuesOptions || []).find((o: any) => `${o.key}` === `${v[0]}`);
-                return { 
-                    value: v[0], 
-                    label: v[1], 
-                    option: !option ? undefined : {
-                        key: option.optionKey,
-                        label: option.optionLabel,
-                    },
-                };
+    const opts = useMemo(() => {
+        if (!field?.items) {
+            return parseFieldValues({
+                values: field.values,
+                options: field.valuesOptions,
             });
-
-        opts = opts.filter((o, i) => i === opts.map(o => o.value).indexOf(o.value));
-
-        return {
-            opts,
-        };
+        } else {
+            return parseFieldItems({ items: field.items, });
+        }
     }, [field]);
 
     const [{ value, value2 }, setValue] = React.useState({
@@ -96,14 +84,14 @@ export function DropDownField({ field, entryValue, onChange, conditionMet,repeat
                 }}
             />
 
-            {!!selected?.option && (
+            {!!selected?.enterValueManually && (
                 <>
                     <Br spacing="m" />
                     
                     <Box>
                         <TextInput
                             multiline
-                            label={`${selected.option.label || ''}`}
+                            label={`${selected.option?.label || ''}`}
                             value={value2 || ''}
                             onChangeText={value2 => {
                                 const key2 = !value2 ? '' : (selected?.option?.key || '');
