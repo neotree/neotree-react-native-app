@@ -68,14 +68,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                 pollData.forEach((s: any) => promises.push(new Promise((resolve, reject) => {
                     (async () => {
                         const { id, exported,local_export, ...exportable } = s
-                        try {
-                            if(!s.exported){
-                            await makeApiCall('nodeapi', `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
-                                method: 'POST',
-                                body: exportable,
-                            });
-                          }
-                            if(hasLocalConfig){
+                        if(hasLocalConfig){
 
                                 try{
                                     if(!local_export){
@@ -83,10 +76,9 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                                 method: 'POST',
                                 body: JSON.stringify(exportable),
                             })
-                           
                               if (res?.status == 200) {
                                 await updateSession({ local_export: true }, { where: { id, }, });
-                                resolve(true);
+                                
                             }
 
 
@@ -95,6 +87,15 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                          
                           }
                             }
+
+                        try {
+                            if(!s.exported){
+                            await makeApiCall('nodeapi', `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
+                                method: 'POST',
+                                body: exportable,
+                            });
+                          }
+                            
 							resolve(true);
                         } catch (e) { reject(e); }
                     })();

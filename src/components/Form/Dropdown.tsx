@@ -9,6 +9,7 @@ import { TextInput } from './TextInput';
 export type DropdownOption = {
     label: string | number;
     value: string | number;
+    itemId?: string | number;
 };
 
 export type DropdownProps = {
@@ -128,7 +129,7 @@ export function Dropdown({
                 {options.map((o, i) => {
                     if (searchVal && !`${o.label}`.match(new RegExp(searchVal, 'gi'))) return null;
                     return (
-                        <React.Fragment key={i}>
+                        <React.Fragment key={o.itemId || i}>
                             <TouchableOpacity                            
                                 onPress={() => {
                                     if (onChange) onChange(o.value, o);

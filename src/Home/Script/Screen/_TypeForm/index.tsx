@@ -81,28 +81,17 @@ export function TypeForm({ }: TypeFormProps) {
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
 
-    const evaluateFieldCondition = (f: any, formId?: number) => {
+    const evaluateFieldCondition = (f: any,form?:any) => {
         let conditionMet = true;
         let formatedvalues = values;
-
-
-
         if (repeatable) {
-            formatedvalues = values.find(v => v.key === 'repeatables')?.value?.[collectionName];
 
-            if (formatedvalues && formatedvalues.length > 0) {
-
-                const filtered = typeof formId === 'number' ? [formatedvalues[formId]] : [];
-
-                if (filtered.length > 0) {
-                    formatedvalues = moveKeysInside(filtered);
-                } else {
-                    formatedvalues = [];
-                }
+            if(form){
+               formatedvalues = moveKeysInside([form]);
+               
             }
 
         }
-
         if (f.condition) {
             conditionMet = evaluateCondition(
                 parseCondition(f.condition, [{ values: formatedvalues }])
@@ -135,11 +124,8 @@ export function TypeForm({ }: TypeFormProps) {
                         const updated = [...formattedValues, repeatables]
                         if (updated && updated.length > 0) {
                             setValues(deepSanitize(updated));
-                            if (data[key]?.length && data[key].every(item =>
-                                item.requiredComplete === true ||
-                                item.requiredComplete > 0)) {
-                                setEntryValues(deepSanitize(updated))
-                            }
+                            setEntryValues(deepSanitize(updated))
+                        
 
                         }
                     } else {
@@ -156,11 +142,7 @@ export function TypeForm({ }: TypeFormProps) {
                         ];
                         if (updatedValues && updatedValues.length > 0) {
                             setValues(deepSanitize(updatedValues));
-                            if (data[key]?.length && data[key].every(item =>
-                                item.requiredComplete === true ||
-                                item.requiredComplete > 0)) {
                             setEntryValues(deepSanitize(updatedValues))
-                                }
                         }
                     }
                 }
@@ -194,36 +176,35 @@ export function TypeForm({ }: TypeFormProps) {
     }
 
 
-    function moveKeysInside(input: any[]): any[] {
-        if (!Array.isArray(input) || input.length === 0 || input[0] === undefined) {
-            return [];
-        }
+   function moveKeysInside(input: any[]): any[] {
+    if (!Array.isArray(input) || input.length === 0) {
+        return [];
+    }
 
-        const [first] = input;
+    const result: any[] = [];
 
-        return Object.entries(first)
-            .map(([key, value]) => {
-                if (key === 'id' || key === 'createdAt' || key === 'requiredComplete') {
-                    return { [key]: value };
-                }
+    for (const item of input) {
+        if (typeof item !== "object" || item === null) continue;
 
-                if (typeof value === 'object' && value !== null && 'value' in value) {
-                    if (value.value) {
-                        return { ...value, key };
-                    } else {
-                        return null;
+        if ("values" in item && typeof item.values === "object" && item.values !== null) {
+            for (const [key, value] of Object.entries(item.values)) {
+                if (value && typeof value === "object" && "value" in value) {
+                    if (value.value !== null && value.value !== undefined && value.value !== "") {
+                        result.push({ value: value.value, key });
                     }
                 }
+            }
+        }
 
-                if (value !== undefined && value !== null && value !== '') {
-                    return { [key]: value };
-                }
-
-                return null;
-            })
-            .filter(Boolean);
-
+        // keep directly if the object itself has "value"
+        else if ("value" in item && Object.keys(item).length === 1) {
+            result.push({ value: item.value, key: Object.keys(item)[0] });
+        }
     }
+
+    return result;
+}
+
 
     const setValue = useCallback((index: number, val: Partial<types.ScreenEntryValue>) => {
         setValues(prev => prev.map((v, i) => {

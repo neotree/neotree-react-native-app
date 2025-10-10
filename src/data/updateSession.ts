@@ -42,6 +42,7 @@ export const updateSession = (data: any = {}, opts: any = {}) => new Promise((re
             const query = `UPDATE sessions SET ${setStatement} WHERE ${whereStatement};`;
         
             const res = await dbTransaction(query, allValues);
+            console.log("....",res)
             resolve(res);
         } catch (e) {
             console.error("Update error:", e);
