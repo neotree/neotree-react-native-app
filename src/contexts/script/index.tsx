@@ -756,6 +756,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             const { script, screens, diagnoses, } = await api.getScript({ script_id: route.params.script_id, });
             const drugsLibrary = await api.getDrugsLibrary();
 
+
             const uid = await generateUID(script?.type);
             setGeneratedUID(uid);
             setScript(script);

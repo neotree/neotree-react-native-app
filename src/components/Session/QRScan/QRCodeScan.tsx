@@ -37,8 +37,6 @@ export function QRCodeScan(props: any) {
             try {
               const converted = await fromHL7Like(value)
               
-              console.log("[CONVERTED]", converted);
-              
               // Check if conversion was successful and has data
               if(converted && typeof converted === 'object' && Object.keys(converted).length > 0){
                 if(props.generic){

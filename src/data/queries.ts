@@ -201,12 +201,15 @@ export const getScript = (options = {}) => new Promise<{
                         },
                     }));
                 diagnoses = _diagnoses.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+
+               
             }
 
             resolve({ script, screens, diagnoses, });
-        } catch (e) { 
-            
-            reject(e); }
+        } catch (e) {
+
+            reject(e);
+        }
     })();
 });
 
