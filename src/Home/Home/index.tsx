@@ -137,10 +137,11 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			>
 				<Content>
 					<Card>
-						<Text variant="title3" color="error" textAlign="center">
+						<Text variant="title3"  textAlign="center">
 							{showError}
 						</Text>
-						<Br spacing="m" />
+						<Br spacing="l" />
+					
 						<TouchableOpacity
 							onPress={handleManualRefresh}
 							style={{
