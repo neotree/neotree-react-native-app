@@ -15,7 +15,7 @@ export function QRCodeScan(props: any) {
   const showInvalidQRError = () => {
     Alert.alert(
       'Invalid QR Code',
-      'The scanned QR code is not valid or cannot be processed. Please try again.',
+      'The scanned QR code cannot be processed. Please use manual search.',
        [
             {
                 text: 'Retry',

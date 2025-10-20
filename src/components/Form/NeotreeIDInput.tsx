@@ -15,7 +15,7 @@ export type NeotreeIDInputProps = {
 };
 
 function getUidSuffix(uid = '') {
-    let [, suffix] = (uid || '').split('-')
+    let [, suffix] = uid.split('-')
     if (suffix?.length === 7) {
         // do nothing
     } else {
