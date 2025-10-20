@@ -76,7 +76,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 				setScripts(selectedHospitalScripts);
 				
 				if (selectedHospitalScripts.length === 0 && hasTriedResync) {
-					setShowError('No scripts available for this hospital.');
+					setShowError('Failed to load scripts for this hospital.');
 				}
 			}
 
