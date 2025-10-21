@@ -219,7 +219,8 @@ export function Diagnosis(props: DiagnosisProps) {
     const hideFAB = useMemo(() => {
         let hide = false;
         if (section === 'agree_disagree') {
-            hide = values.filter(v => v.diagnosis?.how_agree).length !== getSuggestedDiagnoses().length;
+            console.log(values.map(v => v.diagnosis?.how_agree));
+            hide = !!values.find(v => !v.diagnosis?.how_agree);
         }
         return hide;
     }, [section, values, getSuggestedDiagnoses]);
