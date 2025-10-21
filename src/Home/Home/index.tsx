@@ -190,7 +190,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 						<Content>
 							<Card>
 								<Text variant="title3" textAlign="center">
-									No scripts available
+									No scripts available for your hospital.
 								</Text>
 								<Br spacing="s" />
 								<Text color="textSecondary" textAlign="center">
