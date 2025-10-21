@@ -76,7 +76,9 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                                 method: 'POST',
                                 body: JSON.stringify(exportable),
                             })
+                             console.info("..STATUS:::",res?.status)
                               if (res?.status == 200) {
+                                console.info("...ID:::",id)
                                 await updateSession({ local_export: true }, { where: { id, }, });
                                 
                             }
