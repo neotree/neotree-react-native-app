@@ -4,6 +4,8 @@ import * as MediaLibrary from 'expo-media-library';
 import * as api from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
+import { APP_CONFIG } from '../../../constants';
+import * as types from '../../../types';
 
 export { getJSON };
 
@@ -140,30 +142,117 @@ export function exportToApi(opts: any = {}) {
 
   return new Promise((resolve, reject) => {
     (async () => {
-      const sessions = _sessions.filter((s: any) => !s.exported);
-      const postData: any = await api.convertSessionsToExportable(sessions, opts);
+      try {
+        const sessions = _sessions.filter((s: any) => !s.exported);
 
-      try { 
-        if (opts.dontSaveFile !== true) await exportJSON(opts); 
-      } catch (e) { /* Do nothing */ }
-
-    //   api.exportSessions().then(console.log).catch(console.log);
-
-      if (postData.length) {
         try {
-          await Promise.all(postData.map((s: any, i: number) => new Promise((resolve, reject) => {
-            (async () => {
-              try {
-                await api.exportSession(s);    
-				await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id, }, });           
-              } catch (e) { return reject(e); }
-              resolve(null);
-            })();
-          })));
-        } catch (e) { reject(e); }
-      }
+          if (opts.dontSaveFile !== true) await exportJSON(opts);
+        } catch (e) { /* Do nothing */ }
 
-      resolve(null);
+        if (!sessions.length) {
+          resolve(null);
+          return;
+        }
+
+        // Get location config once for all operations
+        const location = await api.getLocation();
+        const country = location?.country;
+        const hasLocalConfig = Boolean(
+          country &&
+          country.length > 0 &&
+          (() => {
+            const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
+            const hospital = location?.hospital;
+            const localConfig = config?.filter(c => c.hospital === hospital?.trim());
+            return localConfig?.[0]?.hospital?.length > 0;
+          })()
+        );
+
+        // Convert sessions once for standard export, once for poll/local data
+        const [standardExportData, pollExportData] = await Promise.all([
+          api.convertSessionsToExportable(sessions, opts),
+          api.convertSessionsToExportable(sessions, { ...opts, showConfidential: true })
+        ]) as [any[], any[]];
+
+        // Three independent API call groups
+        const apiCallGroups = [
+          // 1. Main session export to /sessions
+          ...standardExportData.map((s: any, i: number) => ({
+            type: 'main',
+            execute: async () => {
+              await api.exportSession(s);
+              await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id } });
+              return { success: true, id: sessions[i]?.id };
+            }
+          })),
+
+          // 2. Local export to /local (if hasLocalConfig)
+          ...(hasLocalConfig ? pollExportData.map((s: any, i: number) => ({
+            type: 'local',
+            execute: async () => {
+              if (sessions[i]?.local_export) return { success: true, skipped: true };
+
+              const { id, exported, local_export, ...exportable } = s;
+              const res = await api.makeLocalApiCall(
+                `/local?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
+                {
+                  method: 'POST',
+                  body: JSON.stringify(exportable),
+                }
+              );
+
+              if (res?.status === 200) {
+                await api.updateSession({ local_export: true }, { where: { id: sessions[i]?.id } });
+                return { success: true, id: sessions[i]?.id };
+              }
+              throw new Error(`Failed to local export session ${sessions[i]?.id}`);
+            }
+          })) : []),
+
+          // 3. Poll data export to /save-poll-data
+          ...pollExportData.map((s: any, i: number) => ({
+            type: 'poll',
+            execute: async () => {
+              if (sessions[i]?.exported) return { success: true, skipped: true };
+
+              const { id, exported, local_export, ...exportable } = s;
+              await api.makeApiCall(
+                'nodeapi',
+                `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
+                {
+                  method: 'POST',
+                  body: JSON.stringify(exportable),
+                }
+              );
+              return { success: true, id: sessions[i]?.id };
+            }
+          }))
+        ];
+
+        // Execute all API calls independently - failures don't affect other calls
+        const results = await Promise.allSettled(
+          apiCallGroups.map(group => group.execute())
+        );
+
+        // Collect failures for logging
+        const failures = results
+          .map((result, index) => ({ result, group: apiCallGroups[index] }))
+          .filter(({ result }) => result.status === 'rejected')
+          .map(({ result, group }) => ({
+            type: group.type,
+            error: result.status === 'rejected' ? result.reason : null
+          }));
+
+        if (failures.length > 0) {
+          console.log('Export failures:', failures);
+          // Don't reject - allow partial success
+        }
+
+        resolve(null);
+      } catch (e) {
+        console.log('Export error:', e);
+        reject(e);
+      }
     })();
   });
 }
