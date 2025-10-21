@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Text, Select, Br } from '../../../../components';
@@ -16,7 +16,21 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
 
     const [values, setValues] = React.useState<any[]>(cachedVal || []);
 
+    const groupedItems = useMemo(() => {
+        return metadata.items.reduce((acc: any, item: any) => ({
+            ...acc,
+            [item.type]: [...(acc[item.type] || []), item],
+        }), {}) as Record<string, any[]>;
+    }, [metadata.items]);
+
     React.useEffect(() => {
+        let allSectionsSelected = true;
+
+        Object.keys(groupedItems).forEach(section => {
+            const items = groupedItems[section];
+            if (!values.find(v => items.map(item => item.id).includes(v.value))) allSectionsSelected = false;
+        });
+
         let score = 0;
         if (values) {
             score = values.reduce((acc, v) => {
@@ -32,7 +46,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
             }, 0);
         }
 
-        if (values?.length) {
+        if (allSectionsSelected && values?.length) {
             setEntryValues(
                 [{
                     key: metadata.key,
@@ -54,7 +68,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
         } else {
             setEntryValues(undefined);
         }
-    }, [values, activeScreen]);
+    }, [values, activeScreen, groupedItems]);
 
     const renderItems = (items: any[] = []) => {
         return (
@@ -117,10 +131,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
 
     return (
         <Box>
-            {Object.keys(metadata.items.reduce((acc: any, item: any) => ({
-                ...acc,
-                [item.type]: [...(acc[item.type] || []), item],
-            }), {})).map(type => {
+            {Object.keys(groupedItems).map(type => {
                 return (
                     <React.Fragment key={type}>
                         <Text variant="title3">{ucFirst((type || '').replace(/_/gi, ' '))}</Text>

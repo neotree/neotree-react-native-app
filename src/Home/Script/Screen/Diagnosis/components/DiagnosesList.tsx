@@ -85,12 +85,10 @@ export function DiagnosesList({
 
 						const card = (
 							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-								<View>
+								<View style={{ flex: 1, }}>
 									<Text>{item.customValue || item.name}</Text>
 									{!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
 								</View>
-
-								<View style={{ marginLeft: 'auto' }} />
 
 								{canAgreeDisagree !== false && (
 									<Diagnosis
