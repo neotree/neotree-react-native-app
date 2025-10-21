@@ -44,6 +44,7 @@ export function Diagnosis(props: DiagnosisProps) {
     const {
         activeScreenEntry,
         activeScreen,
+        moreNavOptions,
         goNext: ctxGoNext,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
@@ -215,11 +216,19 @@ export function Diagnosis(props: DiagnosisProps) {
         ctxGoBack,
     ]);
 
+    const hideFAB = useMemo(() => {
+        let hide = false;
+        if (section === 'agree_disagree') {
+            hide = values.filter(v => v.diagnosis?.how_agree).length !== getSuggestedDiagnoses().length;
+        }
+        return hide;
+    }, [section, values, getSuggestedDiagnoses]);
+
     const setMoreNavOptions = useCallback(() => {
         ctxSetMoreNavOptions({
             goBack,
             goNext,
-            showFAB: true,
+            showFAB: !hideFAB,
             hideHeaderRight: false,
             hideSearch: section !== 'select',
             ...(() => {
@@ -244,6 +253,7 @@ export function Diagnosis(props: DiagnosisProps) {
             })(),
         });
     }, [
+        hideFAB,
         section,
         activeDiagnosisIndex,
         goBack,

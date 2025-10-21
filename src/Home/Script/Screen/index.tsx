@@ -92,7 +92,9 @@ export function Screen() {
 
                 <ScreenType searchVal={searchVal} />
 
-                {((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete) || moreNavOptions?.showFAB) && (
+                {(moreNavOptions?.showFAB !== false) && 
+                ((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete)) && 
+                (
                     <Box 
                         position="absolute"
                         bottom={10}
