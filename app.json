@@ -2,7 +2,7 @@
     "expo": {
         "name": "NeoTree",
         "slug": "neotree",
-        "version": "2.5.21",
+        "version": "2.5.20",
         "orientation": "portrait",
         "icon": "./assets/images/icon.png",
         "scheme": "myapp",
