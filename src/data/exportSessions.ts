@@ -16,7 +16,7 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
         
             const promises: Promise<any>[] = [];
             const exportableDbSessions = dbSessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}'), })).filter(s => s.data.completed_at || s.data.canceled_at);
-            const exportData: any[] = sessions || exportableDbSessions.filter(s => s.data.completed_at);
+            const exportData: any[] = sessions || exportableDbSessions.filter(s => s.data.completed_at && !s.exported);
 
             const failed: any[] = [];
 
