@@ -44,6 +44,7 @@ export function QRCodeScan(props: any) {
       }
 
       const value = codes[0].value;
+      
       if (!value) {
         showInvalidQRError();
         return;
@@ -59,7 +60,6 @@ export function QRCodeScan(props: any) {
       setIsProcessing(true);
       try {
         const converted = await fromHL7Like(value);
-        
         if (!converted || typeof converted !== 'object' || Object.keys(converted).length === 0) {
           showInvalidQRError();
           return;
