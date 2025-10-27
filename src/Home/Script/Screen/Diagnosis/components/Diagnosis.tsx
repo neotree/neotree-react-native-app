@@ -30,7 +30,7 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                 >
                     <Icon
                         size={24}
-                        name="thumb-up"
+                        name="check-circle"
                         color={diagnosis.how_agree !== 'Yes' ? theme.colors.textDisabled : theme.colors.primary}
                     />
                 </TouchableOpacity>
@@ -44,7 +44,7 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                 >
                     <Icon
                         size={24}
-                        name="thumb-down"
+                        name="cancel"
                         color={diagnosis.how_agree !== 'No' ? theme.colors.textDisabled : theme.colors.error}
                     />
                 </TouchableOpacity>
