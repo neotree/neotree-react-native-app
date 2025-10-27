@@ -10,7 +10,7 @@ type EdlizSummaryTableProps = types.ScreenTypeProps & {
 };
 
 export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
-    const { activeScreen, activeScreenEntry, setEntryValues } = useScriptContext();
+    const { activeScreen, activeScreenEntry, setMoreNavOptions, setEntryValues } = useScriptContext();
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = (activeScreenEntry?.values || [])[0]?.value;
 
@@ -25,6 +25,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
 
     React.useEffect(() => {
         let allSectionsSelected = true;
+        let showFAB = true;
 
         Object.keys(groupedItems).forEach(section => {
             const items = groupedItems[section];
@@ -32,7 +33,9 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
         });
 
         let score = 0;
-        if (values) {
+        if (values?.length) {
+            showFAB = allSectionsSelected;
+
             score = values.reduce((acc, v) => {
                 if (v.score >= 0) return acc + v.score;
 
@@ -45,6 +48,8 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                 return acc;
             }, 0);
         }
+
+        setMoreNavOptions({ showFAB, });
 
         if (allSectionsSelected && values?.length) {
             setEntryValues(
@@ -68,7 +73,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
         } else {
             setEntryValues(undefined);
         }
-    }, [values, activeScreen, groupedItems]);
+    }, [values, activeScreen, groupedItems, setMoreNavOptions]);
 
     const renderItems = (items: any[] = []) => {
         return (
