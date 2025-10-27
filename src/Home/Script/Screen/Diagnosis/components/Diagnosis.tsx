@@ -24,20 +24,6 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                 <TouchableOpacity
                     onPress={() => setDiagnosis({
                         ...diagnosis,
-                        how_agree: 'No',
-                        hcw_reason_given: null,
-                    })}
-                >
-                    <Icon
-                        size={24}
-                        name="thumb-down"
-                        color={diagnosis.how_agree !== 'No' ? theme.colors.textDisabled : theme.colors.primary}
-                    />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={() => setDiagnosis({
-                        ...diagnosis,
                         how_agree: 'Yes',
                         hcw_reason_given: null,
                     })}
@@ -46,6 +32,20 @@ export function Diagnosis({ diagnosis, setDiagnosis }: DiagnosisProps) {
                         size={24}
                         name="thumb-up"
                         color={diagnosis.how_agree !== 'Yes' ? theme.colors.textDisabled : theme.colors.primary}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => setDiagnosis({
+                        ...diagnosis,
+                        how_agree: 'No',
+                        hcw_reason_given: null,
+                    })}
+                >
+                    <Icon
+                        size={24}
+                        name="thumb-down"
+                        color={diagnosis.how_agree !== 'No' ? theme.colors.textDisabled : theme.colors.error}
                     />
                 </TouchableOpacity>
             </Box>
