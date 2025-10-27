@@ -25,7 +25,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
 
     React.useEffect(() => {
         let allSectionsSelected = true;
-        let showFAB = true;
+        let showFAB: undefined | boolean = undefined;
 
         Object.keys(groupedItems).forEach(section => {
             const items = groupedItems[section];
