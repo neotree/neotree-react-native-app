@@ -44,7 +44,6 @@ export function Diagnosis(props: DiagnosisProps) {
     const {
         activeScreenEntry,
         activeScreen,
-        moreNavOptions,
         goNext: ctxGoNext,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
@@ -98,7 +97,7 @@ export function Diagnosis(props: DiagnosisProps) {
 				const suggested = (getSuggestedDiagnoses() || []) as types.Diagnosis[];   
                 
                 const suggestedEntries = suggested
-                    .filter(d => !values.map(item => item.label).includes(d.name))
+                    .filter(d => !values.map(item => item.key).includes(d.key || d.name))
                     .map(d => diagnosisToEntryValue({
                         ...d,
                         suggested: true,
