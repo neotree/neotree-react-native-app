@@ -34,7 +34,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
 
         let score = 0;
         if (values?.length) {
-            showFAB = allSectionsSelected;
+            showFAB = !allSectionsSelected ? false : undefined;
 
             score = values.reduce((acc, v) => {
                 if (v.score >= 0) return acc + v.score;
