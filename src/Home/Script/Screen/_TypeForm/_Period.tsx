@@ -3,7 +3,7 @@ import moment from 'moment';
 
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
-import { diffHours, diffHours2 } from '../../../../utils/diffHours';
+import { diffHours } from '../../../../utils/diffHours';
 
 type PeriodFieldProps = types.ScreenFormTypeProps & {
     
@@ -28,7 +28,8 @@ export function dateToValueText(value: null | Date, format: 'days_hours' | 'year
                 if (_hrs > 24) _hrs = 0;
                 if (_hrs === 24) _hrs = 23;
                 const _days = Math.floor(days);
-                return `${_days} day${_days > 1 ? 's' : ''}${_hrs >= 1 ? ` ${_hrs} hour${_hrs > 1 ? 's' : ''}` : ``}`;
+                
+                return `${_days} day${_days === 1 ? '' : 's'}${_hrs >= 1 ? ` ${_hrs} hour${_hrs === 1 ? '' : 's'}` : ``}`;
             }
         }
 
@@ -41,7 +42,8 @@ export function dateToValueText(value: null | Date, format: 'days_hours' | 'year
                 if (_months > 12) _months = 0;
                 if (_months === 12) _months = 11;
                 const _years = Math.floor(years);
-                return `${_years} year${_years > 1 ? 's' : ''}${_months >= 1 ? ` ${_months} month${_months > 1 ? 's' : ''}` : ``}`;
+                
+                return `${_years} year${_years === 1 ? '' : 's'}${_months >= 1 ? ` ${_months} month${_months === 1 ? '' : 's'}` : ``}`;
             }
         }
     }
@@ -49,96 +51,113 @@ export function dateToValueText(value: null | Date, format: 'days_hours' | 'year
     return null;
 }
 
-export function PeriodField({ field, conditionMet, onChange, entryValue, allValues,formIndex }: PeriodFieldProps) {
+export function PeriodField({ field, conditionMet, onChange, entryValue, allValues, formIndex }: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
 
-    React.useEffect(() => { setValueText(dateToValueText(value, field.format)); }, [value, field.format]);
+    
+    React.useEffect(() => { 
+        setValueText(dateToValueText(value, field.format)); 
+    }, [value, field.format]);
 
+    
     React.useEffect(() => { 
         if (!conditionMet) {
             onChange({ 
-				value: null, 
-				valueText: null, 
-				calculateValue: null,
-				exportValue: null,
+                value: null, 
+                valueText: null, 
+                calculateValue: null,
+                exportValue: null,
                 exportType: 'number',
-			}); 
+            }); 
             setValue(null);
         }
-    }, [conditionMet]);
+    }, [conditionMet, onChange]);
 
     function getValuesFromIndex<T>(array: T[], startIndex: number = 0): T[] {
         return array?.slice(startIndex);
-      }
+    }
 
-    function getCalculationEntry(data: any[],fieldCalc:any): any | null {
-      
-        const result = getValuesFromIndex(data,formIndex)?.find(v => {
-            // Case 1: Object has explicit key property
+    function getCalculationEntry(data: any[], fieldCalc: string | undefined): any | null {
+        if (!fieldCalc) return null;
+        
+        const result = getValuesFromIndex(data, formIndex)?.find(v => {
+    
             if (v.key && `$${v.key}` === fieldCalc) return true;
             
-            // Case 2: Object is keyed by property name
+    
             const objectKey = Object.keys(v).find(k => 
-              typeof v[k] === 'object' && 
-              `$${k}` === fieldCalc
+                typeof v[k] === 'object' && 
+                `$${k}` === fieldCalc
             );
             return !!objectKey;
-          });
-          
-          if (result && !result.key && fieldCalc) {
-            const key = fieldCalc.substring(1); // Remove the '$' prefix
+        });
+        
+        if (result && !result.key && fieldCalc) {
+            const key = fieldCalc.substring(1);
             if (result[key] && typeof result[key] === 'object') {
-              return { key, ...result[key] };
+                return { key, ...result[key] };
             }
-          }
-          
-          return result;
-      }
+        }
+        
+        return result;
+    }
+
+    
+    const handleCalculationChange = React.useCallback((calcValue: Date) => {
+        const valueText = dateToValueText(calcValue, field.format);
+        onChange({ 
+            label: field?.label,
+            exportType: 'number',
+            value: calcValue.toISOString(), 
+            valueText: valueText, 
+            exportLabel: valueText,
+            exportValue: diffHours(calcValue, new Date()),
+            calculateValue: diffHours(calcValue, new Date()),
+        });
+    }, [field.format, field.label, onChange]);
 
     React.useEffect(() => {
-        const _calcFrom =getCalculationEntry(allValues,field.calculation||field.refKey)
-        if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
-          setCalcFrom(_calcFrom);
-          if (_calcFrom && _calcFrom.value) {
+        const _calcFrom = getCalculationEntry(allValues, field.calculation || field.refKey);
+    
+        if (_calcFrom && _calcFrom.value && JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
+            setCalcFrom(_calcFrom);
             try {
                 const val = new Date(_calcFrom.value);
-                setValue(val);
-                setValueText(dateToValueText(val, field.format));
-                onChange({ 
-                    label:field?.label,
-                    exportType: 'number',
-					value: val.toISOString(), 
-					valueText: dateToValueText(val, field.format), 
-                    exportLabel:dateToValueText(val, field.format),
-					exportValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
-      				calculateValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
-				});
-            } catch(e) { /**/ }
-          }
+    
+                if (!isNaN(val.getTime())) {
+                    setValue(val);
+                    setValueText(dateToValueText(val, field.format));
+                    handleCalculationChange(val);
+                }
+            } catch(e) { 
+                console.error('Invalid date in calculation:', e);
+            }
         }
-      }, [allValues, calcFrom, field.format]);
+    }, [allValues, calcFrom, field.calculation, field.refKey, field.format, handleCalculationChange]);
 
     return (
         <Box>
             <DatePicker
-                mode="datetime"
+                mode={field.format === 'years_months' ? 'date' : 'datetime'}
                 value={value}
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
                 onChange={date => {
-                   const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
+                    const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
                     const validDate = isValidDate(date) ? date : null;
                     setValue(validDate);
+                    
+                    const newValueText = dateToValueText(validDate, field.format);
                     onChange({
-                        label:field?.label,
+                        label: field?.label,
                         exportType: 'number',
                         value: !validDate ? null : validDate.toISOString(),
-                        valueText: dateToValueText(validDate, field.format),
-                        exportLabel:dateToValueText(validDate, field.format),
-						exportValue: validDate ? diffHours(validDate, new Date()) : null,
-      					calculateValue: validDate ? diffHours(validDate, new Date()) : null,
+                        valueText: newValueText,
+                        exportLabel: newValueText,
+                        exportValue: validDate ? diffHours(validDate, new Date()) : null,
+                        calculateValue: validDate ? diffHours(validDate, new Date()) : null,
                     });
                 }}
                 valueText={valueText}
