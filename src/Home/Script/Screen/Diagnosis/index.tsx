@@ -41,6 +41,8 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 });
 
 export function Diagnosis(props: DiagnosisProps) {
+    const mounted = React.useRef(false);
+
     const {
         activeScreenEntry,
         activeScreen,
@@ -295,6 +297,11 @@ export function Diagnosis(props: DiagnosisProps) {
         setDiagnoses,
         setEntryValues,
     ]);
+
+    React.useEffect(() => { 
+        if (!mounted.current) setEntryValues([]); 
+        mounted.current = true;
+    }, [setEntryValues]);
 
     React.useEffect(() => { setMoreNavOptions(); }, [setMoreNavOptions]);
 
