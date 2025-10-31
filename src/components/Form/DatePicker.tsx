@@ -51,11 +51,13 @@ export function DatePicker({
 
     const theme = useTheme();
 
-    const [currentDate] = React.useState(new Date());
-    const [date, setDate] = React.useState<null | Date>(value || null);
+    const [date, setDate] = React.useState<null | Date>(value ?? null);
 
     const [showDatePicker, setShowDatePicker] = React.useState(false);
     const [showTimePicker, setShowTimePicker] = React.useState(false);
+
+    // Store a temporary date for picker display when actual value is null
+    const [tempPickerDate, setTempPickerDate] = React.useState<Date>(new Date());
 
     const reset = React.useCallback(()=>{
       setShowDatePicker(false)
@@ -67,7 +69,7 @@ export function DatePicker({
         if (value) {
             switch(mode) {
                 case 'time':
-                    return moment(value).format('HH:MM');
+                    return moment(value).format('HH:mm');
                 case 'date':
                     return moment(value).format('ll');
                 case 'datetime':
@@ -77,7 +79,7 @@ export function DatePicker({
             }
         }
         return '';
-    }, [value, valueText]);
+    }, [value, valueText, mode]);
 
     React.useEffect(() => {
         if (onChange) onChange(date);
@@ -88,6 +90,7 @@ export function DatePicker({
             let _value = value?.toString?.() || value;
             let _date = date?.toString?.() || date;
             if (value && (_value !== _date)) return new Date(value);
+            if (value === null && date !== null) return null;
             return date;
         });
     }, [value]);
@@ -104,6 +107,11 @@ export function DatePicker({
             <TouchableOpacity
                 disabled={disabled}
                 onPress={() => {
+                    // Set a temporary date for picker display if current value is null
+                    if (!date) {
+                        setTempPickerDate(new Date());
+                    }
+                    
                     if (mode === 'time') {
                         setShowTimePicker(true);
                     } else {
@@ -140,26 +148,25 @@ export function DatePicker({
 
             {showDatePicker && (
                 <DateTimePicker 
-                    // testID="dateTimePicker"
-                    value={date || currentDate}
+                    value={date || tempPickerDate}
                     mode="date"
                     is24Hour={true}
                     display="default"
                     maximumDate={!maxDate ? undefined : (maxDate === 'date_now' ? new Date() : new Date(maxDate))}
                     minimumDate={!minDate ? undefined : (minDate === 'date_now' ? new Date() : new Date(minDate))}
                     onChange={(e, selectedDate) => {
-                        if (!selectedDate ||e.type==='dismissed') return setShowDatePicker(false);
-                           if(e.type==='neutralButtonPressed'){
-                            setDate(null)
+                        if (!selectedDate || e.type === 'dismissed') {
+                            return setShowDatePicker(false);
+                        }
+                        if (e.type === 'neutralButtonPressed') {
+                            setDate(null);
                             return reset();
                         }
                         setShowDatePicker(false);
-                        // setTimeout(() => setDate(selectedDate), 0);
-                        // setDate(selectedDate);
 
-                        // exceptions
-                        const hour = moment(selectedDate).hours();
-                        const minute = moment(selectedDate).minutes();
+                        // Preserve time portion if it exists, otherwise use 00:00
+                        const hour = date ? moment(date).hours() : 0;
+                        const minute = date ? moment(date).minutes() : 0;
                         const newDate = moment(selectedDate).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
                         setDate(newDate);
 
@@ -168,38 +175,38 @@ export function DatePicker({
                         }
                     }}
                     neutralButton={{label: 'Clear', textColor: 'red'}}
-                     negativeButton={{label: 'Cancel', textColor: 'black'}}
-                     positiveButton={{label: 'Ok', textColor: 'green'}}
+                    negativeButton={{label: 'Cancel', textColor: 'black'}}
+                    positiveButton={{label: 'Ok', textColor: 'green'}}
                 />
             )}
 
             {showTimePicker && (
                 <DateTimePicker 
-                    // testID="dateTimePicker"
-                    value={date || currentDate}
+                    value={date || tempPickerDate}
                     mode="time"
                     is24Hour={true}
                     display="default"
                     onChange={(e, selectedDate) => {
-                        if (!selectedDate||e.type==='dismissed') return setShowTimePicker(false);
-                        if(e.type==='neutralButtonPressed'){
-                            setDate(null)
+                        if (!selectedDate || e.type === 'dismissed') {
                             return setShowTimePicker(false);
                         }
+                        if (e.type === 'neutralButtonPressed') {
+                            setDate(null);
+                            return reset();
+                        }
                         setShowTimePicker(false);
-                        // setTimeout(() => setDate(selectedDate), 0);
-                        // setDate(selectedDate);
 
-                        // exceptions
+                        // If we have a date, update time portion; otherwise create new date with selected time
                         const hour = moment(selectedDate).hours();
                         const minute = moment(selectedDate).minutes();
-                        const newDate = moment(selectedDate).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
+                        const newDate = date 
+                            ? moment(date).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate()
+                            : moment(tempPickerDate).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
                         setDate(newDate);
                     }}
-
-                     neutralButton={{label: 'Clear', textColor: 'red'}}
-                     negativeButton={{label: 'Cancel', textColor: 'black'}}
-                     positiveButton={{label: 'Ok', textColor: 'green'}}
+                    neutralButton={{label: 'Clear', textColor: 'red'}}
+                    negativeButton={{label: 'Cancel', textColor: 'black'}}
+                    positiveButton={{label: 'Ok', textColor: 'green'}}
                 />
             )}
 
