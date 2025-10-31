@@ -156,6 +156,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 value={value}
                 disabled={!conditionMet || !canEdit}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
+                fieldKey={field.key}
                 onChange={value => {
                     let date: null | Date = null;
                     if (value) {
