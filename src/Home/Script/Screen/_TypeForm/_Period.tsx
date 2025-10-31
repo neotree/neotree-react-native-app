@@ -199,6 +199,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                 value={value}
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
+                fieldKey={field.key}
                 onChange={date => {
                     const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
                     const validDate = isValidDate(date) ? date : null;

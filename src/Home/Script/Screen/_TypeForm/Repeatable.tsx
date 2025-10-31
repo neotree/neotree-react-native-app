@@ -296,7 +296,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     }
 
     function getPeriodValueText(field: any, value: any) {
-        // CRITICAL: Return null if no valid value provided
+        // Return null if no valid value provided
         if (!value || value === null || value === '') {
             return null;
         }
@@ -326,7 +326,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     }
 
     function getDateValue(field: any, value: any) {
-        // CRITICAL: Return null if no valid value provided
+        //Return null if no valid value provided
         if (!value || value === null || value === '') {
             return null;
         }
@@ -356,7 +356,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         } else if (obj && typeof obj === 'object') {
             return Object.fromEntries(
                 Object.entries(obj)
-                    .filter(([key]) => !/^\d+$/.test(key)) // remove numeric string keys
+                    .filter(([key]) => !/^\d+$/.test(key))
                     .map(([key, value]) => [key, cleanNumericKeys(value)])
             );
         }
@@ -370,14 +370,14 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             let valueObj = partial[key];
             const field = fields.filter(f => f.key === key)[0];
             
-            // CRITICAL: Skip invalid or placeholder values
+            // Skip invalid or placeholder values
             if (valueObj?.value === '[object Object]') {
                 valueObj.value = null;
             }
 
             if (!field) continue;
 
-            // CRITICAL: Don't create base object if value is null, undefined, or empty
+            // Don't create base object if value is null, undefined, or empty
             const hasValidValue = valueObj && 
                 valueObj.value !== null && 
                 valueObj.value !== undefined && 
@@ -402,7 +402,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const calc = String(field?.calculation)?.replace("$", "");
                 const calValue = partial[calc]?.value;
                 
-                // CRITICAL: Only calculate period if source value exists and is valid
+                // Only calculate period if source value exists and is valid
                 if (calValue && calValue !== null && calValue !== '') {
                     try {
                         const testDate = new Date(calValue);
@@ -418,7 +418,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     }
                 }
             } else if (base && (field.type === 'date' || field.type === 'datetime')) {
-                // CRITICAL: Validate date before formatting
+                // Validate date before formatting
                 if (valueObj.value) {
                     try {
                         const testDate = new Date(valueObj.value);
