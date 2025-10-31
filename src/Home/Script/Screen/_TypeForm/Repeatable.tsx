@@ -296,26 +296,58 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     }
 
     function getPeriodValueText(field: any, value: any) {
-        const formatedValue = dateToValueText(value, field.format)
-        return {
-            valueLabel: formatedValue,
-            valueText: formatedValue,
-            exportLabel: formatedValue,
-            exportValue: formatedValue,
-            label: field.label
-        };
-
+        // CRITICAL: Return null if no valid value provided
+        if (!value || value === null || value === '') {
+            return null;
+        }
+        
+        try {
+            const testDate = new Date(value);
+            if (isNaN(testDate.getTime())) {
+                return null;
+            }
+            
+            const formatedValue = dateToValueText(testDate, field.format);
+            if (!formatedValue) {
+                return null;
+            }
+            
+            return {
+                valueLabel: formatedValue,
+                valueText: formatedValue,
+                exportLabel: formatedValue,
+                exportValue: formatedValue,
+                label: field.label
+            };
+        } catch (e) {
+            console.error('Error formatting period value:', e);
+            return null;
+        }
     }
 
-    function getDateValue(field:any,value:any){
-       const  formatedValue= formatDate(value);
-       return {
-            valueLabel: formatedValue,
-            valueText: formatedValue,
-            exportLabel: formatedValue,
-            exportValue: formatedValue,
-            label: field.label
-        };
+    function getDateValue(field: any, value: any) {
+        // CRITICAL: Return null if no valid value provided
+        if (!value || value === null || value === '') {
+            return null;
+        }
+        
+        try {
+            const formatedValue = formatDate(value);
+            if (!formatedValue) {
+                return null;
+            }
+            
+            return {
+                valueLabel: formatedValue,
+                valueText: formatedValue,
+                exportLabel: formatedValue,
+                exportValue: formatedValue,
+                label: field.label
+            };
+        } catch (e) {
+            console.error('Error formatting date value:', e);
+            return null;
+        }
     }
 
     function cleanNumericKeys(obj: any): any {
@@ -337,31 +369,67 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         for (const key in partial) {
             let valueObj = partial[key];
             const field = fields.filter(f => f.key === key)[0];
+            
+            // CRITICAL: Skip invalid or placeholder values
             if (valueObj?.value === '[object Object]') {
                 valueObj.value = null;
             }
 
             if (!field) continue;
 
-            const base = valueObj ? Object.keys(valueObj).length > 0 ? {
-                ...{ 'label': field?.label },
-                ...{ 'exportType': field?.type },
+            // CRITICAL: Don't create base object if value is null, undefined, or empty
+            const hasValidValue = valueObj && 
+                valueObj.value !== null && 
+                valueObj.value !== undefined && 
+                valueObj.value !== '';
+
+            if (!hasValidValue) {
+                transformed[key] = null;
+                continue;
+            }
+
+            const base = {
+                'label': field?.label,
+                'exportType': field?.type,
                 ...valueObj,
-            } : null : null;
+            };
 
             if (field.type === 'dropdown' && base) {
                 const dropdownInfo = getValueLabelAndText(field, valueObj.value);
                 if (dropdownInfo !== null)
                     Object.assign(base, dropdownInfo);
             } else if (field.type === 'period' && base) {
-                const calc = String(field?.calculation)?.replace("$", "")
-                const calValue = partial[calc]?.value
-                const periodInfo = getPeriodValueText(field, calValue);
-                if (periodInfo && periodInfo !== null)
-                    Object.assign(base, periodInfo);
+                const calc = String(field?.calculation)?.replace("$", "");
+                const calValue = partial[calc]?.value;
+                
+                // CRITICAL: Only calculate period if source value exists and is valid
+                if (calValue && calValue !== null && calValue !== '') {
+                    try {
+                        const testDate = new Date(calValue);
+                        if (!isNaN(testDate.getTime())) {
+                            const periodInfo = getPeriodValueText(field, calValue);
+                            if (periodInfo && periodInfo !== null) {
+                                Object.assign(base, periodInfo);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Invalid date for period calculation:', e);
+                        // Don't assign period info if date is invalid
+                    }
+                }
             } else if (base && (field.type === 'date' || field.type === 'datetime')) {
-                const dateInfo = getDateValue(field,valueObj.value);
-                Object.assign(base, dateInfo);
+                // CRITICAL: Validate date before formatting
+                if (valueObj.value) {
+                    try {
+                        const testDate = new Date(valueObj.value);
+                        if (!isNaN(testDate.getTime())) {
+                            const dateInfo = getDateValue(field, valueObj.value);
+                            Object.assign(base, dateInfo);
+                        }
+                    } catch (e) {
+                        console.error('Invalid date value:', e);
+                    }
+                }
             }
 
             transformed[key] = base || null;
