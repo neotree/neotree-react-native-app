@@ -52,13 +52,35 @@ export function dateToValueText(value: null | Date, format: 'days_hours' | 'year
 }
 
 export function PeriodField({ field, conditionMet, onChange, entryValue, allValues, formIndex }: PeriodFieldProps) {
-    const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
-    const [valueText, setValueText] = React.useState(entryValue?.valueText);
+    // Only set value if entryValue actually has a valid date value
+    const [value, setValue] = React.useState<Date | null>(() => {
+        if (entryValue?.value && entryValue.value !== null && entryValue.value !== '') {
+            try {
+                const date = new Date(entryValue.value);
+                return isNaN(date.getTime()) ? null : date;
+            } catch {
+                return null;
+            }
+        }
+        return null;
+    });
+    
+    const [valueText, setValueText] = React.useState(() => {
+        if (entryValue?.valueText) return entryValue.valueText;
+        if (value) return dateToValueText(value, field.format);
+        return null;
+    });
+    
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
 
     
     React.useEffect(() => { 
-        setValueText(dateToValueText(value, field.format)); 
+        // Only update valueText if we have a valid value
+        if (value) {
+            setValueText(dateToValueText(value, field.format));
+        } else {
+            setValueText(null);
+        }
     }, [value, field.format]);
 
     
@@ -72,6 +94,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                 exportType: 'number',
             }); 
             setValue(null);
+            setValueText(null);
         }
     }, [conditionMet, onChange]);
 
@@ -83,10 +106,8 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
         if (!fieldCalc) return null;
         
         const result = getValuesFromIndex(data, formIndex)?.find(v => {
-    
             if (v.key && `$${v.key}` === fieldCalc) return true;
             
-    
             const objectKey = Object.keys(v).find(k => 
                 typeof v[k] === 'object' && 
                 `$${k}` === fieldCalc
@@ -105,7 +126,21 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
     }
 
     
-    const handleCalculationChange = React.useCallback((calcValue: Date) => {
+    const handleCalculationChange = React.useCallback((calcValue: Date | null) => {
+        // CRITICAL: Only perform calculation if we have a valid date
+        if (!calcValue) {
+            onChange({ 
+                label: field?.label,
+                exportType: 'number',
+                value: null, 
+                valueText: null, 
+                exportLabel: null,
+                exportValue: null,
+                calculateValue: null,
+            });
+            return;
+        }
+
         const valueText = dateToValueText(calcValue, field.format);
         onChange({ 
             label: field?.label,
@@ -121,21 +156,41 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
     React.useEffect(() => {
         const _calcFrom = getCalculationEntry(allValues, field.calculation || field.refKey);
     
-        if (_calcFrom && _calcFrom.value && JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
-            setCalcFrom(_calcFrom);
-            try {
-                const val = new Date(_calcFrom.value);
-    
-                if (!isNaN(val.getTime())) {
-                    setValue(val);
-                    setValueText(dateToValueText(val, field.format));
-                    handleCalculationChange(val);
+        // Only set calculated value if source field has a valid, non-null value
+        if (_calcFrom && _calcFrom.value && _calcFrom.value !== null && _calcFrom.value !== '') {
+            // Additional check to prevent re-calculating if nothing changed
+            if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
+                setCalcFrom(_calcFrom);
+                try {
+                    const val = new Date(_calcFrom.value);
+        
+                    if (!isNaN(val.getTime())) {
+                        setValue(val);
+                        setValueText(dateToValueText(val, field.format));
+                        handleCalculationChange(val);
+                    } else {
+                        // Invalid date - clear everything
+                        setValue(null);
+                        setValueText(null);
+                        handleCalculationChange(null);
+                    }
+                } catch(e) { 
+                    console.error('Invalid date in calculation:', e);
+                    setValue(null);
+                    setValueText(null);
+                    handleCalculationChange(null);
                 }
-            } catch(e) { 
-                console.error('Invalid date in calculation:', e);
+            }
+        } else if (!_calcFrom || !_calcFrom.value) {
+            // Source field is empty/null - clear our value too
+            if (value !== null) {
+                setValue(null);
+                setValueText(null);
+                setCalcFrom(null);
+                handleCalculationChange(null);
             }
         }
-    }, [allValues, calcFrom, field.calculation, field.refKey, field.format, handleCalculationChange]);
+    }, [allValues, calcFrom, field.calculation, field.refKey, field.format, handleCalculationChange, value]);
 
     return (
         <Box>
@@ -144,6 +199,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                 value={value}
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
+                fieldKey={field.key}
                 onChange={date => {
                     const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
                     const validDate = isValidDate(date) ? date : null;
@@ -160,7 +216,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                         calculateValue: validDate ? diffHours(validDate, new Date()) : null,
                     });
                 }}
-                valueText={valueText}
+                valueText={valueText || undefined}
                 maxDate="date_now"
             />
         </Box>
