@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Content, Fab, Text, TextInput, OverlayLoader } from '@/src/components';
