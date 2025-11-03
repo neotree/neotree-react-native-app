@@ -41,10 +41,11 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 });
 
 export function Diagnosis(props: DiagnosisProps) {
+    const mounted = React.useRef(false);
+
     const {
         activeScreenEntry,
         activeScreen,
-        moreNavOptions,
         goNext: ctxGoNext,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
@@ -98,7 +99,7 @@ export function Diagnosis(props: DiagnosisProps) {
 				const suggested = (getSuggestedDiagnoses() || []) as types.Diagnosis[];   
                 
                 const suggestedEntries = suggested
-                    .filter(d => !values.map(item => item.label).includes(d.name))
+                    .filter(d => !values.map(item => item.key).includes(d.key || d.name))
                     .map(d => diagnosisToEntryValue({
                         ...d,
                         suggested: true,
@@ -296,6 +297,11 @@ export function Diagnosis(props: DiagnosisProps) {
         setDiagnoses,
         setEntryValues,
     ]);
+
+    React.useEffect(() => { 
+        if (!mounted.current) setEntryValues([]); 
+        mounted.current = true;
+    }, [setEntryValues]);
 
     React.useEffect(() => { setMoreNavOptions(); }, [setMoreNavOptions]);
 

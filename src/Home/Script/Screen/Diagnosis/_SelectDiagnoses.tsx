@@ -30,7 +30,7 @@ export function SelectDiagnoses({
     };
 
     const items: any[] = metadata.items.map((item: any) => {
-        const d = allDiagnoses.map(d => ({ ...d.data, ...d })).filter(d => d.name === item.label)[0];
+        const d = allDiagnoses.map(d => d.data).find(d => (d.key === item?.id) || (d.name === item?.id));
 
         let sevOrder = d?.severity_order || (d?.severity_order === 0) ? Number(d.severity_order) : null;
         if (isNaN(Number(sevOrder))) sevOrder = null;
