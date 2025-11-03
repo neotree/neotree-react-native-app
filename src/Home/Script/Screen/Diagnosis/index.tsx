@@ -30,7 +30,7 @@ const getDefaultDiagnosis = (d?: types.Diagnosis) => ({
 const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
     label: d.name,
     key: d.key || d.name,
-    value: d.customValue || d.name,
+    value: d.customValue || d.key || d.name,
     valueText: d.customValue || d.name,
     type: 'diagnosis',
     dataType: 'diagnosis',
