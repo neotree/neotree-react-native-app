@@ -83,6 +83,7 @@ export async function printSectionsToHTML({
         const {
           type: screenType,
           metadata: screenMeta,
+          listStyle: _listStyle = 'none',
         } = { ...screen, metadata: { ...screen?.metadata } };
 
         // Handle 'management' screens
@@ -118,7 +119,7 @@ export async function printSectionsToHTML({
             let hideLabel = false;
 
             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
-            let listStyle = v.listStyle || 'none';
+            const listStyle = v.listStyle || _listStyle;
 
             if (['fluids', 'drugs'].includes(screenType)) {
               isFlexRow = false;

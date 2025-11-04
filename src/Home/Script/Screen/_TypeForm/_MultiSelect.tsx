@@ -3,7 +3,6 @@ import { TouchableOpacity } from 'react-native';
 import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
 import { fieldsTypes } from '@/src/constants';
-import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
@@ -20,10 +19,6 @@ export function MultiSelectField({
 }: MultiSelectFieldProps) {
     const canEdit = repeatable ? editable : true;
 
-    const ctx = useScriptContext();
-
-    const listStyle = ctx?.activeScreen?.data?.listStyle || 'none';
-
     const opts = useMemo(() => {
         if (!field?.items) {
             return parseFieldValues({
@@ -36,17 +31,17 @@ export function MultiSelectField({
     }, [field]);
 
    const getValue = useCallback(() => {
-    return opts.reduce((acc, o) => {
-        const values = Array.isArray(entryValue?.value) ? entryValue.value : [];
-        const match = values.find((v: types.ScreenEntryValue) => v?.key === o.value);
-        return {
-            ...acc,
-            [o.value]: !conditionMet ? undefined : match,
-        };
-    }, {} as {
-        [key: string]: undefined | types.ScreenEntryValue;
-    });
-}, [opts, entryValue, conditionMet]);
+        return opts.reduce((acc, o) => {
+            const values = Array.isArray(entryValue?.value) ? entryValue.value : [];
+            const match = values.find((v: types.ScreenEntryValue) => v?.key === o.value);
+            return {
+                ...acc,
+                [o.value]: !conditionMet ? undefined : match,
+            };
+        }, {} as {
+            [key: string]: undefined | types.ScreenEntryValue;
+        });
+    }, [opts, entryValue, conditionMet]);
 
 
     const [value, setValue] = useState(getValue());
@@ -115,7 +110,6 @@ export function MultiSelectField({
 
                                 onChange({
                                     value: !values.length ? undefined : values,
-                                    listStyle,
                                 });
                             }}
                         >
