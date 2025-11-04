@@ -46,7 +46,7 @@ export function Summary({
                                 .map(({
                                     values,
                                     management = [],
-                                    screen: { metadata: { label }, type }
+                                    screen: { metadata: { label }, listStyle: _listStyle = 'none', type }
                                 }: any, entryIndex: number) => {
                                     management = management?.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
@@ -59,8 +59,7 @@ export function Summary({
                                             let hideLabel = false;
 
                                             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
-                                            let listStyle = v.listStyle || 'none';
-                                            if (v.type !== 'multi_select') listStyle = 'none';
+                                            const listStyle = v.listStyle || _listStyle;
 
                                             if (['fluids', 'drugs'].includes(type)) {
                                                 isFlexRow = false;
