@@ -610,7 +610,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					{
 						label: showExportFormats ? 'Export' : 'Next',
 						onPress: () => {
-							alert(exportType)
 							if (showExportFormats) {
 								exportSessions();
 								setOpenExportModal(false);
