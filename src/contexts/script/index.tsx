@@ -1112,6 +1112,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // 	.map(s => s.data)
                 // 	.filter(s => s.printable),
                 screen: {
+                    listStyle: activeScreen?.data?.listStyle || 'none',
                     title: activeScreen.data.title,
                     sectionTitle: activeScreen.data.sectionTitle,
                     id: activeScreen.id,
