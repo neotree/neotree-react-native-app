@@ -39,7 +39,7 @@ const deleteTypes = [
 const exportFormats = [
 	{ label: 'Excel Spreadsheet', value: 'excel' },
 	{ label: 'JSON', value: 'json' },
-	{ label: 'JSONAPI', value: 'jsonapi' },
+	{ label: 'JSONAPI (Metabase)', value: 'jsonapi' },
 ];
 
 export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Sessions'>) {
@@ -610,7 +610,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					{
 						label: showExportFormats ? 'Export' : 'Next',
 						onPress: () => {
-							alert(exportType)
 							if (showExportFormats) {
 								exportSessions();
 								setOpenExportModal(false);
