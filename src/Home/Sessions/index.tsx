@@ -38,8 +38,8 @@ const deleteTypes = [
 
 const exportFormats = [
 	{ label: 'Excel Spreadsheet', value: 'excel' },
-	{ label: 'JSON', value: 'json' },
-	{ label: 'JSONAPI (Metabase)', value: 'jsonapi' },
+	{ label: 'JSON (Save to Tablet)', value: 'json' },
+	{ label: 'JSONAPI (Send to Database)', value: 'jsonapi' },
 ];
 
 export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Sessions'>) {
