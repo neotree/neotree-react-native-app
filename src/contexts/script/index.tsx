@@ -529,10 +529,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [entries, drugsLibrary, activeScreen, activeScreenIndex, screens, evaluateCondition, parseCondition]);
 
     const getSuggestedDiagnoses = useCallback(() => {
-        const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
-        const score = (edlizSummary?.value || [])[0]?.score;
+        // const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
+        // const score = (edlizSummary?.value || [])[0]?.score;
         
-        if (score === 0) return [] as any[]; 
+        // if (score === 0) return [] as any[]; 
 
         let _diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
@@ -755,6 +755,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
             const { script, screens, diagnoses, } = await api.getScript({ script_id: route.params.script_id, });
             const drugsLibrary = await api.getDrugsLibrary();
+
 
             const uid = await generateUID(script?.type);
             setGeneratedUID(uid);
@@ -1111,6 +1112,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // 	.map(s => s.data)
                 // 	.filter(s => s.printable),
                 screen: {
+                    listStyle: activeScreen?.data?.listStyle || 'none',
                     title: activeScreen.data.title,
                     sectionTitle: activeScreen.data.sectionTitle,
                     id: activeScreen.id,

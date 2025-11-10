@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
-import { Box, Br, Card, Text } from '../../../components';
+import { Box, Br, Card, Text, TextInput } from '../../../components';
 import * as types from '../../../types';
 
 type TypeMultiSelectProps = types.ScreenTypeProps & {
@@ -28,20 +28,22 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const matched = getPrepopulationData();
 
-    const [value, setValue] = React.useState<{ [key: string]: boolean; }>(cachedVal.reduce((acc: any, v: any) => ({
+    const [value, setValue] = React.useState<Record<string, any>>(cachedVal.reduce((acc: any, v: any) => ({
         ...acc,
-        [v.value]: true,
+        [v.value]: v,
     }), {}));
 
     function onChange(_value: typeof value) {
-        setValue(_value);
         const keys = Object.keys(_value).filter(key => _value[key]);
-		const values = keys.reduce((acc: types.ScreenEntryValue[], value) => {
-            const item = metadata.items.filter((item: any) => item.id === value)[0];
+
+		const values = keys.reduce((acc: types.ScreenEntryValue[], key) => {
+            const value2 = _value[key]?.value2;
+            const item = metadata.items.filter((item: any) => item.id === key)[0];
             return [
                 ...acc,
                 {
-                    value,
+                    value: key,
+                    value2: value2 || '',
                     valueText: item.label,
                     // valueLabel: metadata.label,
                     label: item.label,
@@ -54,7 +56,8 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                 },
             ];
         }, []);
-        setEntryValues && setEntryValues(!keys.length ? undefined : [
+
+        const entryValues = !keys.length ? undefined : [
 			{
                 printable,
 				value: values,
@@ -62,7 +65,14 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 				label: metadata.label,
 				type: metadata.dataType,
 			}
-		]);
+		];
+
+        setValue(values.reduce((acc, v) => ({
+            ...acc,
+            [v.key]: v,
+        }), {} as Record<string, any>));
+
+        setEntryValues?.(entryValues);
     }
 
     const opts: any[] = metadata.items.map((item: any,index: number) => {
@@ -72,6 +82,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
             key: index,
             hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
             exclusive: item.exclusive,
+            enterValueManually: item.enterValueManually,
             disabled: (() => {
                 const exclusive = metadata.items.reduce((acc: any, item: any) => {
                 if (item.exclusive) acc = item.id;
@@ -85,7 +96,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                     form = { [item.id]: !form[item.id], };
                 } else {
                     form = { ...form, [item.id]: !form[item.id], }; 
-                }                         
+                }
                 onChange(form);
             },
           };
@@ -106,7 +117,9 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
             {opts.map(o => {
                 if (o.hide) return null;
 
-                const isSelected = value[o.value];
+                const _value = value[o.value];
+
+                const isSelected = !!_value;
 
                 return (
                     <React.Fragment key={o.key}>
@@ -124,6 +137,22 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                                 >{o.label}</Text>
                             </Card>
                         </TouchableOpacity>
+
+                        {!!_value && o.enterValueManually && (
+                            <>
+                                <Br spacing="m" />
+
+                                <Box>
+                                    <TextInput
+                                        label={`${o.option?.label || ''}`}
+                                        value={_value.value2 || ''}
+                                        onChangeText={value2 => {
+                                            onChange({ ...value, [o.value]: { value2, }, });
+                                        }}
+                                    />
+                                </Box>
+                            </>
+                        )}
 
                         <Br spacing="l" />
                     </React.Fragment>

@@ -48,6 +48,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
             if(session['uid']){
                 setUID(session['uid'])
                 setQRSession([qrtext])
+
+                console.log("[QR TEXT]", qrtext);
+                console.log("[QR SESSION]", qrSession);
+
             }else{
                 setUID(session) 
             }

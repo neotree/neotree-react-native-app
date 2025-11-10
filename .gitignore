@@ -81,6 +81,7 @@ expo-env.d.ts
 
 android
 
+# Config and sensitive files
 src/config.ts
 src/certs
 

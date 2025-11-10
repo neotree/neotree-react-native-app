@@ -105,5 +105,6 @@ export function useDiagnoses() {
         };
     });
 
+    
 	return { allDiagnoses, diagnoses, };
 }

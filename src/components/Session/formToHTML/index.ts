@@ -135,7 +135,7 @@ export default async (session: any, showConfidential?: boolean) => {
           .map(({
             values,
             // management, 
-            screen: { metadata: { label }, type }
+            screen: { metadata: { label }, listStyle: _listStyle = 'none', type }
           }: any) => {
             // management = management || [];
 
@@ -148,7 +148,7 @@ export default async (session: any, showConfidential?: boolean) => {
                 let hideLabel = false;
 
                 const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
-                let listStyle = v.listStyle || 'none';
+                const listStyle = v.listStyle || _listStyle;
 
                 if (['fluids', 'drugs'].includes(type)) {
                   isFlexRow = false;
