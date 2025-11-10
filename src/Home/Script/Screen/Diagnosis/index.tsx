@@ -30,7 +30,7 @@ const getDefaultDiagnosis = (d?: types.Diagnosis) => ({
 const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
     label: d.name,
     key: d.key || d.name,
-    value: d.customValue || d.name,
+    value: d.customValue || d.key || d.name,
     valueText: d.customValue || d.name,
     type: 'diagnosis',
     dataType: 'diagnosis',
@@ -41,6 +41,8 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 });
 
 export function Diagnosis(props: DiagnosisProps) {
+    const mounted = React.useRef(false);
+
     const {
         activeScreenEntry,
         activeScreen,
@@ -97,7 +99,7 @@ export function Diagnosis(props: DiagnosisProps) {
 				const suggested = (getSuggestedDiagnoses() || []) as types.Diagnosis[];   
                 
                 const suggestedEntries = suggested
-                    .filter(d => !values.map(item => item.label).includes(d.name))
+                    .filter(d => !values.map(item => item.key).includes(d.key || d.name))
                     .map(d => diagnosisToEntryValue({
                         ...d,
                         suggested: true,
@@ -215,11 +217,19 @@ export function Diagnosis(props: DiagnosisProps) {
         ctxGoBack,
     ]);
 
+    const hideFAB = useMemo(() => {
+        let hide = false;
+        if (section === 'agree_disagree') {
+            hide = !!values.find(v => !v.diagnosis?.how_agree);
+        }
+        return hide;
+    }, [section, values, getSuggestedDiagnoses]);
+
     const setMoreNavOptions = useCallback(() => {
         ctxSetMoreNavOptions({
             goBack,
             goNext,
-            showFAB: true,
+            showFAB: !hideFAB,
             hideHeaderRight: false,
             hideSearch: section !== 'select',
             ...(() => {
@@ -244,6 +254,7 @@ export function Diagnosis(props: DiagnosisProps) {
             })(),
         });
     }, [
+        hideFAB,
         section,
         activeDiagnosisIndex,
         goBack,
@@ -286,6 +297,11 @@ export function Diagnosis(props: DiagnosisProps) {
         setDiagnoses,
         setEntryValues,
     ]);
+
+    React.useEffect(() => { 
+        if (!mounted.current) setEntryValues([]); 
+        mounted.current = true;
+    }, [setEntryValues]);
 
     React.useEffect(() => { setMoreNavOptions(); }, [setMoreNavOptions]);
 

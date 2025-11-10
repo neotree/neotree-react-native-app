@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Content, Fab, Text, TextInput, OverlayLoader } from '@/src/components';
@@ -92,7 +92,9 @@ export function Screen() {
 
                 <ScreenType searchVal={searchVal} />
 
-                {((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete) || moreNavOptions?.showFAB) && (
+                {(moreNavOptions?.showFAB !== false) && 
+                ((!!activeScreenEntry && !!repeatableComplete)||(skippable && !!repeatableComplete)) && 
+                (
                     <Box 
                         position="absolute"
                         bottom={10}

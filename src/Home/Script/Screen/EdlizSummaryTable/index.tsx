@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Text, Select, Br } from '../../../../components';
@@ -10,15 +10,32 @@ type EdlizSummaryTableProps = types.ScreenTypeProps & {
 };
 
 export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
-    const { activeScreen, activeScreenEntry, setEntryValues } = useScriptContext();
+    const { activeScreen, activeScreenEntry, setMoreNavOptions, setEntryValues } = useScriptContext();
     const metadata = activeScreen?.data?.metadata;
     const cachedVal = (activeScreenEntry?.values || [])[0]?.value;
 
     const [values, setValues] = React.useState<any[]>(cachedVal || []);
 
+    const groupedItems = useMemo(() => {
+        return metadata.items.reduce((acc: any, item: any) => ({
+            ...acc,
+            [item.type]: [...(acc[item.type] || []), item],
+        }), {}) as Record<string, any[]>;
+    }, [metadata.items]);
+
     React.useEffect(() => {
+        let allSectionsSelected = true;
+        let showFAB: undefined | boolean = undefined;
+
+        Object.keys(groupedItems).forEach(section => {
+            const items = groupedItems[section];
+            if (!values.find(v => items.map(item => item.id).includes(v.value))) allSectionsSelected = false;
+        });
+
         let score = 0;
-        if (values) {
+        if (values?.length) {
+            showFAB = !allSectionsSelected ? false : undefined;
+
             score = values.reduce((acc, v) => {
                 if (v.score >= 0) return acc + v.score;
 
@@ -32,7 +49,9 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
             }, 0);
         }
 
-        if (values?.length) {
+        setMoreNavOptions({ showFAB, });
+
+        if (allSectionsSelected && values?.length) {
             setEntryValues(
                 [{
                     key: metadata.key,
@@ -54,7 +73,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
         } else {
             setEntryValues(undefined);
         }
-    }, [values, activeScreen]);
+    }, [values, activeScreen, groupedItems, setMoreNavOptions]);
 
     const renderItems = (items: any[] = []) => {
         return (
@@ -117,10 +136,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
 
     return (
         <Box>
-            {Object.keys(metadata.items.reduce((acc: any, item: any) => ({
-                ...acc,
-                [item.type]: [...(acc[item.type] || []), item],
-            }), {})).map(type => {
+            {Object.keys(groupedItems).map(type => {
                 return (
                     <React.Fragment key={type}>
                         <Text variant="title3">{ucFirst((type || '').replace(/_/gi, ' '))}</Text>

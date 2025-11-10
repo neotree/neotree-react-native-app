@@ -90,13 +90,6 @@ export function SortPriority(props: SortPriorityProps) {
                         );
                     })}
                 />
-
-                <DiagnosesList
-                    {...props}
-                    divider
-                    title="Diagnoses rejected"
-                    filter={d => d.how_agree === 'No'}
-                />
             </Box>
         </ScrollView>
     );

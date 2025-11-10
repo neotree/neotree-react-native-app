@@ -12,12 +12,19 @@ import { Session } from './Session';
 
 const exportTypes = [
 	{
-		label: 'All sessions',
-		value: 'all',
+		label: 'All completed sessions',
+		value: 'completed',
 	},
 	{
-		label: 'Completed sessions',
-		value: 'completed',
+		label: 'Date range (completed sessions)',
+		value: 'date_range',
+	},
+];
+
+const deleteTypes = [
+	{
+		label: 'All sessions',
+		value: 'all',
 	},
 	{
 		label: 'Incomplete sessions',
@@ -31,11 +38,9 @@ const exportTypes = [
 
 const exportFormats = [
 	{ label: 'Excel Spreadsheet', value: 'excel' },
-	{ label: 'JSON', value: 'json' },
-	{ label: 'JSONAPI', value: 'jsonapi' },
+	{ label: 'JSON (Save to Tablet)', value: 'json' },
+	{ label: 'JSONAPI (Send to Database)', value: 'jsonapi' },
 ];
-
-const deleteTypes = exportTypes.filter((_, i) => i !== 1);
 
 export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Sessions'>) {
 	const theme = useTheme();
@@ -73,16 +78,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
     const searchTimeout = React.useRef<any>();
 
 	const exportSessions = async (opts: any = {}) => {
-		let sessions = dbSessions;
+		const _dbSessions = dbSessions.filter((s: any) => s?.data?.completed_at);
+		let sessions = _dbSessions;
 		switch (exportType) {
-			case 'completed':
-				sessions = dbSessions.filter((s: any) => s?.data?.completed_at);
-				break;
-			case 'incomplete':
-				sessions = dbSessions.filter((s: any) => !s?.data?.completed_at);
-				break;
 			case 'date_range':
-				sessions = getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id) as any;
+				sessions = getFilteredSessions(_dbSessions, { minDate, maxDate }).map((s: any) => s.id) as any;
 				break;
 			default:
 				// do nothing
@@ -550,7 +550,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					{
 						label: 'Cancel',
 						onPress: () => {
-							setDeleteType('all');
+							setDeleteType(deleteTypes[0].value);
 							setOpenDeleteModal(false);
 						}
 					},
@@ -602,7 +602,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					{
 						label: 'Cancel',
 						onPress: () => {
-							setExportType('all');
+							setExportType(exportTypes[0].value);
 							setShowExportFormats(false);
 							setOpenExportModal(false);
 						}
