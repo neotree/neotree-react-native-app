@@ -20,6 +20,9 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           unique_key,
         } = session.data;
 
+        const drugsScreenEntry = form.find((e: any) => e.screen.type === 'drugs');
+        const fluidsScreenEntry = form.find((e: any) => e.screen.type === 'fluids');
+        const feedsScreenEntry = form.find((e: any) => e.screen.type === 'feeds');
         const diagnosisScreenEntry = form.find((e: any) => e.screen.type === 'diagnosis');
         const diagnoses = diagnosisScreenEntry
           ? diagnosisScreenEntry.values.map((v: any) => v.diagnosis)
@@ -159,7 +162,8 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           country,
           hospital_id,
           diagnoses: diagnoses.map((d: any) => ({
-            [d.name]: {
+            [d.key || d.name]: {
+              diagnosis: d.name,
               hcw_agree: d.how_agree,
               hcw_follow_instructions: d.hcw_follow_instructions,
               Suggested: d.suggested,
@@ -168,6 +172,39 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             },
           })),
           entries: flatEntries,
+          drugs: drugsScreenEntry?.values?.map?.((v: any) => {
+            const comment = (v.comments || [])[0];
+            return {
+              [v.key]: {
+                drug: v.valueText,
+                administered: v.selected ? 'Yes' : 'No',
+                reason: v.selected ? '' : (comment?.label || ''), 
+                reasonKey: v.selected ? '' : (comment?.key || 'Oth'), 
+              },
+            };
+          }),
+          fluids: fluidsScreenEntry?.values?.map?.((v: any) => {
+            const comment = (v.comments || [])[0];
+            return {
+              [v.key]: {
+                fluid: v.valueText,
+                administered: v.selected ? 'Yes' : 'No',
+                reason: v.selected ? '' : (comment?.label || ''), 
+                reasonKey: v.selected ? '' : (comment?.key || 'Oth'), 
+              },
+            };
+          }),
+          feeds: feedsScreenEntry?.values?.map?.((v: any) => {
+            const comment = (v.comments || [])[0];
+            return {
+              [v.key]: {
+                feed: v.valueText,
+                administered: v.selected ? 'Yes' : 'No',
+                reason: v.selected ? '' : (comment?.label || ''), 
+                reasonKey: v.selected ? '' : (comment?.key || 'Oth'), 
+              },
+            };
+          }),
         };
 
         resolve(exportData);
