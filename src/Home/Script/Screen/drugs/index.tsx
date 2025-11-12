@@ -20,9 +20,10 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         printable,
         drugs,
     } = useMemo(() => {
-        const reasons: { value: string; label: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
+        const reasons: { value: string; label: string; enterValueManually: boolean; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
             value: item.key,
             label: item.value,
+            enterValueManually: !!item.enterValueManually,
         }));
 
         let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
@@ -117,6 +118,8 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         }, 0);
     }, [currentDrug, drugs, setValues, setEntryValues]);
 
+    const enterValueManually = !!reasons.find(o => o.value === currentDrug?.comment?.key)?.enterValueManually;
+
     return (
         <Box>
             <Modal
@@ -149,25 +152,41 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                     />
 
                     <Box mt="l">
-                        {!!currentDrug?.other ? (
-                            <Box mt="l">
-                                <TextInput
-                                    multiline
-                                    label="Other (Optional)"
-                                    value={currentDrug.comment?.label || ''}
-                                    numberOfLines={3}
-                                    onChangeText={v => setCurrentDrug(prev => ({ ...prev!, comment: { label: v, }, }))}
-                                />
-                            </Box>
+                        {enterValueManually ? (
+                            <>
+                                <Box mt="l">
+                                    <TextInput
+                                        multiline
+                                        label="Other (Optional)"
+                                        value={currentDrug?.comment?.label || ''}
+                                        numberOfLines={3}
+                                        onChangeText={v => setCurrentDrug(prev => ({ ...prev!, comment: { ...prev?.comment, label: v, }, }))}
+                                    />
+                                </Box>
+                            </>
                         ) : (
-                            <Radio
-                                label="Other"
-                                checked={currentDrug?.other}
-                                onChange={() => {
-                                    setCurrentDrug(prev => ({ ...prev!, reason: '', other: true, }));
-                                }}
-                                disabled={false}
-                            />
+                            <>
+                                {!!currentDrug?.other ? (
+                                    <Box mt="l">
+                                        <TextInput
+                                            multiline
+                                            label="Other (Optional)"
+                                            value={currentDrug.comment?.label || ''}
+                                            numberOfLines={3}
+                                            onChangeText={v => setCurrentDrug(prev => ({ ...prev!, comment: { label: v, }, }))}
+                                        />
+                                    </Box>
+                                ) : (
+                                    <Radio
+                                        label="Other"
+                                        checked={currentDrug?.other}
+                                        onChange={() => {
+                                            setCurrentDrug(prev => ({ ...prev!, reason: '', other: true, }));
+                                        }}
+                                        disabled={false}
+                                    />
+                                )}
+                            </>
                         )}
                     </Box>
                 </Box>
