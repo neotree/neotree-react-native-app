@@ -152,7 +152,7 @@ export function DatePicker({
           backgroundColor={disabled ? 'disabledBackground' : undefined}
         >
           <Box flex={1}>
-            {date ? (
+            {valueText !== undefined || date ? (
               <Text color={disabled ? 'textDisabled' : undefined}>
                 {renderValue()}
               </Text>

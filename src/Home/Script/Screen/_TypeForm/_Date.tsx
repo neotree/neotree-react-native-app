@@ -2,15 +2,32 @@ import React, { useCallback, useMemo } from 'react';
 import moment from 'moment';
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
+import { toLocalISOString } from '../../../../utils/toLocalISOString';
 
 type DateFieldProps = types.ScreenFormTypeProps & {
 
 };
 
-export function DateField({ field, conditionMet, entryValue, allValues, onChange, repeatable, editable }: DateFieldProps) {
+export function DateField({ field, conditionMet, entryValue, allValues, onChange, repeatable, editable, formIndex }: DateFieldProps) {
     const [mounted, setMounted] = React.useState(false);
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const canEdit = repeatable ? editable : true
+    const fieldKey = field?.key;
+    const fieldLabel = field?.label;
+
+    const logDateFieldEvent = useCallback(
+        (event: string, payload: Record<string, unknown> = {}) => {
+            const prefix = repeatable ? '[Repeatable][DateField]' : '[NonRepeatable][DateField]';
+            console.log(prefix, event, {
+                isRepeatable: !!repeatable,
+                fieldKey,
+                fieldLabel,
+                formIndex,
+                ...payload,
+            });
+        },
+        [fieldKey, fieldLabel, formIndex, repeatable]
+    );
 
     const getformattedDate = (type: any, value: Date) => {
         switch (type) {
@@ -27,13 +44,20 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
         if (!conditionMet) {
             onChange({ value: null, valueText: null, exportType: 'date', });
             setValue(null);
+            logDateFieldEvent('conditionReset', { reason: 'conditionMet=false' });
         } else {
             if (!mounted && (field.defaultValue === 'date_now')) {
                 const date = new Date();
                 const formatedDate = getformattedDate(field.type, date)
+                const normalizedValue = toLocalISOString(date);
+                logDateFieldEvent('defaultValueApplied', {
+                    defaultValue: field.defaultValue,
+                    isoValue: normalizedValue,
+                    formatted: formatedDate,
+                });
                 onChange({
                     exportType: 'date',
-                    value: date,
+                    value: normalizedValue,
                     valueText: formatedDate,
                     valueLabel: formatedDate,
                     exportValue: formatedDate,
@@ -45,9 +69,14 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
 
             if (!mounted && (field.defaultValue === 'date_noon')) {
                 const date = moment(new Date()).startOf('day').hour(12).minute(0).toDate();
+                const normalizedValue = toLocalISOString(date);
+                logDateFieldEvent('defaultValueApplied', {
+                    defaultValue: field.defaultValue,
+                    isoValue: normalizedValue,
+                });
                 onChange({
                     exportType: 'date',
-                    value: date,
+                    value: normalizedValue,
                     label: field?.label,
                     valueText: (() => {
                         switch (field.type) {
@@ -65,9 +94,14 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
 
             if (!mounted && (field.defaultValue === 'date_midnight')) {
                 const date = moment(new Date()).startOf('day').hour(0).minute(0).toDate();
+                const normalizedValue = toLocalISOString(date);
+                logDateFieldEvent('defaultValueApplied', {
+                    defaultValue: field.defaultValue,
+                    isoValue: normalizedValue,
+                });
                 onChange({
                     exportType: 'date',
-                    value: date,
+                    value: normalizedValue,
                      label: field?.label,
                     valueText: (() => {
                         switch (field.type) {
@@ -83,22 +117,39 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 setValue(date);
             }
         }
-    }, [conditionMet, field, mounted]);
+    }, [conditionMet, field, logDateFieldEvent, mounted, onChange]);
 
     React.useEffect(() => { setMounted(true); }, []);
 
     React.useEffect(() => {
         if (!entryValue) {
             setValue(null);
+            logDateFieldEvent('entryValueSynced', {
+                entryValue: null,
+                entryValueText: null,
+                normalizedValue: null,
+                note: 'entryValue missing',
+            });
             return;
         }
         const nextValue = entryValue.value ? new Date(entryValue.value) : null;
         if (nextValue && isNaN(nextValue.getTime())) {
             setValue(null);
+            logDateFieldEvent('entryValueSynced', {
+                entryValue: entryValue?.value || null,
+                entryValueText: entryValue?.valueText || null,
+                normalizedValue: null,
+                note: 'invalid date',
+            });
             return;
         }
+        logDateFieldEvent('entryValueSynced', {
+            entryValue: entryValue?.value || null,
+            entryValueText: entryValue?.valueText || null,
+            normalizedValue: nextValue ? toLocalISOString(nextValue) : null,
+        });
         setValue(nextValue);
-    }, [entryValue?.value]);
+    }, [entryValue?.value, entryValue?.valueText, logDateFieldEvent]);
 
     const { minDate, maxDate } = useMemo(() => {
         let minDate = undefined;
@@ -167,6 +218,7 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                 errors={getErrors(entryValue?.value)}
                 mode={field.type === 'date' ? 'date' : 'datetime'}
                 value={value}
+                valueText={entryValue?.valueText || undefined}
                 disabled={!conditionMet || !canEdit}
                 label={`${field.label}${field.optional ? '' : ' *'}`}
                 fieldKey={field.key}
@@ -179,25 +231,34 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
                     }
                     const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
                     const validDate = isValidDate(date) ? date : null;
-                    const error = getErrors(validDate ? validDate.toISOString() : null)[0] || null;
-                    setValue(validDate);
-                    onChange({
-                        label:field?.label,
+                    const normalizedValue = validDate ? toLocalISOString(validDate) : null;
+                    const error = getErrors(normalizedValue)[0] || null;
+                    const valueText = (() => {
+                        if (!date) return null;
+                        switch (field.type) {
+                            case 'date':
+                                return require('moment')(new Date(date)).format('YYYY-MM-DD');
+                            case 'datetime':
+                                return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
+                            default:
+                                return null;
+                        }
+                    })();
+                    const payload = {
+                        label: field?.label,
                         error,
                         exportType: 'date',
-                        value: validDate ? validDate.toISOString() : null,
-                        valueText: (() => {
-                            if (!date) return null;
-                            switch (field.type) {
-                                case 'date':
-                                    return require('moment')(new Date(date)).format('YYYY-MM-DD');
-                                case 'datetime':
-                                    return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
-                                default:
-                                    return null;
-                            }
-                        })(),
+                        value: normalizedValue,
+                        valueText,
+                    };
+                    setValue(validDate);
+                    logDateFieldEvent('onChange', {
+                        pickedValue: value ? toLocalISOString(value) : null,
+                        normalizedValue: normalizedValue,
+                        valueText,
+                        error,
                     });
+                    onChange(payload);
                 }}
                 maxDate={maxDate || field.maxDate}
                 minDate={minDate || field.minDate}

@@ -346,8 +346,27 @@ export function TypeForm({ }: TypeFormProps) {
 
                             if (!conditionMet) return null;
 
-                            const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
-
+                            const updateFieldValue = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
+                            const shouldLog = ['date', 'datetime', 'period'].includes(f.type);
+                            const onChange = (val: Partial<types.ScreenEntryValue>) => {
+                                if (shouldLog) {
+                                    const incoming = val || {};
+                                    console.log('[NonRepeatable][handleChange]', {
+                                        isRepeatable: false,
+                                        fieldKey: f.key,
+                                        fieldLabel: f.label,
+                                        fieldType: f.type,
+                                        incoming: {
+                                            value: incoming?.value ?? null,
+                                            valueText: incoming?.valueText ?? null,
+                                            exportValue: incoming?.exportValue ?? null,
+                                            calculateValue: incoming?.calculateValue ?? null,
+                                            label: incoming?.label ?? null,
+                                        },
+                                    });
+                                }
+                                updateFieldValue(val);
+                            };
 
                             const allValues = getAllValues()
 
