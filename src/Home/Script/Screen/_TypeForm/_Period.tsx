@@ -4,6 +4,7 @@ import moment from 'moment';
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
 import { diffHours } from '../../../../utils/diffHours';
+import { toLocalISOString } from '../../../../utils/toLocalISOString';
 
 type PeriodFieldProps = types.ScreenFormTypeProps & {};
 
@@ -64,10 +65,27 @@ export function PeriodField({
     formIndex,
     formValues = [],
     onLinkedFieldChange,
+    repeatable,
 }: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
+    const fieldKey = field?.key;
+    const fieldLabel = field?.label;
+
+    const logPeriodFieldEvent = React.useCallback(
+        (event: string, payload: Record<string, unknown> = {}) => {
+            const prefix = repeatable ? '[Repeatable][PeriodField]' : '[NonRepeatable][PeriodField]';
+            console.log(prefix, event, {
+                isRepeatable: !!repeatable,
+                fieldKey,
+                fieldLabel,
+                formIndex,
+                ...payload,
+            });
+        },
+        [fieldKey, fieldLabel, formIndex, repeatable]
+    );
 
     const referenceFieldKey = React.useMemo(() => {
         const { key } = normalizeKey(field?.calculation || field?.refKey);
@@ -95,16 +113,28 @@ export function PeriodField({
             onLinkedFieldChange(referenceFieldKey, {
                 label: calcFrom?.label,
                 exportType: calcFrom?.type,
-                value: date ? date.toISOString() : null,
+                value: date ? toLocalISOString(date) : null,
                 valueText: formatted,
                 exportLabel: formatted,
                 exportValue: formatted,
             });
+            logPeriodFieldEvent('syncLinkedField', {
+                targetKey: referenceFieldKey,
+                isoValue: date ? toLocalISOString(date) : null,
+                formatted,
+            });
         },
-        [calcFrom?.label, calcFrom?.type, field?.type, onLinkedFieldChange, referenceFieldKey]
+        [calcFrom?.label, calcFrom?.type, field?.type, logPeriodFieldEvent, onLinkedFieldChange, referenceFieldKey]
     );
 
-    React.useEffect(() => { setValueText(dateToValueText(value, field.format)); }, [value, field.format]);
+    React.useEffect(() => { 
+        const formatted = dateToValueText(value, field.format);
+        setValueText(formatted); 
+        logPeriodFieldEvent('valueTextComputed', {
+            isoValue: value ? toLocalISOString(value) : null,
+            valueText: formatted,
+        });
+    }, [field.format, logPeriodFieldEvent, value]);
 
     React.useEffect(() => { 
         if (!conditionMet) {
@@ -116,8 +146,16 @@ export function PeriodField({
                 exportType: 'number',
 			}); 
             setValue(null);
+            logPeriodFieldEvent('conditionReset', { reason: 'conditionMet=false' });
         }
-    }, [conditionMet]);
+    }, [conditionMet, logPeriodFieldEvent, onChange]);
+
+    React.useEffect(() => {
+        logPeriodFieldEvent('entryValueSynced', {
+            entryValue: entryValue?.value || null,
+            entryValueText: entryValue?.valueText || null,
+        });
+    }, [entryValue?.value, entryValue?.valueText, logPeriodFieldEvent]);
 
     const normalizeEntries = React.useCallback((input: any): types.ScreenEntryValue[] => {
         if (!input) return [];
@@ -171,19 +209,28 @@ export function PeriodField({
                 const val = new Date(_calcFrom.value);
                 setValue(val);
                 setValueText(dateToValueText(val, field.format));
+                const calculateValue = _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null;
+                const normalizedValue = toLocalISOString(val);
                 onChange({ 
                     label:field?.label,
                     exportType: 'number',
-					value: val.toISOString(), 
+					value: normalizedValue, 
 					valueText: dateToValueText(val, field.format), 
                     exportLabel:dateToValueText(val, field.format),
-					exportValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
-      				calculateValue: _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null,
+					exportValue: calculateValue,
+       				calculateValue,
 				});
+                logPeriodFieldEvent('calcFromResolved', {
+                    calcFromKey: _calcFrom.key,
+                    calcFromValue: _calcFrom.value,
+					normalizedValue: normalizedValue,
+                    calculateValue,
+                    displayText: dateToValueText(val, field.format),
+                });
             } catch(e) { /**/ }
           }
         }
-      }, [calcFrom, field.calculation, field.format, field.refKey, getCalculationEntry, scopedValues]);
+      }, [calcFrom, field.calculation, field.format, field.refKey, getCalculationEntry, logPeriodFieldEvent, scopedValues]);
 
     return (
         <Box>
@@ -197,15 +244,25 @@ export function PeriodField({
                     const validDate = isValidDate(date) ? date : null;
                     setValue(validDate);
                     syncLinkedField(validDate);
-                    onChange({
+                    const valueText = dateToValueText(validDate, field.format);
+                    const diffValue = validDate ? diffHours(validDate, new Date()) : null;
+                    const normalizedValue = validDate ? toLocalISOString(validDate) : null;
+                    const payload = {
                         label:field?.label,
                         exportType: 'number',
-                        value: !validDate ? null : validDate.toISOString(),
-                        valueText: dateToValueText(validDate, field.format),
-                        exportLabel:dateToValueText(validDate, field.format),
-						exportValue: validDate ? diffHours(validDate, new Date()) : null,
-      					calculateValue: validDate ? diffHours(validDate, new Date()) : null,
+                        value: normalizedValue,
+                        valueText,
+                        exportLabel:valueText,
+						exportValue: diffValue,
+       				calculateValue: diffValue,
+                    };
+                    logPeriodFieldEvent('onChange', {
+                        pickedValue: date ? toLocalISOString(date) : null,
+                        normalizedValue,
+                        valueText,
+                        diffValue,
                     });
+                    onChange(payload);
                 }}
                 valueText={valueText}
                 maxDate="date_now"

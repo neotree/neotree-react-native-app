@@ -34,6 +34,17 @@ type FormItem = {
 }
 
 
+const normalizeFormEntries = (values?: Record<string, any>) => {
+    if (!values || typeof values !== 'object') return [];
+    return Object.entries(values).reduce((acc: any[], [key, entry]) => {
+        if (entry && typeof entry === 'object') {
+            acc.push({ key, ...entry });
+        }
+        return acc;
+    }, []);
+};
+
+
 const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluateCondition, allValues }: RepeatableProps) => {
 
 
@@ -186,67 +197,99 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     
 
     const handleChange = (id: number, key: string, value: any, field: any) => {
-
-        const updatedForms = forms.map((form) => {
-            if (form.id !== id) return form;
-            const createAt = form.createdAt
-            const enhancedValue = {
-                ...value,
-                printable: field.printable,
-                label: field.label,
-                prePopulate: field.prePopulate
-            };
-            let newValues = { ...form.values, [key]: enhancedValue };
-            
-            const isComplete = fields.every(field => {
-                const val = newValues[field.key];
-                const conditionMet = form ? evaluateCondition(field,newValues) : true
-        
-                if (!conditionMet) {
-                    return true
+        setForms(prevForms => {
+            const updatedForms = prevForms.map((form, formIdx) => {
+                if (form.id !== id) return form;
+                const createAt = form.createdAt;
+                const enhancedValue = {
+                    ...value,
+                    printable: field.printable,
+                    label: field.label,
+                    prePopulate: field.prePopulate,
+                };
+                const shouldLogField = ['date', 'datetime', 'period'].includes(field.type);
+                if (shouldLogField) {
+                    const incoming = value || {};
+                    console.log('[Repeatable][handleChange]', {
+                        fieldKey: field.key,
+                        fieldLabel: field.label,
+                        fieldType: field.type,
+                        formId: id,
+                        formIndex: formIdx,
+                        incoming: {
+                            value: incoming?.value ?? null,
+                            valueText: incoming?.valueText ?? null,
+                            exportValue: incoming?.exportValue ?? null,
+                            calculateValue: incoming?.calculateValue ?? null,
+                            label: incoming?.label ?? null,
+                        },
+                        enhanced: {
+                            value: enhancedValue?.value ?? null,
+                            valueText: enhancedValue?.valueText ?? null,
+                            exportValue: enhancedValue?.exportValue ?? null,
+                            calculateValue: enhancedValue?.calculateValue ?? null,
+                            label: enhancedValue?.label ?? null,
+                        },
+                    });
                 }
-                return !!val
-                    && !!val?.['value']
+                let newValues = { ...form.values, [key]: enhancedValue };
+
+                const isComplete = fields.every(field => {
+                    const val = newValues[field.key];
+                    const conditionMet = form ? evaluateCondition(field, newValues) : true;
+
+                    if (!conditionMet) {
+                        return true;
+                    }
+                    return !!val && !!val?.['value'];
+                });
+
+                const collectionFieldValue = newValues?.[collectionField];
+                const hasCollectionField = !!(collectionFieldValue && collectionFieldValue['value']);
+                const requiredComplete =
+                    hasCollectionField &&
+                    fields.filter(f => !f.optional).every(field => {
+                        const val = newValues[field.key];
+                        if (field.type === 'dropdown') {
+                            if (val?.['value'] === 'other') {
+                                const otherField = fields.find(f =>
+                                    String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase()
+                                );
+                                if (otherField) {
+                                    return !!newValues[otherField?.key]?.['value'] || !!newValues[otherField]?.['value'];
+                                }
+                            } else {
+                                const otherField = fields.find(f =>
+                                    String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase()
+                                );
+                                const val = newValues[field?.key];
+                                if (otherField && otherField?.key && newValues[otherField.key] && val?.['value'] != 'other') {
+                                    newValues[otherField?.key] = null;
+                                }
+                            }
+                        }
+
+                        const conditionMet = evaluateCondition(field, newValues);
+                        if (!conditionMet) {
+                            return true;
+                        }
+                        return !!val && !!val['value'];
+                    });
+
+                return {
+                    ...form,
+                    createAt,
+                    values: newValues,
+                    isComplete,
+                    requiredComplete,
+                    hasCollectionField,
+                };
             });
 
-
-        
-            const collectionFieldValue = newValues?.[collectionField];
-            const hasCollectionField = (!!collectionFieldValue && !!collectionFieldValue['value'])
-            const requiredComplete = hasCollectionField
-                && fields.filter(f => (!f.optional)).every(field => {
-                    const val = newValues[field.key];
-                    if(field.type==='dropdown'){
-                    if (val?.['value'] === 'other') {
-                       const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
-                        if (otherField) {
-                            return !!newValues[otherField?.key]?.['value'] || !!newValues[otherField]?.['value']
-                        }
-                    } else{
-                        const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
-                        const val = newValues[field?.key];
-                        if(otherField &&otherField?.key && newValues[otherField.key]&& val?.['value'] != 'other'){
-                        newValues[otherField?.key]=null
-                    } 
-                    } 
-                   }
-                  
-                    const conditionMet = evaluateCondition(field,newValues)
-                    if (!conditionMet) {
-                        return true
-                    }
-                    return (!!val
-                        && !!val['value']
-                    )
-                });
-           
-            const updatedValue = { ...form, createAt, values: newValues, isComplete, requiredComplete, hasCollectionField: hasCollectionField }
-
-            return updatedValue;
+            setDisabled(updatedForms.filter(f => !f.requiredComplete).length > 0);
+            notifyParent(updatedForms);
+            return updatedForms;
         });
-        setDisabled(updatedForms?.filter(f => !f.requiredComplete).length > 0);
-        setForms(updatedForms);
-        notifyParent(updatedForms);
     };
 
     const notifyParent = (formsList = forms) => {
@@ -443,6 +486,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
     const renderFieldComponent = (field: any, formId: number, value: any, index: number, createdAt: string) => {
         const form = forms.find(f => f.id === formId)
         const formIndex = form ? forms.indexOf(form) : 0
+        const formEntries = normalizeFormEntries(form?.values);
         const conditionMet = form ? evaluateCondition(field,form) : true
         const editable = field.editable || dateIsToday(new Date(createdAt))
         const handleLinkedFieldChange = (targetKey: string, val: any) => {
@@ -454,11 +498,13 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             handleChange(formId, targetKey, val, targetField);
         };
 
+        const entryValueObj = formEntries.find(entry => entry.key === field.key) || value;
+
         const fieldProps = {
             field,
             fieldIndex: index,
-            entryValue: value,
-            formValues: [],
+            entryValue: entryValueObj,
+            formValues: formEntries,
             allValues,
             repeatable: true,
             conditionMet,
@@ -472,20 +518,22 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         if (!conditionMet) {
             return null
         }
+        const componentKey = `${formId}-${field.key}`;
+
         switch (field.type) {
             case fieldsTypes.NUMBER:
-                return <NumberField key={field.key} {...fieldProps} />;
+                return <NumberField key={componentKey} {...fieldProps} />;
             case fieldsTypes.DATE:
             case fieldsTypes.DATETIME:
-                return <DateField key={field.key} {...fieldProps} />;
+                return <DateField key={componentKey} {...fieldProps} />;
             case fieldsTypes.DROPDOWN:
-                return <DropDownField key={field.key} {...fieldProps} />;
+                return <DropDownField key={componentKey} {...fieldProps} />;
             case fieldsTypes.PERIOD:
-                return <PeriodField key={field.key} {...fieldProps} />;
+                return <PeriodField key={componentKey} {...fieldProps} />;
             case fieldsTypes.TEXT:
-                return <TextField key={field.key} {...fieldProps} />;
+                return <TextField key={componentKey} {...fieldProps} />;
             case fieldsTypes.TIME:
-                return <TimeField key={field.key} {...fieldProps} />;
+                return <TimeField key={componentKey} {...fieldProps} />;
             default:
                 return null;
         }
