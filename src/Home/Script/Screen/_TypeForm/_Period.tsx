@@ -3,10 +3,16 @@ import moment from 'moment';
 
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
-import { diffHours, diffHours2 } from '../../../../utils/diffHours';
+import { diffHours } from '../../../../utils/diffHours';
 
-type PeriodFieldProps = types.ScreenFormTypeProps & {
-    
+type PeriodFieldProps = types.ScreenFormTypeProps & {};
+
+const normalizeKey = (input?: string | null) => {
+    if (!input || typeof input !== 'string') return { token: null, key: null };
+    const trimmed = input.trim();
+    if (!trimmed) return { token: null, key: null };
+    const key = trimmed.startsWith('$') ? trimmed.substring(1) : trimmed;
+    return { token: key ? `$${key}` : null, key: key || null };
 };
 
 export function dateToValueText(value: null | Date, format: 'days_hours' | 'years_months' = 'days_hours') {
@@ -49,10 +55,54 @@ export function dateToValueText(value: null | Date, format: 'days_hours' | 'year
     return null;
 }
 
-export function PeriodField({ field, conditionMet, onChange, entryValue, allValues,formIndex }: PeriodFieldProps) {
+export function PeriodField({
+    field,
+    conditionMet,
+    onChange,
+    entryValue,
+    allValues,
+    formIndex,
+    formValues = [],
+    onLinkedFieldChange,
+}: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
+
+    const referenceFieldKey = React.useMemo(() => {
+        const { key } = normalizeKey(field?.calculation || field?.refKey);
+        return key;
+    }, [field?.calculation, field?.refKey]);
+
+    const syncLinkedField = React.useCallback(
+        (date: Date | null) => {
+            if (!referenceFieldKey || !onLinkedFieldChange) return;
+            let formatted: string | null = null;
+            if (date) {
+                const type = calcFrom?.type || field?.type || 'datetime';
+                switch (type) {
+                    case 'date':
+                        formatted = moment(date).format('YYYY-MM-DD');
+                        break;
+                    case 'time':
+                        formatted = moment(date).format('HH:mm');
+                        break;
+                    default:
+                        formatted = moment(date).format('YYYY-MM-DD HH:mm');
+                        break;
+                }
+            }
+            onLinkedFieldChange(referenceFieldKey, {
+                label: calcFrom?.label,
+                exportType: calcFrom?.type,
+                value: date ? date.toISOString() : null,
+                valueText: formatted,
+                exportLabel: formatted,
+                exportValue: formatted,
+            });
+        },
+        [calcFrom?.label, calcFrom?.type, field?.type, onLinkedFieldChange, referenceFieldKey]
+    );
 
     React.useEffect(() => { setValueText(dateToValueText(value, field.format)); }, [value, field.format]);
 
@@ -69,36 +119,51 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
         }
     }, [conditionMet]);
 
-    function getValuesFromIndex<T>(array: T[], startIndex: number = 0): T[] {
-        return array?.slice(startIndex);
-      }
+    const normalizeEntries = React.useCallback((input: any): types.ScreenEntryValue[] => {
+        if (!input) return [];
+        const normalized: types.ScreenEntryValue[] = [];
 
-    function getCalculationEntry(data: any[],fieldCalc:any): any | null {
-      
-        const result = getValuesFromIndex(data,formIndex)?.find(v => {
-            // Case 1: Object has explicit key property
-            if (v.key && `$${v.key}` === fieldCalc) return true;
-            
-            // Case 2: Object is keyed by property name
-            const objectKey = Object.keys(v).find(k => 
-              typeof v[k] === 'object' && 
-              `$${k}` === fieldCalc
-            );
-            return !!objectKey;
-          });
-          
-          if (result && !result.key && fieldCalc) {
-            const key = fieldCalc.substring(1); // Remove the '$' prefix
-            if (result[key] && typeof result[key] === 'object') {
-              return { key, ...result[key] };
+        const pushEntry = (entry: any, keyOverride?: string) => {
+            if (!entry) return;
+            if (entry.key || keyOverride) {
+                normalized.push({ ...(entry as any), key: (keyOverride || entry.key) as string });
+                return;
             }
-          }
-          
-          return result;
-      }
+            if (typeof entry === 'object') {
+                Object.entries(entry).forEach(([subKey, subValue]) => {
+                    if (subValue && typeof subValue === 'object') {
+                        normalized.push({ ...(subValue as any), key: subKey });
+                    }
+                });
+            }
+        };
+
+        if (Array.isArray(input)) {
+            input.forEach(item => pushEntry(item));
+        } else {
+            pushEntry(input);
+        }
+
+        return normalized;
+    }, []);
+
+    const scopedValues = React.useMemo(() => {
+        const localValues = normalizeEntries(formValues);
+        const globalValues = normalizeEntries(allValues);
+        return [...localValues, ...globalValues];
+    }, [allValues, formValues, normalizeEntries]);
+
+    const getCalculationEntry = React.useCallback(
+        (entries: types.ScreenEntryValue[], fieldCalc?: string | null): types.ScreenEntryValue | null => {
+            const { key } = normalizeKey(fieldCalc);
+            if (!key) return null;
+            return entries.find(v => `${v?.key}`.toLowerCase() === key.toLowerCase()) || null;
+        },
+        []
+    );
 
     React.useEffect(() => {
-        const _calcFrom =getCalculationEntry(allValues,field.calculation||field.refKey)
+        const _calcFrom = getCalculationEntry(scopedValues, field.calculation || field.refKey);
         if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
           setCalcFrom(_calcFrom);
           if (_calcFrom && _calcFrom.value) {
@@ -118,7 +183,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
             } catch(e) { /**/ }
           }
         }
-      }, [allValues, calcFrom, field.format]);
+      }, [calcFrom, field.calculation, field.format, field.refKey, getCalculationEntry, scopedValues]);
 
     return (
         <Box>
@@ -131,6 +196,7 @@ export function PeriodField({ field, conditionMet, onChange, entryValue, allValu
                    const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
                     const validDate = isValidDate(date) ? date : null;
                     setValue(validDate);
+                    syncLinkedField(validDate);
                     onChange({
                         label:field?.label,
                         exportType: 'number',

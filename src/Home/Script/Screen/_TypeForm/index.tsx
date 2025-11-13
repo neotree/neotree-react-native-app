@@ -216,6 +216,17 @@ export function TypeForm({ }: TypeFormProps) {
         }));
     }, []);
 
+    const setValueByKey = useCallback((key: string, val: Partial<types.ScreenEntryValue>) => {
+        if (!key) return;
+        setValues(prev =>
+            prev.map(entry =>
+                `${entry.key}`.toLowerCase() === `${key}`.toLowerCase()
+                    ? { ...entry, ...val }
+                    : entry
+            )
+        );
+    }, []);
+
     React.useEffect(() => {
 
         const completed = repeatable ? (values.length > 0) : values.reduce((acc, { value }, i) => {
@@ -340,6 +351,8 @@ export function TypeForm({ }: TypeFormProps) {
 
                             const allValues = getAllValues()
 
+                            const extraProps = Component === PeriodField ? { onLinkedFieldChange: setValueByKey } : {};
+
                             return (
                                 <FormItem
                                     field={f}
@@ -355,6 +368,7 @@ export function TypeForm({ }: TypeFormProps) {
                                         conditionMet={conditionMet}
                                         patientNUID={patientNUID}
                                         onChange={onChange}
+                                        {...extraProps}
                                     />
                                     <Br spacing="xl" />
                                 </FormItem>
