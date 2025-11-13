@@ -109,9 +109,10 @@ export function DatePicker({
       ? now
       : new Date(maxDate);
 
+      //Limit minimum date for DOBTOB to 84 days ago
   const effectiveMinDate =
     fieldKey === 'DOBTOB'
-      ? moment(now).subtract(28, 'days').toDate()
+      ? moment(now).subtract(84, 'days').toDate()
       : !minDate
       ? undefined
       : minDate === 'date_now'

@@ -445,6 +445,15 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         const formIndex = form ? forms.indexOf(form) : 0
         const conditionMet = form ? evaluateCondition(field,form) : true
         const editable = field.editable || dateIsToday(new Date(createdAt))
+        const handleLinkedFieldChange = (targetKey: string, val: any) => {
+            if (!targetKey) return;
+            const targetField = fields.find(
+                f => `${f.key}`.toLowerCase() === `${targetKey}`.toLowerCase()
+            );
+            if (!targetField) return;
+            handleChange(formId, targetKey, val, targetField);
+        };
+
         const fieldProps = {
             field,
             fieldIndex: index,
@@ -455,7 +464,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             conditionMet,
             editable,
             formIndex: formIndex,
-            onChange: (val: any) => handleChange(formId, field.key, val, field)
+            onChange: (val: any) => handleChange(formId, field.key, val, field),
+            onLinkedFieldChange: handleLinkedFieldChange,
         }
 
 

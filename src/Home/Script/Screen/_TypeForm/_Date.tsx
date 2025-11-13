@@ -87,6 +87,19 @@ export function DateField({ field, conditionMet, entryValue, allValues, onChange
 
     React.useEffect(() => { setMounted(true); }, []);
 
+    React.useEffect(() => {
+        if (!entryValue) {
+            setValue(null);
+            return;
+        }
+        const nextValue = entryValue.value ? new Date(entryValue.value) : null;
+        if (nextValue && isNaN(nextValue.getTime())) {
+            setValue(null);
+            return;
+        }
+        setValue(nextValue);
+    }, [entryValue?.value]);
+
     const { minDate, maxDate } = useMemo(() => {
         let minDate = undefined;
         let maxDate = undefined;
