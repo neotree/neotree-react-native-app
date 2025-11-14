@@ -102,7 +102,7 @@ export function TypeForm({ }: TypeFormProps) {
         return conditionMet;
     };
 
-    const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
+    const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
             const key = Object.keys(data)[0];
 
@@ -123,8 +123,9 @@ export function TypeForm({ }: TypeFormProps) {
                         };
                         const updated = [...formattedValues, repeatables]
                         if (updated && updated.length > 0) {
-                            setValues(deepSanitize(updated));
-                            setEntryValues(deepSanitize(updated))
+                            const sanitized = deepSanitize(updated);
+                            setValues(sanitized);
+                            setEntryValues(sanitized)
                         
 
                         }
@@ -141,8 +142,9 @@ export function TypeForm({ }: TypeFormProps) {
                             ...formattedValues.slice(repeatablesIndex + 1)
                         ];
                         if (updatedValues && updatedValues.length > 0) {
-                            setValues(deepSanitize(updatedValues));
-                            setEntryValues(deepSanitize(updatedValues))
+                            const sanitized = deepSanitize(updatedValues);
+                            setValues(sanitized);
+                            setEntryValues(sanitized)
                         }
                     }
                 }
@@ -150,7 +152,7 @@ export function TypeForm({ }: TypeFormProps) {
         } catch (ex) {
 
         }
-    };
+    }, [values, setEntryValues]);
     function deepSanitize(input: any): any {
         if (input == null) {
             // handles both null and undefined

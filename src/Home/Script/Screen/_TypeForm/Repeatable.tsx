@@ -287,7 +287,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             });
 
             setDisabled(updatedForms.filter(f => !f.requiredComplete).length > 0);
-            notifyParent(updatedForms);
             return updatedForms;
         });
     };
