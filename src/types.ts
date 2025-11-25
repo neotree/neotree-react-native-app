@@ -205,6 +205,7 @@ export type ScreenFormTypeProps = {
   repeatable?:boolean,
   editable?:boolean
   formIndex?: number
+  onLinkedFieldChange?: (key: string, value: Partial<ScreenEntryValue>) => void;
 };
 
 export type DiagnosisSectionProps = ScreenTypeProps & {

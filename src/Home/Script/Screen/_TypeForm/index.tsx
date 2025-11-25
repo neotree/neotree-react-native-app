@@ -102,7 +102,7 @@ export function TypeForm({ }: TypeFormProps) {
         return conditionMet;
     };
 
-    const handleRepeatablesChange = (data: Record<string, Repeatable[]>) => {
+    const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
             const key = Object.keys(data)[0];
 
@@ -123,8 +123,9 @@ export function TypeForm({ }: TypeFormProps) {
                         };
                         const updated = [...formattedValues, repeatables]
                         if (updated && updated.length > 0) {
-                            setValues(deepSanitize(updated));
-                            setEntryValues(deepSanitize(updated))
+                            const sanitized = deepSanitize(updated);
+                            setValues(sanitized);
+                            setEntryValues(sanitized)
                         
 
                         }
@@ -141,8 +142,9 @@ export function TypeForm({ }: TypeFormProps) {
                             ...formattedValues.slice(repeatablesIndex + 1)
                         ];
                         if (updatedValues && updatedValues.length > 0) {
-                            setValues(deepSanitize(updatedValues));
-                            setEntryValues(deepSanitize(updatedValues))
+                            const sanitized = deepSanitize(updatedValues);
+                            setValues(sanitized);
+                            setEntryValues(sanitized)
                         }
                     }
                 }
@@ -150,7 +152,7 @@ export function TypeForm({ }: TypeFormProps) {
         } catch (ex) {
 
         }
-    };
+    }, [values, setEntryValues]);
     function deepSanitize(input: any): any {
         if (input == null) {
             // handles both null and undefined
@@ -214,6 +216,17 @@ export function TypeForm({ }: TypeFormProps) {
             };
             return state;
         }));
+    }, []);
+
+    const setValueByKey = useCallback((key: string, val: Partial<types.ScreenEntryValue>) => {
+        if (!key) return;
+        setValues(prev =>
+            prev.map(entry =>
+                `${entry.key}`.toLowerCase() === `${key}`.toLowerCase()
+                    ? { ...entry, ...val }
+                    : entry
+            )
+        );
     }, []);
 
     React.useEffect(() => {
@@ -335,10 +348,31 @@ export function TypeForm({ }: TypeFormProps) {
 
                             if (!conditionMet) return null;
 
-                            const onChange = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
-
+                            const updateFieldValue = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
+                            const shouldLog = ['date', 'datetime', 'period'].includes(f.type);
+                            const onChange = (val: Partial<types.ScreenEntryValue>) => {
+                                if (shouldLog) {
+                                    const incoming = val || {};
+                                    console.log('[NonRepeatable][handleChange]', {
+                                        isRepeatable: false,
+                                        fieldKey: f.key,
+                                        fieldLabel: f.label,
+                                        fieldType: f.type,
+                                        incoming: {
+                                            value: incoming?.value ?? null,
+                                            valueText: incoming?.valueText ?? null,
+                                            exportValue: incoming?.exportValue ?? null,
+                                            calculateValue: incoming?.calculateValue ?? null,
+                                            label: incoming?.label ?? null,
+                                        },
+                                    });
+                                }
+                                updateFieldValue(val);
+                            };
 
                             const allValues = getAllValues()
+
+                            const extraProps = Component === PeriodField ? { onLinkedFieldChange: setValueByKey } : {};
 
                             return (
                                 <FormItem
@@ -355,6 +389,7 @@ export function TypeForm({ }: TypeFormProps) {
                                         conditionMet={conditionMet}
                                         patientNUID={patientNUID}
                                         onChange={onChange}
+                                        {...extraProps}
                                     />
                                     <Br spacing="xl" />
                                 </FormItem>
