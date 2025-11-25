@@ -109,14 +109,15 @@ export function DatePicker({
       ? now
       : new Date(maxDate);
 
-  const effectiveMinDate =
-    fieldKey === 'DOBTOB'
-      ? moment(now).subtract(28, 'days').toDate()
-      : !minDate
-      ? undefined
-      : minDate === 'date_now'
-      ? now
-      : new Date(minDate);
+      //Limit minimum date for DOBTOB to 84 days ago
+    const effectiveMinDate =
+      fieldKey === 'DOBTOB'
+        ? moment(now).subtract(84, 'days').toDate()
+        : !minDate
+        ? undefined
+        : minDate === 'date_now'
+        ? now
+        : new Date(minDate);
 
   return (
     <>
@@ -151,7 +152,7 @@ export function DatePicker({
           backgroundColor={disabled ? 'disabledBackground' : undefined}
         >
           <Box flex={1}>
-            {date ? (
+            {valueText !== undefined || date ? (
               <Text color={disabled ? 'textDisabled' : undefined}>
                 {renderValue()}
               </Text>
