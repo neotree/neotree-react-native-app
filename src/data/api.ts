@@ -36,7 +36,7 @@ export async function makeApiCall(
 
         console.log('[API]: ', url);
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 45000);
+        const timeout = setTimeout(() => controller.abort(), 300000);
 
         const method = options?.method?.toUpperCase() || 'GET';
 
