@@ -104,13 +104,26 @@ export function MultiSelectField({
 
                                 setValue(state);
 
-                                const values = Object.values(state).filter(v => v).map(v => ({
-                                    ...v,
-                                }));
+                                const selectedValues = Object.values(state).filter(v => v);
+                                
+                                // Validate that all selected items with enterValueManually have value2 filled
+                                const hasInvalidSelection = selectedValues.some((v: any) => 
+                                    v?.enterValueManually && !v?.value2?.trim()
+                                );
 
-                                onChange({
-                                    value: !values.length ? undefined : values,
-                                });
+                                if (!selectedValues.length || hasInvalidSelection) {
+                                    onChange({
+                                        value: undefined,
+                                    });
+                                } else {
+                                    const values = selectedValues.map(v => ({
+                                        ...v,
+                                    }));
+
+                                    onChange({
+                                        value: values,
+                                    });
+                                }
                             }}
                         >
                             <Card 
@@ -130,28 +143,42 @@ export function MultiSelectField({
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option?.label || ''}`}
+                                        label={`${o.option?.label || ''} (Required)`}
                                         value={value2 || ''}
                                         onChangeText={value2 => {
-                                            setValue(prev => ({
-                                                ...prev,
-                                                [o.value]: !prev[o.value] ? undefined : {
-                                                    ...prev[o.value]!,
+                                            const updatedState = {
+                                                ...value,
+                                                [o.value]: !value[o.value] ? undefined : {
+                                                    ...value[o.value]!,
                                                     value2,
                                                     key2: !value2 ? '' : (o.option?.key || ''),
                                                 },
-                                            }));
+                                            };
 
-                                            if (entryValue) {
+                                            setValue(updatedState);
+
+                                            const selectedValues = Object.values(updatedState).filter(v => v);
+                                            
+                                            // Validate that all selected items with enterValueManually have value2 filled
+                                            const hasInvalidSelection = selectedValues.some((v: any) => 
+                                                v?.enterValueManually && !v?.value2?.trim()
+                                            );
+
+                                            if (!selectedValues.length || hasInvalidSelection) {
                                                 onChange({
-                                                    value: (entryValue?.value || []).map((v: types.ScreenEntryValue) => v.key !== o.value ? v : {
-                                                        ...v,
-                                                        value2,
-                                                        key2: o.option?.key || '',
-                                                    })
+                                                    value: undefined,
+                                                });
+                                            } else {
+                                                const values = selectedValues.map((v: any) => ({
+                                                    ...v,
+                                                }));
+
+                                                onChange({
+                                                    value: values,
                                                 });
                                             }
                                         }}
+                                        errors={!value2?.trim() ? ['This field is required'] : undefined}
                                     />
                                 </Box>
                             </>

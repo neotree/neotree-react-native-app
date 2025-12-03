@@ -15,7 +15,7 @@ export function DropDownField({
     editable,
     onChange,
 }: DropDownFieldProps) {
-    const canEdit = repeatable?editable:true
+    const canEdit = repeatable ? editable : true;
 
     const opts = useMemo(() => {
         if (!field?.items) {
@@ -52,6 +52,9 @@ export function DropDownField({
 
     const selected = useMemo(() => opts.find(o => o.value == value), [value, opts]);
 
+    // Check if manual entry is required but not filled
+    const hasInvalidManualEntry = selected?.enterValueManually && !value2?.trim();
+
     return (
         <Box
             {...(!selected?.option ? undefined : {
@@ -73,14 +76,31 @@ export function DropDownField({
                         value2: '',
                         key2: '',
                     });
-                    onChange({
-                        exportType: 'dropdown',
-						value: val, 
-						valueLabel: !val ? null : field.label,
-          				valueText: !val ? null : o.label,
-						exportLabel: !val ? null : o.label,
-                        exportValue: !val ? null : val,
-					});
+                    
+                    // Check if the newly selected option requires manual entry
+                    const selectedOption = opts.find(opt => opt.value == val);
+                    const requiresManualEntry = selectedOption?.enterValueManually;
+                    
+                    // Only set valid entry values if no manual entry required OR it's being cleared
+                    if (!val || requiresManualEntry) {
+                        onChange({
+                            exportType: 'dropdown',
+                            value: null,
+                            valueLabel: null,
+                            valueText: null,
+                            exportLabel: null,
+                            exportValue: null,
+                        });
+                    } else {
+                        onChange({
+                            exportType: 'dropdown',
+                            value: val, 
+                            valueLabel: field.label,
+                            valueText: o.label,
+                            exportLabel: o.label,
+                            exportValue: val,
+                        });
+                    }
                 }}
             />
 
@@ -91,17 +111,40 @@ export function DropDownField({
                     <Box>
                         <TextInput
                             multiline
-                            label={`${selected.option?.label || ''}`}
+                            label={`${selected.option?.label || ''} (Required)`}
                             value={value2 || ''}
-                            onChangeText={value2 => {
-                                const key2 = !value2 ? '' : (selected?.option?.key || '');
+                            onChangeText={newValue2 => {
+                                const newKey2 = !newValue2 ? '' : (selected?.option?.key || '');
                                 setValue(prev => ({
                                     ...prev,
-                                    value2,
-                                    key2,
+                                    value2: newValue2,
+                                    key2: newKey2,
                                 }));
-                                onChange({ ...entryValue, value2, key2, });
+                                
+                                // Only update entry values if value2 is filled
+                                if (newValue2?.trim()) {
+                                    onChange({
+                                        exportType: 'dropdown',
+                                        value: value,
+                                        valueLabel: field.label,
+                                        valueText: selected.label,
+                                        exportLabel: selected.label,
+                                        exportValue: value,
+                                        value2: newValue2,
+                                        key2: newKey2,
+                                    });
+                                } else {
+                                    onChange({
+                                        exportType: 'dropdown',
+                                        value: null,
+                                        valueLabel: null,
+                                        valueText: null,
+                                        exportLabel: null,
+                                        exportValue: null,
+                                    });
+                                }
                             }}
+                            errors={hasInvalidManualEntry ? ['This field is required'] : undefined}
                         />
                     </Box>
                 </>
