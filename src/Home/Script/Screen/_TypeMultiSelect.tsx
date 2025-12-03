@@ -36,6 +36,12 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     function onChange(_value: typeof value) {
         const keys = Object.keys(_value).filter(key => _value[key]);
 
+        // Validate that all selected items with enterValueManually have value2 filled
+        const hasInvalidSelection = keys.some(key => {
+            const item = metadata.items.find((item: any) => item.id === key);
+            return item?.enterValueManually && !_value[key]?.value2?.trim();
+        });
+
 		const values = keys.reduce((acc: types.ScreenEntryValue[], key) => {
             const value2 = _value[key]?.value2;
             const item = metadata.items.filter((item: any) => item.id === key)[0];
@@ -57,7 +63,8 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
             ];
         }, []);
 
-        const entryValues = !keys.length ? undefined : [
+        // Only set entry values if validation passes (no items requiring manual entry are missing value2)
+        const entryValues = (!keys.length || hasInvalidSelection) ? undefined : [
 			{
                 printable,
 				value: values,
@@ -103,6 +110,10 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     });
 
     React.useEffect(() => {
+       // console.log('[TypeMultiSelect] available options', JSON.stringify({ screenKey: metadata?.key, options: opts }));
+    }, [metadata?.key, opts]);
+
+    React.useEffect(() => {
         if (canAutoFill && !autoFilled.current) {
             const _value: any = {};
             const _matched = matched[metadata.key]?.values?.value || [];
@@ -144,11 +155,12 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option?.label || ''}`}
+                                        label={`${o.label || ''} (Required)`}
                                         value={_value.value2 || ''}
                                         onChangeText={value2 => {
                                             onChange({ ...value, [o.value]: { value2, }, });
                                         }}
+                                        errors={!_value.value2?.trim() ? ['This field is required'] : undefined}
                                     />
                                 </Box>
                             </>
