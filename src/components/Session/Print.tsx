@@ -23,6 +23,7 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
             setPrinting(true);
             let html = await formToHTML(session, showConfidential);
             const printSectionsHTML = await printSectionsToHTML({ session, showConfidential });
+            console.log('DATA TO PRINT', JSON.stringify(session));
             if (printSectionsHTML) html = printSectionsHTML;
 
             await ExpoPrint.printAsync({ html, height: 1122, });
