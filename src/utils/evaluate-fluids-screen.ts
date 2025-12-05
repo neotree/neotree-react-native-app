@@ -5,8 +5,11 @@ export function evaluateFluidsScreen({
     entries,
     screen,
     drugsLibrary,
+    scriptType,
     evaluateCondition,
 }: EvaluateDrugsScreenParams) {
+    const isCalculator = scriptType === 'dff_calculator';
+    
     const metadata = { ...screen.data?.metadata, };
     const screenFluids = (metadata.fluids || []) as DrugField[];
 
@@ -27,9 +30,14 @@ export function evaluateFluidsScreen({
         .sort((a, b) => a.position - b.position)
         .map(d => {
             const weightKeys = `${d.weightKey}`.toLowerCase().split(',').map(key => key.trim());
-            const condition = `${d.condition || ''}`;
             const ageKeys = `${d.ageKey}`.toLowerCase().split(',').map(key => key.trim());
             const gestationKey = `${d.gestationKey}`.toLowerCase();
+
+            let condition = `${d.condition || ''}`;
+
+            if (isCalculator) {
+                condition = `${d.calculator_condition || ''}`;
+            }
 
             let conditionMet = !condition ? true : false;
 
@@ -84,7 +92,7 @@ export function evaluateFluidsScreen({
             };
         })
         .filter(d => {
-            if (d.validationType === 'condition') return d.conditionMet;
+            if (!isCalculator && (d.validationType === 'condition')) return d.conditionMet;
 
             if (
                 (d.weight === null) ||
@@ -109,7 +117,7 @@ export function evaluateFluidsScreen({
             const hourlyFeedDivider = d.hourlyFeedDivider || 1;
 
             if (d.dosage) {
-                if (d.validationType === 'condition') {
+                if (!isCalculator && (d.validationType === 'condition')) {
                     dosage = Number((d.dosage * dosageMultiplier).toFixed(2));
                 } else {
                     dosage = d.dosage! * dosageMultiplier!;

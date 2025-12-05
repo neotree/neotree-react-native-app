@@ -381,6 +381,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -402,6 +403,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -475,6 +477,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen: lastScreen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -491,6 +494,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen: lastScreen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
