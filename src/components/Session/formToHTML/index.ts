@@ -147,12 +147,15 @@ export default async (session: any, showConfidential?: boolean) => {
                 let isFlexRow = true;
                 let hideLabel = false;
 
-                const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+                let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 const listStyle = v.listStyle || _listStyle;
 
-                if (['fluids', 'drugs'].includes(type)) {
+                const isDff = ['fluids', 'drugs'].includes(type);
+
+                if (isDff) {
                   isFlexRow = false;
                   hideLabel = true;
+                  extraLabels = [...extraLabels].filter((s: any) => s.title) as typeof extraLabels; // remove management text
                 }
                 let value = v.valueText || v.value || 'N/A'
                 const exportType = v.type ||v.exportType
