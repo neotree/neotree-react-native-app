@@ -137,12 +137,15 @@ export async function printSectionsToHTML({
             let isFlexRow: boolean = true;
             let hideLabel: boolean = false;
 
-            const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+            let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
             const listStyle: string = v.listStyle || _listStyle;
 
-            if (['fluids', 'drugs'].includes(screenType)) {
+            const isDff = ['fluids', 'drugs'].includes(screenType);
+
+            if (isDff) {
               isFlexRow = false;
               hideLabel = true;
+              extraLabels = [...extraLabels].filter((s: any) => s.title) as typeof extraLabels; // remove management text
             }
             
             let value: any = v.valueText || v.value || 'N/A'

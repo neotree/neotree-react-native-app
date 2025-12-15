@@ -360,6 +360,7 @@ export const getScriptUtils = ({
                     entries: form,
                     drugsLibrary,
                     screen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -381,6 +382,7 @@ export const getScriptUtils = ({
                     entries: form,
                     drugsLibrary,
                     screen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -445,6 +447,7 @@ export const getScriptUtils = ({
                     entries: form,
                     drugsLibrary,
                     screen: lastScreen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -460,6 +463,7 @@ export const getScriptUtils = ({
                     entries: form,
                     drugsLibrary,
                     screen: lastScreen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
