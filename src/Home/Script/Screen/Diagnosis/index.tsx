@@ -42,6 +42,7 @@ const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
 
 export function Diagnosis(props: DiagnosisProps) {
     const mounted = React.useRef(false);
+    const autoFilled = React.useRef(false);
 
     const {
         activeScreenEntry,
@@ -49,11 +50,16 @@ export function Diagnosis(props: DiagnosisProps) {
         goNext: ctxGoNext,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
+        mountedScreens,
+        nuidSearchForm,
+        diagnoses: allDiagnoses,
         getFieldPreferences,
         setEntryValues,
         getSuggestedDiagnoses,
     } = useScriptContext();
 
+    const canAutoFill = !mountedScreens[activeScreen?.id];
+    const matchedDiagnoses: any[] = nuidSearchForm.filter(f => f.results)[0]?.results?.session?.data?.diagnoses;
 
     const [section, setSection] = React.useState('select');
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(
@@ -306,6 +312,78 @@ export function Diagnosis(props: DiagnosisProps) {
     React.useEffect(() => { setMoreNavOptions(); }, [setMoreNavOptions]);
 
     React.useEffect(() => () => ctxSetMoreNavOptions(null), []);
+
+    // auto populate diagnoses
+    React.useEffect(() => {
+        if (canAutoFill && !autoFilled.current) {
+            autoFilled.current = true;
+            const items = activeScreen?.data?.metadata?.items || [];
+            const diagnoses = matchedDiagnoses
+                .map((m = {}) => {
+                    const [key] = Object.keys(m);
+                    const [value]: any[] = Object.values(m);
+
+                    let diagnosis = allDiagnoses.map(d => d.data).find((d: any) => (d.key === key) || (d.name === key));
+                    let hcwDiagnosis = items.find((item: any) => item.id === key);
+
+                    let sevOrder = diagnosis?.severity_order || (diagnosis?.severity_order === 0) ? Number(diagnosis.severity_order) : null;
+                    if (isNaN(Number(sevOrder))) sevOrder = null;
+
+                    let itemSevOrder = hcwDiagnosis.severity_order || (hcwDiagnosis.severity_order === 0) ? Number(hcwDiagnosis.severity_order) : null;
+                    if (isNaN(Number(itemSevOrder))) itemSevOrder = null;
+
+                    if (hcwDiagnosis) {
+                        hcwDiagnosis = sectionProps.getDefaultDiagnosis({
+                            key: hcwDiagnosis.key || hcwDiagnosis.id,
+                            severity_order: itemSevOrder,
+                            isHcwDiagnosis: true,
+                            suggested: false,
+                            how_agree: value.hcw_agree,
+                            hcw_follow_instructions: null,
+                            hcw_reason_given: null,
+                            isPrimaryProvisionalDiagnosis: false,
+                            isSecondaryProvisionalDiagnosis: false,
+                            priority: value.priority,
+                            name: hcwDiagnosis.label,
+                            ...(!diagnosis ? null : {
+                                text1: diagnosis.text1,
+                                image1: diagnosis.image1,
+                                text2: diagnosis.text2,
+                                image2: diagnosis.image2,
+                                text3: diagnosis.text3,
+                                image3: diagnosis.image3,
+                                symptoms: diagnosis.symptoms || [],
+                                severity_order: itemSevOrder || sevOrder,
+                            }),
+                        });
+                    } else if (diagnosis) {
+                        diagnosis = {
+                            ...diagnosis,
+                            how_agree: value.hcw_agree,
+                            priority: value.priority,
+                        };
+                    }
+                    
+                    return {
+                        priority: value.Priority,
+                        suggested: value.Suggested,
+                        how_agree: value.hcw_agree,
+                        hcw_reason_given: value.hcw_reason_given,
+                        hcw_follow_instructions: value.hcw_follow_instructions,
+                        hcwDiagnosis,
+                        diagnosis: !diagnosis || !value.Suggested ? undefined : getDefaultDiagnosis({
+                            ...diagnosis,
+                            suggested: true,
+                            priority: value.priority,
+                            how_agree: value.hcw_agree,
+                        }),
+                    };
+                });
+
+            sectionProps.setHcwDiagnoses(diagnoses.filter(d => d.hcwDiagnosis && !d.suggested).map(d => d.hcwDiagnosis));
+			sectionProps.setDiagnoses(diagnoses.filter(d => d.hcwDiagnosis || d.diagnosis).map(d => !d.suggested ? d.hcwDiagnosis : d.diagnosis));
+        }
+    }, [canAutoFill, matchedDiagnoses, activeScreen, allDiagnoses, sectionProps]);
 
     return (
         <Box>
