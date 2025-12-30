@@ -84,6 +84,15 @@ export type Configuration = any;
 export type Repeatable=any;
 export type Alias=any;
 
+export type DischargeDiagnosis = Record<string, {
+  Priority: number;
+  Suggested: boolean;
+  diagnosis: string;
+  hcw_agree: string;
+  hcw_reason_given: null | string;
+  hcw_follow_instructions: null | string;
+}>;
+
 export type DrugField = {
   key: string;
   position: number;
