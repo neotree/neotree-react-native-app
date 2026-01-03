@@ -257,6 +257,10 @@ export function Diagnosis(props: DiagnosisProps) {
                         title = `${activeScreen?.data?.title3 || ''}`;
                         titleStyle = getFieldPreferences('title3')?.style;
                     }
+
+                    if (isDischarge) {
+                        title = 'Diagnoses';
+                    }
                 }
 
                 return { title, titleStyle, };

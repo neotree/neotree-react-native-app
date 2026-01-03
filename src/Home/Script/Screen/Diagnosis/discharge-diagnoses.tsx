@@ -9,7 +9,14 @@ type SortPriorityProps = types.DiagnosisSectionProps;
 export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
     const [mounted, setMounted] = React.useState(false);
     const { nuidSearchForm, setEntryValues, } = useScriptContext();
-    const matchedDiagnoses: types.DischargeDiagnosis[] = nuidSearchForm.filter(f => f.results)[0]?.results?.session?.data?.diagnoses || [];
+    const matchedDiagnoses = React.useMemo(() => {
+        const matches: types.DischargeDiagnosis[] = (nuidSearchForm.filter(f => f.results)[0]?.results?.session?.data?.diagnoses || []);
+        return matches.sort((a, b) => {
+            const [v1] = Object.values(a);
+            const [v2] = Object.values(b);
+            return (v1.hcw_agree === 'Yes' ? -1 : 1) - (v2.hcw_agree === 'Yes' ? -1 : 1);
+        });
+    }, [nuidSearchForm]);
 
     React.useEffect(() => {
         setTimeout(() => {
