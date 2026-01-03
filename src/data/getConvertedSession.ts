@@ -82,6 +82,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             dataType,
             value,
             label,
+            parentKey,
             valueLabel,
             exportValue,
             exportLabel,
@@ -93,6 +94,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           const valType = exportType || dataType || type;
           const common = {
             type: valType,
+            parentKey: parentKey || '',
             comments: comments || [],
             prePopulate: prePopulate || parentPrePopulate || [],
           };
@@ -102,9 +104,10 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
               (acc: any, item: any) => {
                 acc.label.push(item.exportLabel || item.valueLabel || item.label);
                 acc.value.push(item.exportValue || item.value);
+                acc.parentKey = item.parentKey || '';
                 return acc;
               },
-              { label: [], value: [] }
+              { label: [], value: [], parentKey: '', }
             );
             return { [key]: { ...common, values: multi } };
           }

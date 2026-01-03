@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
+import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
 import { Box, Br } from '../../../../components';
 import * as types from '../../../../types';
 import { fieldsTypes } from '../../../../constants';
@@ -62,6 +63,34 @@ export function TypeForm({ }: TypeFormProps) {
                 valueText = cached?.valueText || patientNUID;
             }
 
+            if (f.type === 'multi_select') {
+                const opts = (() => {
+                    if (!f?.items) {
+                        return parseFieldValues({
+                            values: f.values,
+                            options: f.valuesOptions,
+                        });
+                    } else {
+                        return parseFieldItems({ items: f.items, });
+                    }
+                })();
+                const matches = getPrepopulationData(['allSearches']);
+                const fieldMatch: any = Object.values(matches).find((field: any) => field?.values?.parentKey === f.key);
+                const selected = fieldMatch?.values?.value || [];
+                value = cached?.value || opts.filter(o => selected.includes(o.value)).map(o => ( {
+                    value: o.value,
+                    key: o.value,
+                    // valueLabel: o.label,
+                    valueText: o.label,
+                    exportLabel: o.label,
+                    value2: o.option ? '' : undefined,
+                    key2: o.option ? '' : undefined,
+                    parentKey: f.key,
+                    exclusive: o.exclusive,
+                    enterValueManually: o.enterValueManually,
+                }));
+            }
+
             return {
                 printable: f.printable !== false,
                 value,
@@ -73,7 +102,7 @@ export function TypeForm({ }: TypeFormProps) {
                 dataType: f.dataType,
                 confidential: f.confidential,
                 prePopulate: f.prePopulate,
-                editable: f.editable
+                editable: f.editable,
             };
         });
     }, [repeatable, metadata, canAutoFill, cachedVal, getPrepopulationData]);
