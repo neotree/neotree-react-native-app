@@ -168,6 +168,7 @@ export type ScreenEntryValue = {
   extraLabels?: string[] | {
     title?: string;
     label: string;
+    printTitle?: boolean;
   }[];
   selected?: boolean;
   data?: any;

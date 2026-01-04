@@ -153,6 +153,8 @@ export function Summary({
                                                                                 >{item.title}:</Text>
                                                                             </>
                                                                         );
+
+                                                                        if (!item?.printTitle) title = null;
                                                                     }
 
                                                                     const label = typeof item === 'string' ? item : item.label;
