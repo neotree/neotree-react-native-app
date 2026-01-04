@@ -77,7 +77,7 @@ export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
             ListEmptyComponent={(
                 <Content>
                     <Box style={{ marginBottom: 30, marginTop: 20 }}>
-                        <Text color="textDisabled" textAlign="center">No compiled admission diagnoses</Text>
+                        <Text color="textDisabled" textAlign="center">No admission diagnoses available</Text>
                     </Box>
                 </Content>
             )}
