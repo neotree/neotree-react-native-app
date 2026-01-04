@@ -16,7 +16,7 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
         ...data.id ? [data.id] : [],
         data.uid,
         data.script_id,
-        JSON.stringify(data.data || '{}'),
+        JSON.stringify({ ...data?.data, }),
         data.completed || false,
         data.exported || false,
         data.createdAt || new Date().toISOString(),

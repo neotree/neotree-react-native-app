@@ -18,7 +18,7 @@ export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
-    session: { data: { form: sessionForm, } },
+    session: { data: { form: sessionForm, dateAndTimeOfDeath, } },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
     // const excludeScreenTypes = ['zw_edliz_summary_table', 'mwi_edliz_summary_table'];
@@ -31,11 +31,27 @@ export function Summary({
     return (
         <Box>
              <Content/>
+
             {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
             <Wrapper>
             <Content/>
                 <Content>
+                    {!!dateAndTimeOfDeath && (
+                        <Text
+                            style={{
+                                borderColor: '#b20008',
+                                color: '#b20008',
+                                borderWidth: 1,
+                                backgroundColor: 'rgba(255,0,0,.1)',
+                                borderRadius: 5,
+                                padding: 10,
+                                marginBottom: 10,
+                                textAlign: 'center',
+                            }}
+                        >Date and time of death: {dateAndTimeOfDeath}</Text>
+                    )}
+
                     {sections
                         ?.filter(([, entries]) => entries.length)
                         .map(([sectionTitle, entries], sectionIndex) => {

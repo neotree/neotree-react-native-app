@@ -18,6 +18,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           completed_at,
           canceled_at,
           unique_key,
+          dateAndTimeOfDeath = null,
         } = session.data;
 
         const drugsScreenEntry = form.find((e: any) => e.screen.type === 'drugs');
@@ -164,6 +165,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           app_mode,
           country,
           hospital_id,
+          dateAndTimeOfDeath,
           diagnoses: diagnoses.map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,

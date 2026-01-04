@@ -4,7 +4,7 @@ import { ScreenEntry } from '@/src/types';
 import { scriptPrintConfig } from '@/src/constants';
 
 export default (html: any, session: any) => {
-  const { completed_at, canceled_at, script, form, } = session.data;
+  const { completed_at, canceled_at, script, form, dateAndTimeOfDeath, } = session.data;
 
   const printConfig ={
     ...scriptPrintConfig,
@@ -164,6 +164,12 @@ export default (html: any, session: any) => {
                       <p id="headerSubtitle">Ministry of Health - National ${formatScriptType(script.data.type)} Form</p>
                     </div>
                   </div>
+
+                  ${!dateAndTimeOfDeath ? '' : `
+                    <div 
+                      style="border:1px solid #b20008;color: #b20008;background-color:rgba(255,0,0,.1);border-radius:5px;padding:10px;margin:10px 0;text-align:center;"
+                    >Date and time of death: ${dateAndTimeOfDeath}</div>`}
+
                   <div id"content-wrap">
                     <div id="content">
                         ${html || ''}
