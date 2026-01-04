@@ -1,12 +1,12 @@
 import React from 'react';
 import { ActivityIndicator, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import moment from 'moment';
-import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '../../../../components';
-import * as api from '../../../../data';
-import * as types from '../../../../types';
+import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '@/src/components';
+import * as api from '@/src/data';
+import * as types from '@/src/types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
-import { mergeSessions } from '../../utils'
+import { mergeSessions } from '@/src/contexts/script'
 
 const { width, height } = Dimensions.get("window");
 
