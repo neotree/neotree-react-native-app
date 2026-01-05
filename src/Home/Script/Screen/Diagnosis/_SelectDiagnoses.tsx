@@ -130,8 +130,8 @@ export function SelectDiagnoses({
 									onPress={() => {
 										if (exclusiveIsSelected && !isExclusive) return;
 										if (isSelected) {
-											setHcwDiagnoses(hcwDiagnoses.filter(d => d.name !== item.label));
-											setDiagnoses(diagnoses.filter((d) => d.name !== item.label));
+											setHcwDiagnoses(hcwDiagnoses.filter(d => (d.key !== item.id) || (d.name !== item.id)));
+											setDiagnoses(diagnoses.filter((d) => (d.key !== item.id) || (d.name !== item.id)));
 										} else {
 											if (item.enterValueManually) {
 												setCustomValueModal({ onClose: setValue });

@@ -18,6 +18,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           completed_at,
           canceled_at,
           unique_key,
+          dateAndTimeOfDeath = null,
         } = session.data;
 
         const drugsScreenEntry = form.find((e: any) => e.screen.type === 'drugs');
@@ -82,6 +83,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             dataType,
             value,
             label,
+            parentKey,
             valueLabel,
             exportValue,
             exportLabel,
@@ -93,6 +95,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           const valType = exportType || dataType || type;
           const common = {
             type: valType,
+            parentKey: parentKey || '',
             comments: comments || [],
             prePopulate: prePopulate || parentPrePopulate || [],
           };
@@ -102,9 +105,10 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
               (acc: any, item: any) => {
                 acc.label.push(item.exportLabel || item.valueLabel || item.label);
                 acc.value.push(item.exportValue || item.value);
+                acc.parentKey = item.parentKey || '';
                 return acc;
               },
-              { label: [], value: [] }
+              { label: [], value: [], parentKey: '', }
             );
             return { [key]: { ...common, values: multi } };
           }
@@ -161,6 +165,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           app_mode,
           country,
           hospital_id,
+          dateAndTimeOfDeath,
           diagnoses: diagnoses.map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,

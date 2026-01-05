@@ -28,31 +28,10 @@ export function SortPriority(props: SortPriorityProps) {
                     divider
                     canAgreeDisagree={false}
                     canDelete={false}
-                    title="Compiled Diagnoses"
+                    title="Compiled Admission Diagnoses"
                     subtitle="Please order the diagnoses by priority"
                     filter={filterCompiled}
                     itemWrapper={((card, { item: d, index: i }) => {
-                        // const onChange = (value: any) => setDiagnoses(diagnoses.map((d, index) => index !== i ? d : {
-                        //     ...d,
-                        //     ...value,
-                        // }));
-
-                        // const disablePrimary = !!diagnoses.filter(d => d.isPrimaryProvisionalDiagnosis).length;
-                        // const disableSecondary = !!diagnoses.filter(d => d.isSecondaryProvisionalDiagnosis).length;
-
-                        // const onPrimary = () => onChange({ 
-                        //     isPrimaryProvisionalDiagnosis: true,
-                        //     isSecondaryProvisionalDiagnosis: false, 
-                        // });
-                        // const onSecondary = () => onChange({ 
-                        //     isPrimaryProvisionalDiagnosis: false,
-                        //     isSecondaryProvisionalDiagnosis: true, 
-                        // });
-                        // const onOther = () => onChange({ 
-                        //     isPrimaryProvisionalDiagnosis: false,
-                        //     isSecondaryProvisionalDiagnosis: false, 
-                        // });
-
                         return (
                             <Box>
                                 <Box
