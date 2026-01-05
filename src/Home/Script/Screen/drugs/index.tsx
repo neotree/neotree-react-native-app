@@ -76,10 +76,16 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                             label: drug.routeOfAdministration,
                         },
                         {
-                            label: `${drug.managementText}`,
+                            title: 'Administration Frequency',
+                            label: drug.administrationFrequency,
                         },
                         {
+                            title: 'Dosage text',
                             label: drug.dosageText,
+                            printTitle: false,
+                        },
+                        {
+                            label: `${drug.managementText}`,
                         },
                     ],
                 },

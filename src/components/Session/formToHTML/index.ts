@@ -156,6 +156,13 @@ export default async (session: any, showConfidential?: boolean) => {
                   isFlexRow = false;
                   hideLabel = true;
                   extraLabels = [...extraLabels].filter((s: any) => s.title) as typeof extraLabels; // remove management text
+                  extraLabels = extraLabels.map(s => {
+                    if (typeof s === 'string') return s;
+                    return {
+                      ...s,
+                      title: !s.printTitle ? '' : s.title,
+                    };
+                  }) as typeof extraLabels;
                 }
                 let value = v.valueText || v.value || 'N/A'
                 const exportType = v.type ||v.exportType
