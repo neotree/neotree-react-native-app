@@ -160,7 +160,7 @@ export default async (session: any, showConfidential?: boolean) => {
                     if (typeof s === 'string') return s;
                     return {
                       ...s,
-                      title: !s.printTitle ? '' : s.title,
+                      title: s.printTitle === false ? '' : s.title,
                     };
                   }) as typeof extraLabels;
                 }
