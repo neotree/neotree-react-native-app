@@ -154,7 +154,7 @@ export function Summary({
                                                                             </>
                                                                         );
 
-                                                                        if (!item?.printTitle) title = null;
+                                                                        if (item?.printTitle === false) title = null;
                                                                     }
 
                                                                     const label = typeof item === 'string' ? item : item.label;
