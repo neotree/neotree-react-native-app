@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Text, TextInput } from '../../../components';
 import * as types from '../../../types';
+import { getSelectionConflictMessage, getSelectionConflicts } from '@/src/utils/selection-rules';
 
 type TypeMultiSelectProps = types.ScreenTypeProps & {
     
@@ -98,11 +99,25 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                 return exclusive && value[exclusive] ? exclusive !== item.id : false;
             })(),
             onChange: () => {
+                const isSelecting = !value[item.id];
                 let form = { ...value };
                 if (item.exclusive) {
                     form = { [item.id]: !form[item.id], };
                 } else {
                     form = { ...form, [item.id]: !form[item.id], }; 
+                }
+
+                if (isSelecting) {
+                    const selectedValues = Object.keys(form).filter(key => form[key]);
+                    const conflicts = getSelectionConflicts({
+                        items: metadata.items || [],
+                        selectedValues,
+                    });
+
+                    if (conflicts.length) {
+                        Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
+                        return;
+                    }
                 }
                 onChange(form);
             },
