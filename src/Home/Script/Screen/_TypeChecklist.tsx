@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
+import { Alert } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Text, Radio } from '../../../components';
 import * as types from '../../../types';
+import { getSelectionConflictMessage, getSelectionConflicts } from '@/src/utils/selection-rules';
 
 type TypeChecklistProps = types.ScreenTypeProps & {
     
@@ -77,6 +79,19 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
         })(),
         item,
         onChange: (selectValue: boolean) => {
+            if (selectValue) {
+                const selectedValues = Object.keys(value)
+                    .filter(key => value[key])
+                    .concat(item.key);
+                const conflicts = getSelectionConflicts({
+                    items: metadata.items || [],
+                    selectedValues,
+                });
+                if (conflicts.length) {
+                    Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
+                    return;
+                }
+            }
             let form = { ...value };
             if (item.exclusive) {
                 form = { [item.key]: selectValue, };

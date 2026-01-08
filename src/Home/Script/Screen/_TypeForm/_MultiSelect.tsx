@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useEffect, useState, } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
 import { fieldsTypes } from '@/src/constants';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
+import { getSelectionConflicts, getSelectionConflictMessage } from '@/src/utils/selection-rules';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
@@ -86,6 +87,7 @@ export function MultiSelectField({
                         <TouchableOpacity 
                             disabled={disabled}
                             onPress={() => {
+                                const isSelecting = !value[o.value];
                                 const state = {
                                     ...(o.exclusive ? {} : value),
                                     [o.value]: value[o.value] ? undefined : {
@@ -101,6 +103,18 @@ export function MultiSelectField({
                                         enterValueManually: o.enterValueManually,
                                     },
                                 };
+
+                                if (isSelecting) {
+                                    const selectedValues = Object.keys(state).filter(key => state[key]);
+                                    const conflicts = getSelectionConflicts({
+                                        items: opts,
+                                        selectedValues,
+                                    });
+                                    if (conflicts.length) {
+                                        Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
+                                        return;
+                                    }
+                                }
 
                                 setValue(state);
 
