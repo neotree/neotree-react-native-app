@@ -4,6 +4,8 @@ type Option = {
     label: string; 
     enterValueManually?: boolean;
     exclusive?: boolean;
+    exclusiveGroup?: string;
+    forbidWith?: string[];
     option?: { 
         label: string; 
         key: string;
@@ -49,6 +51,8 @@ export function parseFieldItems({ items = [], }: {
         value: string;
         enterValueManually?: boolean;
         exclusive?: boolean;
+        exclusiveGroup?: string;
+        forbidWith?: string[];
         label2?: string;
     }[];
 }): Option[] {
