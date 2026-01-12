@@ -1,5 +1,6 @@
 import QRCode from 'qrcode';
 import { ScreenEntryValue } from '@/src/types';
+import { formatValueWithUnit } from '@/src/utils/units';
 import { getBaseHTML } from "./baseHTML";
 import { toHL7Like } from '../../../data/hl7Like'
 import { formatExportableSession } from '../../../data/getConvertedSession'
@@ -156,8 +157,13 @@ export async function printSectionsToHTML({
             }
             
             let value: any = v.valueText || v.value || 'N/A'
-            if(v.type === 'datetime' || v.type === 'date'){
-              value = formatDate(value, v.type)
+            const exportType = v.type || v.exportType
+            if (exportType === 'datetime' || exportType === 'date') {
+              value = formatDate(value, exportType)
+            }
+            const shouldAppendUnit = exportType === 'number' || exportType === 'text'
+            if (shouldAppendUnit && !Array.isArray(value)) {
+              value = formatValueWithUnit(value, v.unit)
             }
 
             return `
@@ -208,8 +214,13 @@ export async function printSectionsToHTML({
                     value = `<i><strong>${value}</strong></i>`
                   } 
 
-                  if(v.exportType === 'datetime' || v.exportType === 'date'){
-                    value = formatDate(value, v.exportType)
+                  const exportType = v.exportType || v.type
+                  if (exportType === 'datetime' || exportType === 'date') {
+                    value = formatDate(value, exportType)
+                  }
+                  const shouldAppendUnit = exportType === 'number' || exportType === 'text'
+                  if (shouldAppendUnit) {
+                    value = formatValueWithUnit(value, v.unit)
                   }
                   
                   return `
