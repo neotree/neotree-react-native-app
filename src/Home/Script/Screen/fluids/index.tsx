@@ -71,10 +71,6 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                             label: fluid.routeOfAdministration,
                         },
                         {
-                            title: 'Administration Frequency',
-                            label: fluid.administrationFrequency,
-                        },
-                        {
                             title: 'Dosage text',
                             label: fluid.dosageText,
                             printTitle: false,
