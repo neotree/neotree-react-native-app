@@ -149,6 +149,7 @@ export type ScreenEntryValue = {
   key2?: any;
   valueText?: any;
   valueLabel?: any;
+  unit?: string;
   label?: string;
   key?: string;
   parentKey?: string;

@@ -206,6 +206,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     printable: field.printable,
                     label: field.label,
                     prePopulate: field.prePopulate,
+                    unit: field.unit,
                 };
                 const shouldLogField = ['date', 'datetime', 'period'].includes(field.type);
                 if (shouldLogField) {
@@ -433,6 +434,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             const base = {
                 'label': field?.label,
                 'exportType': field?.type,
+                'unit': field?.unit,
                 ...valueObj,
             };
 
