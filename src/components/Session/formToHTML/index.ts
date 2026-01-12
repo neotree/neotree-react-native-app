@@ -2,6 +2,7 @@
 
 import QRCode from 'qrcode';
 import { ScreenEntryValue } from '@/src/types';
+import { formatValueWithUnit } from '@/src/utils/units';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
@@ -165,9 +166,13 @@ export default async (session: any, showConfidential?: boolean) => {
                   }) as typeof extraLabels;
                 }
                 let value = v.valueText || v.value || 'N/A'
-                const exportType = v.type ||v.exportType
+                const exportType = v.type || v.exportType
                 if (exportType == 'datetime' || exportType == 'date') {
                   value = formatDate(value, exportType)
+                }
+                const shouldAppendUnit = exportType === 'number' || exportType === 'text'
+                if (shouldAppendUnit && !Array.isArray(value)) {
+                  value = formatValueWithUnit(value, v.unit)
                 }
 
                 return `

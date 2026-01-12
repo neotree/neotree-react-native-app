@@ -97,6 +97,7 @@ export function TypeForm({ }: TypeFormProps) {
                 value2,
                 valueText,
                 label: f.label,
+                unit: f.unit,
                 key: f.key,
                 type: f.type,
                 dataType: f.dataType,
