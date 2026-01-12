@@ -174,7 +174,7 @@ export default async (session: any, showConfidential?: boolean) => {
                   <div  class="${isFlexRow ? 'row' : ''}">
                     <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
                     <div>
-                      <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
+                      <div style="${!extraLabels.length ? '' : 'text-transform:uppercase;font-weight:bold;margin-top:10px;'}">
                         ${value && value.map ?
                           value.map((v: any, i: number) => {
                             let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
