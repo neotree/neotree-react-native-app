@@ -20,7 +20,7 @@ export const useDateAndTimeOfDeathState = create<typeof defaultState & {
     return {
         ...defaultState,
         setValue: (value) => set({ value, }),
-        setOpen: (open) => set({ open, maxDate: new Date(), }),
+        setOpen: (open) => set({ open, maxDate: new Date(), value: new Date(), }),
         reset: () => set(defaultState),
     };
 });
