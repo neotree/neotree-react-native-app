@@ -136,7 +136,12 @@ export default async (session: any, showConfidential?: boolean) => {
           .map(({
             values,
             // management, 
-            screen: { metadata: { label }, listStyle: _listStyle = 'none', type }
+            screen: { 
+              metadata: { label }, 
+              listStyle: _listStyle = 'none', 
+              printDisplayColumns = 2,
+              type 
+            }
           }: any) => {
             // management = management || [];
 
@@ -145,8 +150,10 @@ export default async (session: any, showConfidential?: boolean) => {
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
               .map((v: any) => {
-                let isFlexRow = true;
                 let hideLabel = false;
+
+                let isFlexRow = printDisplayColumns !== 1;
+                if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;                
 
                 let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 const listStyle = v.listStyle || _listStyle;

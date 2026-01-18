@@ -166,6 +166,7 @@ export type ScreenEntryValue = {
   diagnosis?: Diagnosis;
   prePopulate?: any[];
   printable?: boolean;
+  printDisplayColumns?: 1 | 2;
   extraLabels?: string[] | {
     title?: string;
     label: string;
