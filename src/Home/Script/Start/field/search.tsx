@@ -50,7 +50,7 @@ export function Search({
 
     const formatLookupError = React.useCallback(() => {
         return [
-            'We could not retrieve patient data for this Neotree ID because the lookup did not return usable data.',
+            'We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable.',
             'No patient data was found.',
             'Re-scan or continue with the current Neotree ID (no auto-population).',
         ].join(' ');
@@ -165,7 +165,7 @@ export function Search({
                 setToClear(true)
                 setSearching(false);
                 setValidationMessage(
-                    "No patient data was found for this Neotree ID. Re-scan or continue with the current Neotree ID (no auto-population)."
+                    "We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable. No patient data was found. Re-scan or continue with the current Neotree ID (no auto-population)."
                 );
             }
             if (script_type == 'discharge') {
