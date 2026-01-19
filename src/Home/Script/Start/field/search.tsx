@@ -48,6 +48,14 @@ export function Search({
     const [toClear, setToClear] = React.useState(false);
     const [validationMessage, setValidationMessage] = React.useState('');
 
+    const formatLookupError = React.useCallback(() => {
+        return [
+            'We could not retrieve patient data for this Neotree ID because the lookup did not return usable data.',
+            'No patient data was found.',
+            'Re-scan or continue with the current Neotree ID (no auto-population).',
+        ].join(' ');
+    }, []);
+
     const openQRscanner = () => {
         setShowQR(true);
     };
@@ -144,9 +152,7 @@ export function Search({
 
             if (error && error.error) {
                 setToClear(true)
-                setValidationMessage(
-                    `${error.error}. Do you want to proceed with the current Neotree-ID?(NO DATA AUTO-POPULATION)`
-                )
+                setValidationMessage(formatLookupError())
                 setSearching(false);
             }
             else if (searched) {
@@ -159,7 +165,7 @@ export function Search({
                 setToClear(true)
                 setSearching(false);
                 setValidationMessage(
-                    "No Matched Sessions Found. Do you want to proceed with the current Neotree-ID?(NO DATA AUTO-POPULATION)"
+                    "No patient data was found for this Neotree ID. Re-scan or continue with the current Neotree ID (no auto-population)."
                 );
             }
             if (script_type == 'discharge') {
