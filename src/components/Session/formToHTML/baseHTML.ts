@@ -100,6 +100,18 @@ export default (html: any, session: any) => {
           padding: 3px;
         }
 
+        /*table {
+          min-height: 1000px;
+          background: red;
+        }*/
+
+        tfoot {
+          position: fixed;
+          bottom: 0px;
+          left: 0px;
+          opacity: 0.5;
+        }
+
         tfoot, thead {
           color: #333;
         }
@@ -168,7 +180,10 @@ export default (html: any, session: any) => {
                   ${!dateAndTimeOfDeath ? '' : `
                     <div 
                       style="border:1px solid #b20008;color: #b20008;background-color:rgba(255,0,0,.1);border-radius:5px;padding:10px;margin:10px 0;text-align:center;"
-                    >Date and time of death: ${dateAndTimeOfDeath}</div>`}
+                    >
+                      <div>Date and time of death: <b>${dateAndTimeOfDeath}</b></div>
+                      <div>Neotree ID: <b>${session.uid}</b></div>  
+                    </div>`}
 
                   <div id"content-wrap">
                     <div id="content">
