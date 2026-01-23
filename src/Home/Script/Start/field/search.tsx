@@ -1,12 +1,12 @@
 import React from 'react';
 import { ActivityIndicator, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import moment from 'moment';
-import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '../../../../components';
-import * as api from '../../../../data';
-import * as types from '../../../../types';
+import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '@/src/components';
+import * as api from '@/src/data';
+import * as types from '@/src/types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
-import { mergeSessions } from '../../utils'
+import { mergeSessions } from '@/src/contexts/script'
 
 const { width, height } = Dimensions.get("window");
 
@@ -47,6 +47,14 @@ export function Search({
     const [showQR, setShowQR] = React.useState(false);
     const [toClear, setToClear] = React.useState(false);
     const [validationMessage, setValidationMessage] = React.useState('');
+
+    const formatLookupError = React.useCallback(() => {
+        return [
+            'We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable.',
+            'No patient data was found.',
+            'Re-scan or continue with the current Neotree ID (no auto-population).',
+        ].join(' ');
+    }, []);
 
     const openQRscanner = () => {
         setShowQR(true);
@@ -144,9 +152,7 @@ export function Search({
 
             if (error && error.error) {
                 setToClear(true)
-                setValidationMessage(
-                    `${error.error}. Do you want to proceed with the current Neotree-ID?(NO DATA AUTO-POPULATION)`
-                )
+                setValidationMessage(formatLookupError())
                 setSearching(false);
             }
             else if (searched) {
@@ -159,7 +165,7 @@ export function Search({
                 setToClear(true)
                 setSearching(false);
                 setValidationMessage(
-                    "No Matched Sessions Found. Do you want to proceed with the current Neotree-ID?(NO DATA AUTO-POPULATION)"
+                    "We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable. No patient data was found. Re-scan or continue with the current Neotree ID (no auto-population)."
                 );
             }
             if (script_type == 'discharge') {

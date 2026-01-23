@@ -1,4 +1,5 @@
 import React from "react";
+import { View } from "react-native";
 import { ScreenEntryValue } from '@/src/types';
 import { Box, Text } from "../../Theme";
 import { Confidentials } from "./Confidentials";
@@ -18,7 +19,7 @@ export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
-    session: { data: { form: sessionForm, } },
+    session: { data: { form: sessionForm, dateAndTimeOfDeath }, uid },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
     // const excludeScreenTypes = ['zw_edliz_summary_table', 'mwi_edliz_summary_table'];
@@ -31,11 +32,39 @@ export function Summary({
     return (
         <Box>
              <Content/>
+
             {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
             <Wrapper>
             <Content/>
                 <Content>
+                    {!!dateAndTimeOfDeath && (
+                        <View
+                            style={{
+                                borderWidth: 1,
+                                backgroundColor: 'rgba(255,0,0,.1)',
+                                borderRadius: 5,
+                                padding: 10,
+                                marginBottom: 10,
+                                borderColor: '#b20008',
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: '#b20008',
+                                    textAlign: 'center',
+                                }}
+                            >Date and time of death: {dateAndTimeOfDeath}</Text>
+
+                            <Text
+                                style={{
+                                    color: '#b20008',
+                                    textAlign: 'center',
+                                }}
+                            >Neotree ID: {uid}</Text>
+                        </View>
+                    )}
+
                     {sections
                         ?.filter(([, entries]) => entries.length)
                         .map(([sectionTitle, entries], sectionIndex) => {
@@ -137,6 +166,8 @@ export function Summary({
                                                                                 >{item.title}:</Text>
                                                                             </>
                                                                         );
+
+                                                                        if (item?.printTitle === false) title = null;
                                                                     }
 
                                                                     const label = typeof item === 'string' ? item : item.label;

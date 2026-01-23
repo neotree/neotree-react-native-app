@@ -1,0 +1,108 @@
+import React from 'react';
+import { FlatList, View } from 'react-native';
+import { useScriptContext } from '@/src/contexts/script';
+import { Box, Text, Content, OverlayLoader } from '../../../../components';
+import * as types from '../../../../types';
+
+type SortPriorityProps = types.DiagnosisSectionProps;
+
+export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
+    const [mounted, setMounted] = React.useState(false);
+    const { nuidSearchForm, setEntryValues, } = useScriptContext();
+    const matchedDiagnoses = React.useMemo(() => {
+        const matches: types.DischargeDiagnosis[] = (nuidSearchForm.filter(f => f.results)[0]?.results?.session?.data?.diagnoses || []);
+        return matches.sort((a, b) => {
+            const [v1] = Object.values(a);
+            const [v2] = Object.values(b);
+            return (v1.hcw_agree === 'Yes' ? -1 : 1) - (v2.hcw_agree === 'Yes' ? -1 : 1);
+        });
+    }, [nuidSearchForm]);
+
+    React.useEffect(() => {
+        setTimeout(() => {
+            if (!mounted) {
+                setMounted(true);
+                setEntryValues(matchedDiagnoses.map(item => {
+                    const [key] = Object.keys(item);
+                    const [value] = Object.values(item);
+
+                    return {
+                        label: value.diagnosis,
+                        key,
+                        value: key,
+                        valueText: value.diagnosis,
+                        type: 'diagnosis',
+                        dataType: 'diagnosis',
+                        diagnosis: {
+                            ...getDefaultDiagnosis({
+                                name: value.diagnosis,
+                                key,
+                                how_agree: value.hcw_agree,
+                                hcw_follow_instructions: value.hcw_follow_instructions,
+                                hcw_reason_given: value.hcw_reason_given,
+                                suggested: value.Suggested,
+                                priority: value.Priority,
+                            })
+                        },
+                    };
+                }));
+            }
+        }, 0);
+    }, [mounted, matchedDiagnoses, setEntryValues, getDefaultDiagnosis]);
+
+    if (!mounted) return <OverlayLoader transparent />;
+
+    return (
+        <FlatList
+            data={matchedDiagnoses}
+            keyExtractor={item => Object.keys(item)[0]}
+            ListHeaderComponent={(
+                <Content>
+                    <Box
+                        style={{
+                            padding: 10,
+                            borderTopWidth: 1,
+                            borderBottomWidth: 1,
+                            borderColor: '#999',
+                        }}
+                    >
+                        <Text
+                            color="textDisabled"
+                            textTransform="uppercase"
+                            fontWeight="bold"
+                        >Compiled Admission Diagnoses</Text>
+                    </Box>
+                </Content>
+            )}
+            ListEmptyComponent={(
+                <Content>
+                    <Box style={{ marginBottom: 30, marginTop: 20 }}>
+                        <Text color="textDisabled" textAlign="center">No admission diagnoses available</Text>
+                    </Box>
+                </Content>
+            )}
+            renderItem={({ item }) => {
+                const [d] = Object.values(item);
+
+                if (d.hcw_agree !== 'Yes') return null;
+
+                return (
+                    <Content>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{ flex: 1, }}>
+                                <Text>{d.diagnosis}</Text>
+                                <Text variant="caption" style={{ color: '#999' }}>{d.Suggested ? 'Suggested' : 'Selected by HCW'}</Text>
+                            </View>
+                            <View>
+                                <Text 
+                                    variant="caption" 
+                                    style={{ color: d.Suggested ? '#16a085' : '#f39c12' }}
+                                >{d.Suggested ? 'HCW agreed' : 'HCW selected'}</Text>
+                            </View>
+                        </View>
+                    </Content>
+                );
+            }}
+        />
+    );
+}

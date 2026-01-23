@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import moment from 'moment';
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
@@ -8,261 +8,300 @@ type DateFieldProps = types.ScreenFormTypeProps & {
 
 };
 
-export function DateField({ field, conditionMet, entryValue, allValues, onChange, repeatable, editable, formIndex }: DateFieldProps) {
-    const [mounted, setMounted] = React.useState(false);
-    const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
-    const canEdit = repeatable ? editable : true
-    const fieldKey = field?.key;
-    const fieldLabel = field?.label;
+type DateFieldType = 'date' | 'datetime';
+type DefaultValueType = 'date_now' | 'date_noon' | 'date_midnight';
 
-    const logDateFieldEvent = useCallback(
-        (event: string, payload: Record<string, unknown> = {}) => {
-            const prefix = repeatable ? '[Repeatable][DateField]' : '[NonRepeatable][DateField]';
-            console.log(prefix, event, {
-                isRepeatable: !!repeatable,
-                fieldKey,
-                fieldLabel,
-                formIndex,
-                ...payload,
-            });
-        },
-        [fieldKey, fieldLabel, formIndex, repeatable]
-    );
+// Helper: Parse date string to Date object, handling both formats
+const parseToDate = (value: any): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date && !isNaN(value.getTime())) return value;
+  
+  try {
+    // Handle shortened format like "2025-12-03 10:12"
+    if (typeof value === 'string') {
+      // If it's missing seconds, add them
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(value)) {
+        value = `${value}:00`;
+      }
+      // If it's just a date, add time
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        value = `${value}T00:00:00`;
+      }
+      // If it has space instead of T, replace it
+      value = value.replace(' ', 'T');
+    }
+    
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  } catch {
+    return null;
+  }
+};
 
-    const getformattedDate = (type: any, value: Date) => {
-        switch (type) {
-            case 'date':
-                return require('moment')(new Date(value)).format('YYYY-MM-DD');
-            case 'datetime':
-                return require('moment')(new Date(value)).format('YYYY-MM-DD HH:mm');
-            default:
-                return null;
+// Helper: Format date based on field type (for display only)
+const formatDate = (date: Date, type: DateFieldType): string => {
+  const format = type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm';
+  return moment(date).format(format);
+};
+
+// Helper: Create default date based on type
+const createDefaultDate = (defaultValueType: DefaultValueType): Date => {
+  const now = new Date();
+  switch (defaultValueType) {
+    case 'date_now':
+      return now;
+    case 'date_noon':
+      return moment(now).startOf('day').hour(12).minute(0).toDate();
+    case 'date_midnight':
+      return moment(now).startOf('day').hour(0).minute(0).toDate();
+    default:
+      return now;
+  }
+};
+
+export function DateField({
+  field,
+  conditionMet,
+  entryValue,
+  allValues,
+  onChange,
+  repeatable,
+  editable,
+  formIndex
+}: DateFieldProps) {
+  const [mounted, setMounted] = useState(false);
+  const [value, setValue] = useState<Date | null>(() => parseToDate(entryValue?.value));
+  
+  const canEdit = repeatable ? editable : true;
+  const fieldKey = field?.key;
+  const fieldLabel = field?.label;
+
+  // Helper: Log events
+  const logDateFieldEvent = useCallback(
+    (event: string, payload: Record<string, unknown> = {}) => {
+      const prefix = repeatable ? '[Repeatable][DateField]' : '[NonRepeatable][DateField]';
+      console.log(prefix, event, {
+        isRepeatable: !!repeatable,
+        fieldKey,
+        fieldLabel,
+        formIndex,
+        ...payload,
+      });
+    },
+    [fieldKey, fieldLabel, formIndex, repeatable]
+  );
+
+  // Calculate min/max dates from related fields
+  const { minDate, maxDate } = useMemo(() => {
+    let minDate: Date | undefined = undefined;
+    let maxDate: Date | undefined = undefined;
+
+    if (field.minDateKey && allValues) {
+      const minDateKey = field.minDateKey.replace(/^\$/, '');
+      const minDateField = allValues.find(
+        v => v.key?.toLowerCase() === minDateKey.toLowerCase()
+      );
+      
+      if (minDateField?.value) {
+        const _minDate = parseToDate(minDateField.value);
+        if (_minDate) {
+          minDate = new Date(_minDate);
+          if (minDateField.type === 'date') {
+            minDate.setHours(0, 0, 0, 0);
+          }
         }
+      }
     }
 
-    React.useEffect(() => {
-        if (!conditionMet) {
-            onChange({ value: null, valueText: null, exportType: 'date', });
-            setValue(null);
-            logDateFieldEvent('conditionReset', { reason: 'conditionMet=false' });
-        } else {
-            if (!mounted && (field.defaultValue === 'date_now')) {
-                const date = new Date();
-                const formatedDate = getformattedDate(field.type, date)
-                const normalizedValue = toLocalISOString(date);
-                logDateFieldEvent('defaultValueApplied', {
-                    defaultValue: field.defaultValue,
-                    isoValue: normalizedValue,
-                    formatted: formatedDate,
-                });
-                onChange({
-                    exportType: 'date',
-                    value: normalizedValue,
-                    valueText: formatedDate,
-                    valueLabel: formatedDate,
-                    exportValue: formatedDate,
-                    exportLabel: formatedDate,
-                    label: field?.label
-                });
-                setValue(date);
-            }
-
-            if (!mounted && (field.defaultValue === 'date_noon')) {
-                const date = moment(new Date()).startOf('day').hour(12).minute(0).toDate();
-                const normalizedValue = toLocalISOString(date);
-                logDateFieldEvent('defaultValueApplied', {
-                    defaultValue: field.defaultValue,
-                    isoValue: normalizedValue,
-                });
-                onChange({
-                    exportType: 'date',
-                    value: normalizedValue,
-                    label: field?.label,
-                    valueText: (() => {
-                        switch (field.type) {
-                            case 'date':
-                                return require('moment')(new Date(date)).format('YYYY-MM-DD');
-                            case 'datetime':
-                                return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
-                            default:
-                                return null;
-                        }
-                    })(),
-                });
-                setValue(date);
-            }
-
-            if (!mounted && (field.defaultValue === 'date_midnight')) {
-                const date = moment(new Date()).startOf('day').hour(0).minute(0).toDate();
-                const normalizedValue = toLocalISOString(date);
-                logDateFieldEvent('defaultValueApplied', {
-                    defaultValue: field.defaultValue,
-                    isoValue: normalizedValue,
-                });
-                onChange({
-                    exportType: 'date',
-                    value: normalizedValue,
-                     label: field?.label,
-                    valueText: (() => {
-                        switch (field.type) {
-                            case 'date':
-                                return require('moment')(new Date(date)).format('YYYY-MM-DD');
-                            case 'datetime':
-                                return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
-                            default:
-                                return null;
-                        }
-                    })(),
-                });
-                setValue(date);
-            }
+    if (field.maxDateKey && allValues) {
+      const maxDateKey = field.maxDateKey.replace(/^\$/, '');
+      const maxDateField = allValues.find(
+        v => v.key?.toLowerCase() === maxDateKey.toLowerCase()
+      );
+      
+      if (maxDateField?.value) {
+        const _maxDate = parseToDate(maxDateField.value);
+        if (_maxDate) {
+          maxDate = new Date(_maxDate);
+          if (maxDateField.type === 'date') {
+            maxDate.setHours(23, 59, 59, 999);
+          }
         }
-    }, [conditionMet, field, logDateFieldEvent, mounted, onChange]);
+      }
+    }
 
-    React.useEffect(() => { setMounted(true); }, []);
+    return { minDate, maxDate };
+  }, [field.minDateKey, field.maxDateKey, allValues]);
 
-    React.useEffect(() => {
-        if (!entryValue) {
-            setValue(null);
-            logDateFieldEvent('entryValueSynced', {
-                entryValue: null,
-                entryValueText: null,
-                normalizedValue: null,
-                note: 'entryValue missing',
-            });
-            return;
-        }
-        const nextValue = entryValue.value ? new Date(entryValue.value) : null;
-        if (nextValue && isNaN(nextValue.getTime())) {
-            setValue(null);
-            logDateFieldEvent('entryValueSynced', {
-                entryValue: entryValue?.value || null,
-                entryValueText: entryValue?.valueText || null,
-                normalizedValue: null,
-                note: 'invalid date',
-            });
-            return;
-        }
-        logDateFieldEvent('entryValueSynced', {
-            entryValue: entryValue?.value || null,
-            entryValueText: entryValue?.valueText || null,
-            normalizedValue: nextValue ? toLocalISOString(nextValue) : null,
+  // Get validation errors
+  const getErrors = useCallback(
+    (dateValue: string | null): string[] => {
+      const errors: string[] = [];
+      
+      if (!dateValue) return errors;
+      
+      const date = parseToDate(dateValue);
+      if (!date) return errors;
+      
+      const dateFormat = field.type === 'date' ? 'LL' : 'LLL';
+
+      if (minDate && date.getTime() < minDate.getTime()) {
+        errors.push(
+          `Date should be on or after the min date: ${moment(minDate).format(dateFormat)}`
+        );
+      }
+
+      if (maxDate && date.getTime() > maxDate.getTime()) {
+        errors.push(
+          `Date should be on or before the max date: ${moment(maxDate).format(dateFormat)}`
+        );
+      }
+
+      return errors;
+    },
+    [field.type, minDate, maxDate]
+  );
+
+  // Handle condition changes and default values
+  useEffect(() => {
+    if (!conditionMet) {
+      onChange({ value: null, valueText: null, exportType: 'date' });
+      setValue(null);
+      logDateFieldEvent('conditionReset', { reason: 'conditionMet=false' });
+      return;
+    }
+
+    // Only apply default values on first mount
+    if (!mounted && field.defaultValue) {
+      const defaultValueType = field.defaultValue as DefaultValueType;
+      const validDefaults: DefaultValueType[] = ['date_now', 'date_noon', 'date_midnight'];
+      
+      if (validDefaults.includes(defaultValueType)) {
+        const date = createDefaultDate(defaultValueType);
+        const normalizedValue = toLocalISOString(date);
+        const formattedDate = formatDate(date, field.type as DateFieldType);
+
+        logDateFieldEvent('defaultValueApplied', {
+          defaultValue: field.defaultValue,
+          isoValue: normalizedValue,
+          formatted: formattedDate,
         });
-        setValue(nextValue);
-    }, [entryValue?.value, entryValue?.valueText, logDateFieldEvent]);
 
-    const { minDate, maxDate } = useMemo(() => {
-        let minDate = undefined;
-        let maxDate = undefined;
+        onChange({
+          exportType: 'date',
+          value: normalizedValue,
+          valueText: formattedDate,
+          valueLabel: formattedDate,
+          exportValue: formattedDate,
+          exportLabel: formattedDate,
+          label: field.label,
+        });
+        
+        setValue(date);
+      }
+    }
+  }, [
+    conditionMet,
+    mounted,
+    field.defaultValue,
+    field.type,
+    field.label,
+    onChange,
+    logDateFieldEvent,
+  ]);
 
-        if (field.minDateKey) {
-            let minDateKey = `${field.minDateKey || ''}`;
-            minDateKey = `${minDateKey}`.charAt(0) === '$' ? `${minDateKey}`.substring(1, minDateKey.length) : minDateKey;
-            let _minDate: Date | null = null;
-            let _minDateType = 'datetime';
-            allValues?.forEach(v => {
-                if (`${v.key}`.toLowerCase() === `${minDateKey}`.toLowerCase()) {
-                    _minDate = v.value ? new Date(v.value) : null;
-                    _minDateType = v.type!;
-                }
-            });
-            if (_minDate) {
-                minDate = new Date(_minDate);
-                if (_minDateType === 'date') {
-                    minDate.setHours(0);
-                    minDate.setMinutes(0);
-                }
-            }
-        }
+  // Set mounted flag
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-        if (field.maxDateKey) {
-            let maxDateKey = `${field.maxDateKey || ''}`;
-            maxDateKey = `${maxDateKey}`.charAt(0) === '$' ? `${maxDateKey}`.substring(1, maxDateKey.length) : maxDateKey;
-            let _maxDate: Date | null = null;
-            let _maxDateType = 'datetime';
-            allValues?.forEach(v => {
-                if (`${v.key}`.toLowerCase() === `${maxDateKey}`.toLowerCase()) {
-                    _maxDate = v.value ? new Date(v.value) : null;
-                    _maxDateType = v.type!;
-                }
-            });
-            if (_maxDate) {
-                maxDate = new Date(_maxDate);
-                if (_maxDateType === 'date') {
-                    maxDate.setHours(23);
-                    maxDate.setMinutes(59);
-                }
-            }
-        }
+  // Sync with external entry value changes
+  useEffect(() => {
+    if (!entryValue) {
+      setValue(null);
+      logDateFieldEvent('entryValueSynced', {
+        entryValue: null,
+        entryValueText: null,
+        normalizedValue: null,
+        note: 'entryValue missing',
+      });
+      return;
+    }
 
-        return { minDate, maxDate, };
-    }, [field, allValues]);
+    const nextValue = parseToDate(entryValue.value);
+    
+    if (entryValue.value && !nextValue) {
+      setValue(null);
+      logDateFieldEvent('entryValueSynced', {
+        entryValue: entryValue.value,
+        entryValueText: entryValue.valueText || null,
+        normalizedValue: null,
+        note: 'invalid date',
+      });
+      return;
+    }
 
-    const getErrors = useCallback((date: null | string) => {
-        const errors = [];
+    logDateFieldEvent('entryValueSynced', {
+      entryValue: entryValue.value || null,
+      entryValueText: entryValue.valueText || null,
+      normalizedValue: nextValue ? toLocalISOString(nextValue) : null,
+    });
+    
+    setValue(nextValue);
+  }, [entryValue?.value, entryValue?.valueText, logDateFieldEvent]);
 
-        if (minDate && date && (new Date(date).getTime() < new Date(minDate).getTime())) {
-            errors.push(`Date should be on or after the min date: ${moment(minDate).format(field.type === 'date' ? 'LL' : 'LLL')}`);
-        }
+  // Handle date changes
+  const handleDateChange = useCallback(
+    (pickedValue: Date | null) => {
+      let date: Date | null = null;
+      
+      if (pickedValue) {
+        const hour = moment(pickedValue).hours();
+        const minute = moment(pickedValue).minutes();
+        date = moment(pickedValue).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
+      }
 
-        if (maxDate && date && (new Date(date).getTime() > new Date(maxDate).getTime())) {
-            errors.push(`Date should be on or before the max date: ${moment(maxDate).format(field.type === 'date' ? 'LL' : 'LLL')}`);
-        }
+      const validDate = date instanceof Date && !isNaN(date.getTime()) ? date : null;
+      const normalizedValue = validDate ? toLocalISOString(validDate) : null;
+      const valueText = validDate ? formatDate(validDate, field.type as DateFieldType) : null;
+      const error = getErrors(normalizedValue)[0] || null;
 
-        return errors;
-    }, [field.type, minDate, maxDate]);
+      const payload = {
+        label: field.label,
+        error,
+        exportType: 'date' as const,
+        value: normalizedValue,
+        valueText,
+      };
 
-    return (
-        <Box>
-            <DatePicker
-                errors={getErrors(entryValue?.value)}
-                mode={field.type === 'date' ? 'date' : 'datetime'}
-                value={value}
-                valueText={entryValue?.valueText || undefined}
-                disabled={!conditionMet || !canEdit}
-                label={`${field.label}${field.optional ? '' : ' *'}`}
-                fieldKey={field.key}
-                onChange={value => {
-                    let date: null | Date = null;
-                    if (value) {
-                        const hour = moment(value).hours();
-                        const minute = moment(value).minutes();
-                        date = moment(value).startOf('day').add(hour, 'hour').add(minute, 'minute').toDate();
-                    }
-                    const isValidDate = (d: any): d is Date => d instanceof Date && !isNaN(d.getTime());
-                    const validDate = isValidDate(date) ? date : null;
-                    const normalizedValue = validDate ? toLocalISOString(validDate) : null;
-                    const error = getErrors(normalizedValue)[0] || null;
-                    const valueText = (() => {
-                        if (!date) return null;
-                        switch (field.type) {
-                            case 'date':
-                                return require('moment')(new Date(date)).format('YYYY-MM-DD');
-                            case 'datetime':
-                                return require('moment')(new Date(date)).format('YYYY-MM-DD HH:mm');
-                            default:
-                                return null;
-                        }
-                    })();
-                    const payload = {
-                        label: field?.label,
-                        error,
-                        exportType: 'date',
-                        value: normalizedValue,
-                        valueText,
-                    };
-                    setValue(validDate);
-                    logDateFieldEvent('onChange', {
-                        pickedValue: value ? toLocalISOString(value) : null,
-                        normalizedValue: normalizedValue,
-                        valueText,
-                        error,
-                    });
-                    onChange(payload);
-                }}
-                maxDate={maxDate || field.maxDate}
-                minDate={minDate || field.minDate}
-            />
-        </Box>
-    );
+      setValue(validDate);
+      
+      logDateFieldEvent('onChange', {
+        pickedValue: pickedValue ? toLocalISOString(pickedValue) : null,
+        normalizedValue,
+        valueText,
+        error,
+      });
+      
+      onChange(payload);
+    },
+    [field.label, field.type, getErrors, onChange, logDateFieldEvent]
+  );
+
+  return (
+    <Box>
+      <DatePicker
+        errors={getErrors(entryValue?.value || null)}
+        mode={field.type === 'date' ? 'date' : 'datetime'}
+        value={value}
+        valueText={entryValue?.valueText || undefined}
+        disabled={!conditionMet || !canEdit}
+        label={`${field.label}${field.optional ? '' : ' *'}`}
+        fieldKey={field.key}
+        onChange={handleDateChange}
+        maxDate={maxDate || field.maxDate}
+        minDate={minDate || field.minDate}
+      />
+    </Box>
+  );
 }

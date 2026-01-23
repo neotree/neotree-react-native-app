@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useEffect, useState, } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity } from 'react-native';
 import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
 import { fieldsTypes } from '@/src/constants';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
+import { getSelectionConflicts, getSelectionConflictMessage } from '@/src/utils/selection-rules';
 
 type MultiSelectFieldProps = types.ScreenFormTypeProps & {
     
@@ -86,6 +87,7 @@ export function MultiSelectField({
                         <TouchableOpacity 
                             disabled={disabled}
                             onPress={() => {
+                                const isSelecting = !value[o.value];
                                 const state = {
                                     ...(o.exclusive ? {} : value),
                                     [o.value]: value[o.value] ? undefined : {
@@ -102,15 +104,40 @@ export function MultiSelectField({
                                     },
                                 };
 
+                                if (isSelecting) {
+                                    const selectedValues = Object.keys(state).filter(key => state[key]);
+                                    const conflicts = getSelectionConflicts({
+                                        items: opts,
+                                        selectedValues,
+                                    });
+                                    if (conflicts.length) {
+                                        Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
+                                        return;
+                                    }
+                                }
+
                                 setValue(state);
 
-                                const values = Object.values(state).filter(v => v).map(v => ({
-                                    ...v,
-                                }));
+                                const selectedValues = Object.values(state).filter(v => v);
+                                
+                                // Validate that all selected items with enterValueManually have value2 filled
+                                const hasInvalidSelection = selectedValues.some((v: any) => 
+                                    v?.enterValueManually && !v?.value2?.trim()
+                                );
 
-                                onChange({
-                                    value: !values.length ? undefined : values,
-                                });
+                                if (!selectedValues.length || hasInvalidSelection) {
+                                    onChange({
+                                        value: undefined,
+                                    });
+                                } else {
+                                    const values = selectedValues.map(v => ({
+                                        ...v,
+                                    }));
+
+                                    onChange({
+                                        value: values,
+                                    });
+                                }
                             }}
                         >
                             <Card 
@@ -130,28 +157,42 @@ export function MultiSelectField({
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option?.label || ''}`}
+                                        label={`${o.option?.label || ''} (Required)`}
                                         value={value2 || ''}
                                         onChangeText={value2 => {
-                                            setValue(prev => ({
-                                                ...prev,
-                                                [o.value]: !prev[o.value] ? undefined : {
-                                                    ...prev[o.value]!,
+                                            const updatedState = {
+                                                ...value,
+                                                [o.value]: !value[o.value] ? undefined : {
+                                                    ...value[o.value]!,
                                                     value2,
                                                     key2: !value2 ? '' : (o.option?.key || ''),
                                                 },
-                                            }));
+                                            };
 
-                                            if (entryValue) {
+                                            setValue(updatedState);
+
+                                            const selectedValues = Object.values(updatedState).filter(v => v);
+                                            
+                                            // Validate that all selected items with enterValueManually have value2 filled
+                                            const hasInvalidSelection = selectedValues.some((v: any) => 
+                                                v?.enterValueManually && !v?.value2?.trim()
+                                            );
+
+                                            if (!selectedValues.length || hasInvalidSelection) {
                                                 onChange({
-                                                    value: (entryValue?.value || []).map((v: types.ScreenEntryValue) => v.key !== o.value ? v : {
-                                                        ...v,
-                                                        value2,
-                                                        key2: o.option?.key || '',
-                                                    })
+                                                    value: undefined,
+                                                });
+                                            } else {
+                                                const values = selectedValues.map((v: any) => ({
+                                                    ...v,
+                                                }));
+
+                                                onChange({
+                                                    value: values,
                                                 });
                                             }
                                         }}
+                                        errors={!value2?.trim() ? ['This field is required'] : undefined}
                                     />
                                 </Box>
                             </>
