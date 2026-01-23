@@ -1,9 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, View, FlatList } from 'react-native';
+import { Alert, TouchableOpacity, View, FlatList } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Text, Modal, Card, Br, TextInput, CONTENT_STYLES } from '../../../../components';
 import * as types from '../../../../types';
+import { getSelectionConflictMessage, getSelectionConflicts } from '@/src/utils/selection-rules';
 
 type SelectDiagnosesProps = types.DiagnosisSectionProps & {
     
@@ -130,9 +131,23 @@ export function SelectDiagnoses({
 									onPress={() => {
 										if (exclusiveIsSelected && !isExclusive) return;
 										if (isSelected) {
-											setHcwDiagnoses(hcwDiagnoses.filter(d => d.name !== item.label));
-											setDiagnoses(diagnoses.filter((d) => d.name !== item.label));
+											setHcwDiagnoses(hcwDiagnoses.filter(d => (d.key !== item.id) || (d.name !== item.id)));
+											setDiagnoses(diagnoses.filter((d) => (d.key !== item.id) || (d.name !== item.id)));
 										} else {
+											const selectedValues = items
+												.filter(i => hcwDiagnoses.some(d => d.name === i.label))
+												.map(i => i.key || i.id || i.label);
+
+											const conflicts = getSelectionConflicts({
+												items,
+												selectedValues: [...selectedValues, item.key || item.id || item.label],
+											});
+
+											if (conflicts.length) {
+												Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
+												return;
+											}
+
 											if (item.enterValueManually) {
 												setCustomValueModal({ onClose: setValue });
 											} else {

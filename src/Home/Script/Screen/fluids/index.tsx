@@ -71,10 +71,12 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                             label: fluid.routeOfAdministration,
                         },
                         {
-                            label: fluid.managementText,
+                            title: 'Dosage text',
+                            label: fluid.dosageText,
+                            printTitle: false,
                         },
                         {
-                            label: fluid.dosageText,
+                            label: fluid.managementText,
                         },
                     ],
                 },

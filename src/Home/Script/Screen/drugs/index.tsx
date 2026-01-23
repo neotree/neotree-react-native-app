@@ -76,10 +76,12 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                             label: drug.routeOfAdministration,
                         },
                         {
-                            label: `${drug.managementText}`,
+                            title: 'Dosage text',
+                            label: drug.dosageText,
+                            printTitle: false,
                         },
                         {
-                            label: drug.dosageText,
+                            label: `${drug.managementText}`,
                         },
                     ],
                 },

@@ -87,3 +87,4 @@ src/certs
 
 .env*
 !.env.example
+.eslintrc.js

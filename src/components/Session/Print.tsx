@@ -17,22 +17,23 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
 
     const [printing, setPrinting] = React.useState(false);
     const [, setPrintingError] = React.useState(false);
-  
+
     const print = async () => {
         try {
             setPrinting(true);
             let html = await formToHTML(session, showConfidential);
             const printSectionsHTML = await printSectionsToHTML({ session, showConfidential });
+
             if (printSectionsHTML) html = printSectionsHTML;
 
             await ExpoPrint.printAsync({ html, height: 1122, });
-        } catch(e: any) {
+        } catch (e: any) {
             setPrintingError(e);
         } finally {
             setPrinting(false);
         }
     };
-    
+
     return (
         <>
             {printing && <OverlayLoader transparent backgroundColor="rgba(255,255,255,.5)" />}

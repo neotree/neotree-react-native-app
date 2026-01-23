@@ -4,6 +4,7 @@ export type EvaluateDrugsScreenParams = {
     entries: ScreenEntry[];
     drugsLibrary: DrugsLibraryItem[];
     screen: any;
+    scriptType?: string;
     evaluateCondition: (condition: string) => boolean;
 };
 
@@ -11,8 +12,11 @@ export function evaluateDrugsScreen({
     entries,
     screen,
     drugsLibrary,
+    scriptType,
     evaluateCondition
 }: EvaluateDrugsScreenParams) {
+    const isCalculator = scriptType === 'dff_calculator';
+
     const metadata = { ...screen.data?.metadata, };
     const screenDrugs = (metadata.drugs || []) as DrugField[];
 
@@ -71,10 +75,16 @@ export function evaluateDrugsScreen({
         // })
         .map(d => {
             const weightKeys = `${d.weightKey}`.toLowerCase().split(',').map(key => key.trim());
-            const condition = `${d.condition || ''}`;
-            const diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');
             const ageKeys = `${d.ageKey}`.toLowerCase().split(',').map(key => key.trim());
             const gestationKey = `${d.gestationKey}`.toLowerCase();
+
+            let condition = `${d.condition || ''}`;
+            let diagnosisKeys = `${d.diagnosisKey || ''}`.split(',');
+
+            if (isCalculator) {
+                condition = `${d.calculator_condition || ''}`;
+                diagnosisKeys = [];
+            }
 
             let conditionMet = !condition ? true : false;
 
@@ -138,7 +148,7 @@ export function evaluateDrugsScreen({
             };
         })
         .filter(d => {
-            if (d.validationType === 'condition') {
+            if (!isCalculator && (d.validationType === 'condition')) {
                 return d.conditionMet && (!d.diagnosisKey ? true : !!d.diagnoses.length);
             }
 
@@ -146,9 +156,11 @@ export function evaluateDrugsScreen({
                 (d.weight === null) ||
                 (d.gestation === null) ||
                 (d.age === null) ||
-                !d.diagnoses.length ||
+                // !d.diagnoses.length ||
                 !d.conditionMet
             ) return false;
+
+            if (!isCalculator && !d.diagnoses.length) return false; 
 
             const isCorrectWeight = (d.weight >= d.minWeight!) && (d.weight <= d.maxWeight!);
             const isCorrectAge = (d.age >= d.minAge!) && (d.age <= d.maxAge!);
@@ -164,7 +176,7 @@ export function evaluateDrugsScreen({
             const dosageMultiplier = d.dosageMultiplier || 1;
             
             if (d.dosage) {
-                if (d.validationType === 'condition') {
+                if (!isCalculator && (d.validationType === 'condition')) {
                     dosage = Number((d.dosage * dosageMultiplier).toFixed(2));
                 } else {
                     dosage = d.dosage! * dosageMultiplier!;

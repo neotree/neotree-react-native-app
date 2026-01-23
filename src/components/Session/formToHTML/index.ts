@@ -2,6 +2,7 @@
 
 import QRCode from 'qrcode';
 import { ScreenEntryValue } from '@/src/types';
+import { formatValueWithUnit } from '@/src/utils/units';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
@@ -135,7 +136,12 @@ export default async (session: any, showConfidential?: boolean) => {
           .map(({
             values,
             // management, 
-            screen: { metadata: { label }, listStyle: _listStyle = 'none', type }
+            screen: { 
+              metadata: { label }, 
+              listStyle: _listStyle = 'none', 
+              printDisplayColumns = 2,
+              type 
+            }
           }: any) => {
             // management = management || [];
 
@@ -144,27 +150,43 @@ export default async (session: any, showConfidential?: boolean) => {
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
               .map((v: any) => {
-                let isFlexRow = true;
                 let hideLabel = false;
 
-                const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
+                let isFlexRow = printDisplayColumns !== 1;
+                if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;                
+
+                let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 const listStyle = v.listStyle || _listStyle;
 
-                if (['fluids', 'drugs'].includes(type)) {
+                const isDff = ['fluids', 'drugs'].includes(type);
+
+                if (isDff) {
                   isFlexRow = false;
                   hideLabel = true;
+                  extraLabels = [...extraLabels].filter((s: any) => s.title) as typeof extraLabels; // remove management text
+                  extraLabels = extraLabels.map(s => {
+                    if (typeof s === 'string') return s;
+                    return {
+                      ...s,
+                      title: s.printTitle === false ? '' : s.title,
+                    };
+                  }) as typeof extraLabels;
                 }
                 let value = v.valueText || v.value || 'N/A'
-                const exportType = v.type ||v.exportType
+                const exportType = v.type || v.exportType
                 if (exportType == 'datetime' || exportType == 'date') {
                   value = formatDate(value, exportType)
+                }
+                const shouldAppendUnit = exportType === 'number' || exportType === 'text'
+                if (shouldAppendUnit && !Array.isArray(value)) {
+                  value = formatValueWithUnit(value, v.unit)
                 }
 
                 return `
                   <div  class="${isFlexRow ? 'row' : ''}">
                     <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${label || v.label}</span>
                     <div>
-                      <div style="${!extraLabels.length ? '' : 'font-size:18px;font-weight:bold;margin-top:10px;'}">
+                      <div style="${!extraLabels.length ? '' : 'text-transform:uppercase;font-weight:bold;margin-top:10px;'}">
                         ${value && value.map ?
                           value.map((v: any, i: number) => {
                             let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;

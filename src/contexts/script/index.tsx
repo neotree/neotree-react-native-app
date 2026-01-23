@@ -9,6 +9,7 @@ import { type TextProps, Alert, View, TouchableOpacity, Platform } from 'react-n
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { type DrawerNavigationOptions } from '@react-navigation/drawer';
 import Icon from '@expo/vector-icons/MaterialIcons';
+import { merge } from 'lodash'
 
 import * as types from '@/src/types';
 import * as api from '@/src/data';
@@ -17,6 +18,8 @@ import { defaultPreferences } from '@/src/constants';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
+import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
+import moment from "moment";
 
 type ScriptContextProviderProps = types.StackNavigationProps<types.HomeRoutes, 'Script'>;
 
@@ -30,9 +33,20 @@ export const useScriptContext = () => {
     return ctx;
 };
 
+export const mergeSessions = (
+    first: any | null | undefined,
+    second: any | null | undefined
+): any | null | undefined => {
+
+  if (!first || !second) return first ?? second;
+
+ return merge(second,first)
+}
+
 export function ScriptContextProvider({ children, ...props }: ScriptContextProviderProps & {
     children: React.ReactNode;
 }) {
+    const dateAndTimeOfDeath = useDateAndTimeOfDeathState();
     const ctxValue = useScriptContextValue(props);
 
     return (
@@ -41,6 +55,15 @@ export function ScriptContextProvider({ children, ...props }: ScriptContextProvi
         >
             <>
                 {children}
+                <DateAndTimeOfDeathModal 
+                    done={async () => {
+                        dateAndTimeOfDeath.reset();
+                        ctxValue.createSummaryAndSaveSession({ 
+                            completed: true,
+                            dateAndTimeOfDeath: !dateAndTimeOfDeath.value ? null : moment(dateAndTimeOfDeath.value).format('YYYY-MM-DD HH:mm'), 
+                        });
+                    }}
+                />
             </>
         </ScriptContext.Provider>
     )
@@ -381,6 +404,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -402,6 +426,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -475,6 +500,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen: lastScreen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -491,6 +517,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     entries: entries,
                     drugsLibrary,
                     screen: lastScreen,
+                    scriptType: script?.data?.type,
                     evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
                 });
 
@@ -637,7 +664,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, ...payload } = _payload;
+        const { completed, cancelled, dateAndTimeOfDeath, ...payload } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
@@ -665,6 +692,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             script_id: activeScreen?.script_id || route.params.script_id,
             type: script?.type,
             data: {
+                dateAndTimeOfDeath,
 				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
 				app_mode: application?.mode,
 				country: location?.country,
@@ -1112,6 +1140,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // 	.map(s => s.data)
                 // 	.filter(s => s.printable),
                 screen: {
+                    printDisplayColumns: activeScreen?.data?.printDisplayColumns || 2,
                     listStyle: activeScreen?.data?.listStyle || 'none',
                     title: activeScreen.data.title,
                     sectionTitle: activeScreen.data.sectionTitle,
@@ -1266,12 +1295,15 @@ type GetNavOptionsParams = {
     confirmExit: () => void;
 };
 
-function RightActions({ color, screen, confirmExit, }: { 
+function RightActions({ color, screen, script, confirmExit, }: { 
 	color?: string; 
 	screen: types.Screen; 
+    script: types.Script;
 	confirmExit: () => void; 
 	goNext: () => void; 
 }) {
+    const isAdmission = !script?.type || (script?.type === 'admission');
+
 	const [openModal, setOpenModal] = useState(false);
 	const [openInfoModal, setOpenInfoModal] = useState(false);
 
@@ -1319,6 +1351,16 @@ function RightActions({ color, screen, confirmExit, }: {
 						confirmExit();
 					}}
 				/>
+
+                {isAdmission && (
+                    <>
+                        <View style={{ height: 10, }} />
+
+                        <DateAndTimeOfDeathRadio 
+                            onClick={() => setOpenModal(false)}
+                        />
+                    </>
+                )}
 			</Modal>
 
 			<Modal
@@ -1385,7 +1427,13 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 				
 				{!!script && (
 					<Box>
-						<RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} goNext={goNext} />
+						<RightActions 
+                            color={tintColor} 
+                            screen={activeScreen} 
+                            confirmExit={confirmExit} 
+                            goNext={goNext}
+                            script={script}
+                        />
 					</Box>
 				)}
 			</View>

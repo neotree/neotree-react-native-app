@@ -84,6 +84,15 @@ export type Configuration = any;
 export type Repeatable=any;
 export type Alias=any;
 
+export type DischargeDiagnosis = Record<string, {
+  Priority: number;
+  Suggested: boolean;
+  diagnosis: string;
+  hcw_agree: string;
+  hcw_reason_given: null | string;
+  hcw_follow_instructions: null | string;
+}>;
+
 export type DrugField = {
   key: string;
   position: number;
@@ -118,6 +127,7 @@ export type DrugsLibraryItem = {
   routeOfAdministration: string;
   position: number;
   condition: string;
+  calculator_condition: string;
   validationType: 'default' | 'condition';
   version: number;
   publishDate: string;
@@ -139,6 +149,7 @@ export type ScreenEntryValue = {
   key2?: any;
   valueText?: any;
   valueLabel?: any;
+  unit?: string;
   label?: string;
   key?: string;
   parentKey?: string;
@@ -155,9 +166,11 @@ export type ScreenEntryValue = {
   diagnosis?: Diagnosis;
   prePopulate?: any[];
   printable?: boolean;
+  printDisplayColumns?: 1 | 2;
   extraLabels?: string[] | {
     title?: string;
     label: string;
+    printTitle?: boolean;
   }[];
   selected?: boolean;
   data?: any;

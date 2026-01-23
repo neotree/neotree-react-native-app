@@ -9,6 +9,7 @@ import { AgreeDisagree } from './_AgreeDisagree';
 import { SortPriority } from './_SortPriority';
 import { FullDiagnosis } from './_FullDiagnosis';
 import { SectionContainer } from './section-container';
+import { DischargeDiagnoses } from './discharge-diagnoses';
 
 type DiagnosisProps = types.ScreenTypeProps & {
     
@@ -44,6 +45,7 @@ export function Diagnosis(props: DiagnosisProps) {
     const mounted = React.useRef(false);
 
     const {
+        script,
         activeScreenEntry,
         activeScreen,
         goNext: ctxGoNext,
@@ -54,6 +56,7 @@ export function Diagnosis(props: DiagnosisProps) {
         getSuggestedDiagnoses,
     } = useScriptContext();
 
+    const isDischarge = (script.type || script.data?.type) === 'discharge';
 
     const [section, setSection] = React.useState('select');
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(
@@ -88,6 +91,11 @@ export function Diagnosis(props: DiagnosisProps) {
     const goNext = React.useCallback((opts?: {
         force?: boolean;
     }) => {
+        if (isDischarge) {
+            done();
+            return;
+        }
+
         if ((opts?.force !== true) && !loading) {
             setLoading(true);
             setTimeout(() => goNext({ force: true, }), 500);
@@ -183,6 +191,7 @@ export function Diagnosis(props: DiagnosisProps) {
         loading,
         activeDiagnosisIndex,
         acceptedDiagnoses,
+        isDischarge,
         getSuggestedDiagnoses,
         setEntryValues,
         done,
@@ -231,7 +240,7 @@ export function Diagnosis(props: DiagnosisProps) {
             goNext,
             showFAB: !hideFAB,
             hideHeaderRight: false,
-            hideSearch: section !== 'select',
+            hideSearch: isDischarge || section !== 'select',
             ...(() => {
                 let title: undefined | string = undefined;
                 let titleStyle: undefined | TextProps['style'] = undefined;
@@ -248,6 +257,10 @@ export function Diagnosis(props: DiagnosisProps) {
                         title = `${activeScreen?.data?.title3 || ''}`;
                         titleStyle = getFieldPreferences('title3')?.style;
                     }
+
+                    if (isDischarge) {
+                        title = 'Diagnoses';
+                    }
                 }
 
                 return { title, titleStyle, };
@@ -257,6 +270,7 @@ export function Diagnosis(props: DiagnosisProps) {
         hideFAB,
         section,
         activeDiagnosisIndex,
+        isDischarge,
         goBack,
         goNext,
         ctxSetMoreNavOptions,
@@ -306,6 +320,16 @@ export function Diagnosis(props: DiagnosisProps) {
     React.useEffect(() => { setMoreNavOptions(); }, [setMoreNavOptions]);
 
     React.useEffect(() => () => ctxSetMoreNavOptions(null), []);
+
+    if (isDischarge) {
+        return (
+            <SectionContainer {...sectionProps}>
+                <DischargeDiagnoses 
+                    {...sectionProps}
+                />
+            </SectionContainer>
+        );
+    }
 
     return (
         <Box>

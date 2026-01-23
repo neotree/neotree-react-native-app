@@ -4,7 +4,7 @@ import { ScreenEntry } from '@/src/types';
 import { scriptPrintConfig } from '@/src/constants';
 
 export function getBaseHTML (html: any, session: any) {
-  const { completed_at, canceled_at, script, form, } = session.data;
+  const { completed_at, canceled_at, script, form, dateAndTimeOfDeath, } = session.data;
 
   const printConfig = {
     ...scriptPrintConfig,
@@ -100,6 +100,18 @@ export function getBaseHTML (html: any, session: any) {
           padding: 3px;
         }
 
+        /*table {
+          min-height: 1000px;
+          background: red;
+        }*/
+
+        tfoot {
+          position: fixed;
+          bottom: 0px;
+          left: 0px;
+          opacity: 0.5;
+        }
+
         tfoot, thead {
           color: #333;
         }
@@ -164,6 +176,15 @@ export function getBaseHTML (html: any, session: any) {
                       <p id="headerSubtitle">Ministry of Health - National ${formatScriptType(script.data.type)} Form</p>
                     </div>
                   </div>
+
+                  ${!dateAndTimeOfDeath ? '' : `
+                    <div 
+                      style="border:1px solid #b20008;color: #b20008;background-color:rgba(255,0,0,.1);border-radius:5px;padding:10px;margin:10px 0;text-align:center;"
+                    >
+                      <div>Date and time of death: <b>${dateAndTimeOfDeath}</b></div>
+                      <div>Neotree ID: <b>${session.uid}</b></div>  
+                    </div>`}
+
                   <div id"content-wrap">
                     <div id="content">
                         ${html || ''}
