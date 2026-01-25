@@ -1,3 +1,4 @@
 export const ASYNC_STORAGE_KEYS = {
     SYNC_ERROR: 'SYNC_ERROR',
+    EXPORT_QUEUE: 'EXPORT_QUEUE',
 };
