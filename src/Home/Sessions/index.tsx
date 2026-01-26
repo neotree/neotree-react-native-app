@@ -109,9 +109,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			session?.scriptid;
 
 		let screens: any[] = [];
+		let scriptMeta: any = session?.data?.script;
 		try {
 			if (scriptId) {
 				const scriptRes: any = await api.getScript({ script_id: scriptId });
+				scriptMeta = scriptRes?.script || scriptMeta;
 				screens = scriptRes?.screens || [];
 			}
 		} catch {
@@ -310,8 +312,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 		return {
 			...session,
+			uid: session?.uid || session?.data?.uid,
 			data: {
 				...session.data,
+				script: scriptMeta || session?.data?.script,
 				form,
 			},
 		};
