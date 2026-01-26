@@ -753,7 +753,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 reject(e);
             }
         })();
-    }), [createSessionSummary]);
+    }), [createSessionSummary, sessionID]);
 
     const createSummaryAndSaveSession = useCallback((params?: any) => new Promise((resolve, reject) => {
         setDisplayLoader(true);

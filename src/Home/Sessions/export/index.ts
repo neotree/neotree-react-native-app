@@ -1,15 +1,44 @@
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
 import { APP_CONFIG } from '../../../constants';
 import * as types from '../../../types';
+import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 
 export { getJSON };
 
 const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
+
+const getExportQueue = async (): Promise<number[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.EXPORT_QUEUE);
+    const ids = raw ? JSON.parse(raw) : [];
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+};
+
+const setExportQueue = async (ids: number[]) => {
+  const unique = Array.from(new Set((ids || []).filter((id) => Number.isFinite(id))));
+  await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.EXPORT_QUEUE, JSON.stringify(unique));
+};
+
+const addToExportQueue = async (ids: number[]) => {
+  const existing = await getExportQueue();
+  await setExportQueue([...existing, ...(ids || [])]);
+};
+
+const removeFromExportQueue = async (ids: number[]) => {
+  const removeSet = new Set((ids || []).filter((id) => Number.isFinite(id)));
+  if (!removeSet.size) return;
+  const existing = await getExportQueue();
+  await setExportQueue(existing.filter((id) => !removeSet.has(id)));
+};
 
 const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
   (async () => {
@@ -143,7 +172,27 @@ export function exportToApi(opts: any = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const sessions = _sessions.filter((s: any) => !s.exported);
+        const queuedIds = await getExportQueue();
+        let queuedSessions: any[] = [];
+        if (queuedIds.length) {
+          const allSessions: any[] = (await api.getSessions()) as any[];
+          queuedSessions = (allSessions || []).filter(s => queuedIds.includes(s.id));
+          const existingIds = queuedSessions.map(s => s.id);
+          const missingIds = queuedIds.filter(id => !existingIds.includes(id));
+          if (missingIds.length) {
+            await removeFromExportQueue(missingIds);
+          }
+        }
+
+        const sessions = [
+          ..._sessions,
+          ...queuedSessions,
+        ]
+          .filter((s: any) => s && !s.exported)
+          .reduce((acc: any[], s: any) => {
+            if (!acc.some(e => e.id === s.id)) acc.push(s);
+            return acc;
+          }, []);
 
         try {
           if (opts.dontSaveFile !== true) await exportJSON(opts);
@@ -179,6 +228,7 @@ export function exportToApi(opts: any = {}) {
           // 1. Main session export to /sessions
           ...standardExportData.map((s: any, i: number) => ({
             type: 'main',
+            sessionId: sessions[i]?.id,
             execute: async () => {
               await api.exportSession(s);
               await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id } });
@@ -189,6 +239,7 @@ export function exportToApi(opts: any = {}) {
           // 2. Local export to /local (if hasLocalConfig)
           ...(hasLocalConfig ? pollExportData.map((s: any, i: number) => ({
             type: 'local',
+            sessionId: sessions[i]?.id,
             execute: async () => {
               if (sessions[i]?.local_export) return { success: true, skipped: true };
 
@@ -212,11 +263,12 @@ export function exportToApi(opts: any = {}) {
           // 3. Poll data export to /save-poll-data
           ...pollExportData.map((s: any, i: number) => ({
             type: 'poll',
+            sessionId: sessions[i]?.id,
             execute: async () => {
               if (sessions[i]?.exported) return { success: true, skipped: true };
 
               const { id, exported, local_export, ...exportable } = s;
-              await api.makeApiCall(
+              const res = await api.makeApiCall(
                 'nodeapi',
                 `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
                 {
@@ -224,6 +276,9 @@ export function exportToApi(opts: any = {}) {
                   body: JSON.stringify(exportable),
                 }
               );
+              if (res?.status !== 200) {
+                throw new Error(`Failed to export poll data for session ${sessions[i]?.id}`);
+              }
               return { success: true, id: sessions[i]?.id };
             }
           }))
@@ -240,12 +295,30 @@ export function exportToApi(opts: any = {}) {
           .filter(({ result }) => result.status === 'rejected')
           .map(({ result, group }) => ({
             type: group.type,
+            sessionId: group.sessionId,
             error: result.status === 'rejected' ? result.reason : null
           }));
 
         if (failures.length > 0) {
           console.log('Export failures:', failures);
-          // Don't reject - allow partial success
+          const mainFailures = failures.filter(f => f.type === 'main');
+          if (mainFailures.length > 0) {
+            await addToExportQueue(mainFailures.map(f => f.sessionId).filter(Boolean));
+          }
+          if (mainFailures.length > 0) {
+            throw new Error(`Failed to export ${mainFailures.length} session(s). Check network and try again.`);
+          }
+          // Local/poll failures are treated as warnings
+        }
+
+        const mainSuccessIds = results
+          .map((result, index) => ({ result, group: apiCallGroups[index] }))
+          .filter(({ result, group }) => group.type === 'main' && result.status === 'fulfilled')
+          .map(({ group }) => group.sessionId)
+          .filter(Boolean);
+
+        if (mainSuccessIds.length > 0) {
+          await removeFromExportQueue(mainSuccessIds);
         }
 
         resolve(null);
