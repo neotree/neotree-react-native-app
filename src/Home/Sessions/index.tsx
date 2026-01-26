@@ -254,6 +254,26 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							usedKeys.add(entryMatch.originalKey);
 						}
 					});
+
+					// Non-form screens often use metadata.key instead of fields/items
+					if (!screenKeys.length && metadata?.key) {
+						const metaKey = `${metadata.key}`.toLowerCase();
+						const entryMatch = entriesByKey[metaKey];
+						if (entryMatch) {
+							const val = buildValueFromEntry(entryMatch.originalKey, entryMatch.entry, {
+								key: metadata.key,
+								label: metadata.label,
+								type: metadata.type || screen?.type,
+								dataType: metadata.dataType,
+								printable: screen?.data?.printable,
+								confidential: metadata.confidential,
+							});
+							if (val) {
+								values.push(val);
+								usedKeys.add(entryMatch.originalKey);
+							}
+						}
+					}
 				}
 
 				const repeatableGroup =
@@ -266,19 +286,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		}
 
 		const remainingKeys = Object.keys(entries).filter((key) => key !== 'repeatables' && !usedKeys.has(key));
-		if (remainingKeys.length) {
-			const values = remainingKeys
-				.map((key) => buildValueFromEntry(key, entries[key]))
-				.filter(Boolean);
-			pushScreenEntry(
-				{
-					id: 'historic',
-					screen_id: 'historic',
-					type: 'form',
-					data: { metadata: { label: 'Historic Data' }, title: 'Historic Data', sectionTitle: 'Historic Data' },
-				},
-				values
-			);
+		if (remainingKeys.length && __DEV__) {
+			console.log('[Sessions][normalizeSessionForDisplay] Unmapped keys:', remainingKeys);
 		}
 
 		if (Object.keys(repeatables).length) {
