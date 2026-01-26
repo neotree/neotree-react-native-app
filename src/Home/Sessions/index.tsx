@@ -118,6 +118,30 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			screens = [];
 		}
 
+		if (scriptId) {
+			try {
+				const keys = Object.keys(entries).filter((key) => key !== 'repeatables');
+				const aliasPairs = await Promise.all(
+					keys.map(async (key) => {
+						const aliasRes: any = await api.getAliasKeyFromAliasAndScript({
+							script: scriptId,
+							alias: key,
+						});
+						return { key, alias: aliasRes?.name };
+					})
+				);
+				aliasPairs.forEach(({ key, alias }) => {
+					if (!alias) return;
+					const aliasKey = `${alias}`.toLowerCase();
+					if (!entriesByKey[aliasKey]) {
+						entriesByKey[aliasKey] = entriesByKey[`${key}`.toLowerCase()];
+					}
+				});
+			} catch {
+				// ignore alias lookup failures
+			}
+		}
+
 		const usedKeys = new Set<string>();
 		const form: any[] = [];
 
