@@ -137,27 +137,79 @@ export function Search({
         return session?.data?.unique_key || session?.data?.uid || session?.uid || '';
     }, []);
 
-    const getNeolabSummaryItems = React.useCallback((session: any) => {
-        const entries = session?.data?.entries || {};
-        return Object.entries(entries).reduce((acc: any[], [key, entry]: [string, any]) => {
-            const label = entry?.values?.label?.[0] || key;
-            const value = entry?.values?.value?.[0];
-            const hasValue = value !== undefined && value !== null && value !== '';
-            const isDate = /date/i.test(label) || /date/i.test(key);
-            const isResult = /result/i.test(label) || /result/i.test(key);
-            if (hasValue && (isDate || isResult)) {
-                acc.push({ label, value });
+    const formatNeolabValue = React.useCallback((value: any) => {
+        const normalize = (input: any): string => {
+            if (typeof input === 'string' && moment(input, moment.ISO_8601, true).isValid()) {
+                return moment(input).format('lll');
             }
-            return acc;
-        }, []);
+            if (Array.isArray(input)) {
+                return input.map((item) => normalize(item)).join(', ');
+            }
+            if (input && typeof input === 'object') {
+                try {
+                    return JSON.stringify(input);
+                } catch (error) {
+                    return String(input);
+                }
+            }
+            return String(input);
+        };
+        const hasValue = value !== undefined && value !== null && value !== '';
+        if (!hasValue) return null;
+        return normalize(value);
     }, []);
 
-    const formatNeolabValue = React.useCallback((value: any) => {
-        if (typeof value === 'string' && moment(value, moment.ISO_8601, true).isValid()) {
-            return moment(value).format('lll');
-        }
-        return String(value);
-    }, []);
+    const getNeolabSummaryItems = React.useCallback((session: any) => {
+        const entries = session?.data?.entries || {};
+        const entriesList = Object.entries(entries) as [string, any][];
+        const hasAnyIps = entriesList.some(([, entry]: [string, any]) => entry?.ips === true);
+        return entriesList.reduce((acc: any[], [key, entry]: [string, any]) => {
+            const safeKey = typeof key === 'string' ? key.trim() : '';
+            if (!safeKey) return acc;
+            if (hasAnyIps && entry?.ips !== true) return acc;
+            const pickFirst = (input: any) => {
+                if (Array.isArray(input)) {
+                    const found = input.find((item) => item !== undefined && item !== null && item !== '');
+                    return found !== undefined ? found : input[0];
+                }
+                return input;
+            };
+            const rawValue = pickFirst(entry?.values?.value ?? entry?.value);
+            const rawLabel = pickFirst(entry?.values?.label ?? entry?.label ?? null);
+            const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
+            const hasLabel = rawLabel !== undefined && rawLabel !== null && rawLabel !== '';
+            const type = entry?.type;
+            const preferLabelTypes = ['id', 'set<id>', 'dropdown', 'yesno'];
+            const shouldPreferLabel = typeof type === 'string' && preferLabelTypes.includes(type.toLowerCase());
+            const effectiveValue = shouldPreferLabel
+                ? (hasLabel ? rawLabel : (hasValue ? rawValue : null))
+                : (hasValue ? rawValue : (hasLabel ? rawLabel : null));
+            if (effectiveValue === null || effectiveValue === '') return acc;
+            const labelText = typeof rawLabel === 'string' ? rawLabel.trim() : '';
+            const displayLabel = labelText.length > 0 ? labelText : safeKey;
+            const keyLower = safeKey.toLowerCase();
+            const labelLower = displayLabel.toLowerCase();
+            const isUidKey = keyLower === 'uid';
+            const hasUid = keyLower.includes('uid') || labelLower.includes('uid');
+            const hasHospitalId = keyLower.includes('hospnu') || keyLower.includes('hospitalid') || keyLower.includes('labid')
+                || labelLower.includes('hospnu') || labelLower.includes('hospid');
+            const hasOrgNo = keyLower.includes('orgno') || labelLower.includes('orgno');
+            const hasName = keyLower.includes('firstname') || keyLower.includes('surname')
+                || labelLower.includes('firstname') || labelLower.includes('surname');
+            if (hasHospitalId || hasOrgNo || hasName) return acc;
+            if (hasUid && !isUidKey) return acc;
+            const displayValue = formatNeolabValue(effectiveValue);
+            if (displayValue === null) return acc;
+            acc.push({
+                key: safeKey,
+                label: rawLabel,
+                displayLabel,
+                value: displayValue,
+                type,
+            });
+            return acc;
+        }, []);
+    }, [formatNeolabValue]);
 
     const resetNeolabGate = React.useCallback(() => {
         setNeolabGateOpen(false);
@@ -581,57 +633,72 @@ function hasPrePopulate(entry: any): boolean {
             <Modal
                 open={neolabGateOpen}
                 onClose={() => {}}
-                title="Incoming NeoLab Results"
-                actions={[
-                    {
-                        color: 'primary',
-                        label: 'View Incoming Results',
-                        onPress: () => {
-                            setNeolabGateOpen(false);
-                            setNeolabResultsOpen(true);
-                        },
-                    },
-                ]}
+                title={<Text variant="title2" color="primary">NeoLab Results Found</Text>}
             >
-                <Text variant="title3">A NeoLab result was found for this Neotree ID.</Text>
-                <Br />
-                <Text color="textSecondary">Please review the incoming results before continuing.</Text>
+                <Text variant="body" color="info" style={{ fontFamily: 'Georgia' }}>
+                    A NeoLab result was received for this Neotree ID. Please review the details before continuing.
+                </Text>
+                <Br spacing="l" />
+                <Button
+                    color="primary"
+                    size="m"
+                    onPress={() => {
+                        setNeolabGateOpen(false);
+                        setNeolabResultsOpen(true);
+                    }}
+                >
+                    View Results
+                </Button>
             </Modal>
             <Modal
                 open={neolabResultsOpen}
                 onClose={resetNeolabGate}
-                title="NeoLab Results Summary"
-                actions={[
-                    {
-                        color: 'primary',
-                        label: 'Continue',
-                        onPress: () => {
-                            const key = pendingNeolab?.key;
-                            if (key && !viewedNeolabKeys.includes(key)) {
-                                setViewedNeolabKeys(prev => [...prev, key]);
-                            }
-                            setNeolabResultsOpen(false);
-                            setPendingNeolab(null);
-                        },
-                    },
-                ]}
+                title="Results Summary"
             >
+                <Text color="info" style={{ fontStyle: 'italic' }}>Scroll Down To Continue</Text>
+                <Br spacing="m" />
+
                 <Text variant="title3">{`UID: ${pendingNeolab?.session?.data?.uid || pendingNeolab?.session?.uid || uid || 'Unknown'}`}</Text>
-                <Br />
+                <Br spacing="m" />
                 {pendingNeolab?.session ? (
                     getNeolabSummaryItems(pendingNeolab.session).length ? (
                         getNeolabSummaryItems(pendingNeolab.session).map((item: any, index: number) => (
-                            <Box key={`${item.label}-${index}`} borderBottomColor="divider" borderBottomWidth={1} paddingVertical="s">
-                                <Text variant="caption" color="textSecondary">{item.label}</Text>
-                                <Text variant="body">{formatNeolabValue(item.value)}</Text>
+                            <Box
+                                key={`${item.key || item.label}-${index}`}
+                                backgroundColor={index % 2 === 0 ? 'grey-50' : 'primary-200'}
+                                borderRadius="s"
+                                borderLeftWidth={3}
+                                borderLeftColor="primary"
+                                padding="m"
+                                marginBottom="s"
+                            >
+                                {item.key ? (
+                                    <Text variant="caption" color="textSecondary" style={{ fontFamily: 'Georgia' }}>{item.key}</Text>
+                                ) : null}
+                                <Text variant="body" style={{ fontFamily: 'Georgia' }}>{item.value}</Text>
                             </Box>
                         ))
                     ) : (
-                        <Text color="textSecondary">No result details available.</Text>
+                        <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No result details available.</Text>
                     )
                 ) : (
-                    <Text color="textSecondary">No result details available.</Text>
+                    <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No result details available.</Text>
                 )}
+                <Br spacing="l" />
+                <Button
+                    color="primary"
+                    size="m"
+                    onPress={() => {
+                        const key = pendingNeolab?.key;
+                        if (key && !viewedNeolabKeys.includes(key)) {
+                            setViewedNeolabKeys(prev => [...prev, key]);
+                        }
+                        setNeolabResultsOpen(false);
+                        setPendingNeolab(null);
+                    }}
+                >
+                    Continue
+                </Button>
             </Modal>
             <Modal
                 open={patientSummaryOpen}
