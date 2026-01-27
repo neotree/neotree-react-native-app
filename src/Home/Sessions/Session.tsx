@@ -20,8 +20,6 @@ export function Session({ session, onBack }: SessionProps) {
         onBack();
     };
 
-    console.log('Rendering Session for session:', JSON.stringify(session));
-
     return (
         <Modal
             visible
