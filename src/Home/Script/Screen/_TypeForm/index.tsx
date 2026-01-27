@@ -105,9 +105,10 @@ export function TypeForm({ }: TypeFormProps) {
                 prePopulate: f.prePopulate,
                 editable: f.editable,
                 ips: f.ips
+                printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, cachedVal, getPrepopulationData]);
+    }, [repeatable, metadata, canAutoFill, cachedVal,  activeScreen?.printDisplayColumns, getPrepopulationData]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
