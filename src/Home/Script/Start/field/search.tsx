@@ -41,6 +41,12 @@ export function Search({
     const [merged, setMerged] = React.useState<any>([])
     const [sessionType, setSessionType] = React.useState('admission');
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
+    const [pendingNeolab, setPendingNeolab] = React.useState<any>(null);
+    const [neolabGateOpen, setNeolabGateOpen] = React.useState(false);
+    const [neolabResultsOpen, setNeolabResultsOpen] = React.useState(false);
+    const [viewedNeolabKeys, setViewedNeolabKeys] = React.useState<string[]>([]);
+    const [pendingPatientSelection, setPendingPatientSelection] = React.useState<any>(null);
+    const [patientSummaryOpen, setPatientSummaryOpen] = React.useState(false);
     const [searched, setSearched] = React.useState('');
     const [searching, setSearching] = React.useState(false);
     const [qrSession, setQRSession] = React.useState<any>([]);
@@ -120,8 +126,121 @@ export function Search({
 
     }, []);
 
+    const isNeolabSession = React.useCallback((session: any) => {
+        if (!session) return false;
+        const title = session?.data?.script?.title || '';
+        const type = session?.data?.type || session?.data?.script?.type || '';
+        return /neolab/i.test(title) || /neolab/i.test(type);
+    }, []);
+
+    const getNeolabKey = React.useCallback((session: any) => {
+        return session?.data?.unique_key || session?.data?.uid || session?.uid || '';
+    }, []);
+
+    const getNeolabSummaryItems = React.useCallback((session: any) => {
+        const entries = session?.data?.entries || {};
+        return Object.entries(entries).reduce((acc: any[], [key, entry]: [string, any]) => {
+            const label = entry?.values?.label?.[0] || key;
+            const value = entry?.values?.value?.[0];
+            const hasValue = value !== undefined && value !== null && value !== '';
+            const isDate = /date/i.test(label) || /date/i.test(key);
+            const isResult = /result/i.test(label) || /result/i.test(key);
+            if (hasValue && (isDate || isResult)) {
+                acc.push({ label, value });
+            }
+            return acc;
+        }, []);
+    }, []);
+
+    const formatNeolabValue = React.useCallback((value: any) => {
+        if (typeof value === 'string' && moment(value, moment.ISO_8601, true).isValid()) {
+            return moment(value).format('lll');
+        }
+        return String(value);
+    }, []);
+
+    const resetNeolabGate = React.useCallback(() => {
+        setNeolabGateOpen(false);
+        setNeolabResultsOpen(false);
+        setPendingNeolab(null);
+        setSelectedSession(null);
+    }, []);
+
+    const getPatientSummaryItems = React.useCallback((session: any) => {
+        const entries = session?.data?.entries || {};
+        const keyMatch = /(baby|mother|uid|datebct|datebcr|datetime|dobtob|gestation|weight)/i;
+        const entriesList = Object.entries(entries);
+        const buildItems = (filterFn: (key: string, entry: any) => boolean) =>
+            entriesList.reduce((acc: any[], [key, entry]: [string, any]) => {
+                const safeKey = typeof key === 'string' ? key.trim() : '';
+                if (!safeKey) return acc;
+                if (!filterFn(safeKey, entry)) return acc;
+                const rawValue = Array.isArray(entry?.values?.value)
+                    ? entry.values.value[0]
+                    : entry?.values?.value ?? entry?.value;
+                const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
+                if (!hasValue) return acc;
+                const label = entry?.values?.label?.[0] || safeKey;
+                acc.push({ key: safeKey, label, value: rawValue });
+                return acc;
+            }, []);
+
+        const uidItems = buildItems((key) => /^uid$/i.test(key));
+        const uidItem = uidItems[0];
+        const ipsItems = buildItems((_, entry) => entry?.ips === true).filter(i => !uidItem || i.key !== uidItem.key);
+        const keyMatchItems = buildItems((key) => keyMatch.test(key)).filter(i => !uidItem || i.key !== uidItem.key);
+
+        const result: any[] = [];
+        if (uidItem) result.push(uidItem);
+        result.push(...ipsItems);
+
+        if (ipsItems.length < 4) {
+            const seen = new Set(result.map(i => i.key));
+            let added = 0;
+            for (const item of keyMatchItems) {
+                if (seen.has(item.key)) continue;
+                result.push(item);
+                seen.add(item.key);
+                added += 1;
+                if (ipsItems.length + added >= 4) break;
+            }
+        }
+
+        return result.map(({ key, label, value }) => ({ key, label, value }));
+    }, []);
+
+    const formatPatientValue = React.useCallback((value: any, label?: string, key?: string) => {
+        const labelKey = `${label || ''} ${key || ''}`.toLowerCase();
+        const isWeightField = /weight/.test(labelKey);
+        if (!isWeightField && typeof value === 'string' && moment(value, moment.ISO_8601, true).isValid()) {
+            return moment(value).format('lll');
+        }
+        return String(value);
+    }, []);
+
+    const resetPatientSummary = React.useCallback(() => {
+        setPatientSummaryOpen(false);
+        setPendingPatientSelection(null);
+    }, []);
+
+    const enforceNeolabView = React.useCallback((items: any[]) => {
+        if (script_type === 'admission') return false;
+        const pending = items?.find((session: any) => {
+            if (!isNeolabSession(session)) return false;
+            const key = getNeolabKey(session);
+            return key ? !viewedNeolabKeys.includes(key) : true;
+        });
+        if (pending) {
+            setPendingNeolab({ session: pending, key: getNeolabKey(pending) });
+            setNeolabGateOpen(true);
+            return true;
+        }
+        return false;
+    }, [getNeolabKey, isNeolabSession, script_type, viewedNeolabKeys]);
+
 
     const search = React.useCallback(() => {
+    
         (async () => {
             setSearching(true);
             let searched = qrSession;
@@ -150,11 +269,12 @@ export function Search({
                 setSearching(false);
             }
             else if (searched) {
-               
+                const rawSessions = searched;
                 searched = filterDataWithPrePopulatedEntries(searched)
                 setSessions(searched);
                 setSearching(false);
                 setSearched(uid);
+                enforceNeolabView(rawSessions);
             } else {
                 setToClear(true)
                 setSearching(false);
@@ -266,6 +386,11 @@ export function Search({
                                             autoFill,
                                             prePopulateWithUID: prePopulateWithUID !== false,
                                         } : null
+                                        if (selected) {
+                                            setPendingPatientSelection(matched);
+                                            setPatientSummaryOpen(true);
+                                            return;
+                                        }
 
                                         validateSearchResultDates(matched);
                                     }}
@@ -453,9 +578,118 @@ function hasPrePopulate(entry: any): boolean {
                         )}
                     </ScrollView>
                 </Box>}
+            <Modal
+                open={neolabGateOpen}
+                onClose={() => {}}
+                title="Incoming NeoLab Results"
+                actions={[
+                    {
+                        color: 'primary',
+                        label: 'View Incoming Results',
+                        onPress: () => {
+                            setNeolabGateOpen(false);
+                            setNeolabResultsOpen(true);
+                        },
+                    },
+                ]}
+            >
+                <Text variant="title3">A NeoLab result was found for this Neotree ID.</Text>
+                <Br />
+                <Text color="textSecondary">Please review the incoming results before continuing.</Text>
+            </Modal>
+            <Modal
+                open={neolabResultsOpen}
+                onClose={resetNeolabGate}
+                title="NeoLab Results Summary"
+                actions={[
+                    {
+                        color: 'primary',
+                        label: 'Continue',
+                        onPress: () => {
+                            const key = pendingNeolab?.key;
+                            if (key && !viewedNeolabKeys.includes(key)) {
+                                setViewedNeolabKeys(prev => [...prev, key]);
+                            }
+                            setNeolabResultsOpen(false);
+                            setPendingNeolab(null);
+                        },
+                    },
+                ]}
+            >
+                <Text variant="title3">{`UID: ${pendingNeolab?.session?.data?.uid || pendingNeolab?.session?.uid || uid || 'Unknown'}`}</Text>
+                <Br />
+                {pendingNeolab?.session ? (
+                    getNeolabSummaryItems(pendingNeolab.session).length ? (
+                        getNeolabSummaryItems(pendingNeolab.session).map((item: any, index: number) => (
+                            <Box key={`${item.label}-${index}`} borderBottomColor="divider" borderBottomWidth={1} paddingVertical="s">
+                                <Text variant="caption" color="textSecondary">{item.label}</Text>
+                                <Text variant="body">{formatNeolabValue(item.value)}</Text>
+                            </Box>
+                        ))
+                    ) : (
+                        <Text color="textSecondary">No result details available.</Text>
+                    )
+                ) : (
+                    <Text color="textSecondary">No result details available.</Text>
+                )}
+            </Modal>
+            <Modal
+                open={patientSummaryOpen}
+                onClose={() => {}}
+                title={<Text variant="title2" color="primary">Patient Summary</Text>}
+            >
+                <Box backgroundColor="primary-200" borderRadius="s" padding="m" marginBottom="m">
+                    <Text variant="title3" color="info" style={{ fontFamily: 'Georgia' }}>Please verify the patient details.</Text>
+                </Box>
+                {pendingPatientSelection?.session ? (
+                    getPatientSummaryItems(pendingPatientSelection.session).length ? (
+                        getPatientSummaryItems(pendingPatientSelection.session).map((item: any, index: number) => (
+                            <Box
+                                key={`${item.label}-${index}`}
+                                backgroundColor={index % 2 === 0 ? 'grey-50' : 'primary-200'}
+                                borderRadius="s"
+                                borderLeftWidth={3}
+                                borderLeftColor="primary"
+                                padding="m"
+                                marginBottom="s"
+                            >
+                                <Text variant="caption" color="textSecondary" style={{ fontFamily: 'Georgia' }}>{item.label}</Text>
+                                <Text variant="body" style={{ fontFamily: 'Georgia' }}>{formatPatientValue(item.value, item.label, item.key)}</Text>
+                            </Box>
+                        ))
+                    ) : (
+                        <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No patient summary available.</Text>
+                    )
+                ) : (
+                    <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No patient summary available.</Text>
+                )}
+                <Box flexDirection="row" justifyContent="space-between" marginTop="m">
+                    <Button
+                        color="warning"
+                        size="m"
+                        onPress={() => {
+                            setSelectedSession(null);
+                            resetPatientSummary();
+                        }}
+                        style={{ flex: 1, marginRight: 10 }}
+                    >
+                        Change Selection
+                    </Button>
+                    <Button
+                        color="success"
+                        size="m"
+                        onPress={() => {
+                            const matched = pendingPatientSelection || null;
+                            resetPatientSummary();
+                            validateSearchResultDates(matched);
+                        }}
+                        style={{ flex: 1, marginLeft: 10 }}
+                    >
+                        Continue
+                    </Button>
+                </Box>
+            </Modal>
         </>
 
     );
 }
-
-

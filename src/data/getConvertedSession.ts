@@ -45,6 +45,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
                 label: valObj.exportLabel ?? valObj.valueLabel ??  valObj.value?? '',
                 printable: valObj.printable ?? true,
                 prePopulate: valObj.prePopulate,
+                ips: valObj.ips
               };
             } else {
               if(v){
@@ -89,6 +90,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             exportLabel,
             exportType,
             prePopulate,
+            ips,
             comments,
           } = v;
 
@@ -98,6 +100,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             parentKey: parentKey || '',
             comments: comments || [],
             prePopulate: prePopulate || parentPrePopulate || [],
+            ips:ips||false
           };
 
           if (Array.isArray(value)) {

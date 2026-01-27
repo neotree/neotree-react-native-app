@@ -1128,11 +1128,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         // 	[activeScreen.id]: true,
         // }));	
 
+
         if (values) {
             const screenMeta = activeScreen.data.metadata;
             setEntry({
                 values,
                 prePopulate: activeScreen?.data?.prePopulate,
+                ips: activeScreen?.data?.ips,
                 screenIndex: activeScreenIndex,
                 management: [],
                 // management: screens
