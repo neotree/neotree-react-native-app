@@ -207,6 +207,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     label: field.label,
                     prePopulate: field.prePopulate,
                     unit: field.unit,
+                    ips: field.ips
                 };
                 const shouldLogField = ['date', 'datetime', 'period'].includes(field.type);
                 if (shouldLogField) {
