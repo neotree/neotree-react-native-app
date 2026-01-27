@@ -84,6 +84,8 @@ export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
             renderItem={({ item }) => {
                 const [d] = Object.values(item);
 
+                if (d.hcw_agree !== 'Yes') return null;
+
                 return (
                     <Content>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -91,14 +93,12 @@ export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
                                 <Text>{d.diagnosis}</Text>
                                 <Text variant="caption" style={{ color: '#999' }}>{d.Suggested ? 'Suggested' : 'Selected by HCW'}</Text>
                             </View>
-                            {!!d.Suggested && (
-                                <View>
-                                    <Text 
-                                        variant="caption" 
-                                        style={{ color: d.hcw_agree === 'Yes' ? '#16a085' : '#e74c3c' }}
-                                    >{d.hcw_agree === 'Yes' ? 'HCW agreed' : 'HCW disagreed'}</Text>
-                                </View>
-                            )}
+                            <View>
+                                <Text 
+                                    variant="caption" 
+                                    style={{ color: d.Suggested ? '#16a085' : '#f39c12' }}
+                                >{d.Suggested ? 'HCW agreed' : 'HCW selected'}</Text>
+                            </View>
                         </View>
                     </Content>
                 );

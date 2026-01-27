@@ -753,7 +753,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 reject(e);
             }
         })();
-    }), [createSessionSummary]);
+    }), [createSessionSummary, sessionID]);
 
     const createSummaryAndSaveSession = useCallback((params?: any) => new Promise((resolve, reject) => {
         setDisplayLoader(true);
@@ -1142,6 +1142,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // 	.map(s => s.data)
                 // 	.filter(s => s.printable),
                 screen: {
+                    printDisplayColumns: activeScreen?.data?.printDisplayColumns || 2,
                     listStyle: activeScreen?.data?.listStyle || 'none',
                     title: activeScreen.data.title,
                     sectionTitle: activeScreen.data.sectionTitle,
@@ -1296,12 +1297,15 @@ type GetNavOptionsParams = {
     confirmExit: () => void;
 };
 
-function RightActions({ color, screen, confirmExit, }: { 
+function RightActions({ color, screen, script, confirmExit, }: { 
 	color?: string; 
 	screen: types.Screen; 
+    script: types.Script;
 	confirmExit: () => void; 
 	goNext: () => void; 
 }) {
+    const isAdmission = !script?.type || (script?.type === 'admission');
+
 	const [openModal, setOpenModal] = useState(false);
 	const [openInfoModal, setOpenInfoModal] = useState(false);
 
@@ -1350,11 +1354,15 @@ function RightActions({ color, screen, confirmExit, }: {
 					}}
 				/>
 
-                <View style={{ height: 10, }} />
+                {isAdmission && (
+                    <>
+                        <View style={{ height: 10, }} />
 
-                <DateAndTimeOfDeathRadio 
-                    onClick={() => setOpenModal(false)}
-                />
+                        <DateAndTimeOfDeathRadio 
+                            onClick={() => setOpenModal(false)}
+                        />
+                    </>
+                )}
 			</Modal>
 
 			<Modal
@@ -1421,7 +1429,13 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 				
 				{!!script && (
 					<Box>
-						<RightActions color={tintColor} screen={activeScreen} confirmExit={confirmExit} goNext={goNext} />
+						<RightActions 
+                            color={tintColor} 
+                            screen={activeScreen} 
+                            confirmExit={confirmExit} 
+                            goNext={goNext}
+                            script={script}
+                        />
 					</Box>
 				)}
 			</View>

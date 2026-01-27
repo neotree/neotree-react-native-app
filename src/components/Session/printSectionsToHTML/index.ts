@@ -104,6 +104,7 @@ export async function printSectionsToHTML({
           type: screenType,
           metadata: screenMeta,
           listStyle: _listStyle = 'none',
+          printDisplayColumns = 2,
         } = { ...screen, metadata: { ...screen?.metadata } };
 
         // Handle 'management' screens
@@ -135,8 +136,10 @@ export async function printSectionsToHTML({
           .filter((v: any) => v.valueText || v.value)
           .filter((e: any) => e.printable !== false)
           .map((v: any) => {
-            let isFlexRow: boolean = true;
             let hideLabel: boolean = false;
+
+            let isFlexRow = printDisplayColumns !== 1;
+            if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;  
 
             let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
             const listStyle: string = v.listStyle || _listStyle;

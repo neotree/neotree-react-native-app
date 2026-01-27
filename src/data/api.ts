@@ -203,6 +203,20 @@ export async function makeLocalGetApiCall(
         throw e; }
 }
 
+export async function hasLocalServerConfig() {
+    try {
+        const location = await getLocation();
+        const country = location?.country;
+        if (!country) return false;
+        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
+        const hospital = location?.hospital;
+        const localConfig = Array.isArray(config) ? config.filter(c => c.hospital === hospital?.trim()) : [];
+        return Boolean(localConfig?.[0]?.hospital?.length);
+    } catch {
+        return false;
+    }
+}
+
 export const getHospitals = async (params = {}, otherParams: Partial<(typeof _otherOptions)> = {}) => {
 	const res = await makeApiCall('webeditor', `/get-hospitals?${queryString.stringify(params)}`, undefined, otherParams);
 	const json = await res.json();
