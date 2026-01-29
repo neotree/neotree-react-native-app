@@ -104,7 +104,7 @@ export function TypeForm({ }: TypeFormProps) {
                 confidential: f.confidential,
                 prePopulate: f.prePopulate,
                 editable: f.editable,
-                ips: f.ips
+                ips: f.ips,
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
