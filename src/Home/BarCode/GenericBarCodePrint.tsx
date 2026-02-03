@@ -82,6 +82,21 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
                 onPress={() => openQRscanner()}>
                 Scan QR
             </Button>
+            {uid ? (
+                <>
+                    <Br spacing="s" />
+                    <Button
+                        color="secondary"
+                        onPress={() => {
+                            setUID('');
+                            setSession(null);
+                            setShowQR(false);
+                        }}
+                    >
+                        Clear
+                    </Button>
+                </>
+            ) : null}
             {showQR ? <QRCodeScan onRead={onQrRead} generic={true}/> : null}
             <Br spacing='l' />
             {uid &&  <PrintBarCode

@@ -32,7 +32,7 @@ export async function makeApiCall(
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
-        url = [api_endpoint, endpoint].join('/');
+        url = [api_endpoint, endpoint].join('/').replace(/\?+$/, '');
 
         console.log('[API]: ', url);
         const controller = new AbortController();
