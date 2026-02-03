@@ -1,6 +1,6 @@
 import React from "react";
-import { useTheme, Box } from "../Theme";
-import Br from "../Theme";
+import { useTheme, Box} from "../Theme";
+import {Br} from "../Br"
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { ActivityIndicator, Alert, TouchableOpacity, PermissionsAndroid, Platform } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage";
