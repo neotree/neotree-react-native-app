@@ -223,6 +223,42 @@ export const getHospitals = async (params = {}, otherParams: Partial<(typeof _ot
 	return json.hospitals as types.Hospital[];
 };
 
+export const getUpdatePolicy = async (): Promise<types.UpdatePolicyResponse> => {
+    const res = await makeApiCall('webeditor', '/mobile/update-policy');
+    return res.json();
+};
+
+export const postDeviceAppState = async (payload: {
+    deviceId: string;
+    appVersion: string;
+    runtimeVersion: string;
+    otaUpdateId?: string | null;
+    otaChannel?: string | null;
+    apkReleaseId?: string | null;
+}): Promise<{ data?: any; errors?: string[]; success?: boolean; }> => {
+    const res = await makeApiCall('webeditor', '/mobile/device/app-state', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+    return res.json();
+};
+
+export const postUpdateEvent = async (payload: {
+    deviceId: string;
+    eventType: string;
+    appVersion?: string | null;
+    runtimeVersion?: string | null;
+    otaUpdateId?: string | null;
+    otaChannel?: string | null;
+    payload?: any;
+}): Promise<{ data?: any; errors?: string[]; success?: boolean; }> => {
+    const res = await makeApiCall('webeditor', '/mobile/update-events', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+    return res.json();
+};
+
 export const reportErrors = async (...args: any[]) => {
     try {
         await makeApiCall('webeditor', `/app/errors`, {

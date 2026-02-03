@@ -146,6 +146,12 @@ export async function createTablesIfNotExist() {
     'UNIQUE(scriptid, name)'   
     ].join(',');
 
+    const appUpdatePolicyTableColumns = [
+        'id integer primary key not null',
+        'data text',
+        'updatedAt datetime',
+    ].join(',');
+
     return await Promise.all([
         //DROP OLD ALIASES TABLE IF EXISTS IN FAVOR OF nt_aliases
         dbTransaction(`drop table if exists aliases;`),
@@ -162,6 +168,7 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists exports (${exportsTableColumns});`),
         dbTransaction(`create table if not exists exceptions (${exceptionTableColumns});`),
         dbTransaction(`create table if not exists nt_aliases (${aliasesTableColumns});`),
+        dbTransaction(`create table if not exists app_update_policy (${appUpdatePolicyTableColumns});`),
     ]);
 }
  export const addNewColumns = async()=>{
@@ -190,6 +197,7 @@ export const resetTables = async () => {
         'delete * from configuration where 1;',
         // 'delete * from location where 1;',
         // 'delete * from exports where 1;',
+        'delete * from app_update_policy where 1;',
     ].map(q => dbTransaction(q))); 
 };
 export const resetApp = async () => {
@@ -207,6 +215,7 @@ export const resetApp = async () => {
         dbTransaction(`drop table if exists exports;`),
         dbTransaction(`drop table if exists exceptions;`),
         dbTransaction(`drop table if exists aliases;`),
+        dbTransaction(`drop table if exists app_update_policy;`),
     ]); 
     await createTablesIfNotExist();
 };

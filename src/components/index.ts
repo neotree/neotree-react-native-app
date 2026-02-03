@@ -29,3 +29,5 @@ export * from './Session';
 export * from './LocationForm';
 
 export * from './ManagementScreen';
+
+export * from './ApkUpdateBanner';

@@ -4,17 +4,20 @@ import {
     useState, 
     useMemo, 
     useCallback,
+    useEffect,
 } from "react";
 import { type TextProps, Alert, View, TouchableOpacity, Platform } from 'react-native';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { type DrawerNavigationOptions } from '@react-navigation/drawer';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { merge } from 'lodash'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import * as types from '@/src/types';
 import * as api from '@/src/data';
 import { generateUID } from '@/src/utils/uid';
 import { defaultPreferences } from '@/src/constants';
+import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
@@ -48,6 +51,13 @@ export function ScriptContextProvider({ children, ...props }: ScriptContextProvi
 }) {
     const dateAndTimeOfDeath = useDateAndTimeOfDeathState();
     const ctxValue = useScriptContextValue(props);
+
+    useEffect(() => {
+        AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SESSION_ACTIVE, 'true').catch(() => null);
+        return () => {
+            AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SESSION_ACTIVE, 'false').catch(() => null);
+        };
+    }, []);
 
     return (
         <ScriptContext.Provider

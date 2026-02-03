@@ -3,6 +3,61 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export * from '../config/types';
 
+export type ApkReleaseStatus =
+  | 'uploaded'
+  | 'validated'
+  | 'approved'
+  | 'available'
+  | 'deprecated'
+  | 'revoked'
+  | 'rolled_back';
+
+export type ApkInstallWindow = 'on_restart' | 'idle' | 'immediate';
+
+export type UpdatePolicyApkRelease = {
+  apkReleaseId: string;
+  runtimeVersion: string;
+  versionName: string;
+  versionCode: number;
+  status: ApkReleaseStatus;
+  isAvailable: boolean;
+  available: boolean;
+  fileId: string | null;
+  fileSize?: number | null;
+  checksumSha256?: string | null;
+  signatureSha256?: string | null;
+  validatedAt?: string | null;
+  approvedAt?: string | null;
+  releaseNotes?: string | null;
+  releasedAt?: string | null;
+  downloadUrl?: string | null;
+};
+
+export type UpdatePolicy = {
+  runtimeVersion: string;
+  policyVersion: number;
+  ota: {
+    enabled: boolean;
+    channel: string;
+  };
+  apk: {
+    autoDownload: boolean;
+    forceInstall: boolean;
+    gracePeriodHours?: number | null;
+    forceAfter?: string | null;
+    installWindow?: ApkInstallWindow | string | null;
+    messageTitle?: string | null;
+    messageBody?: string | null;
+  };
+  currentApkRelease?: UpdatePolicyApkRelease | null;
+  rollbackApkRelease?: UpdatePolicyApkRelease | null;
+};
+
+export type UpdatePolicyResponse = {
+  data: UpdatePolicy | null;
+  errors?: string[];
+};
+
 export type Preferences = {
     fontSize: { [key: string]: undefined | 'default' | 'xs' | 'sm' | 'lg' | 'xl'; };
     fontWeight: { [key: string]: undefined | 'bold'; };

@@ -35,6 +35,32 @@ export const getExceptions = () => new Promise<types.Exception[]>((resolve, reje
     })();
 });
 
+export const getUpdatePolicyFromDb = () => new Promise<{ data: types.UpdatePolicy } | null>((resolve, reject) => {
+    (async () => {
+        try {
+            const rows = await dbTransaction('select * from app_update_policy where id=1;');
+            const policy = rows[0];
+            if (!policy?.data) return resolve(null);
+            resolve({ ...policy, data: JSON.parse(policy.data || '{}') });
+        } catch (e) {
+            reject(e);
+        }
+    })();
+});
+
+export const getUpdatePolicyData = () => new Promise<types.UpdatePolicy | null>((resolve, reject) => {
+    (async () => {
+        try {
+            const rows = await dbTransaction('select * from app_update_policy where id=1;');
+            const policy = rows[0];
+            if (!policy?.data) return resolve(null);
+            resolve(JSON.parse(policy.data || '{}') as types.UpdatePolicy);
+        } catch (e) {
+            reject(e);
+        }
+    })();
+});
+
 
 export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((resolve, reject) => {
     (async () => {

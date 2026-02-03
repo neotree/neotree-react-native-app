@@ -19,6 +19,7 @@
 		"env": {
 			"NEOTREE_BUILD_TYPE": "demo"
 		},
+        "channel": "demo",
 		"android": {
 			"buildType": "apk"
 		}
@@ -27,6 +28,7 @@
 		"env": {
 			"NEOTREE_BUILD_TYPE": "stage"
 		},
+        "channel": "stage",
 		"android": {
 			"buildType": "apk"
 		}
@@ -35,6 +37,7 @@
 		"env": {
 			"NEOTREE_BUILD_TYPE": "production"
 		},
+        "channel": "production",
 		"android": {
 			"buildType": "apk"
 		}

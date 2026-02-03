@@ -1,5 +1,6 @@
 {
     "development": {
+        "runtimeVersion": "1.0.0",
         "countries": [
             {
                 "iso": "zw",
@@ -55,6 +56,7 @@
     },
 
     "stage": {
+        "runtimeVersion": "1.0.0",
         "countries": [
             {
                 "iso": "zw",
@@ -94,6 +96,7 @@
     },
 
     "production": {
+        "runtimeVersion": "1.0.0",
         "countries": [
             {
                 "iso": "zw",
@@ -149,6 +152,7 @@
     },
 
     "demo": {
+        "runtimeVersion": "1.0.0",
         "countries": [
             {
                 "iso": "test",

@@ -3,10 +3,12 @@ const NEOTREE_BUILD_TYPE = process.env.NEOTREE_BUILD_TYPE || 'development';
 const appConfig = (() => {
     let config: any = {};
     try {
-        config = { ...config, ...require(`./config/config.json`) } // eslint-disable-line
+        config = { ...config, ...require(`./src/config`).default } // eslint-disable-line
     } catch (e) { /**/ }
     return { ...config[NEOTREE_BUILD_TYPE], };
 })();
+
+const DEFAULT_RUNTIME_VERSION = '1.0.0';
 
 const getBuldConfig = (config: any) => ({
     ...(NEOTREE_BUILD_TYPE === 'development' ? {
@@ -62,14 +64,26 @@ const getBuldConfig = (config: any) => ({
 });
 
 export default ({ config }: any) => {
+    const runtimeVersion =
+        appConfig?.runtimeVersion ||
+        config?.runtimeVersion ||
+        DEFAULT_RUNTIME_VERSION;
+
     const _config = {
         ...config,
         ...getBuldConfig(config),
+        runtimeVersion,
+        updates: {
+            ...config.updates,
+            fallbackToCacheTimeout: 0,
+            checkAutomatically: 'ON_LOAD',
+        },
         extra: { 
             ...config.extra, 
             ...appConfig,
             ...getBuldConfig(config).extra,
-            NEOTREE_BUILD_TYPE
+            NEOTREE_BUILD_TYPE,
+            RUNTIME_VERSION: runtimeVersion,
         },
     };
     return _config;

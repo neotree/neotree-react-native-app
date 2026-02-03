@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { createTablesIfNotExist, dbTransaction,addNewColumns } from './db';
-import { makeApiCall, reportErrors } from './api';
+import { getUpdatePolicy, makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 
@@ -60,10 +60,17 @@ export async function syncData(opts?: { force?: boolean; }) {
 
                 last_sync_date = last_sync_date ? new Date(last_sync_date).toISOString() : new Date().toISOString();
 
-                const res = await makeApiCall(
+                const syncPromise = makeApiCall(
                     'webeditor',
                     `/sync-data?${queryString.stringify({ deviceId, hospitalId: location?.hospital, })}`,
                 );
+                const updatePolicyPromise = getUpdatePolicy().catch(() => null);
+
+                const [res, updatePolicyRes] = await Promise.all([
+                    syncPromise,
+                    updatePolicyPromise,
+                ]);
+
                 const json = await res.json();
                 const webeditorInfo = json?.webeditorInfo || {};
                 const device = json?.device || {};
@@ -182,6 +189,13 @@ export async function syncData(opts?: { force?: boolean; }) {
                 );
 
                 await Promise.all(promises);
+
+                if (updatePolicyRes?.data) {
+                    await dbTransaction(
+                        'insert or replace into app_update_policy (id, data, updatedAt) values (?, ?, ?);',
+                        [1, JSON.stringify(updatePolicyRes.data || {}), new Date().toISOString()],
+                    );
+                }
 
                 const exeptions = await getExceptions();
                 if(exeptions){
