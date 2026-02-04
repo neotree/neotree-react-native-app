@@ -8,7 +8,7 @@ const appConfig = (() => {
     return { ...config[NEOTREE_BUILD_TYPE], };
 })();
 
-const DEFAULT_RUNTIME_VERSION = '1.0.0';
+const DEFAULT_RUNTIME_VERSION = 'neotree-runtime-v1';
 
 const getBuldConfig = (config: any) => ({
     ...(NEOTREE_BUILD_TYPE === 'development' ? {
