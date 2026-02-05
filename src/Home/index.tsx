@@ -15,6 +15,7 @@ import assets from '../assets';
 import { Home } from './Home';
 import { Script } from './Script';
 import { Configuration } from './Configuration';
+import { UpdatesCenter } from './Updates';
 import { Location } from './Location';
 import { Sessions } from './Sessions';
 import {PrintGenericBarCode} from './BarCode/GenericBarCodePrint'
@@ -73,6 +74,11 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				<Drawer.Screen 
 					name="Configuration" 
 					component={Configuration} 
+				/>	
+
+				<Drawer.Screen 
+					name="Updates" 
+					component={UpdatesCenter} 
 				/>	
 
 				<Drawer.Screen 
@@ -193,6 +199,14 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 																<Icon 
 																	size={24} 
 																	name="history"
+																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
+																/>
+															);
+														case 'Updates':
+															return (
+																<Icon 
+																	size={24} 
+																	name="system-update"
 																	color={focused ? theme.colors.primary : theme.colors.textSecondary} 
 																/>
 															);

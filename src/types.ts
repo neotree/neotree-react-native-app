@@ -329,6 +329,7 @@ export type HomeRoutes = {
 	session?: any;
   };
   Configuration: undefined;
+  Updates: undefined;
   Location: undefined;
   Sessions: undefined;
   QrCode: undefined;

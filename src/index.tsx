@@ -1,7 +1,8 @@
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
 import registerdAssets from './assets';
 import { Authentication } from './Authentication';
@@ -11,6 +12,7 @@ import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
 import { checkForOtaUpdateAndRecord, checkForOtaUpdateFetchAndRecord, ensureApkDownloaded, getUpdateDecision } from './update';
+import { ASYNC_STORAGE_KEYS } from './constants/async-storage';
 
 export const assets = Object.values(registerdAssets);
 
@@ -25,6 +27,24 @@ export function Navigation() {
     const {setSyncDataResponse, setUpdateDecision, authenticatedUser} = useAppContext()||{};
     const otaPrompted = React.useRef(false);
     const lastOnline = React.useRef<boolean | null>(null);
+
+    const isSessionActive = React.useCallback(async () => {
+        const v = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.SESSION_ACTIVE);
+        return v === 'true';
+    }, []);
+
+    const setOtaPending = React.useCallback(async (pending: boolean) => {
+        if (pending) {
+            await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.OTA_RESTART_PENDING, 'true');
+        } else {
+            await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.OTA_RESTART_PENDING);
+        }
+    }, []);
+
+    const hasOtaPending = React.useCallback(async () => {
+        const v = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.OTA_RESTART_PENDING);
+        return v === 'true';
+    }, []);
 
     const initialiseApp = React.useCallback(async () => {
         try { 
@@ -59,22 +79,35 @@ export function Navigation() {
     }, []);
 
     const promptForOtaUpdate = React.useCallback(() => {
-        if (otaPrompted.current) return;
-        otaPrompted.current = true;
-        Alert.alert(
-            'Update available',
-            'A new update is ready. Restart the app to apply it?',
-            [
-                { text: 'Later', style: 'cancel' },
-                {
-                    text: 'Restart now',
-                    onPress: () => {
-                        Updates.reloadAsync().catch(() => null);
+        (async () => {
+            if (otaPrompted.current) return;
+            if (await isSessionActive()) {
+                await setOtaPending(true);
+                return;
+            }
+            otaPrompted.current = true;
+            Alert.alert(
+                'Update available',
+                'A new update is ready. Restart the app to apply it?',
+                [
+                    { 
+                        text: 'Later', 
+                        style: 'cancel',
+                        onPress: () => {
+                            setOtaPending(true).catch(() => null);
+                        },
                     },
-                },
-            ],
-        );
-    }, []);
+                    {
+                        text: 'Restart now',
+                        onPress: () => {
+                            setOtaPending(false).catch(() => null);
+                            Updates.reloadAsync().catch(() => null);
+                        },
+                    },
+                ],
+            );
+        })();
+    }, [isSessionActive, setOtaPending]);
 
     const checkOtaWithPrompt = React.useCallback(async () => {
         const res = await checkForOtaUpdateFetchAndRecord();
@@ -82,6 +115,15 @@ export function Navigation() {
             promptForOtaUpdate();
         }
     }, [promptForOtaUpdate]);
+
+    const promptIfPending = React.useCallback(async () => {
+        const pending = await hasOtaPending();
+        if (!pending) return;
+        if (await isSessionActive()) return;
+        otaPrompted.current = false;
+        await setOtaPending(false);
+        promptForOtaUpdate();
+    }, [hasOtaPending, isSessionActive, promptForOtaUpdate, setOtaPending]);
 
     React.useEffect(() => {
         checkOtaWithPrompt();
@@ -98,6 +140,16 @@ export function Navigation() {
         });
         return () => unsubscribe();
     }, [checkOtaWithPrompt]);
+
+    React.useEffect(() => {
+        const subscription = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                promptIfPending();
+            }
+        });
+        promptIfPending();
+        return () => subscription.remove();
+    }, [promptIfPending]);
       
 
     if (!ready) return <Splash />;
