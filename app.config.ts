@@ -8,7 +8,6 @@ const appConfig = (() => {
     return { ...config[NEOTREE_BUILD_TYPE], };
 })();
 
-const DEFAULT_RUNTIME_VERSION = 'neotree-runtime-v1';
 
 const getBuldConfig = (config: any) => ({
     ...(NEOTREE_BUILD_TYPE === 'development' ? {
@@ -66,9 +65,7 @@ const getBuldConfig = (config: any) => ({
 export default ({ config }: any) => {
     const runtimeVersion =
         appConfig?.runtimeVersion ||
-        config?.runtimeVersion ||
-        DEFAULT_RUNTIME_VERSION;
-
+        config?.runtimeVersion;
     const _config = {
         ...config,
         ...getBuldConfig(config),
