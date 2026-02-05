@@ -118,7 +118,7 @@ export type Application = {
   };
 };
 export type Exception = {
-  id: Number,
+  id: number,
   device: string;
   message:string;
   hospital: string;

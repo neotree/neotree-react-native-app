@@ -1,4 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
+import type { NetInfoState } from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
 import Constants from 'expo-constants';
@@ -40,7 +41,7 @@ type OtaEvent = {
 const getRuntimeVersion = () =>
   (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || null;
 
-const isOnline = (netInfo: NetInfo.NetInfoState) =>
+const isOnline = (netInfo: NetInfoState) =>
   Boolean(netInfo?.isConnected) && netInfo?.isInternetReachable !== false;
 
 const otaSessionId = `ota-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;

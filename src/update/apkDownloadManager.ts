@@ -5,7 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import CryptoJS from 'crypto-js';
 
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
-import type { UpdateDecision, UpdatePolicyApkRelease } from './orchestrator';
+import type { UpdatePolicyApkRelease } from '@/src/types';
+import type { UpdateDecision } from './orchestrator';
 
 export type ApkDownloadState = {
   apkReleaseId: string;
