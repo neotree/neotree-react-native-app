@@ -20,6 +20,7 @@ import {PrintGenericBarCode} from './BarCode/GenericBarCodePrint'
 import { useAppContext } from '../AppContext';
 import {} from '../components/'
 import * as api from '../data';
+import { APP_VERSION } from '../constants';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
 
@@ -127,6 +128,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						source={assets.darkLogo}
 						style={{ width: 220, height: 220, }}
 					/>
+					<Text
+						color="textSecondary"
+						fontWeight="bold"
+						style={{ marginTop: 8 }}
+					>
+						Version {APP_VERSION}
+					</Text>
 				</View>
 
 				<Box
