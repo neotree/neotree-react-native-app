@@ -105,8 +105,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 	const theme = useTheme();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 	const {setAuthenticatedUser} = useAppContext()||{};
-	const runtimeVersion =
-		(Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || 'Unknown';
+	
 
 	return (
 		<Box 
@@ -138,13 +137,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 					>
 						Version {APP_VERSION}
 					</Text>
-					<Text
+					{/* <Text
 						color="textSecondary"
 						fontWeight="bold"
 						style={{ marginTop: 4 }}
 					>
 						Runtime {runtimeVersion}
-					</Text>
+					</Text> */}
 				</View>
 
 				<Box
