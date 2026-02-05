@@ -1,6 +1,5 @@
 export default {
     "development": {
-        "runtimeVersion": "neotree-1.0.0-dev",
         "countries": [
             {
                 "iso": "zw",
@@ -64,7 +63,6 @@ export default {
     },
 
     "stage": {
-        "runtimeVersion": "neotree-1.0.0-stage",
         "countries": [
             {
                 "iso": "zw",
@@ -110,7 +108,6 @@ export default {
     },
 
     "production": {
-        "runtimeVersion": "neotree-1.0.0",
         "countries": [
             {
                 "iso": "zw",
@@ -156,7 +153,6 @@ export default {
     },
 
     "demo": {
-        "runtimeVersion": "neotree-1.0.0-demo",
         "countries": [
             {
                 "iso": "test",

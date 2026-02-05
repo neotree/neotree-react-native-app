@@ -3,6 +3,7 @@
     "name": "NeoTree",
     "slug": "neotree",
     "version": "2.5.26",
+    "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -15,7 +16,7 @@
     "updates": {
       "fallbackToCacheTimeout": 0,
       "checkAutomatically": "ON_LOAD",
-      "url": "https://u.expo.dev/88713878-bb93-4e2d-b54f-ed71db372a81"
+      "url": "https://u.expo.dev/53b5b957-7cbe-4a1d-9bed-a4458a3baeb2"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -39,6 +40,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "permissions": [
+        "android.permission.CAMERA",
         "android.permission.CAMERA",
         "android.permission.CAMERA"
       ]
@@ -77,9 +79,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
     }
   }
 }
