@@ -1,5 +1,8 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import NetInfo from '@react-native-community/netinfo';
+import * as Updates from 'expo-updates';
 import registerdAssets from './assets';
 import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
@@ -7,7 +10,7 @@ import { syncData, addSocketEventsListeners } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
-import { checkForOtaUpdateAndRecord, ensureApkDownloaded, getUpdateDecision } from './update';
+import { checkForOtaUpdateAndRecord, checkForOtaUpdateFetchAndRecord, ensureApkDownloaded, getUpdateDecision } from './update';
 
 export const assets = Object.values(registerdAssets);
 
@@ -20,6 +23,8 @@ export * from './update';
 export function Navigation() {
     const [ready, setReady] = React.useState(false);
     const {setSyncDataResponse, setUpdateDecision, authenticatedUser} = useAppContext()||{};
+    const otaPrompted = React.useRef(false);
+    const lastOnline = React.useRef<boolean | null>(null);
 
     const initialiseApp = React.useCallback(async () => {
         try { 
@@ -52,6 +57,47 @@ export function Navigation() {
     React.useEffect(() => {
         checkForOtaUpdateAndRecord();
     }, []);
+
+    const promptForOtaUpdate = React.useCallback(() => {
+        if (otaPrompted.current) return;
+        otaPrompted.current = true;
+        Alert.alert(
+            'Update available',
+            'A new update is ready. Restart the app to apply it?',
+            [
+                { text: 'Later', style: 'cancel' },
+                {
+                    text: 'Restart now',
+                    onPress: () => {
+                        Updates.reloadAsync().catch(() => null);
+                    },
+                },
+            ],
+        );
+    }, []);
+
+    const checkOtaWithPrompt = React.useCallback(async () => {
+        const res = await checkForOtaUpdateFetchAndRecord();
+        if (res.status === 'update_downloaded') {
+            promptForOtaUpdate();
+        }
+    }, [promptForOtaUpdate]);
+
+    React.useEffect(() => {
+        checkOtaWithPrompt();
+        const unsubscribe = NetInfo.addEventListener((state) => {
+            const online = Boolean(state?.isConnected) && state?.isInternetReachable !== false;
+            if (lastOnline.current === null) {
+                lastOnline.current = online;
+                return;
+            }
+            if (!lastOnline.current && online) {
+                checkOtaWithPrompt();
+            }
+            lastOnline.current = online;
+        });
+        return () => unsubscribe();
+    }, [checkOtaWithPrompt]);
       
 
     if (!ready) return <Splash />;

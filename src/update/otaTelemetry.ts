@@ -27,6 +27,9 @@ type OtaEvent = {
 const getRuntimeVersion = () =>
   (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || null;
 
+const isOnline = (netInfo: NetInfo.NetInfoState) =>
+  Boolean(netInfo?.isConnected) && netInfo?.isInternetReachable !== false;
+
 const buildBasePayload = async () => {
   const deviceId = await getDeviceID();
 
@@ -104,7 +107,7 @@ export const recordOtaEvent = async (eventType: OtaEventType, payload?: any) => 
 export const checkForOtaUpdateAndRecord = async () => {
   try {
     const netInfo = await NetInfo.fetch();
-    if (!netInfo?.isConnected || !netInfo?.isInternetReachable) return;
+    if (!isOnline(netInfo)) return;
 
     const res = await Updates.checkForUpdateAsync();
     if (res.isAvailable) {
@@ -114,6 +117,40 @@ export const checkForOtaUpdateAndRecord = async () => {
     }
   } catch (e: any) {
     await recordOtaEvent('ota_check_failed', { message: e?.message || 'Unknown error' });
+  }
+};
+
+export type OtaCheckResult =
+  | { status: 'offline' }
+  | { status: 'no_update' }
+  | { status: 'update_downloaded' }
+  | { status: 'error'; message: string };
+
+export const checkForOtaUpdateFetchAndRecord = async (): Promise<OtaCheckResult> => {
+  try {
+    const netInfo = await NetInfo.fetch();
+    if (!isOnline(netInfo)) return { status: 'offline' };
+
+    const res = await Updates.checkForUpdateAsync();
+    if (!res.isAvailable) {
+      await recordOtaEvent('ota_update_not_available');
+      return { status: 'no_update' };
+    }
+
+    await recordOtaEvent('ota_update_available');
+    try {
+      const fetched = await Updates.fetchUpdateAsync();
+      if (fetched?.isNew) {
+        return { status: 'update_downloaded' };
+      }
+      return { status: 'no_update' };
+    } catch (e: any) {
+      await recordOtaEvent('ota_check_failed', { message: e?.message || 'Fetch failed' });
+      return { status: 'error', message: e?.message || 'Fetch failed' };
+    }
+  } catch (e: any) {
+    await recordOtaEvent('ota_check_failed', { message: e?.message || 'Unknown error' });
+    return { status: 'error', message: e?.message || 'Unknown error' };
   }
 };
 
