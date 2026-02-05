@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, Alert } from 'react-native'
 import Icon from '@expo/vector-icons/MaterialIcons';
+import Constants from 'expo-constants';
 import {
 	createDrawerNavigator,
 	DrawerContentScrollView,
@@ -104,6 +105,8 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 	const theme = useTheme();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 	const {setAuthenticatedUser} = useAppContext()||{};
+	const runtimeVersion =
+		(Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || 'Unknown';
 
 	return (
 		<Box 
@@ -134,6 +137,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						style={{ marginTop: 8 }}
 					>
 						Version {APP_VERSION}
+					</Text>
+					<Text
+						color="textSecondary"
+						fontWeight="bold"
+						style={{ marginTop: 4 }}
+					>
+						Runtime {runtimeVersion}
 					</Text>
 				</View>
 
