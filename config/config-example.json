@@ -1,6 +1,6 @@
 {
     "development": {
-        "runtimeVersion": "1.0.0",
+        "runtimeVersion": "neotree-1.0.0-dev",
         "countries": [
             {
                 "iso": "zw",
@@ -9,54 +9,62 @@
             {
                 "iso": "mwi",
                 "name": "Malawi"
+            },
+            {
+                "iso": "demo",
+                "name": "Demo"
             }
         ],
         "zw": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
-            }
-            , "local":[ {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":"",
-                "hospital":"",
-                "secret":""
-            }
-        ]
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
+            },
+            "local": [
+                {
+                    "host": "",
+                    "api_key": "",
+                    "hospital": "",
+                    "secret": ""
+                }
+            ]
         },
         "mwi": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
-            },
-            "local":[ {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":"",
-                "hospital":"",
-                "secret":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             }
-        ]
+        },
+        "demo": {
+            "savePollingData": false,
+            "webeditor": {
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
+            },
+            "nodeapi": {
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
+            }
         }
     },
-
     "stage": {
-        "runtimeVersion": "1.0.0",
+        "runtimeVersion": "neotree-1.0.0-stage",
         "countries": [
             {
                 "iso": "zw",
@@ -70,33 +78,40 @@
         "zw": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
-            }
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
+            },
+            "local": [
+                {
+                    "host": "",
+                    "api_key": "",
+                    "hospital": "",
+                    "secret": ""
+                }
+            ]
         },
         "mwi": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             }
         }
     },
-
     "production": {
-        "runtimeVersion": "1.0.0",
+        "runtimeVersion": "neotree-1.0.0",
         "countries": [
             {
                 "iso": "zw",
@@ -110,67 +125,57 @@
         "zw": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
-            "local":[ {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":"",
-                "hospital":"",
-                "secret":""
-            }
-        ]
+            "local": [
+                {
+                    "host": "",
+                    "api_key": "",
+                    "hospital": "",
+                    "secret": ""
+                }
+            ]
         },
         "mwi": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
-            },
-            "local":[ {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":"",
-                "hospital":"",
-                "secret":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             }
-        ]
         }
     },
-
     "demo": {
-        "runtimeVersion": "1.0.0",
+        "runtimeVersion": "neotree-1.0.0-demo",
         "countries": [
             {
                 "iso": "test",
                 "name": "Test"
             }
         ],
-        
         "test": {
             "savePollingData": false,
             "webeditor": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             },
             "nodeapi": {
-                "host":"",
-                "api_endpoint":"",
-                "api_key":""
+                "host": "",
+                "api_endpoint": "",
+                "api_key": ""
             }
         }
     }

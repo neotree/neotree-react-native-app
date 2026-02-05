@@ -92,7 +92,7 @@ export const UPDATE_POLICY_SCHEMA = {
 
 export const UPDATE_POLICY_EXAMPLE = {
   data: {
-    runtimeVersion: '1.0.0',
+    runtimeVersion: 'neotree-1.0.0-dev',
     policyVersion: 3,
     ota: {
       enabled: true,
@@ -109,7 +109,7 @@ export const UPDATE_POLICY_EXAMPLE = {
     },
     currentApkRelease: {
       apkReleaseId: '00000000-0000-0000-0000-000000000001',
-      runtimeVersion: '1.0.0',
+      runtimeVersion: 'neotree-1.0.0-dev',
       versionName: '2.6.0',
       versionCode: 20600,
       status: 'available',

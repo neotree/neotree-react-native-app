@@ -63,9 +63,10 @@ const getBuldConfig = (config: any) => ({
 });
 
 export default ({ config }: any) => {
-    const runtimeVersion =
-        appConfig?.runtimeVersion ||
-        config?.runtimeVersion;
+    if (config?.runtimeVersion) {
+        console.warn('runtimeVersion is set in app.json; remove it to avoid drift. Using src/config.ts instead.');
+    }
+    const runtimeVersion = appConfig?.runtimeVersion
     const _config = {
         ...config,
         ...getBuldConfig(config),
