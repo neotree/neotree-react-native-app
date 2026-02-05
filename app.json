@@ -1,76 +1,85 @@
 {
-    "expo": {
-        "name": "NeoTree",
-        "slug": "neotree",
-        "version": "2.5.26",
-        "orientation": "portrait",
-        "icon": "./assets/images/icon.png",
-        "scheme": "myapp",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/images/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#ffffff"
+  "expo": {
+    "name": "NeoTree",
+    "slug": "neotree",
+    "version": "2.5.26",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD",
+      "url": "https://u.expo.dev/88713878-bb93-4e2d-b54f-ed71db372a81"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.neotree",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
         },
-        "updates": {
-            "fallbackToCacheTimeout": 0
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "org.neotree",
-            "buildNumber": "1.0.0",
-            "infoPlist": {
-                "NSAppTransportSecurity": { 
-                    "NSAllowsArbitraryLoads": true 
-                }
-            }
-        },
-        "android": {
-            "usesCleartextTraffic": true,
-            "package": "org.neotree",
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/images/icon.png",
-                "backgroundColor": "#FFFFFF"
-            }
-        },
-        "web": {
-            "favicon": "./assets/images/icon.png",
-            "bundler": "metro",
-            "output": "static"
-        },
-        "plugins": [
-            "expo-router",
-            "expo-font",
-            [
-              "react-native-vision-camera",
-              {
-                "cameraPermissionText": "$(PRODUCT_NAME) needs access to your Camera.",
-                "enableCodeScanner": true
-              }
-            ],
-      
-              [
-                "./plugins/withAndroidMainActivityAttributes",
-                {
-                  "android:showWhenLocked": true,
-                  "android:turnScreenOn": true
-                }
-              ],
-              [
-                "expo-build-properties",
-                {
-                  "android": {
-                    "enableProguardInReleaseBuilds": true,
-                    "usesCleartextTraffic": true
-                  }
-                }
-              ]
-        ],
-        "experiments": {
-            "typedRoutes": true
+        "NSCameraUsageDescription": "$(PRODUCT_NAME) needs access to your Camera."
+      }
+    },
+    "android": {
+      "usesCleartextTraffic": true,
+      "package": "org.neotree",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.CAMERA"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png",
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "$(PRODUCT_NAME) needs access to your Camera.",
+          "enableCodeScanner": true
         }
+      ],
+      [
+        "./plugins/withAndroidMainActivityAttributes",
+        {
+          "android:showWhenLocked": true,
+          "android:turnScreenOn": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
+  }
 }

@@ -1,5 +1,14 @@
 const NEOTREE_BUILD_TYPE = process.env.NEOTREE_BUILD_TYPE || 'development';
 
+const appJsonRuntimeVersion = (() => {
+    try {
+        const appJson = require('./app.json'); // eslint-disable-line
+        return appJson?.expo?.runtimeVersion;
+    } catch (e) {
+        return undefined;
+    }
+})();
+
 const appConfig = (() => {
     let config: any = {};
     try {
@@ -63,7 +72,7 @@ const getBuldConfig = (config: any) => ({
 });
 
 export default ({ config }: any) => {
-    if (config?.runtimeVersion) {
+    if (appJsonRuntimeVersion !== undefined) {
         console.warn('runtimeVersion is set in app.json; remove it to avoid drift. Using src/config.ts instead.');
     }
     const runtimeVersion = appConfig?.runtimeVersion
