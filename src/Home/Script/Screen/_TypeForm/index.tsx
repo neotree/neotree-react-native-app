@@ -55,6 +55,8 @@ export function TypeForm({ }: TypeFormProps) {
 
             let value = cached?.value || `${matched || ''}` || null;
             let valueText = cached?.valueText || matched || null;
+            let exportValue: string | undefined = undefined;
+            let exportLabel: string | undefined = undefined;
 
             let value2 = cached?.value2 || null;
 
@@ -91,6 +93,32 @@ export function TypeForm({ }: TypeFormProps) {
                 }));
             }
 
+            if (f.type === 'dropdown') {
+                const opts = (() => {
+                    if (!f?.items) {
+                        return parseFieldValues({
+                            values: f.values,
+                            options: f.valuesOptions,
+                        });
+                    } else {
+                        return parseFieldItems({ items: f.items, });
+                    }
+                })();
+                const matchedOpt = opts.find(o => `${o.value}` === `${matched || ''}`);
+
+                if (!cached?.value) {
+                    value = null;
+                    valueText = null;
+                    
+                    if (matchedOpt) {
+                        value = matchedOpt.value;
+                        exportValue = matchedOpt.value;
+                        valueText = matchedOpt.label;
+                        exportLabel = matchedOpt.label;
+                    }
+                }
+            }
+
             return {
                 printable: f.printable !== false,
                 value,
@@ -105,6 +133,8 @@ export function TypeForm({ }: TypeFormProps) {
                 prePopulate: f.prePopulate,
                 editable: f.editable,
                 ips: f.ips,
+                exportValue,
+                exportLabel,
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
