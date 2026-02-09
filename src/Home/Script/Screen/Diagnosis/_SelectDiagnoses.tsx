@@ -131,8 +131,10 @@ export function SelectDiagnoses({
 									onPress={() => {
 										if (exclusiveIsSelected && !isExclusive) return;
 										if (isSelected) {
-											setHcwDiagnoses(hcwDiagnoses.filter(d => (d.key !== item.id) || (d.name !== item.id)));
-											setDiagnoses(diagnoses.filter((d) => (d.key !== item.id) || (d.name !== item.id)));
+											const matchKey = item.key || item.id || item.label;
+											const matchName = item.label || item.id || item.key;
+											setHcwDiagnoses(hcwDiagnoses.filter(d => d.key !== matchKey && d.name !== matchName));
+											setDiagnoses(diagnoses.filter(d => d.key !== matchKey && d.name !== matchName));
 										} else {
 											const selectedValues = items
 												.filter(i => hcwDiagnoses.some(d => d.name === i.label))
