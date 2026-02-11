@@ -209,31 +209,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     unit: field.unit,
                     ips: field.ips
                 };
-                const shouldLogField = ['date', 'datetime', 'period'].includes(field.type);
-                if (shouldLogField) {
-                    const incoming = value || {};
-                    console.log('[Repeatable][handleChange]', {
-                        fieldKey: field.key,
-                        fieldLabel: field.label,
-                        fieldType: field.type,
-                        formId: id,
-                        formIndex: formIdx,
-                        incoming: {
-                            value: incoming?.value ?? null,
-                            valueText: incoming?.valueText ?? null,
-                            exportValue: incoming?.exportValue ?? null,
-                            calculateValue: incoming?.calculateValue ?? null,
-                            label: incoming?.label ?? null,
-                        },
-                        enhanced: {
-                            value: enhancedValue?.value ?? null,
-                            valueText: enhancedValue?.valueText ?? null,
-                            exportValue: enhancedValue?.exportValue ?? null,
-                            calculateValue: enhancedValue?.calculateValue ?? null,
-                            label: enhancedValue?.label ?? null,
-                        },
-                    });
-                }
+               
                 let newValues = { ...form.values, [key]: enhancedValue };
 
                 const isComplete = fields.every(field => {

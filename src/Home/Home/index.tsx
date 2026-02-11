@@ -25,7 +25,6 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			setIsResyncing(true);
 			setHasTriedResync(true);
 			setShowError(null);
-			console.log('No scripts found. Performing resync...');
 			
 			const res = await syncData({ force: true });
 			
@@ -33,10 +32,8 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 				setSyncDataResponse(res);
 			}
 			
-			console.log('Resync completed successfully');
 			return true;
 		} catch (err: any) {
-			console.error('Resync failed:', err);
 			setShowError(err?.message || 'Failed to resync data');
 			return false;
 		} finally {

@@ -275,7 +275,6 @@ export async function fromHL7Like(data: string) {
   try {
     // Validate input
     if (!data || typeof data !== 'string' || data.trim().length === 0) {
-      console.log("Invalid input: data is empty or not a string");
       return [];
     }
 

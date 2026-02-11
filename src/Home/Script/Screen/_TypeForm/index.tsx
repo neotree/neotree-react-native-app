@@ -140,17 +140,26 @@ export function TypeForm({ }: TypeFormProps) {
         });
     }, [repeatable, metadata, canAutoFill, cachedVal,  activeScreen?.printDisplayColumns, getPrepopulationData]);
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(() => getValues());
 
+    // Cache condition evaluation results to avoid re-evaluating on every render
+    const conditionCache = useMemo(() => new Map<string, boolean>(), []);
 
-    const evaluateFieldCondition = (f: any,form?:any) => {
+    const evaluateFieldCondition = useCallback((f: any,form?:any) => {
+        const cacheKey = `${f?.key}_${form ? 'form' : 'noform'}`;
+
+        // Check cache first
+        if (conditionCache.has(cacheKey)) {
+            return conditionCache.get(cacheKey)!;
+        }
+
         let conditionMet = true;
         let formatedvalues = values;
         if (repeatable) {
 
             if(form){
                formatedvalues = moveKeysInside([form]);
-               
+
             }
 
         }
@@ -161,8 +170,10 @@ export function TypeForm({ }: TypeFormProps) {
 
         }
 
+        // Store in cache
+        conditionCache.set(cacheKey, conditionMet);
         return conditionMet;
-    };
+    }, [values, repeatable, evaluateCondition, parseCondition, conditionCache]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
@@ -320,8 +331,7 @@ export function TypeForm({ }: TypeFormProps) {
 
     const collectionName = metadata?.collectionName;
     const collectionField = metadata?.collectionLabel;
-    const getAllValues = () => {
-
+    const getAllValues = useMemo(() => {
         let _allValues = [
             ...values,
             ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
@@ -355,17 +365,17 @@ export function TypeForm({ }: TypeFormProps) {
             ];
         }
 
-        return _allValues.filter((v, i) => {
+        const result = _allValues.filter((v, i) => {
             if (!v.key) return true;
             return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
         });
-    }
+        return result;
+    }, [values, repeatable, ctx.entries]);
 
-    const getRepeatableValues = () => {
-        const values = getAllValues()
+    const getRepeatableValues = useMemo(() => {
         const autoFill = getRepeatablesPrepopulation() ? getRepeatablesPrepopulation()[collectionName] : []
-        return values.filter(v => v.key === 'repeatables')[0]?.value?.[collectionName] || autoFill;
-    }
+        return getAllValues.filter(v => v.key === 'repeatables')[0]?.value?.[collectionName] || autoFill;
+    }, [getAllValues, collectionName, getRepeatablesPrepopulation]);
 
     const returnable = (
         <Box>
@@ -411,28 +421,12 @@ export function TypeForm({ }: TypeFormProps) {
                             if (!conditionMet) return null;
 
                             const updateFieldValue = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
-                            const shouldLog = ['date', 'datetime', 'period'].includes(f.type);
+                         
                             const onChange = (val: Partial<types.ScreenEntryValue>) => {
-                                if (shouldLog) {
-                                    const incoming = val || {};
-                                    console.log('[NonRepeatable][handleChange]', {
-                                        isRepeatable: false,
-                                        fieldKey: f.key,
-                                        fieldLabel: f.label,
-                                        fieldType: f.type,
-                                        incoming: {
-                                            value: incoming?.value ?? null,
-                                            valueText: incoming?.valueText ?? null,
-                                            exportValue: incoming?.exportValue ?? null,
-                                            calculateValue: incoming?.calculateValue ?? null,
-                                            label: incoming?.label ?? null,
-                                        },
-                                    });
-                                }
                                 updateFieldValue(val);
                             };
 
-                            const allValues = getAllValues()
+                            const allValues = getAllValues
 
                             const extraProps = Component === PeriodField ? { onLinkedFieldChange: setValueByKey } : {};
 
@@ -469,7 +463,7 @@ export function TypeForm({ }: TypeFormProps) {
             onChange={handleRepeatablesChange}
             evaluateCondition={evaluateFieldCondition}
             collectionField={collectionField}
-            allValues={getRepeatableValues()}
+            allValues={getRepeatableValues}
         /> : returnable
     );
 }
