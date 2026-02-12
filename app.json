@@ -51,23 +51,22 @@
                 "enableCodeScanner": true
               }
             ],
-      
-              [
-                "./plugins/withAndroidMainActivityAttributes",
-                {
-                  "android:showWhenLocked": true,
-                  "android:turnScreenOn": true
+            [
+              "./plugins/withAndroidMainActivityAttributes",
+              {
+                "android:showWhenLocked": true,
+                "android:turnScreenOn": true
+              }
+            ],
+            [
+              "expo-build-properties",
+              {
+                "android": {
+                  "enableProguardInReleaseBuilds": true,
+                  "usesCleartextTraffic": true
                 }
-              ],
-              [
-                "expo-build-properties",
-                {
-                  "android": {
-                    "enableProguardInReleaseBuilds": true,
-                    "usesCleartextTraffic": true
-                  }
-                }
-              ]
+              }
+            ]
         ],
         "experiments": {
             "typedRoutes": true

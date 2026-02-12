@@ -225,6 +225,7 @@ export const getHospitals = async (params = {}, otherParams: Partial<(typeof _ot
 
 export const reportErrors = async (...args: any[]) => {
     try {
+        console.log(JSON.stringify(args))
         await makeApiCall('webeditor', `/app/errors`, {
             method: 'POST',
             body: JSON.stringify(args),
