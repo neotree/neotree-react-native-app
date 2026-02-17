@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
-import { Box, Dropdown, Br, TextInput } from '../../../../components';
+import { Box, Dropdown} from '../../../../components';
 import * as types from '../../../../types';
 
 type DropDownFieldProps = types.ScreenFormTypeProps & {
@@ -15,6 +15,7 @@ export function DropDownField({
     editable,
     onChange,
 }: DropDownFieldProps) {
+
     const canEdit = repeatable ? editable : true;
 
     const opts = useMemo(() => {
@@ -24,15 +25,16 @@ export function DropDownField({
                 options: field.valuesOptions,
             });
         } else {
-            return parseFieldItems({ items: field.items, });
+            return parseFieldItems({ items: field.items });
         }
     }, [field]);
 
-    const [{ value, value2 }, setValue] = React.useState({
+    const [{ value }, setValue] = React.useState({
         value: `${entryValue?.value || ''}`,
         value2: `${entryValue?.value2 || ''}`,
         key2: `${entryValue?.key2 || ''}`,
     });
+
 
     React.useEffect(() => { 
         if (!conditionMet) {
@@ -41,19 +43,20 @@ export function DropDownField({
                 valueText: null, 
                 valueLabel: null, 
                 exportType: 'dropdown', 
+                value2: null
             }); 
             setValue({
                 value: '',
                 value2: '',
                 key2: '',
-            });
+            });    
         }
     }, [conditionMet]);
 
-    const selected = useMemo(() => opts.find(o => o.value == value), [value, opts]);
-
-    // Check if manual entry is required but not filled
-    const hasInvalidManualEntry = selected?.enterValueManually && !value2?.trim();
+    const selected = useMemo(
+        () => opts.find(o => o.value == value),
+        [value, opts]
+    );
 
     return (
         <Box
@@ -71,18 +74,15 @@ export function DropDownField({
                 value={value}
                 options={opts}
                 onChange={(val, o) => {
+
                     setValue({
                         value: `${val || ''}`,
                         value2: '',
                         key2: '',
                     });
-                    
-                    // Check if the newly selected option requires manual entry
-                    const selectedOption = opts.find(opt => opt.value == val);
-                    const requiresManualEntry = selectedOption?.enterValueManually;
-                    
-                    // Only set valid entry values if no manual entry required OR it's being cleared
-                    if (!val || requiresManualEntry) {
+
+
+                    if (!val) {
                         onChange({
                             exportType: 'dropdown',
                             value: null,
@@ -90,65 +90,22 @@ export function DropDownField({
                             valueText: null,
                             exportLabel: null,
                             exportValue: null,
+                            value2: null
                         });
                     } else {
                         onChange({
                             exportType: 'dropdown',
-                            value: val, 
+                            value: val,
                             valueLabel: field.label,
                             valueText: o.label,
                             exportLabel: o.label,
                             exportValue: val,
+                            value2: '' // initially empty until user types
                         });
                     }
                 }}
             />
 
-            {!!selected?.enterValueManually && (
-                <>
-                    <Br spacing="m" />
-                    
-                    <Box>
-                        <TextInput
-                            multiline
-                            label={`${selected.option?.label || ''} (Required)`}
-                            value={value2 || ''}
-                            onChangeText={newValue2 => {
-                                const newKey2 = !newValue2 ? '' : (selected?.option?.key || '');
-                                setValue(prev => ({
-                                    ...prev,
-                                    value2: newValue2,
-                                    key2: newKey2,
-                                }));
-                                
-                                // Only update entry values if value2 is filled
-                                if (newValue2?.trim()) {
-                                    onChange({
-                                        exportType: 'dropdown',
-                                        value: value,
-                                        valueLabel: field.label,
-                                        valueText: selected.label,
-                                        exportLabel: selected.label,
-                                        exportValue: value,
-                                        value2: newValue2,
-                                        key2: newKey2,
-                                    });
-                                } else {
-                                    onChange({
-                                        exportType: 'dropdown',
-                                        value: null,
-                                        valueLabel: null,
-                                        valueText: null,
-                                        exportLabel: null,
-                                        exportValue: null,
-                                    });
-                                }
-                            }}
-                            errors={hasInvalidManualEntry ? ['This field is required'] : undefined}
-                        />
-                    </Box>
-                </>
-            )}
         </Box>
     );
 }

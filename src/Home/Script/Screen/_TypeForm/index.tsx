@@ -14,6 +14,7 @@ import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
 import { MultiSelectField } from './_MultiSelect';
 import Repeatable from './Repeatable';
+import { v4 as uuidv4 } from 'uuid';
 
 type TypeFormProps = types.ScreenTypeProps & {};
 
@@ -32,7 +33,66 @@ export function TypeForm({ }: TypeFormProps) {
         setEntryValues,
     } = ctx;
 
-    const metadata = activeScreen?.data?.metadata;
+//Fix Slowness Issue, By Prebuilding Fields Before Rendering
+  
+   const metadata = React.useMemo(() => {
+    const original = activeScreen?.data?.metadata;
+    if (!original?.fields) return original;
+
+    const hasManual = original.fields.some(
+        (f: any) =>
+            f.type === "dropdown" &&
+            Array.isArray(f.items) &&
+            f.items.some((i: any) => i.enterValueManually === true)
+    );
+
+    if (!hasManual) return original;
+
+    const updatedFields: any[] = [];
+    let positionCounter = 1;
+
+    for (const field of original.fields) {
+        updatedFields.push({
+            ...field,
+            position: positionCounter++,
+        });
+
+        if (field.type === "dropdown" && Array.isArray(field.items)) {
+            const manualItems = field.items.filter(
+                (i: any) => i.enterValueManually === true
+            );
+
+            if (manualItems.length > 0) {
+                const manualCondition = manualItems
+                    .map((i: any) => `$${field.key} = '${i.value}'`)
+                    .join(" or ");
+
+                updatedFields.push({
+                    fieldId: uuidv4(),
+                    keyId: uuidv4(),
+                    type: "text",
+                    key: `manual${field.key}`,
+                    label: `Specify ${(field.label ?? '').toLowerCase()}`,
+                    condition: manualCondition,
+                    printable: true,
+                    optional: false,
+                    editable: true,
+                    confidential: false,
+                    prePopulate: [],
+                    items: [],
+                    valuesOptions: [],
+                    position: positionCounter++,
+                });
+            }
+        }
+    }
+
+    return {
+        ...original,
+        fields: updatedFields,
+    };
+}, [activeScreen?.data?.metadata]);
+
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const repeatable = metadata?.repeatable;
@@ -155,10 +215,10 @@ export function TypeForm({ }: TypeFormProps) {
 
         }
         if (f.condition) {
+            
             conditionMet = evaluateCondition(
                 parseCondition(f.condition, [{ values: formatedvalues }])
             ) as boolean;
-
         }
 
         return conditionMet;
@@ -400,10 +460,10 @@ export function TypeForm({ }: TypeFormProps) {
                                     Component = MultiSelectField;
                                     break;
                                 default:
-
+                            
                                 // do nothing
                             }
-
+                            
                             if (!Component) return null;
 
                             const conditionMet = evaluateFieldCondition(f);
