@@ -212,6 +212,7 @@ export type ScreenFormTypeProps = {
   entryValue: ScreenEntryValue;
   fieldIndex: number;
   conditionMet: boolean;
+  onManualValueChange?: (entry: Partial<ScreenEntryValue>)=>void,
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
   allValues: ScreenEntry['values'];
