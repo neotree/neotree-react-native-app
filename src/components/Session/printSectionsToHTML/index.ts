@@ -78,6 +78,11 @@ export async function printSectionsToHTML({
       return null;
     }
   };
+  const getManualValue = (values: any[],key: string)=>{
+    const filtered = values?.filter((v:any)=>v.key===`manual${key}`)
+    if (filtered.length>0) return filtered[0].value
+    return null
+  }
 
   const sections: PrintSection[] = (script?.data?.printSections || [])
     .map((s: any) => {
@@ -168,6 +173,10 @@ export async function printSectionsToHTML({
             if (shouldAppendUnit && !Array.isArray(value)) {
               value = formatValueWithUnit(value, v.unit)
             }
+            let value2 = v.value2
+            if(v.type==='dropdown'){
+              value2= getManualValue(values,v.key)
+            }
 
             return `
               <div class="${isFlexRow ? 'row' : ''}">
@@ -181,7 +190,7 @@ export async function printSectionsToHTML({
                         return `<span>${bullet}${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`;
                       }).join('<br />')
                       :
-                      `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
+                      `<span>${value}</span>${!value2 ? '' : `<span>(${value2})</span>`}`
                     }
                   </div>
                   ${!extraLabels.length ? '' : `
