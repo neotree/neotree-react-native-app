@@ -5,6 +5,9 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 import { ActivityIndicator, Alert, TouchableOpacity, PermissionsAndroid, Platform } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { reportErrors } from "../../data/api"
+import RNQRGenerator from 'rn-qr-generator';
+import * as FileSystem from 'expo-file-system';
+import { Skia, ImageFormat } from "@shopify/react-native-skia";
 import {
     BluetoothManager,
     BluetoothEscposPrinter,
@@ -346,26 +349,153 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
         }
     };
 
+    const generateQRCodeBase64 = async (uid: string): Promise<string | null> => {
+        let filePath: string | null = null;
+        try {
+            const response = await RNQRGenerator.generate({
+                value: uid,
+                width: 120,
+                height: 120,
+                backgroundColor: '#ffffff',
+                color: '#000000',
+                correctionLevel: 'H',
+            });
+            console.log('QR Generation response:', response);
+
+            // RNQRGenerator returns a file path
+            if (response?.uri) {
+                filePath = response.uri;
+                try {
+                    const base64 = await FileSystem.readAsStringAsync(response.uri, {
+                        encoding: FileSystem.EncodingType.Base64,
+                    });
+                    console.log('QR converted to base64, length:', base64.length);
+                    return base64;
+                } catch (fileError) {
+                    console.log('Error reading QR file:', fileError);
+                    return null;
+                }
+            }
+
+            console.log('Unexpected QR response format:', response);
+            return null;
+        } catch (e) {
+            console.log('QR Generation error:', e);
+            return null;
+        } finally {
+            // Clean up temp QR file
+            if (filePath) {
+                try {
+                    await FileSystem.deleteAsync(filePath, { idempotent: true });
+                    console.log('Deleted temp QR file:', filePath);
+                } catch (deleteError) {
+                    console.log('Error deleting temp QR file:', deleteError);
+                }
+            }
+        }
+    };
+
+    const combineQRCodesIntoBase64 = (leftBase64: string, rightBase64: string, qrSize: number, spacing: number): string | null => {
+        try {
+            const combinedWidth = qrSize + spacing + qrSize;
+            const combinedHeight = qrSize;
+
+            // Decode both base64 images
+            const data1 = Skia.Data.fromBase64(leftBase64);
+            const data2 = Skia.Data.fromBase64(rightBase64);
+
+            const image1 = Skia.Image.MakeImageFromEncoded(data1);
+            const image2 = Skia.Image.MakeImageFromEncoded(data2);
+
+            if (!image1 || !image2) {
+                console.log('Failed to decode QR code images');
+                return null;
+            }
+
+            // Create offscreen surface for combined image
+            const surface = Skia.Surface.MakeOffscreen(combinedWidth, combinedHeight);
+            if (!surface) {
+                console.log('Failed to create Skia surface');
+                return null;
+            }
+
+            const canvas = surface.getCanvas();
+            const paint = Skia.Paint();
+
+            // Draw left QR code
+            canvas.drawImageRect(
+                image1,
+                Skia.XYWHRect(0, 0, image1.width(), image1.height()),
+                Skia.XYWHRect(0, 0, qrSize, qrSize),
+                paint
+            );
+
+            // Draw right QR code
+            canvas.drawImageRect(
+                image2,
+                Skia.XYWHRect(0, 0, image2.width(), image2.height()),
+                Skia.XYWHRect(qrSize + spacing, 0, qrSize, qrSize),
+                paint
+            );
+
+            surface.flush();
+            const snapshot = surface.makeImageSnapshot();
+            const combinedBase64 = snapshot.encodeToBase64(ImageFormat.PNG, 100);
+
+            console.log('Combined QR codes, length:', combinedBase64.length);
+            return combinedBase64;
+        } catch (e) {
+            console.log('Error combining QR codes:', e);
+            return null;
+        }
+    };
+
     const printQrLabel = async (uid: string) => {
-        const basePadding = Math.max(0, Math.round((LABEL_WIDTH - QR_CODE_SIZE) / 2));
-        const leftSpace = Math.max(0, basePadding + printerOffset);
-        await BluetoothEscposPrinter.printerInit();
-        await BluetoothEscposPrinter.setWidth(LABEL_WIDTH);
-        await BluetoothEscposPrinter.printerLeftSpace(leftSpace);
-        await BluetoothEscposPrinter.printerLineSpace(0);
-        await BluetoothEscposPrinter.printerAlign(ALIGN.LEFT);
-        await BluetoothEscposPrinter.printAndFeed(QR_TOP_FEED_LINES);
-        await BluetoothEscposPrinter.printQRCode(uid, QR_CODE_SIZE, ERROR_CORRECTION.M, 0);
-        await BluetoothEscposPrinter.printAndFeed(QR_BOTTOM_FEED_LINES);
-        await BluetoothEscposPrinter.printerInit();
+        const leftBase64 = await generateQRCodeBase64(uid);
+        const rightBase64 = await generateQRCodeBase64(uid);
+
+        if (!leftBase64 || !rightBase64) {
+            throw new Error("Failed to generate QR codes");
+        }
+
+        try {
+            const qrSize = 120;
+            const spacing = 10;
+
+            // Combine both QR codes into a single image
+            const combinedBase64 = combineQRCodesIntoBase64(leftBase64, rightBase64, qrSize, spacing);
+            if (!combinedBase64) {
+                throw new Error("Failed to combine QR codes");
+            }
+
+            const combinedWidth = qrSize + spacing + qrSize;
+            const leftPadding = Math.max(0, Math.round((LABEL_WIDTH - combinedWidth) / 2) + printerOffset);
+
+            await BluetoothEscposPrinter.printerInit();
+            await BluetoothEscposPrinter.setWidth(LABEL_WIDTH);
+            await BluetoothEscposPrinter.printerLineSpace(0);
+            await BluetoothEscposPrinter.printAndFeed(QR_TOP_FEED_LINES);
+
+            // Print combined QR codes as single image
+            await BluetoothEscposPrinter.printPic(combinedBase64, {
+                width: combinedWidth,
+                height: qrSize,
+                left: leftPadding
+            });
+
+            await BluetoothEscposPrinter.printAndFeed(QR_BOTTOM_FEED_LINES);
+            await BluetoothEscposPrinter.printerInit();
+        } catch (e: any) {
+            throw new Error(e.message || "Failed to print QR codes");
+        }
     };
 
     const print = async () => {
         setPrinting(true)
         const uid = session?.uid || session?.['uid'];
         if (!uid) {
-            showPrintingError("MISSING QR DATA. PLEASE SCAN OR ENTER A VALID ID.")
             setPrinting(false);
+            showPrintingError("MISSING QR DATA. PLEASE SCAN OR ENTER A VALID ID.")
             return;
         }
         if (!printer || !printerConnected) {
@@ -375,16 +505,23 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
                 return;
             }
         }
+
+        let hadError = false;
+        let errorMessage = "";
         try {
             await printQrLabel(uid);
             onPrinted?.(uid);
         } catch (e: any) {
-            showPrintingError(e.message)
+            hadError = true;
+            errorMessage = e.message;
             reportErrors(e)
-
         } finally {
             setPrinting(false)
+        }
 
+        // Show error after printing state is reset to avoid layout shifts
+        if (hadError) {
+            showPrintingError(errorMessage)
         }
     }
     return (
