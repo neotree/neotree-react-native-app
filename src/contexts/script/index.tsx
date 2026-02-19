@@ -236,7 +236,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
     ) => {
         _condition = (_condition || '').toString();
-    
+
         const _form = _entries.reduce((acc, e) => {
             const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
 
