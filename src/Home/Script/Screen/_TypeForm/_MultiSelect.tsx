@@ -157,7 +157,7 @@ export function MultiSelectField({
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.option?.label || ''} (Required)`}
+                                        label={`Specify ${o?.label}`}
                                         value={value2 || ''}
                                         onChangeText={value2 => {
                                             const updatedState = {

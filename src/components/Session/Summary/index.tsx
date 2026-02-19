@@ -27,16 +27,23 @@ export function Summary({
 
     const form = sessionForm?.filter((e: any) => !excludeScreenTypes.includes(e.screen?.type));
 
+    const getManualValue = (values: any[], key: string) => {
+        const filtered = values?.filter((v: any) => v.key === `manual${key}`)
+        if (filtered.length > 0) return filtered[0].value
+        return null
+    }
+
+
     const sections: any[] = groupEntries(form);
 
     return (
         <Box>
-             <Content/>
+            <Content />
 
             {!showConfidential && <Confidentials onShowConfidential={onShowConfidential} />}
 
             <Wrapper>
-            <Content/>
+                <Content />
                 <Content>
                     {!!dateAndTimeOfDeath && (
                         <View
@@ -94,6 +101,12 @@ export function Summary({
                                                 isFlexRow = false;
                                                 hideLabel = true;
                                             }
+                                            let value2 = v.value2
+                                            if (v.exportType === 'dropdown') {
+
+                                                value2 = getManualValue(values, v.key)
+
+                                            }
 
                                             return (
                                                 <Box key={`${entryIndex}${i}`}>
@@ -104,7 +117,7 @@ export function Summary({
                                                             flexDirection: isFlexRow ? 'row' : undefined,
                                                         }}
                                                     >
-                                                        <Box 
+                                                        <Box
                                                             style={{
                                                                 flex: isFlexRow ? 1 : undefined,
                                                                 display: hideLabel ? 'none' : undefined,
@@ -147,7 +160,7 @@ export function Summary({
                                                                                 },
                                                                             ]}
                                                                         >
-                                                                            {`${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}
+                                                                            {`${v.valueText || v.value || 'N/A'} ${!value2 ? '' : `(${value2})`}`}
                                                                         </Text>
                                                                     )
                                                             }
@@ -173,7 +186,7 @@ export function Summary({
                                                                     const label = typeof item === 'string' ? item : item.label;
 
                                                                     return (
-                                                                        <Box 
+                                                                        <Box
                                                                             key={label + i}
                                                                             flexDirection="row"
                                                                         >
