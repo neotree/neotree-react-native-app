@@ -37,6 +37,7 @@ export function DropDownField({
 
 
     React.useEffect(() => { 
+       
         if (!conditionMet) {
             onChange({ 
                 value: null, 
@@ -51,7 +52,7 @@ export function DropDownField({
                 key2: '',
             });    
         }
-    }, [conditionMet]);
+    }, [conditionMet,field]);
 
     const selected = useMemo(
         () => opts.find(o => o.value == value),
@@ -93,9 +94,11 @@ export function DropDownField({
                             value2: null
                         });
                     } else {
+                       
                         onChange({
                             exportType: 'dropdown',
                             value: val,
+                            key: field.key,
                             valueLabel: field.label,
                             valueText: o.label,
                             exportLabel: o.label,

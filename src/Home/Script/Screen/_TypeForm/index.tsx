@@ -46,12 +46,27 @@ export function TypeForm({ }: TypeFormProps) {
             f.items.some((i: any) => i.enterValueManually === true)
     );
 
-    if (!hasManual) return original;
+    // Transform dropdown and multi_select fields to clear values if items is not empty
+    const transformedFields = original.fields.map((field: any) => {
+        if ((field.type === "dropdown" || field.type === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
+            return {
+                ...field,
+                values: "",
+            };
+        }
+        return field;
+    });
 
+    if (!hasManual) {
+        return {
+            ...original,
+            fields: transformedFields,
+        };
+    }
     const updatedFields: any[] = [];
     let positionCounter = 1;
 
-    for (const field of original.fields) {
+    for (const field of transformedFields) {
         updatedFields.push({
             ...field,
             position: positionCounter++,
@@ -74,7 +89,7 @@ export function TypeForm({ }: TypeFormProps) {
                     key: `manual${field.key}`,
                     label: `Specify ${(field.label ?? '').toLowerCase()}`,
                     condition: manualCondition,
-                    printable: true,
+                    printable: false,
                     optional: false,
                     editable: true,
                     confidential: false,
@@ -214,12 +229,13 @@ export function TypeForm({ }: TypeFormProps) {
             }
 
         }
-        if (f.condition) {
+        if (f.condition!="") {
             
             conditionMet = evaluateCondition(
                 parseCondition(f.condition, [{ values: formatedvalues }])
             ) as boolean;
         }
+       
 
         return conditionMet;
     };

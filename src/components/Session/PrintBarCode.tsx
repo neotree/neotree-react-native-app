@@ -1,6 +1,5 @@
 import React from "react";
 import { useTheme, Box} from "../Theme";
-import {Br} from "../Br"
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { ActivityIndicator, Alert, TouchableOpacity, PermissionsAndroid, Platform } from "react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,8 +10,6 @@ import { Skia, ImageFormat } from "@shopify/react-native-skia";
 import {
     BluetoothManager,
     BluetoothEscposPrinter,
-    ERROR_CORRECTION,
-    ALIGN,
     PAGE_WIDTH
 } from "tp-react-native-bluetooth-printer";
 import { Button } from "../Button";
@@ -39,7 +36,6 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
 
     const PAGE_WIDTH_SAFE = PAGE_WIDTH || { WIDTH_58: 384, WIDTH_80: 576 };
     const LABEL_WIDTH = PAGE_WIDTH_SAFE.WIDTH_58;
-    const QR_CODE_SIZE = 160;
     const QR_TOP_FEED_LINES = 2;
     const QR_BOTTOM_FEED_LINES = 2;
     const OFFSET_STEP = 6;
@@ -116,24 +112,45 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
         lastAddress: string | null
     ) => {
         if (!devices.length) return null;
+
         const connectedAddresses = new Set((connected || []).map((d: any) => d.address));
+
+        // Check if any newly found device is available (not the last address)
+        const newlyFoundDevices = devices.filter((entry) =>
+            entry.source === 'found' && (!lastAddress || entry.device.address !== lastAddress)
+        );
+
+        if (newlyFoundDevices.length > 0) {
+            // If there are newly found devices, pick the first one (or connected one if available)
+            const connectedNew = newlyFoundDevices.find((entry) =>
+                connectedAddresses.has(entry.device.address)
+            );
+            if (connectedNew) return connectedNew.device;
+            return newlyFoundDevices[0].device;
+        }
+
+        // If no new devices, check if last device is still available and connected
+        if (lastAddress) {
+            const lastDevice = devices.find((entry) => entry.device.address === lastAddress);
+            if (lastDevice && connectedAddresses.has(lastAddress)) {
+                return lastDevice.device;
+            }
+        }
+
+        // Otherwise, pick any available device (prioritize connected > found > paired)
         const scored = devices.map((entry) => {
             let score = 0;
             if (connectedAddresses.has(entry.device.address)) score += 1000;
-            if (lastAddress && entry.device.address === lastAddress) score += 200;
-            if (isTargetPrinter(entry.device)) score += 100;
             if (entry.source === 'found') score += 50;
             if (entry.source === 'paired') score += 10;
             return { ...entry, score };
         });
+
         scored.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
-            if (a.source !== b.source) {
-                if (a.source === 'found') return -1;
-                if (b.source === 'found') return 1;
-            }
             return String(a.device.address).localeCompare(String(b.device.address));
         });
+
         return scored[0]?.device || null;
     }, [isTargetPrinter]);
 
@@ -161,86 +178,130 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
             if (!granted) {
                 await requestBlueToothPermissions()
                 return false;
-            } else {
-                const enabled = await ensureBluetoothEnabled();
-                if (!enabled) {
-                    if (!onStart) {
-                        showPrintingError("BLUE TOOTH NOT ENABLED. PUT BLUETOOTH ON AND PRESS RETRY")
-                        setConnecting(false)
-                    }
-                    return false;
+            }
+
+            const enabled = await ensureBluetoothEnabled();
+            if (!enabled) {
+                if (!onStart) {
+                    showPrintingError("BLUE TOOTH NOT ENABLED. PUT BLUETOOTH ON AND PRESS RETRY")
+                    setConnecting(false)
                 }
-                if (enabled) {
-                    if (!onStart) {
-                        setConnecting(true)
-                    }
-                    const tryConnect = async () => {
-                        const connectedDevices = await BluetoothManager.getConnectedDevice()
-                        console.log('[BT][connected]', connectedDevices);
-                        const connectedTarget = (connectedDevices || []).find((device: any) => isTargetPrinter(device));
-                        if (connectedTarget) {
-                            setPrinter(connectedTarget)
-                            setPrinterConnected(true)
-                            lastPrinterAddressRef.current = connectedTarget.address;
-                            await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.PRINTER_LAST_ADDRESS, connectedTarget.address);
-                            setConnecting(false)
-                            return true;
-                        }
-                        const scannedDevices = await BluetoothManager.scanDevices();
-                        console.log('[BT][scanDevices raw]', scannedDevices);
-                        if (!scannedDevices) {
-                            return false;
-                        }
-                        const scanned = JSON.parse(String(scannedDevices))
-                        console.log('[BT][scanDevices parsed]', scanned);
-                        const paired = Array.isArray(scanned?.paired) ? scanned.paired : [];
-                        const found = Array.isArray(scanned?.found) ? scanned.found : [];
-                        console.log('[BT][paired]', paired);
-                        console.log('[BT][found]', found);
-                        const devices = [
-                            ...paired.map((device: any) => ({ device, source: 'paired' as const })),
-                            ...found.map((device: any) => ({ device, source: 'found' as const })),
-                        ];
-                        console.log('[BT][devices]', devices);
-                        const targetDevices = devices.filter((entry) => isTargetPrinter(entry.device));
-                        console.log('[BT][targetDevices]', targetDevices);
-                        if (!targetDevices.length) return false;
-                        const foundTargets = targetDevices.filter((entry) => entry.source === 'found');
-                        const candidates = foundTargets.length ? foundTargets : targetDevices;
-                        const bestDevice = selectBestPrinter(candidates, connectedDevices, lastPrinterAddressRef.current);
-                        console.log('[BT][bestDevice]', bestDevice);
-                        if (!bestDevice) return false;
-                        await BluetoothManager.connect(bestDevice.address)
-                        setPrinter(bestDevice)
+                return false;
+            }
+
+            if (!onStart) {
+                setConnecting(true)
+            }
+
+            const tryConnect = async () => {
+                // Always do a fresh scan to detect newly powered devices
+                const scannedDevices = await BluetoothManager.scanDevices();
+
+                if (!scannedDevices) {
+                    // If scan fails, check connected devices as fallback
+                    const connectedDevices = await BluetoothManager.getConnectedDevice()
+                    const connectedTarget = (connectedDevices || []).find((device: any) => isTargetPrinter(device));
+                    if (connectedTarget) {
+                        setPrinter(connectedTarget)
                         setPrinterConnected(true)
-                        lastPrinterAddressRef.current = bestDevice.address;
-                        await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.PRINTER_LAST_ADDRESS, bestDevice.address);
+                        lastPrinterAddressRef.current = connectedTarget.address;
+                        await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.PRINTER_LAST_ADDRESS, connectedTarget.address);
                         setConnecting(false)
                         return true;
-                    };
-
-                    const connected = await tryConnect();
-                    if (connected) return true;
-
-                    // fallback: forget last device and retry once
-                    await clearLastPrinter();
-                    const retried = await tryConnect();
-                    if (retried) return true;
-
-                    if (!onStart) {
-                        retryPrinterConnection("LABELS PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE.")
-                        setConnecting(false)
-                    }
-                    return false;
-
-                } else {
-                    if (!onStart) {
-                        showPrintingError("BLUE TOOTH NOT ENABLED. PUT BLUETOOTH ON AND PRESS RETRY")
-                        setConnecting(false)
                     }
                     return false;
                 }
+
+                const scanned = JSON.parse(String(scannedDevices))
+                const paired = Array.isArray(scanned?.paired) ? scanned.paired : [];
+                const found = Array.isArray(scanned?.found) ? scanned.found : [];
+   
+                // Combine paired and found devices
+                const devices = [
+                    ...paired.map((device: any) => ({ device, source: 'paired' as const })),
+                    ...found.map((device: any) => ({ device, source: 'found' as const })),
+                ];
+  
+
+                // Filter for target printer
+                const targetDevices = devices.filter((entry) => isTargetPrinter(entry.device));
+      
+
+                if (!targetDevices.length) return false;
+
+                // Get currently connected devices for scoring
+                const connectedDevices = await BluetoothManager.getConnectedDevice()
+   
+
+                // Select the best device (prioritizes newly found devices)
+                const bestDevice = selectBestPrinter(targetDevices, connectedDevices, lastPrinterAddressRef.current);
+        
+
+                if (!bestDevice) return false;
+
+                // Attempt to connect to the best device
+                let connectionSuccessful = false;
+                try {
+                    await BluetoothManager.connect(bestDevice.address)
+  
+                    connectionSuccessful = true;
+                } catch (connectError: any) {
+
+
+                    // If connection failed and it's a paired device, try to unpair and re-pair it
+                    const isPaired = paired.some((d: any) => d.address === bestDevice.address);
+                    if (isPaired) {
+                              try {
+                            await BluetoothManager.unpair(bestDevice.address);
+        
+
+                            // Small delay to ensure unpair completes
+                            await new Promise(resolve => setTimeout(resolve, 500));
+
+                            // Try to reconnect after unpair
+                            await BluetoothManager.connect(bestDevice.address)
+
+                            connectionSuccessful = true;
+                        } catch (unpairError) {
+              
+                            // Even if unpair fails, continue - device may still work
+                            connectionSuccessful = true;
+                        }
+                    } else {
+                        // Device is not paired, it's newly found - continue anyway
+                        connectionSuccessful = true;
+                    }
+                }
+
+                if (connectionSuccessful) {
+                    setPrinter(bestDevice)
+                    setPrinterConnected(true)
+                    lastPrinterAddressRef.current = bestDevice.address;
+                    await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.PRINTER_LAST_ADDRESS, bestDevice.address);
+                    setConnecting(false)
+                    return true;
+                }
+
+                return false;
+            };
+
+            const connected = await tryConnect();
+            if (connected) return true;
+
+            // Fallback: clear last printer and retry (handles case where previously used device is now unavailable)
+
+            await clearLastPrinter();
+            const retried = await tryConnect();
+            if (retried) return true;
+
+            // If still no connection, clear last printer to force fresh scan next time
+            await clearLastPrinter();
+
+            if (!onStart) {
+                retryPrinterConnection("LABELS PRINTER WAS NOT FOUND. PLEASE TURN ON THE PRINTER AND PAIR IT TO THIS DEVICE.")
+                setConnecting(false)
             }
+            return false;
 
         } catch (e: any) {
             if (!onStart) {
@@ -377,10 +438,9 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
                 }
             }
 
-            console.log('Unexpected QR response format:', response);
             return null;
         } catch (e) {
-            console.log('QR Generation error:', e);
+         
             return null;
         } finally {
             // Clean up temp QR file
@@ -420,6 +480,12 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
             }
 
             const canvas = surface.getCanvas();
+
+            // Fill background with white
+            const bgPaint = Skia.Paint();
+            bgPaint.setColor(Skia.Color('white'));
+            canvas.drawRect(Skia.XYWHRect(0, 0, combinedWidth, combinedHeight), bgPaint);
+
             const paint = Skia.Paint();
 
             // Draw left QR code
@@ -460,7 +526,7 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
 
         try {
             const qrSize = 120;
-            const spacing = 10;
+            const spacing = 80; // Spacing to ensure clear separation
 
             // Combine both QR codes into a single image
             const combinedBase64 = combineQRCodesIntoBase64(leftBase64, rightBase64, qrSize, spacing);
@@ -525,7 +591,7 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
         }
     }
     return (
-        <>
+        <Box style={{ maxHeight: 45, overflow: 'hidden' }}>
             {isGeneric ?
                 <Button
                     hitSlop={{ bottom: 20, left: 20, right: 20 }}
@@ -555,57 +621,59 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
                         )}
                 </TouchableOpacity>
             }
-            {printerConnected ? (
-                <>
-                    <Br spacing="s" />
+            {printerConnected && showAdjust ? (
+                <Box style={{ position: 'absolute', top: 50, right: 0, backgroundColor: 'white', padding: 8, borderRadius: 4, zIndex: 1000 }}>
                     <Button
                         variant="link"
-                        onPress={() => setShowAdjust(v => !v)}
+                        onPress={() => setShowAdjust(false)}
+                        style={{ marginBottom: 4 }}
                     >
-                        {showAdjust ? 'Hide Alignment' : 'Adjust Alignment'}
+                        Hide Alignment
                     </Button>
-                    {showAdjust ? (
-                        <>
-                            <Br spacing="s" />
-                            <Box flexDirection="row" alignItems="center">
-                                <Button
-                                    color="secondary"
-                                    onPress={() => setPrinterOffset(v => v - OFFSET_STEP)}
-                                >
-                                    Shift Left
-                                </Button>
-                                <Box margin="s" />
-                                <Button
-                                    color="secondary"
-                                    onPress={() => setPrinterOffset(v => v + OFFSET_STEP)}
-                                >
-                                    Shift Right
-                                </Button>
-                                <Box margin="s" />
-                                <Button
-                                    color="primary"
-                                    onPress={async () => {
-                                        if (!printer?.address) return;
-                                        try {
-                                            const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.PRINTER_QR_OFFSETS);
-                                            const map = raw ? JSON.parse(raw) : {};
-                                            map[printer.address] = printerOffset;
-                                            await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.PRINTER_QR_OFFSETS, JSON.stringify(map));
-                                            setShowAdjust(false);
-                                        } catch {
-                                            // ignore storage errors
-                                        }
-                                    }}
-                                >
-                                    Save
-                                </Button>
-                            </Box>
-                            <Br spacing="s" />
-                        </>
-                    ) : null}
-                </>
+                    <Box flexDirection="row" alignItems="center" style={{ marginBottom: 4 }}>
+                        <Button
+                            color="secondary"
+                            onPress={() => setPrinterOffset(v => v - OFFSET_STEP)}
+                        >
+                            Move Left
+                        </Button>
+                        <Box margin="s" />
+                        <Button
+                            color="secondary"
+                            onPress={() => setPrinterOffset(v => v + OFFSET_STEP)}
+                        >
+                            Move Right
+                        </Button>
+                        <Box margin="s" />
+                        <Button
+                            color="primary"
+                            onPress={async () => {
+                                if (!printer?.address) return;
+                                try {
+                                    const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.PRINTER_QR_OFFSETS);
+                                    const map = raw ? JSON.parse(raw) : {};
+                                    map[printer.address] = printerOffset;
+                                    await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.PRINTER_QR_OFFSETS, JSON.stringify(map));
+                                    setShowAdjust(false);
+                                } catch {
+                                    // ignore storage errors
+                                }
+                            }}
+                        >
+                            Save
+                        </Button>
+                    </Box>
+                </Box>
+            ) : printerConnected ? (
+                <Button
+                    variant="link"
+                    onPress={() => setShowAdjust(true)}
+                    style={{ marginTop: 4 }}
+                >
+                    Adjust Alignment
+                </Button>
             ) : null}
-        </>
+        </Box>
     );
 
 
