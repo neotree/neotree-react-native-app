@@ -146,7 +146,7 @@ export function Summary({
                                                                                         },
                                                                                     ]}
                                                                                 >
-                                                                                    {`${bullet}${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : `(${v.value2})`}`}
+                                                                                    {`${bullet}${v.valueText || v.value || 'N/A'} ${!v.value2 ? '' : ` (${v.value2})`}`}
                                                                                 </Text>
                                                                             </Box>
                                                                         );
@@ -160,7 +160,7 @@ export function Summary({
                                                                                 },
                                                                             ]}
                                                                         >
-                                                                            {`${v.valueText || v.value || 'N/A'} ${!value2 ? '' : `(${value2})`}`}
+                                                                            {`${v.valueText || v.value || 'N/A'} ${!value2 ? '' : ` (${value2})`}`}
                                                                         </Text>
                                                                     )
                                                             }

@@ -187,10 +187,10 @@ export async function printSectionsToHTML({
                       value.map((val: any, i: number) => {
                         let bullet: string = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
                         if (listStyle === 'none') bullet = '';
-                        return `<span>${bullet}${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span>(${val.value2})</span>`}`;
+                        return `<span>${bullet}${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span> (${val.value2})</span>`}`;
                       }).join('<br />')
                       :
-                      `<span>${value}</span>${!value2 ? '' : `<span>(${value2})</span>`}`
+                      `<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
                     }
                   </div>
                   ${!extraLabels.length ? '' : `

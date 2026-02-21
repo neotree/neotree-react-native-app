@@ -203,10 +203,10 @@ export default async (session: any, showConfidential?: boolean) => {
                     value.map((v: any, i: number) => {
                       let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
                       if (listStyle === 'none') bullet = '';
-                      return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`;
+                      return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span> (${v.value2})</span>`}`;
                     }).join('<br />')
                     :
-                    `<span>${value}</span>${!value2 ? '' : `<span>(${value2})</span>`}`
+                    `<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
                   }
                       </div>
 
