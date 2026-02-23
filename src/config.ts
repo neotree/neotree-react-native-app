@@ -1,5 +1,5 @@
 export default {
-    "development": {
+    "evelopment": {
         "countries": [
             {
                 "iso": "zw",
