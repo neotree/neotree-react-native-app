@@ -8,6 +8,7 @@ import { DropDownField } from './_DropDown';
 import { PeriodField, dateToValueText } from './_Period';
 import { TimeField } from './_Time';
 import { fieldsTypes } from '../../../../constants';
+import { normalizeDateLikeValue } from '@/src/utils/date-value-normalization';
 import { formatDate } from '@/src/utils/formatDate';
 
 
@@ -421,6 +422,13 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             if (!field) continue;
 
+            if ([fieldsTypes.DATE, fieldsTypes.DATETIME, fieldsTypes.TIME, fieldsTypes.PERIOD].includes(field.type)) {
+                const normalizedValue = normalizeDateLikeValue(valueObj?.value, field.type);
+                if (normalizedValue) {
+                    valueObj = { ...valueObj, value: normalizedValue };
+                }
+            }
+
             // Don't create base object if value is null, undefined, or empty
             const hasValidValue = valueObj && 
                 valueObj.value !== null && 
@@ -446,13 +454,18 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
             } else if (field.type === 'period' && base) {
                 const calc = String(field?.calculation)?.replace("$", "");
                 const calValue = partial[calc]?.value;
+                const calcField = fields.find(
+                    f => `${f?.key}`.toLowerCase() === `${calc}`.toLowerCase()
+                );
+                const normalizedCalcValue = normalizeDateLikeValue(calValue, calcField?.type);
+                const effectiveCalcValue = normalizedCalcValue || calValue;
                 
                 // Only calculate period if source value exists and is valid
-                if (calValue && calValue !== null && calValue !== '') {
+                if (effectiveCalcValue && effectiveCalcValue !== null && effectiveCalcValue !== '') {
                     try {
-                        const testDate = new Date(calValue);
+                        const testDate = new Date(effectiveCalcValue);
                         if (!isNaN(testDate.getTime())) {
-                            const periodInfo = getPeriodValueText(field, calValue);
+                            const periodInfo = getPeriodValueText(field, effectiveCalcValue);
                             if (periodInfo && periodInfo !== null) {
                                 Object.assign(base, periodInfo);
                             }

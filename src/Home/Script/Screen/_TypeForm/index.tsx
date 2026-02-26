@@ -2,6 +2,11 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
+import {
+    formatDateLikeLabel,
+    isTimestampLabel,
+    normalizeDateLikeValue,
+} from '@/src/utils/date-value-normalization';
 import { Box, Br } from '../../../../components';
 import * as types from '../../../../types';
 import { fieldsTypes } from '../../../../constants';
@@ -190,6 +195,27 @@ export function TypeForm({ }: TypeFormProps) {
                         exportValue = matchedOpt.value;
                         valueText = matchedOpt.label;
                         exportLabel = matchedOpt.label;
+                    }
+                }
+            }
+
+            if ([fieldsTypes.DATE, fieldsTypes.DATETIME, fieldsTypes.TIME].includes(f.type)) {
+                const normalizedValue = normalizeDateLikeValue(value, f.type);
+                if (normalizedValue) {
+                    value = normalizedValue;
+                }
+
+                const currentText = typeof valueText === 'string' ? valueText : null;
+                const shouldNormalizeLabel =
+                    !currentText ||
+                    isTimestampLabel(currentText) ||
+                    `${currentText}` === `${value ?? ''}`;
+
+                if (shouldNormalizeLabel) {
+                    const formattedLabel = formatDateLikeLabel(value, f.type);
+                    if (formattedLabel) {
+                        valueText = formattedLabel;
+                        exportLabel = formattedLabel;
                     }
                 }
             }
