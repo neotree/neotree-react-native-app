@@ -39,21 +39,25 @@ export function TypeForm({ }: TypeFormProps) {
     } = ctx;
 
 //Fix Slowness Issue, By Prebuilding Fields Before Rendering
+    const normalizeFieldType = React.useCallback((fieldType: any) => {
+        return `${fieldType ?? ''}`.trim().toLowerCase().replace(/[\s-]+/g, '_');
+    }, []);
   
-   const metadata = React.useMemo(() => {
+    const metadata = React.useMemo(() => {
     const original = activeScreen?.data?.metadata;
     if (!original?.fields) return original;
 
     const hasManual = original.fields.some(
         (f: any) =>
-            f.type === "dropdown" &&
+            normalizeFieldType(f.type) === "dropdown" &&
             Array.isArray(f.items) &&
             f.items.some((i: any) => i.enterValueManually === true)
     );
 
     // Transform dropdown and multi_select fields to clear values if items is not empty
     const transformedFields = original.fields.map((field: any) => {
-        if ((field.type === "dropdown" || field.type === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
+        const normalizedType = normalizeFieldType(field.type);
+        if ((normalizedType === "dropdown" || normalizedType === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
             return {
                 ...field,
                 values: "",
@@ -77,7 +81,7 @@ export function TypeForm({ }: TypeFormProps) {
             position: positionCounter++,
         });
 
-        if (field.type === "dropdown" && Array.isArray(field.items)) {
+        if (normalizeFieldType(field.type) === "dropdown" && Array.isArray(field.items)) {
             const manualItems = field.items.filter(
                 (i: any) => i.enterValueManually === true
             );
@@ -111,7 +115,7 @@ export function TypeForm({ }: TypeFormProps) {
         ...original,
         fields: updatedFields,
     };
-}, [activeScreen?.data?.metadata]);
+}, [activeScreen?.data?.metadata, normalizeFieldType]);
 
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
@@ -145,7 +149,9 @@ export function TypeForm({ }: TypeFormProps) {
                 valueText = cached?.valueText || patientNUID;
             }
 
-            if (f.type === 'multi_select') {
+            const normalizedFieldType = normalizeFieldType(f.type);
+
+            if (normalizedFieldType === 'multi_select') {
                 const opts = (() => {
                     if (!f?.items) {
                         return parseFieldValues({
@@ -173,7 +179,7 @@ export function TypeForm({ }: TypeFormProps) {
                 }));
             }
 
-            if (f.type === 'dropdown') {
+            if (normalizedFieldType === 'dropdown') {
                 const opts = (() => {
                     if (!f?.items) {
                         return parseFieldValues({
@@ -239,7 +245,7 @@ export function TypeForm({ }: TypeFormProps) {
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, cachedVal,  activeScreen?.printDisplayColumns, getPrepopulationData]);
+    }, [repeatable, metadata, canAutoFill, cachedVal,  activeScreen?.printDisplayColumns, getPrepopulationData, normalizeFieldType]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
@@ -255,10 +261,11 @@ export function TypeForm({ }: TypeFormProps) {
             }
 
         }
-        if (f.condition!="") {
-            
+        const condition = `${f?.condition ?? ''}`.trim();
+
+        if (condition) {
             conditionMet = evaluateCondition(
-                parseCondition(f.condition, [{ values: formatedvalues }])
+                parseCondition(condition, [{ values: formatedvalues }])
             ) as boolean;
         }
        
@@ -476,7 +483,8 @@ export function TypeForm({ }: TypeFormProps) {
                     <React.Fragment key={f.key}>
                         {(() => {
                             let Component: null | React.ComponentType<types.ScreenFormTypeProps & { patientNUID?: string | null; }> = null;
-                            switch (f.type) {
+                            const normalizedFieldType = normalizeFieldType(f.type);
+                            switch (normalizedFieldType) {
                                 case fieldsTypes.NUMBER:
                                     Component = NumberField;
                                     break;
@@ -513,7 +521,7 @@ export function TypeForm({ }: TypeFormProps) {
                             if (!conditionMet) return null;
 
                             const updateFieldValue = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
-                            const shouldLog = ['date', 'datetime', 'period'].includes(f.type);
+                            const shouldLog = ['date', 'datetime', 'period'].includes(normalizedFieldType);
                             const onChange = (val: Partial<types.ScreenEntryValue>) => {
                                 if (shouldLog) {
                                     const incoming = val || {};
