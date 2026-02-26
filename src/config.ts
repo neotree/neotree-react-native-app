@@ -14,49 +14,26 @@ export default {
                 "name": "Demo"
             }
         ],
-
-        //PRODUCTION CONFIG - DO NOT USE FOR DEVELOPMENT
         "zw": {
             "savePollingData": true,
             "webeditor": {
-                "host":"https://zim-webeditor.neotree.org:10243",
-                "api_endpoint":"https://zim-webeditor.neotree.org:10243/api",
-                "api_key":"N884OAXI9KNTJF0VT1Y15WUUKHAXCQK"
+                "host":"https://zim-dev-webeditor.neotree.org",
+                "api_endpoint":"https://zim-dev-webeditor.neotree.org/api",
+                "api_key":"KWTXE8YYP8S3Z8SXD742PPH1ERDUQKN"
             },
             "nodeapi": {
-                "host":"http://zim-nodeapi.neotree.org",
-                "api_endpoint":"http://zim-nodeapi.neotree.org",
+                "host":"https://zim-dev-nodeapi.neotree.org",
+                "api_endpoint":"https://zim-dev-nodeapi.neotree.org",
                 "api_key":"DdCbe3cz0b6fuEqDIhuML7DuOburXlFr2RCDRkFA"
             },
-             "local": [{
-                "host":"http://192.168.254.78:3001",
+              "local": [{
+                "host":"http://192.168.254.78:3000",
                 "api_key":"DdCbe3cz0b6fuEqDIhuML7DuOburXlFr2RCDRkFA",
-                "hospital":"-MZm_dIkquPzKnJl-tbM",
+                "hospital":"-MYim8JIk9VwHn3wMz3r",
                 "secret":"AFkRDCr2rFlXrubOuD7LMuhIDqEf6b0z"
             }],
-        },
-
-        //DEVELOPMENT CONFIG - DO NOT USE FOR PRODUCTION
-        // "zw": {
-        //     "savePollingData": true,
-        //     "webeditor": {
-        //         "host":"https://zim-dev-webeditor.neotree.org",
-        //         "api_endpoint":"https://zim-dev-webeditor.neotree.org/api",
-        //         "api_key":"KWTXE8YYP8S3Z8SXD742PPH1ERDUQKN"
-        //     },
-        //     "nodeapi": {
-        //         "host":"https://zim-dev-nodeapi.neotree.org",
-        //         "api_endpoint":"https://zim-dev-nodeapi.neotree.org",
-        //         "api_key":"DdCbe3cz0b6fuEqDIhuML7DuOburXlFr2RCDRkFA"
-        //     },
-        //       "local": [{
-        //         "host":"http://192.168.254.78:3000",
-        //         "api_key":"DdCbe3cz0b6fuEqDIhuML7DuOburXlFr2RCDRkFA",
-        //         "hospital":"-MYim8JIk9VwHn3wMz3r",
-        //         "secret":"AFkRDCr2rFlXrubOuD7LMuhIDqEf6b0z"
-        //     }],
             
-        // },
+        },
         "mwi": {
             "savePollingData": false,
             "webeditor": {
