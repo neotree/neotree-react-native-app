@@ -88,6 +88,7 @@ export type DischargeDiagnosis = Record<string, {
   Priority: number;
   Suggested: boolean;
   diagnosis: string;
+  value?: string;
   hcw_agree: string;
   hcw_reason_given: null | string;
   hcw_follow_instructions: null | string;

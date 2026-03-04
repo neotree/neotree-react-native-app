@@ -23,6 +23,8 @@ export default function getJSON(opts: any = {}) {
       diagnoses: diagnoses.map((d: any) => ({
         [d.name]: {
           hcw_agree: d.how_agree,
+          value: d.value,
+          name: d.diagnosis,
           hcw_follow_instructions: d.hcw_follow_instructions,
           Suggested: d.suggested,
           Priority: d.priority,

@@ -21,6 +21,7 @@ const getDefaultDiagnosis = (d?: types.Diagnosis) => ({
     suggested: false,
     priority: null,
     how_agree: null,
+    value: null,
     hcw_follow_instructions: null,
     hcw_reason_given: null,
     isPrimaryProvisionalDiagnosis: false,
@@ -28,18 +29,22 @@ const getDefaultDiagnosis = (d?: types.Diagnosis) => ({
     ...d,
 });
 
-const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => ({
-    label: d.name,
-    key: d.key || d.name,
-    value: d.customValue || d.key || d.name,
-    valueText: d.customValue || d.name,
-    type: 'diagnosis',
-    dataType: 'diagnosis',
-    diagnosis: {
-        ...getDefaultDiagnosis(),
-        ...d,
-    },
-});
+const diagnosisToEntryValue = (d: types.Diagnosis): types.ScreenEntryValue => {
+    const valueText = d.customValue || d.name;
+    return {
+        label: d.name,
+        key: d.key || d.name,
+        value: d.customValue || d.key || d.name,
+        valueText,
+        type: 'diagnosis',
+        dataType: 'diagnosis',
+        diagnosis: {
+            ...getDefaultDiagnosis(),
+            ...d,
+            value: valueText,
+        },
+    };
+};
 
 export function Diagnosis(props: DiagnosisProps) {
     const mounted = React.useRef(false);
