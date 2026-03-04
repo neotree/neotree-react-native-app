@@ -232,6 +232,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							diagnosis: {
 								name: d?.diagnosis || key,
 								how_agree: d?.hcw_agree,
+								value: d?.value,
 								hcw_follow_instructions: d?.hcw_follow_instructions,
 								suggested: d?.Suggested,
 								priority: d?.Priority,
