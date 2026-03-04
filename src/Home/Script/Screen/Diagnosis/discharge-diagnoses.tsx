@@ -26,17 +26,20 @@ export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
                     const [key] = Object.keys(item);
                     const [value] = Object.values(item);
 
+                    const valueText = value.value || value.diagnosis;
+
                     return {
                         label: value.diagnosis,
                         key,
                         value: key,
-                        valueText: value.diagnosis,
+                        valueText,
                         type: 'diagnosis',
                         dataType: 'diagnosis',
                         diagnosis: {
                             ...getDefaultDiagnosis({
                                 name: value.diagnosis,
                                 key,
+                                value: valueText,
                                 how_agree: value.hcw_agree,
                                 hcw_follow_instructions: value.hcw_follow_instructions,
                                 hcw_reason_given: value.hcw_reason_given,
@@ -90,8 +93,8 @@ export function DischargeDiagnoses({ getDefaultDiagnosis }: SortPriorityProps) {
                     <Content>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <View style={{ flex: 1, }}>
-                                <Text>{d.diagnosis}</Text>
-                                <Text variant="caption" style={{ color: '#999' }}>{d.Suggested ? 'Suggested' : 'Selected by HCW'}</Text>
+                                <Text>{d.value || d.diagnosis}</Text>
+                                <Text variant="caption" style={{ color: '#999' }}>{d.Suggested ? 'Suggested' : ''}</Text>
                             </View>
                             <View>
                                 <Text 

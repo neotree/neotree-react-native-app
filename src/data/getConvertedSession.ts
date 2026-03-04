@@ -172,6 +172,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           diagnoses: diagnoses.map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,
+              value: d.value,
               hcw_agree: d.how_agree,
               hcw_follow_instructions: d.hcw_follow_instructions,
               Suggested: d.suggested,
