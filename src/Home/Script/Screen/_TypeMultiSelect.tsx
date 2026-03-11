@@ -39,26 +39,33 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 
         // Validate that all selected items with enterValueManually have value2 filled
         const hasInvalidSelection = keys.some(key => {
-            const item = metadata.items.find((item: any) => item.id === key);
+            const item = metadata.items.find((item: any) => (
+                (item.id === key) ||
+                (item.key === key)
+            ));
             return item?.enterValueManually && !_value[key]?.value2?.trim();
         });
 
 		const values = keys.reduce((acc: types.ScreenEntryValue[], key) => {
             const value2 = _value[key]?.value2;
-            const item = metadata.items.filter((item: any) => item.id === key)[0];
+            const item = metadata.items.filter((item: any) => (
+                (item.id === key) ||
+                (item.key === key)
+            ))[0];
+            
             return [
                 ...acc,
                 {
                     value: key,
                     value2: value2 || '',
-                    valueText: item.label,
+                    valueText: item?.label,
                     // valueLabel: metadata.label,
-                    label: item.label,
-                    key: item.id,
+                    label: item?.label,
+                    key: item?.id,
 					inputKey: metadata.key,
-                    dataType: item.dataType,
-                    exclusive: item.exclusive,
-                    confidential: item.confidential,
+                    dataType: item?.dataType,
+                    exclusive: item?.exclusive,
+                    confidential: item?.confidential,
                     exportType: 'multi_select',
                 },
             ];
