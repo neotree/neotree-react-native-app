@@ -346,6 +346,13 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				]
 			);
 		} catch (e: any) {
+			if (exportFormat === 'excel') {
+				console.error('Excel export failed from Sessions screen', {
+					exportType,
+					sessionCount: Array.isArray(sessions) ? sessions.length : 0,
+					error: e,
+				});
+			}
 			Alert.alert(
 				'Failed to export data',
 				e.message || e.msg || JSON.stringify(e),
