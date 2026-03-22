@@ -24,9 +24,15 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
         const drugsScreenEntry = form.find((e: any) => e.screen.type === 'drugs');
         const fluidsScreenEntry = form.find((e: any) => e.screen.type === 'fluids');
         const feedsScreenEntry = form.find((e: any) => e.screen.type === 'feeds');
+
         const diagnosisScreenEntry = form.find((e: any) => e.screen.type === 'diagnosis');
         const diagnoses = diagnosisScreenEntry
           ? diagnosisScreenEntry.values.map((v: any) => v.diagnosis)
+          : [];
+
+        const problemsScreenEntry = form.find((e: any) => e.screen.type === 'problems');
+        const problems = problemsScreenEntry
+          ? problemsScreenEntry.values.map((v: any) => v.problems)
           : [];
 
         // Helper: convert repeatable item values
@@ -83,7 +89,6 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             type,
             dataType,
             value,
-            label,
             parentKey,
             valueLabel,
             exportValue,
@@ -170,6 +175,17 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           hospital_id,
           dateAndTimeOfDeath,
           diagnoses: diagnoses.map((d: any) => ({
+            [d.key || d.name]: {
+              diagnosis: d.name,
+              value: d.value,
+              hcw_agree: d.how_agree,
+              hcw_follow_instructions: d.hcw_follow_instructions,
+              Suggested: d.suggested,
+              Priority: d.priority,
+              hcw_reason_given: d.hcw_reason_given,
+            },
+          })),
+          problems: problems.map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,
               value: d.value,
