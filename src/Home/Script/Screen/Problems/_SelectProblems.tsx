@@ -66,7 +66,7 @@ export function SelectProblems({
             <Box>
 				<FlatList 
 					data={items}
-					keyExtractor={(_, index) => `${index}`}
+					keyExtractor={(item, index) => `${item.key}${index}`}
 					ListHeaderComponent={(
 						<>
 							{!!activeScreen?.data?.instructions && (
