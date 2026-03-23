@@ -81,7 +81,7 @@ export function ProblemsList({
 
 					{problems.map((item, index) => {
 						if (filter && !filter(item, index)) return null;
-						const key = item.id || index;
+						const key = item.key || item.id || index;
 
 						const card = (
 							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
