@@ -10,6 +10,7 @@ import { SortPriority } from './_SortPriority';
 import { FullProblem } from './_FullProblem';
 import { SectionContainer } from './section-container';
 import { DischargeProblems } from './discharge-problems';
+import { SuggestedProblems } from './suggested-problems';
 
 type ProblemProps = types.ScreenTypeProps & {
     
@@ -61,12 +62,34 @@ export function Problems(props: ProblemProps) {
         getSuggestedProblems,
     } = useScriptContext();
 
+    const initialEntries = React.useMemo(() => {
+        const suggestedProblems = (getSuggestedProblems() || []) as types.Problem[];
+        const allValues = activeScreenEntry?.values || [];
+        const suggestedValues = allValues.filter(v => v?.problem?.suggested);
+        const hcwValues = allValues.filter(v => v?.problem?.isHcwProblem);
+
+        if (
+            JSON.stringify(suggestedProblems.map(p => p?.id).sort((a, b) => a - b)) !==
+            JSON.stringify(suggestedValues.map(p => p?.problem?.id).sort((a, b) => a - b))
+        ) {
+            return [
+                ...suggestedProblems
+                    .filter(d => !allValues.map(item => item.key).includes(d.key || d.name))
+                    .map(d => problemToEntryValue({
+                        ...d,
+                        suggested: true,
+                    })),
+                ...hcwValues,
+            ];
+        }
+
+        return allValues;
+    }, [getSuggestedProblems, activeScreenEntry?.values]);
+
     const isDischarge = (script.type || script.data?.type) === 'discharge';
 
-    const [section, setSection] = React.useState('select');
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(
-		(activeScreenEntry?.values || []).filter(v => !v?.problem?.suggested)
-	); // React.useState(ctx.getSuggestedProblems().map(d => problemToEntryValue(d)) || []);
+    const [section, setSection] = React.useState('suggested');
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(initialEntries);
     const [hcwProblems, setHcwProblems] = React.useState<types.ScreenEntryValue[]>(
 		(activeScreenEntry?.values || []).filter(v => v?.problem?.isHcwProblem).map(v => v.problem)
 	); // React.useState<types.Problem[]>(ctx.getSuggestedProblems() || []);
@@ -108,45 +131,26 @@ export function Problems(props: ProblemProps) {
         }
 
         if (activeProblemIndex === null) {
-            if (section === 'select') {
-				const suggested = (getSuggestedProblems() || []) as types.Problem[];   
-                
-                const suggestedEntries = suggested
-                    .filter(d => !values.map(item => item.key).includes(d.key || d.name))
-                    .map(d => problemToEntryValue({
-                        ...d,
-                        suggested: true,
-                    }));
+            const allEntries = [
+                ...values,
+            ];
 
-                const allEntries = [
-                    ...values,
-                    ...suggestedEntries,
-                ];
+            // sort by severyity_order
+            let entries = [
+                ...allEntries.filter(d => d.problem.severity_order || (d.problem.severity_order === 0))
+                    .sort((a, b) => a.problem.severity_order - b.problem.severity_order),
+                ...allEntries.filter(d => 
+                    (d.problem.severity_order === null) || 
+                    (d.problem.severity_order === undefined) || 
+                    (d.problem.severity_order === '')
+                ),
+            ];
 
-                // sort by severyity_order
-
-                let entries = [
-                    ...allEntries.filter(d => d.problem.severity_order || (d.problem.severity_order === 0))
-                        .sort((a, b) => a.problem.severity_order - b.problem.severity_order),
-                    ...allEntries.filter(d => 
-                        (d.problem.severity_order === null) || 
-                        (d.problem.severity_order === undefined) || 
-                        (d.problem.severity_order === '')
-                    ),
-                ];
-
-                // sort by priority
-                // if (!orderBySeverity) {
-                //     entries = [
-                //         ...values.filter(d => d.problem.priority || (d.problem.priority === 0))
-                //             .sort((a, b) => a.problem.priority - b.problem.priority),
-                //         ...values.filter(d => (d.problem.priority === null) || (d.problem.priority === undefined) || (d.problem.priority === '')),
-                //         ...suggestedEntries.filter(d => d.problem.priority || (d.problem.priority === 0))
-                //             .sort((a, b) => a.problem.priority - b.problem.priority),
-                //         ...suggestedEntries.filter(d => (d.problem.priority === null) || (d.problem.priority === undefined) || (d.problem.priority === '')),
-                //     ];
-                // }
-
+            if (section === 'suggested') {
+                setValues(entries);
+				setEntryValues(entries);
+                setSection('select');
+            } else if (section === 'select') {
 				setValues(entries);
 				setEntryValues(entries);
                 setSection('agree_disagree');
@@ -175,14 +179,12 @@ export function Problems(props: ProblemProps) {
                     setSection('sort_priority');
                 }
             } else if (section === 'sort_priority') {
-                // setProblems(problems
-                //     .sort((a, b) => a.isSecondaryProvisionalProblem > b.isSecondaryProvisionalProblem ? -1 : 1)
-                //     .sort((a, b) => a.isPrimaryProvisionalProblem > b.isPrimaryProvisionalProblem ? -1 : 1));
-                if (acceptedProblems[0]) {
-                    setActiveProblemIndex(0);
-                } else {
-                    done();
-                }
+                // if (acceptedProblems[0]) {
+                //     setActiveProblemIndex(0);
+                // } else {
+                //     done();
+                // }
+                done();
             }        
         } else {
             const activeIndex = activeProblemIndex + 1;
@@ -215,7 +217,8 @@ export function Problems(props: ProblemProps) {
             // if (section === 'manage') return setSection('sort_priority');
             if (section === 'sort_priority') return setSection('agree_disagree');
             if (section === 'agree_disagree') return setSection('select');
-            if (section === 'select') ctxGoBack();
+            if (section === 'select') return setSection('suggested');
+            if (section === 'suggested') ctxGoBack();
         } else {
             const nextIndex = activeProblemIndex - 1;
             if (nextIndex < 0) {
@@ -233,7 +236,7 @@ export function Problems(props: ProblemProps) {
 
     const hideFAB = useMemo(() => {
         let hide = false;
-        if (section === 'agree_disagree') {
+        if ((section === 'agree_disagree') || (section === 'suggested')) {
             hide = !!values.find(v => !v.problem?.how_agree);
         }
         return hide;
@@ -253,6 +256,11 @@ export function Problems(props: ProblemProps) {
                 if (activeProblemIndex !== null) {
                     title = `${acceptedProblems[activeProblemIndex]?.customName || acceptedProblems[activeProblemIndex]?.name}`;
                 } else {
+                    if (section === 'suggested') {
+                        title = `${activeScreen?.data?.title2 || ''}`;
+                        titleStyle = getFieldPreferences('title2')?.style;
+                    }
+
                     if (section === 'agree_disagree') {
                         title = `${activeScreen?.data?.title2 || ''}`;
                         titleStyle = getFieldPreferences('title2')?.style;
@@ -344,6 +352,12 @@ export function Problems(props: ProblemProps) {
                 </SectionContainer>
             ) : (
                 <>
+                    {section === 'suggested' && (
+                        <SectionContainer {...sectionProps} >
+                            <SuggestedProblems {...sectionProps} />
+                        </SectionContainer>
+                    )}
+
                     {section === 'select' && (
                         <SectionContainer {...sectionProps} >
                             <SelectProblems {...sectionProps} />
