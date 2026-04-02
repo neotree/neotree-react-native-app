@@ -27,8 +27,8 @@ function ManagementCard({ text, image, }: { text?: any; image?: any; }) {
     );
 }
 
-export function FullDiagnosis({ acceptedDiagnoses, activeDiagnosisIndex }: FullDiagnosisProps) {
-    const diagnosis = acceptedDiagnoses[activeDiagnosisIndex as number];
+export function FullDiagnosis({ acceptedDiagnosesAndProblems, activeDiagnosisIndex }: FullDiagnosisProps) {
+    const diagnosis = acceptedDiagnosesAndProblems[activeDiagnosisIndex as number];
 
     if (!diagnosis) return null;
 

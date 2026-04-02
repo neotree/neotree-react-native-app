@@ -248,6 +248,7 @@ export type DiagnosisSectionProps = ScreenTypeProps & {
   loading: boolean;
 	diagnoses: Diagnosis[];
 	acceptedDiagnoses: Diagnosis[];
+  acceptedDiagnosesAndProblems: Diagnosis[];
 	activeDiagnosisIndex: null | number;
 	hcwDiagnoses: Diagnosis[];
 };
