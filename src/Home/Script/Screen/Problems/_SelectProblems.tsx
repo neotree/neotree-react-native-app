@@ -14,6 +14,7 @@ export function SelectProblems({
     hcwProblems, 
     searchVal, 
     problems,
+	acceptedProblems,
     getDefaultProblem, 
     setHcwProblems, 
     setProblems, 
@@ -54,7 +55,10 @@ export function SelectProblems({
                 severity_order: itemSevOrder || sevOrder,
             }),
         };
-    });
+    }).filter((p: types.Problem) => {
+		const isAccpetedAndSuggested = acceptedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
+		return !isAccpetedAndSuggested;
+	});
 
 
     const exclusiveIsSelected = items

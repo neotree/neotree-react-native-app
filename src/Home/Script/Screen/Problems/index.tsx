@@ -151,10 +151,6 @@ export function Problems(props: ProblemProps) {
 				setEntryValues(entries);
                 setSection('select');
             } else if (section === 'select') {
-				setValues(entries);
-				setEntryValues(entries);
-                setSection('agree_disagree');
-            } else if (section === 'agree_disagree') {
                 if (!problems.length) {
                     Alert.alert(
                         'Warning',
@@ -176,23 +172,13 @@ export function Problems(props: ProblemProps) {
                         ]
                     );
                 } else {
+                    setValues(entries);
+                    setEntryValues(entries);
                     setSection('sort_priority');
                 }
-            } else if (section === 'sort_priority') {
-                // if (acceptedProblems[0]) {
-                //     setActiveProblemIndex(0);
-                // } else {
-                //     done();
-                // }
-                done();
-            }        
-        } else {
-            const activeIndex = activeProblemIndex + 1;
-            if (activeIndex < acceptedProblems.length) {
-                setActiveProblemIndex(activeIndex);
             } else {
-                done();
-            }
+                done();   
+            }   
         }
     }, [
         loading,
@@ -214,9 +200,7 @@ export function Problems(props: ProblemProps) {
         }
 
         if (activeProblemIndex === null) {
-            // if (section === 'manage') return setSection('sort_priority');
-            if (section === 'sort_priority') return setSection('agree_disagree');
-            if (section === 'agree_disagree') return setSection('select');
+            if (section === 'sort_priority') return setSection('select');
             if (section === 'select') return setSection('suggested');
             if (section === 'suggested') ctxGoBack();
         } else {
@@ -257,11 +241,11 @@ export function Problems(props: ProblemProps) {
                     title = `${acceptedProblems[activeProblemIndex]?.customName || acceptedProblems[activeProblemIndex]?.name}`;
                 } else {
                     if (section === 'suggested') {
-                        title = `${activeScreen?.data?.title2 || ''}`;
-                        titleStyle = getFieldPreferences('title2')?.style;
+                        title = `${activeScreen?.data?.title1 || ''}`;
+                        titleStyle = getFieldPreferences('title1')?.style;
                     }
 
-                    if (section === 'agree_disagree') {
+                    if (section === 'select') {
                         title = `${activeScreen?.data?.title2 || ''}`;
                         titleStyle = getFieldPreferences('title2')?.style;
                     }
