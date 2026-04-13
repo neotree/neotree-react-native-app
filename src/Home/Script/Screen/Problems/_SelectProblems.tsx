@@ -15,6 +15,7 @@ export function SelectProblems({
     searchVal, 
     problems,
 	acceptedProblems,
+	rejectedProblems,
     getDefaultProblem, 
     setHcwProblems, 
     setProblems, 
@@ -57,7 +58,8 @@ export function SelectProblems({
         };
     }).filter((p: types.Problem) => {
 		const isAccpetedAndSuggested = acceptedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
-		return !isAccpetedAndSuggested;
+		const isRejectedAndSuggested = rejectedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
+		return !(isAccpetedAndSuggested || isRejectedAndSuggested);
 	});
 
 

@@ -96,6 +96,7 @@ export function Problems(props: ProblemProps) {
 
     const problems = useMemo(() => values.map(v => v.problem), [values]);
     const acceptedProblems = useMemo(() => problems.filter(d => d.how_agree !== 'No'), [problems]);
+    const rejectedProblems = useMemo(() => problems.filter(d => d.how_agree === 'No'), [problems]);
 
     const [activeProblemIndex, setActiveProblemIndex] = React.useState<null | number>(null);
 
@@ -277,6 +278,7 @@ export function Problems(props: ProblemProps) {
         ...props,        
         problems,
         acceptedProblems,
+        rejectedProblems,
         activeProblemIndex,
         hcwProblems,
         loading,
