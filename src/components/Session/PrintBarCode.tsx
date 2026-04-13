@@ -14,6 +14,8 @@ import {
 } from "tp-react-native-bluetooth-printer";
 import { Button } from "../Button";
 import { ASYNC_STORAGE_KEYS } from "../../constants/async-storage";
+import { getSessionPrintBlockMessage, isSessionPrintable } from "./printEligibility";
+import { PrintBlockedDialog } from "./PrintBlockedDialog";
 
 type PrintBarCodeProps = {
     session: any;
@@ -22,6 +24,8 @@ type PrintBarCodeProps = {
 };
 export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProps) {
     const theme = useTheme();
+    const printable = isGeneric || isSessionPrintable(session);
+    const [showBlockedDialog, setShowBlockedDialog] = React.useState(false);
 
     const [printer, setPrinter] = React.useState<any>(null);
     const [printing, setPrinting] = React.useState(false)
@@ -557,6 +561,11 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
     };
 
     const print = async () => {
+        if (!printable) {
+            setShowBlockedDialog(true);
+            return;
+        }
+
         setPrinting(true)
         const uid = session?.uid || session?.['uid'];
         if (!uid) {
@@ -592,6 +601,11 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
     }
     return (
         <Box style={{ maxHeight: 45, overflow: 'hidden' }}>
+            <PrintBlockedDialog
+                open={showBlockedDialog}
+                message={getSessionPrintBlockMessage(session)}
+                onClose={() => setShowBlockedDialog(false)}
+            />
             {isGeneric ?
                 <Button
                     hitSlop={{ bottom: 20, left: 20, right: 20 }}
@@ -610,9 +624,9 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
                     hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                     style={{ alignItems: 'flex-start' }}
                 >
-                    {!printing && !connecting ? (printerConnected ? <Icon color={theme.colors.primary} size={40} name="qr-code" />
-                        : (bluetoothEnabled ? <Icon color={"blue"} size={40} name="qr-code" />
-                            : <Icon color={theme.colors.error} size={40} name="qr-code" />))
+                    {!printing && !connecting ? (printerConnected ? <Icon color={printable ? theme.colors.primary : theme.colors.textDisabled} size={40} name="qr-code" />
+                        : (bluetoothEnabled ? <Icon color={printable ? "blue" : theme.colors.textDisabled} size={40} name="qr-code" />
+                            : <Icon color={printable ? theme.colors.error : theme.colors.textDisabled} size={40} name="qr-code" />))
                         : (
                             <ActivityIndicator
                                 color={theme.colors.primary}
