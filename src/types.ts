@@ -266,6 +266,7 @@ export type ProblemSectionProps = ScreenTypeProps & {
   loading: boolean;
 	problems: Problem[];
 	acceptedProblems: Problem[];
+  rejectedProblems: Problem[];
 	activeProblemIndex: null | number;
 	hcwProblems: Problem[];
 };
