@@ -53,6 +53,7 @@ export function Diagnosis(props: DiagnosisProps) {
         script,
         activeScreenEntry,
         activeScreen,
+        entries,
         goNext: ctxGoNext,
         goBack:ctxGoBack,
         setMoreNavOptions:ctxSetMoreNavOptions,
@@ -60,6 +61,11 @@ export function Diagnosis(props: DiagnosisProps) {
         setEntryValues,
         getSuggestedDiagnoses,
     } = useScriptContext();
+
+    const problems = useMemo(() => {
+        const values = entries.filter(e => e.screen.type === 'problems')[0]?.values || [];
+        return values.filter(d => d?.problem?.how_agree !== 'No').map(v => v.problem);
+    }, [entries]);
 
     const isDischarge = (script.type || script.data?.type) === 'discharge';
 
@@ -73,6 +79,10 @@ export function Diagnosis(props: DiagnosisProps) {
 
     const diagnoses = useMemo(() => values.map(v => v.diagnosis), [values]);
     const acceptedDiagnoses = useMemo(() => diagnoses.filter(d => d.how_agree !== 'No'), [diagnoses]);
+    const acceptedDiagnosesAndProblems = useMemo(() => [
+        ...problems,
+        ...acceptedDiagnoses,
+    ], [acceptedDiagnoses, problems]);
 
     const [activeDiagnosisIndex, setActiveDiagnosisIndex] = React.useState<null | number>(null);
 
@@ -92,6 +102,41 @@ export function Diagnosis(props: DiagnosisProps) {
         });
         ctxGoNext();
     }, [section, activeDiagnosisIndex, setEntryValues, ctxGoNext]);
+
+    const getActiveDiagnosisIndex = React.useCallback((currentIndex?: number, forward = true) => {
+        const isInitial = forward && (
+            (currentIndex === undefined) ||
+            (currentIndex === null)
+        );
+
+        currentIndex = (
+            (currentIndex === undefined) ||
+            (currentIndex === null) ||
+            (currentIndex < 0) ||
+            (currentIndex > acceptedDiagnosesAndProblems.length - 1)
+        ) ? -1 : currentIndex;
+
+        if (isInitial && acceptedDiagnosesAndProblems[0]) currentIndex = 0;
+        
+        const d: typeof acceptedDiagnosesAndProblems[0] = acceptedDiagnosesAndProblems[currentIndex];
+
+        if (!d) return isInitial ? -1 : currentIndex;
+
+        const data = !d ? [] : [
+            { text: d.text1, image: d.image1 },
+            { text: d.text2, image: d.image2 },
+            { text: d.text3, image: d.image3 },
+        ];
+
+        const noData = data.reduce((acc, item) => {
+            if (item.text || item.image) acc = false;
+            return acc;
+        }, true);
+
+        if (noData) return getActiveDiagnosisIndex(forward ? currentIndex + 1 : currentIndex - 1, forward);
+
+        return currentIndex;
+    }, [acceptedDiagnosesAndProblems]);
 
     const goNext = React.useCallback((opts?: {
         force?: boolean;
@@ -175,18 +220,16 @@ export function Diagnosis(props: DiagnosisProps) {
                     setSection('sort_priority');
                 }
             } else if (section === 'sort_priority') {
-                // setDiagnoses(diagnoses
-                //     .sort((a, b) => a.isSecondaryProvisionalDiagnosis > b.isSecondaryProvisionalDiagnosis ? -1 : 1)
-                //     .sort((a, b) => a.isPrimaryProvisionalDiagnosis > b.isPrimaryProvisionalDiagnosis ? -1 : 1));
-                if (acceptedDiagnoses[0]) {
-                    setActiveDiagnosisIndex(0);
+                const index = getActiveDiagnosisIndex();
+                if (index > -1) {
+                    setActiveDiagnosisIndex(index);
                 } else {
                     done();
                 }
             }        
         } else {
-            const activeIndex = activeDiagnosisIndex + 1;
-            if (activeIndex < acceptedDiagnoses.length) {
+            const activeIndex = getActiveDiagnosisIndex(activeDiagnosisIndex + 1);
+            if (activeIndex > -1) {
                 setActiveDiagnosisIndex(activeIndex);
             } else {
                 done();
@@ -195,8 +238,9 @@ export function Diagnosis(props: DiagnosisProps) {
     }, [
         loading,
         activeDiagnosisIndex,
-        acceptedDiagnoses,
+        acceptedDiagnosesAndProblems,
         isDischarge,
+        getActiveDiagnosisIndex,
         getSuggestedDiagnoses,
         setEntryValues,
         done,
@@ -217,17 +261,18 @@ export function Diagnosis(props: DiagnosisProps) {
             if (section === 'agree_disagree') return setSection('select');
             if (section === 'select') ctxGoBack();
         } else {
-            const nextIndex = activeDiagnosisIndex - 1;
-            if (nextIndex < 0) {
+            const nextIndex = getActiveDiagnosisIndex(activeDiagnosisIndex - 1, false);
+            if (nextIndex === -1) {
             	setActiveDiagnosisIndex(null);
-            } else if (acceptedDiagnoses[nextIndex]) {
+            } else if (acceptedDiagnosesAndProblems[nextIndex]) {
             	setActiveDiagnosisIndex(nextIndex);
             }
         }
     }, [
         loading,
         activeDiagnosisIndex,
-        acceptedDiagnoses,
+        acceptedDiagnosesAndProblems,
+        getActiveDiagnosisIndex,
         ctxGoBack,
     ]);
 
@@ -251,7 +296,7 @@ export function Diagnosis(props: DiagnosisProps) {
                 let titleStyle: undefined | TextProps['style'] = undefined;
 
                 if (activeDiagnosisIndex !== null) {
-                    title = `${acceptedDiagnoses[activeDiagnosisIndex]?.customName || acceptedDiagnoses[activeDiagnosisIndex]?.name}`;
+                    title = `${acceptedDiagnosesAndProblems[activeDiagnosisIndex]?.customName || acceptedDiagnosesAndProblems[activeDiagnosisIndex]?.name}`;
                 } else {
                     if (section === 'agree_disagree') {
                         title = `${activeScreen?.data?.title2 || ''}`;
@@ -285,6 +330,7 @@ export function Diagnosis(props: DiagnosisProps) {
         ...props,        
         diagnoses,
         acceptedDiagnoses,
+        acceptedDiagnosesAndProblems,
         activeDiagnosisIndex,
         hcwDiagnoses,
         loading,
@@ -306,7 +352,7 @@ export function Diagnosis(props: DiagnosisProps) {
     }), [
         props,
         diagnoses,
-        acceptedDiagnoses,
+        acceptedDiagnosesAndProblems,
         activeDiagnosisIndex,
         hcwDiagnoses,
         loading,

@@ -170,6 +170,7 @@ export const getScript = (options = {}) => new Promise<{
     script: types.Script;
     screens: types.Screen[];
     diagnoses: types.Diagnosis[];
+    problems: types.Problem[];
 }>((resolve, reject) => {
     (async () => {
         try {
@@ -183,10 +184,12 @@ export const getScript = (options = {}) => new Promise<{
             const script = res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0];
             let screens = [];
             let diagnoses = [];
+            let problems = [];
 
             if (script) {
                 const _screens = await dbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
                 const _diagnoses = await dbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
+                const _problems = await dbTransaction(`select * from problems where script_id='${script.script_id}' order by position asc;`);
                 screens = _screens
                     .map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
                     .map(s => ({
@@ -201,11 +204,12 @@ export const getScript = (options = {}) => new Promise<{
                         },
                     }));
                 diagnoses = _diagnoses.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+                problems = _problems.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
 
                
             }
 
-            resolve({ script, screens, diagnoses, });
+            resolve({ script, screens, diagnoses, problems, });
         } catch (e) {
 
             reject(e);
@@ -280,6 +284,32 @@ export const getDiagnoses = (options = {}) => new Promise<types.Diagnosis[]>((re
                 .join(',');
 
             let q = 'select * from diagnoses';
+            q = where ? `${q} where ${where}` : q;
+            q = order ? `${q} order by ${order}` : q;
+
+            const rows = await dbTransaction(`${q};`.trim(), null);
+            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+        } catch (e) { 
+            
+            reject(e); }
+    })();
+});
+
+export const getProblems = (options = {}) => new Promise<types.Problem[]>((resolve, reject) => {
+    (async () => {
+        try {
+            const { _order, ..._where }: any = options || {};
+
+            let order = (_order || [['position', 'ASC']]);
+            order = (order.map ? order : [])
+                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
+                .filter((clause: any) => clause)
+                .join(',');
+
+            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
+                .join(',');
+
+            let q = 'select * from problems';
             q = where ? `${q} where ${where}` : q;
             q = order ? `${q} order by ${order}` : q;
 

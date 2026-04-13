@@ -40,49 +40,41 @@ export async function makeApiCall(
 
         const method = options?.method?.toUpperCase() || 'GET';
 
-        if(method==='GET'){
-            try {
-               const res = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                'x-api-key': config.api_key,
-            },
-            
-        });
-        clearTimeout(timeout);
-        return res;
-      }
-        catch (err:any) {
-        if (err.name === 'AbortError') {
-            throw new Error('Network Request Taking Too Longer than the expected 45 Seconds!!');
+        try {
+            if(method==='GET') {
+                const res = await fetch(url, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers,
+                        'x-api-key': config.api_key,
+                    },
+                });
+                clearTimeout(timeout);
+                return res;
+            } else {
+                const res = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers,
+                        'x-api-key': config.api_key,
+                    },
+                });
+                clearTimeout(timeout);
+                return res;
+            }
+        } catch(err:any) {
+            if (err.name === 'AbortError') {
+                throw new Error('Network Request Taking Too Longer than the expected 45 Seconds!!');
+            }
+            throw err;
         }
-        throw err;
-       }
-        } else{
-               const res = await fetch(url, {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                'x-api-key': config.api_key,
-            },
-            
-        });
-
-        if (res.status !== 200) {
-            console.log(res);
-        }
-
-        return res;
-        }
-
-     
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; }
+        throw e; 
+    }
 }
 export async function makeLocalApiCall( 
     endpoint: string, 
