@@ -62,7 +62,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 				setLoadHospitalsError(null);
 				try {
 					const hospitals = await api.getHospitals(undefined, { country });
-					setHospitals(hospitals);
+					setHospitals(Array.isArray(hospitals) ? hospitals : []);
 				} catch (e: any) { setLoadHospitalsError(e.message); }
 				setLoadingHospitals(false);
 			}
