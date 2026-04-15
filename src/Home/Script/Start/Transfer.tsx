@@ -26,6 +26,9 @@ export function Transfer({}: TransferProps) {
                                 onChange={() => {
                                     setIsTransferred(o.value);
                                 }}
+                                onDeselect={() => {
+                                    setIsTransferred(null);
+                                }}
                             />
                         </Box>
                     )

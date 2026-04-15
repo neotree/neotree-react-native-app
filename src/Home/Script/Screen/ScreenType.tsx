@@ -15,6 +15,7 @@ import { TypeTimer } from './_TypeTimer';
 import { TypeYesNo } from './_TypeYesNo';
 import { TypeManagement } from './_TypeManagement';
 import { Diagnosis } from './Diagnosis';
+import { Problems } from './Problems';
 import { TypeDrugs } from './drugs';
 import { EdlizSummaryTable } from './EdlizSummaryTable';
 import { TypeFluids } from './fluids';
@@ -100,6 +101,11 @@ export function ScreenType({ searchVal }: ScreenTypeProps) {
 						break;
 					case 'diagnosis':
 						Component = Diagnosis;
+						scrollable = false;
+						useContentWidth = false;
+						break;
+					case 'problems':
+						Component = Problems;
 						scrollable = false;
 						useContentWidth = false;
 						break;

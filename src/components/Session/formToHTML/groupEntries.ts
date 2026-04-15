@@ -16,9 +16,10 @@ export default function groupEntries(form: any[]) {
     const hasRepeatables = repeatables && Object.keys(repeatables).length > 0;
 
     if ((hasValidValues && !excludeScreenTypes.includes(screenType)) || hasRepeatables) {
-      const sectionTitles = screenType === 'diagnosis'
-        ? ['Ranked diagnoses']
-        : [sectionTitle];
+      let sectionTitles = [sectionTitle];
+
+      if (screenType === 'diagnosis') sectionTitles = ['Ranked diagnoses'];
+      if (screenType === 'problems') sectionTitles = ['Ranked problems'];
 
       sectionTitles.forEach((sectionTitle) => {
         const _sectionTitle = ucFirst(`${sectionTitle}`.toLowerCase());
@@ -33,6 +34,9 @@ export default function groupEntries(form: any[]) {
         const filteredValues = values.filter((v: any) => {
           if (screenType === 'diagnosis') {
             return v.diagnosis?.how_agree !== 'No';
+          }
+          if (screenType === 'problems') {
+            return v.problem?.how_agree !== 'No';
           }
           return v.value || v.valueText;
         });

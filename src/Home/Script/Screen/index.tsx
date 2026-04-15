@@ -25,6 +25,7 @@ export function Screen() {
     const skippable = activeScreen?.data?.skippable
 
     React.useEffect(()=>{
+        
         if(metadata?.repeatable){
             if(skippable && !activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
                 if(!activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
@@ -44,6 +45,7 @@ export function Screen() {
             }
         }
         else{
+          
         setRepeatableComplete(true)
         
     }

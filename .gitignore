@@ -88,3 +88,9 @@ src/certs
 .env*
 !.env.example
 .eslintrc.js
+
+
+#zencoder
+.zencoder
+.zenflow
+.codex

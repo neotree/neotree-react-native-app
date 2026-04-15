@@ -101,6 +101,19 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         }, 0);
     }, [drugs, setEntryValues]);
 
+    const clearSelection = useCallback((drug: types.DrugsLibraryItem) => {
+        let _values: typeof values = [];
+        setValues(prev => {
+            _values = prev.filter(v => v.key !== drug.key);
+            return _values;
+        });
+        setCurrentDrug(prev => prev?.key === drug.key ? null : prev);
+        setTimeout(() => {
+            const completed = drugs.length === _values.length;
+            setEntryValues(completed ? _values : undefined);
+        }, 0);
+    }, [drugs, setEntryValues]);
+
     const closeModal = useCallback(() => {
         let _values: typeof values = []; 
         setValues(prev => {
@@ -243,6 +256,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                             label="Yes"
                                             checked={isSelected}
                                             onChange={() => onSelect(d, true)}
+                                            onDeselect={() => clearSelection(d)}
                                             disabled={false}
                                         />
                                     </Box>
@@ -259,6 +273,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                                     comment: comments[0] || { label: '', }, 
                                                 });
                                             }}
+                                            onDeselect={() => clearSelection(d)}
                                             disabled={false}
                                         />
                                     </Box>
