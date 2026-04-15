@@ -66,8 +66,45 @@ export function Search({
         setShowQR(true);
     };
 
+    const clearResolvedSearch = React.useCallback(() => {
+        setSelectedSession(null);
+        setPendingNeolab(null);
+        setNeolabGateOpen(false);
+        setNeolabResultsOpen(false);
+        setPendingPatientSelection(null);
+        setPatientSummaryOpen(false);
+        setToClear(false);
+        setValidationMessage('');
+        onSession(null);
+    }, [onSession]);
+
+    const resetSearchState = React.useCallback(() => {
+        clearResolvedSearch();
+        setSessions([]);
+        setMerged([]);
+        setSessionType('admission');
+        setSearched('');
+        setQRSession([]);
+        setViewedNeolabKeys([]);
+    }, [clearResolvedSearch]);
+
+    const handleUIDChange = React.useCallback((nextUID: string) => {
+        setUID(nextUID);
+        resetSearchState();
+    }, [resetSearchState]);
+
+    const resolveUIDWithoutMatch = React.useCallback((nextUID: string) => {
+        onSession({
+            session: { uid: nextUID },
+            uid: nextUID,
+            autoFill: { uid: nextUID },
+            prePopulateWithUID: prePopulateWithUID !== false,
+        });
+    }, [onSession, prePopulateWithUID]);
+
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
+            resetSearchState();
             const session = qrtext
             const sessions = []
             if (session['uid']) {
@@ -132,7 +169,7 @@ export function Search({
         }
 
 
-    }, []);
+    }, [onSession]);
 
     const isNeolabSession = React.useCallback((session: any) => {
         if (!session) return false;
@@ -156,7 +193,7 @@ export function Search({
             if (input && typeof input === 'object') {
                 try {
                     return JSON.stringify(input);
-                } catch (error) {
+                } catch {
                     return String(input);
                 }
             }
@@ -302,6 +339,10 @@ export function Search({
     const search = React.useCallback(() => {
     
         (async () => {
+            clearResolvedSearch();
+            setSessions([]);
+            setMerged([]);
+            setSearched('');
             setSearching(true);
             let searched = qrSession;
 
@@ -333,6 +374,9 @@ export function Search({
                 setSearching(false);
                 setSearched(uid);
                 enforceNeolabView(rawSessions);
+                if (!searched.length) {
+                    resolveUIDWithoutMatch(uid);
+                }
             } else {
                 setToClear(true)
                 setSearching(false);
@@ -357,7 +401,7 @@ export function Search({
             }
 
         })();
-    }, [uid, toClear]);
+    }, [clearResolvedSearch, enforceNeolabView, formatLookupError, qrSession, resolveUIDWithoutMatch, script_type, uid]);
 
 
     const handleYesPress = () => {
@@ -365,24 +409,15 @@ export function Search({
         if (selectedSession) {
             onSession(selectedSession)
         } else {
-            onSession({
-                session: { uid },
-                uid,
-                autoFill: { uid },
-                prePopulateWithUID: prePopulateWithUID !== false,
-            })
+            resolveUIDWithoutMatch(uid)
         }
     };
 
     const handleNoPress = (error?: boolean) => {
-        setToClear(false)
+        resetSearchState()
         if (!error) {
             setUID('')
-            setSearched('')
         }
-        setSessions([])
-        setQRSession([])
-        setSelectedSession(null)
     }
 
     const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
@@ -532,7 +567,7 @@ function hasPrePopulate(entry: any): boolean {
                 <Box >
                     <NeotreeIDInput
                         label={label}
-                        onChange={uid => setUID(uid)}
+                        onChange={handleUIDChange}
                         value={uid}
                     />
                     <Br spacing='l' />

@@ -24,6 +24,7 @@ export function Start() {
         }, 
     } = useScriptContext();
 
+
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
 
     const [fields, setFields] = useState<types.NuidSearchFormField[]>(nuidSearchFields.map((f: any) => ({
@@ -49,6 +50,14 @@ export function Start() {
             keyboardDidHideListener.remove();
         };
     }, []);
+
+    const hasResolvedVisibleSearchFields = nuidSearchFields.every((field: any, i: number) => {
+        if (field.type !== 'text') return true;
+        if (!evaluateFieldCondition(field)) return true;
+        return Boolean(fields[i]?.value);
+    });
+
+    const canStart = Boolean(screens?.length) && hasResolvedVisibleSearchFields;
 
     return (
         <Box flex={1} paddingTop="xl">
@@ -109,7 +118,7 @@ export function Start() {
                         )}
 
                         <Button
-                            disabled={!screens?.length}
+                            disabled={!canStart}
                             onPress={() => {
                                 (async () => {
 									try {
@@ -117,7 +126,7 @@ export function Start() {
 										setActiveScreen(screens[0]);
 										setActiveScreenIndex(0);
 										saveSession();
-									} catch(e) { /**/ }
+									} catch { /**/ }
 								})();
                             }}
                         >{matched?.session ? 'Continue' : 'Start'}</Button>
