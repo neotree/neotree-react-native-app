@@ -36,26 +36,40 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const [facility, setFacility] = React.useState<null | types.Facility>(null);
     const [searched, setSearched] = React.useState('');
     const [showQR, setShowQR] = React.useState(false);
-    const [qrSession, setQRSession]= React.useState<any>(null);
+    const [qrSession, setQRSession] = React.useState<any>(null);
 
     const openQRscanner = () => {
         setShowQR(true);
     };
 
+    const resetSearchState = React.useCallback(() => {
+        setSessions([]);
+        setSelectedSession(null);
+        setFacility(null);
+        setSessionType('admission');
+        setSearched('');
+        setQRSession(null);
+        setMatched(null);
+        if (onSession) onSession(null);
+    }, [onSession, setMatched]);
+
+    const handleUIDChange = React.useCallback((nextUID: string) => {
+        setUID(nextUID);
+        resetSearchState();
+    }, [resetSearchState]);
+
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
+            resetSearchState();
             const session = qrtext
-            if(session['uid']){
+            if (session['uid']) {
                 setUID(session['uid'])
                 setQRSession([qrtext])
 
-                console.log("[QR TEXT]", qrtext);
-                console.log("[QR SESSION]", qrSession);
-
-            }else{
-                setUID(session) 
+            } else {
+                setUID(session)
             }
-           
+
         }
         setShowQR(false);
     };
@@ -65,27 +79,41 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
     const search = React.useCallback(() => {
         (async () => {
-            try{
-            setSearching(true);
-            let sessions = qrSession
-            if(!sessions){
-            sessions = await api.getExportedSessionsByUID(uid);
+            try {
+                setMatched(null);
+                if (onSession) onSession(null);
+                setSelectedSession(null);
+                setSearching(true);
+                let sessions = qrSession
+                if (!sessions) {
+                    sessions = await api.getExportedSessionsByUID(uid);
+                }
+                setSessions(sessions);
+                setSearching(false);
+                setSearched(uid);
+                if (prePopulateWithUID && !sessions?.length) {
+                    //ALLOW UID TO PROPAGATE, IF NO MATCH FOUND
+                    const initialSession = {
+                                            session: { uid },
+                                            uid,
+                                            facility: facility as types.Facility,
+                                            prePopulateWithUID: prePopulateWithUID
+                                        }
+                                        console.log("---IOIOO---",initialSession)
+                     if (onSession) onSession(initialSession);
+                }
+            } catch {
+                setSearching(false);
             }
-            setSessions(sessions);
-            setSearching(false);
-            setSearched(uid);
-        }catch(err){
-           
-        }
         })();
-    }, [uid]);
+    }, [facility, onSession, prePopulateWithUID, qrSession, setMatched, uid]);
 
 
 
-    const admissionSessions = sessions?.filter(s => s?.data?.type==='admission' || s?.data?.script?.title.match(/admission/gi) || (s?.data?.script?.type === 'admission'));
-    const neolabSessions = sessions?.filter(s =>s?.data?.type==='neolab' || s?.data?.script?.title.match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
-    const dischargeSessions = sessions?.filter(s => s?.data?.type==='discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type==='drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const admissionSessions = sessions?.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s?.data?.script?.type === 'admission'));
+    const neolabSessions = sessions?.filter(s => s?.data?.type === 'neolab' || s?.data?.script?.title.match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
+    const dischargeSessions = sessions?.filter(s => s?.data?.type === 'discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
+    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type === 'drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
 
     function renderList(sessions: any[]) {
         return (
@@ -124,16 +152,12 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                             uid,
                                             facility: facility as types.Facility,
                                             autoFill,
-                                            prePopulateWithUID: prePopulateWithUID !== false,
-                                        } : {
-                                            session:{uid},
-                                            uid,
-                                            facility: facility as types.Facility,
                                             prePopulateWithUID: prePopulateWithUID
-                                        };
+                                        } : null;
+
 
                                         setSelectedSession(session);
-                                        setFacility(session ? null : getSessionFacility(session));
+                                        setFacility(null);
                                         setMatched(matched);
                                         if (onSession) onSession(matched);
                                     }}
@@ -163,21 +187,21 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
         <Box>
             <NeotreeIDInput
                 label={label}
-                onChange={uid => setUID(uid)}
+                onChange={handleUIDChange}
                 value={uid}
-            
+
             />
 
             <Br spacing='s' />
             <>
                 <Br />
-               <Button disabled={searching || uid!==''}
-               color="primary"
-               onPress={() => openQRscanner()}>
-               Scan QR
-               </Button>
-               {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
-               </>
+                <Button disabled={searching || uid !== ''}
+                    color="primary"
+                    onPress={() => openQRscanner()}>
+                    Scan QR
+                </Button>
+                {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
+            </>
             <Br spacing='s' />
             <Button
                 color="secondary"

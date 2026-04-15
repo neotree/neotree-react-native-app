@@ -5,6 +5,7 @@ import { Box, Text, useTheme } from '../Theme';
 
 export type RadioProps = {
     onChange?: (value?: number | string) => void;
+    onDeselect?: () => void;
     value?: number | string;
     checked?: boolean;
     label?: React.ReactNode;
@@ -13,16 +14,41 @@ export type RadioProps = {
 
 export function Radio({
     onChange,
+    onDeselect,
     value,
     checked,
     label,
     disabled,
 }: RadioProps) {
     const theme = useTheme();
+    const longPressTriggered = React.useRef(false);
+
+    const handlePress = React.useCallback(() => {
+        if (longPressTriggered.current) {
+            longPressTriggered.current = false;
+            return;
+        }
+
+        onChange && onChange(value);
+    }, [onChange, value]);
+
+    const handleLongPress = React.useCallback(() => {
+        if (!checked || disabled) return;
+
+        longPressTriggered.current = true;
+
+        if (onDeselect) {
+            onDeselect();
+            return;
+        }
+
+        onChange && onChange();
+    }, [checked, disabled, onChange, onDeselect]);
 
     return (
         <TouchableOpacity
-            onPress={() => onChange && onChange(value)}
+            onPress={handlePress}
+            onLongPress={handleLongPress}
             disabled={disabled}
         >
             <Box flexDirection="row" alignItems="center">
