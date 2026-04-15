@@ -39,6 +39,12 @@ export default (form: any) => {
             values,
           }];
           break;
+        case 'problems':
+          entries = [{
+            label: metadata.label,
+            values,
+          }];
+          break;
         case 'single_select':
           entries = [{
             label: metadata.label,

@@ -3,6 +3,7 @@ import moment from 'moment';
 
 import { Box, DatePicker } from '../../../../components';
 import * as types from '../../../../types';
+import { parseDateLikeValue } from '../../../../utils/date-value-normalization';
 import { diffHours } from '../../../../utils/diffHours';
 import { toLocalISOString } from '../../../../utils/toLocalISOString';
 
@@ -70,6 +71,7 @@ export function PeriodField({
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
+    const datePickerMode = field.format === 'years_months' ? 'date' : 'datetime';
     const fieldKey = field?.key;
     const fieldLabel = field?.label;
 
@@ -204,12 +206,34 @@ export function PeriodField({
         const _calcFrom = getCalculationEntry(scopedValues, field.calculation || field.refKey);
         if (JSON.stringify(_calcFrom) !== JSON.stringify(calcFrom)) {
           setCalcFrom(_calcFrom);
-          if (_calcFrom && _calcFrom.value) {
+          if (_calcFrom) {
             try {
-                const val = new Date(_calcFrom.value);
+                const val =
+                    parseDateLikeValue(_calcFrom.value, _calcFrom.type) ||
+                    parseDateLikeValue(_calcFrom.valueText, _calcFrom.type);
+                if (!val) {
+                    setValue(null);
+                    setValueText(null);
+                    onChange({
+                        label: field?.label,
+                        exportType: 'number',
+                        value: null,
+                        valueText: null,
+                        exportLabel: null,
+                        exportValue: null,
+                        calculateValue: null,
+                    });
+                    logPeriodFieldEvent('calcFromParseFailed', {
+                        calcFromKey: _calcFrom.key,
+                        calcFromValue: _calcFrom.value ?? null,
+                        calcFromValueText: _calcFrom.valueText ?? null,
+                        calcFromType: _calcFrom.type ?? null,
+                    });
+                    return;
+                }
                 setValue(val);
                 setValueText(dateToValueText(val, field.format));
-                const calculateValue = _calcFrom.value ? diffHours(new Date(_calcFrom.value), new Date()) : null;
+                const calculateValue = diffHours(val, new Date());
                 const normalizedValue = toLocalISOString(val);
                 onChange({ 
                     label:field?.label,
@@ -235,7 +259,7 @@ export function PeriodField({
     return (
         <Box>
             <DatePicker
-                mode="datetime"
+                mode={datePickerMode}
                 value={value}
                 disabled={!conditionMet}
                 label={`${field.label}${field.optional ? '' : ' *'}`}

@@ -45,6 +45,9 @@ export function Field({ field, value, onChange,script_type }: {
                                         onChange={() => {
                                             onChange(o.value);
                                         }}
+                                        onDeselect={() => {
+                                            onChange(null);
+                                        }}
                                     />
                                 </Box>
                             )

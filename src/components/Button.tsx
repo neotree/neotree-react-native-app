@@ -4,7 +4,7 @@ import { useTheme, Text } from './Theme';
 
 export type ButtonProps = TouchableOpacityProps & {
     size?: 's' | 'm' | 'l';
-    color?: 'primary' | 'secondary';
+    color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
     variant?: 'default' | 'link'
     children?: React.ReactNode | string;
     textStyle?: TextProps['style'];

@@ -76,6 +76,251 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
     const [searchValue, setSearchValue] = React.useState('');
     const searchTimeout = React.useRef<any>();
+	const [localServerAvailable, setLocalServerAvailable] = React.useState(false);
+	const [localServerChecked, setLocalServerChecked] = React.useState(false);
+	const [searchingLocalServer, setSearchingLocalServer] = React.useState(false);
+	const [localServerError, setLocalServerError] = React.useState('');
+	const [searchSource, setSearchSource] = React.useState<null | 'local' | 'localServer'>(null);
+	const [loadingSessionDetails, setLoadingSessionDetails] = React.useState(false);
+
+	const normalizeSessionForDisplay = async (session: any) => {
+		if (!session) return session;
+		if (session?.data?.form && Array.isArray(session.data.form)) return session;
+		const entries = session?.data?.entries || {};
+		const repeatables = entries.repeatables || {};
+		const entriesByKey = Object.keys(entries).reduce((acc: any, key: string) => {
+			acc[key.toLowerCase()] = { entry: entries[key], originalKey: key };
+			return acc;
+		}, {});
+		const buildValueObjects = (labels: any, values: any) => {
+			const labelArr = Array.isArray(labels) ? labels : [labels];
+			const valueArr = Array.isArray(values) ? values : [values];
+			const maxLen = Math.max(labelArr.length, valueArr.length, 1);
+			return Array.from({ length: maxLen }).map((_, i) => ({
+				valueText: labelArr[i] ?? valueArr[i] ?? 'N/A',
+				value: valueArr[i] ?? labelArr[i] ?? 'N/A',
+			}));
+		};
+
+		const scriptId =
+			session?.data?.script?.id ||
+			session?.data?.script?.script_id ||
+			session?.data?.scriptTitle ||
+			session?.scriptid;
+
+		let screens: any[] = [];
+		let scriptMeta: any = session?.data?.script;
+		try {
+			if (scriptId) {
+				const scriptRes: any = await api.getScript({ script_id: scriptId });
+				scriptMeta = scriptRes?.script || scriptMeta;
+				screens = scriptRes?.screens || [];
+			}
+		} catch {
+			screens = [];
+		}
+
+		if (scriptId) {
+			try {
+				const keys = Object.keys(entries).filter((key) => key !== 'repeatables');
+				const aliasPairs = await Promise.all(
+					keys.map(async (key) => {
+						const aliasRes: any = await api.getAliasKeyFromAliasAndScript({
+							script: scriptId,
+							alias: key,
+						});
+						return { key, alias: aliasRes?.name };
+					})
+				);
+				aliasPairs.forEach(({ key, alias }) => {
+					if (!alias) return;
+					const aliasKey = `${alias}`.toLowerCase();
+					if (!entriesByKey[aliasKey]) {
+						entriesByKey[aliasKey] = entriesByKey[`${key}`.toLowerCase()];
+					}
+				});
+			} catch {
+				// ignore alias lookup failures
+			}
+		}
+
+		const usedKeys = new Set<string>();
+		const form: any[] = [];
+
+		const pushScreenEntry = (screen: any, values: any[], repeatableGroup?: any) => {
+			if (!values.length && !repeatableGroup) return;
+			form.push({
+				screen: {
+					id: screen?.id || screen?.screen_id || screen?.data?.id || 'historic',
+					screen_id: screen?.screen_id || screen?.id || 'historic',
+					type: screen?.type || screen?.data?.type || 'form',
+					metadata: screen?.data?.metadata || { label: screen?.data?.title || 'Historic Data' },
+					title: screen?.data?.title || screen?.data?.metadata?.label || 'Historic Data',
+					sectionTitle: screen?.data?.sectionTitle || screen?.data?.metadata?.label || 'Historic Data',
+					listStyle: screen?.data?.listStyle,
+					printDisplayColumns: screen?.data?.printDisplayColumns,
+				},
+				values,
+				...(repeatableGroup ? { repeatables: repeatableGroup } : {}),
+			});
+		};
+
+		const buildValueFromEntry = (key: string, entry: any, fieldDef?: any) => {
+			if (!entry) return null;
+			const entryValues = entry.values || {};
+			const valueObjects = buildValueObjects(entryValues.label, entryValues.value);
+			const isMulti = valueObjects.length > 1;
+			const label = fieldDef?.label || entry.label || key;
+			const valuePayload = isMulti
+				? valueObjects.map((v) => ({
+						value: v.value,
+						valueText: v.valueText,
+						parentKey: key,
+					}))
+				: valueObjects[0]?.value ?? 'N/A';
+			const valueTextPayload = isMulti ? valuePayload : valueObjects[0]?.valueText ?? 'N/A';
+			return {
+				key,
+				type: fieldDef?.type || entry.type || 'text',
+				label,
+				value: valuePayload,
+				valueText: valueTextPayload,
+				dataType: fieldDef?.dataType,
+				unit: fieldDef?.unit,
+				parentKey: entry.parentKey || fieldDef?.parentKey || '',
+				printable: entry.printable !== false && fieldDef?.printable !== false,
+				prePopulate: entry.prePopulate || fieldDef?.prePopulate || [],
+				confidential: fieldDef?.confidential,
+				comments: entry.comments || [],
+			};
+		};
+
+		const diagnosesList = Array.isArray(session?.data?.diagnoses) ? session.data.diagnoses : [];
+		const diagnosesMap = diagnosesList.reduce((acc: any, item: any) => {
+			const key = Object.keys(item || {})[0];
+			if (!key) return acc;
+			acc[key] = item[key];
+			return acc;
+		}, {});
+		const diagnosisKeys = Object.keys(diagnosesMap).sort((a, b) => {
+			const pa = diagnosesMap[a]?.Priority ?? Number.MAX_SAFE_INTEGER;
+			const pb = diagnosesMap[b]?.Priority ?? Number.MAX_SAFE_INTEGER;
+			return pa - pb;
+		});
+
+		if (screens.length) {
+			screens.forEach((screen) => {
+				const metadata = screen?.data?.metadata || {};
+				const fields = (metadata.fields || []).map((f: any) => ({ ...f, _source: 'field' }));
+				const items = (metadata.items || []).map((f: any) => ({ ...f, _source: 'item' }));
+				const defs = [...fields, ...items];
+
+				const screenKeys = defs
+					.map((f: any) => f.key || f.value)
+					.filter((k: any) => k);
+
+				const values: any[] = [];
+				if (screen?.type === 'diagnosis') {
+					diagnosisKeys.forEach((key) => {
+						const d = diagnosesMap[key];
+						values.push({
+							key,
+							type: 'diagnosis',
+							label: d?.diagnosis || key,
+							value: d?.diagnosis || key,
+							valueText: d?.diagnosis || key,
+							diagnosis: {
+								name: d?.diagnosis || key,
+								how_agree: d?.hcw_agree,
+								value: d?.value,
+								hcw_follow_instructions: d?.hcw_follow_instructions,
+								suggested: d?.Suggested,
+								priority: d?.Priority,
+								hcw_reason_given: d?.hcw_reason_given,
+							},
+							printable: true,
+						});
+						usedKeys.add(key);
+					});
+				} else {
+					screenKeys.forEach((key: string) => {
+						const entryKey = `${key}`.toLowerCase();
+						const entryMatch = entriesByKey[entryKey];
+						if (!entryMatch) return;
+						const fieldDef = defs.find((d: any) => {
+							const defKey = `${d.key || d.value || ''}`.toLowerCase();
+							return defKey === entryKey;
+						});
+						const val = buildValueFromEntry(entryMatch.originalKey, entryMatch.entry, fieldDef);
+						if (val) {
+							values.push(val);
+							usedKeys.add(entryMatch.originalKey);
+						}
+					});
+
+					// Non-form screens often use metadata.key instead of fields/items
+					if (!screenKeys.length && metadata?.key) {
+						const metaKey = `${metadata.key}`.toLowerCase();
+						const entryMatch = entriesByKey[metaKey];
+						if (entryMatch) {
+							const val = buildValueFromEntry(entryMatch.originalKey, entryMatch.entry, {
+								key: metadata.key,
+								label: metadata.label,
+								type: metadata.type || screen?.type,
+								dataType: metadata.dataType,
+								printable: screen?.data?.printable,
+								confidential: metadata.confidential,
+							});
+							if (val) {
+								values.push(val);
+								usedKeys.add(entryMatch.originalKey);
+							}
+						}
+					}
+				}
+
+				const repeatableGroup =
+					metadata?.repeatable && metadata?.collectionName
+						? repeatables?.[metadata.collectionName]
+						: null;
+
+				pushScreenEntry(screen, values, repeatableGroup);
+			});
+		}
+
+		const remainingKeys = Object.keys(entries).filter((key) => key !== 'repeatables' && !usedKeys.has(key));
+		if (remainingKeys.length && __DEV__) {
+			console.log('[Sessions][normalizeSessionForDisplay] Unmapped keys:', remainingKeys);
+		}
+
+		if (Object.keys(repeatables).length) {
+			const alreadyHandled = screens.some((s) => s?.data?.metadata?.repeatable);
+			if (!alreadyHandled) {
+				form.push({
+					screen: {
+						id: 'historic-repeatables',
+						screen_id: 'historic-repeatables',
+						type: 'form',
+						metadata: { label: 'Historic Data' },
+						title: 'Historic Data',
+						sectionTitle: 'Historic Data',
+					},
+					values: [],
+					repeatables,
+				});
+			}
+		}
+
+		return {
+			...session,
+			uid: session?.uid || session?.data?.uid,
+			data: {
+				...session.data,
+				script: scriptMeta || session?.data?.script,
+				form,
+			},
+		};
+	};
 
 	const exportSessions = async (opts: any = {}) => {
 		const _dbSessions = dbSessions.filter((s: any) => s?.data?.completed_at);
@@ -101,6 +346,13 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				]
 			);
 		} catch (e: any) {
+			if (exportFormat === 'excel') {
+				console.error('Excel export failed from Sessions screen', {
+					exportType,
+					sessionCount: Array.isArray(sessions) ? sessions.length : 0,
+					error: e,
+				});
+			}
 			Alert.alert(
 				'Failed to export data',
 				e.message || e.msg || JSON.stringify(e),
@@ -280,6 +532,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 					const application = await api.getApplication();
 					setApplication(application);
+
+					const hasLocalServer = await api.hasLocalServerConfig();
+					setLocalServerAvailable(hasLocalServer);
+					setLocalServerChecked(true);
 				} catch (e) { console.log(e); /* DO NOTHING */ }
 			})();
 		}
@@ -348,6 +604,50 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		);
 	}
 
+	const runSearch = async (value: string) => {
+		const trimmed = (value || '').trim();
+		setLocalServerError('');
+		if (!trimmed) {
+			setSearchSource(null);
+			setSessions(getFilteredSessions(dbSessions, { searchValue: trimmed }));
+			return;
+		}
+
+		const localMatches = getFilteredSessions(dbSessions, { searchValue: trimmed });
+		if (localMatches.length) {
+			setSearchSource('local');
+			setSessions(localMatches);
+			return;
+		}
+
+		if (!localServerAvailable) {
+			setSearchSource(null);
+			setSessions([]);
+			setLocalServerError('Local server not configured for this site.');
+			return;
+		}
+
+		try {
+			setSearchingLocalServer(true);
+			const location = await api.getLocation();
+			const hospital = location?.hospital;
+			if (!hospital) throw new Error('Hospital not set');
+			const remoteSessions: any = await api.getLocalSessionsByUID(trimmed, hospital, { partial: true });
+			const remoteError = remoteSessions?.[0]?.error;
+			if (remoteError) throw new Error(remoteError);
+			const normalized = (remoteSessions || []).map((s: any) => ({ ...s, __source: 'localServer' }));
+			setSearchSource('localServer');
+			setSessions(normalized);
+			if (!normalized.length) setLocalServerError('No results found on local server.');
+		} catch (e: any) {
+			setSearchSource(null);
+			setSessions([]);
+			setLocalServerError(e?.message || 'Local server unavailable.');
+		} finally {
+			setSearchingLocalServer(false);
+		}
+	};
+
 	return (
 		<>
             <Content>
@@ -357,16 +657,31 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
                     onChangeText={searchValue => {
                         setSearchValue(searchValue);
                         if (searchTimeout.current) clearTimeout(searchTimeout.current);
-                        searchTimeout.current = setTimeout(() => setSessions(getFilteredSessions(dbSessions, { searchValue })), 1000);
+                        searchTimeout.current = setTimeout(() => runSearch(searchValue), 1000);
                     }}
                 />
+				{!!searchingLocalServer && (
+					<Box marginTop="s">
+						<Text variant="caption" color="textSecondary">Searching local server…</Text>
+					</Box>
+				)}
+				{!!localServerError && (
+					<Box marginTop="s">
+						<Text variant="caption" color="textSecondary">{localServerError}</Text>
+					</Box>
+				)}
+				{searchSource === 'localServer' && (
+					<Box marginTop="s">
+						<Text variant="caption" color="textSecondary">Showing results from local server</Text>
+					</Box>
+				)}
             </Content>
 
 			<FlatList
 				data={sessions}
 				onRefresh={getSessions}
 				refreshing={loadingSessions}
-				keyExtractor={(item: any) => `${item.id}`}
+				keyExtractor={(item: any, index) => `${item.id || item?.data?.unique_key || item?.unique_key || index}`}
 				ListHeaderComponent={() => (
 					<Content>
 						{filterByDate && (
@@ -380,7 +695,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				ListEmptyComponent={() => (
 					<Content>
 						<Box style={{ paddingVertical: 25 }}>
-							<Text style={{ textAlign: 'center', color: '#999' }}>No sessions to display</Text>
+							<Text style={{ textAlign: 'center', color: '#999' }}>
+								{searchValue && localServerChecked && !localServerAvailable
+									? 'Historic search unavailable: no local server configured.'
+									: 'No sessions to display'}
+							</Text>
 						</Box>
 					</Content>
 				)}
@@ -390,8 +709,14 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						<>
 							<Content>
 								<TouchableOpacity
-									onPress={() => setSelectedSession(item)}
+									onPress={async () => {
+										setLoadingSessionDetails(true);
+										const formatted = await normalizeSessionForDisplay(item);
+										setSelectedSession(formatted);
+										setLoadingSessionDetails(false);
+									}}
 									onLongPress={() => {
+										if (!item?.id) return;
 										Alert.alert(
 											'Delete session',
 											'Do you want to delete this session?',
@@ -652,7 +977,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				)}
 			</Modal>
 
-			{(deletingSessions || exportingSessions) && <OverlayLoader />}
+			{(deletingSessions || exportingSessions || loadingSessionDetails) && <OverlayLoader />}
 		</>
 	);
 }

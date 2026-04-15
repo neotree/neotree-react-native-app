@@ -6,19 +6,21 @@ import { Box, Text, Modal, Card, Br, TextInput, CONTENT_STYLES } from '../../../
 import * as types from '../../../../types';
 import { getSelectionConflictMessage, getSelectionConflicts } from '@/src/utils/selection-rules';
 
-type SelectDiagnosesProps = types.DiagnosisSectionProps & {
+type SelectProblemsProps = types.ProblemSectionProps & {
     
 };
 
-export function SelectDiagnoses({ 
-    hcwDiagnoses, 
+export function SelectProblems({ 
+    hcwProblems, 
     searchVal, 
-    diagnoses,
-    getDefaultDiagnosis, 
-    setHcwDiagnoses, 
-    setDiagnoses, 
-}: SelectDiagnosesProps) {
-    const {activeScreen,diagnoses:allDiagnoses,getFieldPreferences } = useScriptContext();
+    problems,
+	acceptedProblems,
+	rejectedProblems,
+    getDefaultProblem, 
+    setHcwProblems, 
+    setProblems, 
+}: SelectProblemsProps) {
+    const {activeScreen,problems:allProblems,getFieldPreferences } = useScriptContext();
 
     const metadata = activeScreen?.data?.metadata;
 
@@ -31,7 +33,7 @@ export function SelectDiagnoses({
     };
 
     const items: any[] = metadata.items.map((item: any) => {
-        const d = allDiagnoses.map(d => d.data).find(d => (d.key === item?.id) || (d.name === item?.id));
+        const d = allProblems.map(d => d.data).find(d => (d.key === item?.id) || (d.name === item?.id));
 
         let sevOrder = d?.severity_order || (d?.severity_order === 0) ? Number(d.severity_order) : null;
         if (isNaN(Number(sevOrder))) sevOrder = null;
@@ -54,19 +56,23 @@ export function SelectDiagnoses({
                 severity_order: itemSevOrder || sevOrder,
             }),
         };
-    });
+    }).filter((p: types.Problem) => {
+		const isAccpetedAndSuggested = acceptedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
+		const isRejectedAndSuggested = rejectedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
+		return !(isAccpetedAndSuggested || isRejectedAndSuggested);
+	});
 
 
     const exclusiveIsSelected = items
         .filter(item => item.exclusive)
-        .filter(item => hcwDiagnoses.map(d => d.name).includes(item.label))[0];
+        .filter(item => hcwProblems.map(d => d.name).includes(item.label))[0];
 
     return (
         <>
             <Box>
 				<FlatList 
 					data={items}
-					keyExtractor={(_, index) => `${index}`}
+					keyExtractor={(item, index) => `${item.key}${index}`}
 					ListHeaderComponent={(
 						<>
 							{!!activeScreen?.data?.instructions && (
@@ -95,19 +101,19 @@ export function SelectDiagnoses({
 						const hide = searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false;
                     
 						const isExclusive = item.exclusive;
-						const diagnosis = hcwDiagnoses.filter(d => d.name === item.label)[0];
-						const isSelected = !!diagnosis;
+						const problem = hcwProblems.filter(d => d.name === item.label)[0];
+						const isSelected = !!problem;
 						const disabled = exclusiveIsSelected && !isExclusive;
 			
-						const setValue = (val?: Partial<types.Diagnosis>) => {
-							setHcwDiagnoses([
-                                ...hcwDiagnoses.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
+						const setValue = (val?: Partial<types.Problem>) => {
+							setHcwProblems([
+                                ...hcwProblems.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
                                 {
-                                    ...getDefaultDiagnosis({
+                                    ...getDefaultProblem({
                                         key: item.key,
                                         name: item.label,
                                         how_agree: 'Yes',
-                                        priority: null, // hcwDiagnoses.length,
+                                        priority: null, // hcwProblems.length,
                                         text1: item.text1,
                                         image1: item.image1,
                                         text2: item.text2,
@@ -115,7 +121,7 @@ export function SelectDiagnoses({
                                         text3: item.text3,
                                         image3: item.image3,
                                         suggested: false,
-                                        isHcwDiagnosis: true,
+                                        isHcwProblem: true,
                                         severity_order: item.severity_order,
                                         ...val,
                                     }),
@@ -133,11 +139,11 @@ export function SelectDiagnoses({
 										if (isSelected) {
 											const matchKey = item.key || item.id || item.label;
 											const matchName = item.label || item.id || item.key;
-											setHcwDiagnoses(hcwDiagnoses.filter(d => d.key !== matchKey && d.name !== matchName));
-											setDiagnoses(diagnoses.filter(d => d.key !== matchKey && d.name !== matchName));
+											setHcwProblems(hcwProblems.filter(d => d.key !== matchKey && d.name !== matchName));
+											setProblems(problems.filter(d => d.key !== matchKey && d.name !== matchName));
 										} else {
 											const selectedValues = items
-												.filter(i => hcwDiagnoses.some(d => d.name === i.label))
+												.filter(i => hcwProblems.some(d => d.name === i.label))
 												.map(i => i.key || i.id || i.label);
 
 											const conflicts = getSelectionConflicts({
@@ -174,7 +180,7 @@ export function SelectDiagnoses({
 											})()}
 										>{item.label}</Text>
 
-										{!!(diagnosis && diagnosis.customValue) && (
+										{!!(problem && problem.customValue) && (
 											<Text
 												variant="caption"
 												color={(() => {
@@ -182,15 +188,15 @@ export function SelectDiagnoses({
 													if (disabled) return 'textDisabled';
 													return;
 												})()}
-											>{diagnosis.customValue}</Text>
+											>{problem.customValue}</Text>
 										)}
 									</Card>
 								</TouchableOpacity>
 
-								{diagnosis && diagnosis.customValue && (
+								{problem && problem.customValue && (
 									<TouchableOpacity 
 										onPress={() => {
-											setCustomValue(diagnosis.customValue);
+											setCustomValue(problem.customValue);
 											setCustomValueModal({ onClose: setValue });
 										}}
 									>

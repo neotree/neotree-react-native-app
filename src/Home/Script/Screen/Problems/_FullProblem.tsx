@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import { Box, Text, Card, Image, Br, Content } from '../../../../components';
 import * as types from '../../../../types';
 
-type FullDiagnosisProps = types.DiagnosisSectionProps & {
+type FullProblemProps = types.ProblemSectionProps & {
     
 };
 
@@ -27,15 +27,15 @@ function ManagementCard({ text, image, }: { text?: any; image?: any; }) {
     );
 }
 
-export function FullDiagnosis({ acceptedDiagnosesAndProblems, activeDiagnosisIndex }: FullDiagnosisProps) {
-    const diagnosis = acceptedDiagnosesAndProblems[activeDiagnosisIndex as number];
+export function FullProblem({ acceptedProblems, activeProblemIndex }: FullProblemProps) {
+    const problem = acceptedProblems[activeProblemIndex as number];
 
-    if (!diagnosis) return null;
+    if (!problem) return null;
 
     const data = [
-        { text: diagnosis.text1, image: diagnosis.image1 },
-        { text: diagnosis.text2, image: diagnosis.image2 },
-        { text: diagnosis.text3, image: diagnosis.image3 },
+        { text: problem.text1, image: problem.image1 },
+        { text: problem.text2, image: problem.image2 },
+        { text: problem.text3, image: problem.image3 },
     ];
 
     const noData = data.reduce((acc, item) => {
@@ -47,14 +47,14 @@ export function FullDiagnosis({ acceptedDiagnosesAndProblems, activeDiagnosisInd
 		<ScrollView>
 			<Content>
 				<Box>
-					{!!diagnosis.expressionMeaning && <Text style={{ marginBottom: 20 }}>{diagnosis.expressionMeaning}</Text>}
+					{!!problem.expressionMeaning && <Text style={{ marginBottom: 20 }}>{problem.expressionMeaning}</Text>}
 					{data.map((item, i) => {
 						const key = `${i}`;
 						return <ManagementCard key={key} {...item} />;
 					})}
 					{!noData ? null : (
 						<Box marginVertical="xl">
-							<Text color="textDisabled" variant="title3" textAlign="center">Diagnosis does not have management details</Text>
+							<Text color="textDisabled" variant="title3" textAlign="center">Problem does not have management details</Text>
 						</Box>
 					)}
 				</Box>

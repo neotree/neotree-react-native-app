@@ -3,6 +3,7 @@ type Option = {
     value: string; 
     label: string; 
     enterValueManually?: boolean;
+    enterValueManuallyLabel?: string;
     exclusive?: boolean;
     exclusiveGroup?: string;
     forbidWith?: string[];

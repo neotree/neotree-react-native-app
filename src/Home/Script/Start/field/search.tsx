@@ -41,6 +41,12 @@ export function Search({
     const [merged, setMerged] = React.useState<any>([])
     const [sessionType, setSessionType] = React.useState('admission');
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
+    const [pendingNeolab, setPendingNeolab] = React.useState<any>(null);
+    const [neolabGateOpen, setNeolabGateOpen] = React.useState(false);
+    const [neolabResultsOpen, setNeolabResultsOpen] = React.useState(false);
+    const [viewedNeolabKeys, setViewedNeolabKeys] = React.useState<string[]>([]);
+    const [pendingPatientSelection, setPendingPatientSelection] = React.useState<any>(null);
+    const [patientSummaryOpen, setPatientSummaryOpen] = React.useState(false);
     const [searched, setSearched] = React.useState('');
     const [searching, setSearching] = React.useState(false);
     const [qrSession, setQRSession] = React.useState<any>([]);
@@ -60,8 +66,45 @@ export function Search({
         setShowQR(true);
     };
 
+    const clearResolvedSearch = React.useCallback(() => {
+        setSelectedSession(null);
+        setPendingNeolab(null);
+        setNeolabGateOpen(false);
+        setNeolabResultsOpen(false);
+        setPendingPatientSelection(null);
+        setPatientSummaryOpen(false);
+        setToClear(false);
+        setValidationMessage('');
+        onSession(null);
+    }, [onSession]);
+
+    const resetSearchState = React.useCallback(() => {
+        clearResolvedSearch();
+        setSessions([]);
+        setMerged([]);
+        setSessionType('admission');
+        setSearched('');
+        setQRSession([]);
+        setViewedNeolabKeys([]);
+    }, [clearResolvedSearch]);
+
+    const handleUIDChange = React.useCallback((nextUID: string) => {
+        setUID(nextUID);
+        resetSearchState();
+    }, [resetSearchState]);
+
+    const resolveUIDWithoutMatch = React.useCallback((nextUID: string) => {
+        onSession({
+            session: { uid: nextUID },
+            uid: nextUID,
+            autoFill: { uid: nextUID },
+            prePopulateWithUID: prePopulateWithUID !== false,
+        });
+    }, [onSession, prePopulateWithUID]);
+
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
+            resetSearchState();
             const session = qrtext
             const sessions = []
             if (session['uid']) {
@@ -126,11 +169,180 @@ export function Search({
         }
 
 
+    }, [onSession]);
+
+    const isNeolabSession = React.useCallback((session: any) => {
+        if (!session) return false;
+        const title = session?.data?.script?.title || '';
+        const type = session?.data?.type || session?.data?.script?.type || '';
+        return /neolab/i.test(title) || /neolab/i.test(type);
     }, []);
+
+    const getNeolabKey = React.useCallback((session: any) => {
+        return session?.data?.unique_key || session?.data?.uid || session?.uid || '';
+    }, []);
+
+    const formatNeolabValue = React.useCallback((value: any) => {
+        const normalize = (input: any): string => {
+            if (typeof input === 'string' && moment(input, moment.ISO_8601, true).isValid()) {
+                return moment(input).format('lll');
+            }
+            if (Array.isArray(input)) {
+                return input.map((item) => normalize(item)).join(', ');
+            }
+            if (input && typeof input === 'object') {
+                try {
+                    return JSON.stringify(input);
+                } catch {
+                    return String(input);
+                }
+            }
+            return String(input);
+        };
+        const hasValue = value !== undefined && value !== null && value !== '';
+        if (!hasValue) return null;
+        return normalize(value);
+    }, []);
+
+    const getNeolabSummaryItems = React.useCallback((session: any) => {
+        const entries = session?.data?.entries || {};
+        const entriesList = Object.entries(entries) as [string, any][];
+        const hasAnyIps = entriesList.some(([, entry]: [string, any]) => entry?.ips === true);
+        return entriesList.reduce((acc: any[], [key, entry]: [string, any]) => {
+            const safeKey = typeof key === 'string' ? key.trim() : '';
+            if (!safeKey) return acc;
+            if (hasAnyIps && entry?.ips !== true) return acc;
+            const pickFirst = (input: any) => {
+                if (Array.isArray(input)) {
+                    const found = input.find((item) => item !== undefined && item !== null && item !== '');
+                    return found !== undefined ? found : input[0];
+                }
+                return input;
+            };
+            const rawValue = pickFirst(entry?.values?.value ?? entry?.value);
+            const rawLabel = pickFirst(entry?.values?.label ?? entry?.label ?? null);
+            const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
+            const hasLabel = rawLabel !== undefined && rawLabel !== null && rawLabel !== '';
+            const type = entry?.type;
+            const preferLabelTypes = ['id', 'set<id>', 'dropdown', 'yesno'];
+            const shouldPreferLabel = typeof type === 'string' && preferLabelTypes.includes(type.toLowerCase());
+            const effectiveValue = shouldPreferLabel
+                ? (hasLabel ? rawLabel : (hasValue ? rawValue : null))
+                : (hasValue ? rawValue : (hasLabel ? rawLabel : null));
+            if (effectiveValue === null || effectiveValue === '') return acc;
+            const labelText = typeof rawLabel === 'string' ? rawLabel.trim() : '';
+            const displayLabel = labelText.length > 0 ? labelText : safeKey;
+            const keyLower = safeKey.toLowerCase();
+            const labelLower = displayLabel.toLowerCase();
+            const isUidKey = keyLower === 'uid';
+            const hasUid = keyLower.includes('uid') || labelLower.includes('uid');
+            const hasHospitalId = keyLower.includes('hospnu') || keyLower.includes('hospitalid') || keyLower.includes('labid')
+                || labelLower.includes('hospnu') || labelLower.includes('hospid');
+            const hasOrgNo = keyLower.includes('orgno') || labelLower.includes('orgno');
+            const hasName = keyLower.includes('firstname') || keyLower.includes('surname')
+                || labelLower.includes('firstname') || labelLower.includes('surname');
+            if (hasHospitalId || hasOrgNo || hasName) return acc;
+            if (hasUid && !isUidKey) return acc;
+            const displayValue = formatNeolabValue(effectiveValue);
+            if (displayValue === null) return acc;
+            acc.push({
+                key: safeKey,
+                label: rawLabel,
+                displayLabel,
+                value: displayValue,
+                type,
+            });
+            return acc;
+        }, []);
+    }, [formatNeolabValue]);
+
+    const resetNeolabGate = React.useCallback(() => {
+        setNeolabGateOpen(false);
+        setNeolabResultsOpen(false);
+        setPendingNeolab(null);
+        setSelectedSession(null);
+    }, []);
+
+    const getPatientSummaryItems = React.useCallback((session: any) => {
+        const entries = session?.data?.entries || {};
+        const keyMatch = /(baby|mother|uid|datebct|datebcr|datetime|dobtob|gestation|weight)/i;
+        const entriesList = Object.entries(entries);
+        const buildItems = (filterFn: (key: string, entry: any) => boolean) =>
+            entriesList.reduce((acc: any[], [key, entry]: [string, any]) => {
+                const safeKey = typeof key === 'string' ? key.trim() : '';
+                if (!safeKey) return acc;
+                if (!filterFn(safeKey, entry)) return acc;
+                const rawValue = Array.isArray(entry?.values?.value)
+                    ? entry.values.value[0]
+                    : entry?.values?.value ?? entry?.value;
+                const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
+                if (!hasValue) return acc;
+                const label = entry?.values?.label?.[0] || safeKey;
+                acc.push({ key: safeKey, label, value: rawValue });
+                return acc;
+            }, []);
+
+        const uidItems = buildItems((key) => /^uid$/i.test(key));
+        const uidItem = uidItems[0];
+        const ipsItems = buildItems((_, entry) => entry?.ips === true).filter(i => !uidItem || i.key !== uidItem.key);
+        const keyMatchItems = buildItems((key) => keyMatch.test(key)).filter(i => !uidItem || i.key !== uidItem.key);
+
+        const result: any[] = [];
+        if (uidItem) result.push(uidItem);
+        result.push(...ipsItems);
+
+        if (ipsItems.length < 4) {
+            const seen = new Set(result.map(i => i.key));
+            let added = 0;
+            for (const item of keyMatchItems) {
+                if (seen.has(item.key)) continue;
+                result.push(item);
+                seen.add(item.key);
+                added += 1;
+                if (ipsItems.length + added >= 4) break;
+            }
+        }
+
+        return result.map(({ key, label, value }) => ({ key, label, value }));
+    }, []);
+
+    const formatPatientValue = React.useCallback((value: any, label?: string, key?: string) => {
+        const labelKey = `${label || ''} ${key || ''}`.toLowerCase();
+        const isWeightField = /weight/.test(labelKey);
+        if (!isWeightField && typeof value === 'string' && moment(value, moment.ISO_8601, true).isValid()) {
+            return moment(value).format('lll');
+        }
+        return String(value);
+    }, []);
+
+    const resetPatientSummary = React.useCallback(() => {
+        setPatientSummaryOpen(false);
+        setPendingPatientSelection(null);
+    }, []);
+
+    const enforceNeolabView = React.useCallback((items: any[]) => {
+        if (script_type === 'admission') return false;
+        const pending = items?.find((session: any) => {
+            if (!isNeolabSession(session)) return false;
+            const key = getNeolabKey(session);
+            return key ? !viewedNeolabKeys.includes(key) : true;
+        });
+        if (pending) {
+            setPendingNeolab({ session: pending, key: getNeolabKey(pending) });
+            setNeolabGateOpen(true);
+            return true;
+        }
+        return false;
+    }, [getNeolabKey, isNeolabSession, script_type, viewedNeolabKeys]);
 
 
     const search = React.useCallback(() => {
+    
         (async () => {
+            clearResolvedSearch();
+            setSessions([]);
+            setMerged([]);
+            setSearched('');
             setSearching(true);
             let searched = qrSession;
 
@@ -156,11 +368,15 @@ export function Search({
                 setSearching(false);
             }
             else if (searched) {
-               
+                const rawSessions = searched;
                 searched = filterDataWithPrePopulatedEntries(searched)
                 setSessions(searched);
                 setSearching(false);
                 setSearched(uid);
+                enforceNeolabView(rawSessions);
+                if (!searched.length) {
+                    resolveUIDWithoutMatch(uid);
+                }
             } else {
                 setToClear(true)
                 setSearching(false);
@@ -185,7 +401,7 @@ export function Search({
             }
 
         })();
-    }, [uid, toClear]);
+    }, [clearResolvedSearch, enforceNeolabView, formatLookupError, qrSession, resolveUIDWithoutMatch, script_type, uid]);
 
 
     const handleYesPress = () => {
@@ -193,24 +409,15 @@ export function Search({
         if (selectedSession) {
             onSession(selectedSession)
         } else {
-            onSession({
-                session: { uid },
-                uid,
-                autoFill: { uid },
-                prePopulateWithUID: prePopulateWithUID !== false,
-            })
+            resolveUIDWithoutMatch(uid)
         }
     };
 
     const handleNoPress = (error?: boolean) => {
-        setToClear(false)
+        resetSearchState()
         if (!error) {
             setUID('')
-            setSearched('')
         }
-        setSessions([])
-        setQRSession([])
-        setSelectedSession(null)
     }
 
     const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
@@ -272,6 +479,11 @@ export function Search({
                                             autoFill,
                                             prePopulateWithUID: prePopulateWithUID !== false,
                                         } : null
+                                        if (selected) {
+                                            setPendingPatientSelection(matched);
+                                            setPatientSummaryOpen(true);
+                                            return;
+                                        }
 
                                         validateSearchResultDates(matched);
                                     }}
@@ -355,7 +567,7 @@ function hasPrePopulate(entry: any): boolean {
                 <Box >
                     <NeotreeIDInput
                         label={label}
-                        onChange={uid => setUID(uid)}
+                        onChange={handleUIDChange}
                         value={uid}
                     />
                     <Br spacing='l' />
@@ -459,9 +671,133 @@ function hasPrePopulate(entry: any): boolean {
                         )}
                     </ScrollView>
                 </Box>}
+            <Modal
+                open={neolabGateOpen}
+                onClose={() => {}}
+                title={<Text variant="title2" color="primary">NeoLab Results Found</Text>}
+            >
+                <Text variant="body" color="info" style={{ fontFamily: 'Georgia' }}>
+                    A NeoLab result was received for this Neotree ID. Please review the details before continuing.
+                </Text>
+                <Br spacing="l" />
+                <Button
+                    color="primary"
+                    size="m"
+                    onPress={() => {
+                        setNeolabGateOpen(false);
+                        setNeolabResultsOpen(true);
+                    }}
+                >
+                    View Results
+                </Button>
+            </Modal>
+            <Modal
+                open={neolabResultsOpen}
+                onClose={resetNeolabGate}
+                title="Results Summary"
+            >
+                <Text color="info" style={{ fontStyle: 'italic' }}>Scroll Down To Continue</Text>
+                <Br spacing="m" />
+
+                <Text variant="title3">{`UID: ${pendingNeolab?.session?.data?.uid || pendingNeolab?.session?.uid || uid || 'Unknown'}`}</Text>
+                <Br spacing="m" />
+                {pendingNeolab?.session ? (
+                    getNeolabSummaryItems(pendingNeolab.session).length ? (
+                        getNeolabSummaryItems(pendingNeolab.session).map((item: any, index: number) => (
+                            <Box
+                                key={`${item.key || item.label}-${index}`}
+                                backgroundColor={index % 2 === 0 ? 'grey-50' : 'primary-200'}
+                                borderRadius="s"
+                                borderLeftWidth={3}
+                                borderLeftColor="primary"
+                                padding="m"
+                                marginBottom="s"
+                            >
+                                {item.key ? (
+                                    <Text variant="caption" color="textSecondary" style={{ fontFamily: 'Georgia' }}>{item.key}</Text>
+                                ) : null}
+                                <Text variant="body" style={{ fontFamily: 'Georgia' }}>{item.value}</Text>
+                            </Box>
+                        ))
+                    ) : (
+                        <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No result details available.</Text>
+                    )
+                ) : (
+                    <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No result details available.</Text>
+                )}
+                <Br spacing="l" />
+                <Button
+                    color="primary"
+                    size="m"
+                    onPress={() => {
+                        const key = pendingNeolab?.key;
+                        if (key && !viewedNeolabKeys.includes(key)) {
+                            setViewedNeolabKeys(prev => [...prev, key]);
+                        }
+                        setNeolabResultsOpen(false);
+                        setPendingNeolab(null);
+                    }}
+                >
+                    Continue
+                </Button>
+            </Modal>
+            <Modal
+                open={patientSummaryOpen}
+                onClose={() => {}}
+                title={<Text variant="title2" color="primary">Patient Summary</Text>}
+            >
+                <Box backgroundColor="primary-200" borderRadius="s" padding="m" marginBottom="m">
+                    <Text variant="title3" color="info" style={{ fontFamily: 'Georgia' }}>Please verify the patient details.</Text>
+                </Box>
+                {pendingPatientSelection?.session ? (
+                    getPatientSummaryItems(pendingPatientSelection.session).length ? (
+                        getPatientSummaryItems(pendingPatientSelection.session).map((item: any, index: number) => (
+                            <Box
+                                key={`${item.label}-${index}`}
+                                backgroundColor={index % 2 === 0 ? 'grey-50' : 'primary-200'}
+                                borderRadius="s"
+                                borderLeftWidth={3}
+                                borderLeftColor="primary"
+                                padding="m"
+                                marginBottom="s"
+                            >
+                                <Text variant="caption" color="textSecondary" style={{ fontFamily: 'Georgia' }}>{item.label}</Text>
+                                <Text variant="body" style={{ fontFamily: 'Georgia' }}>{formatPatientValue(item.value, item.label, item.key)}</Text>
+                            </Box>
+                        ))
+                    ) : (
+                        <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No patient summary available.</Text>
+                    )
+                ) : (
+                    <Text color="textSecondary" style={{ fontFamily: 'Georgia' }}>No patient summary available.</Text>
+                )}
+                <Box flexDirection="row" justifyContent="space-between" marginTop="m">
+                    <Button
+                        color="warning"
+                        size="m"
+                        onPress={() => {
+                            setSelectedSession(null);
+                            resetPatientSummary();
+                        }}
+                        style={{ flex: 1, marginRight: 10 }}
+                    >
+                        Change Selection
+                    </Button>
+                    <Button
+                        color="success"
+                        size="m"
+                        onPress={() => {
+                            const matched = pendingPatientSelection || null;
+                            resetPatientSummary();
+                            validateSearchResultDates(matched);
+                        }}
+                        style={{ flex: 1, marginLeft: 10 }}
+                    >
+                        Continue
+                    </Button>
+                </Box>
+            </Modal>
         </>
 
     );
 }
-
-

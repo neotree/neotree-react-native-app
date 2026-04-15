@@ -33,7 +33,7 @@ export async function toHL7Like(data: any) {
 
   // METADATA
   Object.keys(data).forEach((k) => {
-    if (k !== 'entries' && k !== 'diagnoses' && k !== 'scriptTitle') {
+    if (k !== 'entries' && k !== 'diagnoses' && k !== 'problems' && k !== 'scriptTitle') {
       if (k === 'script' && typeof data[k] === 'object') {
         Object.entries(data[k]).forEach(([ki, value]) => {
           if(ki==='id'){
@@ -91,7 +91,7 @@ async function processEntries(data:any, scriptid:string) {
               return;
             }
 
-            const { values, type, prePopulate } = entryData;
+            const { values, type, prePopulate, ips } = entryData;
 
             if (key !== 'repeatables' && type !== 'diagnosis' && Array.isArray(prePopulate) && prePopulate.length > 0) {
               const value = values?.value;
@@ -104,7 +104,8 @@ async function processEntries(data:any, scriptid:string) {
                   typeof v === 'string' ? v.replace(/[\r\n]+/g, ' ').trim() : v
                 );
 
-                entries += `${formattedKey}|${sanitizedValues.join('^')}|${formatPrepopulate(prePopulate)}\n`;
+                const ipsValue = ips === true ? '1' : '';
+                entries += `${formattedKey}|${sanitizedValues.join('^')}|${formatPrepopulate(prePopulate)}|${ipsValue}\n`;
               }
             } else if (key === 'repeatables') {
               const repeatableTypes = entriesArray[key];
@@ -174,7 +175,6 @@ async function processEntries(data:any, scriptid:string) {
         );
       })
   );
-
   return entries;
 }
 function hasNeotreeIdOnly(data: any): boolean {
@@ -279,21 +279,10 @@ export async function fromHL7Like(data: string) {
       return [];
     }
 
-    // Attempt the first decoding method (optimized format)
-    try {
-      const newUncompressed = decodeOptimisedData(data);
-      if (newUncompressed && newUncompressed.length > 0) {
-        return await convertToJSON(newUncompressed);
-      }
-    } catch (e) {
-      console.log("Optimized decode failed:", e);
-      // Continue to next method
-    }
-
-    // Attempt the second decoding method (base64/compressed format)
+    // Attempt the first decoding method (base64/compressed format)
     try {
       const backToBase64 = numbersToText(data);
-      if (backToBase64 && backToBase64.length > 0) {
+      if (looksLikeBase64(backToBase64)) {
         const uint8Array = base64ToUint8Array(backToBase64);
         if (uint8Array && uint8Array.length > 0) {
           try {
@@ -307,9 +296,22 @@ export async function fromHL7Like(data: string) {
         } else {
           console.log("Base64 to Uint8Array conversion returned null or empty");
         }
+      } else {
+        console.log("Decoded text is not base64-like; skipping base64 decode");
       }
     } catch (e) {
       console.log("Numbers to text conversion failed:", e);
+    }
+
+    // Attempt the second decoding method (optimized format)
+    try {
+      const newUncompressed = decodeOptimisedData(data);
+      if (newUncompressed && newUncompressed.length > 0) {
+        return await convertToJSON(newUncompressed);
+      }
+    } catch (e) {
+      console.log("Optimized decode failed:", e);
+      // Continue to next method
     }
 
     return [];
@@ -360,6 +362,13 @@ function numbersToText(data: string): string {
   }
 
   return result;
+}
+
+function looksLikeBase64(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length % 4 !== 0) return false;
+  return /^[A-Za-z0-9+/=]+$/.test(trimmed);
 }
 const base64ToUint8Array = (base64: string): Uint8Array | null => {
   try {
@@ -508,7 +517,6 @@ async function convertToJSON(input: string) {
 
   // Normalize input to handle embedded newlines and unexpected characters
   const normalizedInput = normalizeHL7Input(input);
-  console.log("---TRES:::",normalizedInput)
 
   const lines = normalizedInput.trim().split("\n");
   const result: any = {};
@@ -588,9 +596,10 @@ async function convertToJSON(input: string) {
     if (currentSection === result.entries) {
       if (parts.length < 2) continue; // Skip malformed entries
 
-      const [key, value, prePopulate] = parts;
+      const [key, value, prePopulate, ipsStr] = parts;
       const trimmedKey = key?.trim();
       const trimmedValue = value?.trim() || "";
+      const ipsValue = (ipsStr || "").trim() === '1';
 
       if (!trimmedKey) continue; // Skip if no key
 
@@ -604,6 +613,7 @@ async function convertToJSON(input: string) {
       const formattedField = aliasResult?.name || trimmedKey;
 
       currentSection[formattedField] = {
+        ips: ipsValue,
         values: {
           value: formatted,
           prePopulate: reverseFormatPrepopulate(prePopulate || ""),
@@ -641,6 +651,7 @@ async function convertToJSON(input: string) {
 
   delete transformed.repeatables;
   delete transformed.diagnoses;
+  delete transformed.problems;
 
   return transformed;
 }

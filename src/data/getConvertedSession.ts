@@ -24,9 +24,15 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
         const drugsScreenEntry = form.find((e: any) => e.screen.type === 'drugs');
         const fluidsScreenEntry = form.find((e: any) => e.screen.type === 'fluids');
         const feedsScreenEntry = form.find((e: any) => e.screen.type === 'feeds');
+
         const diagnosisScreenEntry = form.find((e: any) => e.screen.type === 'diagnosis');
         const diagnoses = diagnosisScreenEntry
           ? diagnosisScreenEntry.values.map((v: any) => v.diagnosis)
+          : [];
+
+        const problemsScreenEntry = form.find((e: any) => e.screen.type === 'problems');
+        const problems = problemsScreenEntry
+          ? problemsScreenEntry.values.map((v: any) => v.problems)
           : [];
 
         // Helper: convert repeatable item values
@@ -45,6 +51,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
                 label: valObj.exportLabel ?? valObj.valueLabel ??  valObj.value?? '',
                 printable: valObj.printable ?? true,
                 prePopulate: valObj.prePopulate,
+                ips: valObj.ips
               };
             } else {
               if(v){
@@ -82,13 +89,13 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             type,
             dataType,
             value,
-            label,
             parentKey,
             valueLabel,
             exportValue,
             exportLabel,
             exportType,
             prePopulate,
+            ips,
             comments,
           } = v;
 
@@ -98,6 +105,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             parentKey: parentKey || '',
             comments: comments || [],
             prePopulate: prePopulate || parentPrePopulate || [],
+            ips:ips||false
           };
 
           if (Array.isArray(value)) {
@@ -169,6 +177,18 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           diagnoses: diagnoses.map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,
+              value: d.value,
+              hcw_agree: d.how_agree,
+              hcw_follow_instructions: d.hcw_follow_instructions,
+              Suggested: d.suggested,
+              Priority: d.priority,
+              hcw_reason_given: d.hcw_reason_given,
+            },
+          })),
+          problems: problems.map((d: any) => ({
+            [d.key || d.name]: {
+              diagnosis: d.name,
+              value: d.value,
               hcw_agree: d.how_agree,
               hcw_follow_instructions: d.hcw_follow_instructions,
               Suggested: d.suggested,

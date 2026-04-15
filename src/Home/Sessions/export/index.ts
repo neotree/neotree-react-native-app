@@ -1,15 +1,81 @@
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
 import { APP_CONFIG } from '../../../constants';
 import * as types from '../../../types';
+import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 
 export { getJSON };
 
 const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
+
+const getExportQueue = async (): Promise<number[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.EXPORT_QUEUE);
+    const ids = raw ? JSON.parse(raw) : [];
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+};
+
+const setExportQueue = async (ids: number[]) => {
+  const unique = Array.from(new Set((ids || []).filter((id) => Number.isFinite(id))));
+  await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.EXPORT_QUEUE, JSON.stringify(unique));
+};
+
+const addToExportQueue = async (ids: number[]) => {
+  const existing = await getExportQueue();
+  await setExportQueue([...existing, ...(ids || [])]);
+};
+
+const removeFromExportQueue = async (ids: number[]) => {
+  const removeSet = new Set((ids || []).filter((id) => Number.isFinite(id)));
+  if (!removeSet.size) return;
+  const existing = await getExportQueue();
+  await setExportQueue(existing.filter((id) => !removeSet.has(id)));
+};
+
+const getExcelEntryValue = ({
+  entry,
+  entryKey,
+  scriptId,
+  sessionId,
+}: {
+  entry: any;
+  entryKey: string;
+  scriptId: string;
+  sessionId?: number;
+}) => {
+  if (entryKey === 'repeatables') {
+    return null;
+  }
+
+  const rawValue = entry?.values?.value;
+
+  if (Array.isArray(rawValue)) {
+    return rawValue
+      .filter((value) => value !== null && value !== undefined && value !== '')
+      .join(', ');
+  }
+
+  if (rawValue !== undefined && rawValue !== null) {
+    return String(rawValue);
+  }
+
+  console.error('Excel export entry missing values.value', {
+    scriptId,
+    sessionId,
+    entryKey,
+    entry,
+  });
+
+  return 'N/A';
+};
 
 const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
   (async () => {
@@ -71,9 +137,23 @@ export function exportEXCEL(opts: any = {}) {
     (async () => {
       try {
         const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
+        if (!permissionGranted) {
+          const error = new Error('App has not been granted permission to save files to device');
+          console.error('Excel export permission denied', {
+            sessionCount: sessions.length,
+            format: opts.format,
+          });
+          return reject(error);
+        }
 
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+        if (!granted) {
+          console.error('Excel export directory permission not granted', {
+            sessionCount: sessions.length,
+            format: opts.format,
+          });
+        }
 
         if (granted) {
           const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
@@ -99,9 +179,20 @@ export function exportEXCEL(opts: any = {}) {
                 const data = json[scriptId].map((e: any) => {
                   const values = Object.keys(e.entries).reduce((acc: any, entryKey) => {
                     const entry = e.entries[entryKey];
+                    const entryValue = getExcelEntryValue({
+                      entry,
+                      entryKey,
+                      scriptId,
+                      sessionId: e.id,
+                    });
+
+                    if (entryValue === null) {
+                      return acc;
+                    }
+
                     return {
                       ...acc,
-                      [entryKey || 'N/A']: entry.values.value.join(', ')
+                      [entryKey || 'N/A']: entryValue
                     };
                   }, null);
                   return !values ? null : keys.reduce((acc: any, key: any) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
@@ -115,7 +206,15 @@ export function exportEXCEL(opts: any = {}) {
                 const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
         
                 resolve([fileUri, wbout]);
-              } catch (e) { reject(e); }
+              } catch (e) {
+                console.error('Excel export sheet generation failed', {
+                  scriptId,
+                  scriptTitle: scripts[scriptId]?.data?.title,
+                  sessionCount: json[scriptId]?.length || 0,
+                  error: e,
+                });
+                reject(e);
+              }
             })();
           })));
     
@@ -125,14 +224,27 @@ export function exportEXCEL(opts: any = {}) {
                 try {
                   await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
                   resolve(null);
-                } catch (e) { reject(e); }
+                } catch (e) {
+                  console.error('Excel export file write failed', {
+                    fileUri,
+                    error: e,
+                  });
+                  reject(e);
+                }
               })();
             })));
           }
         }
 
         resolve(null);
-      } catch (e) { reject(e); }
+      } catch (e) {
+        console.error('Excel export failed', {
+          sessionCount: sessions.length,
+          format: opts.format,
+          error: e,
+        });
+        reject(e);
+      }
     })();
   });
 }
@@ -143,7 +255,27 @@ export function exportToApi(opts: any = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const sessions = _sessions.filter((s: any) => !s.exported);
+        const queuedIds = await getExportQueue();
+        let queuedSessions: any[] = [];
+        if (queuedIds.length) {
+          const allSessions: any[] = (await api.getSessions()) as any[];
+          queuedSessions = (allSessions || []).filter(s => queuedIds.includes(s.id));
+          const existingIds = queuedSessions.map(s => s.id);
+          const missingIds = queuedIds.filter(id => !existingIds.includes(id));
+          if (missingIds.length) {
+            await removeFromExportQueue(missingIds);
+          }
+        }
+
+        const sessions = [
+          ..._sessions,
+          ...queuedSessions,
+        ]
+          .filter((s: any) => s && !s.exported)
+          .reduce((acc: any[], s: any) => {
+            if (!acc.some(e => e.id === s.id)) acc.push(s);
+            return acc;
+          }, []);
 
         try {
           if (opts.dontSaveFile !== true) await exportJSON(opts);
@@ -179,6 +311,7 @@ export function exportToApi(opts: any = {}) {
           // 1. Main session export to /sessions
           ...standardExportData.map((s: any, i: number) => ({
             type: 'main',
+            sessionId: sessions[i]?.id,
             execute: async () => {
               await api.exportSession(s);
               await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id } });
@@ -189,6 +322,7 @@ export function exportToApi(opts: any = {}) {
           // 2. Local export to /local (if hasLocalConfig)
           ...(hasLocalConfig ? pollExportData.map((s: any, i: number) => ({
             type: 'local',
+            sessionId: sessions[i]?.id,
             execute: async () => {
               if (sessions[i]?.local_export) return { success: true, skipped: true };
 
@@ -212,11 +346,12 @@ export function exportToApi(opts: any = {}) {
           // 3. Poll data export to /save-poll-data
           ...pollExportData.map((s: any, i: number) => ({
             type: 'poll',
+            sessionId: sessions[i]?.id,
             execute: async () => {
               if (sessions[i]?.exported) return { success: true, skipped: true };
 
               const { id, exported, local_export, ...exportable } = s;
-              await api.makeApiCall(
+              const res = await api.makeApiCall(
                 'nodeapi',
                 `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
                 {
@@ -224,6 +359,9 @@ export function exportToApi(opts: any = {}) {
                   body: JSON.stringify(exportable),
                 }
               );
+              if (res?.status !== 200) {
+                throw new Error(`Failed to export poll data for session ${sessions[i]?.id}`);
+              }
               return { success: true, id: sessions[i]?.id };
             }
           }))
@@ -240,12 +378,30 @@ export function exportToApi(opts: any = {}) {
           .filter(({ result }) => result.status === 'rejected')
           .map(({ result, group }) => ({
             type: group.type,
+            sessionId: group.sessionId,
             error: result.status === 'rejected' ? result.reason : null
           }));
 
         if (failures.length > 0) {
           console.log('Export failures:', failures);
-          // Don't reject - allow partial success
+          const mainFailures = failures.filter(f => f.type === 'main');
+          if (mainFailures.length > 0) {
+            await addToExportQueue(mainFailures.map(f => f.sessionId).filter(Boolean));
+          }
+          if (mainFailures.length > 0) {
+            throw new Error(`Failed to export ${mainFailures.length} session(s). Check network and try again.`);
+          }
+          // Local/poll failures are treated as warnings
+        }
+
+        const mainSuccessIds = results
+          .map((result, index) => ({ result, group: apiCallGroups[index] }))
+          .filter(({ result, group }) => group.type === 'main' && result.status === 'fulfilled')
+          .map(({ group }) => group.sessionId)
+          .filter(Boolean);
+
+        if (mainSuccessIds.length > 0) {
+          await removeFromExportQueue(mainSuccessIds);
         }
 
         resolve(null);

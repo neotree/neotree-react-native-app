@@ -94,13 +94,22 @@ export const getExportedSessionsByUID = (uid: string) => new Promise<any[]>((res
     })();
 });
 
-export const getLocalSessionsByUID = (uid: string, hospital: string) => new Promise<any[]>((resolve, reject) => {
+export const getLocalSessionsByUID = (
+    uid: string,
+    hospital: string,
+    opts: { partial?: boolean } = {}
+) => new Promise<any[]>((resolve, reject) => {
     (async () => {
         if (!uid) return reject(new Error('UID is required'));
 
         try {
-
-            const res = await makeLocalGetApiCall(`/localByUid?uid=${uid}&hospital=${hospital}`);
+            const { partial } = opts;
+            const query = [
+                `uid=${encodeURIComponent(uid)}`,
+                `hospital=${encodeURIComponent(hospital)}`,
+                partial ? 'partial=true' : null,
+            ].filter(Boolean).join('&');
+            const res = await makeLocalGetApiCall(`/localByUid?${query}`);
             resolve(Object.values({
                 ...(res || [])
                     .reduce((acc: any, s: any) => ({
