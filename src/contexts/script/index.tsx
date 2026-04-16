@@ -723,11 +723,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, dateAndTimeOfDeath, ...payload } = _payload;
+        const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
         const matches: any[] = [];
+        const resolvedNuidSearchForm = payloadNuidSearchForm || nuidSearchForm;
 
         let uid = entries.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -741,7 +742,25 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             return uid || acc;
         }, '');
 
-        uid = uid || generatedUID;
+        const searchedUIDSource = resolvedNuidSearchForm.find((f: types.NuidSearchFormField) => (
+            f.results &&
+            f.results.prePopulateWithUID !== false &&
+            (f.value || f.results.uid || f.results.searchedUid)
+        ));
+        const searchedUID = searchedUIDSource?.value
+            || searchedUIDSource?.results?.uid
+            || searchedUIDSource?.results?.searchedUid;
+        const requiresSearchedUID = resolvedNuidSearchForm.some((f: types.NuidSearchFormField) => (
+            f.results &&
+            f.results.prePopulateWithUID !== false
+        ));
+
+        uid = searchedUID || uid;
+
+        if (requiresSearchedUID && !uid) {
+            throw new Error('This session requires the searched Neotree ID, but no Neotree ID was found. Please re-scan or re-enter the patient Neotree ID before continuing.');
+        }
+        uid = uid || (requiresSearchedUID ? '' : generatedUID);
         
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
     
@@ -792,6 +811,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         screens,
         script,
         restructureForm,
+        nuidSearchForm,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -799,9 +819,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [screens]);
 
     const saveSession = useCallback((params?: any) => new Promise((resolve, reject) => {
-        const summary = createSessionSummary(params);
         (async () => {
             try {
+                const summary = createSessionSummary(params);
                 const res = await api.saveSession({
                     id: sessionID,
                     ...summary
@@ -809,7 +829,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 setSessionID(res?.sessionID);
                 resolve(summary);
             } catch (e) {
-
+                const message = e instanceof Error ? e.message : '';
+                if (message.includes('requires the searched Neotree ID')) {
+                    Alert.alert('Neotree ID required', message);
+                }
                 reject(e);
             }
         })();

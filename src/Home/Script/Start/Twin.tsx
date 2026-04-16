@@ -26,6 +26,9 @@ export function Twin({}: TwinProps) {
                                 onChange={() => {
                                     setIsTwin(o.value);
                                 }}
+                                onDeselect={() => {
+                                    setIsTwin(null);
+                                }}
                             />
                         </Box>
                     )
