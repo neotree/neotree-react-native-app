@@ -54,7 +54,7 @@ export function Start() {
     const hasResolvedVisibleSearchFields = nuidSearchFields.every((field: any, i: number) => {
         if (field.type !== 'text') return true;
         if (!evaluateFieldCondition(field)) return true;
-        return Boolean(fields[i]?.value);
+        return Boolean(fields[i]?.results && (fields[i]?.value || fields[i]?.results?.continueWithoutPrePopulation));
     });
 
     const canStart = Boolean(screens?.length) && hasResolvedVisibleSearchFields;
@@ -77,11 +77,11 @@ export function Start() {
                                     value={fields[i].value}
                                     script_type ={type}
                                     onChange={value => {
-                                        let results = null;
+                                        let results: types.NuidSearchResults | null = null;
 
                                         if (field.type === 'text') {
                                             results = value;
-                                            value = value?.uid || null;
+                                            value = value?.continueWithoutPrePopulation ? null : value?.uid || null;
                                         }
 
                                         const newState = fields.map((f, j) => {
