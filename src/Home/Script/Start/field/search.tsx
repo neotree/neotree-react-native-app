@@ -44,6 +44,40 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
+const hasFullQrSession = (session: any) => {
+    return !!session && typeof session === 'object' && Object.keys(session).length > 1;
+};
+
+const normalizeQrSession = (session: any) => {
+    if (!hasFullQrSession(session)) return session;
+    if (session?.data) return session;
+
+    return {
+        uid: session.uid,
+        data: {
+            ...session,
+            uid: session.uid,
+            entries: session.entries || {},
+            script: session.script || {
+                type: session.type,
+                title: session.title || session.scriptTitle,
+                id: session.script_id || session.scriptId,
+            },
+        },
+    };
+};
+
+const mergeSearchResults = (...groups: any[][]) => {
+    const seen = new Set<string>();
+    return groups.flat().filter((session, index) => {
+        if (!session || session.error) return false;
+        const key = getSessionKey(session, index);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+};
+
 export function Search({
     label,
     autofillKeys,
@@ -72,14 +106,8 @@ export function Search({
     const [recommendedSessionKey, setRecommendedSessionKey] = React.useState('');
     const [recommendedSession, setRecommendedSession] = React.useState<any>(null);
     const [searchedFromQR, setSearchedFromQR] = React.useState(false);
-
-    const formatLookupError = React.useCallback(() => {
-        return [
-            'We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable.',
-            'No patient data was found.',
-            'Re-scan or continue with the current Neotree ID (no auto-population).',
-        ].join(' ');
-    }, []);
+    const qrSessionRef = React.useRef<any[]>([]);
+    const qrUidRef = React.useRef('');
 
     const openQRscanner = () => {
         setShowQR(true);
@@ -104,6 +132,8 @@ export function Search({
         setSessionType('admission');
         setSearched('');
         setQRSession([]);
+        qrSessionRef.current = [];
+        qrUidRef.current = '';
         setViewedNeolabKeys([]);
         setRecommendedSessionKey('');
         setRecommendedSession(null);
@@ -111,6 +141,10 @@ export function Search({
     }, [clearResolvedSearch]);
 
     const handleUIDChange = React.useCallback((nextUID: string) => {
+        if (qrUidRef.current && (!nextUID || nextUID === qrUidRef.current)) {
+            setUID(qrUidRef.current);
+            return;
+        }
         setUID(nextUID);
         resetSearchState();
     }, [resetSearchState]);
@@ -200,15 +234,18 @@ export function Search({
         if (qrtext) {
             resetSearchState();
             setSearchedFromQR(true);
-            const session = qrtext
+            const session = normalizeQrSession(qrtext)
             const sessions = []
             if (session['uid']) {
+                qrUidRef.current = session['uid']
                 setUID(session['uid'])
                 if (Object.keys(session).length > 1) {
                     sessions.push(session)
+                    qrSessionRef.current = sessions
                     setQRSession(sessions)
                     setRecommendedSessionKey(getSessionKey(session, 0))
                     setRecommendedSession(session)
+                    setSessionType('qr')
                 }
 
                 if (script_type === 'discharge') {
@@ -222,7 +259,7 @@ export function Search({
                                 setSessionType('merged')
                             }
                     }
-                } else {
+                } else if (!sessions.length) {
 
                     if (script_type === 'drecord' && sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0) {
                         setSessionType('drecord')
@@ -441,31 +478,40 @@ export function Search({
             setMerged([]);
             setSearched('');
             setSearching(true);
-            let searched = qrSession;
+            const qrResults = qrSessionRef.current?.length
+                ? qrSessionRef.current
+                : (qrUidRef.current === uid && qrSession?.length ? qrSession : []);
+            let lookupResults: any[] = [];
+            let lookupError: any = null;
 
-            if (!searched || searched.length <= 0) {
+            try {
                 const location = await api.getLocation();
                 //Prioritise Local Search
                 if (location && location.hospital) {
                 
-                    searched = await api.getLocalSessionsByUID(uid, location.hospital)
+                    lookupResults = await api.getLocalSessionsByUID(uid, location.hospital)
 
                 }
-                const localError = searched?.[0]?.['error']
-                if(localError|| !searched || searched.length<=0){
-                 searched = await api.getExportedSessionsByUID(uid);
+                const localError = lookupResults?.[0]?.['error']
+                if(localError|| !lookupResults || lookupResults.length<=0){
+                    if (localError) lookupError = lookupResults?.[0];
+                    lookupResults = await api.getExportedSessionsByUID(uid);
                 }
+            } catch (error) {
+                lookupError = error;
             }
-         
-            const error = searched?.[0]
 
-            if (error && error.error) {
+            const exportedError = lookupResults?.[0]?.['error'];
+            if (exportedError) lookupError = lookupResults?.[0];
+
+            const rawSessions = mergeSearchResults(qrResults, lookupResults || []);
+
+            if (lookupError && !rawSessions.length) {
                 setToClear(true)
-                setValidationMessage(formatLookupError())
+                setValidationMessage('We could not check patient records right now. Please try again, or re-scan the QR code.')
                 setSearching(false);
             }
-            else if (searched) {
-                const rawSessions = (searched || []).filter((s: any) => !s?.error);
+            else {
                 setSessions(rawSessions);
                 setSearching(false);
                 setSearched(uid);
@@ -490,7 +536,7 @@ export function Search({
                         setSessionType('merged')
                         recommendationSource = mergedSessions;
                     }
-                } else {
+                } else if (!(searchedFromQR && qrSession?.length)) {
                     if (script_type === 'drecord' && rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0) {
                         setSessionType('drecord')
                     }
@@ -506,16 +552,10 @@ export function Search({
                     setPendingPatientSelection(matched);
                     setPatientSummaryOpen(true);
                 }
-            } else {
-                setToClear(true)
-                setSearching(false);
-                setValidationMessage(
-                    "We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable. No patient data was found. Re-scan or continue with the current Neotree ID (no auto-population)."
-                );
             }
 
         })();
-    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, formatLookupError, getRecommendedSession, qrSession, script_type, searchedFromQR, uid]);
+    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, getRecommendedSession, qrSession, script_type, searchedFromQR, uid]);
 
 
     const handleYesPress = () => {
@@ -538,6 +578,7 @@ export function Search({
     const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
     const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
     const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const qrSessions = searchedFromQR && qrSession?.length ? qrSession : [];
    
     function renderList(sessions: any[]) {
         return (
@@ -555,7 +596,7 @@ export function Search({
                                 paddingVertical="m"
                             >
                                 <Radio
-                                    value={s.data.unique_key}
+                                    value={getSessionKey(s, index)}
                                     checked={selected}
                                     onChange={() => {
                                         if (selected) {
@@ -681,6 +722,7 @@ function hasPrePopulate(entry: any): boolean {
                                 <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>
                                 <Text color="textDisabled" variant="caption">{dischargeSessions?.length} Discharge sessions found</Text>
                                 <Text color="textDisabled" variant="caption">{dailyRecordsSessions?.length} Daily Records sessions found</Text>
+                                <Text color="textDisabled" variant="caption">{qrSessions?.length} QR-code sessions found</Text>
                                 <Text color="textDisabled" variant="caption">{merged?.length} Merged sessions found</Text>
                                 <Br spacing="xl" />
 
@@ -710,6 +752,10 @@ function hasPrePopulate(entry: any): boolean {
                                                 value: 'merged',
                                                 label: 'Merged Records',
                                             },
+                                            {
+                                                value: 'qr',
+                                                label: 'QR-code Record',
+                                            },
                                         ]}
                                     />
                                 </Box>
@@ -722,6 +768,7 @@ function hasPrePopulate(entry: any): boolean {
                                     if (sessionType === 'discharge') return dischargeSessions;
                                     if (sessionType === 'drecord') return dailyRecordsSessions;
                                     if (sessionType === 'merged') return merged;
+                                    if (sessionType === 'qr') return qrSessions;
                                     return [];
                                 })())}
                             </>
