@@ -1,5 +1,5 @@
 import React, { Fragment, useState } from 'react';
-import { Keyboard, ScrollView } from 'react-native';
+import { Alert, Keyboard, ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Button, Content, Text } from '../../../components';
@@ -81,7 +81,7 @@ export function Start() {
 
                                         if (field.type === 'text') {
                                             results = value;
-                                            value = value?.continueWithoutPrePopulation ? null : value?.uid || null;
+                                            value = value?.uid || null;
                                         }
 
                                         const newState = fields.map((f, j) => {
@@ -123,10 +123,18 @@ export function Start() {
                                 (async () => {
 									try {
                                         setNuidSearchForm(fields);
+										await saveSession({ nuidSearchForm: fields });
 										setActiveScreen(screens[0]);
 										setActiveScreenIndex(0);
-										saveSession();
-									} catch { /**/ }
+									} catch (error) {
+                                        const message = error instanceof Error ? error.message : '';
+                                        if (!message.includes('requires the searched Neotree ID')) {
+                                            Alert.alert(
+                                                'Unable to start session',
+                                                'The session could not be saved. Please try again before continuing.'
+                                            );
+                                        }
+                                    }
 								})();
                             }}
                         >{matched?.session ? 'Continue' : 'Start'}</Button>

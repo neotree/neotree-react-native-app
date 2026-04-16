@@ -118,13 +118,13 @@ export function Search({
     const resolveUIDWithoutMatch = React.useCallback((nextUID: string) => {
         onSession({
             session: null,
-            uid: '',
+            uid: prePopulateWithUID === false ? '' : nextUID,
             searchedUid: nextUID,
             autoFill: null,
-            prePopulateWithUID: false,
+            prePopulateWithUID: prePopulateWithUID !== false,
             continueWithoutPrePopulation: true,
         });
-    }, [onSession]);
+    }, [onSession, prePopulateWithUID]);
 
     const filterSessionAutoFillEntries = React.useCallback((session: any) => {
         if (!session) return null;
@@ -473,7 +473,7 @@ export function Search({
                 if (!rawSessions.length) {
                     setToClear(true);
                     setValidationMessage(
-                        `No patient record was found for ${uid}. Re-scan or continue without pre-population. The script NUID will be left blank for manual entry.`
+                        `No patient record was found for ${uid}. Re-scan or continue without pre-population. The script NUID will use the current Neotree ID.`
                     );
                     return;
                 }

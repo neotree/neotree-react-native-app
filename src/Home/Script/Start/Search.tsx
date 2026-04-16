@@ -136,17 +136,17 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const resolveUIDWithoutMatch = React.useCallback(() => {
         const initialSession = {
             session: null,
-            uid: '',
+            uid: prePopulateWithUID === false ? '' : uid,
             searchedUid: uid,
             facility: facility as types.Facility,
             autoFill: null,
-            prePopulateWithUID: false,
+            prePopulateWithUID: prePopulateWithUID !== false,
             continueWithoutPrePopulation: true,
         }
         setConfirmNoRecord(false);
         if (onSession) onSession(initialSession);
         setMatched(initialSession);
-    }, [facility, onSession, setMatched, uid]);
+    }, [facility, onSession, prePopulateWithUID, setMatched, uid]);
 
     const search = React.useCallback(() => {
         (async () => {
@@ -359,7 +359,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 ]}
             >
                 <Text color="textSecondary">
-                    {`No patient record was found for ${uid}. Continue without pre-population only if this is the correct Neotree ID. The script NUID will be left blank for manual entry.`}
+                    {`No patient record was found for ${uid}. Continue without pre-population only if this is the correct Neotree ID. The script NUID will use the current Neotree ID.`}
                 </Text>
             </Modal>
         </Box>

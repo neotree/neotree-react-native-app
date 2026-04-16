@@ -123,8 +123,21 @@ export function TypeForm({ }: TypeFormProps) {
 
 
     const patientNUID = useMemo(() => {
-        return nuidSearchForm
-            .filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value;
+        const primarySearch = nuidSearchForm
+            .find(f => (
+                (f.key === 'patientNUID' || f.key === 'BabyTransferedNUID') &&
+                f.value
+            ));
+        const nuidSearch = nuidSearchForm.find(f => (
+            f.results &&
+            f.results.prePopulateWithUID !== false &&
+            (f.value || f.results.uid || f.results.searchedUid)
+        ));
+
+        return primarySearch?.value
+            ?? nuidSearch?.value
+            ?? nuidSearch?.results?.uid
+            ?? nuidSearch?.results?.searchedUid;
     }, [nuidSearchForm]);
 
     const getValues = useCallback(() => {
@@ -245,7 +258,7 @@ export function TypeForm({ }: TypeFormProps) {
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, cachedVal,  activeScreen?.printDisplayColumns, getPrepopulationData, normalizeFieldType]);
+    }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, getPrepopulationData, normalizeFieldType]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
