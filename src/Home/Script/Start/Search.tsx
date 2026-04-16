@@ -41,6 +41,40 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
+const hasFullQrSession = (session: any) => {
+    return !!session && typeof session === 'object' && Object.keys(session).length > 1;
+};
+
+const normalizeQrSession = (session: any) => {
+    if (!hasFullQrSession(session)) return session;
+    if (session?.data) return session;
+
+    return {
+        uid: session.uid,
+        data: {
+            ...session,
+            uid: session.uid,
+            entries: session.entries || {},
+            script: session.script || {
+                type: session.type,
+                title: session.title || session.scriptTitle,
+                id: session.script_id || session.scriptId,
+            },
+        },
+    };
+};
+
+const mergeSearchResults = (...groups: any[][]) => {
+    const seen = new Set<string>();
+    return groups.flat().filter((session, index) => {
+        if (!session || session.error) return false;
+        const key = getSessionKey(session, index);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+};
+
 
 export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {
     const { setMatched } = useScriptContext();
@@ -57,6 +91,8 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const [recommendedSessionKey, setRecommendedSessionKey] = React.useState('');
     const [recommendedSession, setRecommendedSession] = React.useState<any>(null);
     const [confirmNoRecord, setConfirmNoRecord] = React.useState(false);
+    const qrSessionRef = React.useRef<any[]>([]);
+    const qrUidRef = React.useRef('');
 
     const openQRscanner = () => {
         setShowQR(true);
@@ -69,6 +105,8 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
         setSessionType('admission');
         setSearched('');
         setQRSession(null);
+        qrSessionRef.current = [];
+        qrUidRef.current = '';
         setSearchedFromQR(false);
         setRecommendedSessionKey('');
         setRecommendedSession(null);
@@ -78,6 +116,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     }, [onSession, setMatched]);
 
     const handleUIDChange = React.useCallback((nextUID: string) => {
+        if (qrUidRef.current && (!nextUID || nextUID === qrUidRef.current)) {
+            setUID(qrUidRef.current);
+            return;
+        }
         setUID(nextUID);
         resetSearchState();
     }, [resetSearchState]);
@@ -86,13 +128,17 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
         if (qrtext) {
             resetSearchState();
             setSearchedFromQR(true);
-            const session = qrtext
+            const session = normalizeQrSession(qrtext)
             if (session['uid']) {
+                qrUidRef.current = session['uid']
                 setUID(session['uid'])
                 if (Object.keys(session).length > 1) {
-                    setQRSession([qrtext])
+                    const sessions = [session];
+                    qrSessionRef.current = sessions;
+                    setQRSession(sessions)
                     setRecommendedSessionKey(getSessionKey(session, 0))
                     setRecommendedSession(session)
+                    setSessionType('qr')
                 }
 
             } else {
@@ -155,13 +201,27 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 if (onSession) onSession(null);
                 setSelectedSession(null);
                 setSearching(true);
-                let sessions = qrSession
-                if (!sessions) {
-                    sessions = await api.getExportedSessionsByUID(uid);
+                const qrResults = qrSessionRef.current?.length
+                    ? qrSessionRef.current
+                    : (qrUidRef.current === uid && qrSession?.length ? qrSession : []);
+                let lookupResults: any[] = [];
+                let lookupError: any = null;
+
+                try {
+                    lookupResults = await api.getExportedSessionsByUID(uid);
+                } catch (error) {
+                    lookupError = error;
                 }
+                if (lookupResults?.[0]?.error) lookupError = lookupResults[0];
+
+                const sessions = mergeSearchResults(qrResults, lookupResults || []);
                 setSessions(sessions);
                 setSearching(false);
                 setSearched(uid);
+                if (lookupError && !sessions.length) {
+                    setConfirmNoRecord(true);
+                    return;
+                }
                 if (prePopulateWithUID && !sessions?.length) {
                     setConfirmNoRecord(true);
                     return;
@@ -184,10 +244,11 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
 
 
-    const admissionSessions = sessions?.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s?.data?.script?.type === 'admission'));
-    const neolabSessions = sessions?.filter(s => s?.data?.type === 'neolab' || s?.data?.script?.title.match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
-    const dischargeSessions = sessions?.filter(s => s?.data?.type === 'discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type === 'drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const admissionSessions = sessions?.filter(s => s?.data?.type === 'admission' || getSessionTitle(s).match(/admission/gi) || (s?.data?.script?.type === 'admission'));
+    const neolabSessions = sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
+    const dischargeSessions = sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
+    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const qrSessions = searchedFromQR && qrSession?.length ? qrSession : [];
 
     function renderList(sessions: any[]) {
         return (
@@ -204,7 +265,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                 paddingVertical="m"
                             >
                                 <Radio
-                                    value={s.data.unique_key}
+                                    value={getSessionKey(s, index)}
                                     checked={selected}
                                     onChange={() => {
                                         const session = selected ? null : s;
@@ -292,6 +353,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                         <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>
                         <Text color="textDisabled" variant="caption">{dischargeSessions?.length} Discharge sessions found</Text>
                         <Text color="textDisabled" variant="caption">{dailyRecordsSessions?.length} Daily Record sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{qrSessions?.length} QR-code sessions found</Text>
                         <Br spacing="xl" />
 
                         <Box width={200}>
@@ -316,6 +378,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                         value: 'drecord',
                                         label: 'Daily Records',
                                     },
+                                    {
+                                        value: 'qr',
+                                        label: 'QR-code Record',
+                                    },
                                 ]}
                             />
                         </Box>
@@ -327,6 +393,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                             if (sessionType === 'neolab') return neolabSessions;
                             if (sessionType === 'discharge') return dischargeSessions;
                             if (sessionType === 'drecord') return dailyRecordsSessions;
+                            if (sessionType === 'qr') return qrSessions;
                             return [];
                         })())}
                     </>
