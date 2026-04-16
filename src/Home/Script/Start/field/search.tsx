@@ -19,6 +19,22 @@ type SearchProps = {
     script_type?: string;
 };
 
+const getSessionKey = (session: any, index?: number) => {
+    return `${session?.data?.unique_key || session?.data?.uid || session?.uid || session?.data?.id || (index ?? '')}`;
+};
+
+const getSessionTitle = (session: any) => {
+    return session?.data?.title || session?.data?.script?.title || session?.data?.script?.data?.title || 'Unknown script';
+};
+
+const getSessionType = (session: any) => {
+    return session?.data?.type || session?.data?.script?.type || '';
+};
+
+const getSessionDate = (session: any) => {
+    return session?.data?.completed_at || session?.data?.started_at || session?.ingested_at || session?.created_at;
+};
+
 function getSessionFacility(session: any) {
     const birthFacility = session?.data?.entries?.BirthFacility?.values;
     const otherBirthFacility = session?.data?.entries?.OtherBirthFacility?.values;
@@ -53,6 +69,9 @@ export function Search({
     const [showQR, setShowQR] = React.useState(false);
     const [toClear, setToClear] = React.useState(false);
     const [validationMessage, setValidationMessage] = React.useState('');
+    const [recommendedSessionKey, setRecommendedSessionKey] = React.useState('');
+    const [recommendedSession, setRecommendedSession] = React.useState<any>(null);
+    const [searchedFromQR, setSearchedFromQR] = React.useState(false);
 
     const formatLookupError = React.useCallback(() => {
         return [
@@ -86,6 +105,9 @@ export function Search({
         setSearched('');
         setQRSession([]);
         setViewedNeolabKeys([]);
+        setRecommendedSessionKey('');
+        setRecommendedSession(null);
+        setSearchedFromQR(false);
     }, [clearResolvedSearch]);
 
     const handleUIDChange = React.useCallback((nextUID: string) => {
@@ -95,16 +117,89 @@ export function Search({
 
     const resolveUIDWithoutMatch = React.useCallback((nextUID: string) => {
         onSession({
-            session: { uid: nextUID },
-            uid: nextUID,
-            autoFill: { uid: nextUID },
-            prePopulateWithUID: prePopulateWithUID !== false,
+            session: null,
+            uid: '',
+            searchedUid: nextUID,
+            autoFill: null,
+            prePopulateWithUID: false,
+            continueWithoutPrePopulation: true,
         });
-    }, [onSession, prePopulateWithUID]);
+    }, [onSession]);
+
+    const filterSessionAutoFillEntries = React.useCallback((session: any) => {
+        if (!session) return null;
+
+        const autoFill = JSON.parse(JSON.stringify(session));
+        const entries = autoFill?.data?.entries || {};
+
+        if (filterEntries) {
+            autoFill.data.entries = Object.keys(entries).reduce((acc: any, key) => {
+                if (filterEntries(entries[key])) acc[key] = entries[key];
+                return acc;
+            }, {});
+        }
+
+        if (autofillKeys) {
+            autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
+                if (entries[key]) acc[key] = entries[key];
+                return acc;
+            }, {});
+        }
+
+        if (!filterEntries && !autofillKeys) {
+            autoFill.data.entries = Object.fromEntries(
+                Object.entries(entries).filter(([key, entry]) =>
+                    key === 'repeatables' ||
+                    hasPrePopulate(entry)
+                )
+            );
+        }
+
+        return autoFill;
+    }, [autofillKeys, filterEntries]);
+
+    const buildMatchedSession = React.useCallback((session: any) => {
+        if (!session) return null;
+
+        return {
+            session,
+            uid,
+            autoFill: filterSessionAutoFillEntries(session),
+            prePopulateWithUID: prePopulateWithUID !== false,
+        };
+    }, [filterSessionAutoFillEntries, prePopulateWithUID, uid]);
+
+    const getRecommendedSession = React.useCallback((items: any[]) => {
+        if (!items?.length) return null;
+
+        const withDates = [...items].sort((a, b) => {
+            const aDate = getSessionDate(a);
+            const bDate = getSessionDate(b);
+            return moment(bDate || 0).valueOf() - moment(aDate || 0).valueOf();
+        });
+
+        if (script_type === 'discharge') {
+            return withDates.find((s: any) => getSessionType(s) === 'merged')
+                || withDates.find((s: any) => getSessionType(s) === 'drecord')
+                || withDates.find((s: any) => getSessionType(s) === 'admission')
+                || withDates[0];
+        }
+
+        if (script_type === 'drecord') {
+            return withDates.find((s: any) => getSessionType(s) === 'drecord')
+                || withDates.find((s: any) => getSessionType(s) === 'admission')
+                || withDates[0];
+        }
+
+        return withDates.find((s: any) => getSessionType(s) === script_type)
+            || withDates.find((s: any) => getSessionType(s) === 'admission')
+            || withDates[0];
+    }, [script_type]);
 
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
             resetSearchState();
+            setSearchedFromQR(true);
             const session = qrtext
             const sessions = []
             if (session['uid']) {
@@ -112,9 +207,11 @@ export function Search({
                 if (Object.keys(session).length > 1) {
                     sessions.push(session)
                     setQRSession(sessions)
+                    setRecommendedSessionKey(getSessionKey(session, 0))
+                    setRecommendedSession(session)
                 }
 
-                if (script_type == 'discharge') {
+                if (script_type === 'discharge') {
                     if (sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0
                         && sessions?.filter(s => s?.data?.script?.type === 'admission').length > 0) {
                             {
@@ -127,7 +224,7 @@ export function Search({
                     }
                 } else {
 
-                    if (script_type == 'drecord' && sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0) {
+                    if (script_type === 'drecord' && sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0) {
                         setSessionType('drecord')
                     }
                 }
@@ -368,14 +465,46 @@ export function Search({
                 setSearching(false);
             }
             else if (searched) {
-                const rawSessions = searched;
-                searched = filterDataWithPrePopulatedEntries(searched)
-                setSessions(searched);
+                const rawSessions = (searched || []).filter((s: any) => !s?.error);
+                setSessions(rawSessions);
                 setSearching(false);
                 setSearched(uid);
                 enforceNeolabView(rawSessions);
-                if (!searched.length) {
-                    resolveUIDWithoutMatch(uid);
+                if (!rawSessions.length) {
+                    setToClear(true);
+                    setValidationMessage(
+                        `No patient record was found for ${uid}. Re-scan or continue without pre-population. The script NUID will be left blank for manual entry.`
+                    );
+                    return;
+                }
+
+                let recommendationSource = rawSessions;
+
+                if (script_type === 'discharge') {
+                    if (rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0
+                        && rawSessions?.filter((s: any) => s?.data?.script?.type === 'admission').length > 0) {
+                        const mergedSessions = [mergeSessions(rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord')[0],
+                            rawSessions?.filter((s: any) => s?.data?.script?.type === 'admission')[0])]
+
+                        setMerged(mergedSessions)
+                        setSessionType('merged')
+                        recommendationSource = mergedSessions;
+                    }
+                } else {
+                    if (script_type === 'drecord' && rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0) {
+                        setSessionType('drecord')
+                    }
+                }
+
+                const recommended = getRecommendedSession(recommendationSource);
+                setRecommendedSessionKey(recommended ? getSessionKey(recommended, 0) : '');
+                setRecommendedSession(recommended);
+
+                if (searchedFromQR && recommended) {
+                    const matched = buildMatchedSession(recommended);
+                    setSelectedSession(matched);
+                    setPendingPatientSelection(matched);
+                    setPatientSummaryOpen(true);
                 }
             } else {
                 setToClear(true)
@@ -384,24 +513,9 @@ export function Search({
                     "We could not retrieve patient data for this Neotree ID because the lookup service is temporarily unavailable. No patient data was found. Re-scan or continue with the current Neotree ID (no auto-population)."
                 );
             }
-            if (script_type == 'discharge') {
-                if (searched?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0
-                    && searched?.filter((s: any) => s?.data?.script?.type === 'admission').length > 0) {
-                    const mergedSessions = [mergeSessions(searched?.filter((s: any) => s?.data?.script?.type === 'drecord')[0],
-                        searched?.filter((s: any) => s?.data?.script?.type === 'admission')[0])]
-
-                    setMerged(mergedSessions)
-              
-                    setSessionType('merged')
-                }
-            } else {
-                if (script_type == 'drecord' && searched?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0) {
-                    setSessionType('drecord')
-                }
-            }
 
         })();
-    }, [clearResolvedSearch, enforceNeolabView, formatLookupError, qrSession, resolveUIDWithoutMatch, script_type, uid]);
+    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, formatLookupError, getRecommendedSession, qrSession, script_type, searchedFromQR, uid]);
 
 
     const handleYesPress = () => {
@@ -420,18 +534,21 @@ export function Search({
         }
     }
 
-    const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || s?.data?.script?.title.match(/admission/gi) || (s.data?.script?.type === 'admission'));
-    const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || s?.data?.script?.title.match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
-    const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || getSessionTitle(s).match(/admission/gi) || (s.data?.script?.type === 'admission'));
+    const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
+    const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
+    const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
    
     function renderList(sessions: any[]) {
         return (
             <>
                 {sessions.map((s: any, index: number) => {
-                    let selected = selectedSession != null
+                    const sessionKey = getSessionKey(s, index);
+                    const selectedSource = selectedSession?.session || selectedSession;
+                    const selected = !!selectedSession && (selectedSource === s || sessionKey === getSessionKey(selectedSource));
+                    const recommended = recommendedSession === s || sessionKey === recommendedSessionKey;
                     return (
-                        <React.Fragment key={index}>
+                        <React.Fragment key={sessionKey || index}>
                             <Box
                                 borderBottomColor="divider"
                                 borderBottomWidth={1}
@@ -442,58 +559,38 @@ export function Search({
                                     checked={selected}
                                     onChange={() => {
                                         if (selected) {
-                                            selected = false
                                             setSelectedSession(null)
+                                            onSession(null);
+                                            return;
                                         } else {
-                                            selected = true
-                                        }
-                                        const session = selected ? s : null;
-
-                                        let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
-
-                                        if (autoFill) {
-                                            if (filterEntries) {
-
-                                                autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
-                                                    if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
-                                                    return acc;
-                                                }, {});
-
-                                            }
-                                            if (autofillKeys) {
-                                                autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
-                                                    if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
-                                                    return acc;
-                                                }, {});
-
-                                            }
-                                        }
-                                        if (selected) {
-                                            setSelectedSession(session)
-                                        } else {
-                                            setSelectedSession(null)
-                                        }
-                                        const matched = session ? {
-                                            session,
-                                            uid,
-                                            autoFill,
-                                            prePopulateWithUID: prePopulateWithUID !== false,
-                                        } : null
-                                        if (selected) {
+                                            const matched = buildMatchedSession(s);
+                                            setSelectedSession(matched)
                                             setPendingPatientSelection(matched);
                                             setPatientSummaryOpen(true);
-                                            return;
                                         }
-
-                                        validateSearchResultDates(matched);
                                     }}
                                     label={(
                                         <>
-                                            <Text variant="title3">{(merged.length>0)?'Merged Records':s?.data?.title || s?.data?.script?.title}</Text>
+                                            <Box flexDirection="row" alignItems="center">
+                                                <Text variant="title3">{(merged.length>0)?'Merged Records':getSessionTitle(s)}</Text>
+                                                {recommended ? (
+                                                    <Box
+                                                        marginLeft="s"
+                                                        paddingHorizontal="s"
+                                                        paddingVertical="s"
+                                                        borderRadius="s"
+                                                        backgroundColor="primary-200"
+                                                    >
+                                                        <Text variant="caption" color="primary">Recommended</Text>
+                                                    </Box>
+                                                ) : null}
+                                            </Box>
                                             <Text variant="caption" color="textSecondary">
                                                 {[
+                                                    s?.data?.uid || s?.uid || uid,
+                                                    getSessionType(s),
                                                     getSessionFacility(s).other || getSessionFacility(s).value,
-                                                    `${moment(s.ingested_at).format('llll')}`
+                                                    getSessionDate(s) ? `${moment(getSessionDate(s)).format('llll')}` : ''
                                                 ].filter(s => s).join(' - ')}
                                             </Text>
                                         </>
@@ -532,20 +629,6 @@ export function Search({
         );
     }
 
-    function filterDataWithPrePopulatedEntries(items: any[]): any[] {
-    return items.map(item => ({
-        data: {
-            ...item.data,
-            entries: Object.fromEntries(
-                Object.entries(item.data.entries).filter(([key, entry]) =>
-                    key === 'repeatables' ||
-                    hasPrePopulate(entry)
-                )
-            )
-        }
-    }));
-}
-
 function hasPrePopulate(entry: any): boolean {
     // Check for top-level prePopulate
     const topLevel = Array.isArray(entry?.prePopulate) && entry.prePopulate.length > 0;
@@ -573,7 +656,7 @@ function hasPrePopulate(entry: any): boolean {
                     <Br spacing='l' />
                     <>
                         <Br />
-                        <Button disabled={searching || uid != ''}
+                        <Button disabled={searching || uid !== ''}
                             color="primary"
                             onPress={() => openQRscanner()}>
                             Scan QR
@@ -652,7 +735,7 @@ function hasPrePopulate(entry: any): boolean {
                                         {
                                             color: 'error',
                                             label: 'RE-SCAN',
-                                            onPress: () => handleNoPress(true),
+                                            onPress: () => handleNoPress(),
                                         },
                                         {
                                             color: 'primary',
