@@ -744,7 +744,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
         const searchedUIDSource = resolvedNuidSearchForm.find((f: types.NuidSearchFormField) => (
             f.results &&
-            f.results.prePopulateWithUID !== false &&
+            f.results.useSearchedUidForSession === true &&
             (f.value || f.results.uid || f.results.searchedUid)
         ));
         const searchedUID = searchedUIDSource?.value
@@ -752,7 +752,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             || searchedUIDSource?.results?.searchedUid;
         const requiresSearchedUID = resolvedNuidSearchForm.some((f: types.NuidSearchFormField) => (
             f.results &&
-            f.results.prePopulateWithUID !== false
+            f.results.useSearchedUidForSession === true
         ));
 
         uid = searchedUID || uid;
