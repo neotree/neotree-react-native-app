@@ -130,7 +130,7 @@ export function TypeForm({ }: TypeFormProps) {
             ));
         const nuidSearch = nuidSearchForm.find(f => (
             f.results &&
-            f.results.prePopulateWithUID !== false &&
+            f.results.useSearchedUidForSession === true &&
             (f.value || f.results.uid || f.results.searchedUid)
         ));
 

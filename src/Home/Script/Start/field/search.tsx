@@ -17,6 +17,9 @@ type SearchProps = {
     onSession: (data: null | types.MatchedSession) => void;
     filterEntries?: (entry: any) => any;
     script_type?: string;
+    useSearchedUidForSession?: boolean;
+    noRecordTitle?: string;
+    noRecordMessage?: (uid: string) => string;
 };
 
 const getSessionKey = (session: any, index?: number) => {
@@ -50,10 +53,15 @@ const hasFullQrSession = (session: any) => {
 
 const normalizeQrSession = (session: any) => {
     if (!hasFullQrSession(session)) return session;
-    if (session?.data) return session;
+    if (session?.data) {
+        return {
+            ...session,
+            uid: session.uid || session.data?.uid,
+        };
+    }
 
     return {
-        uid: session.uid,
+        uid: session.uid || session.data?.uid,
         data: {
             ...session,
             uid: session.uid,
@@ -84,7 +92,10 @@ export function Search({
     prePopulateWithUID,
     onSession,
     filterEntries,
-    script_type
+    script_type,
+    useSearchedUidForSession = prePopulateWithUID !== false,
+    noRecordTitle,
+    noRecordMessage,
 }: SearchProps) {
     const [uid, setUID] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getLocalSessionsByUID>>>([]);
@@ -152,13 +163,14 @@ export function Search({
     const resolveUIDWithoutMatch = React.useCallback((nextUID: string) => {
         onSession({
             session: null,
-            uid: prePopulateWithUID === false ? '' : nextUID,
+            uid: useSearchedUidForSession ? nextUID : '',
             searchedUid: nextUID,
             autoFill: null,
             prePopulateWithUID: prePopulateWithUID !== false,
             continueWithoutPrePopulation: true,
+            useSearchedUidForSession,
         });
-    }, [onSession, prePopulateWithUID]);
+    }, [onSession, prePopulateWithUID, useSearchedUidForSession]);
 
     const filterSessionAutoFillEntries = React.useCallback((session: any) => {
         if (!session) return null;
@@ -200,8 +212,9 @@ export function Search({
             uid,
             autoFill: filterSessionAutoFillEntries(session),
             prePopulateWithUID: prePopulateWithUID !== false,
+            useSearchedUidForSession,
         };
-    }, [filterSessionAutoFillEntries, prePopulateWithUID, uid]);
+    }, [filterSessionAutoFillEntries, prePopulateWithUID, uid, useSearchedUidForSession]);
 
     const getRecommendedSession = React.useCallback((items: any[]) => {
         if (!items?.length) return null;
@@ -519,7 +532,9 @@ export function Search({
                 if (!rawSessions.length) {
                     setToClear(true);
                     setValidationMessage(
-                        `No patient record was found for ${uid}. Re-scan or continue without pre-population. The script NUID will use the current Neotree ID.`
+                        noRecordMessage
+                            ? noRecordMessage(uid)
+                            : `No patient record was found for ${uid}. Re-scan or continue without pre-population. ${useSearchedUidForSession ? 'The script NUID will use the current Neotree ID.' : 'A new Neotree ID will be generated for this baby.'}`
                     );
                     return;
                 }
@@ -555,7 +570,7 @@ export function Search({
             }
 
         })();
-    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, getRecommendedSession, qrSession, script_type, searchedFromQR, uid]);
+    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, getRecommendedSession, noRecordMessage, qrSession, script_type, searchedFromQR, uid, useSearchedUidForSession]);
 
 
     const handleYesPress = () => {
@@ -578,7 +593,7 @@ export function Search({
     const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
     const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
     const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
-    const qrSessions = searchedFromQR && qrSession?.length ? qrSession : [];
+    const qrSessions = searchedFromQR ? (qrSessionRef.current?.length ? qrSessionRef.current : (qrSession?.length ? qrSession : [])) : [];
    
     function renderList(sessions: any[]) {
         return (
@@ -777,7 +792,7 @@ function hasPrePopulate(entry: any): boolean {
                                 <Modal
                                     open={toClear && !searching}
                                     onClose={() => { setToClear(false) }}
-                                    title="Continue With Current Neotree ID."
+                                    title={noRecordTitle || 'Continue Without Pre-Population'}
                                     actions={[
                                         {
                                             color: 'error',

@@ -14,6 +14,9 @@ type SearchProps = {
     autofillKeys?: string[];
     filterEntries?: (entry: any) => any;
     prePopulateWithUID?: boolean;
+    useSearchedUidForSession?: boolean;
+    noRecordTitle?: string;
+    noRecordMessage?: (uid: string) => string;
 };
 
 const getSessionKey = (session: any, index?: number) => {
@@ -47,10 +50,15 @@ const hasFullQrSession = (session: any) => {
 
 const normalizeQrSession = (session: any) => {
     if (!hasFullQrSession(session)) return session;
-    if (session?.data) return session;
+    if (session?.data) {
+        return {
+            ...session,
+            uid: session.uid || session.data?.uid,
+        };
+    }
 
     return {
-        uid: session.uid,
+        uid: session.uid || session.data?.uid,
         data: {
             ...session,
             uid: session.uid,
@@ -76,7 +84,16 @@ const mergeSearchResults = (...groups: any[][]) => {
 };
 
 
-export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {
+export function Search({
+    onSession,
+    label,
+    autofillKeys,
+    filterEntries,
+    prePopulateWithUID,
+    useSearchedUidForSession = prePopulateWithUID !== false,
+    noRecordTitle = 'No matching record found',
+    noRecordMessage,
+}: SearchProps) {
     const { setMatched } = useScriptContext();
 
     const [uid, setUID] = React.useState('');
@@ -175,24 +192,26 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
             uid,
             facility: facility as types.Facility,
             autoFill,
-            prePopulateWithUID: prePopulateWithUID
+            prePopulateWithUID,
+            useSearchedUidForSession,
         } : null;
-    }, [autofillKeys, facility, filterEntries, prePopulateWithUID, uid]);
+    }, [autofillKeys, facility, filterEntries, prePopulateWithUID, uid, useSearchedUidForSession]);
 
     const resolveUIDWithoutMatch = React.useCallback(() => {
         const initialSession = {
             session: null,
-            uid: prePopulateWithUID === false ? '' : uid,
+            uid: useSearchedUidForSession ? uid : '',
             searchedUid: uid,
             facility: facility as types.Facility,
             autoFill: null,
             prePopulateWithUID: prePopulateWithUID !== false,
             continueWithoutPrePopulation: true,
+            useSearchedUidForSession,
         }
         setConfirmNoRecord(false);
         if (onSession) onSession(initialSession);
         setMatched(initialSession);
-    }, [facility, onSession, prePopulateWithUID, setMatched, uid]);
+    }, [facility, onSession, prePopulateWithUID, setMatched, uid, useSearchedUidForSession]);
 
     const search = React.useCallback(() => {
         (async () => {
@@ -222,7 +241,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                     setConfirmNoRecord(true);
                     return;
                 }
-                if (prePopulateWithUID && !sessions?.length) {
+                if (!sessions?.length) {
                     setConfirmNoRecord(true);
                     return;
                 }
@@ -240,7 +259,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 setSearching(false);
             }
         })();
-    }, [buildMatchedSession, onSession, prePopulateWithUID, qrSession, searchedFromQR, setMatched, uid]);
+    }, [buildMatchedSession, onSession, qrSession, searchedFromQR, setMatched, uid]);
 
 
 
@@ -248,7 +267,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const neolabSessions = sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
     const dischargeSessions = sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
     const dailyRecordsSessions = sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
-    const qrSessions = searchedFromQR && qrSession?.length ? qrSession : [];
+    const qrSessions = searchedFromQR ? (qrSessionRef.current?.length ? qrSessionRef.current : (qrSession?.length ? qrSession : [])) : [];
 
     function renderList(sessions: any[]) {
         return (
@@ -407,7 +426,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
             <Modal
                 open={confirmNoRecord && !searching}
                 onClose={() => setConfirmNoRecord(false)}
-                title="No matching record found"
+                title={noRecordTitle}
                 actions={[
                     {
                         color: 'error',
@@ -426,7 +445,9 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                 ]}
             >
                 <Text color="textSecondary">
-                    {`No patient record was found for ${uid}. Continue without pre-population only if this is the correct Neotree ID. The script NUID will use the current Neotree ID.`}
+                    {noRecordMessage
+                        ? noRecordMessage(uid)
+                        : `No patient record was found for ${uid}. Continue without pre-population only if this is the correct Neotree ID. ${useSearchedUidForSession ? 'The script NUID will use the current Neotree ID.' : 'A new Neotree ID will be generated for this baby.'}`}
                 </Text>
             </Modal>
         </Box>
