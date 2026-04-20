@@ -27,6 +27,7 @@ export type NuidSearchResults = {
     autoFill?: any; 
     prePopulateWithUID?: boolean;
     continueWithoutPrePopulation?: boolean;
+    useSearchedUidForSession?: boolean;
 };
 
 export type NuidSearchFormField = {
@@ -45,6 +46,7 @@ export type MatchedSession = {
 	autoFill?: any; 
 	prePopulateWithUID?: boolean;
 	continueWithoutPrePopulation?: boolean;
+	useSearchedUidForSession?: boolean;
     // fields: ({
     //     key: string;
     //     value: string;
@@ -67,7 +69,7 @@ export type Application = {
   };
 };
 export type Exception = {
-  id: Number,
+  id: number,
   device: string;
   message:string;
   hospital: string;

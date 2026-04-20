@@ -13,6 +13,7 @@ export function Field({ field, value, onChange,script_type }: {
     onChange: (value: any) => void;
     script_type?:string
 }) {
+    const isTwinSearchField = field.key === 'BabyTwinNUID';
     const opts = (field.values || '').split('\n')
         .map((v = '') => v.trim())
         .filter((v: any) => v)
@@ -59,6 +60,11 @@ export function Field({ field, value, onChange,script_type }: {
                     <Search
                         label={field.label}
                         prePopulateWithUID={true}
+                        useSearchedUidForSession={!isTwinSearchField}
+                        noRecordTitle={isTwinSearchField ? 'Twin record not found' : undefined}
+                        noRecordMessage={isTwinSearchField
+                            ? (uid => `No twin record was found for ${uid}. You can continue without twin pre-population. A new Neotree ID will be generated for this baby.`)
+                            : undefined}
                         onSession={value => onChange(value)}
                         script_type={script_type}
                     />
