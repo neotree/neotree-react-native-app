@@ -1,5 +1,5 @@
 import React, { Fragment, useState } from 'react';
-import { Keyboard, ScrollView } from 'react-native';
+import { Alert, Keyboard, ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Button, Content, Text } from '../../../components';
@@ -54,7 +54,7 @@ export function Start() {
     const hasResolvedVisibleSearchFields = nuidSearchFields.every((field: any, i: number) => {
         if (field.type !== 'text') return true;
         if (!evaluateFieldCondition(field)) return true;
-        return Boolean(fields[i]?.value);
+        return Boolean(fields[i]?.results && (fields[i]?.value || fields[i]?.results?.continueWithoutPrePopulation));
     });
 
     const canStart = Boolean(screens?.length) && hasResolvedVisibleSearchFields;
@@ -77,7 +77,7 @@ export function Start() {
                                     value={fields[i].value}
                                     script_type ={type}
                                     onChange={value => {
-                                        let results = null;
+                                        let results: types.NuidSearchResults | null = null;
 
                                         if (field.type === 'text') {
                                             results = value;
@@ -123,10 +123,18 @@ export function Start() {
                                 (async () => {
 									try {
                                         setNuidSearchForm(fields);
+										await saveSession({ nuidSearchForm: fields });
 										setActiveScreen(screens[0]);
 										setActiveScreenIndex(0);
-										saveSession();
-									} catch { /**/ }
+									} catch (error) {
+                                        const message = error instanceof Error ? error.message : '';
+                                        if (!message.includes('requires the searched Neotree ID')) {
+                                            Alert.alert(
+                                                'Unable to start session',
+                                                'The session could not be saved. Please try again before continuing.'
+                                            );
+                                        }
+                                    }
 								})();
                             }}
                         >{matched?.session ? 'Continue' : 'Start'}</Button>

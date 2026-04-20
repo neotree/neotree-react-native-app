@@ -2,11 +2,7 @@ import React from 'react';
 import { Box, Br, Radio, Text, } from '../../../components';
 import { Search } from './Search';
 
-type TransferProps = {
-
-};
-
-export function Transfer({}: TransferProps) {
+export function Transfer() {
     const [isTransferred, setIsTransferred] = React.useState<null | boolean>(null); 
 
     return (
@@ -42,6 +38,7 @@ export function Transfer({}: TransferProps) {
 					label="Search patient's NUID" 
 					autofillKeys={['BirthFacility', 'OtherBirthFacility']}
                     prePopulateWithUID={true}
+                    useSearchedUidForSession={true}
 				/>
 			)}
         </Box>

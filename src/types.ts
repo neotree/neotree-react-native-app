@@ -23,8 +23,11 @@ export type Facility = { label: string; value: string; other?: string; };
 export type NuidSearchResults = {
     session: any;
     uid: string; 
+    searchedUid?: string;
     autoFill?: any; 
     prePopulateWithUID?: boolean;
+    continueWithoutPrePopulation?: boolean;
+    useSearchedUidForSession?: boolean;
 };
 
 export type NuidSearchFormField = {
@@ -38,9 +41,12 @@ export type NuidSearchFormField = {
 export type MatchedSession = { 
 	session: any, 
 	uid: string; 
+	searchedUid?: string;
 	// facility: Facility; 
 	autoFill?: any; 
 	prePopulateWithUID?: boolean;
+	continueWithoutPrePopulation?: boolean;
+	useSearchedUidForSession?: boolean;
     // fields: ({
     //     key: string;
     //     value: string;
@@ -63,7 +69,7 @@ export type Application = {
   };
 };
 export type Exception = {
-  id: Number,
+  id: number,
   device: string;
   message:string;
   hospital: string;
