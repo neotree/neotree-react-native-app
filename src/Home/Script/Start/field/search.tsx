@@ -86,6 +86,105 @@ const mergeSearchResults = (...groups: any[][]) => {
     });
 };
 
+const MIN_PATIENT_SUMMARY_DETAIL_ITEMS = 5;
+
+const PATIENT_SUMMARY_FALLBACK_LABELS: Record<string, string> = {
+    DateBCT: 'Date of birth',
+    DateBCR: 'Date of birth recorded',
+    DOBTOB: 'Date and time of birth',
+    DateTimeOfBirth: 'Date and time of birth',
+    GestAge: 'Gestational age',
+    Gestation: 'Gestational age',
+    BirthWeight: 'Birth weight',
+    BabyWeight: 'Baby weight',
+    BirthFacility: 'Birth facility',
+    Sex: 'Sex',
+    BabySex: 'Sex',
+};
+
+const firstValue = (input: any) => {
+    if (Array.isArray(input)) {
+        return input.find(item => item !== undefined && item !== null && item !== '') ?? input[0];
+    }
+    return input;
+};
+
+const humanizePatientSummaryKey = (key: string) => {
+    return key
+        .replace(/_/g, ' ')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/\bNUID\b/gi, 'NEOTREE ID')
+        .replace(/\bUID\b/gi, 'NEOTREE ID')
+        .replace(/\bGA\b/g, 'gestational age')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
+const getSessionScriptId = (session: any) => {
+    return session?.data?.script?.id
+        || session?.data?.script_id
+        || session?.data?.scriptTitle
+        || session?.script_id
+        || session?.scriptId
+        || session?.data?.id;
+};
+
+const buildPatientSummaryLabelMap = (screens: any[]) => {
+    return (screens || []).reduce((acc: Record<string, string>, screen: any) => {
+        const metadata = screen?.data?.metadata || {};
+        const fields = metadata.fields || [];
+        const items = metadata.items || [];
+
+        [...fields, ...items].forEach((field: any) => {
+            const key = field?.key || field?.inputKey || field?.value;
+            const label = field?.label || field?.text || field?.title;
+            if (!key || !label) return;
+            acc[`${key}`.toLowerCase()] = `${label}`.trim();
+        });
+
+        return acc;
+    }, {});
+};
+
+const getFallbackPatientSummaryLabel = (key: string) => {
+    return Object.entries(PATIENT_SUMMARY_FALLBACK_LABELS).find(([candidate]) =>
+        candidate.toLowerCase() === key.toLowerCase()
+    )?.[1];
+};
+
+const isNeotreeIdSummaryKey = (key: string) => {
+    return /^uid$/i.test(key)
+        || /^nuid$/i.test(key)
+        || /neotree.*id/i.test(key)
+        || /nuid/i.test(key);
+};
+
+const getPatientSummaryLabel = (
+    key: string,
+    entry: any,
+    labelMap: Record<string, string>,
+    fallbackLabel?: string,
+) => {
+    const fieldLabel = firstValue(
+        entry?.fieldLabel
+        ?? entry?.label
+        ?? entry?.metadata?.label
+        ?? entry?.field?.label
+        ?? entry?.values?.fieldLabel
+    );
+
+    if (fieldLabel !== undefined && fieldLabel !== null && `${fieldLabel}`.trim() !== '') {
+        return `${fieldLabel}`.trim();
+    }
+
+    const metadataLabel = labelMap[key.toLowerCase()];
+    if (metadataLabel) return metadataLabel;
+
+    if (fallbackLabel) return fallbackLabel;
+
+    return humanizePatientSummaryKey(key);
+};
+
 export function Search({
     label,
     autofillKeys,
@@ -117,6 +216,7 @@ export function Search({
     const [recommendedSessionKey, setRecommendedSessionKey] = React.useState('');
     const [recommendedSession, setRecommendedSession] = React.useState<any>(null);
     const [searchedFromQR, setSearchedFromQR] = React.useState(false);
+    const [patientSummaryLabels, setPatientSummaryLabels] = React.useState<Record<string, string>>({});
     const qrSessionRef = React.useRef<any[]>([]);
     const qrUidRef = React.useRef('');
 
@@ -410,11 +510,39 @@ export function Search({
         setSelectedSession(null);
     }, []);
 
+    React.useEffect(() => {
+        let cancelled = false;
+
+        (async () => {
+            const session = pendingPatientSelection?.session;
+            const scriptId = getSessionScriptId(session);
+            if (!scriptId) {
+                setPatientSummaryLabels({});
+                return;
+            }
+
+            try {
+                const script = await api.getScript({ script_id: scriptId });
+                if (!cancelled) {
+                    setPatientSummaryLabels(buildPatientSummaryLabelMap(script?.screens || []));
+                }
+            } catch {
+                if (!cancelled) setPatientSummaryLabels({});
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pendingPatientSelection?.session]);
+
     const getPatientSummaryItems = React.useCallback((session: any) => {
         const entries = session?.data?.entries || {};
-        const keyMatch = /(baby|mother|uid|datebct|datebcr|datetime|dobtob|gestation|weight)/i;
         const entriesList = Object.entries(entries);
-        const buildItems = (filterFn: (key: string, entry: any) => boolean) =>
+        const buildItems = (
+            filterFn: (key: string, entry: any) => boolean,
+            getFallbackLabel?: (key: string) => string | undefined,
+        ) =>
             entriesList.reduce((acc: any[], [key, entry]: [string, any]) => {
                 const safeKey = typeof key === 'string' ? key.trim() : '';
                 if (!safeKey) return acc;
@@ -424,34 +552,35 @@ export function Search({
                     : entry?.values?.value ?? entry?.value;
                 const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
                 if (!hasValue) return acc;
-                const label = entry?.values?.label?.[0] || safeKey;
+                const label = getPatientSummaryLabel(safeKey, entry, patientSummaryLabels, getFallbackLabel?.(safeKey));
                 acc.push({ key: safeKey, label, value: rawValue });
                 return acc;
             }, []);
 
-        const uidItems = buildItems((key) => /^uid$/i.test(key));
+        const uidItems = buildItems(isNeotreeIdSummaryKey);
         const uidItem = uidItems[0];
         const ipsItems = buildItems((_, entry) => entry?.ips === true).filter(i => !uidItem || i.key !== uidItem.key);
-        const keyMatchItems = buildItems((key) => keyMatch.test(key)).filter(i => !uidItem || i.key !== uidItem.key);
+        const fallbackItems = buildItems(
+            (key) => Boolean(getFallbackPatientSummaryLabel(key)),
+            getFallbackPatientSummaryLabel,
+        ).filter(i => !uidItem || i.key !== uidItem.key);
 
         const result: any[] = [];
         if (uidItem) result.push(uidItem);
         result.push(...ipsItems);
 
-        if (ipsItems.length < 4) {
-            const seen = new Set(result.map(i => i.key));
-            let added = 0;
-            for (const item of keyMatchItems) {
-                if (seen.has(item.key)) continue;
+        if (ipsItems.length < MIN_PATIENT_SUMMARY_DETAIL_ITEMS) {
+            const seen = new Set(result.map(i => i.key.toLowerCase()));
+            for (const item of fallbackItems) {
+                if (seen.has(item.key.toLowerCase())) continue;
                 result.push(item);
-                seen.add(item.key);
-                added += 1;
-                if (ipsItems.length + added >= 4) break;
+                seen.add(item.key.toLowerCase());
+                if (result.filter(i => !uidItem || i.key !== uidItem.key).length >= MIN_PATIENT_SUMMARY_DETAIL_ITEMS) break;
             }
         }
 
         return result.map(({ key, label, value }) => ({ key, label, value }));
-    }, []);
+    }, [patientSummaryLabels]);
 
     const formatPatientValue = React.useCallback((value: any, label?: string, key?: string) => {
         const labelKey = `${label || ''} ${key || ''}`.toLowerCase();
