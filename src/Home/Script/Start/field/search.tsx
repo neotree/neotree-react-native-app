@@ -96,6 +96,7 @@ const PATIENT_SUMMARY_FALLBACK_LABELS: Record<string, string> = {
     GestAge: 'Gestational age',
     Gestation: 'Gestational age',
     BirthWeight: 'Birth weight',
+    AdmissionWeight: 'Admission weight',
     BabyWeight: 'Baby weight',
     BirthFacility: 'Birth facility',
     Sex: 'Sex',
@@ -539,6 +540,13 @@ export function Search({
     const getPatientSummaryItems = React.useCallback((session: any) => {
         const entries = session?.data?.entries || {};
         const entriesList = Object.entries(entries);
+        const hasBirthWeight = entriesList.some(([key, entry]: [string, any]) => {
+            if (!/^BirthWeight$/i.test(`${key || ''}`.trim())) return false;
+            const rawValue = Array.isArray(entry?.values?.value)
+                ? entry.values.value[0]
+                : entry?.values?.value ?? entry?.value;
+            return rawValue !== undefined && rawValue !== null && rawValue !== '';
+        });
         const buildItems = (
             filterFn: (key: string, entry: any) => boolean,
             getFallbackLabel?: (key: string) => string | undefined,
@@ -561,7 +569,10 @@ export function Search({
         const uidItem = uidItems[0];
         const ipsItems = buildItems((_, entry) => entry?.ips === true).filter(i => !uidItem || i.key !== uidItem.key);
         const fallbackItems = buildItems(
-            (key) => Boolean(getFallbackPatientSummaryLabel(key)),
+            (key) => {
+                if (/^AdmissionWeight$/i.test(key) && hasBirthWeight) return false;
+                return Boolean(getFallbackPatientSummaryLabel(key));
+            },
             getFallbackPatientSummaryLabel,
         ).filter(i => !uidItem || i.key !== uidItem.key);
 
