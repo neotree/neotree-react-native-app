@@ -108,6 +108,7 @@ export function Form({ onSignInSuccess }: FormProps) {
                         textContentType="password"
                         autoCapitalize="none"
                         returnKeyType="go"
+                        autoComplete="current-password"
                         onSubmitEditing={() => submit()}
                         errors={errors.filter(e => e.field === 'password').map(e => e.message)}
                     />
