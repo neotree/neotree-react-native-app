@@ -194,7 +194,7 @@ export default async (session: any, showConfidential?: boolean) => {
                 }
 
                 let bullet = '';
-                if (['diagnosis'].includes(screenType)) {
+                if (['diagnosis', 'problems'].includes(screenType)) {
                   hideLabel = true;
                   bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
                   if (listStyle === 'none') bullet = '';

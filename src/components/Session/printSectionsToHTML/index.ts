@@ -179,7 +179,7 @@ export async function printSectionsToHTML({
             }
 
             let bullet = '';
-            if (['diagnosis'].includes(screenType)) {
+            if (['diagnosis', 'problems'].includes(screenType)) {
               hideLabel = true;
               bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
               if (listStyle === 'none') bullet = '';
