@@ -97,7 +97,7 @@ export function Summary({
                                             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                                             const listStyle = v.listStyle || _listStyle;
 
-                                            if (['fluids', 'drugs', 'diagnosis'].includes(screenType)) {
+                                            if (['fluids', 'drugs', 'diagnosis', 'problems'].includes(screenType)) {
                                                 isFlexRow = false;
                                                 hideLabel = true;
                                             }
@@ -109,7 +109,7 @@ export function Summary({
                                             }
 
                                             let bullet = '';
-                                            if (['diagnosis'].includes(screenType)) {
+                                            if (['diagnosis', 'problems'].includes(screenType)) {
                                                 bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
                                                 if (listStyle === 'none') bullet = '';
                                             }
