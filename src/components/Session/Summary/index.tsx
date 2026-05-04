@@ -82,7 +82,7 @@ export function Summary({
                                 .map(({
                                     values,
                                     management = [],
-                                    screen: { metadata: { label }, listStyle: _listStyle = 'none', type }
+                                    screen: { metadata: { label }, listStyle: _listStyle = 'none', type: screenType }
                                 }: any, entryIndex: number) => {
                                     management = management?.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
@@ -97,7 +97,7 @@ export function Summary({
                                             const extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                                             const listStyle = v.listStyle || _listStyle;
 
-                                            if (['fluids', 'drugs'].includes(type)) {
+                                            if (['fluids', 'drugs', 'diagnosis'].includes(screenType)) {
                                                 isFlexRow = false;
                                                 hideLabel = true;
                                             }
@@ -106,6 +106,12 @@ export function Summary({
 
                                                 value2 = getManualValue(values, v.key)
 
+                                            }
+
+                                            let bullet = '';
+                                            if (['diagnosis'].includes(screenType)) {
+                                                bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+                                                if (listStyle === 'none') bullet = '';
                                             }
 
                                             return (
@@ -134,7 +140,7 @@ export function Summary({
                                                             {
                                                                 v.value && v.value.map ?
                                                                     v.value.map((v: any, j: number) => {
-                                                                        let bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+                                                                        let bullet = listStyle === 'bullet' ? '• ' : `${j + 1}. `;
                                                                         if (listStyle === 'none') bullet = '';
 
                                                                         return (
@@ -160,7 +166,7 @@ export function Summary({
                                                                                 },
                                                                             ]}
                                                                         >
-                                                                            {`${v.valueText || v.value || 'N/A'} ${!value2 ? '' : ` (${value2})`}`}
+                                                                            {bullet}{`${v.valueText || v.value || 'N/A'} ${!value2 ? '' : ` (${value2})`}`}
                                                                         </Text>
                                                                     )
                                                             }
@@ -244,63 +250,6 @@ export function Summary({
                             );
                         })}
                 </Content>
-
-                {/* {form
-                    .filter(({ values, screen }: any) => values.length)
-                    .map(({ screen, values, management }: any) => {
-                        management = management || [];
-
-                        values = values
-                            // .filter((e: any) => e.printable)
-                            .reduce((acc: any, e: any) => [
-                                ...acc,
-                                ...(e.value && e.value.map ? e.value : [e]),
-                            ], []);
-                        
-                        const metadata = screen.metadata;
-
-                        let entries = null;
-
-                        switch (screen.type) {
-                            case 'diagnosis':
-                                const accepted = values
-                                    .filter((v: any) => v.diagnosis.how_agree !== 'No');
-                                entries = [
-                                    {
-                                        label: screen.sectionTitle || 'Ranked diagnoses', // `${screen.sectionTitle} - Primary Problems`,
-                                        values: accepted,
-                                        management: management,
-                                    },
-                                ]; // .filter(v => v.values.length);
-                                break;
-                            case 'form':
-                                entries = values
-                                    // .filter((e: any) => e.printable)
-                                    .filter((e: any) => e.confidential ? showConfidential : true)
-                                    .map((entry: any, i: number, arr: any[]) => ({
-                                        label: entry.label,
-                                        values: [entry],
-                                        management: i === (arr.length - 1) ? management : [],
-                                    }));
-                                break;
-                            default:
-                                entries = [{
-                                    label: screen.sectionTitle || metadata.label,
-                                    values,
-                                    management,
-                                }];
-                        }
-
-                        return !entries ? null : entries.map((e: any, i: any) => {
-                            const key = `${screen.id}${i}`;
-                            return (
-								<Entry 
-									key={key} entry={e} 
-									matched={matched || []} 
-								/>
-							);
-                        });
-                    })} */}
             </Wrapper>
         </Box>
     )
