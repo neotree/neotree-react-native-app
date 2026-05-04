@@ -140,7 +140,7 @@ export async function printSectionsToHTML({
           .filter((e: any) => e.confidential ? showConfidential : true)
           .filter((v: any) => v.valueText || v.value)
           .filter((e: any) => e.printable !== false)
-          .map((v: any) => {
+          .map((v: any, i: number) => {
             let hideLabel: boolean = false;
 
             let isFlexRow = printDisplayColumns !== 1;
@@ -178,6 +178,13 @@ export async function printSectionsToHTML({
               value2= getManualValue(values,v.key)
             }
 
+            let bullet = '';
+            if (['diagnosis', 'problems'].includes(screenType)) {
+              hideLabel = true;
+              bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+              if (listStyle === 'none') bullet = '';
+            }
+
             return `
               <div class="${isFlexRow ? 'row' : ''}">
                 <span style="display:${hideLabel ? 'none' : 'block'};font-weight:bold;">${screenMeta.label || v.label}</span>
@@ -190,7 +197,7 @@ export async function printSectionsToHTML({
                         return `<span>${bullet}${val.valueText || val.value || 'N/A'}</span>${!val.value2 ? '' : `<span> (${val.value2})</span>`}`;
                       }).join('<br />')
                       :
-                      `<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
+                      `${bullet}<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
                     }
                   </div>
                   ${!extraLabels.length ? '' : `
