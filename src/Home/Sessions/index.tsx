@@ -27,6 +27,10 @@ const deleteTypes = [
 		value: 'all',
 	},
 	{
+		label: 'All (except unexported complete sessions)',
+		value: 'all_except_unexported_complete',
+	},
+	{
 		label: 'Incomplete sessions',
 		value: 'incomplete',
 	},
@@ -886,6 +890,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							switch (deleteType) {
 								case 'all':
 									deleteSessions(dbSessions.map((s: any) => s.id));
+									break;
+								case 'all_except_unexported_complete':
+									const unexportedCompleteSessions = dbSessions.filter((s: any) => !s.exported && s?.data?.completed_at);
+									const deletable = dbSessions.filter((s: any) => !unexportedCompleteSessions.find((s2: any) => s2.id === s.id))
+									deleteSessions(deletable.map((s: any) => s.id));
 									break;
 								case 'incomplete':
 									deleteSessions(dbSessions.filter((s: any) => !s?.data?.completed_at).map((s: any) => s.id));
