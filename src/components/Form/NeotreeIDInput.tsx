@@ -8,7 +8,7 @@ import { TextInput } from './TextInput';
 export type NeotreeIDInputProps = {
     autoGenerateValue?: boolean;
     label?: string;
-    onChange: (value: string) => void;
+    onChange: (value: string, isManual?: boolean) => void;
     value?: any;
     disabled?: boolean;
     defaultValue?: string;
@@ -37,6 +37,7 @@ function Input({
     disabled = disabled;
 
     const [mounted, setMounted] = React.useState(false);
+    const lastChangeWasManual = React.useRef(false);
 
     const firstHalfRef = React.useRef<RNTextInput>(null);
     const lastHalfRef = React.useRef<RNTextInput>(null);
@@ -79,7 +80,10 @@ function Input({
         setUIDValue(v);
     }, [firstHalf, lastHalf]);
 
-    React.useEffect(() => { onChange(uidValue); }, [uidValue]);
+    React.useEffect(() => {
+        onChange(uidValue, lastChangeWasManual.current);
+        lastChangeWasManual.current = false;
+    }, [uidValue]);
 
     React.useEffect(() => {
         if (value) {
@@ -123,6 +127,7 @@ function Input({
                         placeholder="ABC2"
                         onChange={e => {
                             const value = e.nativeEvent.text;
+                            lastChangeWasManual.current = true;
                             setFirstHalf(value);
                         }}
                         errors={disabled ? undefined : firstHalfErrors}
@@ -150,6 +155,7 @@ function Input({
                         placeholder="0123"
                         onChange={e => {
                             const value = e.nativeEvent.text;
+                            lastChangeWasManual.current = true;
                             setLastHalf(value);
                         }}
                         errors={(disabled || disableLastHalf) ? undefined : lastHalfErrors}
