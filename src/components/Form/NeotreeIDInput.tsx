@@ -37,6 +37,7 @@ function Input({
     disabled = disabled;
 
     const [mounted, setMounted] = React.useState(false);
+    const onChangeRef = React.useRef(onChange);
     const lastChangeWasManual = React.useRef(false);
 
     const firstHalfRef = React.useRef<RNTextInput>(null);
@@ -51,7 +52,6 @@ function Input({
     const [_defaultVal] = React.useState(getDefault());
     const [firstHalf, setFirstHalf] = React.useState(`${value || ''}`.substring(0, 4) || _defaultVal.firstHalf);
     const [lastHalf, setLastHalf] = React.useState(getUidSuffix(value) || _defaultVal.lastHalf);
-    const [uidValue, setUIDValue] = React.useState('');
 
     const _value = `${firstHalf}-${lastHalf}`;
     const { 
@@ -61,6 +61,10 @@ function Input({
         lastHalfMaxLength, 
         lastHalfErrors,
     } = validateUID(_value);
+
+    React.useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
 
     React.useEffect(() => {
         // if (firstHalf.length === 4) lastHalfRef.current._root.focus();
@@ -75,26 +79,23 @@ function Input({
     // }, [_value, valueInitialised]);
 
     React.useEffect(() => {
-        const _value = `${firstHalf}-${lastHalf}`;
-        const v = validateUID(_value).isValid ? _value : ''; // (value || _defaultVal.uid);
-        setUIDValue(v);
-    }, [firstHalf, lastHalf]);
-
-    React.useEffect(() => {
-        onChange(uidValue, lastChangeWasManual.current);
+        const nextValue = validateUID(_value).isValid ? _value : '';
+        onChangeRef.current(nextValue, lastChangeWasManual.current);
         lastChangeWasManual.current = false;
-    }, [uidValue]);
+    }, [_value]);
 
     React.useEffect(() => {
         if (value) {
             const [_firstHalf, _lastHalf] = (value || '').split('-');
-            setFirstHalf(_firstHalf || _defaultVal.firstHalf);
-            setLastHalf(_lastHalf || _defaultVal.lastHalf);
+            const nextFirstHalf = _firstHalf || _defaultVal.firstHalf;
+            const nextLastHalf = _lastHalf || _defaultVal.lastHalf;
+            if (nextFirstHalf !== firstHalf) setFirstHalf(nextFirstHalf);
+            if (nextLastHalf !== lastHalf) setLastHalf(nextLastHalf);
         } else if (mounted) {
             // setFirstHalf('');
             // setLastHalf('');
         }
-    }, [value, mounted]);
+    }, [value, mounted, _defaultVal.firstHalf, _defaultVal.lastHalf, firstHalf, lastHalf]);
 
     React.useEffect(() => {
         setMounted(true);
