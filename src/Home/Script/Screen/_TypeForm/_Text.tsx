@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
-import { Box,NeotreeIDInput, TextInput} from '../../../../components';
+import { Box,NeotreeIDInput, Text, TextInput} from '../../../../components';
 import * as types from '../../../../types';
 
 
@@ -20,30 +20,90 @@ export function TextField({
     onChange 
 }: TextFieldProps) {
     const { generatedUID } = useScriptContext();
-    const isNeotreeID = field.key.match('UID') || field.key.match('NUID_') || field.key.match(new RegExp('neotree', 'gi'));
+    const onChangeRef = React.useRef(onChange);
+    const normalizedFieldKey = `${field?.key || ''}`.trim();
+    const isNeotreeID = useMemo(() => {
+        return /^uid$/i.test(normalizedFieldKey)
+            || /^nuid$/i.test(normalizedFieldKey)
+            || /^nuid_/i.test(normalizedFieldKey)
+            || /neotree.*id/i.test(normalizedFieldKey)
+            || field?.defaultValue === 'uid';
+    }, [field?.defaultValue, normalizedFieldKey]);
 	const prePopulatedUID = ''; // ctx.matched?.prePopulateWithUID ? ctx.matched?.uid : '';
     // const scriptType = script?.type
     // const isScanable = scriptType==='neolab' ||scriptType==='discharge'
 
     const [value, setValue] = React.useState(entryValue?.value || (isNeotreeID ? prePopulatedUID : '') || '');
     const [error, setError] = React.useState('');
-    const [disabled, setDisabled] = React.useState(false);
-    const canEdit = repeatable?editable:true
+    const canEdit = repeatable ? editable : true;
+    const isLockedNeotreeID = isNeotreeID && conditionMet && !!patientNUID;
+    const minCharacterLimit = useMemo(() => {
+        const parsed = Number(field?.minLength);
+        if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+        return parsed;
+    }, [field?.minLength]);
+    const characterLimit = useMemo(() => {
+        const parsed = Number(field?.maxLength);
+        if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+        return parsed;
+    }, [field?.maxLength]);
+
+    React.useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    const getManualEntryError = React.useCallback((nextValue: string) => {
+        if (nextValue && minCharacterLimit && nextValue.length < minCharacterLimit) {
+            return `Minimum ${minCharacterLimit} characters`;
+        }
+        if (nextValue && characterLimit && nextValue.length > characterLimit) {
+            return `Maximum ${characterLimit} characters`;
+        }
+        return '';
+    }, [characterLimit, minCharacterLimit]);
+
+    const emitValueChange = React.useCallback((nextValue: string, isManual = false) => {
+        const normalizedValue = `${nextValue || ''}`;
+        const nextError = isManual ? getManualEntryError(normalizedValue) : '';
+
+        setValue(normalizedValue);
+        setError(nextError);
+        onChangeRef.current({
+            value: normalizedValue,
+            valueText: normalizedValue,
+            exportType: 'text',
+            exportLabel: normalizedValue,
+            label: field?.label,
+            error: nextError || null,
+        });
+    }, [field?.label, getManualEntryError, onChange]);
+
+    React.useEffect(() => {
+        const nextValue = `${entryValue?.value ?? ''}`;
+        if (nextValue !== value) {
+            setValue(nextValue);
+        }
+    }, [entryValue?.value, value]);
 
     React.useEffect(() => { 
         if (!conditionMet) {
-            onChange({ value: null, valueText: null, exportType: 'text',label: field?.label }); 
-            setValue('');
+            if (entryValue?.value !== null || entryValue?.valueText !== null || entryValue?.error != null) {
+                onChangeRef.current({ value: null, valueText: null, exportType: 'text',label: field?.label, error: null });
+            }
+            if (value !== '') setValue('');
+            if (error !== '') setError('');
         }
-    }, [conditionMet]);
+    }, [conditionMet, entryValue?.error, entryValue?.value, entryValue?.valueText, error, field?.label, value]);
 
     React.useEffect(() => {
         if (isNeotreeID && conditionMet && patientNUID) {
-            onChange({ value: patientNUID, valueText: patientNUID, exportType: 'text',label: field?.label }); 
-            setValue(patientNUID);
-            setDisabled(true);
+            if (entryValue?.value !== patientNUID || entryValue?.error != null) {
+                onChangeRef.current({ value: patientNUID, valueText: patientNUID, exportType: 'text',label: field?.label, error: null });
+            }
+            if (value !== patientNUID) setValue(patientNUID);
+            if (error !== '') setError('');
         }
-    }, [conditionMet, patientNUID, field.key]);
+    }, [conditionMet, patientNUID, entryValue?.error, entryValue?.value, field?.label, isNeotreeID, value, error]);
 
     const autoGenerateValue = useMemo(() => !!field.defaultValue, [field]);
 
@@ -52,18 +112,20 @@ export function TextField({
             {isNeotreeID ? (
                 <>
                 <NeotreeIDInput 
-                    disabled={disabled || !conditionMet || (autoGenerateValue && (field.canEditAutoGeneratedValue !== true))}
+                    disabled={isLockedNeotreeID || !conditionMet || (autoGenerateValue && (field.canEditAutoGeneratedValue !== true))}
                     defaultValue={prePopulatedUID}
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
                     generatedUID={generatedUID}
-                    onChange={val => {
-                        setValue(`${val || ''}`);
-                        onChange({ value: val,valueText:val, exportType: 'text',exportLabel:value,label: field?.label });
-                    }}
+                    onChange={(val, isManual) => emitValueChange(`${val || ''}`, !!isManual)}
                     autoGenerateValue={autoGenerateValue}
 
                 />
+                {!!error && (
+                    <Text variant="caption" color="error">
+                        {error}
+                    </Text>
+                )}
                 </>
             ) : (
             
@@ -73,11 +135,9 @@ export function TextField({
                     label={`${field.label}${field.optional ? '' : ' *'}`}
                     value={value}
                     errors={error ? [error] : []}
+                    maxLength={characterLimit}
                     onChangeText={value => {                    
-                        let err = '';
-                        setValue(value);
-                        setError(err);
-                        onChange({ value: err ? null : value, valueText:value,exportType: 'text',exportLabel:value,label: field?.label});
+                        emitValueChange(value, true);
                     }}
                 />
             
