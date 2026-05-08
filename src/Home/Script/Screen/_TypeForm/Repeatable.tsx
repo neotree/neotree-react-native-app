@@ -71,7 +71,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const val = values[field.key];
                 const conditionMet = evaluateCondition(field,forms?.[index]);
                 if (!conditionMet) return true;
-                return !!val?.['value'];
+                return !!val?.['value'] && !val?.['error'];
             });
             
             const requiredComplete =
@@ -89,7 +89,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         const conditionMet = evaluateCondition(field,forms?.[index]);
                         if (!conditionMet) return true;
 
-                        return !!val?.['value'];
+                        return !!val?.['value'] && !val?.['error'];
                     });
 
             return [{
@@ -249,7 +249,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     if (!conditionMet) {
                         return true;
                     }
-                    return !!val && !!val?.['value'];
+                    return !!val && !!val?.['value'] && !val?.['error'];
                 });
 
                 const collectionFieldValue = newValues?.[collectionField];
@@ -281,7 +281,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         if (!conditionMet) {
                             return true;
                         }
-                        return !!val && !!val['value'];
+                        return !!val && !!val['value'] && !val?.['error'];
                     });
 
                 return {
