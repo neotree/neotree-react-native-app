@@ -147,7 +147,7 @@ export default async (session: any, showConfidential?: boolean) => {
               metadata: { label },
               listStyle: _listStyle = 'none',
               printDisplayColumns = 2,
-              type
+              type: screenType
             }
           }: any) => {
             // management = management || [];
@@ -156,7 +156,7 @@ export default async (session: any, showConfidential?: boolean) => {
               .filter((e: any) => e.confidential ? showConfidential : true)
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
-              .map((v: any) => {
+              .map((v: any, i: number) => {
                 let hideLabel = false;
 
                 let isFlexRow = printDisplayColumns !== 1;
@@ -165,7 +165,7 @@ export default async (session: any, showConfidential?: boolean) => {
                 let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 const listStyle = v.listStyle || _listStyle;
 
-                const isDff = ['fluids', 'drugs'].includes(type);
+                const isDff = ['fluids', 'drugs'].includes(screenType);
 
                 if (isDff) {
                   isFlexRow = false;
@@ -193,6 +193,12 @@ export default async (session: any, showConfidential?: boolean) => {
                   value2 = getManualValue(values, v.key)
                 }
 
+                let bullet = '';
+                if (['diagnosis', 'problems'].includes(screenType)) {
+                  hideLabel = true;
+                  bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+                  if (listStyle === 'none') bullet = '';
+                }
 
                 return `
                   <div  class="${isFlexRow ? 'row' : ''}">
@@ -206,7 +212,7 @@ export default async (session: any, showConfidential?: boolean) => {
                       return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span> (${v.value2})</span>`}`;
                     }).join('<br />')
                     :
-                    `<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
+                    `${bullet}<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
                   }
                       </div>
 
