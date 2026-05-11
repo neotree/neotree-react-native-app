@@ -296,6 +296,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     })
                     .join(' or ');
             }
+
+            _condition = _condition.replace(/\[(.*?)\]/gi, (_, match: string) => {
+                return parseCondition(match, _form);
+            });
         
             const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
                 value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
