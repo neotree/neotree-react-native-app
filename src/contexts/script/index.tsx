@@ -265,16 +265,23 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 }),
             ]);
 
+            _condition = _condition.replace(/\[(.*?)\]/gi, (_, match: string) => {
+                return parseCondition(match, _form);
+            });
+
             if (
                 _condition.match(/ excludes /gi) ||
                 _condition.match(/ includes /gi)
             ) {
-                const [key, vals] = _condition.split(/ excludes /gi).map(s => s.trim());
+                const [key, vals] = _condition.match(/ excludes /gi) ?
+                    _condition.split(/ excludes /gi).map(s => s.trim())
+                    :
+                    _condition.split(/ includes /gi).map(s => s.trim());
 
                 const entryVals = _form.map(e => {
                     let found: string[] = [];
-                    const vals = e.value || e.values || [];
-                    vals.forEach(v => {
+                    const entryVals = e.value || e.values || [];
+                    entryVals.forEach(v => {
                         if (`$${v.key?.toLowerCase?.()}` === key.toLowerCase()) {
                             const val = Array.isArray(v.value) ? v.value : [v.value];
                             val.forEach(v => found.push(v.key));
@@ -295,12 +302,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         return includes;
                     })
                     .join(' or ');
+
+                return _condition;
             }
 
-            _condition = _condition.replace(/\[(.*?)\]/gi, (_, match: string) => {
-                return parseCondition(match, _form);
-            });
-        
             const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
                 value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
                 value = ((value === null) || (value === undefined)) ? 'no value' : value;
