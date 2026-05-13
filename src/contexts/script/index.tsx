@@ -236,124 +236,167 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         _condition = '', 
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
     ) => {
-        _condition = (_condition || '').toString();
+        _condition = `${_condition || ''}`.split('\n').map(_condition => {
+            const _form = _entries.reduce((acc, e) => {
+                const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
 
-        const _form = _entries.reduce((acc, e) => {
-            const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
+                if (index > -1) {
+                    return acc.map((accEntry, i) => {
+                        if (i === index)  {
+                            return { ...accEntry, ...e, }; 
+                        } else { 
+                            return accEntry;
+                        }
+                    }) as types.ScreenEntry[];
+                }
 
-            if (index > -1) {
-                return acc.map((accEntry, i) => {
-                    if (i === index)  {
-                        return { ...accEntry, ...e, }; 
-                    } else { 
-                        return accEntry;
-                    }
-                }) as types.ScreenEntry[];
-            }
+                return [...acc, e] as types.ScreenEntry[];
+            }, [
+                ...entries,
+                ...nuidSearchForm.map(f => {
+                    const entry = {
+                        value: [{
+                            value: f.value,
+                            key: f.key,
+                        }],
+                    } as types.ScreenEntry;
+                    
+                    return entry;
+                }),
+            ]);
 
-            return [...acc, e] as types.ScreenEntry[];
-        }, [
-            ...entries,
-            ...nuidSearchForm.map(f => {
-                const entry = {
-                    value: [{
-                        value: f.value,
-                        key: f.key,
-                    }],
-                } as types.ScreenEntry;
-                
-                return entry;
-            }),
-        ]);
-    
-        const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
-            value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
-            value = ((value === null) || (value === undefined)) ? 'no value' : value;
-            const t = dataType || type;
-    
-            switch (t) {
-                case 'boolean':
-                    value = value === 'false' ? false : Boolean(value);
-                    break;
-                default:
-                    if(key==='createdAt'){
-                        value=value
-                    }else{
-                        value = JSON.stringify(value)
-                    }
-            }
-    
-            return parseConditionString(condition, inputKey || key, value);
-        };
-    
-        let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
-            values = value || values || [];
+            _condition = _condition.replace(/\[(.*?)\]/gi, (_, match: string) => {
+                return parseCondition(match, _form);
+            });
 
-            values = values.reduce((acc: typeof values, v) => {
-                acc = [...acc, v];
-                if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
-                return acc;
-            }, []);
-            
-            // First filter out null/undefined values
-            values = values.filter(e => (e.value !== null) && (e.value !== undefined));
-            
-            // Flatten repeatable structures if they exist
-            values = flattenRepeatables(values);
-            
-            // Handle both array and non-array values
-            values = values
-                .reduce((acc: types.ScreenEntryValue[], e) => {
-                    acc = [
-                        ...acc,
-                        ...(e.value && Array.isArray(e.value) ? e.value : [e]),
-                    ];
+            if (
+                _condition.match(/ excludes /gi) ||
+                _condition.match(/ includes /gi)
+            ) {
+                const [key, vals] = _condition.match(/ excludes /gi) ?
+                    _condition.split(/ excludes /gi).map(s => s.trim())
+                    :
+                    _condition.split(/ includes /gi).map(s => s.trim());
 
-                    acc.forEach(v => {
-                        if (v.value2) {
-                            acc.push({
-                                ...v,
-                                value: v.value2,
-                            });
+                const entryVals = _form.map(e => {
+                    let found: string[] = [];
+                    const entryVals = e.value || e.values || [];
+                    entryVals.forEach(v => {
+                        if (`$${v.key?.toLowerCase?.()}` === key.toLowerCase()) {
+                            const val = Array.isArray(v.value) ? v.value : [v.value];
+                            val.forEach(v => found.push(v.key));
                         }
                     });
+                    return found;
+                }).reduce((acc, arr) => [...acc, ...arr], []);
 
-                    return acc;
-                }, []);
-    
-            let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+                _condition = `${vals || ''}`
+                    .replace(/\((.*?)\)/, '$1')
+                    .split(',')
+                    .map(v => v.trim().replaceAll('"', '').replaceAll("'", '').replaceAll('`', '').replaceAll('`', ''))
+                    .map(v => {
+                        let includes = entryVals.map(v => v.toLowerCase()).includes(v.toLowerCase());
+                        if (_condition.match(/ excludes /gi)) {
+                            includes = !includes;
+                        }
+                        return includes;
+                    })
+                    .join(' or ');
 
-            let chunks: string[] = values.filter(v => v.parentKey)
-                .map(v => parseValue(condition, {
-                    ...v,
-                    key: v.parentKey,
-                }))
-                .filter(c => c !== condition);
-    
-            if (screen) {
-                switch (screen.type) {
-                    case 'multi_select':
-                        chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+                return _condition;
+            }
+
+            const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
+                value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
+                value = ((value === null) || (value === undefined)) ? 'no value' : value;
+                const t = dataType || type;
+        
+                switch (t) {
+                    case 'boolean':
+                        value = value === 'false' ? false : Boolean(value);
                         break;
                     default:
-                    // do nothing
+                        if(key==='createdAt'){
+                            value=value
+                        }else{
+                            value = JSON.stringify(value)
+                        }
                 }
-            }
+        
+                return parseConditionString(condition, inputKey || key, value);
+            };
+        
+            let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
+                values = value || values || [];
 
-            if (chunks.length) {
-                c = chunks.map(c => `(${c})`).join(' || ');
+                values = values.reduce((acc: typeof values, v) => {
+                    acc = [...acc, v];
+                    if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
+                    return acc;
+                }, []);
+                
+                // First filter out null/undefined values
+                values = values.filter(e => (e.value !== null) && (e.value !== undefined));
+                
+                // Flatten repeatable structures if they exist
+                values = flattenRepeatables(values);
+                
+                // Handle both array and non-array values
+                values = values
+                    .reduce((acc: types.ScreenEntryValue[], e) => {
+                        acc = [
+                            ...acc,
+                            ...(e.value && Array.isArray(e.value) ? e.value : [e]),
+                        ];
+
+                        acc.forEach(v => {
+                            if (v.value2) {
+                                acc.push({
+                                    ...v,
+                                    value: v.value2,
+                                });
+                            }
+                        });
+
+                        return acc;
+                    }, []);
+        
+                let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+
+                let chunks: string[] = values.filter(v => v.parentKey)
+                    .map(v => parseValue(condition, {
+                        ...v,
+                        key: v.parentKey,
+                    }))
+                    .filter(c => c !== condition);
+        
+                if (screen) {
+                    switch (screen.type) {
+                        case 'multi_select':
+                            chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+                            break;
+                        default:
+                        // do nothing
+                    }
+                }
+
+                if (chunks.length) {
+                    c = chunks.map(c => `(${c})`).join(' || ');
+                }
+        
+                return c || condition;
+            }, _condition);
+        
+            if (configuration) {
+                parsedCondition = Object.keys(configuration).reduce((acc, key) => {
+                    return parseConditionString(acc, key, configuration[key] ? true : false);
+                }, parsedCondition);
             }
-    
-            return c || condition;
-        }, _condition);
-    
-        if (configuration) {
-            parsedCondition = Object.keys(configuration).reduce((acc, key) => {
-                return parseConditionString(acc, key, configuration[key] ? true : false);
-            }, parsedCondition);
-        }
-    
-        return sanitizeCondition(parsedCondition);
+        
+            return `(${sanitizeCondition(parsedCondition)})`;
+        }).join(' && ');
+
+        return _condition;
     }, [entries, configuration, nuidSearchForm, parseConditionString, flattenRepeatables, sanitizeCondition]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
