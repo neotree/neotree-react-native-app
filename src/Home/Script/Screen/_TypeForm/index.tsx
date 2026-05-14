@@ -2,6 +2,11 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
+import {
+    formatDateLikeLabel,
+    isTimestampLabel,
+    normalizeDateLikeValue,
+} from '@/src/utils/date-value-normalization';
 import { Box, Br } from '../../../../components';
 import * as types from '../../../../types';
 import { fieldsTypes } from '../../../../constants';
@@ -14,6 +19,7 @@ import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
 import { MultiSelectField } from './_MultiSelect';
 import Repeatable from './Repeatable';
+import { v4 as uuidv4 } from 'uuid';
 
 type TypeFormProps = types.ScreenTypeProps & {};
 
@@ -32,15 +38,106 @@ export function TypeForm({ }: TypeFormProps) {
         setEntryValues,
     } = ctx;
 
-    const metadata = activeScreen?.data?.metadata;
+//Fix Slowness Issue, By Prebuilding Fields Before Rendering
+    const normalizeFieldType = React.useCallback((fieldType: any) => {
+        return `${fieldType ?? ''}`.trim().toLowerCase().replace(/[\s-]+/g, '_');
+    }, []);
+  
+    const metadata = React.useMemo(() => {
+    const original = activeScreen?.data?.metadata;
+    if (!original?.fields) return original;
+
+    const hasManual = original.fields.some(
+        (f: any) =>
+            normalizeFieldType(f.type) === "dropdown" &&
+            Array.isArray(f.items) &&
+            f.items.some((i: any) => i.enterValueManually === true)
+    );
+
+    // Transform dropdown and multi_select fields to clear values if items is not empty
+    const transformedFields = original.fields.map((field: any) => {
+        const normalizedType = normalizeFieldType(field.type);
+        if ((normalizedType === "dropdown" || normalizedType === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
+            return {
+                ...field,
+                values: "",
+            };
+        }
+        return field;
+    });
+
+    if (!hasManual) {
+        return {
+            ...original,
+            fields: transformedFields,
+        };
+    }
+    const updatedFields: any[] = [];
+    let positionCounter = 1;
+
+    for (const field of transformedFields) {
+        updatedFields.push({
+            ...field,
+            position: positionCounter++,
+        });
+
+        if (normalizeFieldType(field.type) === "dropdown" && Array.isArray(field.items)) {
+            const manualItems = field.items.filter(
+                (i: any) => i.enterValueManually === true
+            );
+
+            if (manualItems.length > 0) {
+                const manualCondition = manualItems
+                    .map((i: any) => `$${field.key} = '${i.value}'`)
+                    .join(" or ");
+
+                updatedFields.push({
+                    fieldId: uuidv4(),
+                    keyId: uuidv4(),
+                    type: "text",
+                    key: `manual${field.key}`,
+                    label: `Specify ${(field.label ?? '').toLowerCase()}`,
+                    condition: manualCondition,
+                    printable: false,
+                    optional: false,
+                    editable: true,
+                    confidential: false,
+                    prePopulate: [],
+                    items: [],
+                    valuesOptions: [],
+                    position: positionCounter++,
+                });
+            }
+        }
+    }
+
+    return {
+        ...original,
+        fields: updatedFields,
+    };
+}, [activeScreen?.data?.metadata, normalizeFieldType]);
+
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const repeatable = metadata?.repeatable;
 
 
     const patientNUID = useMemo(() => {
-        return nuidSearchForm
-            .filter(f => f.key === 'patientNUID' || f.key === 'BabyTransferedNUID')[0]?.value;
+        const primarySearch = nuidSearchForm
+            .find(f => (
+                (f.key === 'patientNUID' || f.key === 'BabyTransferedNUID') &&
+                f.value
+            ));
+        const nuidSearch = nuidSearchForm.find(f => (
+            f.results &&
+            f.results.useSearchedUidForSession === true &&
+            (f.value || f.results.uid || f.results.searchedUid)
+        ));
+
+        return primarySearch?.value
+            ?? nuidSearch?.value
+            ?? nuidSearch?.results?.uid
+            ?? nuidSearch?.results?.searchedUid;
     }, [nuidSearchForm]);
 
     const getValues = useCallback(() => {
@@ -55,6 +152,8 @@ export function TypeForm({ }: TypeFormProps) {
 
             let value = cached?.value || `${matched || ''}` || null;
             let valueText = cached?.valueText || matched || null;
+            let exportValue: string | undefined = undefined;
+            let exportLabel: string | undefined = undefined;
 
             let value2 = cached?.value2 || null;
 
@@ -63,7 +162,9 @@ export function TypeForm({ }: TypeFormProps) {
                 valueText = cached?.valueText || patientNUID;
             }
 
-            if (f.type === 'multi_select') {
+            const normalizedFieldType = normalizeFieldType(f.type);
+
+            if (normalizedFieldType === 'multi_select') {
                 const opts = (() => {
                     if (!f?.items) {
                         return parseFieldValues({
@@ -91,6 +192,53 @@ export function TypeForm({ }: TypeFormProps) {
                 }));
             }
 
+            if (normalizedFieldType === 'dropdown') {
+                const opts = (() => {
+                    if (!f?.items) {
+                        return parseFieldValues({
+                            values: f.values,
+                            options: f.valuesOptions,
+                        });
+                    } else {
+                        return parseFieldItems({ items: f.items, });
+                    }
+                })();
+                const matchedOpt = opts.find(o => `${o.value}` === `${matched || ''}`);
+
+                if (!cached?.value) {
+                    value = null;
+                    valueText = null;
+                    
+                    if (matchedOpt) {
+                        value = matchedOpt.value;
+                        exportValue = matchedOpt.value;
+                        valueText = matchedOpt.label;
+                        exportLabel = matchedOpt.label;
+                    }
+                }
+            }
+
+            if ([fieldsTypes.DATE, fieldsTypes.DATETIME, fieldsTypes.TIME].includes(f.type)) {
+                const normalizedValue = normalizeDateLikeValue(value, f.type);
+                if (normalizedValue) {
+                    value = normalizedValue;
+                }
+
+                const currentText = typeof valueText === 'string' ? valueText : null;
+                const shouldNormalizeLabel =
+                    !currentText ||
+                    isTimestampLabel(currentText) ||
+                    `${currentText}` === `${value ?? ''}`;
+
+                if (shouldNormalizeLabel) {
+                    const formattedLabel = formatDateLikeLabel(value, f.type);
+                    if (formattedLabel) {
+                        valueText = formattedLabel;
+                        exportLabel = formattedLabel;
+                    }
+                }
+            }
+
             return {
                 printable: f.printable !== false,
                 value,
@@ -105,10 +253,12 @@ export function TypeForm({ }: TypeFormProps) {
                 prePopulate: f.prePopulate,
                 editable: f.editable,
                 ips: f.ips,
+                exportValue,
+                exportLabel,
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, cachedVal,  activeScreen?.printDisplayColumns, getPrepopulationData]);
+    }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, getPrepopulationData, normalizeFieldType]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
@@ -124,12 +274,14 @@ export function TypeForm({ }: TypeFormProps) {
             }
 
         }
-        if (f.condition) {
-            conditionMet = evaluateCondition(
-                parseCondition(f.condition, [{ values: formatedvalues }])
-            ) as boolean;
+        const condition = `${f?.condition ?? ''}`.trim();
 
+        if (condition) {
+            conditionMet = evaluateCondition(
+                parseCondition(condition, [{ values: formatedvalues }])
+            ) as boolean;
         }
+       
 
         return conditionMet;
     };
@@ -344,7 +496,8 @@ export function TypeForm({ }: TypeFormProps) {
                     <React.Fragment key={f.key}>
                         {(() => {
                             let Component: null | React.ComponentType<types.ScreenFormTypeProps & { patientNUID?: string | null; }> = null;
-                            switch (f.type) {
+                            const normalizedFieldType = normalizeFieldType(f.type);
+                            switch (normalizedFieldType) {
                                 case fieldsTypes.NUMBER:
                                     Component = NumberField;
                                     break;
@@ -370,10 +523,10 @@ export function TypeForm({ }: TypeFormProps) {
                                     Component = MultiSelectField;
                                     break;
                                 default:
-
+                            
                                 // do nothing
                             }
-
+                            
                             if (!Component) return null;
 
                             const conditionMet = evaluateFieldCondition(f);
@@ -381,7 +534,7 @@ export function TypeForm({ }: TypeFormProps) {
                             if (!conditionMet) return null;
 
                             const updateFieldValue = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
-                            const shouldLog = ['date', 'datetime', 'period'].includes(f.type);
+                            const shouldLog = ['date', 'datetime', 'period'].includes(normalizedFieldType);
                             const onChange = (val: Partial<types.ScreenEntryValue>) => {
                                 if (shouldLog) {
                                     const incoming = val || {};

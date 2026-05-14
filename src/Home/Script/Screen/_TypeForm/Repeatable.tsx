@@ -7,7 +7,9 @@ import { TextField } from './_Text';
 import { DropDownField } from './_DropDown';
 import { PeriodField, dateToValueText } from './_Period';
 import { TimeField } from './_Time';
+import { MultiSelectField } from './_MultiSelect';
 import { fieldsTypes } from '../../../../constants';
+import { normalizeDateLikeValue } from '@/src/utils/date-value-normalization';
 import { formatDate } from '@/src/utils/formatDate';
 
 
@@ -44,6 +46,10 @@ const normalizeFormEntries = (values?: Record<string, any>) => {
     }, []);
 };
 
+const normalizeFieldType = (fieldType: any) => {
+    return `${fieldType ?? ''}`.trim().toLowerCase().replace(/[\s-]+/g, '_');
+};
+
 
 const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluateCondition, allValues }: RepeatableProps) => {
 
@@ -65,7 +71,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 const val = values[field.key];
                 const conditionMet = evaluateCondition(field,forms?.[index]);
                 if (!conditionMet) return true;
-                return !!val?.['value'];
+                return !!val?.['value'] && !val?.['error'];
             });
             
             const requiredComplete =
@@ -83,7 +89,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         const conditionMet = evaluateCondition(field,forms?.[index]);
                         if (!conditionMet) return true;
 
-                        return !!val?.['value'];
+                        return !!val?.['value'] && !val?.['error'];
                     });
 
             return [{
@@ -177,7 +183,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
         if (value) {
             const field = fields.find(field => field.key === collectionField)
-            if (field && field.type === 'dropdown') {
+            if (field && normalizeFieldType(field.type) === 'dropdown') {
                 if (value['value'] === 'other') {
                     const otherField = fields.find(f => String(f.key).toLocaleLowerCase() === String('other' + field.key).toLocaleLowerCase())
 
@@ -243,7 +249,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     if (!conditionMet) {
                         return true;
                     }
-                    return !!val && !!val?.['value'];
+                    return !!val && !!val?.['value'] && !val?.['error'];
                 });
 
                 const collectionFieldValue = newValues?.[collectionField];
@@ -275,7 +281,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         if (!conditionMet) {
                             return true;
                         }
-                        return !!val && !!val['value'];
+                        return !!val && !!val['value'] && !val?.['error'];
                     });
 
                 return {
@@ -421,6 +427,13 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
             if (!field) continue;
 
+            if ([fieldsTypes.DATE, fieldsTypes.DATETIME, fieldsTypes.TIME, fieldsTypes.PERIOD].includes(field.type)) {
+                const normalizedValue = normalizeDateLikeValue(valueObj?.value, field.type);
+                if (normalizedValue) {
+                    valueObj = { ...valueObj, value: normalizedValue };
+                }
+            }
+
             // Don't create base object if value is null, undefined, or empty
             const hasValidValue = valueObj && 
                 valueObj.value !== null && 
@@ -439,20 +452,27 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 ...valueObj,
             };
 
-            if (field.type === 'dropdown' && base) {
+            const normalizedFieldType = normalizeFieldType(field.type);
+
+            if (normalizedFieldType === 'dropdown' && base) {
                 const dropdownInfo = getValueLabelAndText(field, valueObj.value);
                 if (dropdownInfo !== null)
                     Object.assign(base, dropdownInfo);
-            } else if (field.type === 'period' && base) {
+            } else if (normalizedFieldType === 'period' && base) {
                 const calc = String(field?.calculation)?.replace("$", "");
                 const calValue = partial[calc]?.value;
+                const calcField = fields.find(
+                    f => `${f?.key}`.toLowerCase() === `${calc}`.toLowerCase()
+                );
+                const normalizedCalcValue = normalizeDateLikeValue(calValue, calcField?.type);
+                const effectiveCalcValue = normalizedCalcValue || calValue;
                 
                 // Only calculate period if source value exists and is valid
-                if (calValue && calValue !== null && calValue !== '') {
+                if (effectiveCalcValue && effectiveCalcValue !== null && effectiveCalcValue !== '') {
                     try {
-                        const testDate = new Date(calValue);
+                        const testDate = new Date(effectiveCalcValue);
                         if (!isNaN(testDate.getTime())) {
-                            const periodInfo = getPeriodValueText(field, calValue);
+                            const periodInfo = getPeriodValueText(field, effectiveCalcValue);
                             if (periodInfo && periodInfo !== null) {
                                 Object.assign(base, periodInfo);
                             }
@@ -462,7 +482,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                         // Don't assign period info if date is invalid
                     }
                 }
-            } else if (base && (field.type === 'date' || field.type === 'datetime')) {
+            } else if (base && (normalizedFieldType === 'date' || normalizedFieldType === 'datetime')) {
                 // Validate date before formatting
                 if (valueObj.value) {
                     try {
@@ -522,7 +542,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         }
         const componentKey = `${formId}-${field.key}`;
 
-        switch (field.type) {
+        switch (normalizeFieldType(field.type)) {
             case fieldsTypes.NUMBER:
                 return <NumberField key={componentKey} {...fieldProps} />;
             case fieldsTypes.DATE:
@@ -536,6 +556,8 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 return <TextField key={componentKey} {...fieldProps} />;
             case fieldsTypes.TIME:
                 return <TimeField key={componentKey} {...fieldProps} />;
+            case fieldsTypes.MULTI_SELECT:
+                return <MultiSelectField key={componentKey} {...fieldProps} />;
             default:
                 return null;
         }

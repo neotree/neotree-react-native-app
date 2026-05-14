@@ -78,8 +78,11 @@ export type Facility = { label: string; value: string; other?: string; };
 export type NuidSearchResults = {
     session: any;
     uid: string; 
+    searchedUid?: string;
     autoFill?: any; 
     prePopulateWithUID?: boolean;
+    continueWithoutPrePopulation?: boolean;
+    useSearchedUidForSession?: boolean;
 };
 
 export type NuidSearchFormField = {
@@ -93,9 +96,12 @@ export type NuidSearchFormField = {
 export type MatchedSession = { 
 	session: any, 
 	uid: string; 
+	searchedUid?: string;
 	// facility: Facility; 
 	autoFill?: any; 
 	prePopulateWithUID?: boolean;
+	continueWithoutPrePopulation?: boolean;
+	useSearchedUidForSession?: boolean;
     // fields: ({
     //     key: string;
     //     value: string;
@@ -134,6 +140,7 @@ export type Exception = {
 export type Script = any;
 export type Screen = any;
 export type Diagnosis = any;
+export type Problem = any;
 export type ConfigKey = any;
 export type Configuration = any;
 export type Repeatable=any;
@@ -143,6 +150,17 @@ export type DischargeDiagnosis = Record<string, {
   Priority: number;
   Suggested: boolean;
   diagnosis: string;
+  value?: string;
+  hcw_agree: string;
+  hcw_reason_given: null | string;
+  hcw_follow_instructions: null | string;
+}>;
+
+export type DischargeProblem = Record<string, {
+  Priority: number;
+  Suggested: boolean;
+  problem: string;
+  value?: string;
   hcw_agree: string;
   hcw_reason_given: null | string;
   hcw_follow_instructions: null | string;
@@ -219,6 +237,7 @@ export type ScreenEntryValue = {
   exclusive?: any;
   error?: any;
   diagnosis?: Diagnosis;
+  problem?: Problem;
   prePopulate?: any[];
   printable?: boolean;
   printDisplayColumns?: 1 | 2;
@@ -267,6 +286,7 @@ export type ScreenFormTypeProps = {
   entryValue: ScreenEntryValue;
   fieldIndex: number;
   conditionMet: boolean;
+  onManualValueChange?: (entry: Partial<ScreenEntryValue>)=>void,
   onChange: (val: Partial<ScreenEntryValue>) => void;
   formValues: ScreenEntry['values'];
   allValues: ScreenEntry['values'];
@@ -289,8 +309,27 @@ export type DiagnosisSectionProps = ScreenTypeProps & {
   loading: boolean;
 	diagnoses: Diagnosis[];
 	acceptedDiagnoses: Diagnosis[];
+  acceptedDiagnosesAndProblems: Diagnosis[];
 	activeDiagnosisIndex: null | number;
 	hcwDiagnoses: Diagnosis[];
+};
+
+export type ProblemSectionProps = ScreenTypeProps & {
+	getDefaultProblem: (d?: Problem) => Problem;
+	problemToEntryValue: (d?: Problem) => ScreenEntryValue;
+	setActiveProblemIndex: React.Dispatch<React.SetStateAction<null | number>>;
+	_setHcwProblems: React.Dispatch<React.SetStateAction<ScreenEntryValue[]>>;
+  setOrderBySeverity: React.Dispatch<React.SetStateAction<boolean>>;
+	setHcwProblems: (problems: Problem[]) => void;
+	setProblems: (problems?: Problem[]) => void;
+	setMoreNavOptions: () => void;
+  setLoading: (loading: boolean) => void;
+  loading: boolean;
+	problems: Problem[];
+	acceptedProblems: Problem[];
+  rejectedProblems: Problem[];
+	activeProblemIndex: null | number;
+	hcwProblems: Problem[];
 };
 
 export type RepeatableProps = ScreenTypeProps & {

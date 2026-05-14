@@ -131,6 +131,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     const [script, setScript] = useState<null | types.Script>(null);
     const [screens, setScreens] = useState<types.Screen[]>([]);
     const [diagnoses, setDiagnoses] = useState<types.Diagnosis[]>([]);
+    const [problems, setProblems] = useState<types.Problem[]>([]);
     const [drugsLibrary, setDrugsLibrary] = useState<types.DrugsLibraryItem[]>([]);
     const [loadScriptError, setLoadScriptError] = useState('');
 
@@ -246,7 +247,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
     ) => {
         _condition = (_condition || '').toString();
-    
+
         const _form = _entries.reduce((acc, e) => {
             const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
 
@@ -623,6 +624,64 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         return diagnosesRslts;
     }, [diagnoses, evaluateCondition, parseCondition]);
 
+    const getSuggestedProblems = useCallback(() => {
+        // const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
+        // const score = (edlizSummary?.value || [])[0]?.score;
+        
+        // if (score === 0) return [] as any[]; 
+
+        let _problems = problems.reduce((acc: types.Problem[], d) => {
+            if (acc.map(d => d.problem_id).includes(d.problem_id)) return acc;
+            return [...acc, d];
+        }, []);
+
+        _problems = [
+            ..._problems.filter(d => d.data.severity_order || (d.data.severity_order === 0))
+                .sort((a, b) => a.data.severity_order - b.data.severity_order),
+            ..._problems.filter(d => (d.data.severity_order === null) || (d.data.severity_order === undefined) || (d.data.severity_order === '')),
+        ]
+            .map((d, position) => {
+                let sevOrder = d.data.severity_order || (d.data.severity_order === 0) ? Number(d.data.severity_order) : null;
+                if (isNaN(Number(sevOrder))) sevOrder = null;
+
+                return { 
+                    ...d, 
+                    position, 
+                    severity_order: sevOrder,
+                };
+            });
+        
+        const problemsRslts = (() => {
+            const rslts = (_problems || []).filter(({ data: { symptoms, expression } }) => {
+                return expression || (symptoms || []).length;
+            }).map((d) => {
+                const { data: { symptoms: s, expression } } = d;
+                const symptoms: any[] = s || [];
+            
+                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+                // const _symptoms = symptoms;
+                const riskSignCount = _symptoms.reduce((acc, s) => {
+                    if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
+                    if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
+                    return acc;
+                }, { riskCount: 0, signCount: 0 }); // @ts-ignore
+                
+                const conditionMet = evaluateCondition(parseCondition(expression, [{
+                    values: [ 
+                        { key: 'riskCount', value: riskSignCount.riskCount, },
+                        { key: 'signCount', value: riskSignCount.signCount, },
+                    ],
+                }]));
+                // const conditionMet = i < 2;
+                return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
+            }).filter(d => d);
+        
+            return rslts;
+        })();
+        
+        return problemsRslts;
+    }, [problems, evaluateCondition, parseCondition]);
+
     const restructureForm = useCallback(() => {
         /**
        * Recursively removes all properties where 'value' is an empty object
@@ -674,11 +733,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, dateAndTimeOfDeath, ...payload } = _payload;
+        const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
         const matches: any[] = [];
+        const resolvedNuidSearchForm = payloadNuidSearchForm || nuidSearchForm;
 
         let uid = entries.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -692,7 +752,25 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             return uid || acc;
         }, '');
 
-        uid = uid || generatedUID;
+        const searchedUIDSource = resolvedNuidSearchForm.find((f: types.NuidSearchFormField) => (
+            f.results &&
+            f.results.useSearchedUidForSession === true &&
+            (f.value || f.results.uid || f.results.searchedUid)
+        ));
+        const searchedUID = searchedUIDSource?.value
+            || searchedUIDSource?.results?.uid
+            || searchedUIDSource?.results?.searchedUid;
+        const requiresSearchedUID = resolvedNuidSearchForm.some((f: types.NuidSearchFormField) => (
+            f.results &&
+            f.results.useSearchedUidForSession === true
+        ));
+
+        uid = searchedUID || uid;
+
+        if (requiresSearchedUID && !uid) {
+            throw new Error('This session requires the searched Neotree ID, but no Neotree ID was found. Please re-scan or re-enter the patient Neotree ID before continuing.');
+        }
+        uid = uid || (requiresSearchedUID ? '' : generatedUID);
         
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
     
@@ -716,6 +794,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 					.filter(s => s.type === 'management')
 					.filter(s => s.printable),
 				diagnoses: [],
+                problems: [],
 				form: restructureForm(),
 				matchingSession: session?.data?.matchingSession || matchingSession,
 				matched: session?.data?.matched || (script.type !== 'discharge' ? [] : matches.reduce((acc, s) => {
@@ -742,6 +821,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         screens,
         script,
         restructureForm,
+        nuidSearchForm,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -749,9 +829,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [screens]);
 
     const saveSession = useCallback((params?: any) => new Promise((resolve, reject) => {
-        const summary = createSessionSummary(params);
         (async () => {
             try {
+                const summary = createSessionSummary(params);
                 const res = await api.saveSession({
                     id: sessionID,
                     ...summary
@@ -759,7 +839,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 setSessionID(res?.sessionID);
                 resolve(summary);
             } catch (e) {
-
+                const message = e instanceof Error ? e.message : '';
+                if (message.includes('requires the searched Neotree ID')) {
+                    Alert.alert('Neotree ID required', message);
+                }
                 reject(e);
             }
         })();
@@ -788,10 +871,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             setScript(null);
             setScreens([]);
             setDiagnoses([]);
+            setProblems([]);
             setActiveScreen(null);
             setDrugsLibrary([]);
 
-            const { script, screens, diagnoses, } = await api.getScript({ script_id: route.params.script_id, });
+            const { script, screens, diagnoses, problems, } = await api.getScript({ script_id: route.params.script_id, });
             const drugsLibrary = await api.getDrugsLibrary();
 
 
@@ -800,6 +884,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             setScript(script);
             setScreens(screens);
             setDiagnoses(diagnoses);
+            setProblems(problems);
             setDrugsLibrary(drugsLibrary.map(d => d.data));
             setLoadingScript(false);
             setReviewConfigurations(script?.data?.reviewConfigurations)
@@ -1215,6 +1300,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         script,
         screens,
         diagnoses,
+        problems,
         drugsLibrary,
         loadScriptError,
         loadingConfiguration,
@@ -1273,6 +1359,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         getScreen,
         getLastScreen,
         getSuggestedDiagnoses,
+        getSuggestedProblems,
         restructureForm,
         createSessionSummary,
         getScreenIndex,

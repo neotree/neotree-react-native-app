@@ -33,7 +33,7 @@ export async function toHL7Like(data: any) {
 
   // METADATA
   Object.keys(data).forEach((k) => {
-    if (k !== 'entries' && k !== 'diagnoses' && k !== 'scriptTitle') {
+    if (k !== 'entries' && k !== 'diagnoses' && k !== 'problems' && k !== 'scriptTitle') {
       if (k === 'script' && typeof data[k] === 'object') {
         Object.entries(data[k]).forEach(([ki, value]) => {
           if(ki==='id'){
@@ -651,6 +651,7 @@ async function convertToJSON(input: string) {
 
   delete transformed.repeatables;
   delete transformed.diagnoses;
+  delete transformed.problems;
 
   return transformed;
 }

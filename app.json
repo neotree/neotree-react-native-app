@@ -2,7 +2,7 @@
   "expo": {
     "name": "NeoTree",
     "slug": "neotree",
-    "version": "2.5.26",
+    "version": "2.5.30",
     "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -40,8 +40,6 @@
         "backgroundColor": "#FFFFFF"
       },
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.CAMERA",
         "android.permission.CAMERA"
       ]
     },

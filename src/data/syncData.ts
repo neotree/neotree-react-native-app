@@ -79,9 +79,10 @@ export async function syncData(opts?: { force?: boolean; }) {
                 const scripts = json?.scripts || [];
                 const screens = json?.screens || [];
                 const diagnoses = json?.diagnoses || [];
+                const problems = json?.problems || [];
                 const aliases = json?.aliases || []
                 
-                await Promise.all(['scripts', 'screens', 'diagnoses', 'config_keys', 'drugs_library'].map(table => dbTransaction(
+                await Promise.all(['scripts', 'screens', 'diagnoses', 'problems', 'config_keys', 'drugs_library'].map(table => dbTransaction(
                     `delete from ${table} where 1;`
                 )));
 
@@ -157,6 +158,21 @@ export async function syncData(opts?: { force?: boolean; }) {
                     promises.push(dbTransaction(`insert or replace into diagnoses (${columns}) values (${values});`, [
                         s.id,
                         s.diagnosis_id,
+                        s.script_id,
+                        s.position,
+                        s.type,
+                        JSON.stringify(s.data || {}),
+                        s.createdAt,
+                        s.updatedAt
+                    ]));
+                });
+
+                problems.map((s: any) => {
+                    const columns = ['id', 'problem_id', 'script_id', 'position', 'type', 'data', 'createdAt', 'updatedAt'].join(',');
+                    const values = ['?', '?', '?', '?', '?', '?', '?', '?'].join(',');
+                    promises.push(dbTransaction(`insert or replace into problems (${columns}) values (${values});`, [
+                        s.id,
+                        s.problem_id,
                         s.script_id,
                         s.position,
                         s.type,

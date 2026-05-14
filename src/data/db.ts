@@ -63,6 +63,17 @@ export async function createTablesIfNotExist() {
         'updatedAt datetime',
     ].join(',');
 
+    const problemsTableColumns = [
+        'id integer primary key not null',
+        'script_id varchar',
+        'problem_id varchar',
+        'position integer',
+        'type varchar',
+        'data text',
+        'createdAt datetime',
+        'updatedAt datetime',
+    ].join(',');
+
     const sessionsTableColumns = [
         'id integer primary key not null',
         'session_id integer',
@@ -159,6 +170,7 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists scripts (${scriptsTableColumns});`),
         dbTransaction(`create table if not exists screens (${screensTableColumns});`),
         dbTransaction(`create table if not exists diagnoses (${diagnosesTableColumns});`),
+        dbTransaction(`create table if not exists problems (${problemsTableColumns});`),
         dbTransaction(`create table if not exists sessions (${sessionsTableColumns});`),
         dbTransaction(`create table if not exists authenticated_user (${authenticatedUserTableColumns});`),
         dbTransaction(`create table if not exists config_keys (${config_keysTableColumns});`),
@@ -190,6 +202,7 @@ export const resetTables = async () => {
         'delete * from scripts where 1;',
         'delete * from screens where 1;',
         'delete * from diagnoses where 1;',
+        'delete * from problems where 1;',
         // 'delete * from sessions where 1;',
         // 'delete * from authenticated_user where 1;',
         'delete * from config_keys where 1;',
@@ -206,6 +219,7 @@ export const resetApp = async () => {
         dbTransaction(`drop table if exists scripts;`),
         dbTransaction(`drop table if exists screens;`),
         dbTransaction(`drop table if exists diagnoses;`),
+        dbTransaction(`drop table if exists problems;`),
         dbTransaction(`drop table if exists sessions;`),
         dbTransaction(`drop table if exists authenticated_user ;`),
         dbTransaction(`drop table if exists config_keys;`),

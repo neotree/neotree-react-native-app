@@ -98,7 +98,7 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 					name="QrCode" 
 					component={PrintGenericBarCode} 
 					options={{
-						drawerItemStyle: { display: 'none' },
+						drawerLabel: 'Print QR',
 					}}
 				/>	
 	

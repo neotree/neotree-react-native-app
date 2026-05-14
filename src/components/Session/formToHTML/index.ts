@@ -119,6 +119,13 @@ export default async (session: any, showConfidential?: boolean) => {
   ${await generateImageHtml()}
   <br/>
 </div>`
+  const getManualValue = (values: any[], key: string) => {
+    console.log("----HERE123::::---")
+    const filtered = values?.filter((v: any) => v.key === `manual${key}`)
+    if (filtered.length > 0) return filtered[0].value
+    return null
+  }
+
   const tables = sections
     .filter(([, entries]) => entries.length)
     .map(([sectionTitle, entries]) => {
@@ -136,11 +143,11 @@ export default async (session: any, showConfidential?: boolean) => {
           .map(({
             values,
             // management, 
-            screen: { 
-              metadata: { label }, 
-              listStyle: _listStyle = 'none', 
+            screen: {
+              metadata: { label },
+              listStyle: _listStyle = 'none',
               printDisplayColumns = 2,
-              type 
+              type: screenType
             }
           }: any) => {
             // management = management || [];
@@ -149,16 +156,16 @@ export default async (session: any, showConfidential?: boolean) => {
               .filter((e: any) => e.confidential ? showConfidential : true)
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
-              .map((v: any) => {
+              .map((v: any, i: number) => {
                 let hideLabel = false;
 
                 let isFlexRow = printDisplayColumns !== 1;
-                if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;                
+                if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;
 
                 let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 const listStyle = v.listStyle || _listStyle;
 
-                const isDff = ['fluids', 'drugs'].includes(type);
+                const isDff = ['fluids', 'drugs'].includes(screenType);
 
                 if (isDff) {
                   isFlexRow = false;
@@ -181,6 +188,17 @@ export default async (session: any, showConfidential?: boolean) => {
                 if (shouldAppendUnit && !Array.isArray(value)) {
                   value = formatValueWithUnit(value, v.unit)
                 }
+                let value2 = v.value2
+                if (exportType === 'dropdown') {
+                  value2 = getManualValue(values, v.key)
+                }
+
+                let bullet = '';
+                if (['diagnosis', 'problems'].includes(screenType)) {
+                  hideLabel = true;
+                  bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+                  if (listStyle === 'none') bullet = '';
+                }
 
                 return `
                   <div  class="${isFlexRow ? 'row' : ''}">
@@ -188,27 +206,27 @@ export default async (session: any, showConfidential?: boolean) => {
                     <div>
                       <div style="${!extraLabels.length ? '' : 'text-transform:uppercase;font-weight:bold;margin-top:10px;'}">
                         ${value && value.map ?
-                          value.map((v: any, i: number) => {
-                            let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
-                            if (listStyle === 'none') bullet = '';
-                            return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`;
-                          }).join('<br />')
-                          :
-                          `<span>${value}</span>${!v.value2 ? '' : `<span>(${v.value2})</span>`}`
-                        }
+                    value.map((v: any, i: number) => {
+                      let bullet = listStyle === 'bullet' ? '&#x2022; ' : `${i + 1}. `;
+                      if (listStyle === 'none') bullet = '';
+                      return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span> (${v.value2})</span>`}`;
+                    }).join('<br />')
+                    :
+                    `${bullet}<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
+                  }
                       </div>
 
                       ${!extraLabels?.length ? '' : `
                         <div>
                           ${extraLabels.map((item) => {
-                            const label = typeof item === 'string' ? item : (
-                              [item.title ? `<b>${item.title}</b>` : '', item.label].filter(s => s).join(':')
-                            );
-                            return `
+                    const label = typeof item === 'string' ? item : (
+                      [item.title ? `<b>${item.title}</b>` : '', item.label].filter(s => s).join(':')
+                    );
+                    return `
                               <div style="margin-bottom:5px;">
                                 <div style="opacity:0.7;">${label}</div>
                               </div>`;
-                          }).join('')}
+                  }).join('')}
                         </div>
                       `}
                     </div>                  
