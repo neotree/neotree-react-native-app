@@ -102,10 +102,8 @@ export function Summary({
                                                 hideLabel = true;
                                             }
                                             let value2 = v.value2
-                                            if (v.exportType === 'dropdown') {
-
+                                            if (v.exportType === 'dropdown' && !value2) {
                                                 value2 = getManualValue(values, v.key)
-
                                             }
 
                                             let bullet = '';

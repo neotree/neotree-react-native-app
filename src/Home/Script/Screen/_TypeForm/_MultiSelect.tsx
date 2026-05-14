@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect, useState, } from 'react';
+import { useCallback, useMemo, useEffect, useRef, useState, } from 'react';
 import { Alert, TouchableOpacity } from 'react-native';
 import { Box, Card, Text, Br, TextInput } from '@/src/components';
 import * as types from '@/src/types';
@@ -19,6 +19,7 @@ export function MultiSelectField({
     onChange, 
 }: MultiSelectFieldProps) {
     const canEdit = repeatable ? editable : true;
+    const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const opts = useMemo(() => {
         if (!field?.items) {
@@ -46,9 +47,56 @@ export function MultiSelectField({
 
 
     const [value, setValue] = useState(getValue());
+    const valueRef = useRef(value);
+
+    useEffect(() => {
+        valueRef.current = value;
+    }, [value]);
+
+    const clearScheduledSync = useCallback(() => {
+        if (syncTimeoutRef.current) {
+            clearTimeout(syncTimeoutRef.current);
+            syncTimeoutRef.current = null;
+        }
+    }, [syncTimeoutRef]);
+
+    const emitSelectionState = useCallback((state: Record<string, undefined | types.ScreenEntryValue>) => {
+        const selectedValues = Object.values(state).filter((v): v is types.ScreenEntryValue => !!v);
+        const hasInvalidSelection = selectedValues.some(v =>
+            v?.enterValueManually && !`${v?.value2 || ''}`.trim()
+        );
+
+        if (!selectedValues.length || hasInvalidSelection) {
+            onChange({
+                value: undefined,
+            });
+            return;
+        }
+
+        onChange({
+            value: selectedValues.map(v => ({
+                ...v,
+            })),
+        });
+    }, [onChange]);
+
+    const scheduleSelectionSync = useCallback((state: Record<string, undefined | types.ScreenEntryValue>, immediate = false) => {
+        clearScheduledSync();
+
+        if (immediate) {
+            emitSelectionState(state);
+            return;
+        }
+
+        syncTimeoutRef.current = setTimeout(() => {
+            emitSelectionState(state);
+            syncTimeoutRef.current = null;
+        }, 180);
+    }, [clearScheduledSync, emitSelectionState]);
 
     useEffect(() => { 
         if (!conditionMet) {
+            clearScheduledSync();
             onChange({ 
                 value: null,
                 valueText: null, 
@@ -57,7 +105,13 @@ export function MultiSelectField({
             }); 
             setValue(getValue());
         }
-    }, [conditionMet]);
+    }, [clearScheduledSync, conditionMet, getValue, onChange]);
+
+    useEffect(() => {
+        return () => {
+            clearScheduledSync();
+        };
+    }, [clearScheduledSync]);
 
     // useEffect(() => {
     //     setValue(getValue());
@@ -74,6 +128,7 @@ export function MultiSelectField({
                 const disabled = !canEdit || !conditionMet || (exclusiveSelected && !isSelected);
 
                 const { value2, } = { ...value[o.value] };
+                const manualLabel = `${o.enterValueManuallyLabel || ''}`.trim() || `Specify ${o?.label}`;
 
                 return (
                     <Box 
@@ -118,26 +173,7 @@ export function MultiSelectField({
 
                                 setValue(state);
 
-                                const selectedValues = Object.values(state).filter(v => v);
-                                
-                                // Validate that all selected items with enterValueManually have value2 filled
-                                const hasInvalidSelection = selectedValues.some((v: any) => 
-                                    v?.enterValueManually && !v?.value2?.trim()
-                                );
-
-                                if (!selectedValues.length || hasInvalidSelection) {
-                                    onChange({
-                                        value: undefined,
-                                    });
-                                } else {
-                                    const values = selectedValues.map(v => ({
-                                        ...v,
-                                    }));
-
-                                    onChange({
-                                        value: values,
-                                    });
-                                }
+                                emitSelectionState(state);
                             }}
                         >
                             <Card 
@@ -157,7 +193,7 @@ export function MultiSelectField({
 
                                 <Box>
                                     <TextInput
-                                        label={`Specify ${o?.label}`}
+                                        label={manualLabel}
                                         value={value2 || ''}
                                         onChangeText={value2 => {
                                             const updatedState = {
@@ -170,27 +206,10 @@ export function MultiSelectField({
                                             };
 
                                             setValue(updatedState);
-
-                                            const selectedValues = Object.values(updatedState).filter(v => v);
-                                            
-                                            // Validate that all selected items with enterValueManually have value2 filled
-                                            const hasInvalidSelection = selectedValues.some((v: any) => 
-                                                v?.enterValueManually && !v?.value2?.trim()
-                                            );
-
-                                            if (!selectedValues.length || hasInvalidSelection) {
-                                                onChange({
-                                                    value: undefined,
-                                                });
-                                            } else {
-                                                const values = selectedValues.map((v: any) => ({
-                                                    ...v,
-                                                }));
-
-                                                onChange({
-                                                    value: values,
-                                                });
-                                            }
+                                            scheduleSelectionSync(updatedState);
+                                        }}
+                                        onBlur={() => {
+                                            scheduleSelectionSync(valueRef.current, true);
                                         }}
                                         errors={!value2?.trim() ? ['This field is required'] : undefined}
                                     />

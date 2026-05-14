@@ -174,7 +174,7 @@ export async function printSectionsToHTML({
               value = formatValueWithUnit(value, v.unit)
             }
             let value2 = v.value2
-            if(exportType==='dropdown'){
+            if(exportType==='dropdown' && !value2){
               value2= getManualValue(values,v.key)
             }
 
