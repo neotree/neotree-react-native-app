@@ -165,6 +165,8 @@ export type ScreenEntryValue = {
   value?: any;
   value2?: any;
   key2?: any;
+  enterValueManually?: boolean;
+  enterValueManuallyLabel?: string;
   valueText?: any;
   valueLabel?: any;
   unit?: string;

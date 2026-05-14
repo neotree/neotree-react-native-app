@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { Modal } from '../Modal';
 import { Text, Box, useTheme, Theme } from '../Theme';
@@ -54,7 +54,43 @@ export function Dropdown({
     const [openModal, setOpenModal] = React.useState(false);
     const [searchVal, setSearchVal] = React.useState('');
 
-    const selectedOption = options.filter(o => `${o.value}` === `${value}`)[0];
+    const selectedOption = React.useMemo(
+        () => options.find(o => `${o.value}` === `${value}`),
+        [options, value]
+    );
+    const normalizedSearch = searchVal.trim().toLowerCase();
+    const filteredOptions = React.useMemo(() => {
+        if (!normalizedSearch) return options;
+        return options.filter(option => `${option.label}`.toLowerCase().includes(normalizedSearch));
+    }, [normalizedSearch, options]);
+    const handleOpen = React.useCallback(() => {
+        setOpenModal(true);
+    }, []);
+    const handleClose = React.useCallback(() => {
+        setOpenModal(false);
+        if (searchVal) setSearchVal('');
+    }, [searchVal]);
+    const handleSearchChange = React.useCallback((nextValue: string) => {
+        setSearchVal(nextValue);
+    }, []);
+    const handleSelect = React.useCallback((option: DropdownOption) => {
+        if (onChange) onChange(option.value, option);
+        setOpenModal(false);
+        if (searchVal) setSearchVal('');
+    }, [onChange, searchVal]);
+    const renderOption = React.useCallback(({ item }: { item: DropdownOption }) => (
+        <TouchableOpacity
+            onPress={() => {
+                handleSelect(item);
+            }}
+        >
+            <Box padding="m">
+                <Text color={selectedOption?.value === item.value ? 'primary' : undefined}>
+                    {item.label}
+                </Text>
+            </Box>
+        </TouchableOpacity>
+    ), [handleSelect, selectedOption?.value]);
 
     return (
         <>
@@ -67,9 +103,7 @@ export function Dropdown({
 
             <TouchableOpacity
                 disabled={disabled}
-                onPress={() => {
-                    setOpenModal(true);
-                }}
+                onPress={handleOpen}
             >
                 <Box
                     borderColor="divider"
@@ -98,56 +132,47 @@ export function Dropdown({
                 </Box>
             </TouchableOpacity>
 
-            <Modal
-                open={openModal}
-                onRequestClose={() => setOpenModal(false)}
-                onClose={() => setOpenModal(true)}
-                title={(title || searchable) ? (
-                    <>
-                        {renderReactNode(title, { textVariant: 'title3', })}
-                        {searchable && (
-                            <>
-                                {!!title && <Br spacing='s'/>}
-                                
-                                <TextInput
-                                    placeholder="Search"
-                                    onChangeText={val => setSearchVal(val)}
-                                    returnKeyType="search"
-                                    size="s"
-                                />
-                            </>
-                        )}
-                    </>
-                ) : undefined}
-                actions={[
-                    {
-                        label: 'Cancel',
-                        onPress: () => setOpenModal(false),
-                    },
-                ]}
-            >
-                {options.map((o, i) => {
-                    if (searchVal && !`${o.label}`.match(new RegExp(searchVal, 'gi'))) return null;
-                    return (
-                        <React.Fragment key={o.itemId || i}>
-                            <TouchableOpacity                            
-                                onPress={() => {
-                                    if (onChange) onChange(o.value, o);
-                                    setOpenModal(false);
-                                }}
-                            >
-                                <Box
-                                    padding="m"
-                                >
-                                    <Text
-                                        color={selectedOption?.value === o.value ? 'primary' : undefined}
-                                    >{o.label}</Text>
-                                </Box>
-                            </TouchableOpacity>
-                        </React.Fragment>
-                    );
-                })}
-            </Modal>
+            {!openModal ? null : (
+                <Modal
+                    open={openModal}
+                    onRequestClose={handleClose}
+                    onClose={handleClose}
+                    scrollable={false}
+                    title={(title || searchable) ? (
+                        <>
+                            {renderReactNode(title, { textVariant: 'title3', })}
+                            {searchable && (
+                                <>
+                                    {!!title && <Br spacing='s'/>}
+                                    
+                                    <TextInput
+                                        placeholder="Search"
+                                        onChangeText={handleSearchChange}
+                                        returnKeyType="search"
+                                        size="s"
+                                    />
+                                </>
+                            )}
+                        </>
+                    ) : undefined}
+                    actions={[
+                        {
+                            label: 'Cancel',
+                            onPress: handleClose,
+                        },
+                    ]}
+                >
+                    <FlatList
+                        data={filteredOptions}
+                        keyExtractor={(item, index) => `${item.itemId || item.value || index}`}
+                        keyboardShouldPersistTaps="handled"
+                        initialNumToRender={15}
+                        maxToRenderPerBatch={20}
+                        windowSize={5}
+                        renderItem={renderOption}
+                    />
+                </Modal>
+            )}
         </>
     );
 }
