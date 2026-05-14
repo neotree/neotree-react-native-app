@@ -1,6 +1,7 @@
 import 'react-native-get-random-values'
 import CryptoJS from 'crypto-js';
 import queryString from 'query-string';
+import Constants from 'expo-constants';
 import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
@@ -216,7 +217,9 @@ export const getHospitals = async (params = {}, otherParams: Partial<(typeof _ot
 };
 
 export const getUpdatePolicy = async (): Promise<types.UpdatePolicyResponse> => {
-    const res = await makeApiCall('webeditor', '/mobile/update-policy');
+    const runtimeVersion = (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || '';
+    const params = runtimeVersion ? `?${queryString.stringify({ runtimeVersion })}` : '';
+    const res = await makeApiCall('webeditor', `/mobile/update-policy${params}`);
     return res.json();
 };
 

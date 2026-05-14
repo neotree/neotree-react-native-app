@@ -207,6 +207,10 @@ export async function syncData(opts?: { force?: boolean; }) {
                 await Promise.all(promises);
 
                 if (updatePolicyRes?.data) {
+                    await AsyncStorage.setItem(
+                        ASYNC_STORAGE_KEYS.UPDATE_POLICY,
+                        JSON.stringify(updatePolicyRes.data || {}),
+                    );
                     await dbTransaction(
                         'insert or replace into app_update_policy (id, data, updatedAt) values (?, ?, ?);',
                         [1, JSON.stringify(updatePolicyRes.data || {}), new Date().toISOString()],

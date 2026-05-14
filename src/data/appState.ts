@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { postDeviceAppState } from './api';
+import { getUpdatePolicyData } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { recordOtaAppliedIfChanged } from '@/src/update/otaTelemetry';
 
@@ -20,6 +21,12 @@ export async function reportAppStateIfChanged() {
         const runtimeVersion = (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || '';
         const otaUpdateId = Updates.updateId ? `${Updates.updateId}` : null;
         const otaChannel = (Updates as any).channel || null;
+        const policy = await getUpdatePolicyData().catch(() => null);
+        const currentApkRelease = policy?.currentApkRelease;
+        const apkReleaseId =
+            currentApkRelease?.runtimeVersion === runtimeVersion && currentApkRelease?.available
+                ? currentApkRelease.apkReleaseId
+                : null;
 
         if (!appVersion || !runtimeVersion) return;
 
@@ -28,6 +35,7 @@ export async function reportAppStateIfChanged() {
             runtimeVersion,
             otaUpdateId,
             otaChannel,
+            apkReleaseId,
         };
 
         const lastStateRaw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.LAST_REPORTED_APP_STATE);
@@ -39,7 +47,8 @@ export async function reportAppStateIfChanged() {
                     lastState?.appVersion === currentState.appVersion &&
                     lastState?.runtimeVersion === currentState.runtimeVersion &&
                     lastState?.otaUpdateId === currentState.otaUpdateId &&
-                    lastState?.otaChannel === currentState.otaChannel
+                    lastState?.otaChannel === currentState.otaChannel &&
+                    lastState?.apkReleaseId === currentState.apkReleaseId
                 ) {
                     return;
                 }
@@ -54,7 +63,7 @@ export async function reportAppStateIfChanged() {
             runtimeVersion,
             otaUpdateId,
             otaChannel,
-            apkReleaseId: null,
+            apkReleaseId: currentState.apkReleaseId,
         });
 
         if (res?.errors?.length) return;

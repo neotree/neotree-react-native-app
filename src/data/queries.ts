@@ -1,6 +1,8 @@
 import { APP_VERSION } from '@/src/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as types from '../types';
 import { dbTransaction } from './db';
+import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 
 export async function getAuthenticatedUser() {
     const rows = await dbTransaction('select * from authenticated_user;');
@@ -53,7 +55,10 @@ export const getUpdatePolicyData = () => new Promise<types.UpdatePolicy | null>(
         try {
             const rows = await dbTransaction('select * from app_update_policy where id=1;');
             const policy = rows[0];
-            if (!policy?.data) return resolve(null);
+            if (!policy?.data) {
+                const cached = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
+                return resolve(cached ? JSON.parse(cached) as types.UpdatePolicy : null);
+            }
             resolve(JSON.parse(policy.data || '{}') as types.UpdatePolicy);
         } catch (e) {
             reject(e);

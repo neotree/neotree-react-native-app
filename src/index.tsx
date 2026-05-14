@@ -11,8 +11,17 @@ import { syncData, addSocketEventsListeners } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
-import { checkForOtaUpdateAndRecord, checkForOtaUpdateFetchAndRecord, ensureApkDownloaded, getUpdateDecision } from './update';
+import {
+    attemptAutoInstallIfDeferred,
+    attemptAutoRetryDownload,
+    checkForOtaUpdateAndRecord,
+    checkForOtaUpdateFetchAndRecord,
+    ensureApkDownloaded,
+    flushOtaEvents,
+    getUpdateDecision,
+} from './update';
 import { ASYNC_STORAGE_KEYS } from './constants/async-storage';
+import { reportAppStateIfChanged } from './data/appState';
 
 export const assets = Object.values(registerdAssets);
 
@@ -54,10 +63,16 @@ export function Navigation() {
             if (setUpdateDecision) {
                 const decision = await getUpdateDecision();
                 setUpdateDecision(decision);
+                await attemptAutoInstallIfDeferred();
+                await attemptAutoRetryDownload(decision);
                 if (decision?.shouldAutoDownload) {
                     await ensureApkDownloaded(decision);
                 }
             }
+            await Promise.all([
+                reportAppStateIfChanged(),
+                flushOtaEvents(),
+            ]);
         } catch (e) {
             console.log(e);
         } finally {
@@ -145,6 +160,8 @@ export function Navigation() {
         const subscription = AppState.addEventListener('change', (state) => {
             if (state === 'active') {
                 promptIfPending();
+                reportAppStateIfChanged().catch(() => null);
+                flushOtaEvents().catch(() => null);
             }
         });
         promptIfPending();
