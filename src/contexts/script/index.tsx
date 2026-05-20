@@ -100,6 +100,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [loadingScreen, setLoadingScreen] = useState(false);
     const [nuidSearchForm, setNuidSearchForm] = useState<types.NuidSearchFormField[]>([]);
+    const [eligibilityCompleted, setEligibilityCompleted] = useState(Boolean(route.params?.session?.data?.eligibilityCompleted));
+    const [eligibilityAutoFillValues, setEligibilityAutoFillValues] = useState<types.ScreenEntryValue[]>(
+        route.params?.session?.data?.eligibilityAutoFillValues || []
+    );
     const [matched, setMatched] = useState<types.MatchedSession | null>(null);
     const [patientDetails, setPatientDetails] = useState({
         isTwin: false,
@@ -253,6 +257,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 return [...acc, e] as types.ScreenEntry[];
             }, [
                 ...entries,
+                {
+                    value: eligibilityAutoFillValues,
+                } as types.ScreenEntry,
                 ...nuidSearchForm.map(f => {
                     const entry = {
                         value: [{
@@ -397,13 +404,15 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         }).join(' && ');
 
         return _condition;
-    }, [entries, configuration, nuidSearchForm, parseConditionString, flattenRepeatables, sanitizeCondition]);
+    }, [entries, configuration, nuidSearchForm, eligibilityAutoFillValues, parseConditionString, flattenRepeatables, sanitizeCondition]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
         const direction = (d && ['next', 'back'].includes(d)) ? d : null;
         
-        if ((i !== undefined) && !isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
+        if ((i !== undefined) && !isNaN(Number(i)) && !(direction === 'next' && i < 0)) {
+            return screens[i] ? { screen: screens[i], index: i } : null;
+        }
 
         let skipToScreenIndex: number | null = null;
         
@@ -488,6 +497,24 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
             
             if (!screen) return null;
+
+            const inferredScreenEntry = eligibilityAutoFillValues.find(v => {
+                if (!v?.data?.inferredFromEligibility) return false;
+                const screenKey = screen?.data?.metadata?.key;
+                return screenKey && `${v.key}`.toLowerCase() === `${screenKey}`.toLowerCase();
+            });
+
+            if (inferredScreenEntry && direction) {
+                const res = getTargetScreen(index);
+                if (res) {
+                    screen = res.screen;
+                    index = res.index;
+                } else {
+                    screen = null;
+                }
+            }
+
+            if (!screen) return null;
         
             if (!direction) return { screen, index, };
         
@@ -525,6 +552,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         activeScreenIndex, 
         drugsLibrary, 
         screens, 
+        eligibilityAutoFillValues,
         evaluateCondition, 
         parseCondition,
     ]);
@@ -822,6 +850,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 				completed_at: completed ? new Date().toISOString() : null,
 				canceled_at: cancelled ? new Date().toISOString() : null,
 				script,
+                eligibilityCompleted,
+                eligibilityAutoFillValues,
 				management: screens
 					.map(s => s.data)
 					.filter(s => s.type === 'management')
@@ -855,6 +885,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         script,
         restructureForm,
         nuidSearchForm,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -1321,6 +1353,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         startTime,
         refresh,
         nuidSearchForm,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
         matched,
         patientDetails,
         mountedScreens,
@@ -1356,6 +1390,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         setMoreNavOptions,
         setRefresh,
         setNuidSearchForm,
+        setEligibilityCompleted,
+        setEligibilityAutoFillValues,
         setMatched,
         setPatientDetails,
         setMountedScreens,
