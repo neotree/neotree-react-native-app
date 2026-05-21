@@ -180,6 +180,27 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
     const [mainValue, setMainValue] = React.useState<EligibilityValue | null>(null);
     const [alternativeValue, setAlternativeValue] = React.useState<EligibilityValue | null>(null);
     const [showBlockedModal, setShowBlockedModal] = React.useState(false);
+    const [showClosingModal, setShowClosingModal] = React.useState(false);
+    const [closingCountdown, setClosingCountdown] = React.useState(5);
+    const criteriaFailureMessage = criteria?.failure_message || null;
+
+    const closeScript = React.useCallback(() => {
+        setShowClosingModal(false);
+        navigation.navigate('Home');
+    }, [navigation]);
+
+    React.useEffect(() => {
+        if (!showClosingModal) return undefined;
+        if (closingCountdown <= 0) {
+            closeScript();
+            return undefined;
+        }
+
+        const timeout = setTimeout(() => {
+            setClosingCountdown(currentCountdown => currentCountdown - 1);
+        }, 1000);
+        return () => clearTimeout(timeout);
+    }, [closeScript, closingCountdown, showClosingModal]);
 
     const hasAlternative = Boolean(criteria?.alternative_criteria_type && criteria?.alternative_criteria_condition);
     const feasibilityEntry = React.useMemo<types.ScreenEntryValue | null>(() => {
@@ -481,7 +502,8 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
                         onPress: () => {
                             setShowBlockedModal(false);
                             setEligibilityAutoFillValues([]);
-                            navigation.navigate('Home');
+                            setClosingCountdown(5);
+                            setShowClosingModal(true);
                         },
                     },
                 ]}
@@ -492,11 +514,39 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
                     style={{ backgroundColor: 'rgba(128, 0, 0, 0.08)' }}
                 >
                     <Text fontWeight="bold" style={{ color: '#800000' }}>
-                        The eligibility criteria has not been met. If you are sure that you have entered the correct information press{' '}
-                        <Text fontWeight="bold" color="error">Proceed</Text>
-                        {' '}to exit the form. If not, press{' '}
-                        <Text fontWeight="bold" color="success">Review</Text>
-                        {' '}to adjust the information.
+                        {criteriaFailureMessage || (
+                            <>
+                                The eligibility criteria has not been met. If you are sure that you have entered the correct information press{' '}
+                                <Text fontWeight="bold" color="error">Proceed</Text>
+                                {' '}to exit the form. If not, press{' '}
+                                <Text fontWeight="bold" color="success">Review</Text>
+                                {' '}to adjust the information.
+                            </>
+                        )}
+                    </Text>
+                </Box>
+            </Modal>
+
+            <Modal
+                open={showClosingModal}
+                onClose={closeScript}
+                onRequestClose={closeScript}
+                title={<Text variant="title2" fontWeight="bold" color="info">Closing script</Text>}
+                actions={[
+                    {
+                        label: 'OK',
+                        color: 'info',
+                        onPress: closeScript,
+                    },
+                ]}
+            >
+                <Box
+                    padding="m"
+                    borderRadius="s"
+                    style={{ backgroundColor: 'rgba(2, 136, 209, 0.08)' }}
+                >
+                    <Text fontWeight="bold" color="info">
+                        We are closing the script in {closingCountdown}...
                     </Text>
                 </Box>
             </Modal>
