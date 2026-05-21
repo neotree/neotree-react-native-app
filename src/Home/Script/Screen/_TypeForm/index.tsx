@@ -31,6 +31,7 @@ export function TypeForm({ }: TypeFormProps) {
         activeScreenEntry,
         mountedScreens,
         nuidSearchForm,
+        eligibilityAutoFillValues,
         evaluateCondition,
         parseCondition,
         getPrepopulationData,
@@ -149,13 +150,16 @@ export function TypeForm({ }: TypeFormProps) {
             const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
 
             const cached = cachedVal.filter(v => v.key === f.key)[0];
+            const eligibilityAutoFill = eligibilityAutoFillValues.find(
+                v => `${v.key}`.toLowerCase() === `${f.key}`.toLowerCase()
+            );
 
-            let value = cached?.value || `${matched || ''}` || null;
-            let valueText = cached?.valueText || matched || null;
-            let exportValue: string | undefined = undefined;
-            let exportLabel: string | undefined = undefined;
+            let value = cached?.value || eligibilityAutoFill?.value || `${matched || ''}` || null;
+            let valueText = cached?.valueText || eligibilityAutoFill?.valueText || matched || null;
+            let exportValue: string | undefined = eligibilityAutoFill?.exportValue;
+            let exportLabel: string | undefined = eligibilityAutoFill?.exportLabel;
 
-            let value2 = cached?.value2 || null;
+            let value2 = cached?.value2 || eligibilityAutoFill?.value2 || null;
 
             if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
                 value = cached?.value || patientNUID;
@@ -205,7 +209,7 @@ export function TypeForm({ }: TypeFormProps) {
                 })();
                 const matchedOpt = opts.find(o => `${o.value}` === `${matched || ''}`);
 
-                if (!cached?.value) {
+                if (!cached?.value && !eligibilityAutoFill?.value) {
                     value = null;
                     valueText = null;
                     
@@ -255,10 +259,11 @@ export function TypeForm({ }: TypeFormProps) {
                 ips: f.ips,
                 exportValue,
                 exportLabel,
+                calculateValue: cached?.calculateValue ?? eligibilityAutoFill?.calculateValue,
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, getPrepopulationData, normalizeFieldType]);
+    }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
