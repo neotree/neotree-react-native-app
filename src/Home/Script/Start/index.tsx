@@ -1,5 +1,5 @@
 import React, { Fragment, useState } from 'react';
-import { Keyboard, ScrollView } from 'react-native';
+import { Alert, Keyboard, ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Button, Content, Text } from '../../../components';
@@ -14,6 +14,7 @@ export function Start() {
         setActiveScreen,
         saveSession,
         setActiveScreenIndex,
+        getScreen,
         screens, 
         matched, 
         script: { 
@@ -23,6 +24,7 @@ export function Start() {
             },
         }, 
     } = useScriptContext();
+
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
 
@@ -50,6 +52,14 @@ export function Start() {
         };
     }, []);
 
+    const hasResolvedVisibleSearchFields = nuidSearchFields.every((field: any, i: number) => {
+        if (field.type !== 'text') return true;
+        if (!evaluateFieldCondition(field)) return true;
+        return Boolean(fields[i]?.results && (fields[i]?.value || fields[i]?.results?.continueWithoutPrePopulation));
+    });
+
+    const canStart = Boolean(screens?.length) && hasResolvedVisibleSearchFields;
+
     return (
         <Box flex={1} paddingTop="xl">
             <ScrollView
@@ -68,7 +78,7 @@ export function Start() {
                                     value={fields[i].value}
                                     script_type ={type}
                                     onChange={value => {
-                                        let results = null;
+                                        let results: types.NuidSearchResults | null = null;
 
                                         if (field.type === 'text') {
                                             results = value;
@@ -109,15 +119,24 @@ export function Start() {
                         )}
 
                         <Button
-                            disabled={!screens?.length}
+                            disabled={!canStart}
                             onPress={() => {
                                 (async () => {
 									try {
                                         setNuidSearchForm(fields);
-										setActiveScreen(screens[0]);
-										setActiveScreenIndex(0);
-										saveSession();
-									} catch(e) { /**/ }
+										await saveSession({ nuidSearchForm: fields });
+                                        const initial = getScreen({ direction: 'next', index: -1 }) || { screen: screens[0], index: 0 };
+										setActiveScreen(initial.screen);
+										setActiveScreenIndex(initial.index);
+									} catch (error) {
+                                        const message = error instanceof Error ? error.message : '';
+                                        if (!message.includes('requires the searched Neotree ID')) {
+                                            Alert.alert(
+                                                'Unable to start session',
+                                                'The session could not be saved. Please try again before continuing.'
+                                            );
+                                        }
+                                    }
 								})();
                             }}
                         >{matched?.session ? 'Continue' : 'Start'}</Button>

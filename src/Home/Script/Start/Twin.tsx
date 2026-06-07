@@ -2,11 +2,7 @@ import React from 'react';
 import { Box, Br, Radio, Text, } from '../../../components';
 import { Search } from './Search';
 
-type TwinProps = {
-
-};
-
-export function Twin({}: TwinProps) {
+export function Twin() {
     const [isTwin, setIsTwin] = React.useState<null | boolean>(null); 
 
     return (
@@ -26,6 +22,9 @@ export function Twin({}: TwinProps) {
                                 onChange={() => {
                                     setIsTwin(o.value);
                                 }}
+                                onDeselect={() => {
+                                    setIsTwin(null);
+                                }}
                             />
                         </Box>
                     )
@@ -39,6 +38,9 @@ export function Twin({}: TwinProps) {
 					label="Search patient's NUID" 
 					filterEntries={e => e.prePopulate && e.prePopulate.includes('twinSearches')}
 					prePopulateWithUID={false}
+                    useSearchedUidForSession={false}
+                    noRecordTitle="Twin record not found"
+                    noRecordMessage={uid => `No twin record was found for ${uid}. You can continue without twin pre-population. A new Neotree ID will be generated for this baby.`}
 				/>
 			)}
         </Box>

@@ -134,6 +134,7 @@ export function TypeChecklist({ searchVal }: TypeChecklistProps) {
                                         label="Yes"
                                         checked={isSelected}
                                         onChange={() => o.onChange(true)}
+                                        onDeselect={() => o.onChange(false)}
                                         disabled={o.disabled}
                                     />
                                 </Box>
