@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView } from 'react-native';
 import moment from 'moment';
 
 import { useScriptContext } from '@/src/contexts/script';
-import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme } from '../../../components';
+import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '../../../components';
 import * as api from '../../../data';
 import * as types from '../../../types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
@@ -14,6 +14,25 @@ type SearchProps = {
     autofillKeys?: string[];
     filterEntries?: (entry: any) => any;
     prePopulateWithUID?: boolean;
+    useSearchedUidForSession?: boolean;
+    noRecordTitle?: string;
+    noRecordMessage?: (uid: string) => string;
+};
+
+const getSessionKey = (session: any, index?: number) => {
+    return `${session?.data?.unique_key || session?.data?.uid || session?.uid || session?.data?.id || (index ?? '')}`;
+};
+
+const getSessionTitle = (session: any) => {
+    return session?.data?.title || session?.data?.script?.title || session?.data?.script?.data?.title || 'Unknown script';
+};
+
+const getSessionType = (session: any) => {
+    return session?.data?.type || session?.data?.script?.type || '';
+};
+
+const getSessionDate = (session: any) => {
+    return session?.data?.completed_at || session?.data?.started_at || session?.ingested_at || session?.created_at;
 };
 
 function getSessionFacility(session: any) {
@@ -25,8 +44,56 @@ function getSessionFacility(session: any) {
     return { label: birthFacilityLabel, value: birthFacilityValue, other: otherBirthFacilityValue, };
 }
 
+const hasFullQrSession = (session: any) => {
+    return !!session && typeof session === 'object' && Object.keys(session).length > 1;
+};
 
-export function Search({ onSession, label, autofillKeys, filterEntries, prePopulateWithUID, }: SearchProps) {
+const normalizeQrSession = (session: any) => {
+    if (!hasFullQrSession(session)) return session;
+    if (session?.data) {
+        return {
+            ...session,
+            uid: session.uid || session.data?.uid,
+        };
+    }
+
+    return {
+        uid: session.uid || session.data?.uid,
+        data: {
+            ...session,
+            uid: session.uid,
+            entries: session.entries || {},
+            script: session.script || {
+                type: session.type,
+                title: session.title || session.scriptTitle,
+                id: session.script_id || session.scriptId,
+            },
+        },
+    };
+};
+
+const mergeSearchResults = (...groups: any[][]) => {
+    const seen = new Set<string>();
+    return groups.flat().filter((session, index) => {
+        if (!session || session.error) return false;
+        const key = getSessionKey(session, index);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+};
+
+
+export function Search({
+    onSession,
+    label,
+    autofillKeys,
+    filterEntries,
+    prePopulateWithUID,
+    useSearchedUidForSession = prePopulateWithUID !== false,
+    noRecordTitle = 'No matching record found',
+    noRecordMessage,
+}: SearchProps) {
     const { setMatched } = useScriptContext();
 
     const [uid, setUID] = React.useState('');
@@ -36,26 +103,65 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
     const [facility, setFacility] = React.useState<null | types.Facility>(null);
     const [searched, setSearched] = React.useState('');
     const [showQR, setShowQR] = React.useState(false);
-    const [qrSession, setQRSession]= React.useState<any>(null);
+    const [qrSession, setQRSession] = React.useState<any>(null);
+    const [searchedFromQR, setSearchedFromQR] = React.useState(false);
+    const [recommendedSessionKey, setRecommendedSessionKey] = React.useState('');
+    const [recommendedSession, setRecommendedSession] = React.useState<any>(null);
+    const [confirmNoRecord, setConfirmNoRecord] = React.useState(false);
+    const qrSessionRef = React.useRef<any[]>([]);
+    const qrUidRef = React.useRef('');
 
     const openQRscanner = () => {
         setShowQR(true);
     };
 
+    const resetSearchState = React.useCallback(() => {
+        setSessions([]);
+        setSelectedSession(null);
+        setFacility(null);
+        setSessionType('admission');
+        setSearched('');
+        setQRSession(null);
+        qrSessionRef.current = [];
+        qrUidRef.current = '';
+        setSearchedFromQR(false);
+        setRecommendedSessionKey('');
+        setRecommendedSession(null);
+        setConfirmNoRecord(false);
+        setMatched(null);
+        if (onSession) onSession(null);
+    }, [onSession, setMatched]);
+
+    const handleUIDChange = React.useCallback((nextUID: string) => {
+        if (qrUidRef.current && (!nextUID || nextUID === qrUidRef.current)) {
+            setUID(qrUidRef.current);
+            return;
+        }
+        setUID(nextUID);
+        resetSearchState();
+    }, [resetSearchState]);
+
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
-            const session = qrtext
-            if(session['uid']){
+            resetSearchState();
+            setSearchedFromQR(true);
+            const session = normalizeQrSession(qrtext)
+            if (session['uid']) {
+                qrUidRef.current = session['uid']
                 setUID(session['uid'])
-                setQRSession([qrtext])
+                if (Object.keys(session).length > 1) {
+                    const sessions = [session];
+                    qrSessionRef.current = sessions;
+                    setQRSession(sessions)
+                    setRecommendedSessionKey(getSessionKey(session, 0))
+                    setRecommendedSession(session)
+                    setSessionType('qr')
+                }
 
-                console.log("[QR TEXT]", qrtext);
-                console.log("[QR SESSION]", qrSession);
-
-            }else{
-                setUID(session) 
+            } else {
+                setUID(session)
             }
-           
+
         }
         setShowQR(false);
     };
@@ -63,87 +169,155 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
 
     const [searching, setSearching] = React.useState(false);
 
+    const buildMatchedSession = React.useCallback((session: any) => {
+        let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
+
+        if (autoFill) {
+            if (filterEntries) {
+                autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
+                    if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
+                    return acc;
+                }, {});
+            }
+            if (autofillKeys) {
+                autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
+                    if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
+                    return acc;
+                }, {});
+            }
+        }
+
+        return session ? {
+            session,
+            uid,
+            facility: facility as types.Facility,
+            autoFill,
+            prePopulateWithUID,
+            useSearchedUidForSession,
+        } : null;
+    }, [autofillKeys, facility, filterEntries, prePopulateWithUID, uid, useSearchedUidForSession]);
+
+    const resolveUIDWithoutMatch = React.useCallback(() => {
+        const initialSession = {
+            session: null,
+            uid: useSearchedUidForSession ? uid : '',
+            searchedUid: uid,
+            facility: facility as types.Facility,
+            autoFill: null,
+            prePopulateWithUID: prePopulateWithUID !== false,
+            continueWithoutPrePopulation: true,
+            useSearchedUidForSession,
+        }
+        setConfirmNoRecord(false);
+        if (onSession) onSession(initialSession);
+        setMatched(initialSession);
+    }, [facility, onSession, prePopulateWithUID, setMatched, uid, useSearchedUidForSession]);
+
     const search = React.useCallback(() => {
         (async () => {
-            try{
-            setSearching(true);
-            let sessions = qrSession
-            if(!sessions){
-            sessions = await api.getExportedSessionsByUID(uid);
+            try {
+                setMatched(null);
+                if (onSession) onSession(null);
+                setSelectedSession(null);
+                setSearching(true);
+                const qrResults = qrSessionRef.current?.length
+                    ? qrSessionRef.current
+                    : (qrUidRef.current === uid && qrSession?.length ? qrSession : []);
+                let lookupResults: any[] = [];
+                let lookupError: any = null;
+
+                try {
+                    lookupResults = await api.getExportedSessionsByUID(uid);
+                } catch (error) {
+                    lookupError = error;
+                }
+                if (lookupResults?.[0]?.error) lookupError = lookupResults[0];
+
+                const sessions = mergeSearchResults(qrResults, lookupResults || []);
+                setSessions(sessions);
+                setSearching(false);
+                setSearched(uid);
+                if (lookupError && !sessions.length) {
+                    setConfirmNoRecord(true);
+                    return;
+                }
+                if (!sessions?.length) {
+                    setConfirmNoRecord(true);
+                    return;
+                }
+
+                if (searchedFromQR && sessions?.length) {
+                    const recommended = sessions[0];
+                    const matched = buildMatchedSession(recommended);
+                    setRecommendedSessionKey(getSessionKey(recommended, 0));
+                    setRecommendedSession(recommended);
+                    setSelectedSession(recommended);
+                    setMatched(matched);
+                    if (onSession) onSession(matched);
+                }
+            } catch {
+                setSearching(false);
             }
-            setSessions(sessions);
-            setSearching(false);
-            setSearched(uid);
-        }catch(err){
-           
-        }
         })();
-    }, [uid]);
+    }, [buildMatchedSession, onSession, qrSession, searchedFromQR, setMatched, uid]);
 
 
 
-    const admissionSessions = sessions?.filter(s => s?.data?.type==='admission' || s?.data?.script?.title.match(/admission/gi) || (s?.data?.script?.type === 'admission'));
-    const neolabSessions = sessions?.filter(s =>s?.data?.type==='neolab' || s?.data?.script?.title.match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
-    const dischargeSessions = sessions?.filter(s => s?.data?.type==='discharge' || s?.data?.script?.title.match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type==='drecord' || s?.data?.script?.title.match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const admissionSessions = sessions?.filter(s => s?.data?.type === 'admission' || getSessionTitle(s).match(/admission/gi) || (s?.data?.script?.type === 'admission'));
+    const neolabSessions = sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s?.data?.script?.type === 'neolab'));
+    const dischargeSessions = sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
+    const dailyRecordsSessions = sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
+    const qrSessions = searchedFromQR ? (qrSessionRef.current?.length ? qrSessionRef.current : (qrSession?.length ? qrSession : [])) : [];
 
     function renderList(sessions: any[]) {
         return (
             <>
-                {sessions.map((s: any) => {
-                    const selected = s.data.unique_key === selectedSession?.data?.unique_key;
+                {sessions.map((s: any, index: number) => {
+                    const sessionKey = getSessionKey(s, index);
+                    const selected = !!selectedSession && (selectedSession === s || sessionKey === getSessionKey(selectedSession));
+                    const recommended = recommendedSession === s || sessionKey === recommendedSessionKey;
                     return (
-                        <React.Fragment key={s.data.unique_key}>
+                        <React.Fragment key={sessionKey}>
                             <Box
                                 borderBottomColor="divider"
                                 borderBottomWidth={1}
                                 paddingVertical="m"
                             >
                                 <Radio
-                                    value={s.data.unique_key}
+                                    value={getSessionKey(s, index)}
                                     checked={selected}
                                     onChange={() => {
                                         const session = selected ? null : s;
-                                        let autoFill = session ? JSON.parse(JSON.stringify(session)) : null;
-                                        if (autoFill) {
-                                            if (filterEntries) {
-                                                autoFill.data.entries = Object.keys(autoFill.data.entries).reduce((acc: any, key) => {
-                                                    if (filterEntries(autoFill.data.entries[key])) acc[key] = autoFill.data.entries[key];
-                                                    return acc;
-                                                }, {});
-                                            }
-                                            if (autofillKeys) {
-                                                autoFill.data.entries = autofillKeys.reduce((acc: any, key) => {
-                                                    if (autoFill.data.entries[key]) acc[key] = autoFill.data.entries[key];
-                                                    return acc;
-                                                }, {});
-                                            }
-                                        }
-                                        const matched = session ? {
-                                            session,
-                                            uid,
-                                            facility: facility as types.Facility,
-                                            autoFill,
-                                            prePopulateWithUID: prePopulateWithUID !== false,
-                                        } : {
-                                            session:{uid},
-                                            uid,
-                                            facility: facility as types.Facility,
-                                            prePopulateWithUID: prePopulateWithUID
-                                        };
+                                        const matched = buildMatchedSession(session);
+
 
                                         setSelectedSession(session);
-                                        setFacility(session ? null : getSessionFacility(session));
+                                        setFacility(null);
                                         setMatched(matched);
                                         if (onSession) onSession(matched);
                                     }}
                                     label={(
                                         <>
-                                            <Text variant="title3">{s.data.script.title}</Text>
+                                            <Box flexDirection="row" alignItems="center">
+                                                <Text variant="title3">{getSessionTitle(s)}</Text>
+                                                {recommended ? (
+                                                    <Box
+                                                        marginLeft="s"
+                                                        paddingHorizontal="s"
+                                                        paddingVertical="s"
+                                                        borderRadius="s"
+                                                        backgroundColor="primary-200"
+                                                    >
+                                                        <Text variant="caption" color="primary">Recommended</Text>
+                                                    </Box>
+                                                ) : null}
+                                            </Box>
                                             <Text variant="caption" color="textSecondary">
                                                 {[
+                                                    s?.data?.uid || s?.uid || uid,
+                                                    getSessionType(s),
                                                     getSessionFacility(s).other || getSessionFacility(s).value,
-                                                    `${moment(s.ingested_at).format('llll')}`
+                                                    getSessionDate(s) ? `${moment(getSessionDate(s)).format('llll')}` : ''
                                                 ].filter(s => s).join(' - ')}
                                             </Text>
                                         </>
@@ -163,21 +337,21 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
         <Box>
             <NeotreeIDInput
                 label={label}
-                onChange={uid => setUID(uid)}
+                onChange={handleUIDChange}
                 value={uid}
-            
+
             />
 
             <Br spacing='s' />
             <>
                 <Br />
-               <Button disabled={searching || uid!==''}
-               color="primary"
-               onPress={() => openQRscanner()}>
-               Scan QR
-               </Button>
-               {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
-               </>
+                <Button disabled={searching || uid !== ''}
+                    color="primary"
+                    onPress={() => openQRscanner()}>
+                    Scan QR
+                </Button>
+                {showQR ? <QRCodeScan onRead={onQrRead} /> : null}
+            </>
             <Br spacing='s' />
             <Button
                 color="secondary"
@@ -198,6 +372,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                         <Text color="textDisabled" variant="caption">{neolabSessions?.length} Neolab sessions found</Text>
                         <Text color="textDisabled" variant="caption">{dischargeSessions?.length} Discharge sessions found</Text>
                         <Text color="textDisabled" variant="caption">{dailyRecordsSessions?.length} Daily Record sessions found</Text>
+                        <Text color="textDisabled" variant="caption">{qrSessions?.length} QR-code sessions found</Text>
                         <Br spacing="xl" />
 
                         <Box width={200}>
@@ -222,6 +397,10 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                                         value: 'drecord',
                                         label: 'Daily Records',
                                     },
+                                    {
+                                        value: 'qr',
+                                        label: 'QR-code Record',
+                                    },
                                 ]}
                             />
                         </Box>
@@ -233,6 +412,7 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                             if (sessionType === 'neolab') return neolabSessions;
                             if (sessionType === 'discharge') return dischargeSessions;
                             if (sessionType === 'drecord') return dailyRecordsSessions;
+                            if (sessionType === 'qr') return qrSessions;
                             return [];
                         })())}
                     </>
@@ -242,6 +422,34 @@ export function Search({ onSession, label, autofillKeys, filterEntries, prePopul
                     </>
                 )}
             </ScrollView>
+
+            <Modal
+                open={confirmNoRecord && !searching}
+                onClose={() => setConfirmNoRecord(false)}
+                title={noRecordTitle}
+                actions={[
+                    {
+                        color: 'error',
+                        label: 'RE-SCAN',
+                        onPress: () => {
+                            setConfirmNoRecord(false);
+                            resetSearchState();
+                            setUID('');
+                        },
+                    },
+                    {
+                        color: 'primary',
+                        label: 'Continue',
+                        onPress: resolveUIDWithoutMatch,
+                    },
+                ]}
+            >
+                <Text color="textSecondary">
+                    {noRecordMessage
+                        ? noRecordMessage(uid)
+                        : `No patient record was found for ${uid}. Continue without pre-population only if this is the correct Neotree ID. ${useSearchedUidForSession ? 'The script NUID will use the current Neotree ID.' : 'A new Neotree ID will be generated for this baby.'}`}
+                </Text>
+            </Modal>
         </Box>
     );
 }

@@ -11,6 +11,26 @@ type DateFieldProps = types.ScreenFormTypeProps & {
 type DateFieldType = 'date' | 'datetime';
 type DefaultValueType = 'date_now' | 'date_noon' | 'date_midnight';
 
+const normalizeDateBoundary = (
+  date: Date,
+  boundary: 'min' | 'max',
+  currentFieldType?: string,
+  relatedFieldType?: string
+): Date => {
+  const normalized = new Date(date);
+  const compareByDay = currentFieldType === 'date' || relatedFieldType === 'date';
+
+  if (compareByDay) {
+    if (boundary === 'min') {
+      normalized.setHours(0, 0, 0, 0);
+    } else {
+      normalized.setHours(23, 59, 59, 999);
+    }
+  }
+
+  return normalized;
+};
+
 // Helper: Parse date string to Date object, handling both formats
 const parseToDate = (value: any): Date | null => {
   if (!value) return null;
@@ -105,10 +125,7 @@ export function DateField({
       if (minDateField?.value) {
         const _minDate = parseToDate(minDateField.value);
         if (_minDate) {
-          minDate = new Date(_minDate);
-          if (minDateField.type === 'date') {
-            minDate.setHours(0, 0, 0, 0);
-          }
+          minDate = normalizeDateBoundary(_minDate, 'min', field.type, minDateField.type);
         }
       }
     }
@@ -122,10 +139,7 @@ export function DateField({
       if (maxDateField?.value) {
         const _maxDate = parseToDate(maxDateField.value);
         if (_maxDate) {
-          maxDate = new Date(_maxDate);
-          if (maxDateField.type === 'date') {
-            maxDate.setHours(23, 59, 59, 999);
-          }
+          maxDate = normalizeDateBoundary(_maxDate, 'max', field.type, maxDateField.type);
         }
       }
     }

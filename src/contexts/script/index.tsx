@@ -100,6 +100,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [loadingScreen, setLoadingScreen] = useState(false);
     const [nuidSearchForm, setNuidSearchForm] = useState<types.NuidSearchFormField[]>([]);
+    const [eligibilityCompleted, setEligibilityCompleted] = useState(Boolean(route.params?.session?.data?.eligibilityCompleted));
+    const [eligibilityAutoFillValues, setEligibilityAutoFillValues] = useState<types.ScreenEntryValue[]>(
+        route.params?.session?.data?.eligibilityAutoFillValues || []
+    );
     const [matched, setMatched] = useState<types.MatchedSession | null>(null);
     const [patientDetails, setPatientDetails] = useState({
         isTwin: false,
@@ -236,131 +240,179 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         _condition = '', 
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
     ) => {
-        _condition = (_condition || '').toString();
+        _condition = `${_condition || ''}`.split('\n').map(_condition => {
+            const _form = _entries.reduce((acc, e) => {
+                const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
 
-        const _form = _entries.reduce((acc, e) => {
-            const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
+                if (index > -1) {
+                    return acc.map((accEntry, i) => {
+                        if (i === index)  {
+                            return { ...accEntry, ...e, }; 
+                        } else { 
+                            return accEntry;
+                        }
+                    }) as types.ScreenEntry[];
+                }
 
-            if (index > -1) {
-                return acc.map((accEntry, i) => {
-                    if (i === index)  {
-                        return { ...accEntry, ...e, }; 
-                    } else { 
-                        return accEntry;
-                    }
-                }) as types.ScreenEntry[];
-            }
+                return [...acc, e] as types.ScreenEntry[];
+            }, [
+                ...entries,
+                {
+                    value: eligibilityAutoFillValues,
+                } as types.ScreenEntry,
+                ...nuidSearchForm.map(f => {
+                    const entry = {
+                        value: [{
+                            value: f.value,
+                            key: f.key,
+                        }],
+                    } as types.ScreenEntry;
+                    
+                    return entry;
+                }),
+            ]);
 
-            return [...acc, e] as types.ScreenEntry[];
-        }, [
-            ...entries,
-            ...nuidSearchForm.map(f => {
-                const entry = {
-                    value: [{
-                        value: f.value,
-                        key: f.key,
-                    }],
-                } as types.ScreenEntry;
-                
-                return entry;
-            }),
-        ]);
-    
-        const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
-            value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
-            value = ((value === null) || (value === undefined)) ? 'no value' : value;
-            const t = dataType || type;
-    
-            switch (t) {
-                case 'boolean':
-                    value = value === 'false' ? false : Boolean(value);
-                    break;
-                default:
-                    if(key==='createdAt'){
-                        value=value
-                    }else{
-                        value = JSON.stringify(value)
-                    }
-            }
-    
-            return parseConditionString(condition, inputKey || key, value);
-        };
-    
-        let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
-            values = value || values || [];
+            _condition = _condition.replace(/\[(.*?)\]/gi, (_, match: string) => {
+                return parseCondition(match, _form);
+            });
 
-            values = values.reduce((acc: typeof values, v) => {
-                acc = [...acc, v];
-                if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
-                return acc;
-            }, []);
-            
-            // First filter out null/undefined values
-            values = values.filter(e => (e.value !== null) && (e.value !== undefined));
-            
-            // Flatten repeatable structures if they exist
-            values = flattenRepeatables(values);
-            
-            // Handle both array and non-array values
-            values = values
-                .reduce((acc: types.ScreenEntryValue[], e) => {
-                    acc = [
-                        ...acc,
-                        ...(e.value && Array.isArray(e.value) ? e.value : [e]),
-                    ];
+            if (
+                _condition.match(/ excludes /gi) ||
+                _condition.match(/ includes /gi)
+            ) {
+                const [key, vals] = _condition.match(/ excludes /gi) ?
+                    _condition.split(/ excludes /gi).map(s => s.trim())
+                    :
+                    _condition.split(/ includes /gi).map(s => s.trim());
 
-                    acc.forEach(v => {
-                        if (v.value2) {
-                            acc.push({
-                                ...v,
-                                value: v.value2,
-                            });
+                const entryVals = _form.map(e => {
+                    let found: string[] = [];
+                    const entryVals = e.value || e.values || [];
+                    entryVals.forEach(v => {
+                        if (`$${v.key?.toLowerCase?.()}` === key.toLowerCase()) {
+                            const val = Array.isArray(v.value) ? v.value : [v.value];
+                            val.forEach(v => found.push(v.key));
                         }
                     });
+                    return found;
+                }).reduce((acc, arr) => [...acc, ...arr], []);
 
-                    return acc;
-                }, []);
-    
-            let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+                _condition = `${vals || ''}`
+                    .replace(/\((.*?)\)/, '$1')
+                    .split(',')
+                    .map(v => v.trim().replaceAll('"', '').replaceAll("'", '').replaceAll('`', '').replaceAll('`', ''))
+                    .map(v => {
+                        let includes = entryVals.map(v => v.toLowerCase()).includes(v.toLowerCase());
+                        if (_condition.match(/ excludes /gi)) {
+                            includes = !includes;
+                        }
+                        return includes;
+                    })
+                    .join(' or ');
 
-            let chunks: string[] = values.filter(v => v.parentKey)
-                .map(v => parseValue(condition, {
-                    ...v,
-                    key: v.parentKey,
-                }))
-                .filter(c => c !== condition);
-    
-            if (screen) {
-                switch (screen.type) {
-                    case 'multi_select':
-                        chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+                return _condition;
+            }
+
+            const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
+                value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
+                value = ((value === null) || (value === undefined)) ? 'no value' : value;
+                const t = dataType || type;
+        
+                switch (t) {
+                    case 'boolean':
+                        value = value === 'false' ? false : Boolean(value);
                         break;
                     default:
-                    // do nothing
+                        if(key==='createdAt'){
+                            value=value
+                        }else{
+                            value = JSON.stringify(value)
+                        }
                 }
-            }
+        
+                return parseConditionString(condition, inputKey || key, value);
+            };
+        
+            let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
+                values = value || values || [];
 
-            if (chunks.length) {
-                c = chunks.map(c => `(${c})`).join(' || ');
+                values = values.reduce((acc: typeof values, v) => {
+                    acc = [...acc, v];
+                    if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
+                    return acc;
+                }, []);
+                
+                // First filter out null/undefined values
+                values = values.filter(e => (e.value !== null) && (e.value !== undefined));
+                
+                // Flatten repeatable structures if they exist
+                values = flattenRepeatables(values);
+                
+                // Handle both array and non-array values
+                values = values
+                    .reduce((acc: types.ScreenEntryValue[], e) => {
+                        acc = [
+                            ...acc,
+                            ...(e.value && Array.isArray(e.value) ? e.value : [e]),
+                        ];
+
+                        acc.forEach(v => {
+                            if (v.value2) {
+                                acc.push({
+                                    ...v,
+                                    value: v.value2,
+                                });
+                            }
+                        });
+
+                        return acc;
+                    }, []);
+        
+                let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+
+                let chunks: string[] = values.filter(v => v.parentKey)
+                    .map(v => parseValue(condition, {
+                        ...v,
+                        key: v.parentKey,
+                    }))
+                    .filter(c => c !== condition);
+        
+                if (screen) {
+                    switch (screen.type) {
+                        case 'multi_select':
+                            chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
+                            break;
+                        default:
+                        // do nothing
+                    }
+                }
+
+                if (chunks.length) {
+                    c = chunks.map(c => `(${c})`).join(' || ');
+                }
+        
+                return c || condition;
+            }, _condition);
+        
+            if (configuration) {
+                parsedCondition = Object.keys(configuration).reduce((acc, key) => {
+                    return parseConditionString(acc, key, configuration[key] ? true : false);
+                }, parsedCondition);
             }
-    
-            return c || condition;
-        }, _condition);
-    
-        if (configuration) {
-            parsedCondition = Object.keys(configuration).reduce((acc, key) => {
-                return parseConditionString(acc, key, configuration[key] ? true : false);
-            }, parsedCondition);
-        }
-    
-        return sanitizeCondition(parsedCondition);
-    }, [entries, configuration, nuidSearchForm, parseConditionString, flattenRepeatables, sanitizeCondition]);
+        
+            return `(${sanitizeCondition(parsedCondition)})`;
+        }).join(' && ');
+
+        return _condition;
+    }, [entries, configuration, nuidSearchForm, eligibilityAutoFillValues, parseConditionString, flattenRepeatables, sanitizeCondition]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
         const direction = (d && ['next', 'back'].includes(d)) ? d : null;
         
-        if ((i !== undefined) && !isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
+        if ((i !== undefined) && !isNaN(Number(i)) && !(direction === 'next' && i < 0)) {
+            return screens[i] ? { screen: screens[i], index: i } : null;
+        }
 
         let skipToScreenIndex: number | null = null;
         
@@ -445,6 +497,24 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
             
             if (!screen) return null;
+
+            const inferredScreenEntry = eligibilityAutoFillValues.find(v => {
+                if (!v?.data?.inferredFromEligibility) return false;
+                const screenKey = screen?.data?.metadata?.key;
+                return screenKey && `${v.key}`.toLowerCase() === `${screenKey}`.toLowerCase();
+            });
+
+            if (inferredScreenEntry && direction) {
+                const res = getTargetScreen(index);
+                if (res) {
+                    screen = res.screen;
+                    index = res.index;
+                } else {
+                    screen = null;
+                }
+            }
+
+            if (!screen) return null;
         
             if (!direction) return { screen, index, };
         
@@ -482,6 +552,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         activeScreenIndex, 
         drugsLibrary, 
         screens, 
+        eligibilityAutoFillValues,
         evaluateCondition, 
         parseCondition,
     ]);
@@ -723,11 +794,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, dateAndTimeOfDeath, ...payload } = _payload;
+        const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
         const matches: any[] = [];
+        const resolvedNuidSearchForm = payloadNuidSearchForm || nuidSearchForm;
 
         let uid = entries.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -741,7 +813,25 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             return uid || acc;
         }, '');
 
-        uid = uid || generatedUID;
+        const searchedUIDSource = resolvedNuidSearchForm.find((f: types.NuidSearchFormField) => (
+            f.results &&
+            f.results.useSearchedUidForSession === true &&
+            (f.value || f.results.uid || f.results.searchedUid)
+        ));
+        const searchedUID = searchedUIDSource?.value
+            || searchedUIDSource?.results?.uid
+            || searchedUIDSource?.results?.searchedUid;
+        const requiresSearchedUID = resolvedNuidSearchForm.some((f: types.NuidSearchFormField) => (
+            f.results &&
+            f.results.useSearchedUidForSession === true
+        ));
+
+        uid = searchedUID || uid;
+
+        if (requiresSearchedUID && !uid) {
+            throw new Error('This session requires the searched Neotree ID, but no Neotree ID was found. Please re-scan or re-enter the patient Neotree ID before continuing.');
+        }
+        uid = uid || (requiresSearchedUID ? '' : generatedUID);
         
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
     
@@ -760,6 +850,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 				completed_at: completed ? new Date().toISOString() : null,
 				canceled_at: cancelled ? new Date().toISOString() : null,
 				script,
+                eligibilityCompleted,
+                eligibilityAutoFillValues,
 				management: screens
 					.map(s => s.data)
 					.filter(s => s.type === 'management')
@@ -792,6 +884,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         screens,
         script,
         restructureForm,
+        nuidSearchForm,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -799,9 +894,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     }, [screens]);
 
     const saveSession = useCallback((params?: any) => new Promise((resolve, reject) => {
-        const summary = createSessionSummary(params);
         (async () => {
             try {
+                const summary = createSessionSummary(params);
                 const res = await api.saveSession({
                     id: sessionID,
                     ...summary
@@ -809,7 +904,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 setSessionID(res?.sessionID);
                 resolve(summary);
             } catch (e) {
-
+                const message = e instanceof Error ? e.message : '';
+                if (message.includes('requires the searched Neotree ID')) {
+                    Alert.alert('Neotree ID required', message);
+                }
                 reject(e);
             }
         })();
@@ -1255,6 +1353,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         startTime,
         refresh,
         nuidSearchForm,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
         matched,
         patientDetails,
         mountedScreens,
@@ -1290,6 +1390,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         setMoreNavOptions,
         setRefresh,
         setNuidSearchForm,
+        setEligibilityCompleted,
+        setEligibilityAutoFillValues,
         setMatched,
         setPatientDetails,
         setMountedScreens,

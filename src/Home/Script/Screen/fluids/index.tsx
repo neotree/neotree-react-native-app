@@ -96,6 +96,19 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
         }, 0);
     }, [fluids, setEntryValues]);
 
+    const clearSelection = useCallback((fluid: types.DrugsLibraryItem) => {
+        let _values: typeof values = [];
+        setValues(prev => {
+            _values = prev.filter(v => v.key !== fluid.key);
+            return _values;
+        });
+        setCurrentDrug(prev => prev?.key === fluid.key ? null : prev);
+        setTimeout(() => {
+            const completed = fluids.length === _values.length;
+            setEntryValues(completed ? _values : undefined);
+        }, 0);
+    }, [fluids, setEntryValues]);
+
     const closeModal = useCallback(() => {
         let _values: typeof values = []; 
         setValues(prev => {
@@ -238,6 +251,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                             label="Yes"
                                             checked={isSelected}
                                             onChange={() => onSelect(d, true)}
+                                            onDeselect={() => clearSelection(d)}
                                             disabled={false}
                                         />
                                     </Box>
@@ -254,6 +268,7 @@ export function TypeFluids({ entry }: TypeFluidsProps) {
                                                     comment: comments[0] || { label: '', }, 
                                                 });
                                             }}
+                                            onDeselect={() => clearSelection(d)}
                                             disabled={false}
                                         />
                                     </Box>
