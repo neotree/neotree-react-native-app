@@ -216,8 +216,8 @@ export function DatePicker({
       setShowDatePicker(false);
 
       // Preserve existing time if we have a date
-      const hour = date ? moment(date).hours() : 0;
-      const minute = date ? moment(date).minutes() : 0;
+      const hour = date ? moment(date).hours() : new Date().getHours();
+      const minute = date ? moment(date).minutes() : new Date().getMinutes();
       const newDate = combineDateAndTime(selectedDate, hour, minute);
       
       handleInternalDateChange(newDate);
