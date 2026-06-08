@@ -504,7 +504,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 return screenKey && `${v.key}`.toLowerCase() === `${screenKey}`.toLowerCase();
             });
 
-            if (inferredScreenEntry && direction) {
+            if (inferredScreenEntry && direction && index > 0) {
                 const res = getTargetScreen(index);
                 if (res) {
                     screen = res.screen;

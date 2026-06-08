@@ -14,7 +14,6 @@ export function Start() {
         setActiveScreen,
         saveSession,
         setActiveScreenIndex,
-        getScreen,
         screens, 
         matched, 
         script: { 
@@ -125,9 +124,8 @@ export function Start() {
 									try {
                                         setNuidSearchForm(fields);
 										await saveSession({ nuidSearchForm: fields });
-                                        const initial = getScreen({ direction: 'next', index: -1 }) || { screen: screens[0], index: 0 };
-										setActiveScreen(initial.screen);
-										setActiveScreenIndex(initial.index);
+										setActiveScreen(screens[0]);
+										setActiveScreenIndex(0);
 									} catch (error) {
                                         const message = error instanceof Error ? error.message : '';
                                         if (!message.includes('requires the searched Neotree ID')) {
