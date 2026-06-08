@@ -1,13 +1,12 @@
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Updates from 'expo-updates';
-import Constants from 'expo-constants';
 
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { postDeviceAppState } from './api';
 import { getUpdatePolicyData } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
-import { recordOtaAppliedIfChanged } from '@/src/update/otaTelemetry';
+import { recordOtaAppliedIfChanged, recordUpdateEvent } from '@/src/update/otaTelemetry';
+import { detectInstalledApkRelease, getAppRuntimeIdentity } from '@/src/update/appIdentity';
 
 export async function reportAppStateIfChanged() {
     try {
@@ -17,16 +16,14 @@ export async function reportAppStateIfChanged() {
         const deviceId = await getDeviceID();
         if (!deviceId) return;
 
-        const appVersion = Constants.expoConfig?.version || '';
-        const runtimeVersion = (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || '';
-        const otaUpdateId = Updates.updateId ? `${Updates.updateId}` : null;
-        const otaChannel = (Updates as any).channel || null;
+        const identity = getAppRuntimeIdentity();
         const policy = await getUpdatePolicyData().catch(() => null);
-        const currentApkRelease = policy?.currentApkRelease;
-        const apkReleaseId =
-            currentApkRelease?.runtimeVersion === runtimeVersion && currentApkRelease?.available
-                ? currentApkRelease.apkReleaseId
-                : null;
+        const installedApk = await detectInstalledApkRelease(policy);
+        const appVersion = identity.appVersion || '';
+        const runtimeVersion = identity.runtimeVersion || '';
+        const otaUpdateId = identity.otaUpdateId;
+        const otaChannel = identity.otaChannel;
+        const apkReleaseId = installedApk?.apkReleaseId || null;
 
         if (!appVersion || !runtimeVersion) return;
 
@@ -69,6 +66,9 @@ export async function reportAppStateIfChanged() {
         if (res?.errors?.length) return;
 
         await recordOtaAppliedIfChanged(lastState, currentState);
+        if (currentState.apkReleaseId && lastState?.apkReleaseId !== currentState.apkReleaseId) {
+            await recordUpdateEvent('apk_installed', { apkReleaseId: currentState.apkReleaseId });
+        }
 
         await AsyncStorage.setItem(
             ASYNC_STORAGE_KEYS.LAST_REPORTED_APP_STATE,

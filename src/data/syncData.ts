@@ -37,6 +37,15 @@ export async function syncData(opts?: { force?: boolean; }) {
         try {
             const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
             const deviceRegJSON = await deviceReg.json();
+            if (deviceRegJSON?.device?.device_auth_secret) {
+                await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.DEVICE_AUTH_SECRET, deviceRegJSON.device.device_auth_secret);
+                if (deviceRegJSON.device.device_auth_secret_rotated_at) {
+                    await AsyncStorage.setItem(
+                        ASYNC_STORAGE_KEYS.DEVICE_AUTH_SECRET_ROTATED_AT,
+                        deviceRegJSON.device.device_auth_secret_rotated_at,
+                    );
+                }
+            }
           
             webUpdated = deviceRegJSON?.info?.last_backup_date && 
                 last_sync_date && 
@@ -215,6 +224,9 @@ export async function syncData(opts?: { force?: boolean; }) {
                         'insert or replace into app_update_policy (id, data, updatedAt) values (?, ?, ?);',
                         [1, JSON.stringify(updatePolicyRes.data || {}), new Date().toISOString()],
                     );
+                } else if (updatePolicyRes?.errors?.length) {
+                    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
+                    await dbTransaction('delete from app_update_policy where id=1;');
                 }
 
                 const exeptions = await getExceptions();

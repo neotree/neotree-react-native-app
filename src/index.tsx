@@ -64,9 +64,9 @@ export function Navigation() {
                 const decision = await getUpdateDecision();
                 setUpdateDecision(decision);
                 await attemptAutoInstallIfDeferred();
-                await attemptAutoRetryDownload(decision);
+                attemptAutoRetryDownload(decision).catch(() => null);
                 if (decision?.shouldAutoDownload) {
-                    await ensureApkDownloaded(decision);
+                    ensureApkDownloaded(decision).catch(() => null);
                 }
             }
             await Promise.all([

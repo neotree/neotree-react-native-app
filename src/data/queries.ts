@@ -57,9 +57,21 @@ export const getUpdatePolicyData = () => new Promise<types.UpdatePolicy | null>(
             const policy = rows[0];
             if (!policy?.data) {
                 const cached = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
-                return resolve(cached ? JSON.parse(cached) as types.UpdatePolicy : null);
+                if (!cached) return resolve(null);
+                try {
+                    return resolve(JSON.parse(cached) as types.UpdatePolicy);
+                } catch {
+                    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
+                    return resolve(null);
+                }
             }
-            resolve(JSON.parse(policy.data || '{}') as types.UpdatePolicy);
+            try {
+                resolve(JSON.parse(policy.data || '{}') as types.UpdatePolicy);
+            } catch {
+                await dbTransaction('delete from app_update_policy where id=1;');
+                await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
+                resolve(null);
+            }
         } catch (e) {
             reject(e);
         }

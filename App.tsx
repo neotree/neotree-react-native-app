@@ -4,13 +4,11 @@ import { AppState, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from 'react-native-error-boundary'
 import Icon from '@expo/vector-icons/MaterialIcons';
-import Constants from 'expo-constants';
 
 import {CustomError}from './src/types'
 import {handleAppCrush} from './src/utils/handleCrashes'
-import { getUpdatePolicyData } from './src/data/queries';
 import { reportAppStateIfChanged } from './src/data/appState';
-import { attemptAutoInstallIfDeferred, attemptAutoRetryDownload, flushOtaEvents, getDownloadState, installApkIfSafe } from './src/update';
+import { attemptAutoInstallIfDeferred, attemptAutoRetryDownload, flushOtaEvents, getDownloadState, getUpdateDecision, installApkIfSafe } from './src/update';
 import { ApkUpdateBanner, Modal, Text as UIText } from './src/components';
 import { useAppContext } from './src/AppContext';
 
@@ -36,14 +34,8 @@ export default function App() {
 
     const checkRuntimeMismatch = React.useCallback(async () => {
         try {
-            const policy = await getUpdatePolicyData();
-            const policyRuntime = policy?.runtimeVersion;
-            const runtimeVersion = (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion;
-            if (policyRuntime && runtimeVersion && `${policyRuntime}` !== `${runtimeVersion}`) {
-                setShowRuntimeWarning(true);
-            } else {
-                setShowRuntimeWarning(false);
-            }
+            const decision = await getUpdateDecision();
+            setShowRuntimeWarning(decision.state === 'runtime_mismatch_unmanaged');
         } catch {
             // offline-first: no banner if we can't read policy
             setShowRuntimeWarning(false);
@@ -136,7 +128,7 @@ function ForcedInstallModal() {
                     onPress: async () => {
                         if (!canInstall) return;
                         try {
-                            await installApkIfSafe(downloadState.fileUri);
+                            await installApkIfSafe(downloadState.fileUri, updateDecision?.currentApk || null);
                         } catch {
                             // keep modal open
                         }

@@ -31,6 +31,7 @@ export type UpdatePolicyApkRelease = {
   releaseNotes?: string | null;
   releasedAt?: string | null;
   downloadUrl?: string | null;
+  isDowngrade?: boolean;
 };
 
 export type UpdatePolicy = {

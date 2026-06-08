@@ -2,12 +2,13 @@ import NetInfo from '@react-native-community/netinfo';
 import type { NetInfoState } from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
-import Constants from 'expo-constants';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { postUpdateEvent } from '@/src/data/api';
 import { getUpdatePolicyData } from '@/src/data/queries';
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
+import { getAppRuntimeIdentity } from './appIdentity';
 
 export type OtaEventType =
   | 'ota_check_failed'
@@ -15,6 +16,19 @@ export type OtaEventType =
   | 'ota_update_fetched'
   | 'ota_update_not_available'
   | 'ota_update_applied';
+
+export type UpdateEventType =
+  | OtaEventType
+  | 'apk_download_started'
+  | 'apk_download_paused'
+  | 'apk_download_resumed'
+  | 'apk_downloaded'
+  | 'apk_verified'
+  | 'apk_download_failed'
+  | 'apk_install_deferred'
+  | 'apk_install_started'
+  | 'apk_install_blocked'
+  | 'apk_installed';
 
 export type OtaLastStatus = {
   status: string;
@@ -28,7 +42,8 @@ export type OtaLastStatus = {
 };
 
 type OtaEvent = {
-  eventType: OtaEventType;
+  eventId?: string;
+  eventType: UpdateEventType;
   appVersion?: string | null;
   runtimeVersion?: string | null;
   otaUpdateId?: string | null;
@@ -37,9 +52,6 @@ type OtaEvent = {
   createdAt?: string;
   attempts?: number;
 };
-
-const getRuntimeVersion = () =>
-  (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || null;
 
 const isOnline = (netInfo: NetInfoState) =>
   Boolean(netInfo?.isConnected) && netInfo?.isInternetReachable !== false;
@@ -53,12 +65,7 @@ const OTA_DISABLE_HOURS = 24;
 
 const buildBasePayload = async () => {
   const deviceId = await getDeviceID();
-
-  const appVersion = Constants.expoConfig?.version || null;
-  const runtimeVersion = getRuntimeVersion();
-  const otaUpdateId = Updates.updateId ? `${Updates.updateId}` : null;
-  const otaChannel = (Updates as any).channel || null;
-  return { deviceId, appVersion, runtimeVersion, otaUpdateId, otaChannel };
+  return { deviceId, ...getAppRuntimeIdentity() };
 };
 
 const shouldSampleEvent = (eventType: OtaEventType) => {
@@ -161,7 +168,11 @@ const evaluatePolicyGate = async (runtimeVersion: string | null, otaChannel: str
 const enqueueEvent = async (event: OtaEvent) => {
   const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE);
   const list = raw ? JSON.parse(raw) : [];
-  list.push({ ...event, createdAt: event.createdAt || new Date().toISOString() });
+  list.push({
+    ...event,
+    eventId: event.eventId || uuidv4(),
+    createdAt: event.createdAt || new Date().toISOString(),
+  });
   await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE, JSON.stringify(list));
 };
 
@@ -176,8 +187,13 @@ export const flushOtaEvents = async () => {
   if (!netInfo?.isConnected || !netInfo?.isInternetReachable) return;
 
   const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE);
-  const list: OtaEvent[] = raw ? JSON.parse(raw) : [];
+  const pendingRaw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_PENDING_FLUSH);
+  const list: OtaEvent[] = pendingRaw ? JSON.parse(pendingRaw) : (raw ? JSON.parse(raw) : []);
   if (!list.length) return;
+  if (!pendingRaw) {
+    await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_PENDING_FLUSH, JSON.stringify(list));
+    await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE, JSON.stringify([]));
+  }
 
   const base = await buildBasePayload();
   if (!base.deviceId) return;
@@ -185,30 +201,41 @@ export const flushOtaEvents = async () => {
   const remaining: OtaEvent[] = [];
 
   for (const evt of list) {
-    const res = await postUpdateEvent({
-      deviceId: base.deviceId,
-      eventType: evt.eventType,
-      appVersion: evt.appVersion ?? base.appVersion,
-      runtimeVersion: evt.runtimeVersion ?? base.runtimeVersion,
-      otaUpdateId: evt.otaUpdateId ?? base.otaUpdateId,
-      otaChannel: evt.otaChannel ?? base.otaChannel,
-      payload: evt.payload ?? null,
-    });
+    try {
+      const res = await postUpdateEvent({
+        deviceId: base.deviceId,
+        eventId: evt.eventId,
+        eventType: evt.eventType,
+        appVersion: evt.appVersion ?? base.appVersion,
+        runtimeVersion: evt.runtimeVersion ?? base.runtimeVersion,
+        otaUpdateId: evt.otaUpdateId ?? base.otaUpdateId,
+        otaChannel: evt.otaChannel ?? base.otaChannel,
+        payload: evt.payload ?? null,
+      });
 
-    if (res?.errors?.length) {
+      if (!res?.errors?.length) continue;
+      const attempts = (evt.attempts || 0) + 1;
+      if (attempts < 5) remaining.push({ ...evt, attempts });
+    } catch {
       const attempts = (evt.attempts || 0) + 1;
       if (attempts < 5) remaining.push({ ...evt, attempts });
     }
   }
 
-  await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE, JSON.stringify(remaining));
+  const queuedDuringFlushRaw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE);
+  const queuedDuringFlush: OtaEvent[] = queuedDuringFlushRaw ? JSON.parse(queuedDuringFlushRaw) : [];
+  await AsyncStorage.setItem(
+    ASYNC_STORAGE_KEYS.OTA_EVENTS_QUEUE,
+    JSON.stringify([...remaining, ...queuedDuringFlush]),
+  );
+  await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_PENDING_FLUSH);
   await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.OTA_EVENTS_LAST_FLUSH, new Date().toISOString());
 };
 
-export const recordOtaEvent = async (eventType: OtaEventType, payload?: any) => {
+export const recordUpdateEvent = async (eventType: UpdateEventType, payload?: any) => {
   const base = await buildBasePayload();
   if (!base.deviceId) return;
-  if (!shouldSampleEvent(eventType)) return;
+  if (eventType.startsWith('ota_') && !shouldSampleEvent(eventType as OtaEventType)) return;
 
   await enqueueEvent({
     eventType,
@@ -220,6 +247,10 @@ export const recordOtaEvent = async (eventType: OtaEventType, payload?: any) => 
   });
 
   await flushOtaEvents();
+};
+
+export const recordOtaEvent = async (eventType: OtaEventType, payload?: any) => {
+  await recordUpdateEvent(eventType, payload);
 };
 
 export const checkForOtaUpdateAndRecord = async () => {
@@ -250,7 +281,8 @@ export const checkForOtaUpdateAndRecord = async () => {
       return;
     }
 
-    const policyGate = await evaluatePolicyGate(getRuntimeVersion(), (Updates as any).channel || null);
+    const identity = getAppRuntimeIdentity();
+    const policyGate = await evaluatePolicyGate(identity.runtimeVersion, identity.otaChannel);
     if (!policyGate.allow) {
       const base = await buildBasePayload();
       await persistLastOtaStatus({
@@ -360,7 +392,8 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
       return { status: 'offline' };
     }
 
-    const policyGate = await evaluatePolicyGate(getRuntimeVersion(), (Updates as any).channel || null);
+    const identity = getAppRuntimeIdentity();
+    const policyGate = await evaluatePolicyGate(identity.runtimeVersion, identity.otaChannel);
     if (!policyGate.allow) {
       const base = await buildBasePayload();
       await persistLastOtaStatus({

@@ -101,7 +101,8 @@ export function ApkUpdateBanner() {
 
   const onInstall = async () => {
     try {
-      await installApkIfSafe(state?.fileUri);
+      if (!state?.fileUri) throw new Error('Update file is not ready yet.');
+      await installApkIfSafe(state?.fileUri, release);
     } catch (e: any) {
       setEnvMessage(e?.message || 'Install blocked.');
     }

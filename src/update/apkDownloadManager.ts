@@ -1,12 +1,16 @@
-import { AppState, Linking, NativeModules } from 'react-native';
+import { AppState, Linking, NativeModules, Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Battery from 'expo-battery';
+import * as IntentLauncher from 'expo-intent-launcher';
+import * as Application from 'expo-application';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CryptoJS from 'crypto-js';
 
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
+import { getMobileDeviceHeaders } from '@/src/data/api';
 import type { UpdatePolicyApkRelease } from '@/src/types';
 import type { UpdateDecision } from './orchestrator';
+import { recordUpdateEvent } from './otaTelemetry';
 
 export type ApkDownloadState = {
   apkReleaseId: string;
@@ -18,6 +22,8 @@ export type ApkDownloadState = {
   signatureVerified?: boolean | null;
   updatedAt?: string;
 };
+
+type ApkInstallMetadata = Pick<UpdatePolicyApkRelease, 'apkReleaseId'> & Partial<UpdatePolicyApkRelease>;
 
 const APK_DIR = `${FileSystem.documentDirectory || ''}apk/`;
 
@@ -90,7 +96,7 @@ const verifyApkSignature = async (fileUri: string, expected?: string | null) => 
 
   const verifier = (NativeModules as any)?.ApkSignature;
   if (!verifier?.getApkSignatureSha256) {
-    return true;
+    throw new Error('APK signature verification is required but unavailable on this build');
   }
 
   const sig = await verifier.getApkSignatureSha256(fileUri);
@@ -106,6 +112,7 @@ const isSafeToInstall = async () => {
 
 export const deferInstall = async (until: 'idle' | 'restart') => {
   await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.APK_INSTALL_DEFER_UNTIL, until);
+  await recordUpdateEvent('apk_install_deferred', { until }).catch(() => null);
 };
 
 export const clearInstallDefer = async () => {
@@ -117,13 +124,63 @@ export const getInstallDefer = async () => {
   return v as 'idle' | 'restart' | null;
 };
 
-export const installApkIfSafe = async (fileUri: string) => {
+export const installApkIfSafe = async (fileUri: string, release?: ApkInstallMetadata | null) => {
   const safe = await isSafeToInstall();
-  if (!safe) throw new Error('Install blocked: app is in use');
+  if (!safe) {
+    await recordUpdateEvent('apk_install_blocked', {
+      apkReleaseId: release?.apkReleaseId || null,
+      reason: 'app_in_use',
+    }).catch(() => null);
+    throw new Error('Install blocked: app is in use');
+  }
 
   const contentUri = await FileSystem.getContentUriAsync(fileUri);
+  await AsyncStorage.setItem(
+    ASYNC_STORAGE_KEYS.APK_INSTALL_PENDING,
+    JSON.stringify({
+      apkReleaseId: release?.apkReleaseId || null,
+      versionName: release?.versionName || null,
+      versionCode: release?.versionCode || null,
+      runtimeVersion: release?.runtimeVersion || null,
+      fileUri,
+      startedAt: new Date().toISOString(),
+    }),
+  );
+  await recordUpdateEvent('apk_install_started', { apkReleaseId: release?.apkReleaseId || null }).catch(() => null);
+
+  if (Platform.OS === 'android') {
+    try {
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: contentUri,
+        type: 'application/vnd.android.package-archive',
+        flags: 1,
+      });
+    } catch (e: any) {
+      await recordUpdateEvent('apk_install_blocked', {
+        apkReleaseId: release?.apkReleaseId || null,
+        reason: 'installer_permission_or_intent_failed',
+        message: e?.message || 'Install intent failed',
+      }).catch(() => null);
+      try {
+        await IntentLauncher.startActivityAsync('android.settings.MANAGE_UNKNOWN_APP_SOURCES', {
+          data: `package:${Application.applicationId || ''}`,
+        });
+      } catch {
+        await Linking.openSettings().catch(() => null);
+      }
+      throw new Error('Install permission required. Allow app installs from settings, then try again.');
+    }
+    return;
+  }
+
   const canOpen = await Linking.canOpenURL(contentUri);
-  if (!canOpen) throw new Error('Install intent unavailable');
+  if (!canOpen) {
+    await recordUpdateEvent('apk_install_blocked', {
+      apkReleaseId: release?.apkReleaseId || null,
+      reason: 'install_intent_unavailable',
+    }).catch(() => null);
+    throw new Error('Install intent unavailable');
+  }
   await Linking.openURL(contentUri);
 };
 
@@ -137,7 +194,7 @@ export const attemptAutoInstallIfDeferred = async () => {
   if (defer === 'restart') {
     // only try on app startup; caller should clear defer if it succeeds
     try {
-      await installApkIfSafe(state.fileUri);
+      await installApkIfSafe(state.fileUri, { apkReleaseId: state.apkReleaseId });
       await clearInstallDefer();
       return true;
     } catch {
@@ -147,7 +204,7 @@ export const attemptAutoInstallIfDeferred = async () => {
 
   if (defer === 'idle') {
     try {
-      await installApkIfSafe(state.fileUri);
+      await installApkIfSafe(state.fileUri, { apkReleaseId: state.apkReleaseId });
       await clearInstallDefer();
       return true;
     } catch {
@@ -156,6 +213,63 @@ export const attemptAutoInstallIfDeferred = async () => {
   }
 
   return false;
+};
+
+const markDownloadedAndVerified = async (release: UpdatePolicyApkRelease, fileUri: string) => {
+  await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA);
+  await setState({ apkReleaseId: release.apkReleaseId, status: 'downloaded', fileUri });
+  await recordUpdateEvent('apk_downloaded', { apkReleaseId: release.apkReleaseId }).catch(() => null);
+
+  const checksumOk = await verifyApkChecksum(fileUri, release.checksumSha256 || null);
+  if (!checksumOk) {
+    await setState({
+      apkReleaseId: release.apkReleaseId,
+      status: 'failed',
+      fileUri,
+      error: 'Checksum mismatch',
+    });
+    throw new Error('Checksum mismatch');
+  }
+
+  let signatureVerified: boolean | null = null;
+  if (release.signatureSha256) {
+    try {
+      const signatureOk = await verifyApkSignature(fileUri, release.signatureSha256);
+      signatureVerified = signatureOk;
+      if (!signatureOk) {
+        await setState({
+          apkReleaseId: release.apkReleaseId,
+          status: 'failed',
+          fileUri,
+          error: 'Signature mismatch',
+          signatureVerified: false,
+        });
+        throw new Error('Signature mismatch');
+      }
+    } catch (e: any) {
+      await setState({
+        apkReleaseId: release.apkReleaseId,
+        status: 'failed',
+        fileUri,
+        error: e?.message || 'Signature verification unavailable',
+        signatureVerified: false,
+      });
+      throw e;
+    }
+  }
+
+  await setState({
+    apkReleaseId: release.apkReleaseId,
+    status: 'verified',
+    fileUri,
+    signatureVerified: signatureVerified ?? null,
+  });
+  await recordUpdateEvent('apk_verified', {
+    apkReleaseId: release.apkReleaseId,
+    signatureVerified: signatureVerified ?? null,
+  }).catch(() => null);
+
+  return fileUri;
 };
 
 export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
@@ -176,12 +290,13 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
   }
 
   let resumeData: string | null = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA);
+  const headers = await getMobileDeviceHeaders({ method: 'GET', endpoint: release.downloadUrl });
 
   activeReleaseId = release.apkReleaseId;
   activeDownload = FileSystem.createDownloadResumable(
     release.downloadUrl,
     targetUri,
-    {},
+    { headers },
     (progress) => {
       setState({
         apkReleaseId: release.apkReleaseId,
@@ -197,57 +312,17 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
   await setState({ apkReleaseId: release.apkReleaseId, status: 'downloading', fileUri: targetUri });
 
   try {
+    await recordUpdateEvent(resumeData ? 'apk_download_resumed' : 'apk_download_started', {
+      apkReleaseId: release.apkReleaseId,
+      versionName: release.versionName,
+      versionCode: release.versionCode,
+      runtimeVersion: release.runtimeVersion,
+    }).catch(() => null);
+
     const result = resumeData ? await activeDownload.resumeAsync() : await activeDownload.downloadAsync();
     if (!result?.uri) throw new Error('Download failed');
 
-    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA);
-    await setState({ apkReleaseId: release.apkReleaseId, status: 'downloaded', fileUri: result.uri });
-
-    const checksumOk = await verifyApkChecksum(result.uri, release.checksumSha256 || null);
-    if (!checksumOk) {
-      await setState({
-        apkReleaseId: release.apkReleaseId,
-        status: 'failed',
-        fileUri: result.uri,
-        error: 'Checksum mismatch',
-      });
-      throw new Error('Checksum mismatch');
-    }
-
-    let signatureVerified: boolean | null = null;
-    if (release.signatureSha256) {
-      try {
-        const signatureOk = await verifyApkSignature(result.uri, release.signatureSha256);
-        signatureVerified = signatureOk;
-        if (!signatureOk) {
-          await setState({
-            apkReleaseId: release.apkReleaseId,
-            status: 'failed',
-            fileUri: result.uri,
-            error: 'Signature mismatch',
-            signatureVerified: false,
-          });
-          throw new Error('Signature mismatch');
-        }
-      } catch (e: any) {
-        await setState({
-          apkReleaseId: release.apkReleaseId,
-          status: 'failed',
-          fileUri: result.uri,
-          error: e?.message || 'Signature verification unavailable',
-          signatureVerified: false,
-        });
-        throw e;
-      }
-    }
-
-    await setState({
-      apkReleaseId: release.apkReleaseId,
-      status: 'verified',
-      fileUri: result.uri,
-      signatureVerified: signatureVerified ?? null,
-    });
-    return result.uri;
+    return markDownloadedAndVerified(release, result.uri);
   } catch (e: any) {
     try {
       const saved = await activeDownload?.pauseAsync();
@@ -264,6 +339,10 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
       fileUri: targetUri,
       error: e?.message || 'Download error',
     });
+    await recordUpdateEvent('apk_download_failed', {
+      apkReleaseId: release.apkReleaseId,
+      message: e?.message || 'Download error',
+    }).catch(() => null);
     throw e;
   } finally {
     activeDownload = null;
@@ -277,6 +356,7 @@ export const pauseApkDownload = async () => {
   if (saved?.resumeData) {
     await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA, saved.resumeData);
   }
+  await recordUpdateEvent('apk_download_paused', { apkReleaseId: activeReleaseId }).catch(() => null);
   return saved?.resumeData || null;
 };
 
@@ -286,12 +366,13 @@ export const resumeApkDownload = async (release: UpdatePolicyApkRelease) => {
 
   await ensureApkDir();
   const targetUri = `${APK_DIR}${release.apkReleaseId}.apk`;
+  const headers = await getMobileDeviceHeaders({ method: 'GET', endpoint: release.downloadUrl || '' });
 
   activeReleaseId = release.apkReleaseId;
   activeDownload = FileSystem.createDownloadResumable(
     release.downloadUrl || '',
     targetUri,
-    {},
+    { headers },
     (progress) => {
       setState({
         apkReleaseId: release.apkReleaseId,
@@ -305,47 +386,34 @@ export const resumeApkDownload = async (release: UpdatePolicyApkRelease) => {
   );
 
   await setState({ apkReleaseId: release.apkReleaseId, status: 'downloading', fileUri: targetUri });
+  await recordUpdateEvent('apk_download_resumed', {
+    apkReleaseId: release.apkReleaseId,
+    versionName: release.versionName,
+    versionCode: release.versionCode,
+    runtimeVersion: release.runtimeVersion,
+  }).catch(() => null);
 
-  const result = await activeDownload.resumeAsync();
-  if (!result?.uri) throw new Error('Download failed');
+  try {
+    const result = await activeDownload.resumeAsync();
+    if (!result?.uri) throw new Error('Download failed');
 
-  await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA);
-  await setState({ apkReleaseId: release.apkReleaseId, status: 'downloaded', fileUri: result.uri });
-
-  const checksumOk = await verifyApkChecksum(result.uri, release.checksumSha256 || null);
-  if (!checksumOk) {
+    return markDownloadedAndVerified(release, result.uri);
+  } catch (e: any) {
     await setState({
       apkReleaseId: release.apkReleaseId,
       status: 'failed',
-      fileUri: result.uri,
-      error: 'Checksum mismatch',
+      fileUri: targetUri,
+      error: e?.message || 'Download error',
     });
-    throw new Error('Checksum mismatch');
+    await recordUpdateEvent('apk_download_failed', {
+      apkReleaseId: release.apkReleaseId,
+      message: e?.message || 'Download error',
+    }).catch(() => null);
+    throw e;
+  } finally {
+    activeDownload = null;
+    activeReleaseId = null;
   }
-
-  let signatureVerified: boolean | null = null;
-  if (release.signatureSha256) {
-    const signatureOk = await verifyApkSignature(result.uri, release.signatureSha256);
-    signatureVerified = signatureOk;
-    if (!signatureOk) {
-      await setState({
-        apkReleaseId: release.apkReleaseId,
-        status: 'failed',
-        fileUri: result.uri,
-        error: 'Signature mismatch',
-        signatureVerified: false,
-      });
-      throw new Error('Signature mismatch');
-    }
-  }
-
-  await setState({
-    apkReleaseId: release.apkReleaseId,
-    status: 'verified',
-    fileUri: result.uri,
-    signatureVerified: signatureVerified ?? null,
-  });
-  return result.uri;
 };
 
 export const ensureApkDownloaded = async (decision: UpdateDecision) => {

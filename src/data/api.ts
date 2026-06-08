@@ -1,10 +1,13 @@
 import 'react-native-get-random-values'
 import CryptoJS from 'crypto-js';
 import queryString from 'query-string';
-import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
+import { getAppRuntimeIdentity } from '../update/appIdentity';
+import { getDeviceID } from '../utils/getDeviceID';
+import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 
 
 const _otherOptions = {
@@ -217,10 +220,85 @@ export const getHospitals = async (params = {}, otherParams: Partial<(typeof _ot
 };
 
 export const getUpdatePolicy = async (): Promise<types.UpdatePolicyResponse> => {
-    const runtimeVersion = (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || '';
-    const params = runtimeVersion ? `?${queryString.stringify({ runtimeVersion })}` : '';
-    const res = await makeApiCall('webeditor', `/mobile/update-policy${params}`);
+    const identity = getAppRuntimeIdentity();
+    const runtimeVersion = identity.runtimeVersion || '';
+    const nativeBuildVersion = identity.nativeBuildVersion || '';
+    const deviceId = await getDeviceID();
+    const params = `?${queryString.stringify({ runtimeVersion, nativeBuildVersion, deviceId })}`;
+    const endpoint = `/mobile/update-policy${params}`;
+    const res = await makeApiCall('webeditor', `/mobile/update-policy${params}`, {
+        headers: await getMobileDeviceHeaders({ method: 'GET', endpoint }),
+    });
     return res.json();
+};
+
+const normalizeSignaturePath = (endpoint: string) => {
+    try {
+        const url = new URL(endpoint);
+        return `${url.pathname.replace(/^\/api/, '') || '/'}${url.search || ''}`;
+    } catch {
+        const value = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        return value.replace(/^\/api/, '');
+    }
+};
+
+const createBodyHash = (body?: string | null) => CryptoJS.SHA256(body || '').toString(CryptoJS.enc.Hex);
+
+const createDeviceSignature = ({
+    method,
+    endpoint,
+    timestamp,
+    nonce,
+    body,
+    secret,
+}: {
+    method: string;
+    endpoint: string;
+    timestamp: string;
+    nonce: string;
+    body?: string | null;
+    secret: string;
+}) => {
+    const canonical = [
+        method.toUpperCase(),
+        normalizeSignaturePath(endpoint),
+        timestamp,
+        nonce,
+        createBodyHash(body),
+    ].join('\n');
+    return CryptoJS.HmacSHA256(canonical, secret).toString(CryptoJS.enc.Hex);
+};
+
+export const getMobileDeviceHeaders = async (opts?: {
+    method?: string;
+    endpoint?: string;
+    body?: string | null;
+}) => {
+    const deviceId = await getDeviceID();
+    const location = await getLocation();
+    const country = location?.country;
+    const apiKey = country ? (APP_CONFIG[country] as types.COUNTRY_CONFIG)?.webeditor?.api_key : '';
+    const secret = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.DEVICE_AUTH_SECRET);
+    const timestamp = new Date().toISOString();
+    const nonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const signature = secret && opts?.endpoint ? createDeviceSignature({
+        method: opts.method || 'GET',
+        endpoint: opts.endpoint,
+        timestamp,
+        nonce,
+        body: opts.body || '',
+        secret,
+    }) : null;
+
+    return {
+        'x-device-id': deviceId,
+        ...(signature ? {
+            'x-device-timestamp': timestamp,
+            'x-device-nonce': nonce,
+            'x-device-signature': signature,
+        } : {}),
+        ...(apiKey ? { 'x-api-key': apiKey } : {}),
+    };
 };
 
 export const postDeviceAppState = async (payload: {
@@ -231,15 +309,20 @@ export const postDeviceAppState = async (payload: {
     otaChannel?: string | null;
     apkReleaseId?: string | null;
 }): Promise<{ data?: any; errors?: string[]; success?: boolean; }> => {
+    const body = JSON.stringify(payload);
+    const endpoint = '/mobile/device/app-state';
+    const headers = await getMobileDeviceHeaders({ method: 'POST', endpoint, body });
     const res = await makeApiCall('webeditor', '/mobile/device/app-state', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        headers,
+        body,
     });
     return res.json();
 };
 
 export const postUpdateEvent = async (payload: {
     deviceId: string;
+    eventId?: string;
     eventType: string;
     appVersion?: string | null;
     runtimeVersion?: string | null;
@@ -247,9 +330,13 @@ export const postUpdateEvent = async (payload: {
     otaChannel?: string | null;
     payload?: any;
 }): Promise<{ data?: any; errors?: string[]; success?: boolean; }> => {
+    const body = JSON.stringify(payload);
+    const endpoint = '/mobile/update-events';
+    const headers = await getMobileDeviceHeaders({ method: 'POST', endpoint, body });
     const res = await makeApiCall('webeditor', '/mobile/update-events', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        headers,
+        body,
     });
     return res.json();
 };
