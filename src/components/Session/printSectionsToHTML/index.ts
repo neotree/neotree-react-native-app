@@ -296,7 +296,7 @@ export async function printSectionsToHTML({
         `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
           ${generatedQR}
         </div>` :
-        `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
+        !generatedQR ? '' : `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
           ${generatedQR}
         </div>`;
       return htmlContent;
