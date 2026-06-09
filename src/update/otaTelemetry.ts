@@ -28,7 +28,9 @@ export type UpdateEventType =
   | 'apk_install_deferred'
   | 'apk_install_started'
   | 'apk_install_blocked'
-  | 'apk_installed';
+  | 'apk_installed'
+  | 'apk_policy_seen'
+  | 'mdm_push_acknowledged';
 
 export type OtaLastStatus = {
   status: string;
@@ -49,6 +51,10 @@ type OtaEvent = {
   otaUpdateId?: string | null;
   otaChannel?: string | null;
   payload?: any;
+  apkReleaseId?: string | null;
+  status?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
   createdAt?: string;
   attempts?: number;
 };
@@ -150,10 +156,14 @@ const disableOtaTemporarily = async (count: number) => {
 const evaluatePolicyGate = async (runtimeVersion: string | null, otaChannel: string | null) => {
   try {
     const policy = await getUpdatePolicyData();
+    const normalizeChannel = (value?: string | null) => {
+      const channel = `${value || ''}`.trim().toLowerCase();
+      return channel === 'production' ? 'prod' : channel;
+    };
     if (policy?.ota && policy.ota.enabled === false) {
       return { allow: false, reason: 'OTA disabled by policy' };
     }
-    if (policy?.ota?.channel && otaChannel && policy.ota.channel !== otaChannel) {
+    if (policy?.ota?.channel && otaChannel && normalizeChannel(policy.ota.channel) !== normalizeChannel(otaChannel)) {
       return { allow: false, reason: 'OTA channel mismatch with policy' };
     }
     if (policy?.runtimeVersion && runtimeVersion && policy.runtimeVersion !== runtimeVersion) {
@@ -210,6 +220,10 @@ export const flushOtaEvents = async () => {
         runtimeVersion: evt.runtimeVersion ?? base.runtimeVersion,
         otaUpdateId: evt.otaUpdateId ?? base.otaUpdateId,
         otaChannel: evt.otaChannel ?? base.otaChannel,
+        apkReleaseId: evt.apkReleaseId ?? evt.payload?.apkReleaseId ?? null,
+        status: evt.status ?? evt.payload?.status ?? null,
+        errorCode: evt.errorCode ?? evt.payload?.errorCode ?? null,
+        errorMessage: evt.errorMessage ?? evt.payload?.errorMessage ?? evt.payload?.message ?? null,
         payload: evt.payload ?? null,
       });
 
@@ -243,6 +257,10 @@ export const recordUpdateEvent = async (eventType: UpdateEventType, payload?: an
     runtimeVersion: base.runtimeVersion,
     otaUpdateId: base.otaUpdateId,
     otaChannel: base.otaChannel,
+    apkReleaseId: payload?.apkReleaseId ?? null,
+    status: payload?.status ?? null,
+    errorCode: payload?.errorCode ?? null,
+    errorMessage: payload?.errorMessage ?? payload?.message ?? null,
     payload: { ...payload, sessionId: otaSessionId },
   });
 

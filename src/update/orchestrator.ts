@@ -12,6 +12,8 @@ export type UpdateDecisionState =
   | 'policy_missing'
   | 'runtime_ok'
   | 'runtime_mismatch_unmanaged'
+  | 'mdm_managed'
+  | 'manual_update_required'
   | 'apk_available'
   | 'apk_forced';
 
@@ -24,6 +26,8 @@ export type UpdateDecision = {
   installedApk?: InstalledApkRelease | null;
   shouldAutoDownload: boolean;
   shouldForceInstall: boolean;
+  deliveryMode?: string | null;
+  managedByMdm?: boolean;
   forceAfter?: string | null;
   blockedReason?: string | null;
   reason?: string;
@@ -100,8 +104,12 @@ export function evaluateUpdatePolicy(
   const currentApk = getTargetRelease(policy);
   const needsApkInstall = shouldInstallRelease(currentApk, installedApk || null, identity);
   const blockedReason = getBlockedReason(currentApk, identity);
-  const shouldAutoDownload = !!(policy.apk?.autoDownload && needsApkInstall);
+  const deliveryMode = policy.apk?.deliveryMode || 'in_app';
+  const managedByMdm = deliveryMode === 'mdm' || deliveryMode === 'hybrid';
+  const allowsInAppDownload = deliveryMode === 'in_app' || deliveryMode === 'hybrid';
+  const shouldAutoDownload = !!(allowsInAppDownload && policy.apk?.autoDownload && needsApkInstall);
   const shouldForceInstall = !!(
+    allowsInAppDownload &&
     policy.apk?.forceInstall &&
     needsApkInstall &&
     isForceWindowActive(policy.apk?.forceAfter || null)
@@ -117,11 +125,49 @@ export function evaluateUpdatePolicy(
       installedApk,
       shouldAutoDownload: false,
       shouldForceInstall: false,
+      deliveryMode,
+      managedByMdm,
       blockedReason,
     };
   }
 
   if (needsApkInstall) {
+    if (deliveryMode === 'mdm') {
+      return {
+        state: 'mdm_managed',
+        runtimeVersion: runtime,
+        policyRuntimeVersion: policyRuntime,
+        policy,
+        currentApk,
+        installedApk,
+        shouldAutoDownload: false,
+        shouldForceInstall: false,
+        deliveryMode,
+        managedByMdm: true,
+        forceAfter: policy.apk?.forceAfter || null,
+        blockedReason: null,
+        reason: 'This update is managed by MDM',
+      };
+    }
+
+    if (deliveryMode === 'manual') {
+      return {
+        state: 'manual_update_required',
+        runtimeVersion: runtime,
+        policyRuntimeVersion: policyRuntime,
+        policy,
+        currentApk,
+        installedApk,
+        shouldAutoDownload: false,
+        shouldForceInstall: false,
+        deliveryMode,
+        managedByMdm: false,
+        forceAfter: policy.apk?.forceAfter || null,
+        blockedReason: null,
+        reason: 'Manual update required',
+      };
+    }
+
     return {
       state: shouldForceInstall ? 'apk_forced' : 'apk_available',
       runtimeVersion: runtime,
@@ -131,6 +177,8 @@ export function evaluateUpdatePolicy(
       installedApk,
       shouldAutoDownload,
       shouldForceInstall,
+      deliveryMode,
+      managedByMdm,
       forceAfter: policy.apk?.forceAfter || null,
       blockedReason: null,
     };
@@ -145,6 +193,8 @@ export function evaluateUpdatePolicy(
     installedApk,
     shouldAutoDownload: false,
     shouldForceInstall: false,
+    deliveryMode,
+    managedByMdm,
     blockedReason,
     reason: blockedReason || 'Runtime mismatch with no available APK',
   };

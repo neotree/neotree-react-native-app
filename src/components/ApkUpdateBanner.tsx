@@ -69,9 +69,14 @@ export function ApkUpdateBanner() {
   if (!updateDecision?.currentApk || !updateDecision?.currentApk?.available) return null;
 
   const release = updateDecision.currentApk;
+  const deliveryMode = updateDecision.deliveryMode || updateDecision.policy?.apk?.deliveryMode || 'in_app';
+  const isMdmOnly = deliveryMode === 'mdm';
+  const isManualOnly = deliveryMode === 'manual';
+  const isHybrid = deliveryMode === 'hybrid';
   const isDownloading = state?.status === 'downloading';
   const isDownloaded = state?.status === 'verified';
   const hasError = state?.status === 'failed';
+  const canUseInAppDownload = !isMdmOnly && !isManualOnly;
 
   const progress = state?.totalBytes
     ? Math.min(1, (state?.bytesWritten || 0) / state.totalBytes)
@@ -113,15 +118,49 @@ export function ApkUpdateBanner() {
     setInstallDefer(mode);
   };
 
+  const statusLabel = (() => {
+    if (isMdmOnly) return 'Administrator managed update';
+    if (isHybrid) return 'App update available';
+    if (isManualOnly) return 'Administrator help needed';
+    if (updateDecision?.shouldForceInstall) return 'Required app update';
+    return 'App update available';
+  })();
+
+  const deliveryLabel = (() => {
+    if (isMdmOnly) return 'admin';
+    if (isHybrid) return 'admin or app';
+    if (isManualOnly) return 'manual';
+    return 'app';
+  })();
+
   return (
     <View style={styles.banner}>
-      <Text style={styles.title}>App update ready</Text>
-      <Text style={styles.subtitle}>Version {release.versionName}</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{statusLabel}</Text>
+          <Text style={styles.subtitle}>Target version {release.versionName}</Text>
+        </View>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{deliveryLabel}</Text>
+        </View>
+      </View>
+      {isMdmOnly ? (
+        <Text style={styles.infoText}>No action is needed here. Your administrator will install this update through device management.</Text>
+      ) : null}
+      {isHybrid ? (
+        <Text style={styles.infoText}>An administrator can install this remotely. Use the app download only if you have been asked to do so.</Text>
+      ) : null}
+      {isManualOnly ? (
+        <Text style={styles.infoText}>Contact your administrator to install this update safely.</Text>
+      ) : null}
 
       {progress !== null ? (
+        <>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
         </View>
+        <Text style={styles.progressText}>{Math.round(progress * 100)}% downloaded</Text>
+        </>
       ) : null}
 
       {envMessage ? (
@@ -133,44 +172,44 @@ export function ApkUpdateBanner() {
       ) : null}
 
       {installDefer ? (
-        <Text style={styles.infoText}>Install deferred: {installDefer}</Text>
+        <Text style={styles.infoText}>Install scheduled for {installDefer === 'idle' ? 'when the tablet is idle' : 'next restart'}.</Text>
       ) : null}
 
       <View style={styles.actions}>
-        {!isDownloaded && !isDownloading ? (
+        {canUseInAppDownload && !isDownloaded && !isDownloading ? (
           <TouchableOpacity
-            style={styles.actionButton}
+            style={isHybrid ? styles.actionButton : styles.actionButtonPrimary}
             onPress={onDownload}
           >
-            <Text style={styles.actionText}>Download</Text>
+            <Text style={isHybrid ? styles.actionText : styles.actionPrimaryText}>Download update</Text>
           </TouchableOpacity>
         ) : null}
 
-        {isDownloading ? (
+        {canUseInAppDownload && isDownloading ? (
           <TouchableOpacity style={styles.actionButton} onPress={() => pauseApkDownload().catch(() => null)}>
             <Text style={styles.actionText}>Pause</Text>
           </TouchableOpacity>
         ) : null}
 
-        {!isDownloading && state?.status === 'failed' ? (
+        {canUseInAppDownload && !isDownloading && state?.status === 'failed' ? (
           <TouchableOpacity style={styles.actionButton} onPress={onResume}>
             <Text style={styles.actionText}>Resume</Text>
           </TouchableOpacity>
         ) : null}
 
-        {isDownloaded ? (
+        {canUseInAppDownload && isDownloaded ? (
           <TouchableOpacity style={styles.actionButtonPrimary} onPress={onInstall}>
-            <Text style={styles.actionPrimaryText}>Install</Text>
+            <Text style={styles.actionPrimaryText}>Install update</Text>
           </TouchableOpacity>
         ) : null}
 
-        {isDownloaded ? (
+        {canUseInAppDownload && isDownloaded ? (
           <TouchableOpacity style={styles.actionButton} onPress={() => onInstallLater('idle')}>
             <Text style={styles.actionText}>Install when idle</Text>
           </TouchableOpacity>
         ) : null}
 
-        {isDownloaded ? (
+        {canUseInAppDownload && isDownloaded ? (
           <TouchableOpacity style={styles.actionButton} onPress={() => onInstallLater('restart')}>
             <Text style={styles.actionText}>Install on restart</Text>
           </TouchableOpacity>
@@ -182,14 +221,33 @@ export function ApkUpdateBanner() {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: '#F1F5F9',
-    borderBottomColor: '#CBD5E1',
-    borderBottomWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
   },
+  headerRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  headerText: { flex: 1 },
   title: { fontSize: 14, fontWeight: '600', color: '#0F172A' },
   subtitle: { fontSize: 12, color: '#475569', marginTop: 2 },
+  badge: {
+    backgroundColor: '#E8F1EC',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  badgeText: {
+    color: '#2E6B4F',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
   progressBar: {
     height: 6,
     backgroundColor: '#E2E8F0',
@@ -199,22 +257,23 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 6,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#70A487',
   },
+  progressText: { color: '#475569', marginTop: 4, fontSize: 12 },
   errorText: { color: '#B91C1C', marginTop: 6, fontSize: 12 },
   infoText: { color: '#475569', marginTop: 6, fontSize: 12 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   actionButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#F5F5F5',
     borderRadius: 6,
   },
   actionText: { color: '#0F172A', fontSize: 12 },
   actionButtonPrimary: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: '#70A487',
     borderRadius: 6,
   },
   actionPrimaryText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },

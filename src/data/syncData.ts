@@ -9,6 +9,7 @@ import { createTablesIfNotExist, dbTransaction,addNewColumns } from './db';
 import { getUpdatePolicy, makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
+import { recordUpdateEvent } from '../update/otaTelemetry';
 
 export async function syncData(opts?: { force?: boolean; }) {  
 	const netInfo = await NetInfo.fetch();
@@ -224,6 +225,12 @@ export async function syncData(opts?: { force?: boolean; }) {
                         'insert or replace into app_update_policy (id, data, updatedAt) values (?, ?, ?);',
                         [1, JSON.stringify(updatePolicyRes.data || {}), new Date().toISOString()],
                     );
+                    await recordUpdateEvent('apk_policy_seen', {
+                        apkReleaseId: updatePolicyRes.data.currentApkRelease?.apkReleaseId || null,
+                        policyVersion: updatePolicyRes.data.policyVersion,
+                        deliveryMode: updatePolicyRes.data.apk?.deliveryMode || 'in_app',
+                        status: 'seen',
+                    }).catch(() => null);
                 } else if (updatePolicyRes?.errors?.length) {
                     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
                     await dbTransaction('delete from app_update_policy where id=1;');

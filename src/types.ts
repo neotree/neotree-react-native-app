@@ -13,6 +13,8 @@ export type ApkReleaseStatus =
   | 'rolled_back';
 
 export type ApkInstallWindow = 'on_restart' | 'idle' | 'immediate';
+export type ApkDeliveryMode = 'in_app' | 'mdm' | 'hybrid' | 'manual';
+export type UpdateChannel = 'demo' | 'stage' | 'prod' | 'production';
 
 export type UpdatePolicyApkRelease = {
   apkReleaseId: string;
@@ -39,9 +41,10 @@ export type UpdatePolicy = {
   policyVersion: number;
   ota: {
     enabled: boolean;
-    channel: string;
+    channel: UpdateChannel | string;
   };
   apk: {
+    deliveryMode?: ApkDeliveryMode | string | null;
     autoDownload: boolean;
     forceInstall: boolean;
     gracePeriodHours?: number | null;
@@ -49,6 +52,14 @@ export type UpdatePolicy = {
     installWindow?: ApkInstallWindow | string | null;
     messageTitle?: string | null;
     messageBody?: string | null;
+  };
+  targeting?: {
+    scope?: 'country' | 'group' | 'hospital' | string | null;
+    groupId?: string | null;
+    hospitalId?: string | null;
+  };
+  rollback?: {
+    enabled?: boolean;
   };
   currentApkRelease?: UpdatePolicyApkRelease | null;
   rollbackApkRelease?: UpdatePolicyApkRelease | null;

@@ -324,10 +324,14 @@ export const postUpdateEvent = async (payload: {
     deviceId: string;
     eventId?: string;
     eventType: string;
+    status?: string | null;
+    apkReleaseId?: string | null;
     appVersion?: string | null;
     runtimeVersion?: string | null;
     otaUpdateId?: string | null;
     otaChannel?: string | null;
+    errorCode?: string | null;
+    errorMessage?: string | null;
     payload?: any;
 }): Promise<{ data?: any; errors?: string[]; success?: boolean; }> => {
     const body = JSON.stringify(payload);

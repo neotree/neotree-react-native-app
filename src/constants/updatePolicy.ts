@@ -16,13 +16,14 @@ export const UPDATE_POLICY_SCHEMA = {
               required: ['enabled', 'channel'],
               properties: {
                 enabled: { type: 'boolean' },
-                channel: { type: 'string' },
+                channel: { type: 'string', enum: ['demo', 'stage', 'prod', 'production'] },
               },
             },
             apk: {
               type: 'object',
               required: ['autoDownload', 'forceInstall'],
               properties: {
+                deliveryMode: { type: ['string', 'null'], enum: ['in_app', 'mdm', 'hybrid', 'manual', null] },
                 autoDownload: { type: 'boolean' },
                 forceInstall: { type: 'boolean' },
                 gracePeriodHours: { type: ['integer', 'null'] },
@@ -30,6 +31,20 @@ export const UPDATE_POLICY_SCHEMA = {
                 installWindow: { type: ['string', 'null'] },
                 messageTitle: { type: ['string', 'null'] },
                 messageBody: { type: ['string', 'null'] },
+              },
+            },
+            targeting: {
+              type: 'object',
+              properties: {
+                scope: { type: ['string', 'null'] },
+                groupId: { type: ['string', 'null'] },
+                hospitalId: { type: ['string', 'null'] },
+              },
+            },
+            rollback: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
               },
             },
             currentApkRelease: { $ref: '#/$defs/apkRelease' },
@@ -96,9 +111,10 @@ export const UPDATE_POLICY_EXAMPLE = {
     policyVersion: 3,
     ota: {
       enabled: true,
-      channel: 'production',
+      channel: 'prod',
     },
     apk: {
+      deliveryMode: 'hybrid',
       autoDownload: true,
       forceInstall: false,
       gracePeriodHours: 24,
