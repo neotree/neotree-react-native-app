@@ -1,12 +1,11 @@
 import Constants from 'expo-constants';
 
-import configJSON from '../config';
 import { Preferences } from '../types';
 
-export const NEOTREE_BUILD_TYPE = Constants.expoConfig?.extra?.NEOTREE_BUILD_TYPE! as 'demo' | 'development' | 'stage' | 'production';
+export const NEOTREE_BUILD_TYPE = (Constants.expoConfig?.extra?.NEOTREE_BUILD_TYPE || 'development') as 'demo' | 'development' | 'stage' | 'production';
 
 export const expoContantsExtra = {
-    ...configJSON[NEOTREE_BUILD_TYPE], // TODO: this is a band-aid - eas build is not picking up this values from app.config.js
+    countries: [],
     ...Constants.expoConfig?.extra,
 } as { [key: string]: any; };
 
