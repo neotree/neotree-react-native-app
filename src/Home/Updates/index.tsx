@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { Box, Br, Button, Text, useTheme, ApkUpdateBanner } from '@/src/components';
+import { Box, Br, Button, Text, useTheme, ApkUpdateBanner, OfflineUpdateShare } from '@/src/components';
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
 import { checkForOtaUpdateFetchAndRecord, getLastOtaStatus } from '@/src/update/otaTelemetry';
 import { useAppContext } from '@/src/AppContext';
@@ -244,7 +244,9 @@ export function UpdatesCenter() {
 
   return (
     <ScrollView contentContainerStyle={{ padding: theme.spacing.l }}>
-      <Text variant="title3" fontWeight="bold">Update Center</Text>
+      <Text variant="title3" fontWeight="bold">App updates</Text>
+      <Br spacing="s" />
+      <Text color="textSecondary">Keep this tablet up to date. If you are unsure, ask your NeoTree administrator.</Text>
       <Br spacing="m" />
 
       <Box padding="m" backgroundColor={statusBackground} borderRadius="m">
@@ -254,16 +256,13 @@ export function UpdatesCenter() {
         {currentApk ? (
           <>
             <Br spacing="s" />
-            <Text color="textSecondary">Target version: {currentApk.versionName}</Text>
+            <Text color="textSecondary">New version: {currentApk.versionName}</Text>
           </>
         ) : null}
         <Br spacing="m" />
         <Box flexDirection="row" flexWrap="wrap" style={{ gap: 8 }}>
           <Button onPress={handlePrimaryAction} disabled={syncing}>
-            {pendingRestart ? 'Restart NeoTree' : syncing ? 'Refreshing...' : status.action}
-          </Button>
-          <Button onPress={handleManualCheck} disabled={checking} color="secondary">
-            {checking ? 'Checking...' : 'Check for app update'}
+            {pendingRestart ? 'Restart NeoTree' : syncing ? 'Checking…' : status.action}
           </Button>
         </Box>
       </Box>
@@ -274,12 +273,19 @@ export function UpdatesCenter() {
 
       <Br spacing="m" />
 
+      <OfflineUpdateShare />
+
+      <Br spacing="m" />
+
       <Box padding="m" backgroundColor="bg.light" borderRadius="m">
-        <Text fontWeight="bold">Last check</Text>
+        <Text fontWeight="bold">Last checked</Text>
         <Br spacing="s" />
-        <Text>Status: {formatStatus(lastStatus?.status)}</Text>
+        {lastChecked ? (
+          <Text color="textSecondary">{lastChecked}</Text>
+        ) : (
+          <Text color="textSecondary">Not checked yet on this tablet.</Text>
+        )}
         {lastStatus?.message ? <Text color="textSecondary">{lastStatus.message}</Text> : null}
-        {lastChecked ? <Text color="textSecondary">Checked: {lastChecked}</Text> : null}
       </Box>
 
       <Br spacing="m" />
@@ -311,16 +317,16 @@ export function UpdatesCenter() {
       <Br spacing="m" />
 
       <Box padding="m" backgroundColor="bg.light" borderRadius="m">
-        <Text fontWeight="bold">Support actions</Text>
+        <Text fontWeight="bold">Other options</Text>
         <Br spacing="s" />
-        <Text color="textSecondary">Use these if an administrator asks you to refresh this tablet.</Text>
+        <Text color="textSecondary">Use these if your administrator asks you to.</Text>
         <Br spacing="s" />
         <Box flexDirection="row" flexWrap="wrap" style={{ gap: 8 }}>
           <Button onPress={handleSyncNow} disabled={syncing}>
-            {syncing ? 'Refreshing...' : 'Refresh update status'}
+            {syncing ? 'Checking…' : 'Check for updates'}
           </Button>
           <Button onPress={handleManualCheck} disabled={checking} color="secondary">
-            {checking ? 'Checking...' : 'Check for app update'}
+            {checking ? 'Checking…' : 'Check again'}
           </Button>
           <Button
             onPress={() => {

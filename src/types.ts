@@ -68,6 +68,10 @@ export type UpdatePolicy = {
 export type UpdatePolicyResponse = {
   data: UpdatePolicy | null;
   errors?: string[];
+  /** HTTP status of the policy fetch, used to distinguish 404 (no policy) from transient errors. */
+  status?: number;
+  /** True when the request was deliberately not made (e.g. device secret not yet provisioned). */
+  skipped?: boolean;
 };
 
 export type Preferences = {
@@ -80,7 +84,7 @@ export type Preferences = {
     enableSeverityRanking?: boolean;
 };
 
-export type Location = { 
+export type Location = {
   id: number;
   country: string;
   hospital?: string;
@@ -90,9 +94,9 @@ export type Facility = { label: string; value: string; other?: string; };
 
 export type NuidSearchResults = {
     session: any;
-    uid: string; 
+    uid: string;
     searchedUid?: string;
-    autoFill?: any; 
+    autoFill?: any;
     prePopulateWithUID?: boolean;
     continueWithoutPrePopulation?: boolean;
     useSearchedUidForSession?: boolean;
@@ -106,12 +110,12 @@ export type NuidSearchFormField = {
     condition: string;
 };
 
-export type MatchedSession = { 
-	session: any, 
-	uid: string; 
+export type MatchedSession = {
+	session: any,
+	uid: string;
 	searchedUid?: string;
-	// facility: Facility; 
-	autoFill?: any; 
+	// facility: Facility;
+	autoFill?: any;
 	prePopulateWithUID?: boolean;
 	continueWithoutPrePopulation?: boolean;
 	useSearchedUidForSession?: boolean;
@@ -279,13 +283,13 @@ export type ScreenEntry = {
     id: string | number;
     screen_id: string | number;
     type: string;
-    metadata: { 
-      label: string; 
+    metadata: {
+      label: string;
       dataType: string;
     };
-  }; 
+  };
   lastSection?: any;
-  lastActiveDiagnosisIndex?: any; 
+  lastActiveDiagnosisIndex?: any;
 };
 
 export type ScreenTypeProps = {
@@ -375,8 +379,8 @@ export type AuthenticationRoutes = {
 
 export type HomeRoutes = {
   Home: undefined;
-  Script: { 
-    script_id: string; 
+  Script: {
+    script_id: string;
     screen_id?: string;
 	session?: any;
   };
@@ -390,6 +394,6 @@ export type HomeRoutes = {
 export type CustomError = {
   message: string;
   stack: string;
-  
-  
+
+
 }

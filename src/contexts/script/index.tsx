@@ -1,8 +1,8 @@
-import { 
-    createContext, 
-    useContext, 
-    useState, 
-    useMemo, 
+import {
+    createContext,
+    useContext,
+    useState,
+    useMemo,
     useCallback,
     useEffect,
 } from "react";
@@ -18,6 +18,7 @@ import * as api from '@/src/data';
 import { generateUID } from '@/src/utils/uid';
 import { defaultPreferences } from '@/src/constants';
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
+import { attemptAutoInstallIfDeferred } from '@/src/update/apkDownloadManager';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
@@ -55,7 +56,13 @@ export function ScriptContextProvider({ children, ...props }: ScriptContextProvi
     useEffect(() => {
         AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SESSION_ACTIVE, 'true').catch(() => null);
         return () => {
-            AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SESSION_ACTIVE, 'false').catch(() => null);
+            AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SESSION_ACTIVE, 'false')
+                .then(() => {
+                    // Session just ended -> the tablet is now idle, so apply any
+                    // update the user chose to "install when idle" (#11).
+                    attemptAutoInstallIfDeferred().catch(() => null);
+                })
+                .catch(() => null);
         };
     }, []);
 
@@ -65,12 +72,12 @@ export function ScriptContextProvider({ children, ...props }: ScriptContextProvi
         >
             <>
                 {children}
-                <DateAndTimeOfDeathModal 
+                <DateAndTimeOfDeathModal
                     done={async () => {
                         dateAndTimeOfDeath.reset();
-                        ctxValue.createSummaryAndSaveSession({ 
+                        ctxValue.createSummaryAndSaveSession({
                             completed: true,
-                            dateAndTimeOfDeath: !dateAndTimeOfDeath.value ? null : moment(dateAndTimeOfDeath.value).format('YYYY-MM-DD HH:mm'), 
+                            dateAndTimeOfDeath: !dateAndTimeOfDeath.value ? null : moment(dateAndTimeOfDeath.value).format('YYYY-MM-DD HH:mm'),
                         });
                     }}
                 />
@@ -156,7 +163,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         return isAlreadyEntered ? entries.map(e => e.screen.id === entry.screen.id ? entry : e) : [...entries, entry];
     }), [entries]);
 
-    
+
     const getCachedEntry = useCallback((screenIndex: number): types.ScreenEntry | undefined => {
         return cachedEntries.find(e => `${e.screenIndex}` === `${screenIndex}`);
     }, [cachedEntries]);
@@ -219,15 +226,15 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const flattenRepeatables = useCallback((values: any[]): types.ScreenEntryValue[] => {
         const flat: types.ScreenEntryValue[] = [];
-        
+
         values.forEach(v => {
             if (v?.key === 'repeatables' && typeof v.value === 'object') {
                 const repeatables = v.value as Record<string, any[]>;
-                
+
                 Object.values(repeatables).forEach((repeatableGroup: any[]) => {
                     repeatableGroup.forEach(entry => {
                         Object.entries(entry).forEach(([_, fieldValue]: [string, any]) => {
-                            
+
                             if (fieldValue && typeof fieldValue === 'object' && 'value' in fieldValue) {
                                 flat.push({
                                     ...fieldValue,
@@ -241,13 +248,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             } else {
                 flat.push(v);
             }
-            
+
         });
         return flat;
     }, []);
 
     const parseCondition = useCallback((
-        _condition = '', 
+        _condition = '',
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
     ) => {
         _condition = `${_condition || ''}`.split('\n').map(_condition => {
@@ -257,8 +264,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 if (index > -1) {
                     return acc.map((accEntry, i) => {
                         if (i === index)  {
-                            return { ...accEntry, ...e, }; 
-                        } else { 
+                            return { ...accEntry, ...e, };
+                        } else {
                             return accEntry;
                         }
                     }) as types.ScreenEntry[];
@@ -277,7 +284,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                             key: f.key,
                         }],
                     } as types.ScreenEntry;
-                    
+
                     return entry;
                 }),
             ]);
@@ -327,7 +334,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
                 value = ((value === null) || (value === undefined)) ? 'no value' : value;
                 const t = dataType || type;
-        
+
                 switch (t) {
                     case 'boolean':
                         value = value === 'false' ? false : Boolean(value);
@@ -339,10 +346,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                             value = JSON.stringify(value)
                         }
                 }
-        
+
                 return parseConditionString(condition, inputKey || key, value);
             };
-        
+
             let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
                 values = value || values || [];
 
@@ -351,13 +358,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
                     return acc;
                 }, []);
-                
+
                 // First filter out null/undefined values
                 values = values.filter(e => (e.value !== null) && (e.value !== undefined));
-                
+
                 // Flatten repeatable structures if they exist
                 values = flattenRepeatables(values);
-                
+
                 // Handle both array and non-array values
                 values = values
                     .reduce((acc: types.ScreenEntryValue[], e) => {
@@ -377,7 +384,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
                         return acc;
                     }, []);
-        
+
                 let c = values.reduce((acc, v) => parseValue(acc, v), condition);
 
                 let chunks: string[] = values.filter(v => v.parentKey)
@@ -386,7 +393,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         key: v.parentKey,
                     }))
                     .filter(c => c !== condition);
-        
+
                 if (screen) {
                     switch (screen.type) {
                         case 'multi_select':
@@ -400,16 +407,16 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 if (chunks.length) {
                     c = chunks.map(c => `(${c})`).join(' || ');
                 }
-        
+
                 return c || condition;
             }, _condition);
-        
+
             if (configuration) {
                 parsedCondition = Object.keys(configuration).reduce((acc, key) => {
                     return parseConditionString(acc, key, configuration[key] ? true : false);
                 }, parsedCondition);
             }
-        
+
             return `(${sanitizeCondition(parsedCondition)})`;
         }).join(' && ');
 
@@ -419,13 +426,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
         const direction = (d && ['next', 'back'].includes(d)) ? d : null;
-        
+
         if ((i !== undefined) && !isNaN(Number(i)) && !(direction === 'next' && i < 0)) {
             return screens[i] ? { screen: screens[i], index: i } : null;
         }
 
         let skipToScreenIndex: number | null = null;
-        
+
         const getTargetScreen = (i = activeScreenIndex): null | { screen: types.Screen, index: number; } => {
             let index = (() => {
                 switch (direction) {
@@ -448,7 +455,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                                 (s.screenId === prevEntry?.screen?.screen_id)
                             ) return i;
                             return null;
-                        }).filter(i => i !== null)[0]; 
+                        }).filter(i => i !== null)[0];
                         return index === null ? (i - 1) : index;
                     default:
                         return i;
@@ -459,7 +466,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 const parsedCondition = parseCondition(`${activeScreen?.data?.skipToCondition || ''}`);
                 index = evaluateCondition(parsedCondition) ? skipToScreenIndex : index;
             }
-        
+
             let screen = screens[index];
 
             if (screen?.type === 'drugs') {
@@ -472,7 +479,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 screen = s;
-    
+
                 if (!s.data?.metadata?.drugs?.length) {
                     const res = getTargetScreen(index);
                     if (res) {
@@ -494,7 +501,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 screen = s;
-    
+
                 if (!s.data?.metadata?.fluids?.length) {
                     const res = getTargetScreen(index);
                     if (res) {
@@ -505,7 +512,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     }
                 }
             }
-            
+
             if (!screen) return null;
 
             const inferredScreenEntry = eligibilityAutoFillValues.find(v => {
@@ -525,12 +532,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
 
             if (!screen) return null;
-        
+
             if (!direction) return { screen, index, };
-        
+
             const target = { screen, index };
             const condition: string = screen.data.condition || '';
-        
+
             if (!condition) return target;
 
             const parsedCondition = parseCondition(condition);
@@ -548,32 +555,32 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
 
             if (conditionMet) return target;
-            
+
             if (index === (screens.length - 1)) return null;
-        
+
             return getTargetScreen(index);
         };
-        
+
         return getTargetScreen();
     }, [
-        entries, 
-        activeScreen, 
-        activeScreenEntry, 
-        activeScreenIndex, 
-        drugsLibrary, 
-        screens, 
+        entries,
+        activeScreen,
+        activeScreenEntry,
+        activeScreenIndex,
+        drugsLibrary,
+        screens,
         eligibilityAutoFillValues,
-        evaluateCondition, 
+        evaluateCondition,
         parseCondition,
     ]);
 
     const getLastScreen = useCallback(() => {
         if (!activeScreen) return null;
-    
+
         const getScreenIndex = (s: types.Screen) => !s ? -1 : screens.map(s => s.id).indexOf(s.id);
         const activeScreenIndex = getScreenIndex(activeScreen);
-    
-        const getLastScreen = (currentIndex: number): null | types.Screen => {    
+
+        const getLastScreen = (currentIndex: number): null | types.Screen => {
             let lastScreenIndex = currentIndex + 1;
             let lastScreen = lastScreenIndex >= screens.length ? null : screens[lastScreenIndex];
 
@@ -587,7 +594,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 lastScreen = s;
-                
+
                 if (!s.data?.metadata?.drugs?.length) {
                      //lastScreen = getLastScreen(lastScreenIndex);
                     return null;
@@ -604,7 +611,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 });
 
                 lastScreen = s;
-    
+
                 if (!s.data?.metadata?.fluids?.length) {
                     // lastScreen = getLastScreen(lastScreenIndex);
                     return null;
@@ -630,18 +637,18 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     lastScreen = lastScreenIndex >= screens.length ? null : getLastScreen(lastScreenIndex);
                 }
             }
-            
+
             return screens[lastScreenIndex];
         };
-    
+
         return getLastScreen(activeScreenIndex) || activeScreen;
     }, [entries, drugsLibrary, activeScreen, activeScreenIndex, screens, evaluateCondition, parseCondition]);
 
     const getSuggestedDiagnoses = useCallback(() => {
         // const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
         // const score = (edlizSummary?.value || [])[0]?.score;
-        
-        // if (score === 0) return [] as any[]; 
+
+        // if (score === 0) return [] as any[];
 
         let _diagnoses = diagnoses.reduce((acc: types.Diagnosis[], d) => {
             if (acc.map(d => d.diagnosis_id).includes(d.diagnosis_id)) return acc;
@@ -657,20 +664,20 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 let sevOrder = d.data.severity_order || (d.data.severity_order === 0) ? Number(d.data.severity_order) : null;
                 if (isNaN(Number(sevOrder))) sevOrder = null;
 
-                return { 
-                    ...d, 
-                    position, 
+                return {
+                    ...d,
+                    position,
                     severity_order: sevOrder,
                 };
             });
-        
+
         const diagnosesRslts = (() => {
             const rslts = (_diagnoses || []).filter(({ data: { symptoms, expression } }) => {
                 return expression || (symptoms || []).length;
             }).map((d) => {
                 const { data: { symptoms: s, expression } } = d;
                 const symptoms: any[] = s || [];
-            
+
                 const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
                 // const _symptoms = symptoms;
                 const riskSignCount = _symptoms.reduce((acc, s) => {
@@ -678,9 +685,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
                     return acc;
                 }, { riskCount: 0, signCount: 0 }); // @ts-ignore
-                
+
                 const conditionMet = evaluateCondition(parseCondition(expression, [{
-                    values: [ 
+                    values: [
                         { key: 'riskCount', value: riskSignCount.riskCount, },
                         { key: 'signCount', value: riskSignCount.signCount, },
                     ],
@@ -688,18 +695,18 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // const conditionMet = i < 2;
                 return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
             }).filter(d => d);
-        
+
             return rslts;
         })();
-        
+
         return diagnosesRslts;
     }, [diagnoses, evaluateCondition, parseCondition]);
 
     const getSuggestedProblems = useCallback(() => {
         // const edlizSummary = entries.find(e => `${e.screen?.type || ''}`.includes('edliz_summary_table'));
         // const score = (edlizSummary?.value || [])[0]?.score;
-        
-        // if (score === 0) return [] as any[]; 
+
+        // if (score === 0) return [] as any[];
 
         let _problems = problems.reduce((acc: types.Problem[], d) => {
             if (acc.map(d => d.problem_id).includes(d.problem_id)) return acc;
@@ -715,20 +722,20 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 let sevOrder = d.data.severity_order || (d.data.severity_order === 0) ? Number(d.data.severity_order) : null;
                 if (isNaN(Number(sevOrder))) sevOrder = null;
 
-                return { 
-                    ...d, 
-                    position, 
+                return {
+                    ...d,
+                    position,
                     severity_order: sevOrder,
                 };
             });
-        
+
         const problemsRslts = (() => {
             const rslts = (_problems || []).filter(({ data: { symptoms, expression } }) => {
                 return expression || (symptoms || []).length;
             }).map((d) => {
                 const { data: { symptoms: s, expression } } = d;
                 const symptoms: any[] = s || [];
-            
+
                 const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
                 // const _symptoms = symptoms;
                 const riskSignCount = _symptoms.reduce((acc, s) => {
@@ -736,9 +743,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     if (s.type === 'sign') acc.signCount += Number(s.weight || 1);
                     return acc;
                 }, { riskCount: 0, signCount: 0 }); // @ts-ignore
-                
+
                 const conditionMet = evaluateCondition(parseCondition(expression, [{
-                    values: [ 
+                    values: [
                         { key: 'riskCount', value: riskSignCount.riskCount, },
                         { key: 'signCount', value: riskSignCount.signCount, },
                     ],
@@ -746,10 +753,10 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // const conditionMet = i < 2;
                 return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
             }).filter(d => d);
-        
+
             return rslts;
         })();
-        
+
         return problemsRslts;
     }, [problems, evaluateCondition, parseCondition]);
 
@@ -763,7 +770,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             if (Array.isArray(data)) {
                 return data.map(item => dropEmptyValueObjects(item)).filter(Boolean) as T;
             }
-            
+
             if (typeof data === 'object' && data !== null) {
                 const result: any = {};
 
@@ -776,17 +783,17 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     if (key === 'value' && typeof value === 'object' && value !== null && Object.keys(value).length === 0) {
                         continue;
                     }
-                    
+
                     // Recursively process nested objects/arrays
                     result[key] = dropEmptyValueObjects(value);
                 }
-                
+
                 return result;
             }
-            
+
             return data;
         }
-       
+
         return entries.map(section => {
             const newSection = { ...section };
             const newValues = [];
@@ -803,7 +810,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         });
       }, [entries]);
 
-    const createSessionSummary = useCallback((_payload: any = {}) => {    
+    const createSessionSummary = useCallback((_payload: any = {}) => {
         const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
 
         const matchingSession = matched?.session || null;
@@ -842,9 +849,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             throw new Error('This session requires the searched Neotree ID, but no Neotree ID was found. Please re-scan or re-enter the patient Neotree ID before continuing.');
         }
         uid = uid || (requiresSearchedUID ? '' : generatedUID);
-        
+
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
-    
+
         return {
             ...payload,
             uid, //: __DEV__ ? `${Number(Math.random().toString().substring(2, 6))}-TEST` : uid,
@@ -884,12 +891,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             },
         };
     }, [
-        route, 
-        entries, 
-        matched, 
-        generatedUID, 
-        activeScreen, 
-        application, 
+        route,
+        entries,
+        matched,
+        generatedUID,
+        activeScreen,
+        application,
         location,
         screens,
         script,
@@ -1051,7 +1058,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             setLoadingScreen(false);
             return;
         }
-       
+
         if ((activeScreen?.id === lastScreen?.id)) {
             if (reviewConfigurations?.length > 0) {
                 setReview(true)
@@ -1204,26 +1211,26 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     const handleReviewChange = useCallback((screen_id: any, lastPage: types.Screen, lastPageIndex: number) => {
 
         let as = screens.find(f => f.screen_id === screen_id)
-    
+
         if (as) {
             let index = screens.indexOf(as)
             const prev = getScreen({ direction: 'back',index });
-    
+
             if(prev?.screen){
                 setRefresh(true);
                 prev.screen.review = true
                 setActiveScreen(prev.screen);
-                setActiveScreenIndex(prev.index);	
+                setActiveScreenIndex(prev.index);
                 setEntry(getCachedEntry(prev.index));
                 setTimeout(() => setRefresh(false), 10);
                 setReview(false)
                 setLastPage(lastPage)
-                setLastPageIndex(lastPageIndex)	
-            }			
+                setLastPageIndex(lastPageIndex)
+            }
 
         }
     }, [
-        screens, 
+        screens,
         getScreen,
         setRefresh,
         setActiveScreen,
@@ -1296,7 +1303,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         // setMountedScreens(prev => ({
         // 	...prev,
         // 	[activeScreen.id]: true,
-        // }));	
+        // }));
 
 
         if (values) {
@@ -1473,12 +1480,12 @@ type GetNavOptionsParams = {
     confirmExit: () => void;
 };
 
-function RightActions({ color, screen, script, confirmExit, }: { 
-	color?: string; 
-	screen: types.Screen; 
+function RightActions({ color, screen, script, confirmExit, }: {
+	color?: string;
+	screen: types.Screen;
     script: types.Script;
-	confirmExit: () => void; 
-	goNext: () => void; 
+	confirmExit: () => void;
+	goNext: () => void;
 }) {
     const isAdmission = !script?.type || (script?.type === 'admission');
 
@@ -1488,13 +1495,13 @@ function RightActions({ color, screen, script, confirmExit, }: {
 	return (
 		<>
 			<Box flexDirection="row" justifyContent="flex-end" columnGap="s">
-              
+
 				{!!screen?.data?.infoText && (
 					<Box marginRight="s">
 						<TouchableOpacity onPress={() => setOpenInfoModal(true)}>
-							<Icon 
-								name="info" 
-								size={24} 
+							<Icon
+								name="info"
+								size={24}
 								color={color}
 							/>
 						</TouchableOpacity>
@@ -1502,9 +1509,9 @@ function RightActions({ color, screen, script, confirmExit, }: {
 				)}
 
 				<TouchableOpacity onPress={() => setOpenModal(true)}>
-					<Icon 
-						name="more-vert" 
-						size={24} 
+					<Icon
+						name="more-vert"
+						size={24}
 						color={color}
 					/>
 				</TouchableOpacity>
@@ -1534,7 +1541,7 @@ function RightActions({ color, screen, script, confirmExit, }: {
                     <>
                         <View style={{ height: 10, }} />
 
-                        <DateAndTimeOfDeathRadio 
+                        <DateAndTimeOfDeathRadio
                             onClick={() => setOpenModal(false)}
                         />
                     </>
@@ -1577,9 +1584,9 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 				{!!script && (
 					<Box marginRight="s">
 						<TouchableOpacity onPress={() => goBack()}>
-							<Icon 
-								name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}  
-								size={28} 
+							<Icon
+								name={Platform.OS === 'ios' ? 'arrow-back-ios' : 'arrow-back'}
+								size={28}
 								color={tintColor}
 							/>
 						</TouchableOpacity>
@@ -1602,13 +1609,13 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 				</Box>
 
 				{!!headerRight && headerRight({ ...params, tintColor })}
-				
+
 				{!!script && (
 					<Box>
-						<RightActions 
-                            color={tintColor} 
-                            screen={activeScreen} 
-                            confirmExit={confirmExit} 
+						<RightActions
+                            color={tintColor}
+                            screen={activeScreen}
+                            confirmExit={confirmExit}
                             goNext={goNext}
                             script={script}
                         />
@@ -1616,13 +1623,13 @@ const headerTitle: (params: GetNavOptionsParams) => DrawerNavigationOptions['hea
 				)}
 			</View>
 		);
-	}; 
+	};
 };
 
 const headerTitlePlaceholder: (params: GetNavOptionsParams) => DrawerNavigationOptions['headerTitle'] = () => () => {
     return (
         <Box>
-        
+
         </Box>
     );
 };

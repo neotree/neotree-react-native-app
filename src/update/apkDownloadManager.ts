@@ -3,11 +3,14 @@ import * as FileSystem from 'expo-file-system';
 import * as Battery from 'expo-battery';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as Application from 'expo-application';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CryptoJS from 'crypto-js';
 
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
 import { getMobileDeviceHeaders } from '@/src/data/api';
+import { getUpdatePolicyData } from '@/src/data/queries';
 import type { UpdatePolicyApkRelease } from '@/src/types';
 import type { UpdateDecision } from './orchestrator';
 import { recordUpdateEvent } from './otaTelemetry';
@@ -35,6 +38,28 @@ const ensureApkDir = async () => {
   const info = await FileSystem.getInfoAsync(APK_DIR);
   if (!info.exists) {
     await FileSystem.makeDirectoryAsync(APK_DIR, { intermediates: true });
+  }
+};
+
+/**
+ * Removes stale downloaded APKs so the directory doesn't grow unbounded over the
+ * life of the tablet. Keeps only the file for `keepReleaseId` (the one we are
+ * about to download / have just verified).
+ */
+export const cleanupApkDir = async (keepReleaseId?: string | null) => {
+  if (!APK_DIR) return;
+  try {
+    const info = await FileSystem.getInfoAsync(APK_DIR);
+    if (!info.exists) return;
+    const entries = await FileSystem.readDirectoryAsync(APK_DIR);
+    const keepName = keepReleaseId ? `${keepReleaseId}.apk` : null;
+    await Promise.all(
+      entries
+        .filter((name) => name.endsWith('.apk') && name !== keepName)
+        .map((name) => FileSystem.deleteAsync(`${APK_DIR}${name}`, { idempotent: true }).catch(() => null)),
+    );
+  } catch {
+    // best-effort cleanup
   }
 };
 
@@ -276,6 +301,8 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
   if (!release.downloadUrl) throw new Error('Missing downloadUrl');
 
   await ensureApkDir();
+  // Drop any previously downloaded releases before fetching the new one.
+  await cleanupApkDir(release.apkReleaseId);
 
   const targetUri = `${APK_DIR}${release.apkReleaseId}.apk`;
 
@@ -460,3 +487,258 @@ export const clearRetry = async () => {
 };
 
 export const getActiveDownloadReleaseId = () => activeReleaseId;
+
+// ---------------------------------------------------------------------------
+// Offline peer-to-peer distribution
+//
+// For sites that are permanently offline, tablets must be able to pass the
+// update to each other without the internet:
+//  - shareUpdateFile():  send this tablet's downloaded update to another tablet
+//                        (Bluetooth / Nearby Share / WhatsApp / Files / USB).
+//  - importUpdateFromFile(): pick an .apk that arrived by any of those means and
+//                        verify it against the approved update before installing.
+// ---------------------------------------------------------------------------
+
+const findAnyApkInDir = async (): Promise<string | null> => {
+  if (!APK_DIR) return null;
+  try {
+    const info = await FileSystem.getInfoAsync(APK_DIR);
+    if (!info.exists) return null;
+    const entries = await FileSystem.readDirectoryAsync(APK_DIR);
+    const apk = entries.find((name) => name.toLowerCase().endsWith('.apk'));
+    return apk ? `${APK_DIR}${apk}` : null;
+  } catch {
+    return null;
+  }
+};
+
+const apkNativeModule = () => (NativeModules as any)?.ApkSignature || null;
+
+export type NativeApkInfo = {
+  packageName: string | null;
+  versionName: string | null;
+  versionCode: number | null;
+  signatureSha256: string | null;
+};
+
+const getNativeApkInfo = async (fileUri: string): Promise<NativeApkInfo | null> => {
+  const mod = apkNativeModule();
+  if (!mod?.getApkInfo) return null;
+  try {
+    const info = await mod.getApkInfo(fileUri);
+    return {
+      packageName: info?.packageName || null,
+      versionName: info?.versionName || null,
+      versionCode: info?.versionCode != null ? Number(info.versionCode) : null,
+      signatureSha256: info?.signatureSha256 || null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Copies this app's own installed APK into shareable storage so a tablet that
+ * only has the app installed (never downloaded a file) can still seed peers (#1).
+ */
+const exportInstalledApk = async (): Promise<string | null> => {
+  const mod = apkNativeModule();
+  if (!mod?.getInstalledApkPath) return null;
+  try {
+    const sourceDir: string = await mod.getInstalledApkPath();
+    if (!sourceDir) return null;
+    await ensureApkDir();
+    const version = Application.nativeApplicationVersion || 'latest';
+    const dest = `${APK_DIR}neotree-${version}.apk`;
+    const from = sourceDir.startsWith('file://') ? sourceDir : `file://${sourceDir}`;
+    await FileSystem.copyAsync({ from, to: dest });
+    return dest;
+  } catch {
+    return null;
+  }
+};
+
+/** True when this tablet can pass an update on to another tablet. */
+export const hasShareableUpdate = async (): Promise<boolean> => {
+  const state = await getDownloadState();
+  if (state?.status === 'verified' && state.fileUri) return true;
+  if (await findAnyApkInDir()) return true;
+  // The installed app itself can be shared if the native helper is available.
+  return !!apkNativeModule()?.getInstalledApkPath;
+};
+
+/**
+ * Opens the Android share sheet so the user can send the downloaded update file
+ * to another tablet by whatever channel they have (Bluetooth, Nearby Share,
+ * WhatsApp, a file copy to a USB stick / SD card, etc.).
+ */
+export const shareUpdateFile = async () => {
+  const state = await getDownloadState();
+  // Prefer a downloaded update file; otherwise fall back to sharing this app's
+  // own installed APK so any tablet can seed its peers offline.
+  const fileUri =
+    (state?.status === 'verified' && state.fileUri)
+      ? state.fileUri
+      : (await findAnyApkInDir()) || (await exportInstalledApk());
+  if (!fileUri) {
+    throw new Error('This tablet does not have an update file to share yet.');
+  }
+
+  const canShare = await Sharing.isAvailableAsync();
+  if (!canShare) {
+    throw new Error('Sharing is not available on this tablet.');
+  }
+
+  await recordUpdateEvent('apk_shared_offline', { fileUri }).catch(() => null);
+  await Sharing.shareAsync(fileUri, {
+    mimeType: 'application/vnd.android.package-archive',
+    dialogTitle: 'Send the NeoTree update to another tablet',
+  });
+};
+
+export type ImportedApk = {
+  fileUri: string;
+  fileName: string;
+  size: number;
+  checksumSha256: string;
+  /** The approved release this file matches, if any (offline verification). */
+  matchedReleaseId: string | null;
+  matchedVersionName: string | null;
+  /** True when the file's checksum matches an approved update in the cached policy. */
+  verifiedAgainstPolicy: boolean;
+  /** False when no policy is cached, so we could not check it (still installable). */
+  couldCheck: boolean;
+  /** True when native APK inspection proved this is the same app and not a downgrade. */
+  trustedByPackageInspection: boolean;
+  /** Read from the APK itself (when the native helper is available). */
+  packageName: string | null;
+  versionName: string | null;
+  versionCode: number | null;
+  /** True when the file is a different app from this one (wrong APK). */
+  wrongPackage: boolean;
+  /** True when the file is an older build than what is installed (Android will block it). */
+  isDowngrade: boolean;
+};
+
+/**
+ * Lets the user pick an .apk that arrived on the tablet (USB, SD card, Bluetooth,
+ * WhatsApp, etc.), copies it into app storage and verifies it against the cached
+ * approved update where possible. Returns null if the user cancels.
+ */
+export const importUpdateFromFile = async (): Promise<ImportedApk | null> => {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: ['application/vnd.android.package-archive', 'application/octet-stream', '*/*'],
+    copyToCacheDirectory: true,
+    multiple: false,
+  });
+
+  if (result.canceled || !result.assets?.length) return null;
+  const asset = result.assets[0];
+  const fileName = asset.name || 'update.apk';
+
+  const looksLikeApk =
+    fileName.toLowerCase().endsWith('.apk') ||
+    asset.mimeType === 'application/vnd.android.package-archive';
+  if (!looksLikeApk) {
+    throw new Error('That file is not an Android app (.apk). Please choose the NeoTree update file.');
+  }
+
+  await ensureApkDir();
+  const targetUri = `${APK_DIR}imported-${Date.now()}.apk`;
+  await FileSystem.copyAsync({ from: asset.uri, to: targetUri });
+
+  const checksumSha256 = await computeSha256(targetUri);
+
+  // Verify against the approved update if we have a cached policy.
+  let policy = null;
+  try {
+    policy = await getUpdatePolicyData();
+  } catch {
+    policy = null;
+  }
+  const candidates = [policy?.currentApkRelease, policy?.rollbackApkRelease].filter(Boolean) as UpdatePolicyApkRelease[];
+  const couldCheck = candidates.some((release) => !!release.checksumSha256);
+  const matched = candidates.find(
+    (release) => (release.checksumSha256 || '').toLowerCase() === checksumSha256.toLowerCase(),
+  ) || null;
+
+  // Inspect the APK itself (package + version) to catch a wrong app or an older build.
+  const nativeInfo = await getNativeApkInfo(targetUri);
+  const installedPackage = Application.applicationId || null;
+  const installedBuild = Number(Application.nativeBuildVersion);
+  const wrongPackage = !!(nativeInfo?.packageName && installedPackage && nativeInfo.packageName !== installedPackage);
+  const isDowngrade = !!(
+    nativeInfo?.versionCode != null &&
+    Number.isFinite(installedBuild) &&
+    nativeInfo.versionCode < installedBuild
+  );
+  const trustedByPackageInspection = !!(
+    !couldCheck &&
+    nativeInfo?.packageName &&
+    installedPackage &&
+    nativeInfo.packageName === installedPackage &&
+    !isDowngrade
+  );
+
+  await recordUpdateEvent('apk_imported_offline', {
+    apkReleaseId: matched?.apkReleaseId || null,
+    verified: !!matched,
+    checksumSha256,
+    packageName: nativeInfo?.packageName || null,
+    versionCode: nativeInfo?.versionCode ?? null,
+    wrongPackage,
+    isDowngrade,
+    trustedByPackageInspection,
+  }).catch(() => null);
+
+  return {
+    fileUri: targetUri,
+    fileName,
+    size: asset.size || 0,
+    checksumSha256,
+    matchedReleaseId: matched?.apkReleaseId || null,
+    matchedVersionName: matched?.versionName || null,
+    verifiedAgainstPolicy: !!matched,
+    couldCheck,
+    trustedByPackageInspection,
+    packageName: nativeInfo?.packageName || null,
+    versionName: nativeInfo?.versionName || null,
+    versionCode: nativeInfo?.versionCode ?? null,
+    wrongPackage,
+    isDowngrade,
+  };
+};
+
+/**
+ * Installs a file the user imported offline. When it matched an approved release
+ * we re-check its signing certificate (defence in depth); Android additionally
+ * refuses any APK not signed with the installed app's key.
+ */
+export const installImportedApk = async (imported: ImportedApk) => {
+  if (imported.wrongPackage) {
+    throw new Error('This file is not a NeoTree update. It was not installed.');
+  }
+  if (imported.isDowngrade) {
+    throw new Error('This update is older than the version already installed.');
+  }
+  if (!imported.verifiedAgainstPolicy && !imported.trustedByPackageInspection) {
+    throw new Error('NeoTree could not verify this update file. Connect to the internet to refresh update information, or ask your administrator for the approved update file.');
+  }
+
+  const matched: ApkInstallMetadata | null = imported.matchedReleaseId
+    ? { apkReleaseId: imported.matchedReleaseId, versionName: imported.matchedVersionName || undefined }
+    : null;
+
+  if (imported.verifiedAgainstPolicy && imported.matchedReleaseId) {
+    const policy = await getUpdatePolicyData().catch(() => null);
+    const release = [policy?.currentApkRelease, policy?.rollbackApkRelease]
+      .filter(Boolean)
+      .find((r) => (r as UpdatePolicyApkRelease).apkReleaseId === imported.matchedReleaseId) as UpdatePolicyApkRelease | undefined;
+    if (release?.signatureSha256) {
+      const ok = await verifyApkSignature(imported.fileUri, release.signatureSha256);
+      if (!ok) throw new Error('This file failed the signature check and was not installed.');
+    }
+  }
+
+  await installApkIfSafe(imported.fileUri, matched);
+};

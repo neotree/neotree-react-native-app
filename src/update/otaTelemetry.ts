@@ -30,6 +30,8 @@ export type UpdateEventType =
   | 'apk_install_blocked'
   | 'apk_installed'
   | 'apk_policy_seen'
+  | 'apk_shared_offline'
+  | 'apk_imported_offline'
   | 'mdm_push_acknowledged';
 
 export type OtaLastStatus = {
@@ -74,10 +76,18 @@ const buildBasePayload = async () => {
   return { deviceId, ...getAppRuntimeIdentity() };
 };
 
+// Lifecycle-significant events are always recorded so rollout dashboards are
+// accurate (#14). Only the high-volume "nothing happened" signal
+// (ota_update_not_available) is sampled.
+const ALWAYS_RECORDED_OTA_EVENTS: ReadonlySet<OtaEventType> = new Set<OtaEventType>([
+  'ota_update_applied',
+  'ota_update_fetched',
+  'ota_update_available',
+  'ota_check_failed',
+]);
+
 const shouldSampleEvent = (eventType: OtaEventType) => {
-  if (eventType === 'ota_update_applied') return true;
-  if (eventType === 'ota_update_fetched') return true;
-  if (eventType === 'ota_check_failed') return true;
+  if (ALWAYS_RECORDED_OTA_EVENTS.has(eventType)) return true;
   return Math.random() < OTA_TELEMETRY_SAMPLE_RATE;
 };
 

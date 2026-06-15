@@ -16,8 +16,8 @@ const _otherOptions = {
 };
 
 export async function makeApiCall(
-    source: 'webeditor' | 'nodeapi', 
-    endpoint: string, 
+    source: 'webeditor' | 'nodeapi',
+    endpoint: string,
     options: RequestInit = {},
     otherOptions: Partial<(typeof _otherOptions)> = _otherOptions,
 ) {
@@ -32,7 +32,7 @@ export async function makeApiCall(
         const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
+        api_endpoint = api_endpoint[api_endpoint.length - 1] === '/' ?
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
@@ -71,17 +71,17 @@ export async function makeApiCall(
             }
         } catch(err:any) {
             if (err.name === 'AbortError') {
-                throw new Error('Network Request Taking Too Longer than the expected 45 Seconds!!');
+                throw new Error('Network request took longer than the expected 5 minutes. Please check your connection and try again.');
             }
             throw err;
         }
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; 
+        throw e;
     }
 }
-export async function makeLocalApiCall( 
-    endpoint: string, 
+export async function makeLocalApiCall(
+    endpoint: string,
     options: RequestInit = {},
     otherOptions: Partial<(typeof _otherOptions)> = _otherOptions,
 ) {
@@ -96,14 +96,14 @@ export async function makeLocalApiCall(
         if(config && Array.isArray(config)){
 
         let api_endpoint =  config?.[0].host;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
+        api_endpoint = api_endpoint[api_endpoint.length - 1] === '/' ?
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
 
         console.log('[API]: ', url);
-    
+
        const sec = config?.[0].secret
         const body =encryptInReactNative(options.body, sec);
         const res = await fetch(url, {
@@ -119,7 +119,7 @@ export async function makeLocalApiCall(
         if (res.status !== 200) {
             console.log(res);
         }
-       
+
 
         return res;
     }
@@ -129,8 +129,8 @@ export async function makeLocalApiCall(
         throw e; }
 }
 
-export async function makeLocalGetApiCall( 
-    endpoint: string, 
+export async function makeLocalGetApiCall(
+    endpoint: string,
     options: RequestInit = {},
     otherOptions: Partial<(typeof _otherOptions)> = _otherOptions,
 ) {
@@ -149,19 +149,19 @@ export async function makeLocalGetApiCall(
         if(!config || !Array.isArray(config) || config.length<=0){
             return null
         }
-        if(config.length>0 && config[0]['hospital']!=hospitalId){
+        if(config.length>0 && config[0]['hospital'] !== hospitalId){
             return null
         }
         else{
         let api_endpoint =  config?.[0].host;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
+        api_endpoint = api_endpoint[api_endpoint.length - 1] === '/' ?
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
 
         console.log('[API]: ', url);
-    
+
        const sec = config?.[0].secret
 
         const controller = new AbortController();
@@ -178,11 +178,11 @@ export async function makeLocalGetApiCall(
                 'x-api-key': config?.[0].api_key,
             }
         });
-        
+
         if (res.status !== 200) {
             console.log(res);
         }
-       
+
         const sessions = decryptInReactNative(await res?.json(),sec)
         clearTimeout(timeout);
         return sessions;
@@ -193,7 +193,7 @@ export async function makeLocalGetApiCall(
         throw err;
        }
     }
-   
+
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
@@ -224,12 +224,27 @@ export const getUpdatePolicy = async (): Promise<types.UpdatePolicyResponse> => 
     const runtimeVersion = identity.runtimeVersion || '';
     const nativeBuildVersion = identity.nativeBuildVersion || '';
     const deviceId = await getDeviceID();
-    const params = `?${queryString.stringify({ runtimeVersion, nativeBuildVersion, deviceId })}`;
+    const location = await getLocation();
+
+    // Cold-start guard: signed mobile endpoints require the device secret. If it
+    // has not been synced yet, skip the call (the caller keeps any cached policy)
+    // rather than hammering the server with unsigned requests that will 401.
+    const secret = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.DEVICE_AUTH_SECRET);
+    if (!secret) return { data: null, errors: ['Device credential not yet provisioned'], skipped: true } as types.UpdatePolicyResponse;
+
+    const params = `?${queryString.stringify({
+        runtimeVersion,
+        nativeBuildVersion,
+        deviceId,
+        hospitalId: location?.hospital || '',
+        countryISO: location?.country || '',
+    })}`;
     const endpoint = `/mobile/update-policy${params}`;
     const res = await makeApiCall('webeditor', `/mobile/update-policy${params}`, {
         headers: await getMobileDeviceHeaders({ method: 'GET', endpoint }),
     });
-    return res.json();
+    const json = await res.json();
+    return { ...json, status: res.status } as types.UpdatePolicyResponse;
 };
 
 const normalizeSignaturePath = (endpoint: string) => {
@@ -351,7 +366,7 @@ export const reportErrors = async (...args: any[]) => {
             method: 'POST',
             body: JSON.stringify(args),
         });
-    } catch (e) {
+    } catch {
         // do nothing
     }
 };
@@ -388,7 +403,7 @@ function decryptInReactNative(encryptedData: any, secretKey: string): any {
     const decrypted = CryptoJS.AES.decrypt(
       ciphertextBase64,
       CryptoJS.enc.Utf8.parse(secretKey),
-      { 
+      {
         iv: CryptoJS.enc.Base64.parse(ivBase64),
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
@@ -397,7 +412,7 @@ function decryptInReactNative(encryptedData: any, secretKey: string): any {
 
     // 6. Convert to UTF-8 and parse JSON
     const decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
-    
+
     if (!decryptedStr) {
       throw new Error('Decryption failed - possibly wrong key or corrupted data');
     }
@@ -405,7 +420,7 @@ function decryptInReactNative(encryptedData: any, secretKey: string): any {
 }else{
     return null;
 }
-    
+
   } catch (error) {
     console.error('Decryption error:', error);
     // Return null or rethrow based on your error handling strategy
@@ -426,7 +441,7 @@ function encryptInReactNative(data:any, secretKey:string) {
       padding: CryptoJS.pad.Pkcs7
     }
   ).toString(); // Returns Base64 by default
-  
+
   // 3. Return IV + ciphertext (both Base64)
   return iv.toString(CryptoJS.enc.Base64) + ':' + encrypted
 }

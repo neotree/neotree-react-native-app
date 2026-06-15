@@ -9,13 +9,14 @@ import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
 import { syncData, addSocketEventsListeners } from './data';
 import { useAppContext } from './AppContext';
-import { Splash } from './components';
+import { Splash, ForcedUpdateGate } from './components';
 import { SyncStatus } from './components/sync-status';
 import {
     attemptAutoInstallIfDeferred,
     attemptAutoRetryDownload,
     checkForOtaUpdateAndRecord,
     checkForOtaUpdateFetchAndRecord,
+    cleanupApkDir,
     ensureApkDownloaded,
     flushOtaEvents,
     getUpdateDecision,
@@ -56,9 +57,9 @@ export function Navigation() {
     }, []);
 
     const initialiseApp = React.useCallback(async () => {
-        try { 
-            const res = await syncData(); 
-            if(setSyncDataResponse)          
+        try {
+            const res = await syncData();
+            if(setSyncDataResponse)
                 setSyncDataResponse(res);
             if (setUpdateDecision) {
                 const decision = await getUpdateDecision();
@@ -67,6 +68,9 @@ export function Navigation() {
                 attemptAutoRetryDownload(decision).catch(() => null);
                 if (decision?.shouldAutoDownload) {
                     ensureApkDownloaded(decision).catch(() => null);
+                } else if (decision?.state === 'runtime_ok') {
+                    // Tablet is up to date: clear any leftover downloaded APKs.
+                    cleanupApkDir(null).catch(() => null);
                 }
             }
             await Promise.all([
@@ -77,16 +81,16 @@ export function Navigation() {
             console.log(e);
         } finally {
             setReady(true);
-        } 
+        }
     }, [setSyncDataResponse, setUpdateDecision]);
 
     React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
 
-    React.useEffect(() => { 
-        
+    React.useEffect(() => {
+
         addSocketEventsListeners(initialiseApp)
-    
-      
+
+
         ; }, []);
 
     React.useEffect(() => {
@@ -105,8 +109,8 @@ export function Navigation() {
                 'Update available',
                 'A new update is ready. Restart the app to apply it?',
                 [
-                    { 
-                        text: 'Later', 
+                    {
+                        text: 'Later',
                         style: 'cancel',
                         onPress: () => {
                             setOtaPending(true).catch(() => null);
@@ -167,7 +171,7 @@ export function Navigation() {
         promptIfPending();
         return () => subscription.remove();
     }, [promptIfPending]);
-      
+
 
     if (!ready) return <Splash />;
 
@@ -176,6 +180,7 @@ export function Navigation() {
             <StatusBar style="dark" />
             {!authenticatedUser ? <Authentication /> : <HomeNavigator />}
             <SyncStatus />
+            {authenticatedUser ? <ForcedUpdateGate /> : null}
         </>
     );
 }

@@ -6,14 +6,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { createTablesIfNotExist, dbTransaction,addNewColumns } from './db';
-import { getUpdatePolicy, makeApiCall, reportErrors } from './api';
+import { getMobileDeviceHeaders, getUpdatePolicy, makeApiCall, reportErrors } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { recordUpdateEvent } from '../update/otaTelemetry';
 
-export async function syncData(opts?: { force?: boolean; }) {  
+export async function syncData(opts?: { force?: boolean; }) {
 	const netInfo = await NetInfo.fetch();
-    // const networkState = await Network.getNetworkStateAsync(); 
+    // const networkState = await Network.getNetworkStateAsync();
 
     await createTablesIfNotExist();
     await addNewColumns();
@@ -36,7 +36,13 @@ export async function syncData(opts?: { force?: boolean; }) {
         let versionUpdated = false;
 
         try {
-            const deviceReg = await makeApiCall('webeditor', `/get-device-registration?deviceId=${deviceId}`);
+            // Sign the re-fetch so the server will return the device secret on the
+            // recovery path (#2). On first enrollment the device has no secret yet;
+            // the server issues + returns it regardless of signature.
+            const deviceRegEndpoint = `/get-device-registration?deviceId=${deviceId}`;
+            const deviceReg = await makeApiCall('webeditor', deviceRegEndpoint, {
+                headers: await getMobileDeviceHeaders({ method: 'GET', endpoint: deviceRegEndpoint }),
+            });
             const deviceRegJSON = await deviceReg.json();
             if (deviceRegJSON?.device?.device_auth_secret) {
                 await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.DEVICE_AUTH_SECRET, deviceRegJSON.device.device_auth_secret);
@@ -47,9 +53,9 @@ export async function syncData(opts?: { force?: boolean; }) {
                     );
                 }
             }
-          
-            webUpdated = deviceRegJSON?.info?.last_backup_date && 
-                last_sync_date && 
+
+            webUpdated = deviceRegJSON?.info?.last_backup_date &&
+                last_sync_date &&
                 (new Date(deviceRegJSON?.info?.last_backup_date).getTime() !== new Date(last_sync_date).getTime());
 
             last_sync_date = deviceRegJSON?.info?.last_backup_date;
@@ -91,7 +97,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                 const diagnoses = json?.diagnoses || [];
                 const problems = json?.problems || [];
                 const aliases = json?.aliases || []
-                
+
                 await Promise.all(['scripts', 'screens', 'diagnoses', 'problems', 'config_keys', 'drugs_library'].map(table => dbTransaction(
                     `delete from ${table} where 1;`
                 )));
@@ -203,7 +209,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                     total_sessions_recorded: Math.max(_application?.total_sessions_recorded || 0, device?.details?.scripts_count || 0),
                     device_id: _application?.device_id || device?.device_id || deviceId,
                     webeditor_info: JSON.stringify(webeditorInfo),
-                    createdAt: _application?.createdAt || new Date().toISOString(),            
+                    createdAt: _application?.createdAt || new Date().toISOString(),
                     version: APP_VERSION,
                     updatedAt: new Date().toISOString(),
                 };
@@ -231,7 +237,10 @@ export async function syncData(opts?: { force?: boolean; }) {
                         deliveryMode: updatePolicyRes.data.apk?.deliveryMode || 'in_app',
                         status: 'seen',
                     }).catch(() => null);
-                } else if (updatePolicyRes?.errors?.length) {
+                } else if (updatePolicyRes?.status === 404) {
+                    // Only clear the cached policy when the server definitively says
+                    // there is none for this device. Transient errors / skipped calls
+                    // keep the last known policy so the tablet keeps working offline.
                     await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
                     await dbTransaction('delete from app_update_policy where id=1;');
                 }
@@ -252,9 +261,9 @@ export async function syncData(opts?: { force?: boolean; }) {
                                 `insert or replace into exceptions (${Object.keys(ex).join(',')}) values (${Object.keys(ex).map(() => '?').join(',')});`,
                                 Object.values(ex)
                             );
-                
+
                         }).catch(() => {})
-                    
+
                     }
                 }
             } catch(e: any) {
@@ -268,9 +277,9 @@ export async function syncData(opts?: { force?: boolean; }) {
 
     const _app = await getApplication();
 
-    return { 
-        authenticatedUser, 
+    return {
+        authenticatedUser,
         application: _app,
         last_sync_date,
     };
-}  
+}
