@@ -5,6 +5,7 @@ export default {
                 "iso": "zw",
                 "name": "Zimbabwe"
             },
+            
             {
                 "iso": "mwi",
                 "name": "Malawi"
