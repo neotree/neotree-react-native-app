@@ -318,8 +318,15 @@ export const getMobileDeviceHeaders = async (opts?: {
 
 export const postDeviceAppState = async (payload: {
     deviceId: string;
+    deviceHash?: string | null;
     appVersion: string;
     runtimeVersion: string;
+    countryISO?: string | null;
+    androidVersion?: string | null;
+    androidSdk?: number | null;
+    manufacturer?: string | null;
+    model?: string | null;
+    deviceCapabilities?: Record<string, any>;
     otaUpdateId?: string | null;
     otaChannel?: string | null;
     apkReleaseId?: string | null;

@@ -1,12 +1,16 @@
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Device from 'expo-device';
+import * as Application from 'expo-application';
 
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { postDeviceAppState } from './api';
-import { getUpdatePolicyData } from './queries';
+import { getApplication, getLocation, getUpdatePolicyData } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { recordOtaAppliedIfChanged, recordUpdateEvent } from '@/src/update/otaTelemetry';
 import { detectInstalledApkRelease, getAppRuntimeIdentity } from '@/src/update/appIdentity';
+
+const APP_STATE_REPORT_SCHEMA_VERSION = 2;
 
 export async function reportAppStateIfChanged() {
     try {
@@ -18,18 +22,48 @@ export async function reportAppStateIfChanged() {
 
         const identity = getAppRuntimeIdentity();
         const policy = await getUpdatePolicyData().catch(() => null);
+        const location = await getLocation().catch(() => null);
+        const application = await getApplication().catch(() => null);
         const installedApk = await detectInstalledApkRelease(policy);
         const appVersion = identity.appVersion || '';
         const runtimeVersion = identity.runtimeVersion || '';
         const otaUpdateId = identity.otaUpdateId;
         const otaChannel = identity.otaChannel;
         const apkReleaseId = installedApk?.apkReleaseId || null;
+        const androidId = Application.getAndroidId?.() || deviceId;
+        const deviceHash = application?.uid_prefix || null;
+        const manufacturer = Device.manufacturer || null;
+        const model = Device.modelName || Device.modelId || null;
+        const androidVersion = Device.osVersion || null;
+        const androidSdk = Number.isFinite(Number(Device.platformApiLevel)) ? Number(Device.platformApiLevel) : null;
+        const deviceCapabilities = {
+            deviceHash,
+            androidId,
+            identifiers: {
+                deviceId,
+                androidId,
+                deviceHash,
+            },
+            updateDelivery: {
+                inAppApkInstall: true,
+                offlineApkShare: true,
+                otaUpdates: true,
+            },
+        };
 
         if (!appVersion || !runtimeVersion) return;
 
         const currentState = {
+            reportSchemaVersion: APP_STATE_REPORT_SCHEMA_VERSION,
+            deviceHash,
             appVersion,
             runtimeVersion,
+            countryISO: location?.country || null,
+            androidVersion,
+            androidSdk,
+            manufacturer,
+            model,
+            deviceCapabilities,
             otaUpdateId,
             otaChannel,
             apkReleaseId,
@@ -42,7 +76,14 @@ export async function reportAppStateIfChanged() {
                 lastState = JSON.parse(lastStateRaw);
                 if (
                     lastState?.appVersion === currentState.appVersion &&
+                    lastState?.reportSchemaVersion === currentState.reportSchemaVersion &&
                     lastState?.runtimeVersion === currentState.runtimeVersion &&
+                    lastState?.deviceHash === currentState.deviceHash &&
+                    lastState?.countryISO === currentState.countryISO &&
+                    lastState?.androidVersion === currentState.androidVersion &&
+                    lastState?.androidSdk === currentState.androidSdk &&
+                    lastState?.manufacturer === currentState.manufacturer &&
+                    lastState?.model === currentState.model &&
                     lastState?.otaUpdateId === currentState.otaUpdateId &&
                     lastState?.otaChannel === currentState.otaChannel &&
                     lastState?.apkReleaseId === currentState.apkReleaseId
@@ -56,8 +97,15 @@ export async function reportAppStateIfChanged() {
 
         const res = await postDeviceAppState({
             deviceId,
+            deviceHash,
             appVersion,
             runtimeVersion,
+            countryISO: currentState.countryISO,
+            androidVersion,
+            androidSdk,
+            manufacturer,
+            model,
+            deviceCapabilities,
             otaUpdateId,
             otaChannel,
             apkReleaseId: currentState.apkReleaseId,
