@@ -10,10 +10,16 @@ const appJsonRuntimeVersion = (() => {
 })();
 
 const appConfig = (() => {
-    let config: any = {};
-    try {
-        config = { ...config, ...require(`./src/config`).default } // eslint-disable-line
-    } catch (e) { /**/ }
+    const configPaths = ['./src/config', './config/config'];
+    const config = configPaths.reduce((acc: any, configPath) => {
+        try {
+            const module = require(configPath); // eslint-disable-line
+            return { ...acc, ...(module.default || module) };
+        } catch (e) {
+            return acc;
+        }
+    }, {});
+
     return { ...config[NEOTREE_BUILD_TYPE], };
 })();
 
