@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Image, Alert } from 'react-native'
 import Icon from '@expo/vector-icons/MaterialIcons';
-import Constants from 'expo-constants';
 import {
 	createDrawerNavigator,
 	DrawerContentScrollView,
@@ -23,6 +22,7 @@ import { useAppContext } from '../AppContext';
 import {} from '../components/'
 import * as api from '../data';
 import { APP_VERSION } from '../constants';
+import { NEOTREE_UPDATE_RELEASE } from '../update';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
 
@@ -142,6 +142,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 						style={{ marginTop: 8 }}
 					>
 						Version {APP_VERSION}
+					</Text>
+					<Text
+						color="textSecondary"
+						fontWeight="bold"
+						style={{ marginTop: 4 }}
+					>
+						Update {NEOTREE_UPDATE_RELEASE.label}
 					</Text>
 					{/* <Text
 						color="textSecondary"

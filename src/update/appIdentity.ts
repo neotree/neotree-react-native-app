@@ -5,11 +5,13 @@ import * as Updates from 'expo-updates';
 
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
 import type { UpdatePolicy, UpdatePolicyApkRelease } from '@/src/types';
+import { NEOTREE_UPDATE_RELEASE } from './releaseInfo';
 
 export type AppRuntimeIdentity = {
   appVersion: string | null;
   nativeBuildVersion: string | null;
   runtimeVersion: string | null;
+  updateRelease: string;
   otaUpdateId: string | null;
   otaChannel: string | null;
 };
@@ -27,6 +29,7 @@ export function getAppRuntimeIdentity(): AppRuntimeIdentity {
     appVersion: Application.nativeApplicationVersion || Constants.expoConfig?.version || null,
     nativeBuildVersion: Application.nativeBuildVersion || null,
     runtimeVersion: (Constants as any).runtimeVersion || Constants.expoConfig?.runtimeVersion || null,
+    updateRelease: NEOTREE_UPDATE_RELEASE.label,
     otaUpdateId: Updates.updateId ? `${Updates.updateId}` : null,
     otaChannel: (Updates as any).channel || null,
   };

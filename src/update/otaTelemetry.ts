@@ -39,6 +39,7 @@ export type OtaLastStatus = {
   message?: string | null;
   otaUpdateId?: string | null;
   otaChannel?: string | null;
+  updateRelease?: string | null;
   runtimeVersion?: string | null;
   appVersion?: string | null;
   checkedAt?: string;
@@ -52,6 +53,7 @@ type OtaEvent = {
   runtimeVersion?: string | null;
   otaUpdateId?: string | null;
   otaChannel?: string | null;
+  updateRelease?: string | null;
   payload?: any;
   apkReleaseId?: string | null;
   status?: string | null;
@@ -116,6 +118,7 @@ const persistLastOtaStatus = async (data: {
   message?: string | null;
   otaUpdateId?: string | null;
   otaChannel?: string | null;
+  updateRelease?: string | null;
   runtimeVersion?: string | null;
   appVersion?: string | null;
 }) => {
@@ -248,6 +251,7 @@ export const flushOtaEvents = async () => {
         eventType: evt.eventType,
         appVersion: evt.appVersion ?? base.appVersion,
         runtimeVersion: evt.runtimeVersion ?? base.runtimeVersion,
+        updateRelease: evt.updateRelease ?? base.updateRelease,
         otaUpdateId: evt.otaUpdateId ?? base.otaUpdateId,
         otaChannel: evt.otaChannel ?? base.otaChannel,
         apkReleaseId: evt.apkReleaseId ?? evt.payload?.apkReleaseId ?? null,
@@ -285,13 +289,14 @@ export const recordUpdateEvent = async (eventType: UpdateEventType, payload?: an
     eventType,
     appVersion: base.appVersion,
     runtimeVersion: base.runtimeVersion,
+    updateRelease: base.updateRelease,
     otaUpdateId: base.otaUpdateId,
     otaChannel: base.otaChannel,
     apkReleaseId: payload?.apkReleaseId ?? null,
     status: payload?.status ?? null,
     errorCode: payload?.errorCode ?? null,
     errorMessage: payload?.errorMessage ?? payload?.message ?? null,
-    payload: { ...payload, sessionId: otaSessionId },
+    payload: { ...payload, sessionId: otaSessionId, updateRelease: base.updateRelease },
   });
 
   await flushOtaEvents();
@@ -310,6 +315,7 @@ export const checkForOtaUpdateAndRecord = async () => {
         status: 'disabled',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -323,6 +329,7 @@ export const checkForOtaUpdateAndRecord = async () => {
         status: 'offline',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -338,6 +345,7 @@ export const checkForOtaUpdateAndRecord = async () => {
         message: policyGate.reason,
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -352,6 +360,7 @@ export const checkForOtaUpdateAndRecord = async () => {
         status: 'available',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -363,6 +372,7 @@ export const checkForOtaUpdateAndRecord = async () => {
         status: 'not_available',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -380,6 +390,7 @@ export const checkForOtaUpdateAndRecord = async () => {
       message,
       otaUpdateId: base.otaUpdateId,
       otaChannel: base.otaChannel,
+      updateRelease: base.updateRelease,
       runtimeVersion: base.runtimeVersion,
       appVersion: base.appVersion,
     });
@@ -412,6 +423,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
           status: 'disabled',
           otaUpdateId: base.otaUpdateId,
           otaChannel: base.otaChannel,
+          updateRelease: base.updateRelease,
           runtimeVersion: base.runtimeVersion,
           appVersion: base.appVersion,
         });
@@ -424,6 +436,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
           status: 'deferred',
           otaUpdateId: base.otaUpdateId,
           otaChannel: base.otaChannel,
+          updateRelease: base.updateRelease,
           runtimeVersion: base.runtimeVersion,
           appVersion: base.appVersion,
         });
@@ -438,6 +451,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
         status: 'offline',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -453,6 +467,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
         message: policyGate.reason,
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -467,6 +482,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
         status: 'not_available',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -484,6 +500,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
           status: 'fetched',
           otaUpdateId: base.otaUpdateId,
           otaChannel: base.otaChannel,
+          updateRelease: base.updateRelease,
           runtimeVersion: base.runtimeVersion,
           appVersion: base.appVersion,
         });
@@ -495,6 +512,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
         status: 'not_available',
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -512,6 +530,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
         message,
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
+        updateRelease: base.updateRelease,
         runtimeVersion: base.runtimeVersion,
         appVersion: base.appVersion,
       });
@@ -539,6 +558,7 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
       message,
       otaUpdateId: base.otaUpdateId,
       otaChannel: base.otaChannel,
+      updateRelease: base.updateRelease,
       runtimeVersion: base.runtimeVersion,
       appVersion: base.appVersion,
     });
@@ -560,11 +580,13 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
 export const recordOtaAppliedIfChanged = async (previous: {
   appVersion?: string | null;
   runtimeVersion?: string | null;
+  updateRelease?: string | null;
   otaUpdateId?: string | null;
   otaChannel?: string | null;
 } | null, current: {
   appVersion?: string | null;
   runtimeVersion?: string | null;
+  updateRelease?: string | null;
   otaUpdateId?: string | null;
   otaChannel?: string | null;
 }) => {
@@ -575,6 +597,7 @@ export const recordOtaAppliedIfChanged = async (previous: {
       status: 'applied',
       otaUpdateId: base.otaUpdateId,
       otaChannel: base.otaChannel,
+      updateRelease: base.updateRelease,
       runtimeVersion: base.runtimeVersion,
       appVersion: base.appVersion,
     });
@@ -584,6 +607,7 @@ export const recordOtaAppliedIfChanged = async (previous: {
   if (
     previous.appVersion !== current.appVersion ||
     previous.runtimeVersion !== current.runtimeVersion ||
+    previous.updateRelease !== current.updateRelease ||
     previous.otaUpdateId !== current.otaUpdateId ||
     previous.otaChannel !== current.otaChannel
   ) {
@@ -593,6 +617,7 @@ export const recordOtaAppliedIfChanged = async (previous: {
       status: 'applied',
       otaUpdateId: base.otaUpdateId,
       otaChannel: base.otaChannel,
+      updateRelease: base.updateRelease,
       runtimeVersion: base.runtimeVersion,
       appVersion: base.appVersion,
     });

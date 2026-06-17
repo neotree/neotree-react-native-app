@@ -27,6 +27,7 @@ export async function reportAppStateIfChanged() {
         const installedApk = await detectInstalledApkRelease(policy);
         const appVersion = identity.appVersion || '';
         const runtimeVersion = identity.runtimeVersion || '';
+        const updateRelease = identity.updateRelease;
         const otaUpdateId = identity.otaUpdateId;
         const otaChannel = identity.otaChannel;
         const apkReleaseId = installedApk?.apkReleaseId || null;
@@ -49,6 +50,13 @@ export async function reportAppStateIfChanged() {
                 offlineApkShare: true,
                 otaUpdates: true,
             },
+            software: {
+                appVersion,
+                runtimeVersion,
+                updateRelease,
+                otaUpdateId,
+                otaChannel,
+            },
         };
 
         if (!appVersion || !runtimeVersion) return;
@@ -58,6 +66,7 @@ export async function reportAppStateIfChanged() {
             deviceHash,
             appVersion,
             runtimeVersion,
+            updateRelease,
             countryISO: location?.country || null,
             androidVersion,
             androidSdk,
@@ -78,6 +87,7 @@ export async function reportAppStateIfChanged() {
                     lastState?.appVersion === currentState.appVersion &&
                     lastState?.reportSchemaVersion === currentState.reportSchemaVersion &&
                     lastState?.runtimeVersion === currentState.runtimeVersion &&
+                    lastState?.updateRelease === currentState.updateRelease &&
                     lastState?.deviceHash === currentState.deviceHash &&
                     lastState?.countryISO === currentState.countryISO &&
                     lastState?.androidVersion === currentState.androidVersion &&
@@ -108,6 +118,7 @@ export async function reportAppStateIfChanged() {
             deviceCapabilities,
             otaUpdateId,
             otaChannel,
+            updateRelease,
             apkReleaseId: currentState.apkReleaseId,
         });
 

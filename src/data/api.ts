@@ -321,6 +321,7 @@ export const postDeviceAppState = async (payload: {
     deviceHash?: string | null;
     appVersion: string;
     runtimeVersion: string;
+    updateRelease?: string | null;
     countryISO?: string | null;
     androidVersion?: string | null;
     androidSdk?: number | null;
@@ -350,6 +351,7 @@ export const postUpdateEvent = async (payload: {
     apkReleaseId?: string | null;
     appVersion?: string | null;
     runtimeVersion?: string | null;
+    updateRelease?: string | null;
     otaUpdateId?: string | null;
     otaChannel?: string | null;
     errorCode?: string | null;

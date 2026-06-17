@@ -27,6 +27,7 @@ import {
     applyUpdateFlowAfterSync,
     getDownloadState,
     installApkIfSafe,
+    NEOTREE_UPDATE_RELEASE,
     setUpdatesScreenFocused,
     startApkDownload,
     type UpdateDecision,
@@ -739,6 +740,9 @@ export function UpdatesCenter({
                             <Br spacing="s" />
 
                             <Text>Version: {appVersion}</Text>
+                            <Text>
+                                Update release: {NEOTREE_UPDATE_RELEASE.label}
+                            </Text>
                             <Text>Runtime: {runtimeVersion}</Text>
                             <Text>Channel: {channelLabel(otaChannel)}</Text>
                             <Text>Delivery: {deliveryLabel(deliveryMode)}</Text>
