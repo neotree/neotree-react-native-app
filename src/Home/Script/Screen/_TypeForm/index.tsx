@@ -265,7 +265,7 @@ export function TypeForm({ }: TypeFormProps) {
         });
     }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType]);
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
+    const [values, _setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
 
     const evaluateFieldCondition = (f: any,form?:any) => {
@@ -290,6 +290,61 @@ export function TypeForm({ }: TypeFormProps) {
 
         return conditionMet;
     };
+
+    const onValuesChange = React.useCallback((_values = values) => {
+        const entryValsToRemove: number[] = [];
+        
+        const completed = repeatable ? (_values.length > 0) : _values.reduce((acc, { value }, i) => {
+            const field = metadata.fields[i];
+
+            let hasValue = !!value;
+            if (field.type === 'multi_select') hasValue = !!value?.length;
+            if (field.optional) hasValue = true;
+
+            const condition = metadata.fields[i].condition;
+            let conditionMet = true;
+
+            if (condition) conditionMet = evaluateCondition(parseCondition(condition, [{ values: _values, }]));
+
+            if (conditionMet) {
+                return hasValue;
+            } else {
+                entryValsToRemove.push(i);
+            }
+            return acc;
+        }, true);
+
+        const hasErrors = _values.filter(v => v.error).length;
+        if (!repeatable) {
+            const entryVals = _values.filter((v, i) => {
+                if (entryValsToRemove.includes(i)) return false;
+
+                if (
+                    (v?.value === null) || 
+                    (v?.value === undefined) || 
+                    (v?.value === '')
+                ) return false;
+
+                return true;
+            });
+
+            setEntryValues(hasErrors || !completed ? undefined : entryVals);
+        }
+
+    }, [values, metadata]);
+
+    const setValues: typeof _setValues = React.useCallback((state) => {
+        let _values: typeof values = values;
+        _setValues(prev => {
+            if (typeof state === 'function') {
+                _values = state(prev);
+            } else {
+                _values = values;
+            }
+            return _values;
+        });
+        onValuesChange(_values);
+    }, [values, onValuesChange]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
@@ -419,30 +474,8 @@ export function TypeForm({ }: TypeFormProps) {
     }, []);
 
     React.useEffect(() => {
-
-        const completed = repeatable ? (values.length > 0) : values.reduce((acc, { value }, i) => {
-            const field = metadata.fields[i];
-            const conditionMet = evaluateFieldCondition(metadata.fields[i]);
-            if (conditionMet && !field.optional && !value) return false;
-            return acc;
-        }, true);
-
-        const hasErrors = values.filter(v => v.error).length;
-        if (!repeatable) {
-            const entryVals = values.filter(v => {
-                if (
-                    (v?.value === null) || 
-                    (v?.value === undefined) || 
-                    (v?.value === '')
-                ) return false;
-
-                return true;
-            });
-
-            setEntryValues(hasErrors || !completed ? undefined : entryVals);
-        }
-
-    }, [values, metadata]);
+        onValuesChange();
+    }, [onValuesChange]);
 
 
     const collectionName = metadata?.collectionName;
