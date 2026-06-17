@@ -2,6 +2,6 @@
 // unless a new APK is being built.
 export const NEOTREE_UPDATE_RELEASE = {
   baseAppVersion: '2.5.34',
-  sequence: 1,
-  label: '2.5.34-1',
+  sequence: 2,
+  label: '2.5.34-2',
 } as const;
