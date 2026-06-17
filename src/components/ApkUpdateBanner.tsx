@@ -16,7 +16,11 @@ import {
   shouldRetryNow,
 } from '@/src/update';
 
-export function ApkUpdateBanner() {
+type ApkUpdateBannerProps = {
+  cardOwnsPrimaryInstall?: boolean;
+};
+
+export function ApkUpdateBanner({ cardOwnsPrimaryInstall = false }: ApkUpdateBannerProps) {
   const { updateDecision } = useAppContext() || {};
   const [state, setState] = React.useState<any>(null);
   const [installDefer, setInstallDefer] = React.useState<'idle' | 'restart' | null>(null);
@@ -176,7 +180,7 @@ export function ApkUpdateBanner() {
       ) : null}
 
       <View style={styles.actions}>
-        {canUseInAppDownload && !isDownloaded && !isDownloading ? (
+        {canUseInAppDownload && !cardOwnsPrimaryInstall && !isDownloaded && !isDownloading ? (
           <TouchableOpacity
             style={isHybrid ? styles.actionButton : styles.actionButtonPrimary}
             onPress={onDownload}
@@ -197,7 +201,7 @@ export function ApkUpdateBanner() {
           </TouchableOpacity>
         ) : null}
 
-        {canUseInAppDownload && isDownloaded ? (
+        {canUseInAppDownload && !cardOwnsPrimaryInstall && isDownloaded ? (
           <TouchableOpacity style={styles.actionButtonPrimary} onPress={onInstall}>
             <Text style={styles.actionPrimaryText}>Install update</Text>
           </TouchableOpacity>

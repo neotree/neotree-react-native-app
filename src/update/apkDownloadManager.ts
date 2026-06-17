@@ -32,6 +32,7 @@ const APK_DIR = `${FileSystem.documentDirectory || ''}apk/`;
 
 let activeDownload: FileSystem.DownloadResumable | null = null;
 let activeReleaseId: string | null = null;
+let activeDownloadPromise: Promise<string> | null = null;
 
 const ensureApkDir = async () => {
   if (!APK_DIR) return;
@@ -82,6 +83,15 @@ export const getDownloadState = async (): Promise<ApkDownloadState | null> => {
   } catch {
     return null;
   }
+};
+
+/**
+ * Clears the persisted download state. Used when the tablet is up to date so a
+ * stale `verified` record can't make the UI (banner / ready-prompt) think there
+ * is still an update to install against a file that has been cleaned up.
+ */
+export const clearDownloadState = async () => {
+  await setState(null);
 };
 
 const hasEnoughDiskSpace = async (bytesNeeded?: number | null) => {
@@ -300,6 +310,21 @@ const markDownloadedAndVerified = async (release: UpdatePolicyApkRelease, fileUr
 export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
   if (!release.downloadUrl) throw new Error('Missing downloadUrl');
 
+  if (activeReleaseId === release.apkReleaseId && activeDownloadPromise) {
+    return activeDownloadPromise;
+  }
+
+  const existingState = await getDownloadState();
+  if (existingState?.apkReleaseId === release.apkReleaseId) {
+    if (existingState.status === 'verified' && existingState.fileUri) {
+      const info = await FileSystem.getInfoAsync(existingState.fileUri);
+      if (info.exists) return existingState.fileUri;
+    }
+    if (existingState.status === 'downloading' && activeDownloadPromise) {
+      return activeDownloadPromise;
+    }
+  }
+
   await ensureApkDir();
   // Drop any previously downloaded releases before fetching the new one.
   await cleanupApkDir(release.apkReleaseId);
@@ -338,43 +363,52 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
 
   await setState({ apkReleaseId: release.apkReleaseId, status: 'downloading', fileUri: targetUri });
 
-  try {
-    await recordUpdateEvent(resumeData ? 'apk_download_resumed' : 'apk_download_started', {
-      apkReleaseId: release.apkReleaseId,
-      versionName: release.versionName,
-      versionCode: release.versionCode,
-      runtimeVersion: release.runtimeVersion,
-    }).catch(() => null);
-
-    const result = resumeData ? await activeDownload.resumeAsync() : await activeDownload.downloadAsync();
-    if (!result?.uri) throw new Error('Download failed');
-
-    return markDownloadedAndVerified(release, result.uri);
-  } catch (e: any) {
+  let downloadPromise!: Promise<string>;
+  downloadPromise = (async () => {
     try {
-      const saved = await activeDownload?.pauseAsync();
-      if (saved?.resumeData) {
-        await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA, saved.resumeData);
-      }
-    } catch {
-      // ignore pause errors
-    }
+      await recordUpdateEvent(resumeData ? 'apk_download_resumed' : 'apk_download_started', {
+        apkReleaseId: release.apkReleaseId,
+        versionName: release.versionName,
+        versionCode: release.versionCode,
+        runtimeVersion: release.runtimeVersion,
+      }).catch(() => null);
 
-    await setState({
-      apkReleaseId: release.apkReleaseId,
-      status: 'failed',
-      fileUri: targetUri,
-      error: e?.message || 'Download error',
-    });
-    await recordUpdateEvent('apk_download_failed', {
-      apkReleaseId: release.apkReleaseId,
-      message: e?.message || 'Download error',
-    }).catch(() => null);
-    throw e;
-  } finally {
-    activeDownload = null;
-    activeReleaseId = null;
-  }
+      const result = resumeData ? await activeDownload.resumeAsync() : await activeDownload.downloadAsync();
+      if (!result?.uri) throw new Error('Download failed');
+
+      return markDownloadedAndVerified(release, result.uri);
+    } catch (e: any) {
+      try {
+        const saved = await activeDownload?.pauseAsync();
+        if (saved?.resumeData) {
+          await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA, saved.resumeData);
+        }
+      } catch {
+        // ignore pause errors
+      }
+
+      await setState({
+        apkReleaseId: release.apkReleaseId,
+        status: 'failed',
+        fileUri: targetUri,
+        error: e?.message || 'Download error',
+      });
+      await recordUpdateEvent('apk_download_failed', {
+        apkReleaseId: release.apkReleaseId,
+        message: e?.message || 'Download error',
+      }).catch(() => null);
+      throw e;
+    } finally {
+      if (activeDownloadPromise === downloadPromise) {
+        activeDownload = null;
+        activeReleaseId = null;
+        activeDownloadPromise = null;
+      }
+    }
+  })();
+
+  activeDownloadPromise = downloadPromise;
+  return downloadPromise;
 };
 
 export const pauseApkDownload = async () => {

@@ -4,12 +4,13 @@ import { FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box, theme } from '../../components';
 import { getLocation, getScripts, syncData } from '../../data';
+import { tryApplyUpdateFlowAfterSync } from '../../update';
 import * as types from '../../types';
 
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
 	const isFocused = useIsFocused();
 
-	const { application, setSyncDataResponse } = useAppContext() || {};
+	const { application, setSyncDataResponse, setUpdateDecision } = useAppContext() || {};
 
 	const [scriptsInitialised, setScriptsInitialised] = React.useState(false);
 	const [loadingScripts, setLoadingScripts] = React.useState(false);
@@ -32,6 +33,10 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			if (setSyncDataResponse) {
 				setSyncDataResponse(res);
 			}
+			if (setUpdateDecision) {
+				const decision = await tryApplyUpdateFlowAfterSync();
+				if (decision) setUpdateDecision(decision);
+			}
 			
 			console.log('Resync completed successfully');
 			return true;
@@ -42,7 +47,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 		} finally {
 			setIsResyncing(false);
 		}
-	}, [isResyncing, hasTriedResync, setSyncDataResponse]);
+	}, [isResyncing, hasTriedResync, setSyncDataResponse, setUpdateDecision]);
 
 	const loadScripts = React.useCallback(async (showLoader = true) => {
 		try {

@@ -9,17 +9,13 @@ import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
 import { syncData, addSocketEventsListeners } from './data';
 import { useAppContext } from './AppContext';
-import { Splash, ForcedUpdateGate } from './components';
+import { Splash, ForcedUpdateGate, ApkUpdateReadyPrompt } from './components';
 import { SyncStatus } from './components/sync-status';
 import {
-    attemptAutoInstallIfDeferred,
-    attemptAutoRetryDownload,
     checkForOtaUpdateAndRecord,
     checkForOtaUpdateFetchAndRecord,
-    cleanupApkDir,
-    ensureApkDownloaded,
     flushOtaEvents,
-    getUpdateDecision,
+    tryApplyUpdateFlowAfterSync,
 } from './update';
 import { ASYNC_STORAGE_KEYS } from './constants/async-storage';
 import { reportAppStateIfChanged } from './data/appState';
@@ -62,16 +58,8 @@ export function Navigation() {
             if(setSyncDataResponse)
                 setSyncDataResponse(res);
             if (setUpdateDecision) {
-                const decision = await getUpdateDecision();
-                setUpdateDecision(decision);
-                await attemptAutoInstallIfDeferred();
-                attemptAutoRetryDownload(decision).catch(() => null);
-                if (decision?.shouldAutoDownload) {
-                    ensureApkDownloaded(decision).catch(() => null);
-                } else if (decision?.state === 'runtime_ok') {
-                    // Tablet is up to date: clear any leftover downloaded APKs.
-                    cleanupApkDir(null).catch(() => null);
-                }
+                const decision = await tryApplyUpdateFlowAfterSync();
+                if (decision) setUpdateDecision(decision);
             }
             await Promise.all([
                 reportAppStateIfChanged(),
@@ -181,6 +169,7 @@ export function Navigation() {
             {!authenticatedUser ? <Authentication /> : <HomeNavigator />}
             <SyncStatus />
             {authenticatedUser ? <ForcedUpdateGate /> : null}
+            {authenticatedUser ? <ApkUpdateReadyPrompt /> : null}
         </>
     );
 }

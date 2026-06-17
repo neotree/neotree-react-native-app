@@ -4,11 +4,12 @@ import { Box, Br, Text, useTheme, Button  } from "../../components";
 import { Form } from './Form';
 import { syncData } from '../../data';
 import { useAppContext } from '../../AppContext';
+import { tryApplyUpdateFlowAfterSync } from '../../update';
 
 type SignInProps = { onSignIn: () => void; };
 
 export function SignIn({ onSignIn }: SignInProps) {
-	const {setSyncDataResponse} = useAppContext()||{};
+	const {setSyncDataResponse, setUpdateDecision} = useAppContext()||{};
 	const theme = useTheme();
 
 	const [loggedIn, setLoggedIn] = React.useState(false);
@@ -22,12 +23,19 @@ export function SignIn({ onSignIn }: SignInProps) {
 				const res = await syncData();
 				setSyncDataResponse &&setSyncDataResponse(res);
 				onSignIn();
+				if (setUpdateDecision) {
+					tryApplyUpdateFlowAfterSync()
+						.then((decision) => {
+							if (decision) setUpdateDecision(decision);
+						})
+						.catch(() => null);
+				}
 			} catch(e) { 
 				console.log(e);
 				setInitialiseDataFailed(true); 
 			}
 		})();
-	}, []);
+	}, [onSignIn, setSyncDataResponse, setUpdateDecision]);
 
 	return (
 		<>

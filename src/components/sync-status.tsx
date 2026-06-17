@@ -1,41 +1,50 @@
 import { useCallback, useEffect, useState } from "react";
 import { ToastAndroid, TouchableOpacity } from "react-native";
-import Icon from '@expo/vector-icons/MaterialIcons';
+import Icon from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { Box, Text, useTheme } from '@/src/components';
+import { Box, Text, useTheme } from "@/src/components";
 import { ASYNC_STORAGE_KEYS } from "@/src/constants/async-storage";
-import * as api from '@/src/data';
+import * as api from "@/src/data";
+import { useAppContext } from "@/src/AppContext";
+import { tryApplyUpdateFlowAfterSync } from "@/src/update";
 
 export function SyncStatus() {
     const theme = useTheme();
-    const [error, setError] = useState('');
+    const { setUpdateDecision } = useAppContext() || {};
+    const [error, setError] = useState("");
 
     const init = useCallback(async () => {
         try {
-            const error = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.SYNC_ERROR);
+            const error = await AsyncStorage.getItem(
+                ASYNC_STORAGE_KEYS.SYNC_ERROR,
+            );
             if (error) setError(error);
-        } catch(e: any) {
+        } catch (e: any) {
             // do nothing
         }
     }, []);
 
     const dismiss = useCallback(() => {
-        setError('');
+        setError("");
         AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.SYNC_ERROR);
     }, []);
 
     const sync = useCallback(async () => {
         try {
-            ToastAndroid.show('syncing...', ToastAndroid.SHORT);
+            ToastAndroid.show("syncing...", ToastAndroid.SHORT);
             dismiss();
             await api.syncData();
+            const decision = await tryApplyUpdateFlowAfterSync();
+            if (decision && setUpdateDecision) setUpdateDecision(decision);
         } finally {
             init();
         }
-    }, [dismiss, init]);
+    }, [dismiss, init, setUpdateDecision]);
 
-    useEffect(() => { init(); }, [init]);
+    useEffect(() => {
+        init();
+    }, [init]);
 
     if (!error) return null;
 
@@ -47,18 +56,14 @@ export function SyncStatus() {
                 flexDirection="row"
                 justifyContent="center"
                 alignItems="center"
-                style={{ padding: 2, }}
+                style={{ padding: 2 }}
             >
-                <Text
-                    variant="caption"
-                    color="errorContrastText"
-                    opacity={.8}
-                >
+                <Text variant="caption" color="errorContrastText" opacity={0.8}>
                     {error}
                 </Text>
 
                 <TouchableOpacity onPress={sync}>
-                    <Icon 
+                    <Icon
                         name="refresh"
                         size={16}
                         color={theme.colors.errorContrastText}

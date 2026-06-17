@@ -35,3 +35,5 @@ export * from './ApkUpdateBanner';
 export * from './ForcedUpdateGate';
 
 export * from './OfflineUpdateShare';
+
+export * from './ApkUpdateReadyPrompt';

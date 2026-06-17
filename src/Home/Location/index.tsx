@@ -4,10 +4,11 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 import { useAppContext } from '../../AppContext';
 import { Content, LocationForm, OverlayLoader, Box } from "../../components";
 import * as api from '../../data';
+import { tryApplyUpdateFlowAfterSync } from '../../update';
 import * as types from '../../types';
 
 export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Location'>) {
-	const {setSyncDataResponse} = useAppContext();
+	const {setSyncDataResponse, setUpdateDecision} = useAppContext();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 
 
@@ -35,9 +36,18 @@ export function Location({ navigation }: types.StackNavigationProps<types.HomeRo
 						onSetLocation={() => {
 							(async () => {
 								setDisplayLoader(true);
-								const res = await api.syncData({ force: true, });
-								setSyncDataResponse && setSyncDataResponse(res);
-								setDisplayLoader(false);
+								try {
+									const res = await api.syncData({ force: true, });
+									setSyncDataResponse && setSyncDataResponse(res);
+									if (setUpdateDecision) {
+										const decision = await tryApplyUpdateFlowAfterSync();
+										if (decision) setUpdateDecision(decision);
+									}
+								} catch (e) {
+									console.log(e);
+								} finally {
+									setDisplayLoader(false);
+								}
 							})();
 						}}
 					/>
