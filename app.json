@@ -2,7 +2,7 @@
   "expo": {
     "name": "NeoTree",
     "slug": "neotree",
-    "version": "2.5.33",
+    "version": "2.5.34",
     "runtimeVersion": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -33,9 +33,8 @@
       }
     },
     "android": {
-      "usesCleartextTraffic": true,
       "package": "org.neotree",
-      "versionCode": 2530,
+      "versionCode": 2534,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#FFFFFF"

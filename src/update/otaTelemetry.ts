@@ -61,8 +61,28 @@ type OtaEvent = {
   attempts?: number;
 };
 
+const OTA_ENDPOINT_UNAVAILABLE_MESSAGE =
+  'OTA update service is unavailable for this build. The installed app can still be up to date.';
+
 const isOnline = (netInfo: NetInfoState) =>
   Boolean(netInfo?.isConnected) && netInfo?.isInternetReachable !== false;
+
+const sanitizeOtaErrorMessage = (value?: string | null) => {
+  const message = `${value || 'Unknown error'}`;
+  if (
+    /failed to download remote update/i.test(message) ||
+    /expo-runtime-version/i.test(message) ||
+    /expo-channel-name/i.test(message) ||
+    /expo-platform/i.test(message) ||
+    /eas-update-missing-headers/i.test(message)
+  ) {
+    return OTA_ENDPOINT_UNAVAILABLE_MESSAGE;
+  }
+  return message;
+};
+
+const isNonBlockingOtaEndpointError = (value?: string | null) =>
+  sanitizeOtaErrorMessage(value) === OTA_ENDPOINT_UNAVAILABLE_MESSAGE;
 
 const otaSessionId = `ota-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 const OTA_TELEMETRY_SAMPLE_RATE = 0.2;
@@ -349,11 +369,15 @@ export const checkForOtaUpdateAndRecord = async () => {
       await resetRetryState();
     }
   } catch (e: any) {
-    await recordOtaEvent('ota_check_failed', { message: e?.message || 'Unknown error' });
+    const message = sanitizeOtaErrorMessage(e?.message || 'Unknown error');
+    await recordOtaEvent('ota_check_failed', {
+      message,
+      rawMessage: e?.message || null,
+    });
     const base = await buildBasePayload();
     await persistLastOtaStatus({
       status: 'error',
-      message: e?.message || 'Unknown error',
+      message,
       otaUpdateId: base.otaUpdateId,
       otaChannel: base.otaChannel,
       runtimeVersion: base.runtimeVersion,
@@ -376,7 +400,7 @@ export type OtaCheckResult =
   | { status: 'update_downloaded' }
   | { status: 'deferred'; message?: string }
   | { status: 'disabled'; message?: string }
-  | { status: 'error'; message: string };
+  | { status: 'error'; message: string; nonBlocking?: boolean };
 
 export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }): Promise<OtaCheckResult> => {
   try {
@@ -477,11 +501,15 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
       await resetRetryState();
       return { status: 'no_update' };
     } catch (e: any) {
-      await recordOtaEvent('ota_check_failed', { message: e?.message || 'Fetch failed' });
+      const message = sanitizeOtaErrorMessage(e?.message || 'Fetch failed');
+      await recordOtaEvent('ota_check_failed', {
+        message,
+        rawMessage: e?.message || null,
+      });
       const base = await buildBasePayload();
       await persistLastOtaStatus({
         status: 'error',
-        message: e?.message || 'Fetch failed',
+        message,
         otaUpdateId: base.otaUpdateId,
         otaChannel: base.otaChannel,
         runtimeVersion: base.runtimeVersion,
@@ -493,14 +521,22 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
       } else {
         await scheduleRetry(nextCount);
       }
-      return { status: 'error', message: e?.message || 'Fetch failed' };
+      return {
+        status: 'error',
+        message,
+        nonBlocking: isNonBlockingOtaEndpointError(e?.message),
+      };
     }
   } catch (e: any) {
-    await recordOtaEvent('ota_check_failed', { message: e?.message || 'Unknown error' });
+    const message = sanitizeOtaErrorMessage(e?.message || 'Unknown error');
+    await recordOtaEvent('ota_check_failed', {
+      message,
+      rawMessage: e?.message || null,
+    });
     const base = await buildBasePayload();
     await persistLastOtaStatus({
       status: 'error',
-      message: e?.message || 'Unknown error',
+      message,
       otaUpdateId: base.otaUpdateId,
       otaChannel: base.otaChannel,
       runtimeVersion: base.runtimeVersion,
@@ -513,7 +549,11 @@ export const checkForOtaUpdateFetchAndRecord = async (opts?: { force?: boolean }
     } else {
       await scheduleRetry(nextCount);
     }
-    return { status: 'error', message: e?.message || 'Unknown error' };
+    return {
+      status: 'error',
+      message,
+      nonBlocking: isNonBlockingOtaEndpointError(e?.message),
+    };
   }
 };
 

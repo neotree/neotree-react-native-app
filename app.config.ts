@@ -1,5 +1,14 @@
 const NEOTREE_BUILD_TYPE = process.env.NEOTREE_BUILD_TYPE || 'development';
 
+const EAS_PROJECT_IDS: Record<string, string> = {
+    demo: '53b5b957-7cbe-4a1d-9bed-a4458a3baeb2',
+    stage: '42a5fe96-9887-457c-91e7-9298cb4aa378',
+    production: '88713878-bb93-4e2d-b54f-ed71db372a81',
+};
+
+const isLocalDevelopment = NEOTREE_BUILD_TYPE === 'development';
+const getProjectId = () => EAS_PROJECT_IDS[NEOTREE_BUILD_TYPE] || EAS_PROJECT_IDS.stage;
+
 const appJsonRuntimeVersion = (() => {
     try {
         const appJson = require('./app.json'); // eslint-disable-line
@@ -25,7 +34,7 @@ const getBuldConfig = (config: any) => ({
             APP_ENV: 'LOCAL_DEV',
             eas: {
                 ...config?.extra?.eas,
-                projectId: '88713878-bb93-4e2d-b54f-ed71db372a81',
+                projectId: EAS_PROJECT_IDS.stage,
             }, 
         },
     } : null),
@@ -39,7 +48,7 @@ const getBuldConfig = (config: any) => ({
             APP_ENV: 'DEMO',
             eas: {
                 ...config?.extra?.eas,
-                projectId: '53b5b957-7cbe-4a1d-9bed-a4458a3baeb2',
+                projectId: getProjectId(),
             }, 
         },
     } : null),
@@ -53,7 +62,7 @@ const getBuldConfig = (config: any) => ({
             APP_ENV: 'DEV',
             eas: {
                 ...config?.extra?.eas,
-                projectId: '42a5fe96-9887-457c-91e7-9298cb4aa378',
+                projectId: getProjectId(),
             }, 
         },
     } : null),
@@ -65,7 +74,7 @@ const getBuldConfig = (config: any) => ({
             APP_ENV: 'PROD',
             eas: {
                 ...config?.extra?.eas,
-                projectId: '88713878-bb93-4e2d-b54f-ed71db372a81',
+                projectId: getProjectId(),
             }, 
         },
     } : null),
@@ -78,10 +87,16 @@ export default ({ config }: any) => {
         ...config,
         ...getBuldConfig(config),
         runtimeVersion,
-        updates: {
+        updates: isLocalDevelopment ? {
+            ...config.updates,
+            enabled: false,
+            fallbackToCacheTimeout: 0,
+            checkAutomatically: 'NEVER',
+        } : {
             ...config.updates,
             fallbackToCacheTimeout: 0,
             checkAutomatically: 'ON_LOAD',
+            url: `https://u.expo.dev/${getProjectId()}`,
         },
         extra: { 
             ...config.extra, 

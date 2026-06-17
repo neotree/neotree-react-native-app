@@ -9,40 +9,48 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "NEOTREE_BUILD_TYPE": "demo"
+      },
+      "channel": "demo"
     },
     "preview2": {
+      "env": {
+        "NEOTREE_BUILD_TYPE": "demo"
+      },
+      "channel": "demo",
       "android": {
         "buildType": "apk"
       }
     },
     "demo": {
-		"env": {
-			"NEOTREE_BUILD_TYPE": "demo"
-		},
-        "channel": "demo",
-		"android": {
-			"buildType": "apk"
-		}
-	},
-	"stage": {
-		"env": {
-			"NEOTREE_BUILD_TYPE": "stage"
-		},
-        "channel": "stage",
-		"android": {
-			"buildType": "apk"
-		}
-	},
-	"production": {
-		"env": {
-			"NEOTREE_BUILD_TYPE": "production"
-		},
-        "channel": "production",
-		"android": {
-			"buildType": "apk"
-		}
-	}
+      "env": {
+        "NEOTREE_BUILD_TYPE": "demo"
+      },
+      "channel": "demo",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "stage": {
+      "env": {
+        "NEOTREE_BUILD_TYPE": "stage"
+      },
+      "channel": "stage",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "env": {
+        "NEOTREE_BUILD_TYPE": "production"
+      },
+      "channel": "production",
+      "android": {
+        "buildType": "apk"
+      }
+    }
   },
   "submit": {
     "production": {}

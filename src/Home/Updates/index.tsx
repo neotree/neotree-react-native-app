@@ -89,6 +89,9 @@ const isApkUpdatePending = (decision?: UpdateDecision | null) =>
             APK_PENDING_STATES.includes(`${decision?.state || ""}`),
     );
 
+const isAppAlreadyCurrent = (decision?: UpdateDecision | null) =>
+    !decision || decision.state === "runtime_ok";
+
 // States where the tablet is offline / cannot self-update over the air and an
 // administrator typically hands over an update file. We surface the offline
 // tablet-to-tablet sharing controls inline (not just under "More options") so
@@ -371,11 +374,13 @@ export function UpdatesCenter({
             // failure in one must not cancel the other. Capture each error and
             // surface a single message at the end rather than short-circuiting.
             let apkUpdatePending = false;
+            let appAlreadyCurrent = true;
             let decisionError: any = null;
             try {
                 const decision = await applyUpdateFlowAfterSync();
                 if (setUpdateDecision) setUpdateDecision(decision);
                 apkUpdatePending = isApkUpdatePending(decision);
+                appAlreadyCurrent = isAppAlreadyCurrent(decision);
             } catch (e) {
                 decisionError = e;
             }
@@ -399,10 +404,24 @@ export function UpdatesCenter({
                     await handleOtaPrompt(otaRes);
                     return;
                 }
+                if (
+                    appAlreadyCurrent &&
+                    otaRes?.status === "error" &&
+                    otaRes.nonBlocking
+                ) {
+                    return;
+                }
                 throw decisionError || otaError;
             }
 
             if (otaRes) {
+                if (
+                    appAlreadyCurrent &&
+                    otaRes.status === "error" &&
+                    otaRes.nonBlocking
+                ) {
+                    return;
+                }
                 await handleOtaPrompt(otaRes, {
                     suppressNonActionAlerts: apkUpdatePending,
                 });
@@ -441,6 +460,10 @@ export function UpdatesCenter({
         deliveryMode,
     });
     const tone = TONE_STYLES[status.tone as StatusTone] || TONE_STYLES.info;
+    const lastStatusMessage =
+        status.tone === "success" && lastStatus?.status === "error"
+            ? null
+            : lastStatus?.message;
 
     const decisionState = `${updateDecision?.state || ""}`;
     const isApkState =
@@ -650,10 +673,10 @@ export function UpdatesCenter({
                             : "No update check has been completed yet."}
                     </Text>
 
-                    {lastStatus?.message ? (
+                    {lastStatusMessage ? (
                         <>
                             <Br spacing="s" />
-                            <Text color="textSecondary">{lastStatus.message}</Text>
+                            <Text color="textSecondary">{lastStatusMessage}</Text>
                         </>
                     ) : null}
                 </Box>
