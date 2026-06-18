@@ -265,7 +265,7 @@ export function TypeForm({ }: TypeFormProps) {
         });
     }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType]);
 
-    const [values, _setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
 
     const evaluateFieldCondition = (f: any,form?:any) => {
