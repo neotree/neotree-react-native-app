@@ -341,7 +341,7 @@ export function TypeForm({ }: TypeFormProps) {
             }
             return _values;
         });
-        // onValuesChange(_values);
+        onValuesChange(_values);
     }, [values, onValuesChange]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
