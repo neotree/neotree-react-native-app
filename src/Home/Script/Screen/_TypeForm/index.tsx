@@ -306,11 +306,9 @@ export function TypeForm({ }: TypeFormProps) {
 
             if (condition) conditionMet = evaluateCondition(parseCondition(condition, [{ values: _values, }]));
 
-            if (conditionMet) {
-                return hasValue;
-            } else {
-                entryValsToRemove.push(i);
-            }
+            if (!conditionMet) entryValsToRemove.push(i);
+
+            if (conditionMet && !hasValue) return false;
             return acc;
         }, true);
 
@@ -339,11 +337,11 @@ export function TypeForm({ }: TypeFormProps) {
             if (typeof state === 'function') {
                 _values = state(prev);
             } else {
-                _values = values;
+                _values = state;
             }
             return _values;
         });
-        onValuesChange(_values);
+        // onValuesChange(_values);
     }, [values, onValuesChange]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
