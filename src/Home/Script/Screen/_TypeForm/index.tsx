@@ -265,7 +265,7 @@ export function TypeForm({ }: TypeFormProps) {
         });
     }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType]);
 
-    const [values, _setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
 
     const evaluateFieldCondition = (f: any,form?:any) => {
@@ -306,11 +306,9 @@ export function TypeForm({ }: TypeFormProps) {
 
             if (condition) conditionMet = evaluateCondition(parseCondition(condition, [{ values: _values, }]));
 
-            if (conditionMet) {
-                return hasValue;
-            } else {
-                entryValsToRemove.push(i);
-            }
+            if (!conditionMet) entryValsToRemove.push(i);
+
+            if (conditionMet && !hasValue) return false;
             return acc;
         }, true);
 
@@ -332,19 +330,6 @@ export function TypeForm({ }: TypeFormProps) {
         }
 
     }, [values, metadata]);
-
-    const setValues: typeof _setValues = React.useCallback((state) => {
-        let _values: typeof values = values;
-        _setValues(prev => {
-            if (typeof state === 'function') {
-                _values = state(prev);
-            } else {
-                _values = values;
-            }
-            return _values;
-        });
-        onValuesChange(_values);
-    }, [values, onValuesChange]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
