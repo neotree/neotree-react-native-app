@@ -14,6 +14,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.WritableMap
 import java.io.File
+import java.io.FileInputStream
 import java.security.MessageDigest
 
 class ApkSignatureModule(private val reactContext: ReactApplicationContext) :
@@ -57,7 +58,7 @@ class ApkSignatureModule(private val reactContext: ReactApplicationContext) :
       }
 
       val digest = MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
-      promise.resolve(digest.joinToString("") { "%02x".format(it) })
+      promise.resolve(toHex(digest))
     } catch (e: Exception) {
       promise.reject("APK_SIGNATURE_ERROR", e.message, e)
     }
@@ -74,6 +75,22 @@ class ApkSignatureModule(private val reactContext: ReactApplicationContext) :
       promise.resolve(sourceDir)
     } catch (e: Exception) {
       promise.reject("APK_PATH_ERROR", e.message, e)
+    }
+  }
+
+  @ReactMethod
+  fun getFileSha256(fileUri: String, promise: Promise) {
+    try {
+      val path = resolvePath(fileUri)
+      val file = File(path)
+      if (path.isBlank() || !file.exists()) {
+        promise.reject("FILE_NOT_FOUND", "File not found")
+        return
+      }
+
+      promise.resolve(fileSha256(file))
+    } catch (e: Exception) {
+      promise.reject("FILE_HASH_ERROR", e.message, e)
     }
   }
 
@@ -119,7 +136,7 @@ class ApkSignatureModule(private val reactContext: ReactApplicationContext) :
       val signature = signatures?.firstOrNull()
       if (signature != null) {
         val digest = MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
-        result.putString("signatureSha256", digest.joinToString("") { "%02x".format(it) })
+        result.putString("signatureSha256", toHex(digest))
       } else {
         result.putNull("signatureSha256")
       }
@@ -134,6 +151,21 @@ class ApkSignatureModule(private val reactContext: ReactApplicationContext) :
     if (fileUri.startsWith("file://") || fileUri.startsWith("content://")) return Uri.parse(fileUri).path ?: ""
     return fileUri
   }
+
+  private fun fileSha256(file: File): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    val buffer = ByteArray(1024 * 1024)
+    FileInputStream(file).use { input ->
+      while (true) {
+        val read = input.read(buffer)
+        if (read <= 0) break
+        digest.update(buffer, 0, read)
+      }
+    }
+    return toHex(digest.digest())
+  }
+
+  private fun toHex(bytes: ByteArray): String = bytes.joinToString("") { "%02x".format(it) }
 }
 `;
 

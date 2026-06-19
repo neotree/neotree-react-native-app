@@ -9,8 +9,9 @@ import { getApplication, getLocation, getUpdatePolicyData } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { recordOtaAppliedIfChanged, recordUpdateEvent } from '@/src/update/otaTelemetry';
 import { detectInstalledApkRelease, getAppRuntimeIdentity } from '@/src/update/appIdentity';
+import { getMdmIdentity } from '@/src/update/mdmIdentity';
 
-const APP_STATE_REPORT_SCHEMA_VERSION = 2;
+const APP_STATE_REPORT_SCHEMA_VERSION = 3;
 
 export async function reportAppStateIfChanged() {
     try {
@@ -37,13 +38,22 @@ export async function reportAppStateIfChanged() {
         const model = Device.modelName || Device.modelId || null;
         const androidVersion = Device.osVersion || null;
         const androidSdk = Number.isFinite(Number(Device.platformApiLevel)) ? Number(Device.platformApiLevel) : null;
+        const mdmIdentity = await getMdmIdentity({ deviceId, deviceHash }).catch(() => null);
         const deviceCapabilities = {
             deviceHash,
             androidId,
+            mdm: mdmIdentity,
             identifiers: {
                 deviceId,
                 androidId,
                 deviceHash,
+                mdmDeviceId: mdmIdentity?.deviceId || null,
+                mdmDeviceNumber: mdmIdentity?.deviceNumber || null,
+                headwindDeviceNumber: mdmIdentity?.headwindNumber || null,
+                headwindNumber: mdmIdentity?.headwindNumber || null,
+                headwindOldNumber: mdmIdentity?.oldDeviceNumber || null,
+                mdmCustom1: mdmIdentity?.custom1 || null,
+                mdmCustom2: mdmIdentity?.custom2 || null,
             },
             updateDelivery: {
                 inAppApkInstall: true,
@@ -58,6 +68,7 @@ export async function reportAppStateIfChanged() {
                 otaChannel,
             },
         };
+        const deviceCapabilitiesSignature = JSON.stringify(deviceCapabilities);
 
         if (!appVersion || !runtimeVersion) return;
 
@@ -76,6 +87,7 @@ export async function reportAppStateIfChanged() {
             otaUpdateId,
             otaChannel,
             apkReleaseId,
+            deviceCapabilitiesSignature,
         };
 
         const lastStateRaw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.LAST_REPORTED_APP_STATE);
@@ -96,7 +108,8 @@ export async function reportAppStateIfChanged() {
                     lastState?.model === currentState.model &&
                     lastState?.otaUpdateId === currentState.otaUpdateId &&
                     lastState?.otaChannel === currentState.otaChannel &&
-                    lastState?.apkReleaseId === currentState.apkReleaseId
+                    lastState?.apkReleaseId === currentState.apkReleaseId &&
+                    lastState?.deviceCapabilitiesSignature === currentState.deviceCapabilitiesSignature
                 ) {
                     return;
                 }

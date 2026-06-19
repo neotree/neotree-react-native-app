@@ -113,6 +113,19 @@ const hasEnoughBattery = async () => {
 };
 
 const computeSha256 = async (fileUri: string) => {
+  const verifier = (NativeModules as any)?.ApkSignature;
+  if (verifier?.getFileSha256) {
+    return `${await verifier.getFileSha256(fileUri)}`.toLowerCase();
+  }
+
+  const info = await FileSystem.getInfoAsync(fileUri);
+  const legacyMaxBytes = 60 * 1024 * 1024;
+  if (info.exists && typeof (info as any).size === 'number' && (info as any).size > legacyMaxBytes) {
+    throw new Error('APK checksum verification requires the latest NeoTree build. Please install the latest APK before using in-app APK downloads.');
+  }
+
+  // Compatibility fallback for older builds that do not yet include the native
+  // streaming hasher. Current APK builds use ApkSignature.getFileSha256 above.
   const base64 = await FileSystem.readAsStringAsync(fileUri, {
     encoding: FileSystem.EncodingType.Base64,
   });

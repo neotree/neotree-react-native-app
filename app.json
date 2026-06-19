@@ -2,8 +2,8 @@
   "expo": {
     "name": "NeoTree",
     "slug": "neotree",
-    "version": "2.5.34",
-    "runtimeVersion": "1.0.1",
+    "version": "2.5.35",
+    "runtimeVersion": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -24,7 +24,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "org.neotree",
-      "buildNumber": "1.0.0",
+      "buildNumber": "2.5.35",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -34,7 +34,7 @@
     },
     "android": {
       "package": "org.neotree",
-      "versionCode": 2534,
+      "versionCode": 2535,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#FFFFFF"
@@ -61,6 +61,9 @@
       ],
       [
         "./plugins/withAndroidApkSignatureModule"
+      ],
+      [
+        "./plugins/withAndroidHeadwindMdmIdentityModule"
       ],
       [
         "./plugins/withAndroidMainActivityAttributes",
