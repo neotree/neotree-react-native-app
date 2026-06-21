@@ -6,6 +6,7 @@ import * as Updates from 'expo-updates';
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
 import type { UpdatePolicy, UpdatePolicyApkRelease } from '@/src/types';
 import { NEOTREE_UPDATE_RELEASE } from './releaseInfo';
+import { parseNativeBuildVersion } from './versioning';
 
 export type AppRuntimeIdentity = {
   appVersion: string | null;
@@ -39,10 +40,21 @@ export function isReleaseInstalled(release: UpdatePolicyApkRelease | null | unde
   if (!release) return false;
 
   const versionNameMatches = !!identity.appVersion && `${identity.appVersion}` === `${release.versionName}`;
-  const buildMatches = !!identity.nativeBuildVersion && `${identity.nativeBuildVersion}` === `${release.versionCode}`;
+  const nativeBuildVersion = parseNativeBuildVersion(identity.nativeBuildVersion);
+  const buildMatches = nativeBuildVersion !== null && nativeBuildVersion === release.versionCode;
   const runtimeMatches = !!identity.runtimeVersion && `${identity.runtimeVersion}` === `${release.runtimeVersion}`;
 
-  return runtimeMatches && (buildMatches || (!identity.nativeBuildVersion && versionNameMatches));
+  // The Android versionCode (Application.nativeBuildVersion) is the authoritative
+  // identity of the installed binary for a given package — two builds with the
+  // same versionCode ARE the same APK. So an equal versionCode means "installed",
+  // regardless of any runtimeVersion/versionName drift in the editor's release
+  // metadata. Previously this required runtimeVersion to also match, which made a
+  // device that already ran the release report "not installed" whenever the
+  // admin-entered runtimeVersion differed from what the device reported — the
+  // root cause of phantom "update available" notices. Only when the native build
+  // number is unavailable do we fall back to runtime + versionName.
+  if (buildMatches) return true;
+  return nativeBuildVersion === null && runtimeMatches && versionNameMatches;
 }
 
 export async function getStoredInstalledApkRelease(): Promise<InstalledApkRelease | null> {
@@ -61,10 +73,15 @@ export async function detectInstalledApkRelease(policy?: UpdatePolicy | null) {
 
   if (!installed) {
     const stored = await getStoredInstalledApkRelease();
-    const storedMatchesNative =
-      !!stored &&
-      `${stored.versionCode}` === `${identity.nativeBuildVersion || ''}` &&
-      `${stored.runtimeVersion}` === `${identity.runtimeVersion || ''}`;
+    // Mirror isReleaseInstalled(): the Android versionCode is authoritative. When
+    // we have a native build number, an equal versionCode means the stored record
+    // describes the running binary (runtime metadata drift must not invalidate it).
+    // Only fall back to a runtime check when the native build number is unavailable.
+    const nativeBuildVersion = parseNativeBuildVersion(identity.nativeBuildVersion);
+    const buildMatches = nativeBuildVersion !== null && stored?.versionCode === nativeBuildVersion;
+    const runtimeMatches =
+      nativeBuildVersion === null && `${stored?.runtimeVersion}` === `${identity.runtimeVersion || ''}`;
+    const storedMatchesNative = !!stored && (buildMatches || runtimeMatches);
     const storedIsPolicyCandidate =
       !candidates.length || candidates.some((release) => release.apkReleaseId === stored?.apkReleaseId);
 

@@ -10,6 +10,73 @@ import { getMobileDeviceHeaders, getUpdatePolicy, makeApiCall, reportErrors } fr
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { recordUpdateEvent } from '../update/otaTelemetry';
+import type { UpdatePolicyResponse } from '../types';
+import { getUpdatePolicyFingerprint } from '../update/policyIdentity';
+
+let updatePolicyRefreshPromise: Promise<UpdatePolicyResponse | null> | null = null;
+
+/**
+ * Refreshes the cached update policy (and therefore any newly published APK
+ * release) from the server. This MUST run on every online sync independently of
+ * whether editor content (scripts/screens) changed: an APK-only release does not
+ * bump the content backup version, so gating the policy fetch behind the content
+ * `shouldSync` check meant a new APK was never picked up by a routine sync — only
+ * by an unrelated content change or a manual "Check for updates". Best-effort:
+ * a transient failure keeps the last known policy so the tablet stays offline-safe.
+ */
+async function refreshUpdatePolicyCacheInternal() {
+    const updatePolicyRes = await getUpdatePolicy().catch(() => null);
+    if (updatePolicyRes?.data) {
+        const serializedPolicy = JSON.stringify(updatePolicyRes.data);
+        const [cachedPolicy, acknowledgedFingerprint] = await Promise.all([
+            AsyncStorage.getItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY),
+            AsyncStorage.getItem(ASYNC_STORAGE_KEYS.LAST_ACKNOWLEDGED_UPDATE_POLICY),
+        ]);
+
+        if (cachedPolicy !== serializedPolicy) {
+            await Promise.all([
+                AsyncStorage.setItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY, serializedPolicy),
+                dbTransaction(
+                    'insert or replace into app_update_policy (id, data, updatedAt) values (?, ?, ?);',
+                    [1, serializedPolicy, new Date().toISOString()],
+                ),
+            ]);
+        }
+
+        const fingerprint = getUpdatePolicyFingerprint(updatePolicyRes.data);
+        if (fingerprint !== acknowledgedFingerprint) {
+            try {
+                await recordUpdateEvent('apk_policy_seen', {
+                    apkReleaseId: updatePolicyRes.data.currentApkRelease?.apkReleaseId || null,
+                    policyVersion: updatePolicyRes.data.policyVersion,
+                    deliveryMode: updatePolicyRes.data.apk?.deliveryMode || 'in_app',
+                    status: 'seen',
+                });
+                await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.LAST_ACKNOWLEDGED_UPDATE_POLICY, fingerprint);
+            } catch {
+                // Leave it unacknowledged so a later sync retries the local enqueue.
+            }
+        }
+    } else if (updatePolicyRes?.status === 404) {
+        // Only clear the cached policy when the server definitively says there is
+        // none for this device. Transient errors / skipped calls keep the last
+        // known policy so the tablet keeps working offline.
+        await Promise.all([
+            AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY),
+            AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.LAST_ACKNOWLEDGED_UPDATE_POLICY),
+            dbTransaction('delete from app_update_policy where id=1;'),
+        ]);
+    }
+    return updatePolicyRes;
+}
+
+function refreshUpdatePolicyCache() {
+    if (updatePolicyRefreshPromise) return updatePolicyRefreshPromise;
+    updatePolicyRefreshPromise = refreshUpdatePolicyCacheInternal().finally(() => {
+        updatePolicyRefreshPromise = null;
+    });
+    return updatePolicyRefreshPromise;
+}
 
 export async function syncData(opts?: { force?: boolean; }) {
 	const netInfo = await NetInfo.fetch();
@@ -70,6 +137,12 @@ export async function syncData(opts?: { force?: boolean; }) {
 
         // shouldSync = true;
 
+        // Always refresh the update policy when online, independently of the
+        // content `shouldSync` gate, so an APK-only release is picked up by routine
+        // syncs (not just by a manual "Check for updates" or an unrelated content
+        // change). Best-effort and offline-safe via refreshUpdatePolicyCache().
+        const updatePolicyPromise = refreshUpdatePolicyCache().catch(() => null);
+
         if (shouldSync) {
             try{
                 const location = await getLocation();
@@ -80,12 +153,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                     'webeditor',
                     `/sync-data?${queryString.stringify({ deviceId, hospitalId: location?.hospital, })}`,
                 );
-                const updatePolicyPromise = getUpdatePolicy().catch(() => null);
-
-                const [res, updatePolicyRes] = await Promise.all([
-                    syncPromise,
-                    updatePolicyPromise,
-                ]);
+                const [res] = await Promise.all([syncPromise, updatePolicyPromise]);
 
                 const json = await res.json();
                 const webeditorInfo = json?.webeditorInfo || {};
@@ -222,29 +290,6 @@ export async function syncData(opts?: { force?: boolean; }) {
 
                 await Promise.all(promises);
 
-                if (updatePolicyRes?.data) {
-                    await AsyncStorage.setItem(
-                        ASYNC_STORAGE_KEYS.UPDATE_POLICY,
-                        JSON.stringify(updatePolicyRes.data || {}),
-                    );
-                    await dbTransaction(
-                        'insert or replace into app_update_policy (id, data, updatedAt) values (?, ?, ?);',
-                        [1, JSON.stringify(updatePolicyRes.data || {}), new Date().toISOString()],
-                    );
-                    await recordUpdateEvent('apk_policy_seen', {
-                        apkReleaseId: updatePolicyRes.data.currentApkRelease?.apkReleaseId || null,
-                        policyVersion: updatePolicyRes.data.policyVersion,
-                        deliveryMode: updatePolicyRes.data.apk?.deliveryMode || 'in_app',
-                        status: 'seen',
-                    }).catch(() => null);
-                } else if (updatePolicyRes?.status === 404) {
-                    // Only clear the cached policy when the server definitively says
-                    // there is none for this device. Transient errors / skipped calls
-                    // keep the last known policy so the tablet keeps working offline.
-                    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.UPDATE_POLICY);
-                    await dbTransaction('delete from app_update_policy where id=1;');
-                }
-
                 const exeptions = await getExceptions();
                 if(exeptions){
                     for (let ex of exeptions){
@@ -272,6 +317,8 @@ export async function syncData(opts?: { force?: boolean; }) {
                 if (!app?.webeditor_info?.version) throw new Error(e);
                 AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
             }
+        } else {
+            await updatePolicyPromise;
         }
     }
 

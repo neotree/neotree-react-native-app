@@ -7,6 +7,7 @@ import {
   type AppRuntimeIdentity,
   type InstalledApkRelease,
 } from './appIdentity';
+import { parseNativeBuildVersion } from './versioning';
 
 export type UpdateDecisionState =
   | 'policy_missing'
@@ -60,11 +61,22 @@ const shouldInstallRelease = (
   if (isReleaseInstalled(release, identity)) return false;
   if (release?.isDowngrade) return false;
 
-  const nativeBuildVersion = Number(identity.nativeBuildVersion);
-  if (Number.isFinite(nativeBuildVersion) && release && release.versionCode < nativeBuildVersion) return false;
-  if (Number.isFinite(nativeBuildVersion) && release && release.versionCode > nativeBuildVersion) return true;
+  // The Android versionCode is the authoritative install signal. When we have a
+  // native build number we decide purely from it: lower = downgrade (skip),
+  // EQUAL = the same binary is already installed (skip), higher = real upgrade.
+  // Previously an equal versionCode fell through to runtimeVersion/versionName
+  // comparisons, so any drift between the editor's release metadata and what the
+  // device reported produced a phantom "update available" for an APK that was
+  // already installed. Runtime/versionName are only used as soft fallbacks when
+  // the device cannot report its native build number.
+  const nativeBuildVersion = parseNativeBuildVersion(identity.nativeBuildVersion);
+  if (nativeBuildVersion !== null && release) {
+    if (release.versionCode < nativeBuildVersion) return false;
+    if (release.versionCode === nativeBuildVersion) return false;
+    return true;
+  }
   if (release?.runtimeVersion && identity.runtimeVersion && release.runtimeVersion !== identity.runtimeVersion) return true;
-  if (release?.versionName && identity.appVersion !== release.versionName) return true;
+  if (release?.versionName && identity.appVersion && identity.appVersion !== release.versionName) return true;
 
   return !identity.runtimeVersion || !identity.appVersion;
 };
@@ -73,8 +85,8 @@ const getBlockedReason = (release: UpdatePolicyApkRelease | null, identity: AppR
   if (release?.isDowngrade) {
     return 'Target APK versionCode is lower than the installed build; Android blocks downgrade installs';
   }
-  const nativeBuildVersion = Number(identity.nativeBuildVersion);
-  if (Number.isFinite(nativeBuildVersion) && release && release.versionCode < nativeBuildVersion) {
+  const nativeBuildVersion = parseNativeBuildVersion(identity.nativeBuildVersion);
+  if (nativeBuildVersion !== null && release && release.versionCode < nativeBuildVersion) {
     return 'Target APK versionCode is lower than the installed build; Android blocks downgrade installs';
   }
   return null;
