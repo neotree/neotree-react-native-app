@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { withAndroidManifest, withDangerousMod } = require("@expo/config-plugins");
+const { registerAndroidReactPackage } = require("./registerAndroidReactPackage");
 
 const MODULE = `package org.neotree
 
@@ -216,20 +217,7 @@ module.exports = function withAndroidApkSignatureModule(config) {
       fs.writeFileSync(path.join(packageDir, "ApkSignaturePackage.kt"), PACKAGE);
 
       const mainApplicationPath = path.join(packageDir, "MainApplication.kt");
-      if (fs.existsSync(mainApplicationPath)) {
-        let source = fs.readFileSync(mainApplicationPath, "utf8");
-        if (!source.includes("ApkSignaturePackage()")) {
-          source = source.replace(
-            "return PackageList(this).packages",
-            [
-              "val packages = PackageList(this).packages.toMutableList()",
-              "            packages.add(ApkSignaturePackage())",
-              "            return packages",
-            ].join("\n"),
-          );
-          fs.writeFileSync(mainApplicationPath, source);
-        }
-      }
+      registerAndroidReactPackage(mainApplicationPath, "ApkSignaturePackage");
 
       return config;
     },

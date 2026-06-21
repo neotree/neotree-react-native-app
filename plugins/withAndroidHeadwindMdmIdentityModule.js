@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { withAndroidManifest, withDangerousMod } = require("@expo/config-plugins");
+const { registerAndroidReactPackage } = require("./registerAndroidReactPackage");
 
 const MODULE = `package org.neotree
 
@@ -182,30 +183,6 @@ function ensureGradleWiring(buildGradlePath, aarName) {
   fs.writeFileSync(buildGradlePath, source);
 }
 
-function registerPackage(mainApplicationPath) {
-  if (!fs.existsSync(mainApplicationPath)) return;
-  let source = fs.readFileSync(mainApplicationPath, "utf8");
-  if (source.includes("HeadwindMdmIdentityPackage()")) return;
-
-  if (source.includes("packages.add(ApkSignaturePackage())")) {
-    source = source.replace(
-      "packages.add(ApkSignaturePackage())",
-      "packages.add(ApkSignaturePackage())\n            packages.add(HeadwindMdmIdentityPackage())",
-    );
-  } else if (source.includes("return PackageList(this).packages")) {
-    source = source.replace(
-      "return PackageList(this).packages",
-      [
-        "val packages = PackageList(this).packages.toMutableList()",
-        "            packages.add(HeadwindMdmIdentityPackage())",
-        "            return packages",
-      ].join("\n"),
-    );
-  }
-
-  fs.writeFileSync(mainApplicationPath, source);
-}
-
 module.exports = function withAndroidHeadwindMdmIdentityModule(config) {
   config = withAndroidManifest(config, (config) => {
     ensureHeadwindQuery(config.modResults);
@@ -220,8 +197,9 @@ module.exports = function withAndroidHeadwindMdmIdentityModule(config) {
       const aarPath = findHeadwindAar(projectRoot, root);
 
       if (!aarPath) {
-        console.warn("withAndroidHeadwindMdmIdentityModule: no hmdm*.aar found; Headwind identity native module will be skipped.");
-        return config;
+        throw new Error(
+          "withAndroidHeadwindMdmIdentityModule: missing plugins/headwind/hmdm*.aar; refusing to build without Headwind identity support",
+        );
       }
 
       const libsDir = path.join(root, "app", "libs");
@@ -236,7 +214,7 @@ module.exports = function withAndroidHeadwindMdmIdentityModule(config) {
       fs.mkdirSync(packageDir, { recursive: true });
       fs.writeFileSync(path.join(packageDir, "HeadwindMdmIdentityModule.kt"), MODULE);
       fs.writeFileSync(path.join(packageDir, "HeadwindMdmIdentityPackage.kt"), PACKAGE);
-      registerPackage(path.join(packageDir, "MainApplication.kt"));
+      registerAndroidReactPackage(path.join(packageDir, "MainApplication.kt"), "HeadwindMdmIdentityPackage");
 
       return config;
     },
