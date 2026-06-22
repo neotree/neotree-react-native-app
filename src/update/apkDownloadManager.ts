@@ -6,6 +6,7 @@ import * as Application from 'expo-application';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import CryptoJS from 'crypto-js';
 
 import { ASYNC_STORAGE_KEYS } from '@/src/constants/async-storage';
@@ -14,10 +15,16 @@ import { getUpdatePolicyData } from '@/src/data/queries';
 import type { UpdatePolicyApkRelease } from '@/src/types';
 import type { UpdateDecision } from './orchestrator';
 import { recordUpdateEvent } from './otaTelemetry';
+import { getAppRuntimeIdentity } from './appIdentity';
+import { parseNativeBuildVersion } from './versioning';
+import { decideBackgroundDownloadAction, type BackgroundDownloadAction } from './backgroundDownloadDecision';
+
+export { decideBackgroundDownloadAction };
+export type { BackgroundDownloadAction };
 
 export type ApkDownloadState = {
   apkReleaseId: string;
-  status: 'idle' | 'downloading' | 'downloaded' | 'verified' | 'failed';
+  status: 'idle' | 'downloading' | 'paused' | 'downloaded' | 'verified' | 'failed';
   fileUri?: string | null;
   bytesWritten?: number;
   totalBytes?: number;
@@ -33,6 +40,10 @@ const APK_DIR = `${FileSystem.documentDirectory || ''}apk/`;
 let activeDownload: FileSystem.DownloadResumable | null = null;
 let activeReleaseId: string | null = null;
 let activeDownloadPromise: Promise<string> | null = null;
+// Set while a user-initiated pause is in flight so the download promise's catch
+// (expo rejects the in-flight download when paused) preserves the 'paused' state
+// instead of overwriting it with 'failed'.
+let pauseRequested = false;
 
 const ensureApkDir = async () => {
   if (!APK_DIR) return;
@@ -375,6 +386,8 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
   );
 
   await setState({ apkReleaseId: release.apkReleaseId, status: 'downloading', fileUri: targetUri });
+  // A new/resumed transfer clears any prior pause request.
+  pauseRequested = false;
 
   let downloadPromise!: Promise<string>;
   downloadPromise = (async () => {
@@ -391,6 +404,14 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
 
       return markDownloadedAndVerified(release, result.uri);
     } catch (e: any) {
+      // A user pause rejects the in-flight download. That is not a failure:
+      // pauseApkDownload has already persisted resumeData and the 'paused' state,
+      // so leave both intact and exit quietly.
+      if (pauseRequested) {
+        pauseRequested = false;
+        throw e;
+      }
+
       try {
         const saved = await activeDownload?.pauseAsync();
         if (saved?.resumeData) {
@@ -426,68 +447,37 @@ export const startApkDownload = async (release: UpdatePolicyApkRelease) => {
 
 export const pauseApkDownload = async () => {
   if (!activeDownload) return null;
+
+  // Flag the pause first so the download promise's catch keeps the 'paused' state.
+  pauseRequested = true;
   const saved = await activeDownload.pauseAsync();
   if (saved?.resumeData) {
     await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA, saved.resumeData);
   }
+
+  // Persist an explicit 'paused' state, preserving progress so the bar holds its
+  // position and the UI can offer a Resume control (instead of looking stalled).
+  const current = await getDownloadState();
+  await setState({
+    apkReleaseId: activeReleaseId || current?.apkReleaseId || '',
+    status: 'paused',
+    fileUri: current?.fileUri,
+    bytesWritten: current?.bytesWritten,
+    totalBytes: current?.totalBytes,
+  });
+
   await recordUpdateEvent('apk_download_paused', { apkReleaseId: activeReleaseId }).catch(() => null);
   return saved?.resumeData || null;
 };
 
 export const resumeApkDownload = async (release: UpdatePolicyApkRelease) => {
-  const resumeData = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RESUME_DATA);
-  if (!resumeData) return startApkDownload(release);
-
-  await ensureApkDir();
-  const targetUri = `${APK_DIR}${release.apkReleaseId}.apk`;
-  const headers = await getMobileDeviceHeaders({ method: 'GET', endpoint: release.downloadUrl || '' });
-
-  activeReleaseId = release.apkReleaseId;
-  activeDownload = FileSystem.createDownloadResumable(
-    release.downloadUrl || '',
-    targetUri,
-    { headers },
-    (progress) => {
-      setState({
-        apkReleaseId: release.apkReleaseId,
-        status: 'downloading',
-        fileUri: targetUri,
-        bytesWritten: progress.totalBytesWritten,
-        totalBytes: progress.totalBytesExpectedToWrite,
-      }).catch(() => null);
-    },
-    resumeData,
-  );
-
-  await setState({ apkReleaseId: release.apkReleaseId, status: 'downloading', fileUri: targetUri });
-  await recordUpdateEvent('apk_download_resumed', {
-    apkReleaseId: release.apkReleaseId,
-    versionName: release.versionName,
-    versionCode: release.versionCode,
-    runtimeVersion: release.runtimeVersion,
-  }).catch(() => null);
-
-  try {
-    const result = await activeDownload.resumeAsync();
-    if (!result?.uri) throw new Error('Download failed');
-
-    return markDownloadedAndVerified(release, result.uri);
-  } catch (e: any) {
-    await setState({
-      apkReleaseId: release.apkReleaseId,
-      status: 'failed',
-      fileUri: targetUri,
-      error: e?.message || 'Download error',
-    });
-    await recordUpdateEvent('apk_download_failed', {
-      apkReleaseId: release.apkReleaseId,
-      message: e?.message || 'Download error',
-    }).catch(() => null);
-    throw e;
-  } finally {
-    activeDownload = null;
-    activeReleaseId = null;
-  }
+  // `startApkDownload` already resumes from persisted resumeData when present
+  // (otherwise it starts fresh) AND de-duplicates against an in-flight download
+  // via the shared `activeDownloadPromise`. Delegating to it keeps "resume" and
+  // "start" on one race-free code path, so a manual Resume tap, the post-sync
+  // auto-retry and the connectivity-aware background controller can never spawn
+  // two writers against the same partial file.
+  return startApkDownload(release);
 };
 
 export const ensureApkDownloaded = async (decision: UpdateDecision) => {
@@ -498,8 +488,78 @@ export const ensureApkDownloaded = async (decision: UpdateDecision) => {
   if (state?.apkReleaseId === release.apkReleaseId && state.status === 'verified') {
     return state.fileUri || null;
   }
+  // Respect an explicit user pause: never auto-(re)start it from a routine sync.
+  if (state?.apkReleaseId === release.apkReleaseId && state.status === 'paused') {
+    return null;
+  }
 
   return startApkDownload(release);
+};
+
+export type DriveDownloadResult = { action: BackgroundDownloadAction; fileUri?: string | null; error?: string };
+
+/**
+ * Connectivity-aware background download driver. This is the piece that gives the
+ * APK channel OTA-grade behaviour: once an update is found it downloads in the
+ * background, and — crucially — when the connection drops and later returns it
+ * resumes from exactly where it left off (expo's resumeData) rather than waiting
+ * for the next content sync or a manual tap. Idempotent and de-duplicated, so the
+ * app root can safely call it on reconnect, on foreground and on a slow safety-net
+ * interval until the file is verified.
+ */
+// Wi-Fi-only enforcement (#2): when the policy is Wi-Fi-only, hold the auto-download
+// on metered/cellular links. Short-circuits without touching NetInfo when the policy
+// does not require Wi-Fi, and fails open (does not block) if connection type is
+// unknown — an update should never be starved because we couldn't read the network.
+const isMeteredBlocked = async (decision: UpdateDecision | null | undefined): Promise<boolean> => {
+  if (!decision?.policy?.apk?.wifiOnly) return false;
+  try {
+    const net = await NetInfo.fetch();
+    const isUnmetered = net.type === 'wifi' || net.type === 'ethernet';
+    const expensive =
+      net.details && 'isConnectionExpensive' in net.details
+        ? (net.details as { isConnectionExpensive?: boolean }).isConnectionExpensive
+        : null;
+    return !isUnmetered || expensive === true;
+  } catch {
+    return false;
+  }
+};
+
+export const driveApkBackgroundDownload = async (
+  decision: UpdateDecision | null | undefined,
+  opts?: { ignoreBackoff?: boolean },
+): Promise<DriveDownloadResult> => {
+  const state = await getDownloadState();
+  const action = decideBackgroundDownloadAction({
+    decision,
+    state,
+    activeReleaseId: getActiveDownloadReleaseId(),
+    retryReady: await shouldRetryNow(),
+    ignoreBackoff: opts?.ignoreBackoff,
+    meteredBlocked: await isMeteredBlocked(decision),
+  });
+
+  if (action === 'verified') {
+    // Defence in depth: a 'verified' record pointing at a file that has since been
+    // cleaned up must fall through to a fresh download, not silently stall.
+    if (state?.fileUri) {
+      const info = await FileSystem.getInfoAsync(state.fileUri);
+      if (info.exists) return { action: 'verified', fileUri: state.fileUri };
+    }
+  } else if (action !== 'download') {
+    return { action };
+  }
+
+  const release = decision!.currentApk!;
+  try {
+    const fileUri = await startApkDownload(release);
+    await resetDownloadBackoff();
+    return { action: 'download', fileUri };
+  } catch (e: any) {
+    await scheduleEscalatingRetry();
+    return { action: 'download', error: e?.message || 'Download error' };
+  }
 };
 
 export const attemptAutoRetryDownload = async (decision: UpdateDecision) => {
@@ -533,7 +593,90 @@ export const clearRetry = async () => {
   await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RETRY_AT);
 };
 
+// Escalating backoff for *unattended* background retries. A reconnect is a strong
+// signal and bypasses this (immediate resume); the backoff only paces the
+// "still online but the fetch keeps failing" case so a flaky CDN / server is not
+// hammered. It resets on a successful (re)start and on a fresh reconnect.
+const RETRY_BACKOFF_MINUTES = [1, 2, 5, 10, 15, 30];
+
+export const scheduleEscalatingRetry = async () => {
+  const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RETRY_ATTEMPTS);
+  const attempt = Math.max(0, Number(raw) || 0);
+  const minutes = RETRY_BACKOFF_MINUTES[Math.min(attempt, RETRY_BACKOFF_MINUTES.length - 1)];
+  await scheduleRetry(minutes);
+  await AsyncStorage.setItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RETRY_ATTEMPTS, `${attempt + 1}`);
+  return minutes;
+};
+
+export const resetDownloadBackoff = async () => {
+  await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_DOWNLOAD_RETRY_ATTEMPTS);
+  await clearRetry();
+};
+
 export const getActiveDownloadReleaseId = () => activeReleaseId;
+
+// ---------------------------------------------------------------------------
+// Post-install health verification (#4)
+//
+// When an install is started we persist APK_INSTALL_PENDING. On a later launch we
+// confirm the device is actually running the target build:
+//  - running versionCode >= target  -> install succeeded (emit apk_installed)
+//  - target not reached within the   -> install did not take (emit apk_install_failed,
+//    health window                       which the server maps to a rollback signal
+//                                         and feeds the auto-halt evaluator)
+// This closes the loop so a build that fails to apply across the fleet is detected
+// and can be pulled back, instead of silently appearing "shipped".
+// ---------------------------------------------------------------------------
+
+const DEFAULT_INSTALL_HEALTH_HOURS = 24;
+
+export type ApkInstallHealthOutcome = 'succeeded' | 'failed' | 'pending' | 'none';
+
+export const reconcileApkInstallHealth = async (): Promise<ApkInstallHealthOutcome> => {
+  const raw = await AsyncStorage.getItem(ASYNC_STORAGE_KEYS.APK_INSTALL_PENDING);
+  if (!raw) return 'none';
+
+  let pending: any;
+  try {
+    pending = JSON.parse(raw);
+  } catch {
+    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_INSTALL_PENDING);
+    return 'none';
+  }
+
+  const targetCode = parseNativeBuildVersion(pending?.versionCode);
+  const identity = getAppRuntimeIdentity();
+  const runningCode = parseNativeBuildVersion(identity.nativeBuildVersion);
+
+  // Success: the device is now running the target build (or newer).
+  if (targetCode !== null && runningCode !== null && runningCode >= targetCode) {
+    await recordUpdateEvent('apk_installed', {
+      apkReleaseId: pending?.apkReleaseId || null,
+      versionName: pending?.versionName || identity.appVersion,
+      versionCode: runningCode,
+      runtimeVersion: pending?.runtimeVersion || identity.runtimeVersion,
+    }).catch(() => null);
+    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_INSTALL_PENDING);
+    return 'succeeded';
+  }
+
+  // Failure: the health window has elapsed and the target build is still not live.
+  const policy = await getUpdatePolicyData().catch(() => null);
+  const windowHours = Math.max(1, Number(policy?.apk?.healthCheckHours) || DEFAULT_INSTALL_HEALTH_HOURS);
+  const startedAt = pending?.startedAt ? new Date(pending.startedAt).getTime() : null;
+  if (startedAt !== null && Date.now() - startedAt >= windowHours * 60 * 60 * 1000) {
+    await recordUpdateEvent('apk_install_failed', {
+      apkReleaseId: pending?.apkReleaseId || null,
+      reason: 'post_install_not_applied',
+      targetVersionCode: targetCode,
+      runningVersionCode: runningCode,
+    }).catch(() => null);
+    await AsyncStorage.removeItem(ASYNC_STORAGE_KEYS.APK_INSTALL_PENDING);
+    return 'failed';
+  }
+
+  return 'pending';
+};
 
 // ---------------------------------------------------------------------------
 // Offline peer-to-peer distribution

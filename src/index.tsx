@@ -9,7 +9,7 @@ import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
 import { syncData, addSocketEventsListeners } from './data';
 import { useAppContext } from './AppContext';
-import { Splash, ForcedUpdateGate, ApkUpdateReadyPrompt } from './components';
+import { Splash, ForcedUpdateGate, ApkUpdateReadyPrompt, ApkBackgroundDownloader } from './components';
 import { SyncStatus } from './components/sync-status';
 import {
     checkForOtaUpdateAndRecord,
@@ -168,6 +168,7 @@ export function Navigation() {
             <StatusBar style="dark" />
             {!authenticatedUser ? <Authentication /> : <HomeNavigator />}
             <SyncStatus />
+            {authenticatedUser ? <ApkBackgroundDownloader /> : null}
             {authenticatedUser ? <ForcedUpdateGate /> : null}
             {authenticatedUser ? <ApkUpdateReadyPrompt /> : null}
         </>

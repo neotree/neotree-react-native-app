@@ -29,6 +29,7 @@ export type UpdateEventType =
   | 'apk_install_started'
   | 'apk_install_blocked'
   | 'apk_installed'
+  | 'apk_install_failed'
   | 'apk_policy_seen'
   | 'apk_shared_offline'
   | 'apk_imported_offline'

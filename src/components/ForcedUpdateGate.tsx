@@ -52,7 +52,9 @@ export function ForcedUpdateGate() {
   const deliveryMode = updateDecision.deliveryMode || updateDecision.policy?.apk?.deliveryMode || 'in_app';
   const canUseInAppDownload = deliveryMode === 'in_app' || deliveryMode === 'hybrid';
   const isDownloading = state?.status === 'downloading';
+  const isPaused = state?.status === 'paused';
   const isDownloaded = state?.status === 'verified';
+  const canResume = isPaused || state?.status === 'failed';
   const progress = state?.totalBytes ? Math.min(1, (state?.bytesWritten || 0) / state.totalBytes) : null;
 
   const onDownload = async () => {
@@ -117,13 +119,13 @@ export function ForcedUpdateGate() {
 
         {canUseInAppDownload ? (
           <View style={styles.actions}>
-            {!isDownloaded && !isDownloading ? (
+            {!isDownloaded && !isDownloading && !canResume ? (
               <TouchableOpacity style={styles.primary} onPress={onDownload}>
                 <Text style={styles.primaryText}>Download update</Text>
               </TouchableOpacity>
             ) : null}
             {isDownloading ? <Text style={styles.body}>Downloading…</Text> : null}
-            {!isDownloading && state?.status === 'failed' ? (
+            {!isDownloading && canResume ? (
               <TouchableOpacity style={styles.primary} onPress={onResume}>
                 <Text style={styles.primaryText}>Resume download</Text>
               </TouchableOpacity>

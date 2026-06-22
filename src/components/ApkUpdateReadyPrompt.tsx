@@ -9,6 +9,7 @@ import {
   getDownloadState,
   installApkIfSafe,
   isUpdatesScreenFocused,
+  updateCopy,
 } from '@/src/update';
 
 const canOfferInAppInstall = (mode?: string | null) =>
@@ -127,11 +128,11 @@ export function ApkUpdateReadyPrompt() {
 
       prompting.current = true;
       Alert.alert(
-        'App update ready',
-        `NeoTree has downloaded version ${release.versionName}. Install it now?`,
+        updateCopy.apkReadyTitle(),
+        updateCopy.apkReadyBody(release.versionName),
         [
           {
-            text: 'Later',
+            text: updateCopy.later(),
             style: 'cancel',
             onPress: () => {
               snoozeRelease(release.apkReleaseId, SNOOZE_MS);
@@ -139,7 +140,7 @@ export function ApkUpdateReadyPrompt() {
             },
           },
           {
-            text: 'Install',
+            text: updateCopy.install(),
             onPress: () => {
               // Short snooze only: avoids an immediate re-prompt when returning
               // from the OS installer, but recovers quickly if it was blocked.
@@ -147,8 +148,8 @@ export function ApkUpdateReadyPrompt() {
               installApkIfSafe(state.fileUri || '', release)
                 .catch((e: any) => {
                   Alert.alert(
-                    'Install blocked',
-                    e?.message || 'NeoTree could not open the installer.',
+                    updateCopy.installBlockedTitle(),
+                    updateCopy.installBlockedBody(e?.message),
                   );
                 })
                 .finally(() => {

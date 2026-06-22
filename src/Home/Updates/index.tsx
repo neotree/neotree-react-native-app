@@ -475,6 +475,7 @@ export function UpdatesCenter({
     const isInAppOnly =
         isApkState && (deliveryMode === "in_app" || !deliveryMode);
     const isDownloading = downloadState?.status === "downloading";
+    const isPaused = downloadState?.status === "paused";
 
     // A verified download for the current target release that can be installed
     // right here, without internet.
@@ -545,6 +546,11 @@ export function UpdatesCenter({
             }
             if (isDownloading) {
                 return { label: "Downloading…", disabled: true };
+            }
+            if (isPaused) {
+                // A user-paused download resumes from where it left off; it is never
+                // auto-resumed by the background controller, so the card owns this.
+                return { label: "Resume download", onPress: handleDownload };
             }
             if (!online) {
                 return {

@@ -2,8 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Battery from 'expo-battery';
+import NetInfo from '@react-native-community/netinfo';
 
 import { useAppContext } from '@/src/AppContext';
+import { updateCopy } from '@/src/update';
 import {
   getDownloadState,
   pauseApkDownload,
@@ -66,9 +68,24 @@ export function ApkUpdateBanner({ cardOwnsPrimaryInstall = false }: ApkUpdateBan
         // ignore
       }
 
+      // Wi-Fi-only policy on a metered connection: explain why the download is
+      // waiting instead of leaving the banner looking stalled (#2).
+      if (updateDecision?.policy?.apk?.wifiOnly) {
+        try {
+          const net = await NetInfo.fetch();
+          const onWifi = net.type === 'wifi' || net.type === 'ethernet';
+          if (!onWifi) {
+            setEnvMessage(updateCopy.waitingForWifi());
+            return;
+          }
+        } catch {
+          // ignore — fail open
+        }
+      }
+
       setEnvMessage(null);
     })();
-  }, [updateDecision?.currentApk]);
+  }, [updateDecision?.currentApk, updateDecision?.policy?.apk?.wifiOnly]);
 
   if (!updateDecision?.currentApk || !updateDecision?.currentApk?.available) return null;
 
@@ -78,8 +95,10 @@ export function ApkUpdateBanner({ cardOwnsPrimaryInstall = false }: ApkUpdateBan
   const isManualOnly = deliveryMode === 'manual';
   const isHybrid = deliveryMode === 'hybrid';
   const isDownloading = state?.status === 'downloading';
+  const isPaused = state?.status === 'paused';
   const isDownloaded = state?.status === 'verified';
   const hasError = state?.status === 'failed';
+  const canResume = isPaused || hasError;
   const canUseInAppDownload = !isMdmOnly && !isManualOnly;
 
   const progress = state?.totalBytes
@@ -163,7 +182,9 @@ export function ApkUpdateBanner({ cardOwnsPrimaryInstall = false }: ApkUpdateBan
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
         </View>
-        <Text style={styles.progressText}>{Math.round(progress * 100)}% downloaded</Text>
+        <Text style={styles.progressText}>
+          {Math.round(progress * 100)}% downloaded{isPaused ? ' · Paused' : ''}
+        </Text>
         </>
       ) : null}
 
@@ -180,7 +201,7 @@ export function ApkUpdateBanner({ cardOwnsPrimaryInstall = false }: ApkUpdateBan
       ) : null}
 
       <View style={styles.actions}>
-        {canUseInAppDownload && !cardOwnsPrimaryInstall && !isDownloaded && !isDownloading ? (
+        {canUseInAppDownload && !cardOwnsPrimaryInstall && !isDownloaded && !isDownloading && !canResume ? (
           <TouchableOpacity
             style={isHybrid ? styles.actionButton : styles.actionButtonPrimary}
             onPress={onDownload}
@@ -195,9 +216,9 @@ export function ApkUpdateBanner({ cardOwnsPrimaryInstall = false }: ApkUpdateBan
           </TouchableOpacity>
         ) : null}
 
-        {canUseInAppDownload && !isDownloading && state?.status === 'failed' ? (
-          <TouchableOpacity style={styles.actionButton} onPress={onResume}>
-            <Text style={styles.actionText}>Resume</Text>
+        {canUseInAppDownload && !isDownloading && canResume ? (
+          <TouchableOpacity style={isPaused ? styles.actionButtonPrimary : styles.actionButton} onPress={onResume}>
+            <Text style={isPaused ? styles.actionPrimaryText : styles.actionText}>Resume</Text>
           </TouchableOpacity>
         ) : null}
 

@@ -4,10 +4,16 @@ import {
     cleanupApkDir,
     clearDownloadState,
     ensureApkDownloaded,
+    reconcileApkInstallHealth,
 } from "./apkDownloadManager";
 import { getUpdateDecision, type UpdateDecision } from "./orchestrator";
 
 export const applyUpdateFlowAfterSync = async (): Promise<UpdateDecision> => {
+    // Verify the outcome of any prior install before evaluating the next decision,
+    // so a build that failed to apply is reported (and can be auto-halted) rather
+    // than silently looking "shipped" (#4).
+    await reconcileApkInstallHealth().catch(() => null);
+
     const decision = await getUpdateDecision();
 
     await attemptAutoInstallIfDeferred();

@@ -47,6 +47,8 @@ export type UpdatePolicy = {
     deliveryMode?: ApkDeliveryMode | string | null;
     autoDownload: boolean;
     forceInstall: boolean;
+    wifiOnly?: boolean | null;
+    healthCheckHours?: number | null;
     gracePeriodHours?: number | null;
     forceAfter?: string | null;
     installWindow?: ApkInstallWindow | string | null;
