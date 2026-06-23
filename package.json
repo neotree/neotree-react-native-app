@@ -12,9 +12,9 @@
     "build:demo": "NODE_ENV=production NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
     "build:stage": "NODE_ENV=production NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage --clear-cache",
     "build:prod": "NODE_ENV=production NEOTREE_BUILD_TYPE=production eas build --platform android --profile production",
-    "build:local-demo": "NODE_ENV=production NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo --local",
-    "build:local-stage": "NODE_ENV=production NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage --clear-cache --local",
-    "build:local-prod": "NODE_ENV=production NEOTREE_BUILD_TYPE=production eas build --platform android --profile production --local"
+    "build:local-demo": "NODE_ENV=production NEOTREE_BUILD_TYPE=demo npx eas build --platform android --profile demo --local",
+    "build:local-stage": "NODE_ENV=production NEOTREE_BUILD_TYPE=stage npx eas build --platform android --profile stage --clear-cache --local",
+    "build:local-prod": "NODE_ENV=production NEOTREE_BUILD_TYPE=production npx eas build --platform android --profile production --local"
   },
   "jest": {
     "preset": "jest-expo"

@@ -82,7 +82,7 @@ export function Screen() {
                     </Box>
                 )}
 
-                {!moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'single_select'].includes(activeScreen?.type) && (
+                {!moreNavOptions?.hideSearch && ['multi_select', 'diagnosis', 'problems', 'single_select'].includes(activeScreen?.type) && (
                     <Content>
                         <TextInput
                             placeholder="Search"
