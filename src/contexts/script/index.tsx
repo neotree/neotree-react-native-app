@@ -100,6 +100,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [loadingScreen, setLoadingScreen] = useState(false);
     const [nuidSearchForm, setNuidSearchForm] = useState<types.NuidSearchFormField[]>([]);
+    const [startSessionMode, setStartSessionMode] = useState<null | 'bidStillBirth'>(
+        route.params?.session?.data?.startSessionMode || null
+    );
     const [eligibilityCompleted, setEligibilityCompleted] = useState(Boolean(route.params?.session?.data?.eligibilityCompleted));
     const [eligibilityAutoFillValues, setEligibilityAutoFillValues] = useState<types.ScreenEntryValue[]>(
         route.params?.session?.data?.eligibilityAutoFillValues || []
@@ -794,12 +797,20 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
+        const {
+            completed,
+            cancelled,
+            dateAndTimeOfDeath,
+            nuidSearchForm: payloadNuidSearchForm,
+            startSessionMode: payloadStartSessionMode,
+            ...payload
+        } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
         const matches: any[] = [];
         const resolvedNuidSearchForm = payloadNuidSearchForm || nuidSearchForm;
+        const resolvedStartSessionMode = payloadStartSessionMode ?? startSessionMode;
 
         let uid = entries.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -844,6 +855,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 dateAndTimeOfDeath,
 				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
 				app_mode: application?.mode,
+                startSessionMode: resolvedStartSessionMode,
 				country: location?.country,
 				hospital_id: location?.hospital,
 				started_at: session?.data?.started_at || startTime,
@@ -883,6 +895,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         location,
         screens,
         script,
+        startSessionMode,
         restructureForm,
         nuidSearchForm,
         eligibilityCompleted,
@@ -1353,6 +1366,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         startTime,
         refresh,
         nuidSearchForm,
+        startSessionMode,
         eligibilityCompleted,
         eligibilityAutoFillValues,
         matched,
@@ -1390,6 +1404,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         setMoreNavOptions,
         setRefresh,
         setNuidSearchForm,
+        setStartSessionMode,
         setEligibilityCompleted,
         setEligibilityAutoFillValues,
         setMatched,
