@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
+import { filterFieldToBidStillBirthOptions } from '@/src/utils/bid-stillbirth-outcome';
 import {
     formatDateLikeLabel,
     isTimestampLabel,
@@ -31,6 +32,7 @@ export function TypeForm({ }: TypeFormProps) {
         activeScreenEntry,
         mountedScreens,
         nuidSearchForm,
+        startSessionMode,
         eligibilityAutoFillValues,
         evaluateCondition,
         parseCondition,
@@ -58,13 +60,22 @@ export function TypeForm({ }: TypeFormProps) {
     // Transform dropdown and multi_select fields to clear values if items is not empty
     const transformedFields = original.fields.map((field: any) => {
         const normalizedType = normalizeFieldType(field.type);
-        if ((normalizedType === "dropdown" || normalizedType === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
-            return {
-                ...field,
-                values: "",
-            };
+        const transformedField = (() => {
+            if ((normalizedType === "dropdown" || normalizedType === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
+                return {
+                    ...field,
+                    values: "",
+                };
+            }
+
+            return field;
+        })();
+
+        if (startSessionMode === 'bidStillBirth') {
+            return filterFieldToBidStillBirthOptions(transformedField);
         }
-        return field;
+
+        return transformedField;
     });
 
     if (!hasManual) {
@@ -116,7 +127,7 @@ export function TypeForm({ }: TypeFormProps) {
         ...original,
         fields: updatedFields,
     };
-}, [activeScreen?.data?.metadata, normalizeFieldType]);
+}, [activeScreen?.data?.metadata, normalizeFieldType, startSessionMode]);
 
     const cachedVal = activeScreenEntry?.values || [];
     const canAutoFill = !mountedScreens[activeScreen?.id];
