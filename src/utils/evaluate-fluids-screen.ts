@@ -9,14 +9,50 @@ export function evaluateFluidsScreen({
     evaluateCondition,
 }: EvaluateDrugsScreenParams) {
     const isCalculator = scriptType === 'dff_calculator';
-    
+
     const metadata = { ...screen.data?.metadata, };
     const screenFluids = (metadata.fluids || []) as DrugField[];
+    const screenFluidKeys = screenFluids.map(d => `${d.key}`.toLowerCase());
+
+    // The session values and key/value map are identical for every fluid,
+    // so build them once instead of once per library item.
+    const values = entries.reduce((acc: any[], e) => {
+        acc.push(...(e.value || []), ...(e.values || []));
+        return acc;
+    }, []);
+
+    const entriesKeyVal: { [key: string]: any[]; } = {};
+    let hasKeyedValue = false;
+
+    values.forEach(v => {
+        if (v.key) {
+            hasKeyedValue = true;
+            const key = `${v.key}`.toLowerCase();
+
+            let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
+            if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
+            entriesKeyVal[key] = value;
+        }
+    });
+
+    // evaluateCondition runs a full parseCondition over the session per call;
+    // fluids often share condition strings, so resolve each string once.
+    // Matching the previous behaviour, conditions only evaluate when the
+    // session has at least one keyed value (otherwise they stay unmet).
+    const conditionResultCache = new Map<string, boolean>();
+    const resolveCondition = (condition: string) => {
+        if (!condition) return true;
+        if (!hasKeyedValue) return false;
+        if (!conditionResultCache.has(condition)) {
+            conditionResultCache.set(condition, evaluateCondition(condition));
+        }
+        return conditionResultCache.get(condition)!;
+    };
 
     const fluids = drugsLibrary
         .filter(item => item.type === 'fluid')
         .map(d => {
-            const screenDrugIndex = screenFluids.map(d => `${d.key}`.toLowerCase()).indexOf(`${d.key}`.toLowerCase());
+            const screenDrugIndex = screenFluidKeys.indexOf(`${d.key}`.toLowerCase());
             const screenDrug = screenFluids[screenDrugIndex];
             if (screenDrug) {
                 return {
@@ -39,28 +75,7 @@ export function evaluateFluidsScreen({
                 condition = `${d.calculator_condition || ''}`;
             }
 
-            let conditionMet = !condition ? true : false;
-
-            const entriesKeyVal: { [key: string]: any[]; } = {};
-
-            const values = entries.reduce((acc: any[], e) => [
-                ...acc,
-                ...(e.value || []),
-                ...(e.values || []),
-            ], []);
-
-            values.forEach(v => {
-                if (v.key) {
-                    let key = `${v.key}`.toLowerCase();
-
-                    let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
-                    if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
-                    if (condition) {
-                        conditionMet = evaluateCondition(condition);
-                    }
-                    entriesKeyVal[key] = value;
-                }
-            });
+            const conditionMet = resolveCondition(condition);
 
             const weights = weightKeys.map(key => (entriesKeyVal[key] || [])[0])
                 .filter(n => (n !== undefined) || (n !== null) || (n !== ''))
@@ -144,8 +159,12 @@ export function evaluateFluidsScreen({
             };
         });
 
-    metadata.fluids = fluids
-        .filter((d, i) => fluids.map(d => d.key).indexOf(d.key) === i); // remove duplicates
+    const seenFluidKeys = new Set<string>();
+    metadata.fluids = fluids.filter(d => {
+        if (seenFluidKeys.has(d.key)) return false; // remove duplicates
+        seenFluidKeys.add(d.key);
+        return true;
+    });
 
     return {
         ...screen,
