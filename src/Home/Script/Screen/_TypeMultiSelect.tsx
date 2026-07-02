@@ -48,6 +48,10 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     }, []);
 
     const syncValue = React.useCallback((_value: typeof value) => {
+        // Supersede any pending debounced sync so its stale state can't fire
+        // after this emission and silently drop a just-toggled selection.
+        clearScheduledSync();
+
         const keys = Object.keys(_value).filter(key => _value[key]);
 
         // Validate that all selected items with enterValueManually have value2 filled
@@ -101,7 +105,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
         }), {} as Record<string, any>));
 
         setEntryValues?.(entryValues);
-    }, [metadata, printable, setEntryValues]);
+    }, [clearScheduledSync, metadata, printable, setEntryValues]);
 
     const scheduleValueSync = React.useCallback((_value: typeof value, immediate = false) => {
         clearScheduledSync();

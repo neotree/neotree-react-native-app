@@ -69,6 +69,10 @@ export function DropDownField({
     }, [clearManualCommitTimeout, conditionMet]);
 
     React.useEffect(() => {
+        // A pending commit means the user is mid-typing; syncing the (older)
+        // committed entry back now would drop their latest characters.
+        if (manualCommitTimeoutRef.current) return;
+
         const nextState = {
             value: `${entryValue?.value || ''}`,
             value2: `${entryValue?.value2 || ''}`,
@@ -171,6 +175,10 @@ export function DropDownField({
                 value={localValue.value}
                 options={opts}
                 onChange={(val, option) => {
+                    // Cancel any pending manual-entry commit so its stale closure
+                    // can't fire later and overwrite this new selection.
+                    clearManualCommitTimeout();
+
                     const requiresManualEntry = !!(option as any)?.enterValueManually;
                     const nextState = {
                         value: `${val || ''}`,

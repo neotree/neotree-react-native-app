@@ -361,7 +361,9 @@ export function TypeForm(_: TypeFormProps) {
         });
     }, [repeatable, metadata, canAutoFill, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType, cachedVal, cachedValuesByKey]);
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
+    // Lazy initializer: getValues does a full pass over every field (prepopulation,
+    // option parsing), so it must only run once at mount, not on every render.
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues);
 
 
     const deepSanitize = React.useCallback((input: any): any => {
