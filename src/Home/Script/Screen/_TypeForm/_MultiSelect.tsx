@@ -61,6 +61,10 @@ export function MultiSelectField({
     }, [syncTimeoutRef]);
 
     const emitSelectionState = useCallback((state: Record<string, undefined | types.ScreenEntryValue>) => {
+        // Supersede any pending debounced sync so its stale state can't fire
+        // after this emission and silently drop a just-toggled selection.
+        clearScheduledSync();
+
         const selectedValues = Object.values(state).filter((v): v is types.ScreenEntryValue => !!v);
         const hasInvalidSelection = selectedValues.some(v =>
             v?.enterValueManually && !`${v?.value2 || ''}`.trim()
@@ -78,7 +82,7 @@ export function MultiSelectField({
                 ...v,
             })),
         });
-    }, [onChange]);
+    }, [clearScheduledSync, onChange]);
 
     const scheduleSelectionSync = useCallback((state: Record<string, undefined | types.ScreenEntryValue>, immediate = false) => {
         clearScheduledSync();
