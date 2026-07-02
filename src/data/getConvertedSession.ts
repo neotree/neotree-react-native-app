@@ -174,7 +174,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           country,
           hospital_id,
           dateAndTimeOfDeath,
-          diagnoses: diagnoses.map((d: any) => ({
+          diagnoses: diagnoses.filter((d: any) => d).map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,
               value: d.value,
@@ -185,7 +185,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
               hcw_reason_given: d.hcw_reason_given,
             },
           })),
-          problems: problems.map((d: any) => ({
+          problems: problems.filter((d: any) => d).map((d: any) => ({
             [d.key || d.name]: {
               diagnosis: d.name,
               value: d.value,

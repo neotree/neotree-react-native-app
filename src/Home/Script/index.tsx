@@ -9,6 +9,7 @@ import { Start } from './Start';
 import { Screen } from './Screen';
 import { Summary } from './Summary';
 import { ReviewScreen } from './Screen/ReviewScreen';
+import { EligibilityCriteria } from './EligibilityCriteria';
 
 export function Script(props: types.StackNavigationProps<types.HomeRoutes, 'Script'>) {
 	const isFocused = useIsFocused();
@@ -46,9 +47,24 @@ function ScriptComponent({ navigation }: types.StackNavigationProps<types.HomeRo
 		setNavOptions,
 		goBack,
 		loadScript,
+		eligibilityCompleted,
+		setEligibilityCompleted,
+		setEligibilityAutoFillValues,
 	} = useScriptContext();
 
 	useEffect(() => { init(); }, [init]);
+
+	const scriptIdentity = script?.id || script?.script_id || script?.data?.id || script?.data?.script_id;
+	const previousScriptIdentityRef = React.useRef<typeof scriptIdentity>(undefined);
+
+	React.useEffect(() => {
+		if (!scriptIdentity) return;
+		if (previousScriptIdentityRef.current && previousScriptIdentityRef.current !== scriptIdentity) {
+			setEligibilityCompleted(false);
+			setEligibilityAutoFillValues([]);
+		}
+		previousScriptIdentityRef.current = scriptIdentity;
+	}, [scriptIdentity, setEligibilityAutoFillValues, setEligibilityCompleted]);
 
 	React.useEffect(() => { setNavOptions(); }, [script, activeScreen, moreNavOptions]);
 
@@ -97,7 +113,11 @@ function ScriptComponent({ navigation }: types.StackNavigationProps<types.HomeRo
 					<>
 						<Box flex={1} paddingBottom="m" backgroundColor="white">
 							{!activeScreen ? (
-								<Start />
+								script?.data?.eligibilityCriteria && !eligibilityCompleted ? (
+									<EligibilityCriteria onEligible={() => setEligibilityCompleted(true)} />
+								) : (
+									<Start />
+								)
 							) : (
 								<Screen />
 							)}

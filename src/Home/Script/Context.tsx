@@ -44,9 +44,11 @@ export type ContextType = ReturnType<typeof getScriptUtils> & {
     summary: any;
     matched: null | types.MatchedSession;
     mountedScreens: { [id: string]: boolean; };
-	patientDetails: PatientDetails;
+    patientDetails: PatientDetails;
     nuidSearchForm: types.NuidSearchFormField[];
+    startSessionMode: null | 'bidStillBirth';
     setNuidSearchForm: React.Dispatch<React.SetStateAction<types.NuidSearchFormField[]>>;
+    setStartSessionMode: React.Dispatch<React.SetStateAction<null | 'bidStillBirth'>>;
 	setPatientDetails: React.Dispatch<React.SetStateAction<PatientDetails>>;
 	saveSession: (params?: any) => Promise<any>;
 	createSummaryAndSaveSession: (params?: any) => Promise<any>;

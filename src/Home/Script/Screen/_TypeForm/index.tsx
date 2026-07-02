@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
+import { filterFieldToBidStillBirthOptions } from '@/src/utils/bid-stillbirth-outcome';
 import {
     formatDateLikeLabel,
     isTimestampLabel,
@@ -156,6 +157,9 @@ export function TypeForm(_: TypeFormProps) {
         activeScreenEntry,
         mountedScreens,
         nuidSearchForm,
+        startSessionMode,
+        eligibilityAutoFillValues,
+        configuration,
         evaluateCondition,
         parseCondition,
         getPrepopulationData,
@@ -175,24 +179,32 @@ export function TypeForm(_: TypeFormProps) {
 
         const transformedFields = original.fields.map((field: any) => {
             const normalizedType = normalizeFieldType(field.type);
-            if (
-                (normalizedType === "dropdown" || normalizedType === "multi_select") &&
-                Array.isArray(field.items) &&
-                field.items.length > 0
-            ) {
-                return {
-                    ...field,
-                    values: "",
-                };
+            const transformedField = (() => {
+                if (
+                    (normalizedType === "dropdown" || normalizedType === "multi_select") &&
+                    Array.isArray(field.items) &&
+                    field.items.length > 0
+                ) {
+                    return {
+                        ...field,
+                        values: "",
+                    };
+                }
+                return field;
+            })();
+
+            if (startSessionMode === 'bidStillBirth') {
+                return filterFieldToBidStillBirthOptions(transformedField);
             }
-            return field;
+
+            return transformedField;
         });
 
         return {
             ...original,
             fields: transformedFields,
         };
-    }, [activeScreen?.data?.metadata, normalizeFieldType]);
+    }, [activeScreen?.data?.metadata, normalizeFieldType, startSessionMode]);
 
     const cachedVal = useMemo(() => activeScreenEntry?.values || [], [activeScreenEntry?.values]);
     const canAutoFill = !mountedScreens[activeScreen?.id];
@@ -234,13 +246,16 @@ export function TypeForm(_: TypeFormProps) {
             const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
 
             const cached = cachedValuesByKey.get(`${f.key || ''}`.toLowerCase());
+            const eligibilityAutoFill = eligibilityAutoFillValues.find(
+                v => `${v.key}`.toLowerCase() === `${f.key}`.toLowerCase()
+            );
 
-            let value = cached?.value || `${matched || ''}` || null;
-            let valueText = cached?.valueText || matched || null;
-            let exportValue: string | undefined = undefined;
-            let exportLabel: string | undefined = undefined;
+            let value = cached?.value || eligibilityAutoFill?.value || `${matched || ''}` || null;
+            let valueText = cached?.valueText || eligibilityAutoFill?.valueText || matched || null;
+            let exportValue: string | undefined = eligibilityAutoFill?.exportValue;
+            let exportLabel: string | undefined = eligibilityAutoFill?.exportLabel;
 
-            let value2 = cached?.value2 || null;
+            let value2 = cached?.value2 || eligibilityAutoFill?.value2 || null;
 
             if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
                 value = cached?.value || patientNUID;
@@ -290,7 +305,7 @@ export function TypeForm(_: TypeFormProps) {
                 })();
                 const matchedOpt = opts.find(o => `${o.value}` === `${matched || ''}`);
 
-                if (!cached?.value) {
+                if (!cached?.value && !eligibilityAutoFill?.value) {
                     value = null;
                     valueText = null;
                     
@@ -340,10 +355,11 @@ export function TypeForm(_: TypeFormProps) {
                 ips: f.ips,
                 exportValue,
                 exportLabel,
+                calculateValue: cached?.calculateValue ?? eligibilityAutoFill?.calculateValue,
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, patientNUID, activeScreen?.data?.printDisplayColumns, getPrepopulationData, normalizeFieldType, cachedVal, cachedValuesByKey]);
+    }, [repeatable, metadata, canAutoFill, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType, cachedVal, cachedValuesByKey]);
 
     const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
 
@@ -540,37 +556,108 @@ export function TypeForm(_: TypeFormProps) {
         });
     }, [ctx.entries, repeatable, values, valuesByKey]);
 
+    // Keys referenced by any field condition on this screen (the `$key` tokens).
+    // Values outside this set can never change a condition's outcome.
+    const conditionDependencyKeys = React.useMemo(() => {
+        const keys = new Set<string>();
+        metadata?.fields?.forEach((field: any) => {
+            const condition = `${field?.condition ?? ''}`;
+            (condition.match(/\$[\w-]+/g) || []).forEach(token => {
+                keys.add(token.slice(1).toLowerCase());
+            });
+        });
+        return keys;
+    }, [metadata?.fields]);
+
+    // Compact fingerprint of the condition-relevant slice of the form values.
+    // value2 (manual-entry text) only reaches conditions through key2 or
+    // multi-select item lists, so plain typing does not alter the signature.
+    const conditionValuesSignature = React.useMemo(() => {
+        if (!conditionDependencyKeys.size) return '';
+
+        const parts: string[] = [];
+
+        values.forEach(v => {
+            const key = `${v?.key || ''}`.toLowerCase();
+            const key2 = `${v?.key2 || ''}`.toLowerCase();
+
+            const referencesKey = !!key && conditionDependencyKeys.has(key);
+            const referencesKey2 = !!key2 && conditionDependencyKeys.has(key2);
+            const referencesArrayItem = Array.isArray(v?.value) && v.value.some((item: any) => {
+                const itemKey = `${item?.key || ''}`.toLowerCase();
+                const itemKey2 = `${item?.key2 || ''}`.toLowerCase();
+                const parentKey = `${item?.parentKey || ''}`.toLowerCase();
+                return (!!itemKey && conditionDependencyKeys.has(itemKey))
+                    || (!!itemKey2 && conditionDependencyKeys.has(itemKey2))
+                    || (!!parentKey && conditionDependencyKeys.has(parentKey));
+            });
+
+            if (!referencesKey && !referencesKey2 && !referencesArrayItem) return;
+
+            parts.push(JSON.stringify([
+                key,
+                v?.value ?? null,
+                v?.calculateValue ?? null,
+                (referencesKey2 || referencesArrayItem) ? (v?.value2 ?? null) : null,
+                key2,
+            ]));
+        });
+
+        return parts.join('|');
+    }, [conditionDependencyKeys, values]);
+
     const conditionMetByKey = React.useMemo(() => {
         const map = new Map<string, boolean>();
         metadata?.fields?.forEach((field: any) => {
             map.set(`${field?.key || ''}`.toLowerCase(), evaluateFieldCondition(field));
         });
         return map;
-    }, [evaluateFieldCondition, metadata?.fields]);
+        // Running the eval-based condition sweep on every value commit is what froze
+        // large forms. While this screen is mounted, other entries/searches are static
+        // and the current screen's entry only echoes `values`, so outcomes can only
+        // change with the signature, the fields themselves, or the global configuration.
+        // evaluateFieldCondition is deliberately omitted: whenever the memo does re-run,
+        // the factory closes over the fresh callback anyway.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [metadata?.fields, conditionValuesSignature, configuration]);
 
     const computedEntryValues = React.useMemo(() => {
         if (repeatable) return undefined;
 
+        const entryValsToRemove: number[] = [];
+
         const completed = values.reduce((acc, { value }, i) => {
             const field = metadata.fields[i];
             const conditionMet = conditionMetByKey.get(`${field?.key || ''}`.toLowerCase()) ?? true;
-            if (conditionMet && !field.optional && !value) return false;
+
+            let hasValue = !!value;
+            if (normalizeFieldType(field?.type) === fieldsTypes.MULTI_SELECT) hasValue = !!value?.length;
+            if (field?.optional) hasValue = true;
+
+            if (!conditionMet) entryValsToRemove.push(i);
+
+            if (conditionMet && !hasValue) return false;
             return acc;
         }, true);
 
-        const hasErrors = values.some(v => !!v.error);
-        const entryVals = values.filter(v => (
-            v?.value !== null
-            && v?.value !== undefined
-            && v?.value !== ''
-        ));
+        // Ignore errors on fields whose condition is no longer met — they are not
+        // rendered, so a stale error there would block completion invisibly.
+        const hasErrors = values.some((v, i) => !entryValsToRemove.includes(i) && !!v.error);
 
         if (hasErrors || !completed) {
             return undefined;
         }
 
-        return entryVals;
-    }, [conditionMetByKey, metadata.fields, repeatable, values]);
+        return values.filter((v, i) => {
+            if (entryValsToRemove.includes(i)) return false;
+
+            return (
+                v?.value !== null
+                && v?.value !== undefined
+                && v?.value !== ''
+            );
+        });
+    }, [conditionMetByKey, metadata.fields, normalizeFieldType, repeatable, values]);
 
     React.useEffect(() => {
         if (!repeatable) {
