@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { Alert } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Br, Card, Dropdown, TextInput, Modal, Text, Radio } from '@/src/components';
@@ -20,10 +21,11 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         printable,
         drugs,
     } = useMemo(() => {
-        const reasons: { value: string; label: string; enterValueManually: boolean; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
+        const reasons: { value: string; label: string; enterValueManually: boolean; enterValueManuallyLabel?: string; }[] = (activeScreen?.data?.reasons || []).map((item: any) => ({
             value: item.key,
             label: item.value,
             enterValueManually: !!item.enterValueManually,
+            enterValueManuallyLabel: item.enterValueManuallyLabel,
         }));
 
         let cachedVal = (activeScreenEntry?.values || [])[0]?.value || [];
@@ -114,7 +116,16 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
         }, 0);
     }, [drugs, setEntryValues]);
 
+    const selectedReason = reasons.find(o => o.value === currentDrug?.comment?.key);
+    const enterValueManually = !!selectedReason?.enterValueManually;
+    const manualEntryLabel = `${selectedReason?.enterValueManuallyLabel || ''}`.trim() || 'Other';
+
     const closeModal = useCallback(() => {
+        if (enterValueManually && !`${currentDrug?.comment?.label || ''}`.trim()) {
+            Alert.alert('Value required', `Enter a value for "${manualEntryLabel}" before closing.`);
+            return;
+        }
+
         let _values: typeof values = []; 
         setValues(prev => {
             const comments = currentDrug?.comment?.label ? [currentDrug?.comment] : undefined;
@@ -131,9 +142,7 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
             const completed = drugs.length === _values.length;
             setEntryValues(completed ? _values : undefined);
         }, 0);
-    }, [currentDrug, drugs, setValues, setEntryValues]);
-
-    const enterValueManually = !!reasons.find(o => o.value === currentDrug?.comment?.key)?.enterValueManually;
+    }, [currentDrug, drugs, enterValueManually, manualEntryLabel, setValues, setEntryValues]);
 
     return (
         <Box>
@@ -158,10 +167,11 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                         value={currentDrug?.comment?.key}
                         options={reasons}
                         onChange={(_, o) => {
+                            const requiresManualEntry = !!(o as typeof reasons[number])?.enterValueManually;
                             setCurrentDrug(prev => ({ 
                                 ...prev!, 
                                 other: undefined,
-                                comment: { key: `${o.value}`, label: `${o.label}`, }, 
+                                comment: { key: `${o.value}`, label: requiresManualEntry ? '' : `${o.label}`, }, 
                             }));
                         }}
                     />
@@ -172,10 +182,11 @@ export function TypeDrugs({ entry }: TypeDrugsProps) {
                                 <Box mt="l">
                                     <TextInput
                                         multiline
-                                        label="Other (Optional)"
+                                        label={`${manualEntryLabel} *`}
                                         value={currentDrug?.comment?.label || ''}
                                         numberOfLines={3}
                                         onChangeText={v => setCurrentDrug(prev => ({ ...prev!, comment: { ...prev?.comment, label: v, }, }))}
+                                        errors={!`${currentDrug?.comment?.label || ''}`.trim() ? ['This field is required'] : []}
                                     />
                                 </Box>
                             </>

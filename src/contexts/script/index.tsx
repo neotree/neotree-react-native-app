@@ -1,9 +1,10 @@
-import { 
-    createContext, 
-    useContext, 
-    useState, 
-    useMemo, 
+import {
+    createContext,
+    useContext,
+    useState,
+    useMemo,
     useCallback,
+    useRef,
 } from "react";
 import { type TextProps, Alert, View, TouchableOpacity, Platform } from 'react-native';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
@@ -175,13 +176,27 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [reviewConfigurations, setReviewConfigurations] = useState<any[]>([]);
 
+    // Parsed conditions are fully-substituted literal expressions, so a given
+    // string always evaluates to the same result. eval() is very slow on Hermes;
+    // caching by string skips it for the repeated sweeps large forms perform.
+    const evalResultCacheRef = useRef(new Map<string, any>());
+
     const evaluateCondition = useCallback((condition: string, defaultEval = false) => {
+        const cache = evalResultCacheRef.current;
+        const cacheKey = `${defaultEval}:${condition}`;
+
+        if (cache.has(cacheKey)) return cache.get(cacheKey);
+
         let conditionMet = defaultEval;
         try {
             conditionMet = eval(condition);
         } catch (e) {
             // do nothing
         }
+
+        if (cache.size >= 2000) cache.clear();
+        cache.set(cacheKey, conditionMet);
+
         return conditionMet;
     }, []);
 
@@ -340,8 +355,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 values = value || values || [];
 
                 values = values.reduce((acc: typeof values, v) => {
-                    acc = [...acc, v];
-                    if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
+                    acc.push(v);
+                    if (v.value2 && v.key2) acc.push({ value: v.value2, key: v.key2, });
                     return acc;
                 }, []);
                 
@@ -354,24 +369,31 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // Handle both array and non-array values
                 values = values
                     .reduce((acc: types.ScreenEntryValue[], e) => {
-                        acc = [
-                            ...acc,
-                            ...(e.value && Array.isArray(e.value) ? e.value : [e]),
-                        ];
-
-                        acc.forEach(v => {
-                            if (v.value2) {
-                                acc.push({
-                                    ...v,
-                                    value: v.value2,
-                                });
-                            }
-                        });
-
+                        acc.push(...(e.value && Array.isArray(e.value) ? e.value : [e]));
                         return acc;
                     }, []);
-        
-                let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+
+                // Make manual-entry text (value2) substitutable under the same key.
+                // Exactly one clone per value, appended after all originals, with
+                // value2 stripped so clones can never be cloned again. (The previous
+                // in-loop acc.forEach re-cloned every prior clone on each iteration,
+                // doubling them per value — exponential once any value2 was set.)
+                const value2Substitutions = values
+                    .filter(v => v.value2)
+                    .map(v => ({ ...v, value: v.value2, value2: undefined }));
+
+                if (value2Substitutions.length) {
+                    values = values.concat(value2Substitutions);
+                }
+
+                // Each parseValue pass is ~8 string split/joins over the whole
+                // condition; once no $tokens remain there is nothing left to
+                // substitute, so skip the remaining values. The first value is
+                // always processed because parseValue also normalizes the string
+                // (lowercase/spacing) even when it substitutes nothing.
+                let c = values.reduce((acc, v, i) => (
+                    (i > 0 && acc.indexOf('$') === -1) ? acc : parseValue(acc, v)
+                ), condition);
 
                 let chunks: string[] = values.filter(v => v.parentKey)
                     .map(v => parseValue(condition, {

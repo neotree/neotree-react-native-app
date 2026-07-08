@@ -84,7 +84,11 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                             const otherField = fields.find(f =>
                                 String(f.key).toLowerCase() === `other${field.key}`.toLowerCase()
                             );
-                            return !!values[otherField?.key]?.['value'];
+                            // Only apply the legacy other<key> companion-field convention when
+                            // the script authored one; editor-driven manual entry
+                            // (enterValueManually) keeps the text in value2 and is already
+                            // covered by the standard value/error check below.
+                            if (otherField) return !!values[otherField.key]?.['value'];
                         }
                         const conditionMet = evaluateCondition(field,forms?.[index]);
                         if (!conditionMet) return true;
@@ -189,9 +193,10 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
                     if (otherField) {
                         return form.values[otherField?.key]?.['value'] || form.values[otherField]?.['value'] || ''
-                    } else {
-                        return ''
                     }
+
+                    // Editor-driven manual entry: the typed text lives in value2.
+                    return value['value2'] || value['valueText'] || value['value'] || ''
                 }
             }
             return value['valueText'] || value['value']
