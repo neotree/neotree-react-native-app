@@ -10,13 +10,5 @@ type FormItemProps = React.PropsWithChildren<{
 export function FormItem({
     children,
 }: FormItemProps) {
-    const [mounted, setMounted] = React.useState(false);
-
-    React.useEffect(() => { setMounted(true); }, []);
-
-    return (
-        <>
-            {!!mounted && children}
-        </>
-    );
+    return <>{children}</>;
 }
