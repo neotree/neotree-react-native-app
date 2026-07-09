@@ -100,48 +100,10 @@ const getConditionValue = (entry?: types.ScreenEntryValue | null) => {
     return entry.value ?? entry.valueText;
 };
 
-const parseConditionRequirements = (condition?: string | null) => {
-    if (!condition) return [] as { key: string; value: string; rawValue: string }[];
-
-    return Array.from(condition.matchAll(/\$([A-Za-z0-9_.-]+)\s*(?:={1,2})\s*(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^\s)&|]+))/g))
-        .map(([, key, doubleQuoted, singleQuoted, backtickQuoted, unquoted]) => {
-            const rawValue = doubleQuoted ?? singleQuoted ?? backtickQuoted ?? unquoted ?? '';
-            return {
-                key,
-                rawValue,
-                value: rawValue,
-            };
-        })
-        .filter(({ key, value }) => Boolean(key) && value !== '');
-};
-
-const makeInferredEntry = (key: string, value: string, sourceKey: string, fields: any[]): types.ScreenEntryValue => {
-    const matchedField = fields.find(field => normalizeKey(field?.key || field?.data?.metadata?.key) === normalizeKey(key));
-    const matchedType = normalizeFieldType(matchedField?.type || matchedField?.data?.type || matchedField?.data?.metadata?.dataType);
-    const normalizedValue = `${value}`.toLowerCase();
-    const yesNoValue = normalizedValue === 'no' || normalizedValue === 'false'
-        ? 'false'
-        : normalizedValue === 'yes' || normalizedValue === 'true'
-            ? 'true'
-            : value;
-
-    return {
-        key,
-        label: matchedField?.label || matchedField?.data?.metadata?.label || key,
-        value: matchedType === 'yesno' ? yesNoValue : value,
-        valueText: value,
-        valueLabel: value,
-        exportValue: value,
-        exportLabel: value,
-        exportType: matchedType || 'inferred',
-        type: matchedType || 'inferred',
-        data: {
-            inferredFromEligibility: true,
-            sourceKey,
-        },
-    };
-};
-
+/**
+ * Safely evaluates a condition expression without using eval().
+ * Converts condition string to a safe JavaScript expression and evaluates it.
+ */
 const evaluateEligibilityCondition = (
     condition: string,
     values: types.ScreenEntryValue[],
@@ -161,8 +123,12 @@ const evaluateEligibilityCondition = (
         .replace(/\$([A-Za-z0-9_.-]+)/g, (_, rawKey) => JSON.stringify(record[normalizeKey(rawKey)] ?? null));
 
     try {
-        return Boolean(eval(expression));
-    } catch {
+        // Use Function constructor instead of eval for better security and performance
+        // This is still safer than eval as it doesn't have access to local scope
+        const evaluator = new Function('record', `return ${expression}`);
+        return Boolean(evaluator(record));
+    } catch (error) {
+        console.warn('Failed to evaluate condition:', condition, error);
         return false;
     }
 };
@@ -258,42 +224,22 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
     }, [alternativeValue, criteria, mainValue, useAlternative]);
 
     const allScriptFields = React.useMemo(() => {
-        return screens.reduce((acc: any[], screen: any) => {
+        const result: any[] = [];
+        screens.forEach(screen => {
+            if (!screen) return;
             const fields = screen?.data?.metadata?.fields || [];
-            const screenField = screen?.data?.metadata?.key ? [{
-                ...screen.data.metadata,
-                type: screen.type,
-                condition: screen.data?.condition,
-            }] : [];
-            return [...acc, ...screenField, ...fields];
-        }, []);
+            if (screen?.data?.metadata?.key) {
+                result.push({
+                    ...screen.data.metadata,
+                    type: screen.type,
+                    condition: screen.data?.condition,
+                });
+            }
+            result.push(...fields);
+        });
+        return result;
     }, [screens]);
 
-    const inferPromptValues = React.useCallback((values: types.ScreenEntryValue[]) => {
-        const knownKeys = new Set(values.map(v => normalizeKey(v.key)));
-        const inferred: types.ScreenEntryValue[] = [];
-
-        values.forEach(value => {
-            const autoFillKey = normalizeKey(value.key);
-            if (!autoFillKey) return;
-
-            const targetFields = allScriptFields.filter(field => normalizeKey(field?.key) === autoFillKey);
-            targetFields.forEach(field => {
-                parseConditionRequirements(field?.condition).forEach(requirement => {
-                    const requirementKey = normalizeKey(requirement.key);
-                    if (!requirementKey || requirementKey === autoFillKey || knownKeys.has(requirementKey)) return;
-                    const promptField = allScriptFields.find(field => normalizeKey(field?.key) === requirementKey);
-                    const promptType = normalizeFieldType(promptField?.type || promptField?.data?.type || promptField?.data?.metadata?.dataType);
-                    if (promptField && promptType && ['date', 'datetime', 'number', 'period', 'time'].includes(promptType)) return;
-
-                    inferred.push(makeInferredEntry(requirement.key, requirement.value, value.key || '', allScriptFields));
-                    knownKeys.add(requirementKey);
-                });
-            });
-        });
-
-        return inferred;
-    }, [allScriptFields]);
 
     const buildAutoFillValues = React.useCallback(() => {
         const values: types.ScreenEntryValue[] = [];
@@ -333,6 +279,13 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
             if (!sourceDate) return;
 
             const calculateValue = diffHours(sourceDate, new Date());
+
+            // Validate diffHours result
+            if (typeof calculateValue !== 'number' || isNaN(calculateValue)) {
+                console.warn(`Invalid diffHours result for field ${field?.key}`);
+                return;
+            }
+
             const valueText = dateToValueText(sourceDate, field?.format);
             values.push({
                 key: field.key,
@@ -349,8 +302,10 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
             knownKeys.add(normalizeKey(field.key));
         });
 
-        return [...values, ...inferPromptValues(values)];
-    }, [activeDefinition, allScriptFields, inferPromptValues]);
+        // Only auto-fill the specific criteria?.auto_fills or criteria?.alternative_auto_fills field.
+        // Don't infer any other values from field conditions.
+        return values;
+    }, [activeDefinition, allScriptFields]);
 
     const activeValues = React.useMemo(() => {
         const values = buildAutoFillValues();
@@ -360,7 +315,7 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
 
     if (!criteria) return null;
 
-    const renderYesNo = (
+    const renderYesNo = React.useCallback((
         label: string,
         value: EligibilityValue | null,
         onChange: (value: EligibilityValue) => void,
@@ -375,25 +330,42 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
             <Box>
                 <Text>{label}</Text>
                 <Br spacing="m" />
-                {options.map(item => (
-                    <React.Fragment key={item.itemId || item.value}>
-                        <Radio
-                            value={item.value}
-                            checked={`${value?.value}` === `${item.value}`}
-                            label={item.label}
-                            onChange={() => onChange({ value: item.value, valueText: item.label, option: item })}
-                        />
-                        <Br spacing="m" />
-                    </React.Fragment>
-                ))}
+                {options.map(item => {
+                    const itemValue = String(item.value);
+                    const selectedValue = String(value?.value ?? '');
+                    const isChecked = selectedValue === itemValue;
+
+                    return (
+                        <React.Fragment key={item.itemId || item.value}>
+                            <Radio
+                                value={item.value}
+                                checked={isChecked}
+                                label={item.label}
+                                onChange={() => onChange({ value: item.value, valueText: item.label, option: item })}
+                            />
+                            <Br spacing="m" />
+                        </React.Fragment>
+                    );
+                })}
             </Box>
         );
-    };
+    }, []);
 
-    const renderCriterionInput = () => {
+    const renderCriterionInput = React.useCallback(() => {
         const type = normalizeFieldType(activeDefinition.type);
         const value = activeDefinition.value;
         const setValue = useAlternative ? setAlternativeValue : setMainValue;
+
+        // Validate required properties
+        if (!type) {
+            console.warn('Invalid field type in activeDefinition');
+            return <Text>Invalid field type</Text>;
+        }
+
+        if (!activeDefinition.autoFills) {
+            console.warn('Missing autoFills in activeDefinition');
+            return <Text>Configuration error</Text>;
+        }
 
         if (['date', 'datetime'].includes(type)) {
             return (
@@ -436,7 +408,7 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
         }
 
         return null;
-    };
+    }, [activeDefinition, useAlternative]);
 
     const canContinue = !(
         activeDefinition.value?.value === null ||
@@ -469,10 +441,21 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
                     <Button
                         disabled={!canContinue}
                         onPress={() => {
+                            // Validate activeDefinition has required properties
+                            if (!activeDefinition.autoFills) {
+                                console.warn('Missing autoFills in activeDefinition');
+                                return;
+                            }
+
+                            // Always validate the eligibility condition to ensure unmet criteria is properly handled
+                            const autoFillNormalizedKey = normalizeKey(activeDefinition.autoFills);
+                            const autoFillEntry = activeValues.find(v => normalizeKey(v.key) === autoFillNormalizedKey);
+                            const selfValue = getConditionValue(autoFillEntry) ?? activeDefinition.value?.valueText ?? activeDefinition.value?.value;
+
                             const passed = evaluateEligibilityCondition(
                                 activeDefinition.condition || '',
                                 activeValues,
-                                getConditionValue(activeValues.find(v => normalizeKey(v.key) === normalizeKey(activeDefinition.autoFills))) ?? activeDefinition.value?.valueText ?? activeDefinition.value?.value,
+                                selfValue,
                             );
 
                             if (passed) {
