@@ -307,12 +307,16 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     let found: string[] = [];
                     const entryVals = e.value || e.values || [];
                     entryVals.forEach(v => {
-                        if (`$${v.key?.toLowerCase?.()}` === key.toLowerCase()) {
+                        if (`$${v?.key?.toLowerCase?.()}` === key?.toLowerCase?.()) {
                             const val = Array.isArray(v.value) ? v.value : [v.value];
-                            val.forEach(v => found.push(v.key));
+                            val.forEach(v => {
+                                if (v.key) {
+                                    found.push(v.key);
+                                }
+                            });
                         }
                     });
-                    return found;
+                    return found.filter(v => v);
                 }).reduce((acc, arr) => [...acc, ...arr], []);
 
                 _condition = `${vals || ''}`
