@@ -2,21 +2,38 @@ import React, { Fragment, useState } from 'react';
 import { Alert, Keyboard, ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
+import { hasBidStillBirthOutcomeOptions } from '@/src/utils/bid-stillbirth-outcome';
 import { Box, Button, Content, Text } from '../../../components';
 import { Field } from './field';
 import * as types from '../../../types';
 
+function isStandardNuidSearchField(field: any) {
+    const key = `${field?.key ?? ''}`.toLowerCase();
+    const label = `${field?.label ?? ''}`.toLowerCase();
+
+    return field?.type === 'text'
+        && !key.includes('twin')
+        && !label.includes('twin')
+        && !key.includes('transfer')
+        && !key.includes('transfered')
+        && !key.includes('transferred')
+        && !label.includes('transfer')
+        && !label.includes('transferred');
+}
+
 export function Start() {
-    const { 
+    const {
         evaluateCondition,
         parseCondition,
         setNuidSearchForm,
+        setStartSessionMode,
         setActiveScreen,
         saveSession,
         setActiveScreenIndex,
-        screens, 
-        matched, 
-        script: { 
+        screens,
+        matched,
+        setMatched,
+        script: {
             type,
             data: {
                 nuidSearchFields = [], 
@@ -26,6 +43,7 @@ export function Start() {
 
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
+    const [starting, setStarting] = React.useState(false);
 
     const [fields, setFields] = useState<types.NuidSearchFormField[]>(nuidSearchFields.map((f: any) => ({
         key: f.key,
@@ -35,12 +53,33 @@ export function Start() {
         results: null,
     })));
 
-    const evaluateFieldCondition = (f: any) => {
+    const evaluateFieldCondition = React.useCallback((f: any) => {
         let conditionMet = true;
         const values = fields;
         if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
-    };
+    }, [evaluateCondition, fields, parseCondition]);
+
+    // When a search field is hidden by its condition (e.g. the user changes the answer
+    // that revealed it), drop its stale search results so a re-shown blank field cannot
+    // leave the Start button enabled or pre-populate from the previous search.
+    React.useEffect(() => {
+        let changed = false;
+        let clearedStandardField = false;
+        const next = fields.map((f, i) => {
+            const searchField: any = nuidSearchFields[i];
+            if (searchField?.type !== 'text') return f;
+            if (evaluateFieldCondition(searchField)) return f;
+            if (f.value == null && f.results == null) return f;
+            changed = true;
+            if (isStandardNuidSearchField(searchField)) clearedStandardField = true;
+            return { ...f, value: null, results: null };
+        });
+        if (changed) {
+            setFields(next);
+            if (clearedStandardField) setMatched(null);
+        }
+    }, [fields, nuidSearchFields, evaluateFieldCondition, setMatched]);
 
     React.useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => setKeyboardIsOpen(true));
@@ -58,6 +97,70 @@ export function Start() {
     });
 
     const canStart = Boolean(screens?.length) && hasResolvedVisibleSearchFields;
+    const canStartWithoutNuid = Boolean(screens?.length) && nuidSearchFields.some((field: any) => (
+        isStandardNuidSearchField(field) && evaluateFieldCondition(field)
+    ));
+
+    const startSession = React.useCallback(async (
+        nextFields: types.NuidSearchFormField[],
+        nextStartSessionMode: null | 'bidStillBirth' = null
+    ) => {
+        try {
+            setStarting(true);
+            setNuidSearchForm(nextFields);
+            setStartSessionMode(nextStartSessionMode);
+            await saveSession({
+                nuidSearchForm: nextFields,
+                startSessionMode: nextStartSessionMode,
+            });
+            setActiveScreen(screens[0]);
+            setActiveScreenIndex(0);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : '';
+            if (!message.includes('requires the searched Neotree ID')) {
+                Alert.alert(
+                    'Unable to start session',
+                    message
+                        ? `The session could not be started because: ${message}`
+                        : 'The session could not be started. Please check the form setup and try again.'
+                );
+            }
+        } finally {
+            setStarting(false);
+        }
+    }, [saveSession, screens, setActiveScreen, setActiveScreenIndex, setNuidSearchForm, setStartSessionMode]);
+
+    const startSessionWithoutNuid = React.useCallback(() => {
+        if (!hasBidStillBirthOutcomeOptions(screens)) {
+            Alert.alert(
+                'BID/StillBirth outcome unavailable',
+                'The current script does not have any NeoTreeOutcome options related to BID or StillBirth.'
+            );
+            return;
+        }
+
+        const nextFields = fields.map((field, i) => {
+            const searchField = nuidSearchFields[i];
+            if (!isStandardNuidSearchField(searchField) || !evaluateFieldCondition(searchField)) return field;
+
+            return {
+                ...field,
+                value: null,
+                results: {
+                    session: null,
+                    uid: '',
+                    searchedUid: '',
+                    prePopulateWithUID: false,
+                    continueWithoutPrePopulation: true,
+                    useSearchedUidForSession: false,
+                },
+            };
+        });
+
+        setFields(nextFields);
+        setMatched(null);
+        startSession(nextFields, 'bidStillBirth');
+    }, [evaluateFieldCondition, fields, nuidSearchFields, screens, setMatched, startSession]);
 
     return (
         <Box flex={1} paddingTop="xl">
@@ -82,17 +185,16 @@ export function Start() {
                                         if (field.type === 'text') {
                                             results = value;
                                             value = value?.uid || null;
+                                            if (isStandardNuidSearchField(field)) {
+                                                setMatched(results?.session ? (results as types.MatchedSession) : null);
+                                            }
                                         }
 
-                                        const newState = fields.map((f, j) => {
+                                        setFields(prev => prev.map((f, j) => {
                                             if (j === i) return { ...f, value, results, };
                                             return f;
-                                        });
-                                        setFields(newState);
-                                        
-                                    }
-                                  
-                                }
+                                        }));
+                                    }}
                                 />
                                 <Box marginVertical="l" />
                             </Fragment>
@@ -118,26 +220,20 @@ export function Start() {
                         )}
 
                         <Button
-                            disabled={!canStart}
-                            onPress={() => {
-                                (async () => {
-									try {
-                                        setNuidSearchForm(fields);
-										await saveSession({ nuidSearchForm: fields });
-										setActiveScreen(screens[0]);
-										setActiveScreenIndex(0);
-									} catch (error) {
-                                        const message = error instanceof Error ? error.message : '';
-                                        if (!message.includes('requires the searched Neotree ID')) {
-                                            Alert.alert(
-                                                'Unable to start session',
-                                                'The session could not be saved. Please try again before continuing.'
-                                            );
-                                        }
-                                    }
-								})();
-                            }}
+                            disabled={!canStart || starting}
+                            onPress={() => startSession(fields)}
                         >{matched?.session ? 'Continue' : 'Start'}</Button>
+
+                        {canStartWithoutNuid ? (
+                            <>
+                                <Box marginVertical="s" />
+                                <Button
+                                    color="secondary"
+                                    disabled={starting || !screens?.length}
+                                    onPress={startSessionWithoutNuid}
+                                >BID/StillBirth</Button>
+                            </>
+                        ) : null}
                     </Content>
                 </Box>
             )}

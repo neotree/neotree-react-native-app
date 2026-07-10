@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
+import { filterFieldToBidStillBirthOptions } from '@/src/utils/bid-stillbirth-outcome';
 import {
     formatDateLikeLabel,
     isTimestampLabel,
@@ -19,18 +20,146 @@ import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
 import { MultiSelectField } from './_MultiSelect';
 import Repeatable from './Repeatable';
-import { v4 as uuidv4 } from 'uuid';
 
 type TypeFormProps = types.ScreenTypeProps & {};
+const EMPTY_VALUES: types.ScreenEntry['values'] = [];
 
-export function TypeForm({ }: TypeFormProps) {
+type FieldComponent = React.ComponentType<types.ScreenFormTypeProps & { patientNUID?: string | null; }>;
+
+const getFieldComponent = (normalizedFieldType: string): FieldComponent | null => {
+    switch (normalizedFieldType) {
+        case fieldsTypes.NUMBER:
+            return NumberField;
+        case fieldsTypes.DATE:
+        case fieldsTypes.DATETIME:
+            return DateField;
+        case fieldsTypes.DROPDOWN:
+            return DropDownField;
+        case fieldsTypes.PERIOD:
+            return PeriodField;
+        case fieldsTypes.TEXT:
+            return TextField;
+        case fieldsTypes.TIME:
+            return TimeField;
+        case fieldsTypes.MULTI_SELECT:
+            return MultiSelectField;
+        default:
+            return null;
+    }
+};
+
+const fieldNeedsAllValues = (normalizedFieldType: string) => (
+    normalizedFieldType === fieldsTypes.NUMBER
+    || normalizedFieldType === fieldsTypes.DATE
+    || normalizedFieldType === fieldsTypes.DATETIME
+    || normalizedFieldType === fieldsTypes.PERIOD
+);
+
+const fieldNeedsFormValues = (normalizedFieldType: string) => normalizedFieldType === fieldsTypes.PERIOD;
+const fieldNeedsPatientNUID = (normalizedFieldType: string) => normalizedFieldType === fieldsTypes.TEXT;
+
+type FieldRowProps = {
+    field: any;
+    normalizedFieldType: string;
+    fieldIndex: number;
+    entryValue?: types.ScreenEntryValue;
+    formValues?: types.ScreenEntry['values'];
+    allValues?: types.ScreenEntry['values'];
+    conditionMet: boolean;
+    patientNUID?: string | null;
+    onChangeByKey: (key: string, val: Partial<types.ScreenEntryValue>) => void;
+    onLinkedFieldChange?: (key: string, value: Partial<types.ScreenEntryValue>) => void;
+};
+
+const FieldRow = React.memo(function FieldRow({
+    field,
+    normalizedFieldType,
+    fieldIndex,
+    entryValue,
+    formValues,
+    allValues,
+    conditionMet,
+    patientNUID,
+    onChangeByKey,
+    onLinkedFieldChange,
+}: FieldRowProps) {
+    const Component = React.useMemo(() => getFieldComponent(normalizedFieldType), [normalizedFieldType]);
+    const shouldLog = normalizedFieldType === fieldsTypes.DATE
+        || normalizedFieldType === fieldsTypes.DATETIME
+        || normalizedFieldType === fieldsTypes.PERIOD;
+
+    const onChange = React.useCallback((val: Partial<types.ScreenEntryValue>) => {
+        if (shouldLog) {
+            const incoming = val || {};
+            console.log('[NonRepeatable][handleChange]', {
+                isRepeatable: false,
+                fieldKey: field.key,
+                fieldLabel: field.label,
+                fieldType: field.type,
+                incoming: {
+                    value: incoming?.value ?? null,
+                    valueText: incoming?.valueText ?? null,
+                    exportValue: incoming?.exportValue ?? null,
+                    calculateValue: incoming?.calculateValue ?? null,
+                    label: incoming?.label ?? null,
+                },
+            });
+        }
+
+        onChangeByKey(field.key, val);
+    }, [field.key, field.label, field.type, onChangeByKey, shouldLog]);
+
+    if (!Component || !conditionMet) return null;
+
+    const extraProps = Component === PeriodField && onLinkedFieldChange
+        ? { onLinkedFieldChange }
+        : {};
+
+    return (
+        <FormItem
+            field={field}
+            onChange={onChange}
+            conditionMet={conditionMet}
+        >
+            <Component
+                field={field}
+                fieldIndex={fieldIndex}
+                entryValue={entryValue as types.ScreenEntryValue}
+                formValues={formValues || EMPTY_VALUES}
+                allValues={allValues || EMPTY_VALUES}
+                conditionMet={conditionMet}
+                patientNUID={patientNUID}
+                onChange={onChange}
+                {...extraProps}
+            />
+            <Br spacing="xl" />
+        </FormItem>
+    );
+}, (prev, next) => (
+    prev.field === next.field
+    && prev.normalizedFieldType === next.normalizedFieldType
+    && prev.fieldIndex === next.fieldIndex
+    && prev.entryValue === next.entryValue
+    && prev.formValues === next.formValues
+    && prev.allValues === next.allValues
+    && prev.conditionMet === next.conditionMet
+    && prev.patientNUID === next.patientNUID
+    && prev.onChangeByKey === next.onChangeByKey
+    && prev.onLinkedFieldChange === next.onLinkedFieldChange
+));
+
+export function TypeForm(_: TypeFormProps) {
     const ctx = useScriptContext();
+    const lastEntryValuesSignatureRef = React.useRef<string | null>(null);
 
     const {
         activeScreen,
         activeScreenEntry,
         mountedScreens,
         nuidSearchForm,
+        startSessionMode,
+        eligibilityAutoFillValues,
+        configuration,
         evaluateCondition,
         parseCondition,
         getPrepopulationData,
@@ -38,88 +167,56 @@ export function TypeForm({ }: TypeFormProps) {
         setEntryValues,
     } = ctx;
 
-//Fix Slowness Issue, By Prebuilding Fields Before Rendering
+// Keep field metadata stable. Expanding synthetic manual-entry fields here
+// causes extra condition work and broader rerenders in large management forms.
     const normalizeFieldType = React.useCallback((fieldType: any) => {
         return `${fieldType ?? ''}`.trim().toLowerCase().replace(/[\s-]+/g, '_');
     }, []);
   
     const metadata = React.useMemo(() => {
-    const original = activeScreen?.data?.metadata;
-    if (!original?.fields) return original;
+        const original = activeScreen?.data?.metadata;
+        if (!original?.fields) return original;
 
-    const hasManual = original.fields.some(
-        (f: any) =>
-            normalizeFieldType(f.type) === "dropdown" &&
-            Array.isArray(f.items) &&
-            f.items.some((i: any) => i.enterValueManually === true)
-    );
+        const transformedFields = original.fields.map((field: any) => {
+            const normalizedType = normalizeFieldType(field.type);
+            const transformedField = (() => {
+                if (
+                    (normalizedType === "dropdown" || normalizedType === "multi_select") &&
+                    Array.isArray(field.items) &&
+                    field.items.length > 0
+                ) {
+                    return {
+                        ...field,
+                        values: "",
+                    };
+                }
+                return field;
+            })();
 
-    // Transform dropdown and multi_select fields to clear values if items is not empty
-    const transformedFields = original.fields.map((field: any) => {
-        const normalizedType = normalizeFieldType(field.type);
-        if ((normalizedType === "dropdown" || normalizedType === "multi_select") && Array.isArray(field.items) && field.items.length > 0) {
-            return {
-                ...field,
-                values: "",
-            };
-        }
-        return field;
-    });
+            if (startSessionMode === 'bidStillBirth') {
+                return filterFieldToBidStillBirthOptions(transformedField);
+            }
 
-    if (!hasManual) {
+            return transformedField;
+        });
+
         return {
             ...original,
             fields: transformedFields,
         };
-    }
-    const updatedFields: any[] = [];
-    let positionCounter = 1;
+    }, [activeScreen?.data?.metadata, normalizeFieldType, startSessionMode]);
 
-    for (const field of transformedFields) {
-        updatedFields.push({
-            ...field,
-            position: positionCounter++,
-        });
-
-        if (normalizeFieldType(field.type) === "dropdown" && Array.isArray(field.items)) {
-            const manualItems = field.items.filter(
-                (i: any) => i.enterValueManually === true
-            );
-
-            if (manualItems.length > 0) {
-                const manualCondition = manualItems
-                    .map((i: any) => `$${field.key} = '${i.value}'`)
-                    .join(" or ");
-
-                updatedFields.push({
-                    fieldId: uuidv4(),
-                    keyId: uuidv4(),
-                    type: "text",
-                    key: `manual${field.key}`,
-                    label: `Specify ${(field.label ?? '').toLowerCase()}`,
-                    condition: manualCondition,
-                    printable: false,
-                    optional: false,
-                    editable: true,
-                    confidential: false,
-                    prePopulate: [],
-                    items: [],
-                    valuesOptions: [],
-                    position: positionCounter++,
-                });
-            }
-        }
-    }
-
-    return {
-        ...original,
-        fields: updatedFields,
-    };
-}, [activeScreen?.data?.metadata, normalizeFieldType]);
-
-    const cachedVal = activeScreenEntry?.values || [];
+    const cachedVal = useMemo(() => activeScreenEntry?.values || [], [activeScreenEntry?.values]);
     const canAutoFill = !mountedScreens[activeScreen?.id];
     const repeatable = metadata?.repeatable;
+    const cachedValuesByKey = useMemo(() => {
+        const map = new Map<string, types.ScreenEntryValue>();
+        cachedVal.forEach(value => {
+            const key = `${value?.key || ''}`.toLowerCase();
+            if (key) map.set(key, value);
+        });
+        return map;
+    }, [cachedVal]);
 
 
     const patientNUID = useMemo(() => {
@@ -148,14 +245,17 @@ export function TypeForm({ }: TypeFormProps) {
 
             const matched = !shouldAutoPopulate ? null : (getPrepopulationData(f.prePopulate)[f.key]?.values?.value || [])[0];
 
-            const cached = cachedVal.filter(v => v.key === f.key)[0];
+            const cached = cachedValuesByKey.get(`${f.key || ''}`.toLowerCase());
+            const eligibilityAutoFill = eligibilityAutoFillValues.find(
+                v => `${v.key}`.toLowerCase() === `${f.key}`.toLowerCase()
+            );
 
-            let value = cached?.value || `${matched || ''}` || null;
-            let valueText = cached?.valueText || matched || null;
-            let exportValue: string | undefined = undefined;
-            let exportLabel: string | undefined = undefined;
+            let value = cached?.value || eligibilityAutoFill?.value || `${matched || ''}` || null;
+            let valueText = cached?.valueText || eligibilityAutoFill?.valueText || matched || null;
+            let exportValue: string | undefined = eligibilityAutoFill?.exportValue;
+            let exportLabel: string | undefined = eligibilityAutoFill?.exportLabel;
 
-            let value2 = cached?.value2 || null;
+            let value2 = cached?.value2 || eligibilityAutoFill?.value2 || null;
 
             if (`${f.key}`.match(/NUID_/gi) && patientNUID) {
                 value = cached?.value || patientNUID;
@@ -205,7 +305,7 @@ export function TypeForm({ }: TypeFormProps) {
                 })();
                 const matchedOpt = opts.find(o => `${o.value}` === `${matched || ''}`);
 
-                if (!cached?.value) {
+                if (!cached?.value && !eligibilityAutoFill?.value) {
                     value = null;
                     valueText = null;
                     
@@ -255,89 +355,18 @@ export function TypeForm({ }: TypeFormProps) {
                 ips: f.ips,
                 exportValue,
                 exportLabel,
+                calculateValue: cached?.calculateValue ?? eligibilityAutoFill?.calculateValue,
                 printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
             };
         });
-    }, [repeatable, metadata, canAutoFill, cachedVal, patientNUID, activeScreen?.data?.printDisplayColumns, getPrepopulationData, normalizeFieldType]);
+    }, [repeatable, metadata, canAutoFill, patientNUID, activeScreen?.data?.printDisplayColumns, eligibilityAutoFillValues, getPrepopulationData, normalizeFieldType, cachedVal, cachedValuesByKey]);
 
-    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues());
+    // Lazy initializer: getValues does a full pass over every field (prepopulation,
+    // option parsing), so it must only run once at mount, not on every render.
+    const [values, setValues] = React.useState<types.ScreenEntryValue[]>(getValues);
 
 
-    const evaluateFieldCondition = (f: any,form?:any) => {
-        let conditionMet = true;
-        let formatedvalues = values;
-        if (repeatable) {
-
-            if(form){
-               formatedvalues = moveKeysInside([form]);
-               
-            }
-
-        }
-        const condition = `${f?.condition ?? ''}`.trim();
-
-        if (condition) {
-            conditionMet = evaluateCondition(
-                parseCondition(condition, [{ values: formatedvalues }])
-            ) as boolean;
-        }
-       
-
-        return conditionMet;
-    };
-
-    const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
-        try {
-            const key = Object.keys(data)[0];
-
-            if (data) {
-                {
-                    // Find the repeatables object in the existing values
-                    const formattedValues = values || []
-                    const repeatablesIndex = formattedValues.findIndex(item => item.key === 'repeatables');
-                    let repeatables;
-
-                    if (repeatablesIndex === -1) {
-                        // Create a new repeatables object if it doesn't exist
-                        repeatables = {
-                            key: 'repeatables',
-                            value: {
-                                [key]: data[key],
-                            }
-                        };
-                        const updated = [...formattedValues, repeatables]
-                        if (updated && updated.length > 0) {
-                            const sanitized = deepSanitize(updated);
-                            setValues(sanitized);
-                            setEntryValues(sanitized)
-                        
-
-                        }
-                    } else {
-                        // Update the existing repeatables object
-                        repeatables = { ...formattedValues[repeatablesIndex] };
-
-                        repeatables.value[key] = data[key];
-
-                        // Create a new array with the updated repeatables
-                        const updatedValues = [
-                            ...formattedValues.slice(0, repeatablesIndex),
-                            repeatables,
-                            ...formattedValues.slice(repeatablesIndex + 1)
-                        ];
-                        if (updatedValues && updatedValues.length > 0) {
-                            const sanitized = deepSanitize(updatedValues);
-                            setValues(sanitized);
-                            setEntryValues(sanitized)
-                        }
-                    }
-                }
-            }
-        } catch (ex) {
-
-        }
-    }, [values, setEntryValues]);
-    function deepSanitize(input: any): any {
+    const deepSanitize = React.useCallback((input: any): any => {
         if (input == null) {
             // handles both null and undefined
             return input;
@@ -359,99 +388,138 @@ export function TypeForm({ }: TypeFormProps) {
 
         // Primitives, functions, Dates, etc. are returned as-is
         return input;
-    }
+    }, []);
 
 
-   function moveKeysInside(input: any[]): any[] {
-    if (!Array.isArray(input) || input.length === 0) {
-        return [];
-    }
+   const moveKeysInside = React.useCallback((input: any[]): any[] => {
+        if (!Array.isArray(input) || input.length === 0) {
+            return [];
+        }
 
-    const result: any[] = [];
+        const result: any[] = [];
 
-    for (const item of input) {
-        if (typeof item !== "object" || item === null) continue;
+        for (const item of input) {
+            if (typeof item !== "object" || item === null) continue;
 
-        if ("values" in item && typeof item.values === "object" && item.values !== null) {
-            for (const [key, value] of Object.entries(item.values)) {
-                if (value && typeof value === "object" && "value" in value) {
-                    if (value.value !== null && value.value !== undefined && value.value !== "") {
-                        result.push({ value: value.value, key });
+            if ("values" in item && typeof item.values === "object" && item.values !== null) {
+                for (const [key, value] of Object.entries(item.values)) {
+                    if (value && typeof value === "object" && "value" in value) {
+                        if (value.value !== null && value.value !== undefined && value.value !== "") {
+                            result.push({ value: value.value, key });
+                        }
                     }
                 }
             }
+
+            // keep directly if the object itself has "value"
+            else if ("value" in item && Object.keys(item).length === 1) {
+                result.push({ value: item.value, key: Object.keys(item)[0] });
+            }
         }
 
-        // keep directly if the object itself has "value"
-        else if ("value" in item && Object.keys(item).length === 1) {
-            result.push({ value: item.value, key: Object.keys(item)[0] });
-        }
-    }
-
-    return result;
-}
-
-
-    const setValue = useCallback((index: number, val: Partial<types.ScreenEntryValue>) => {
-        setValues(prev => prev.map((v, i) => {
-            const state = `${index}` !== `${i}` ? v : {
-                ...v,
-                ...val
-            };
-            return state;
-        }));
+        return result;
     }, []);
 
+    const evaluateFieldCondition = React.useCallback((f: any, form?: any) => {
+        let conditionMet = true;
+        let formatedvalues = values;
+        if (repeatable) {
+            if (form) {
+                formatedvalues = moveKeysInside([form]);
+            }
+        }
+
+        const condition = `${f?.condition ?? ''}`.trim();
+
+        if (condition) {
+            conditionMet = evaluateCondition(
+                parseCondition(condition, [{ values: formatedvalues }])
+            ) as boolean;
+        }
+
+        return conditionMet;
+    }, [evaluateCondition, moveKeysInside, parseCondition, repeatable, values]);
+
+    const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
+        try {
+            const key = Object.keys(data)[0];
+
+            if (data) {
+                const formattedValues = values || [];
+                const repeatablesIndex = formattedValues.findIndex(item => item.key === 'repeatables');
+                let repeatables;
+
+                if (repeatablesIndex === -1) {
+                    repeatables = {
+                        key: 'repeatables',
+                        value: {
+                            [key]: data[key],
+                        }
+                    };
+                    const updated = [...formattedValues, repeatables];
+                    if (updated.length > 0) {
+                        const sanitized = deepSanitize(updated);
+                        setValues(sanitized);
+                        setEntryValues(sanitized);
+                    }
+                } else {
+                    repeatables = { ...formattedValues[repeatablesIndex] };
+                    repeatables.value[key] = data[key];
+
+                    const updatedValues = [
+                        ...formattedValues.slice(0, repeatablesIndex),
+                        repeatables,
+                        ...formattedValues.slice(repeatablesIndex + 1)
+                    ];
+
+                    if (updatedValues.length > 0) {
+                        const sanitized = deepSanitize(updatedValues);
+                        setValues(sanitized);
+                        setEntryValues(sanitized);
+                    }
+                }
+            }
+        } catch {
+            // ignore malformed repeatable payloads
+        }
+    }, [deepSanitize, setEntryValues, values]);
     const setValueByKey = useCallback((key: string, val: Partial<types.ScreenEntryValue>) => {
         if (!key) return;
-        setValues(prev =>
-            prev.map(entry =>
-                `${entry.key}`.toLowerCase() === `${key}`.toLowerCase()
-                    ? { ...entry, ...val }
-                    : entry
-            )
-        );
-    }, []);
+        setValues(prev => {
+            const normalizedKey = `${key}`.toLowerCase();
+            let changed = false;
+            const nextValues = prev.map(entry => {
+                if (`${entry.key}`.toLowerCase() !== normalizedKey) {
+                    return entry;
+                }
 
-    React.useEffect(() => {
-
-        const completed = repeatable ? (values.length > 0) : values.reduce((acc, { value }, i) => {
-            const field = metadata.fields[i];
-            const conditionMet = evaluateFieldCondition(metadata.fields[i]);
-            if (conditionMet && !field.optional && !value) return false;
-            return acc;
-        }, true);
-
-        const hasErrors = values.filter(v => v.error).length;
-        if (!repeatable) {
-            const entryVals = values.filter(v => {
-                if (
-                    (v?.value === null) || 
-                    (v?.value === undefined) || 
-                    (v?.value === '')
-                ) return false;
-
-                return true;
+                changed = true;
+                return { ...entry, ...val };
             });
 
-            setEntryValues(hasErrors || !completed ? undefined : entryVals);
-        }
+            return changed ? nextValues : prev;
+        });
+    }, []);
 
-    }, [values, metadata]);
+    const valuesByKey = React.useMemo(() => {
+        const map = new Map<string, types.ScreenEntryValue>();
+        values.forEach(value => {
+            const key = `${value?.key || ''}`.toLowerCase();
+            if (key) map.set(key, value);
+        });
+        return map;
+    }, [values]);
 
-
-    const collectionName = metadata?.collectionName;
-    const collectionField = metadata?.collectionLabel;
-    const getAllValues = () => {
-
-        let _allValues = [
+    const allValues = React.useMemo(() => {
+        let mergedValues = [
             ...values,
-            ...ctx.entries.reduce((acc: types.ScreenEntry['values'], e) => [
+            ...ctx.entries.reduce((acc: types.ScreenEntry['values'], entry) => [
                 ...acc,
-                ...e.values,
+                ...entry.values,
             ], []),
         ];
-        if (repeatable && !values.find(v => v.key === 'repeatables')?.value) {
+
+        if (repeatable && !valuesByKey.get('repeatables')?.value) {
             const repeatablesGrouped: Record<string, any[]> = {};
 
             ctx.entries.forEach(entry => {
@@ -460,6 +528,7 @@ export function TypeForm({ }: TypeFormProps) {
                     if (!repeatablesGrouped[key]) {
                         repeatablesGrouped[key] = [];
                     }
+
                     if (Array.isArray(items)) {
                         repeatablesGrouped[key].push(...items);
                     } else {
@@ -468,7 +537,7 @@ export function TypeForm({ }: TypeFormProps) {
                 });
             });
 
-            _allValues = [
+            mergedValues = [
                 ...values,
                 {
                     key: 'repeatables',
@@ -477,110 +546,161 @@ export function TypeForm({ }: TypeFormProps) {
             ];
         }
 
-        return _allValues.filter((v, i) => {
-            if (!v.key) return true;
-            return _allValues.map(v => `${v.key}`.toLowerCase()).indexOf(`${v.key}`.toLowerCase()) === i;
-        });
-    }
+        const seenKeys = new Set<string>();
+        return mergedValues.filter(value => {
+            if (!value.key) return true;
 
-    const getRepeatableValues = () => {
-        const values = getAllValues()
-        const autoFill = getRepeatablesPrepopulation() ? getRepeatablesPrepopulation()[collectionName] : []
-        return values.filter(v => v.key === 'repeatables')[0]?.value?.[collectionName] || autoFill;
-    }
+            const normalizedKey = `${value.key}`.toLowerCase();
+            if (seenKeys.has(normalizedKey)) return false;
+
+            seenKeys.add(normalizedKey);
+            return true;
+        });
+    }, [ctx.entries, repeatable, values, valuesByKey]);
+
+    // Keys referenced by any field condition on this screen (the `$key` tokens).
+    // Values outside this set can never change a condition's outcome.
+    const conditionDependencyKeys = React.useMemo(() => {
+        const keys = new Set<string>();
+        metadata?.fields?.forEach((field: any) => {
+            const condition = `${field?.condition ?? ''}`;
+            (condition.match(/\$[\w-]+/g) || []).forEach(token => {
+                keys.add(token.slice(1).toLowerCase());
+            });
+        });
+        return keys;
+    }, [metadata?.fields]);
+
+    // Compact fingerprint of the condition-relevant slice of the form values.
+    // value2 (manual-entry text) only reaches conditions through key2 or
+    // multi-select item lists, so plain typing does not alter the signature.
+    const conditionValuesSignature = React.useMemo(() => {
+        if (!conditionDependencyKeys.size) return '';
+
+        const parts: string[] = [];
+
+        values.forEach(v => {
+            const key = `${v?.key || ''}`.toLowerCase();
+            const key2 = `${v?.key2 || ''}`.toLowerCase();
+
+            const referencesKey = !!key && conditionDependencyKeys.has(key);
+            const referencesKey2 = !!key2 && conditionDependencyKeys.has(key2);
+            const referencesArrayItem = Array.isArray(v?.value) && v.value.some((item: any) => {
+                const itemKey = `${item?.key || ''}`.toLowerCase();
+                const itemKey2 = `${item?.key2 || ''}`.toLowerCase();
+                const parentKey = `${item?.parentKey || ''}`.toLowerCase();
+                return (!!itemKey && conditionDependencyKeys.has(itemKey))
+                    || (!!itemKey2 && conditionDependencyKeys.has(itemKey2))
+                    || (!!parentKey && conditionDependencyKeys.has(parentKey));
+            });
+
+            if (!referencesKey && !referencesKey2 && !referencesArrayItem) return;
+
+            parts.push(JSON.stringify([
+                key,
+                v?.value ?? null,
+                v?.calculateValue ?? null,
+                (referencesKey2 || referencesArrayItem) ? (v?.value2 ?? null) : null,
+                key2,
+            ]));
+        });
+
+        return parts.join('|');
+    }, [conditionDependencyKeys, values]);
+
+    const conditionMetByKey = React.useMemo(() => {
+        const map = new Map<string, boolean>();
+        metadata?.fields?.forEach((field: any) => {
+            map.set(`${field?.key || ''}`.toLowerCase(), evaluateFieldCondition(field));
+        });
+        return map;
+        // Running the eval-based condition sweep on every value commit is what froze
+        // large forms. While this screen is mounted, other entries/searches are static
+        // and the current screen's entry only echoes `values`, so outcomes can only
+        // change with the signature, the fields themselves, or the global configuration.
+        // evaluateFieldCondition is deliberately omitted: whenever the memo does re-run,
+        // the factory closes over the fresh callback anyway.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [metadata?.fields, conditionValuesSignature, configuration]);
+
+    const computedEntryValues = React.useMemo(() => {
+        if (repeatable) return undefined;
+
+        const entryValsToRemove: number[] = [];
+
+        const completed = values.reduce((acc, { value }, i) => {
+            const field = metadata.fields[i];
+            const conditionMet = conditionMetByKey.get(`${field?.key || ''}`.toLowerCase()) ?? true;
+
+            let hasValue = !!value;
+            if (normalizeFieldType(field?.type) === fieldsTypes.MULTI_SELECT) hasValue = !!value?.length;
+            if (field?.optional) hasValue = true;
+
+            if (!conditionMet) entryValsToRemove.push(i);
+
+            if (conditionMet && !hasValue) return false;
+            return acc;
+        }, true);
+
+        // Ignore errors on fields whose condition is no longer met — they are not
+        // rendered, so a stale error there would block completion invisibly.
+        const hasErrors = values.some((v, i) => !entryValsToRemove.includes(i) && !!v.error);
+
+        if (hasErrors || !completed) {
+            return undefined;
+        }
+
+        return values.filter((v, i) => {
+            if (entryValsToRemove.includes(i)) return false;
+
+            return (
+                v?.value !== null
+                && v?.value !== undefined
+                && v?.value !== ''
+            );
+        });
+    }, [conditionMetByKey, metadata.fields, normalizeFieldType, repeatable, values]);
+
+    React.useEffect(() => {
+        if (!repeatable) {
+            const nextSignature = computedEntryValues ? JSON.stringify(computedEntryValues) : 'undefined';
+            if (lastEntryValuesSignatureRef.current !== nextSignature) {
+                lastEntryValuesSignatureRef.current = nextSignature;
+                setEntryValues(computedEntryValues);
+            }
+        }
+    }, [computedEntryValues, repeatable, setEntryValues]);
+
+
+    const collectionName = metadata?.collectionName;
+    const collectionField = metadata?.collectionLabel;
+    const repeatableValues = React.useMemo(() => {
+        const autoFill = getRepeatablesPrepopulation() ? getRepeatablesPrepopulation()[collectionName] : [];
+        return allValues.find(v => v.key === 'repeatables')?.value?.[collectionName] || autoFill;
+    }, [allValues, collectionName, getRepeatablesPrepopulation]);
 
     const returnable = (
         <Box>
             {metadata.fields.map((f: any, i: number) => {
+                const normalizedFieldType = normalizeFieldType(f.type);
+                const Component = getFieldComponent(normalizedFieldType);
+
+                if (!Component) return null;
+
                 return (
-                    <React.Fragment key={f.key}>
-                        {(() => {
-                            let Component: null | React.ComponentType<types.ScreenFormTypeProps & { patientNUID?: string | null; }> = null;
-                            const normalizedFieldType = normalizeFieldType(f.type);
-                            switch (normalizedFieldType) {
-                                case fieldsTypes.NUMBER:
-                                    Component = NumberField;
-                                    break;
-                                case fieldsTypes.DATE:
-                                    Component = DateField;
-                                    break;
-                                case fieldsTypes.DATETIME:
-                                    Component = DateField;
-                                    break;
-                                case fieldsTypes.DROPDOWN:
-                                    Component = DropDownField;
-                                    break;
-                                case fieldsTypes.PERIOD:
-                                    Component = PeriodField;
-                                    break;
-                                case fieldsTypes.TEXT:
-                                    Component = TextField;
-                                    break;
-                                case fieldsTypes.TIME:
-                                    Component = TimeField;
-                                    break;
-                                case fieldsTypes.MULTI_SELECT:
-                                    Component = MultiSelectField;
-                                    break;
-                                default:
-                            
-                                // do nothing
-                            }
-                            
-                            if (!Component) return null;
-
-                            const conditionMet = evaluateFieldCondition(f);
-
-                            if (!conditionMet) return null;
-
-                            const updateFieldValue = (val: Partial<types.ScreenEntryValue>) => setValue(i, val);
-                            const shouldLog = ['date', 'datetime', 'period'].includes(normalizedFieldType);
-                            const onChange = (val: Partial<types.ScreenEntryValue>) => {
-                                if (shouldLog) {
-                                    const incoming = val || {};
-                                    console.log('[NonRepeatable][handleChange]', {
-                                        isRepeatable: false,
-                                        fieldKey: f.key,
-                                        fieldLabel: f.label,
-                                        fieldType: f.type,
-                                        incoming: {
-                                            value: incoming?.value ?? null,
-                                            valueText: incoming?.valueText ?? null,
-                                            exportValue: incoming?.exportValue ?? null,
-                                            calculateValue: incoming?.calculateValue ?? null,
-                                            label: incoming?.label ?? null,
-                                        },
-                                    });
-                                }
-                                updateFieldValue(val);
-                            };
-
-                            const allValues = getAllValues()
-
-                            const extraProps = Component === PeriodField ? { onLinkedFieldChange: setValueByKey } : {};
-
-                            return (
-                                <FormItem
-                                    field={f}
-                                    onChange={onChange}
-                                    conditionMet={conditionMet}
-                                >
-                                    <Component
-                                        field={f}
-                                        fieldIndex={i}
-                                        entryValue={values.filter(v => v.key === f.key)[0]}
-                                        formValues={values}
-                                        allValues={allValues}
-                                        conditionMet={conditionMet}
-                                        patientNUID={patientNUID}
-                                        onChange={onChange}
-                                        {...extraProps}
-                                    />
-                                    <Br spacing="xl" />
-                                </FormItem>
-                            );
-                        })()}
-                    </React.Fragment>
+                    <FieldRow
+                        key={f.key}
+                        field={f}
+                        normalizedFieldType={normalizedFieldType}
+                        fieldIndex={i}
+                        entryValue={valuesByKey.get(`${f.key || ''}`.toLowerCase())}
+                        formValues={fieldNeedsFormValues(normalizedFieldType) ? values : undefined}
+                        allValues={fieldNeedsAllValues(normalizedFieldType) ? allValues : undefined}
+                        conditionMet={conditionMetByKey.get(`${f.key || ''}`.toLowerCase()) ?? true}
+                        patientNUID={fieldNeedsPatientNUID(normalizedFieldType) ? patientNUID : undefined}
+                        onChangeByKey={setValueByKey}
+                        onLinkedFieldChange={normalizedFieldType === fieldsTypes.PERIOD ? setValueByKey : undefined}
+                    />
                 );
             })}
         </Box>
@@ -592,7 +712,7 @@ export function TypeForm({ }: TypeFormProps) {
             onChange={handleRepeatablesChange}
             evaluateCondition={evaluateFieldCondition}
             collectionField={collectionField}
-            allValues={getRepeatableValues()}
+            allValues={repeatableValues}
         /> : returnable
     );
 }

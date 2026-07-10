@@ -99,7 +99,7 @@ export default async (session: any, showConfidential?: boolean) => {
       let htmlContent = !!qrSmall ? `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
                   ${generatedQR}
               </div>`:
-        `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
+        !generatedQR ? '' : `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
                   ${generatedQR}
               </div>
               `;
@@ -120,7 +120,6 @@ export default async (session: any, showConfidential?: boolean) => {
   <br/>
 </div>`
   const getManualValue = (values: any[], key: string) => {
-    console.log("----HERE123::::---")
     const filtered = values?.filter((v: any) => v.key === `manual${key}`)
     if (filtered.length > 0) return filtered[0].value
     return null
@@ -189,7 +188,7 @@ export default async (session: any, showConfidential?: boolean) => {
                   value = formatValueWithUnit(value, v.unit)
                 }
                 let value2 = v.value2
-                if (exportType === 'dropdown') {
+                if (exportType === 'dropdown' && !value2) {
                   value2 = getManualValue(values, v.key)
                 }
 
