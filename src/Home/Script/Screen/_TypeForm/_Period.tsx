@@ -71,6 +71,7 @@ export function PeriodField({
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
+    const lastNotifiedPayloadRef = React.useRef<string | null>(null);
     const datePickerMode = field.format === 'years_months' ? 'date' : 'datetime';
     const fieldKey = field?.key;
     const fieldLabel = field?.label;
@@ -214,7 +215,7 @@ export function PeriodField({
                 if (!val) {
                     setValue(null);
                     setValueText(null);
-                    onChange({
+                    const payload = {
                         label: field?.label,
                         exportType: 'number',
                         value: null,
@@ -222,7 +223,12 @@ export function PeriodField({
                         exportLabel: null,
                         exportValue: null,
                         calculateValue: null,
-                    });
+                    };
+                    const payloadStr = JSON.stringify(payload);
+                    if (lastNotifiedPayloadRef.current !== payloadStr) {
+                        lastNotifiedPayloadRef.current = payloadStr;
+                        onChange(payload);
+                    }
                     logPeriodFieldEvent('calcFromParseFailed', {
                         calcFromKey: _calcFrom.key,
                         calcFromValue: _calcFrom.value ?? null,
@@ -235,15 +241,20 @@ export function PeriodField({
                 setValueText(dateToValueText(val, field.format));
                 const calculateValue = diffHours(val, new Date());
                 const normalizedValue = toLocalISOString(val);
-                onChange({ 
-                    label:field?.label,
+                const payload = {
+                    label: field?.label,
                     exportType: 'number',
-					value: normalizedValue, 
-					valueText: dateToValueText(val, field.format), 
-                    exportLabel:dateToValueText(val, field.format),
-					exportValue: calculateValue,
-       				calculateValue,
-				});
+                    value: normalizedValue,
+                    valueText: dateToValueText(val, field.format),
+                    exportLabel: dateToValueText(val, field.format),
+                    exportValue: calculateValue,
+                    calculateValue,
+                };
+                const payloadStr = JSON.stringify(payload);
+                if (lastNotifiedPayloadRef.current !== payloadStr) {
+                    lastNotifiedPayloadRef.current = payloadStr;
+                    onChange(payload);
+                }
                 logPeriodFieldEvent('calcFromResolved', {
                     calcFromKey: _calcFrom.key,
                     calcFromValue: _calcFrom.value,

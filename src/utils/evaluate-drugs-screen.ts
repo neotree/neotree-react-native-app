@@ -19,11 +19,54 @@ export function evaluateDrugsScreen({
 
     const metadata = { ...screen.data?.metadata, };
     const screenDrugs = (metadata.drugs || []) as DrugField[];
+    const screenDrugKeys = screenDrugs.map(d => `${d.key}`.toLowerCase());
+
+    // The session values, key/value map and diagnoses list are identical for
+    // every drug, so build them once instead of once per library item.
+    const values = entries.reduce((acc: any[], e) => {
+        acc.push(...(e.value || []), ...(e.values || []));
+        return acc;
+    }, []);
+
+    const entriesKeyVal: { [key: string]: any[]; } = {};
+    const diagnoses: string[] = [];
+    let hasKeyedValue = false;
+
+    values.forEach(v => {
+        if (v.key) {
+            hasKeyedValue = true;
+            const key = `${v.key}`.toLowerCase();
+
+            let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
+            if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
+            if (v.diagnosis?.key) {
+                diagnoses.push(v.diagnosis.key);
+                value = [v.diagnosis.key];
+            }
+            entriesKeyVal[key] = value;
+        }
+    });
+
+    const diagnosesLower = diagnoses.map(d => d.toLowerCase());
+
+    // evaluateCondition runs a full parseCondition over the session per call;
+    // drugs often share condition strings, so resolve each string once.
+    // Matching the previous behaviour, conditions only evaluate when the
+    // session has at least one keyed value (otherwise they stay unmet).
+    const conditionResultCache = new Map<string, boolean>();
+    const resolveCondition = (condition: string) => {
+        if (!condition) return true;
+        if (!hasKeyedValue) return false;
+        if (!conditionResultCache.has(condition)) {
+            conditionResultCache.set(condition, evaluateCondition(condition));
+        }
+        return conditionResultCache.get(condition)!;
+    };
 
     const drugs = drugsLibrary
         .filter(item => item.type === 'drug')
         .map(d => {
-            const screenDrugIndex = screenDrugs.map(d => `${d.key}`.toLowerCase()).indexOf(`${d.key}`.toLowerCase());
+            const screenDrugIndex = screenDrugKeys.indexOf(`${d.key}`.toLowerCase());
             const screenDrug = screenDrugs[screenDrugIndex];
             if (screenDrug) {
                 return {
@@ -86,33 +129,7 @@ export function evaluateDrugsScreen({
                 diagnosisKeys = [];
             }
 
-            let conditionMet = !condition ? true : false;
-
-            const entriesKeyVal: { [key: string]: any[]; } = {};
-            const diagnoses: string[] = [];
-
-            const values = entries.reduce((acc: any[], e) => [
-                ...acc,
-                ...(e.value || []),
-                ...(e.values || []),
-            ], []);
-
-            values.forEach(v => {
-                if (v.key) {
-                    let key = `${v.key}`.toLowerCase();
-
-                    let value = !v.value ? [] : v.value?.map ? v.value : [v.value];
-                    if ((v.calculateValue !== undefined) && (v.calculateValue !== null)) value = [v.calculateValue];
-                    if (v.diagnosis?.key) {
-                        diagnoses.push(v.diagnosis.key);
-                        value = [v.diagnosis.key];
-                    }
-                    if (condition) {
-                        conditionMet = evaluateCondition(condition);
-                    }
-                    entriesKeyVal[key] = value;
-                }
-            });
+            const conditionMet = resolveCondition(condition);
 
             const weights = weightKeys.map(key => (entriesKeyVal[key] || [])[0])
                 .filter(n => (n !== undefined) || (n !== null) || (n !== ''))
@@ -135,8 +152,8 @@ export function evaluateDrugsScreen({
             let gestation: number | null = (entriesKeyVal[gestationKey] || [])[0];
             gestation = gestation === null ? null : (isNaN(Number(gestation)) ? null : Number(gestation));
 
-            const matchedDiagnoses = diagnosisKeys.filter(key => 
-                diagnoses.map(d => d.toLowerCase()).includes(key.toLowerCase()));
+            const matchedDiagnoses = diagnosisKeys.filter(key =>
+                diagnosesLower.includes(key.toLowerCase()));
 
             return {
                 ...d,
@@ -199,8 +216,12 @@ export function evaluateDrugsScreen({
             };
         });
 
-    metadata.drugs = drugs
-        .filter((d, i) => drugs.map(d => d.key).indexOf(d.key) === i); // remove duplicates
+    const seenDrugKeys = new Set<string>();
+    metadata.drugs = drugs.filter(d => {
+        if (seenDrugKeys.has(d.key)) return false; // remove duplicates
+        seenDrugKeys.add(d.key);
+        return true;
+    });
 
     return {
         ...screen,

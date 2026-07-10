@@ -1,9 +1,10 @@
-import { 
-    createContext, 
-    useContext, 
-    useState, 
-    useMemo, 
+import {
+    createContext,
+    useContext,
+    useState,
+    useMemo,
     useCallback,
+    useRef,
 } from "react";
 import { type TextProps, Alert, View, TouchableOpacity, Platform } from 'react-native';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
@@ -100,6 +101,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [loadingScreen, setLoadingScreen] = useState(false);
     const [nuidSearchForm, setNuidSearchForm] = useState<types.NuidSearchFormField[]>([]);
+    const [startSessionMode, setStartSessionMode] = useState<null | 'bidStillBirth'>(
+        route.params?.session?.data?.startSessionMode || null
+    );
+    const [eligibilityCompleted, setEligibilityCompleted] = useState(Boolean(route.params?.session?.data?.eligibilityCompleted));
+    const [eligibilityAutoFillValues, setEligibilityAutoFillValues] = useState<types.ScreenEntryValue[]>(
+        route.params?.session?.data?.eligibilityAutoFillValues || []
+    );
     const [matched, setMatched] = useState<types.MatchedSession | null>(null);
     const [patientDetails, setPatientDetails] = useState({
         isTwin: false,
@@ -168,13 +176,27 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [reviewConfigurations, setReviewConfigurations] = useState<any[]>([]);
 
+    // Parsed conditions are fully-substituted literal expressions, so a given
+    // string always evaluates to the same result. eval() is very slow on Hermes;
+    // caching by string skips it for the repeated sweeps large forms perform.
+    const evalResultCacheRef = useRef(new Map<string, any>());
+
     const evaluateCondition = useCallback((condition: string, defaultEval = false) => {
+        const cache = evalResultCacheRef.current;
+        const cacheKey = `${defaultEval}:${condition}`;
+
+        if (cache.has(cacheKey)) return cache.get(cacheKey);
+
         let conditionMet = defaultEval;
         try {
             conditionMet = eval(condition);
         } catch (e) {
             // do nothing
         }
+
+        if (cache.size >= 2000) cache.clear();
+        cache.set(cacheKey, conditionMet);
+
         return conditionMet;
     }, []);
 
@@ -253,6 +275,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 return [...acc, e] as types.ScreenEntry[];
             }, [
                 ...entries,
+                {
+                    value: eligibilityAutoFillValues,
+                } as types.ScreenEntry,
                 ...nuidSearchForm.map(f => {
                     const entry = {
                         value: [{
@@ -330,8 +355,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 values = value || values || [];
 
                 values = values.reduce((acc: typeof values, v) => {
-                    acc = [...acc, v];
-                    if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
+                    acc.push(v);
+                    if (v.value2 && v.key2) acc.push({ value: v.value2, key: v.key2, });
                     return acc;
                 }, []);
                 
@@ -344,24 +369,31 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 // Handle both array and non-array values
                 values = values
                     .reduce((acc: types.ScreenEntryValue[], e) => {
-                        acc = [
-                            ...acc,
-                            ...(e.value && Array.isArray(e.value) ? e.value : [e]),
-                        ];
-
-                        acc.forEach(v => {
-                            if (v.value2) {
-                                acc.push({
-                                    ...v,
-                                    value: v.value2,
-                                });
-                            }
-                        });
-
+                        acc.push(...(e.value && Array.isArray(e.value) ? e.value : [e]));
                         return acc;
                     }, []);
-        
-                let c = values.reduce((acc, v) => parseValue(acc, v), condition);
+
+                // Make manual-entry text (value2) substitutable under the same key.
+                // Exactly one clone per value, appended after all originals, with
+                // value2 stripped so clones can never be cloned again. (The previous
+                // in-loop acc.forEach re-cloned every prior clone on each iteration,
+                // doubling them per value — exponential once any value2 was set.)
+                const value2Substitutions = values
+                    .filter(v => v.value2)
+                    .map(v => ({ ...v, value: v.value2, value2: undefined }));
+
+                if (value2Substitutions.length) {
+                    values = values.concat(value2Substitutions);
+                }
+
+                // Each parseValue pass is ~8 string split/joins over the whole
+                // condition; once no $tokens remain there is nothing left to
+                // substitute, so skip the remaining values. The first value is
+                // always processed because parseValue also normalizes the string
+                // (lowercase/spacing) even when it substitutes nothing.
+                let c = values.reduce((acc, v, i) => (
+                    (i > 0 && acc.indexOf('$') === -1) ? acc : parseValue(acc, v)
+                ), condition);
 
                 let chunks: string[] = values.filter(v => v.parentKey)
                     .map(v => parseValue(condition, {
@@ -397,13 +429,15 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         }).join(' && ');
 
         return _condition;
-    }, [entries, configuration, nuidSearchForm, parseConditionString, flattenRepeatables, sanitizeCondition]);
+    }, [entries, configuration, nuidSearchForm, eligibilityAutoFillValues, parseConditionString, flattenRepeatables, sanitizeCondition]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
         const direction = (d && ['next', 'back'].includes(d)) ? d : null;
         
-        if ((i !== undefined) && !isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
+        if ((i !== undefined) && !isNaN(Number(i)) && !(direction === 'next' && i < 0)) {
+            return screens[i] ? { screen: screens[i], index: i } : null;
+        }
 
         let skipToScreenIndex: number | null = null;
         
@@ -488,6 +522,24 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
             
             if (!screen) return null;
+
+            const inferredScreenEntry = eligibilityAutoFillValues.find(v => {
+                if (!v?.data?.inferredFromEligibility) return false;
+                const screenKey = screen?.data?.metadata?.key;
+                return screenKey && `${v.key}`.toLowerCase() === `${screenKey}`.toLowerCase();
+            });
+
+            if (inferredScreenEntry && direction && index > 0) {
+                const res = getTargetScreen(index);
+                if (res) {
+                    screen = res.screen;
+                    index = res.index;
+                } else {
+                    screen = null;
+                }
+            }
+
+            if (!screen) return null;
         
             if (!direction) return { screen, index, };
         
@@ -525,6 +577,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         activeScreenIndex, 
         drugsLibrary, 
         screens, 
+        eligibilityAutoFillValues,
         evaluateCondition, 
         parseCondition,
     ]);
@@ -766,12 +819,20 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
+        const {
+            completed,
+            cancelled,
+            dateAndTimeOfDeath,
+            nuidSearchForm: payloadNuidSearchForm,
+            startSessionMode: payloadStartSessionMode,
+            ...payload
+        } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
         const matches: any[] = [];
         const resolvedNuidSearchForm = payloadNuidSearchForm || nuidSearchForm;
+        const resolvedStartSessionMode = payloadStartSessionMode ?? startSessionMode;
 
         let uid = entries.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -816,12 +877,15 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 dateAndTimeOfDeath,
 				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
 				app_mode: application?.mode,
+                startSessionMode: resolvedStartSessionMode,
 				country: location?.country,
 				hospital_id: location?.hospital,
 				started_at: session?.data?.started_at || startTime,
 				completed_at: completed ? new Date().toISOString() : null,
 				canceled_at: cancelled ? new Date().toISOString() : null,
 				script,
+                eligibilityCompleted,
+                eligibilityAutoFillValues,
 				management: screens
 					.map(s => s.data)
 					.filter(s => s.type === 'management')
@@ -853,8 +917,11 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         location,
         screens,
         script,
+        startSessionMode,
         restructureForm,
         nuidSearchForm,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -1321,6 +1388,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         startTime,
         refresh,
         nuidSearchForm,
+        startSessionMode,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
         matched,
         patientDetails,
         mountedScreens,
@@ -1356,6 +1426,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         setMoreNavOptions,
         setRefresh,
         setNuidSearchForm,
+        setStartSessionMode,
+        setEligibilityCompleted,
+        setEligibilityAutoFillValues,
         setMatched,
         setPatientDetails,
         setMountedScreens,

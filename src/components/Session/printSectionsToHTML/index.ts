@@ -174,7 +174,7 @@ export async function printSectionsToHTML({
               value = formatValueWithUnit(value, v.unit)
             }
             let value2 = v.value2
-            if(exportType==='dropdown'){
+            if(exportType==='dropdown' && !value2){
               value2= getManualValue(values,v.key)
             }
 
@@ -296,7 +296,7 @@ export async function printSectionsToHTML({
         `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
           ${generatedQR}
         </div>` :
-        `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
+        !generatedQR ? '' : `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
           ${generatedQR}
         </div>`;
       return htmlContent;
