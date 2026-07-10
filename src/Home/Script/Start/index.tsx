@@ -22,7 +22,7 @@ function isStandardNuidSearchField(field: any) {
 }
 
 export function Start() {
-    const { 
+    const {
         evaluateCondition,
         parseCondition,
         setNuidSearchForm,
@@ -30,9 +30,10 @@ export function Start() {
         setActiveScreen,
         saveSession,
         setActiveScreenIndex,
-        screens, 
-        matched, 
-        script: { 
+        screens,
+        matched,
+        setMatched,
+        script: {
             type,
             data: {
                 nuidSearchFields = [], 
@@ -58,6 +59,27 @@ export function Start() {
         if (f.condition) conditionMet = evaluateCondition(parseCondition(f.condition, [{ values }])) as boolean;
         return conditionMet;
     }, [evaluateCondition, fields, parseCondition]);
+
+    // When a search field is hidden by its condition (e.g. the user changes the answer
+    // that revealed it), drop its stale search results so a re-shown blank field cannot
+    // leave the Start button enabled or pre-populate from the previous search.
+    React.useEffect(() => {
+        let changed = false;
+        let clearedStandardField = false;
+        const next = fields.map((f, i) => {
+            const searchField: any = nuidSearchFields[i];
+            if (searchField?.type !== 'text') return f;
+            if (evaluateFieldCondition(searchField)) return f;
+            if (f.value == null && f.results == null) return f;
+            changed = true;
+            if (isStandardNuidSearchField(searchField)) clearedStandardField = true;
+            return { ...f, value: null, results: null };
+        });
+        if (changed) {
+            setFields(next);
+            if (clearedStandardField) setMatched(null);
+        }
+    }, [fields, nuidSearchFields, evaluateFieldCondition, setMatched]);
 
     React.useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => setKeyboardIsOpen(true));
@@ -136,8 +158,9 @@ export function Start() {
         });
 
         setFields(nextFields);
+        setMatched(null);
         startSession(nextFields, 'bidStillBirth');
-    }, [evaluateFieldCondition, fields, nuidSearchFields, screens, startSession]);
+    }, [evaluateFieldCondition, fields, nuidSearchFields, screens, setMatched, startSession]);
 
     return (
         <Box flex={1} paddingTop="xl">
@@ -162,17 +185,16 @@ export function Start() {
                                         if (field.type === 'text') {
                                             results = value;
                                             value = value?.uid || null;
+                                            if (isStandardNuidSearchField(field)) {
+                                                setMatched(results?.session ? (results as types.MatchedSession) : null);
+                                            }
                                         }
 
-                                        const newState = fields.map((f, j) => {
+                                        setFields(prev => prev.map((f, j) => {
                                             if (j === i) return { ...f, value, results, };
                                             return f;
-                                        });
-                                        setFields(newState);
-                                        
-                                    }
-                                  
-                                }
+                                        }));
+                                    }}
                                 />
                                 <Box marginVertical="l" />
                             </Fragment>
