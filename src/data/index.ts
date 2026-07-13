@@ -10,6 +10,10 @@ export * from './convertSessionsToExportable';
 
 export * from './exportSessions';
 
+export * from './exportLock';
+
+export * from './exportOnReconnect';
+
 export * from './saveSession';
 
 export * from './updateSession';
