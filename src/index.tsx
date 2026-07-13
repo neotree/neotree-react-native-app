@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import registerdAssets from './assets';
 import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
-import { syncData, addSocketEventsListeners } from './data';
+import { syncData, addSocketEventsListeners, registerExportOnReconnect } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
@@ -33,12 +33,11 @@ export function Navigation() {
 
     React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
 
-    React.useEffect(() => { 
-        
-        addSocketEventsListeners(initialiseApp)
-    
-      
-        ; }, []);
+    React.useEffect(() => {
+        addSocketEventsListeners(initialiseApp);
+        const unsubscribe = registerExportOnReconnect();
+        return unsubscribe;
+    }, []);
       
 
     if (!ready) return <Splash />;
