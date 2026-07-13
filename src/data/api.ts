@@ -38,38 +38,24 @@ export async function makeApiCall(
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 300000);
 
-        const method = options?.method?.toUpperCase() || 'GET';
-
         try {
-            if(method==='GET') {
-                const res = await fetch(url, {
-                    ...options,
-                    signal: controller.signal,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers,
-                        'x-api-key': config.api_key,
-                    },
-                });
-                clearTimeout(timeout);
-                return res;
-            } else {
-                const res = await fetch(url, {
-                    ...options,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers,
-                        'x-api-key': config.api_key,
-                    },
-                });
-                clearTimeout(timeout);
-                return res;
-            }
+            const res = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    'x-api-key': config.api_key,
+                },
+            });
+            return res;
         } catch(err:any) {
             if (err.name === 'AbortError') {
-                throw new Error('Network Request Taking Too Longer than the expected 45 Seconds!!');
+                throw new Error('Network request timed out after 5 minutes. Check your connection and try again.');
             }
             throw err;
+        } finally {
+            clearTimeout(timeout);
         }
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
@@ -102,20 +88,34 @@ export async function makeLocalApiCall(
     
        const sec = config?.[0].secret
         const body =encryptInReactNative(options.body, sec);
-        const res = await fetch(url, {
-            method:'POST',
-            body: JSON.stringify({data:body}),
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                'x-api-key': config?.[0].api_key,
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        let res;
+        try {
+            res = await fetch(url, {
+                method:'POST',
+                body: JSON.stringify({data:body}),
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    'x-api-key': config?.[0].api_key,
+                }
+            });
+        } catch (err: any) {
+            if (err.name === 'AbortError') {
+                throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
             }
-        });
+            throw err;
+        } finally {
+            clearTimeout(timeout);
+        }
 
         if (res.status !== 200) {
             console.log(res);
         }
-       
 
         return res;
     }
