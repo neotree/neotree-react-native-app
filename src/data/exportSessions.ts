@@ -1,19 +1,26 @@
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
-import { makeApiCall, makeLocalApiCall } from './api';
+import { makeApiCall, makeLocalApiCall, hasLocalServerConfig } from './api';
 import { updateSession } from './updateSession';
-import { APP_CONFIG } from '@/src/constants';
-import * as types from '../types';
-import { getLocation } from './queries';
+import { withExportLock } from './exportLock';
 
-export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject) => {
+const doExportSessions = (sessions?: any[]) => new Promise((resolve, reject) => {
     (async () => {
         try {
-			let dbSessions = [];
-        
-            if (!sessions) dbSessions = await dbTransaction('SELECT * FROM sessions WHERE exported IS NOT ? OR local_export IS NOT ?;',[true, true]);
+            const hasLocalConfig = await hasLocalServerConfig();
 
-        
+			let dbSessions = [];
+
+            // only local-server sites track local_export; querying it at other
+            // sites would rescan every exported session forever
+            if (!sessions) dbSessions = await dbTransaction(
+                hasLocalConfig
+                    ? 'SELECT * FROM sessions WHERE exported IS NOT ? OR local_export IS NOT ?;'
+                    : 'SELECT * FROM sessions WHERE exported IS NOT ?;',
+                hasLocalConfig ? [true, true] : [true]
+            );
+
+
             const promises: Promise<any>[] = [];
             const exportableDbSessions = dbSessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}'), })).filter(s => s.data.completed_at || s.data.canceled_at);
             const exportData: any[] = sessions || exportableDbSessions.filter(s => s.data.completed_at && !s.exported);
@@ -51,18 +58,6 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
                     })();
                 })));
             }
-              const location = await getLocation();
-               const country =  location?.country;
-               let hasLocalConfig = false
-              if(country && country.length>0){
-                 const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-                 const hospital = location?.hospital
-                 const localConfig = config?.filter(c=>c.hospital===hospital?.trim())
-                 if(localConfig && localConfig?.[0]?.hospital?.length>0){
-                     hasLocalConfig =true 
-                 }
-            }
-
             // Handle /local calls (only if hasLocalConfig)
             if (exportData.length && hasLocalConfig) {
                 const localData: any = await convertSessionsToExportable(exportData, { showConfidential: true, });
@@ -115,8 +110,10 @@ export const exportSessions = (sessions?: any[]) => new Promise((resolve, reject
             if (failed.length) throw new Error('Failed to export session, try again!');
 
             resolve(null);
-        } catch (e) { 
-            reject(e); 
+        } catch (e) {
+            reject(e);
         }
     })();
 });
+
+export const exportSessions = (sessions?: any[]) => withExportLock(() => doExportSessions(sessions));
