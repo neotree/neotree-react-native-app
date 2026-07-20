@@ -432,7 +432,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             return `(${sanitizeCondition(parsedCondition)})`;
         }).join(' && ');
 
-        return _condition;
+        return _condition.toLowerCase();
     }, [entries, configuration, nuidSearchForm, eligibilityAutoFillValues, parseConditionString, flattenRepeatables, sanitizeCondition]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
