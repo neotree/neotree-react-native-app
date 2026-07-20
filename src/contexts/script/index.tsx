@@ -879,7 +879,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             type: script?.type,
             data: {
                 dateAndTimeOfDeath,
-				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
+				unique_key: session?.data?.unique_key || summary?.data?.unique_key || `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
 				app_mode: application?.mode,
                 startSessionMode: resolvedStartSessionMode,
 				country: location?.country,
@@ -926,6 +926,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         nuidSearchForm,
         eligibilityCompleted,
         eligibilityAutoFillValues,
+        summary,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -957,7 +958,6 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         (async () => {
             try {
                 const summary = await saveSession(params);
-                api.exportSessions().then(() => { }).catch(() => { });
                 setSummary(summary);
                 resolve(summary);
             } catch (e) {

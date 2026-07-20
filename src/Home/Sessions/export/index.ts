@@ -267,7 +267,7 @@ export function exportToApi(opts: any = {}) {
           }
         }
 
-        const sessions = [
+        const candidates = [
           ..._sessions,
           ...queuedSessions,
         ]
@@ -281,10 +281,28 @@ export function exportToApi(opts: any = {}) {
           if (opts.dontSaveFile !== true) await exportJSON(opts);
         } catch (e) { /* Do nothing */ }
 
-        if (!sessions.length) {
+        if (!candidates.length) {
           resolve(null);
           return;
         }
+
+        await api.withExportLock(async () => {
+
+        // Refresh export flags from the db: an auto-export may have finished
+        // while this run waited for the lock, or the screen state may be stale
+        const freshRows: any[] = ((await api.getSessions()) as any[]) || [];
+        const freshById: any = {};
+        freshRows.forEach((s: any) => { if (s?.id !== undefined) freshById[s.id] = s; });
+
+        const sessions = candidates
+          .map((s: any) => !freshById[s?.id] ? s : {
+            ...s,
+            exported: freshById[s.id].exported,
+            local_export: freshById[s.id].local_export,
+          })
+          .filter((s: any) => s && !s.exported);
+
+        if (!sessions.length) return;
 
         // Get location config once for all operations
         const location = await api.getLocation();
@@ -403,6 +421,8 @@ export function exportToApi(opts: any = {}) {
         if (mainSuccessIds.length > 0) {
           await removeFromExportQueue(mainSuccessIds);
         }
+
+        });
 
         resolve(null);
       } catch (e) {
