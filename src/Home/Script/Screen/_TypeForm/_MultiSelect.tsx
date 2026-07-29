@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useEffect, useRef, useState, } from 'react';
-import { Alert, TouchableOpacity } from 'react-native';
-import { Box, Card, Text, Br, TextInput } from '@/src/components';
+import { Alert, TouchableOpacity, View } from 'react-native';
+import Icon from '@expo/vector-icons/MaterialIcons';
+import { Box, Card, Text, Br, TextInput, useTheme } from '@/src/components';
 import * as types from '@/src/types';
 import { fieldsTypes } from '@/src/constants';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items';
@@ -18,8 +19,13 @@ export function MultiSelectField({
     entryValue, 
     onChange, 
 }: MultiSelectFieldProps) {
+    const theme = useTheme();
     const canEdit = repeatable ? editable : true;
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [search, setSearch] = useState({
+        show: false,
+        value: '',
+    });
 
     const opts = useMemo(() => {
         if (!field?.items) {
@@ -123,7 +129,70 @@ export function MultiSelectField({
 
     return (
         <Box>
-            <Text mb="m">{`${field.label || ''}${field.optional ? '' : ' *'}`}</Text>
+            <View
+                style={{
+                    flexDirection: 'row',
+                    columnGap: 8,
+                }}
+            >
+                <Box flex={1}>
+                    <Text mb="m">
+                        {`${field.label || ''}${field.optional ? '' : ' *'}`}
+                    </Text>
+                </Box>
+                
+                {!search.show && (
+                    <TouchableOpacity
+                        onPress={() => setSearch(prev => ({
+                            ...prev,
+                            show: true,
+                            value: '',
+                        }))}
+                    >
+                        <Icon 
+                            size={24} 
+                            name="search"
+                            color={theme.colors.primary} 
+                        />
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            {search.show && (
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        columnGap: 8,
+                        marginTop: 10,
+                        marginBottom: 20,
+                    }}
+                >
+                    <View style={{ flex: 1, }}>
+                        <TextInput
+                            placeholder="Search"
+                            onChangeText={value => setSearch(prev => ({
+                                ...prev,
+                                value,
+                            }))}
+                            returnKeyType="search"
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        onPress={() => setSearch(prev => ({
+                            ...prev,
+                            show: false,
+                            value: '',
+                        }))}
+                    >
+                        <Icon 
+                            size={24} 
+                            name="close"
+                        />
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {opts.map(o => {
                 const exclusiveSelected = Object.values(value).find(o => o?.exclusive);
@@ -133,6 +202,10 @@ export function MultiSelectField({
 
                 const { value2, } = { ...value[o.value] };
                 const manualLabel = `${o.enterValueManuallyLabel || ''}`.trim() || `Specify ${o?.label}`;
+
+                const hide = search.value ? !`${o.label}`.match(new RegExp(search.value, 'gi')) : false;
+
+                if (hide) return null;
 
                 return (
                     <Box 
