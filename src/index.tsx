@@ -17,28 +17,42 @@ export * from './components';
 
 export function Navigation() {
     const [ready, setReady] = React.useState(false);
-    const {setSyncDataResponse,authenticatedUser} = useAppContext()||{};
+    const {setSyncDataResponse,authenticatedUser,locationVersion} = useAppContext()||{};
 
     const initialiseApp = React.useCallback(async () => {
-        try { 
-            const res = await syncData(); 
-            if(setSyncDataResponse)          
+        try {
+            const res = await syncData();
+            if(setSyncDataResponse)
                 setSyncDataResponse(res);
         } catch (e) {
             console.log(e);
         } finally {
             setReady(true);
-        } 
+        }
     }, [setSyncDataResponse]);
 
     React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
 
+    // Registered once: NetInfo transitions and circuit resets aren't tied to location.
     React.useEffect(() => {
-        addSocketEventsListeners(initialiseApp);
         const unsubscribe = registerExportOnReconnect();
         return unsubscribe;
     }, []);
-      
+
+    React.useEffect(() => {
+        let cancelled = false;
+        let cleanup: (() => void) | undefined;
+
+        addSocketEventsListeners(initialiseApp).then(unsubscribe => {
+            if (cancelled) { unsubscribe(); return; }
+            cleanup = unsubscribe;
+        });
+
+        return () => {
+            cancelled = true;
+            cleanup?.();
+        };
+    }, [locationVersion]);
 
     if (!ready) return <Splash />;
 

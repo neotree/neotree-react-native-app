@@ -1,10 +1,10 @@
 import { APP_VERSION } from '@/src/constants';
-import { convertSessionsToExportable } from '../../../data';
+import { convertSessionsToExportable, isExportableSession } from '../../../data';
 
 export default function getJSON(opts: any = {}) {
   const { showConfidential, sessions: _sessions, application } = opts;
 
-  const sessions = (_sessions || []).map((s: any) => {
+  const sessions = (_sessions || []).filter(isExportableSession).map((s: any) => {
     const { script, app_mode, country, hospital_id, started_at, completed_at, canceled_at } = s.data;
     const { entries, diagnoses }: any = convertSessionsToExportable([s], { showConfidential });
 
