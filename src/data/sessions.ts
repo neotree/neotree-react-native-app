@@ -4,6 +4,10 @@ import { convertSessionsToExportable } from './convertSessionsToExportable';
 
 
 export const exportSession = async (s: any) => {
+    if (!s?.completed_at || s?.canceled_at) {
+        throw new Error('Only completed sessions can be exported');
+    }
+
     try {
         const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
             method: 'POST',

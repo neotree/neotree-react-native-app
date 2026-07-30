@@ -93,6 +93,7 @@ export function Account() {
                                         (async () => {
                                             setDisplayLoader(true);
                                             await api.resetApp();
+                                            api.invalidateLocationCache();
                                             await api.logout();
                                             setDisplayLoader(false);
                                             setAuthenticatedUser && setAuthenticatedUser(null);
