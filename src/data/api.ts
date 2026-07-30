@@ -4,12 +4,36 @@ import queryString from 'query-string';
 import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
+import {
+    acquireAttempt,
+    recordSuccess,
+    recordFailure,
+    backendKey,
+    NetworkUnavailableError,
+} from './circuitBreaker';
 
+const PROBE_TIMEOUT_MS = 15_000;
+const REMOTE_TIMEOUT_MS = 60_000;
+const LOCAL_TIMEOUT_MS = 30_000;
+
+export const SYNC_DOWNLOAD_TIMEOUT_MS = 300_000;
+export const REMOTE_PROBE_TIMEOUT_MS = PROBE_TIMEOUT_MS;
 
 const _otherOptions = {
     useHost: false,
 	country: '',
+	hospital: '',
+	timeout: REMOTE_TIMEOUT_MS,
 };
+
+export function resolveLocalServer(country: string | null | undefined, hospital: string | null | undefined) {
+    if (!country) return null;
+    const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)?.['local'];
+    if (!Array.isArray(config) || !config.length) return null;
+    const trimmedHospital = hospital?.trim();
+    if (!trimmedHospital) return null;
+    return config.find(c => c.hospital === trimmedHospital) || null;
+}
 
 export async function makeApiCall(
     source: 'webeditor' | 'nodeapi', 
@@ -17,7 +41,7 @@ export async function makeApiCall(
     options: RequestInit = {},
     otherOptions: Partial<(typeof _otherOptions)> = _otherOptions,
 ) {
-    const { useHost } = { ..._otherOptions, ...otherOptions, };
+    const { useHost, timeout: timeoutMs } = { ..._otherOptions, ...otherOptions, };
     let url = '';
     try {
         const location = await getLocation();
@@ -34,9 +58,20 @@ export async function makeApiCall(
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/').replace(/\?+$/, '');
 
+        const circuitKey = backendKey(country, source);
+        if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError(source);
+
         console.log('[API]: ', url);
+
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (ok) recordSuccess(circuitKey); else recordFailure(circuitKey);
+        };
+
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 300000);
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
             const res = await fetch(url, {
@@ -48,14 +83,17 @@ export async function makeApiCall(
                     'x-api-key': config.api_key,
                 },
             });
+            settle(true);
             return res;
         } catch(err:any) {
+            settle(false);
             if (err.name === 'AbortError') {
-                throw new Error('Network request timed out after 5 minutes. Check your connection and try again.');
+                throw new Error('Network request timed out. Check your connection and try again.');
             }
             throw err;
         } finally {
             clearTimeout(timeout);
+            settle(false);
         }
     } catch(e) {
         // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
@@ -71,26 +109,37 @@ export async function makeLocalApiCall(
     try {
         const location = await getLocation();
         const country = otherOptions.country || location?.country;
+        const hospital = otherOptions.hospital || location?.hospital;
 
         if (!country) throw new Error('Location not set');
 
-        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-        if(config && Array.isArray(config)){
+        const target = resolveLocalServer(country, hospital);
+        if(target){
 
-        let api_endpoint =  config?.[0].host;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
+        let api_endpoint =  target.host;
+        api_endpoint[api_endpoint.length - 1] === '/' ?
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
 
+        const sec = target.secret;
+        const body = encryptInReactNative(options.body, sec);
+
+        const circuitKey = backendKey(country, 'local', hospital);
+        if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
+
         console.log('[API]: ', url);
-    
-       const sec = config?.[0].secret
-        const body =encryptInReactNative(options.body, sec);
+
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (ok) recordSuccess(circuitKey); else recordFailure(circuitKey);
+        };
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), LOCAL_TIMEOUT_MS);
 
         let res;
         try {
@@ -101,16 +150,19 @@ export async function makeLocalApiCall(
                 headers: {
                     'Content-Type': 'application/json',
                     ...options.headers,
-                    'x-api-key': config?.[0].api_key,
+                    'x-api-key': target.api_key,
                 }
             });
+            settle(true);
         } catch (err: any) {
+            settle(false);
             if (err.name === 'AbortError') {
                 throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
             }
             throw err;
         } finally {
             clearTimeout(timeout);
+            settle(false);
         }
 
         if (res.status !== 200) {
@@ -137,57 +189,68 @@ export async function makeLocalGetApiCall(
 
         if (!country) throw new Error('Location not set');
 
-        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
         const queryString = endpoint.split('?')[1];
         const params = new URLSearchParams(queryString);
         const hospitalId = params.get("hospital");
 
-        if(!config || !Array.isArray(config) || config.length<=0){
-            return null
-        }
-        if(config.length>0 && config[0]['hospital']!=hospitalId){
+        const target = resolveLocalServer(country, hospitalId);
+        if(!target){
             return null
         }
         else{
-        let api_endpoint =  config?.[0].host;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
+        let api_endpoint =  target.host;
+        api_endpoint[api_endpoint.length - 1] === '/' ?
             api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
 
+        const sec = target.secret;
+
+        const circuitKey = backendKey(country, 'local', hospitalId);
+        if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
+
         console.log('[API]: ', url);
-    
-       const sec = config?.[0].secret
+
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (ok) recordSuccess(circuitKey); else recordFailure(circuitKey);
+        };
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), LOCAL_TIMEOUT_MS);
 
-          try {
-
-        const res = await fetch(url, {
-            method:'GET',
-            signal: controller.signal,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                'x-api-key': config?.[0].api_key,
+        let res;
+        try {
+            res = await fetch(url, {
+                method:'GET',
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    'x-api-key': target.api_key,
+                }
+            });
+            settle(true);
+        } catch (err: any) {
+            settle(false);
+            if (err.name === 'AbortError') {
+                throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
             }
-        });
-        
+            throw err;
+        } finally {
+            clearTimeout(timeout);
+            settle(false);
+        }
+
         if (res.status !== 200) {
             console.log(res);
         }
-       
-        const sessions = decryptInReactNative(await res?.json(),sec)
-        clearTimeout(timeout);
+
+        const sessions = decryptInReactNative(await res?.json(), sec);
         return sessions;
-    }catch (err:any) {
-        if (err.name === 'AbortError') {
-            throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
-        }
-        throw err;
-       }
     }
    
     } catch(e) {
@@ -198,12 +261,8 @@ export async function makeLocalGetApiCall(
 export async function hasLocalServerConfig() {
     try {
         const location = await getLocation();
-        const country = location?.country;
-        if (!country) return false;
-        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-        const hospital = location?.hospital;
-        const localConfig = Array.isArray(config) ? config.filter(c => c.hospital === hospital?.trim()) : [];
-        return Boolean(localConfig?.[0]?.hospital?.length);
+        if (!location?.country) return false;
+        return Boolean(resolveLocalServer(location.country, location.hospital));
     } catch {
         return false;
     }

@@ -156,6 +156,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           id: session?.id,
           exported:session.exported,
           local_export:session.local_export,
+          poll_exported:session.poll_exported,
           uid: session.uid,
           unique_key,
           appVersion: APP_VERSION,
