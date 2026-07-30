@@ -341,11 +341,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
                 _condition = valsParsed
                     .map(v => {
-                        let includes = entryVals.map(v => v.toLowerCase()).includes(v.toLowerCase());
-                        if (_condition.match(/ excludes /gi)) {
-                            includes = !includes;
-                        }
-                        return includes;
+                        // let includes = entryVals.map(v => v.toLowerCase()).includes(v.toLowerCase());
+                        // if (_condition.match(/ excludes /gi)) {
+                        //     includes = !includes;
+                        // }
+                        // return includes;
+                        return `${JSON.stringify(entryVals.map(v => v.toLowerCase()))}.includes(${JSON.stringify(v).toLowerCase()})`;
                     })
                     .join(` ${joinWith} `);
 
