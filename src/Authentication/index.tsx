@@ -2,16 +2,19 @@ import React from 'react';
 import { View, Image } from "react-native";
 import assets from "../assets";
 import { Content, Box, LocationForm  } from "../components";
+import { useAppContext } from '../AppContext';
 import { SignIn } from './SignIn';
 
 type AuthenticationProps = {};
 
 export function Authentication({}: AuthenticationProps) {
     const [section, setSection] = React.useState<'location' | 'sign-in'>('location');
+    const { bumpLocationVersion } = useAppContext() || {};
 
     const onSetLocation = React.useCallback(() => {
+        bumpLocationVersion && bumpLocationVersion();
         setSection('sign-in');
-    }, []);
+    }, [bumpLocationVersion]);
 
     const onSignIn = React.useCallback(() => {
 
