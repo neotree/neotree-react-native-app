@@ -5,11 +5,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
-import { APP_CONFIG } from '../../../constants';
-import * as types from '../../../types';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 
 export { getJSON };
+export interface ManualExportOutcome {
+  status: 'success' | 'already-exported' | 'local-only' | 'partial' | 'failed';
+  localConfigured: boolean;
+  localOk: number;
+  remoteOk: number;
+  localPending: number;
+  remotePending: number;
+  alreadyExported: number;
+}
 
 const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
 
@@ -87,7 +94,8 @@ const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
 });
 
 export function exportJSON(_opts: any = {}) {
-  const { sessions, ...opts } = _opts;
+  const { sessions: suppliedSessions, ...opts } = _opts;
+  const sessions = (suppliedSessions || []).filter(api.isExportableSession);
 
   return new Promise((resolve, reject) => {
     (async () => {
@@ -130,7 +138,7 @@ export function exportJSON(_opts: any = {}) {
 }
 
 export function exportEXCEL(opts: any = {}) {
-  const sessions = opts.sessions || [];
+  const sessions = (opts.sessions || []).filter(api.isExportableSession);
   const scriptsFields = { ...opts.scriptsFields };
 
   return new Promise((resolve, reject) => {
@@ -250,7 +258,7 @@ export function exportEXCEL(opts: any = {}) {
 }
 
 export function exportToApi(opts: any = {}) {
-  const _sessions = opts.sessions || [];
+  const _sessions = (opts.sessions || []).filter(api.isExportableSession);
 
   return new Promise((resolve, reject) => {
     (async () => {
@@ -265,13 +273,38 @@ export function exportToApi(opts: any = {}) {
           if (missingIds.length) {
             await removeFromExportQueue(missingIds);
           }
+
+          const nonExportableIds = queuedSessions
+            .filter(s => !api.isExportableSession(s))
+            .map(s => s.id);
+          if (nonExportableIds.length) {
+            await removeFromExportQueue(nonExportableIds);
+            queuedSessions = queuedSessions.filter(api.isExportableSession);
+          }
+
+          const alreadyExportedIds = queuedSessions.filter(s => Boolean(s.exported)).map(s => s.id);
+          if (alreadyExportedIds.length) {
+            await removeFromExportQueue(alreadyExportedIds);
+            queuedSessions = queuedSessions.filter(s => !Boolean(s.exported));
+          }
         }
+
+        const hasLocalConfig = await api.hasLocalServerConfig();
+        const location = await api.getLocation();
+
+        const localRequired = (s: any) => api.localRequiredForSession(s, location, hasLocalConfig);
+
+        const needsExport = (s: any) => api.isExportableSession(s) && (
+          !s.exported ||
+          (api.pollingRequired(s.data?.country) && !s.poll_exported) ||
+          (localRequired(s) && !s.local_export)
+        );
 
         const candidates = [
           ..._sessions,
           ...queuedSessions,
         ]
-          .filter((s: any) => s && !s.exported)
+          .filter(needsExport)
           .reduce((acc: any[], s: any) => {
             if (!acc.some(e => e.id === s.id)) acc.push(s);
             return acc;
@@ -279,17 +312,36 @@ export function exportToApi(opts: any = {}) {
 
         try {
           if (opts.dontSaveFile !== true) await exportJSON(opts);
-        } catch (e) { /* Do nothing */ }
+        } catch { /* Do nothing */ }
+
+        let outcome: ManualExportOutcome = {
+          status: 'success',
+          localConfigured: hasLocalConfig,
+          localOk: 0,
+          remoteOk: 0,
+          localPending: 0,
+          remotePending: 0,
+          alreadyExported: 0,
+        };
 
         if (!candidates.length) {
-          resolve(null);
+          const selectedCount = Array.isArray(_sessions) ? _sessions.length : 0;
+          if (selectedCount) {
+            outcome = { ...outcome, status: 'already-exported', alreadyExported: selectedCount };
+          }
+          resolve(outcome);
           return;
         }
 
+        try {
+          const loc = await api.getLocation();
+          if (loc?.country) {
+            api.resetCircuit(api.backendKey(loc.country, 'local', loc.hospital));
+          }
+        } catch { /* a failed location read just means no local reset */ }
+
         await api.withExportLock(async () => {
 
-        // Refresh export flags from the db: an auto-export may have finished
-        // while this run waited for the lock, or the screen state may be stale
         const freshRows: any[] = ((await api.getSessions()) as any[]) || [];
         const freshById: any = {};
         freshRows.forEach((s: any) => { if (s?.id !== undefined) freshById[s.id] = s; });
@@ -298,133 +350,107 @@ export function exportToApi(opts: any = {}) {
           .map((s: any) => !freshById[s?.id] ? s : {
             ...s,
             exported: freshById[s.id].exported,
+            poll_exported: freshById[s.id].poll_exported,
             local_export: freshById[s.id].local_export,
           })
-          .filter((s: any) => s && !s.exported);
+          .filter(needsExport);
 
         if (!sessions.length) return;
 
-        // Get location config once for all operations
-        const location = await api.getLocation();
-        const country = location?.country;
-        const hasLocalConfig = Boolean(
-          country &&
-          country.length > 0 &&
-          (() => {
-            const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-            const hospital = location?.hospital;
-            const localConfig = config?.filter(c => c.hospital === hospital?.trim());
-            return localConfig?.[0]?.hospital?.length > 0;
-          })()
+        const wasRemoteDone = new Set(
+          sessions
+            .filter((s: any) => {
+              const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(s.poll_exported);
+              return Boolean(s.exported) && pollSatisfied;
+            })
+            .map((s: any) => s.id)
         );
 
-        // Convert sessions once for standard export, once for poll/local data
-        const [standardExportData, pollExportData] = await Promise.all([
-          api.convertSessionsToExportable(sessions, opts),
-          api.convertSessionsToExportable(sessions, { ...opts, showConfidential: true })
-        ]) as [any[], any[]];
-
-        // Three independent API call groups
-        const apiCallGroups = [
-          // 1. Main session export to /sessions
-          ...standardExportData.map((s: any, i: number) => ({
-            type: 'main',
-            sessionId: sessions[i]?.id,
-            execute: async () => {
-              await api.exportSession(s);
-              await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id } });
-              return { success: true, id: sessions[i]?.id };
-            }
-          })),
-
-          // 2. Local export to /local (if hasLocalConfig)
-          ...(hasLocalConfig ? pollExportData.map((s: any, i: number) => ({
-            type: 'local',
-            sessionId: sessions[i]?.id,
-            execute: async () => {
-              if (sessions[i]?.local_export) return { success: true, skipped: true };
-
-              const { id, exported, local_export, ...exportable } = s;
-              const res = await api.makeLocalApiCall(
-                `/local?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
-                {
-                  method: 'POST',
-                  body: JSON.stringify(exportable),
-                }
-              );
-
-              if (res?.status === 200) {
-                await api.updateSession({ local_export: true }, { where: { id: sessions[i]?.id } });
-                return { success: true, id: sessions[i]?.id };
-              }
-              throw new Error(`Failed to local export session ${sessions[i]?.id}`);
-            }
-          })) : []),
-
-          // 3. Poll data export to /save-poll-data
-          ...pollExportData.map((s: any, i: number) => ({
-            type: 'poll',
-            sessionId: sessions[i]?.id,
-            execute: async () => {
-              if (sessions[i]?.exported) return { success: true, skipped: true };
-
-              const { id, exported, local_export, ...exportable } = s;
-              const res = await api.makeApiCall(
-                'nodeapi',
-                `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
-                {
-                  method: 'POST',
-                  body: JSON.stringify(exportable),
-                }
-              );
-              if (res?.status !== 200) {
-                throw new Error(`Failed to export poll data for session ${sessions[i]?.id}`);
-              }
-              return { success: true, id: sessions[i]?.id };
-            }
-          }))
-        ];
-
-        // Execute all API calls independently - failures don't affect other calls
-        const results = await Promise.allSettled(
-          apiCallGroups.map(group => group.execute())
+        const wasLocalDone = new Set(
+          sessions.filter((s: any) => !localRequired(s) || Boolean(s.local_export)).map((s: any) => s.id)
         );
 
-        // Collect failures for logging
-        const failures = results
-          .map((result, index) => ({ result, group: apiCallGroups[index] }))
-          .filter(({ result }) => result.status === 'rejected')
-          .map(({ result, group }) => ({
-            type: group.type,
-            sessionId: group.sessionId,
-            error: result.status === 'rejected' ? result.reason : null
-          }));
 
-        if (failures.length > 0) {
-          console.log('Export failures:', failures);
-          const mainFailures = failures.filter(f => f.type === 'main');
-          if (mainFailures.length > 0) {
-            await addToExportQueue(mainFailures.map(f => f.sessionId).filter(Boolean));
-          }
-          if (mainFailures.length > 0) {
-            throw new Error(`Failed to export ${mainFailures.length} session(s). Check network and try again.`);
-          }
-          // Local/poll failures are treated as warnings
+        const result = await api.doExportSessions(sessions);
+
+        const postRows: any[] = ((await api.getSessions()) as any[]) || [];
+        const postById: any = {};
+        postRows.forEach((s: any) => { if (s?.id !== undefined) postById[s.id] = s; });
+
+        const isRemoteDone = (s: any) => {
+          const row = postById[s.id] || s;
+          const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(row.poll_exported);
+          return Boolean(row.exported) && pollSatisfied;
+        };
+        const isLocalDone = (s: any) => {
+
+          if (!localRequired(s)) return true;
+          return Boolean((postById[s.id] || s).local_export);
+        };
+
+        const remotePending = sessions.filter((s: any) => !isRemoteDone(s));
+        const localPending = sessions.filter((s: any) => !isLocalDone(s));
+
+        const sentRemote = sessions.filter((s: any) => isRemoteDone(s) && !wasRemoteDone.has(s.id));
+        const sentLocal = sessions.filter((s: any) => isLocalDone(s) && !wasLocalDone.has(s.id));
+        const alreadyDone = sessions.filter((s: any) => (
+          wasRemoteDone.has(s.id) && wasLocalDone.has(s.id)
+        ));
+
+        const clearedIds = sessions
+          .map((s: any) => s.id)
+          .filter((id: any) => Boolean(postById[id]?.exported));
+        if (clearedIds.length) await removeFromExportQueue(clearedIds);
+
+        const stillPendingMainIds = sessions
+          .map((s: any) => s.id)
+          .filter((id: any) => !postById[id]?.exported);
+        if (stillPendingMainIds.length) await addToExportQueue(stillPendingMainIds);
+
+        outcome = {
+          status: 'success',
+          localConfigured: result.localConfigured,
+          localOk: sentLocal.length,
+          remoteOk: sentRemote.length,
+          localPending: localPending.length,
+          remotePending: remotePending.length,
+          alreadyExported: alreadyDone.length,
+        };
+
+        if (remotePending.length || localPending.length) {
+          console.log('Export outcome:', {
+            sentRemote: sentRemote.length,
+            sentLocal: sentLocal.length,
+            alreadyExported: alreadyDone.length,
+            remotePending: remotePending.length,
+            localPending: localPending.length,
+          });
+
+          api.scheduleExportSessions();
         }
 
-        const mainSuccessIds = results
-          .map((result, index) => ({ result, group: apiCallGroups[index] }))
-          .filter(({ result, group }) => group.type === 'main' && result.status === 'fulfilled')
-          .map(({ group }) => group.sessionId)
-          .filter(Boolean);
+        if (!remotePending.length && !localPending.length) {
+          outcome.status = (!sentRemote.length && !sentLocal.length && alreadyDone.length)
+            ? 'already-exported'
+            : 'success';
+        } else if (sessions.some(localRequired) && !localPending.length && remotePending.length) {
+          outcome.status = 'local-only';
+        } else if (sentRemote.length || sentLocal.length) {
+          outcome.status = 'partial';
+        } else {
+          outcome.status = 'failed';
+        }
 
-        if (mainSuccessIds.length > 0) {
-          await removeFromExportQueue(mainSuccessIds);
+        if (outcome.status === 'failed') {
+          throw new Error(
+            `Could not export ${remotePending.length} session(s) — no server could be reached. `
+            + `The data is saved on this device and will be sent automatically once a server is available.`
+          );
         }
 
         });
 
-        resolve(null);
+        resolve(outcome);
       } catch (e) {
         console.log('Export error:', e);
         reject(e);
@@ -436,7 +462,7 @@ export function exportToApi(opts: any = {}) {
 export default function exportData(opts: any = {}) {
   const { format } = opts;
 
-  opts.sessions = (opts.sessions || []).filter((s: any) => s?.data?.completed_at || s?.data?.canceled_at);
+  opts.sessions = (opts.sessions || []).filter(api.isExportableSession);
 
   switch (format) {
     case 'jsonapi':

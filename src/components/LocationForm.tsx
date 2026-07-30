@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator } from "react-native";
-import { countries, SDK_VERSION } from '@/src/constants';
+import { countries,} from '@/src/constants';
 
 import { useTheme, Text  } from "./Theme";
 import { Br } from './Br';
@@ -43,6 +43,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 						`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
 						Object.values(location),
 					);
+					api.invalidateLocationCache();
 					onSetLocation();
 					setSubmitting(false);
 				} else {

@@ -8,6 +8,8 @@ export interface IAppContext {
     setAuthenticatedUser: React.Dispatch<React.SetStateAction<types.AuthenticatedUser | null>>;    
     setApplication: React.Dispatch<React.SetStateAction<types.Application | null>>;
     setSyncDataResponse: (res: Awaited<ReturnType<typeof api.syncData>>) => void;
+    locationVersion: number;
+    bumpLocationVersion: () => void;
 }
 
 export const AppContext = React.createContext<IAppContext>(null!);
@@ -17,6 +19,7 @@ export const useAppContext = () => React.useContext(AppContext);
 export function AppContextProvider({ children }: React.PropsWithChildren<{}>) {
     const [authenticatedUser, setAuthenticatedUser] = React.useState<types.AuthenticatedUser | null>(null);
     const [application, setApplication] = React.useState<types.Application | null>(null);
+    const [locationVersion, setLocationVersion] = React.useState(0);
 
     return (
         <AppContext.Provider 
@@ -29,6 +32,8 @@ export function AppContextProvider({ children }: React.PropsWithChildren<{}>) {
                     setAuthenticatedUser(res?.authenticatedUser);
                     setApplication(res?.application);
                 },
+                locationVersion,
+                bumpLocationVersion: () => setLocationVersion(v => v + 1),
             }}
         >
             {children}

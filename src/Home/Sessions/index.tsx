@@ -23,11 +23,11 @@ const exportTypes = [
 
 const deleteTypes = [
 	{
-		label: 'All (except unexported complete sessions)',
+		label: 'All (except sessions still awaiting export)',
 		value: 'all',
 	},
 	{
-		label: 'Incomplete sessions',
+		label: 'Incomplete (unsubmitted) sessions',
 		value: 'incomplete',
 	},
 	{
@@ -82,6 +82,16 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [localServerError, setLocalServerError] = React.useState('');
 	const [searchSource, setSearchSource] = React.useState<null | 'local' | 'localServer'>(null);
 	const [loadingSessionDetails, setLoadingSessionDetails] = React.useState(false);
+	const [location, setLocation] = React.useState<null | types.Location>(null);
+	const [hasLocalConfig, setHasLocalConfig] = React.useState(false);
+
+
+	const isDeliveredSession = React.useCallback(
+		(s: any) => api.isFullyDelivered(s, location, hasLocalConfig),
+		[location, hasLocalConfig]
+	);
+
+	const isDraftSession = React.useCallback((s: any) => !api.isTerminalSession(s), []);
 
 	const normalizeSessionForDisplay = async (session: any) => {
 		if (!session) return session;
@@ -323,7 +333,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	};
 
 	const exportSessions = async (opts: any = {}) => {
-		const _dbSessions = dbSessions.filter((s: any) => s?.data?.completed_at);
+		const _dbSessions = dbSessions.filter(api.isExportableSession);
 		let sessions = _dbSessions;
 		switch (exportType) {
 			case 'date_range':
@@ -334,11 +344,43 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		}
 		setExportingSessions(true);
 		try {
-			await exportData({ ...opts, format: exportFormat, sessions, scriptsFields, application, });
+			const result: any = await exportData({ ...opts, format: exportFormat, sessions, scriptsFields, application, });
 			if (exportFormat === 'jsonapi') await getSessions();
+
+			let title = '';
+			let message = 'Export success';
+			if (exportFormat === 'jsonapi') {
+				switch (result?.status) {
+					case 'already-exported':
+						title = 'Already exported';
+						message = result.alreadyExported === 1
+							? 'This session has already been exported. Nothing was sent again.'
+							: `All ${result.alreadyExported} selected sessions have already been exported.`;
+						break;
+					case 'local-only':
+						title = 'Saved to local server';
+						message = (result.localOk
+							? `${result.localOk} session(s) saved to the local server. `
+							: `These sessions are already saved on the local server. `)
+							+ `The cloud server can't be reached right now, Please try again later`;
+						break;
+					case 'partial':
+						title = 'Partially exported';
+						message = `Sent to the cloud: ${result.remoteOk}. `
+							+ (result.localConfigured ? `Saved locally: ${result.localOk}. ` : '')
+							+ (result.alreadyExported ? `Already exported previously: ${result.alreadyExported}. ` : '')
+							+ `Still queued: ${Math.max(result.remotePending, result.localPending)} session(s) — these retry automatically.`;
+						break;
+					default:
+						message = result?.localConfigured
+							? `Export success — sent to both the cloud and the local server.`
+							: 'Export success';
+				}
+			}
+
 			Alert.alert(
-				'',
-				'Export success',
+				title,
+				message,
 				[
 					{
 						text: 'Ok',
@@ -372,11 +414,34 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		setShowExportFormats(false);
 	};
 
-	const deleteSessions = async (ids: any[] = []) => {
-		if (ids.length) {
+	const deleteSessions = async (ids: any[] = [], opts: { allowDrafts?: boolean } = {}) => {
+		if (!ids.length) return;
+
+		const allRows: any[] = ((await api.getSessions()) as any[]) || [];
+		const byId: any = {};
+		allRows.forEach((s: any) => { if (s?.id !== undefined) byId[s.id] = s; });
+
+		const requested = ids.map((id: any) => byId[id]).filter(Boolean);
+		const deletable = requested.filter((s: any) => (
+			isDeliveredSession(s) || (opts.allowDrafts && isDraftSession(s))
+		));
+		const blocked = requested.filter((s: any) => !deletable.includes(s));
+
+		if (!deletable.length) {
+			Alert.alert(
+				'Nothing deleted',
+				blocked.length === 1
+					? 'This session has not finished exporting yet, so it cannot be deleted. It will be sent automatically once a server is reachable.'
+					: `${blocked.length} session(s) have not finished exporting yet, so none were deleted. They will be sent automatically once a server is reachable.`,
+				[{ text: 'Ok' }]
+			);
+			return;
+		}
+
+		const proceed = async () => {
 			setDeletingSessions(true);
 			try {
-				await api.deleteSessions(ids);
+				await api.deleteSessions(deletable.map((s: any) => s.id));
 				await getSessions();
 			} catch (e: any) {
 				Alert.alert(
@@ -385,7 +450,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				[
 					{
 						text: 'Try again',
-						onPress: () => deleteSessions(ids),
+						onPress: () => deleteSessions(ids, opts),
 					},
 					{
 						text: 'Cancel',
@@ -393,10 +458,25 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					}
 				]
 				);
-				
+
 			}
 			setDeletingSessions(false);
+		};
+
+		if (blocked.length) {
+			Alert.alert(
+				'Some sessions kept',
+				`${blocked.length} session(s) have not finished exporting and will be kept. `
+				+ `Delete the remaining ${deletable.length} session(s)?`,
+				[
+					{ text: 'Cancel', style: 'cancel' },
+					{ text: 'Delete', onPress: () => { proceed(); } },
+				]
+			);
+			return;
 		}
+
+		await proceed();
 	};
 
 	React.useEffect(() => {
@@ -490,6 +570,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			setLoadingSessions((loader === undefined) || loader);
 			try {
 				const location = await api.getLocation();
+				setLocation(location);
+				setHasLocalConfig(await api.hasLocalServerConfig());
 				const sessions: any = await api.getSessions();
 				const dbSessions = (sessions || []).filter((s: any) => {
 					return (
@@ -734,24 +816,26 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 									}}
 								>
 									<Card>
-										{!!item.exported && (
+										{(!!item.exported || !!item.local_export) && (
 											<>
 												<Box flexDirection="row">
-													<Box 
-														backgroundColor="success"
-														paddingVertical="s"
-														paddingHorizontal="m"
-														borderRadius="xl"
-													>
-														<Text
-															textAlign="center"
-															variant="caption"
-															color="successContrastText"
-														>Exported Online</Text>
-													</Box>
-													
-													{!!item.local_export && (	
-														<Box 
+													{!!item.exported && (
+														<Box
+															backgroundColor="success"
+															paddingVertical="s"
+															paddingHorizontal="m"
+															borderRadius="xl"
+														>
+															<Text
+																textAlign="center"
+																variant="caption"
+																color="successContrastText"
+															>Exported Online</Text>
+														</Box>
+													)}
+
+													{!!item.local_export && (
+														<Box
 															backgroundColor="highlight"
 															paddingVertical="s"
 															paddingHorizontal="xl"
@@ -885,12 +969,18 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							setOpenDeleteModal(false);
 							switch (deleteType) {
 								case 'all':
-									const unexportedCompleteSessions = dbSessions.filter((s: any) => !s.exported && s?.data?.completed_at);
-									const deletable = dbSessions.filter((s: any) => !unexportedCompleteSessions.find((s2: any) => s2.id === s.id))
-									deleteSessions(deletable.map((s: any) => s.id));
+									deleteSessions(
+										dbSessions
+											.filter((s: any) => isDeliveredSession(s) || isDraftSession(s))
+											.map((s: any) => s.id),
+										{ allowDrafts: true }
+									);
 									break;
 								case 'incomplete':
-									deleteSessions(dbSessions.filter((s: any) => !s?.data?.completed_at).map((s: any) => s.id));
+									deleteSessions(
+										dbSessions.filter(isDraftSession).map((s: any) => s.id),
+										{ allowDrafts: true }
+									);
 									break;
 								case 'date_range':
 									deleteSessions(getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id));
