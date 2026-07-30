@@ -3,7 +3,7 @@ import * as SQLite from 'expo-sqlite';
 
 export const db = SQLite.openDatabaseSync('db.db');
 
-export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
+export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void, handle: any = db) => new Promise<any[]>((resolve, reject) => {
     const done = (error?: null | Error, data?: any[]) => {
         if (error) {
             reject(error);
@@ -12,8 +12,8 @@ export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?:
         }
         cb?.(error, data);
     };
-    db.getAllAsync<any>(q, data)
-        .then(res => done(null, res))
+    handle.getAllAsync(q, data)
+        .then((res: any) => done(null, res))
         .catch(done);
 });
 
@@ -83,6 +83,8 @@ export async function createTablesIfNotExist() {
         'data text',
         'completed boolean',
         'exported boolean',
+        'local_export boolean default 0',
+        'poll_exported boolean default 0',
         'createdAt datetime',
         'updatedAt datetime',
     ].join(',');
@@ -185,11 +187,22 @@ export async function createTablesIfNotExist() {
           await dbTransaction(`ALTER TABLE sessions ADD COLUMN local_export BOOLEAN DEFAULT 0;`);
 
      }
+
+     const pollExportedExists = sessionsTableInfo.some((col: any) => col.name === 'poll_exported');
+     if(!pollExportedExists){
+          await dbTransaction(`ALTER TABLE sessions ADD COLUMN poll_exported BOOLEAN DEFAULT 0;`);
+     }
   }
 }
 
-export const resetTables = async () => {
+
+export async function ensureSchema() {
     await createTablesIfNotExist();
+    await addNewColumns();
+}
+
+export const resetTables = async () => {
+    await ensureSchema();
     return await Promise.all([
         // 'delete * from application where 1;',
         'delete * from scripts where 1;',
@@ -221,6 +234,7 @@ export const resetApp = async () => {
         dbTransaction(`drop table if exists exports;`),
         dbTransaction(`drop table if exists exceptions;`),
         dbTransaction(`drop table if exists aliases;`),
-    ]); 
-    await createTablesIfNotExist();
+        dbTransaction(`drop table if exists nt_aliases;`),
+    ]);
+    await ensureSchema();
 };

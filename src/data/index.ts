@@ -24,3 +24,5 @@ export * from './sessions';
 
 export * from './socket';
 
+export * from './circuitBreaker';
+

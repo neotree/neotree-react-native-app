@@ -2,6 +2,7 @@ import { InteractionManager } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import { exportSessions } from './exportSessions';
+import { resetAllCircuits } from './circuitBreaker';
 
 let unsubscribe: (() => void) | null = null;
 let wasOnline: boolean | null = null;
@@ -36,7 +37,10 @@ export function registerExportOnReconnect() {
         const cameBackOnline = wasOnline === false && online;
         wasOnline = online;
 
-        if (cameBackOnline) queueSilentFlush();
+        if (cameBackOnline) {
+            resetAllCircuits();
+            queueSilentFlush();
+        }
     });
 
     unsubscribe = () => {

@@ -8,10 +8,22 @@ export async function getAuthenticatedUser() {
     return user?.details ? JSON.parse(user.details) : null;
 }
 
+let _locationCache: { value: null | types.Location; expires: number } | null = null;
+const LOCATION_CACHE_TTL = 5000;
+
+export function invalidateLocationCache() {
+    _locationCache = null;
+}
+
 export async function getLocation() {
+    if (_locationCache && Date.now() < _locationCache.expires) {
+        return _locationCache.value;
+    }
     const rows = await dbTransaction('select * from location limit 1;', null);
-    return rows[0] as (null | types.Location);
-} 
+    const value = (rows[0] as (null | types.Location)) ?? null;
+    _locationCache = { value, expires: Date.now() + LOCATION_CACHE_TTL };
+    return value;
+}
 
 export const getApplication = () => new Promise<types.Application>((resolve, reject) => {
     (async () => {
