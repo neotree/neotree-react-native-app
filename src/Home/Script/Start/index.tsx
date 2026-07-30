@@ -60,9 +60,6 @@ export function Start() {
         return conditionMet;
     }, [evaluateCondition, fields, parseCondition]);
 
-    // When a search field is hidden by its condition (e.g. the user changes the answer
-    // that revealed it), drop its stale search results so a re-shown blank field cannot
-    // leave the Start button enabled or pre-populate from the previous search.
     React.useEffect(() => {
         let changed = false;
         let clearedStandardField = false;
@@ -90,16 +87,28 @@ export function Start() {
         };
     }, []);
 
-    const hasResolvedVisibleSearchFields = nuidSearchFields.every((field: any, i: number) => {
-        if (field.type !== 'text') return true;
-        if (!evaluateFieldCondition(field)) return true;
-        return Boolean(fields[i]?.results && (fields[i]?.value || fields[i]?.results?.continueWithoutPrePopulation));
+    const isFieldAnswered = React.useCallback((field: any, i: number) => {
+        if (field?.type === 'text') {
+            return Boolean(fields[i]?.results && (fields[i]?.value || fields[i]?.results?.continueWithoutPrePopulation));
+        }
+        const value = fields[i]?.value;
+        if (Array.isArray(value)) return value.length > 0;
+        return value !== null && value !== undefined && value !== '';
+    }, [fields]);
+
+    const unansweredMandatoryFields = nuidSearchFields.filter((field: any, i: number) => {
+        if (field?.optional) return false;
+        if (!evaluateFieldCondition(field)) return false;
+        return !isFieldAnswered(field, i);
     });
 
-    const canStart = Boolean(screens?.length) && hasResolvedVisibleSearchFields;
-    const canStartWithoutNuid = Boolean(screens?.length) && nuidSearchFields.some((field: any) => (
-        isStandardNuidSearchField(field) && evaluateFieldCondition(field)
-    ));
+    const canStart = Boolean(screens?.length) && !unansweredMandatoryFields.length;
+
+    const canStartWithoutNuid = Boolean(screens?.length)
+        && nuidSearchFields.some((field: any) => (
+            isStandardNuidSearchField(field) && evaluateFieldCondition(field)
+        ))
+        && !unansweredMandatoryFields.some((field: any) => field?.type !== 'text');
 
     const startSession = React.useCallback(async (
         nextFields: types.NuidSearchFormField[],
@@ -218,6 +227,14 @@ export function Start() {
                                 <Text textAlign="center">Start a new session</Text>
                             </Box>
                         )}
+
+                        {unansweredMandatoryFields.length ? (
+                            <Box paddingHorizontal="m" paddingBottom="m">
+                                <Text variant="caption" color="textSecondary" textAlign="center">
+                                    Answer all required questions (*) to continue.
+                                </Text>
+                            </Box>
+                        ) : null}
 
                         <Button
                             disabled={!canStart || starting}
