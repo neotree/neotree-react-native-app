@@ -7,6 +7,7 @@ export function Field({ field, value, onChange,script_type }: {
         condition: string;
         label: string;
         values: string;
+        optional?: boolean;
         type: 'dropdown' | 'text';
     },
     value: any,
@@ -14,6 +15,7 @@ export function Field({ field, value, onChange,script_type }: {
     script_type?:string
 }) {
     const isTwinSearchField = field.key === 'BabyTwinNUID';
+    const label = `${field.label || ''}${field.optional ? '' : ' *'}`;
     const opts = (field.values || '').split('\n')
         .map((v = '') => v.trim())
         .filter((v: any) => v)
@@ -27,7 +29,7 @@ export function Field({ field, value, onChange,script_type }: {
 
             {field.type === 'dropdown' ? (
                 <>
-                    <Text>{field.label}</Text>
+                    <Text>{label}</Text>
 
                     <Box 
                         {...(opts.length > 2 ? {
@@ -58,7 +60,7 @@ export function Field({ field, value, onChange,script_type }: {
             ): (
                 <>
                     <Search
-                        label={field.label}
+                        label={label}
                         prePopulateWithUID={true}
                         useSearchedUidForSession={!isTwinSearchField}
                         noRecordTitle={isTwinSearchField ? 'Twin record not found' : undefined}
