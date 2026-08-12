@@ -16,6 +16,8 @@ export interface ManualExportOutcome {
   localPending: number;
   remotePending: number;
   alreadyExported: number;
+  failures: api.ExportFailure[];
+  hasMore: boolean;
 }
 
 const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
@@ -266,8 +268,7 @@ export function exportToApi(opts: any = {}) {
         const queuedIds = await getExportQueue();
         let queuedSessions: any[] = [];
         if (queuedIds.length) {
-          const allSessions: any[] = (await api.getSessions()) as any[];
-          queuedSessions = (allSessions || []).filter(s => queuedIds.includes(s.id));
+          queuedSessions = await api.getSessionsByIds(queuedIds);
           const existingIds = queuedSessions.map(s => s.id);
           const missingIds = queuedIds.filter(id => !existingIds.includes(id));
           if (missingIds.length) {
@@ -296,19 +297,15 @@ export function exportToApi(opts: any = {}) {
 
         const needsExport = (s: any) => api.isExportableSession(s) && (
           !s.exported ||
-          (api.pollingRequired(s.data?.country) && !s.poll_exported) ||
+          !api.isPollDelivered(s) ||
           (localRequired(s) && !s.local_export)
         );
 
-        const candidates = [
-          ..._sessions,
-          ...queuedSessions,
-        ]
+        const candidatesById = new Map<any, any>();
+        [..._sessions, ...queuedSessions]
           .filter(needsExport)
-          .reduce((acc: any[], s: any) => {
-            if (!acc.some(e => e.id === s.id)) acc.push(s);
-            return acc;
-          }, []);
+          .forEach((session: any) => candidatesById.set(session.id, session));
+        const candidates = Array.from(candidatesById.values());
 
         try {
           if (opts.dontSaveFile !== true) await exportJSON(opts);
@@ -322,6 +319,8 @@ export function exportToApi(opts: any = {}) {
           localPending: 0,
           remotePending: 0,
           alreadyExported: 0,
+          failures: [],
+          hasMore: false,
         };
 
         if (!candidates.length) {
@@ -336,13 +335,14 @@ export function exportToApi(opts: any = {}) {
         try {
           const loc = await api.getLocation();
           if (loc?.country) {
+            api.resetCircuit(api.backendKey(loc.country, 'nodeapi'));
             api.resetCircuit(api.backendKey(loc.country, 'local', loc.hospital));
           }
         } catch { /* a failed location read just means no local reset */ }
 
         await api.withExportLock(async () => {
 
-        const freshRows: any[] = ((await api.getSessions()) as any[]) || [];
+        const freshRows: any[] = await api.getSessionsByIds(candidates.map((s: any) => s.id));
         const freshById: any = {};
         freshRows.forEach((s: any) => { if (s?.id !== undefined) freshById[s.id] = s; });
 
@@ -360,8 +360,7 @@ export function exportToApi(opts: any = {}) {
         const wasRemoteDone = new Set(
           sessions
             .filter((s: any) => {
-              const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(s.poll_exported);
-              return Boolean(s.exported) && pollSatisfied;
+              return api.isRemoteDelivered(s);
             })
             .map((s: any) => s.id)
         );
@@ -373,14 +372,13 @@ export function exportToApi(opts: any = {}) {
 
         const result = await api.doExportSessions(sessions);
 
-        const postRows: any[] = ((await api.getSessions()) as any[]) || [];
+        const postRows: any[] = await api.getSessionsByIds(sessions.map((s: any) => s.id));
         const postById: any = {};
         postRows.forEach((s: any) => { if (s?.id !== undefined) postById[s.id] = s; });
 
         const isRemoteDone = (s: any) => {
           const row = postById[s.id] || s;
-          const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(row.poll_exported);
-          return Boolean(row.exported) && pollSatisfied;
+          return api.isRemoteDelivered(row);
         };
         const isLocalDone = (s: any) => {
 
@@ -415,6 +413,8 @@ export function exportToApi(opts: any = {}) {
           localPending: localPending.length,
           remotePending: remotePending.length,
           alreadyExported: alreadyDone.length,
+          failures: result.failures,
+          hasMore: result.hasMore,
         };
 
         if (remotePending.length || localPending.length) {
@@ -426,7 +426,9 @@ export function exportToApi(opts: any = {}) {
             localPending: localPending.length,
           });
 
-          api.scheduleExportSessions();
+          if (result.hasMore || result.failures.some((failure: api.ExportFailure) => failure.retryable)) {
+            api.scheduleExportSessions();
+          }
         }
 
         if (!remotePending.length && !localPending.length) {
@@ -442,9 +444,11 @@ export function exportToApi(opts: any = {}) {
         }
 
         if (outcome.status === 'failed') {
+          const firstFailure = result.failures[0];
           throw new Error(
-            `Could not export ${remotePending.length} session(s) — no server could be reached. `
-            + `The data is saved on this device and will be sent automatically once a server is available.`
+            firstFailure
+              ? `Could not finish exporting ${Math.max(remotePending.length, localPending.length)} session(s). ${firstFailure.message}`
+              : `Could not finish exporting ${Math.max(remotePending.length, localPending.length)} session(s). The data remains saved on this device.`
           );
         }
 

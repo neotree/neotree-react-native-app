@@ -71,12 +71,16 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
             makeApiCall('webeditor', '/update-device-registration', {
                 method: 'POST',
                 body: JSON.stringify({ deviceId: application.device_id, details: { scripts_count } }),
-            }).then(() => {}).catch((e) => {
+            }).then(() => {}).catch(() => {
                  
             });
         }
 
-		scheduleExportSessions();
+		// Page-level draft saves are frequent. Only completed, non-cancelled
+		// sessions can be exported, so drafts must not trigger a database sweep.
+		if (payloadData.completed_at && !payloadData.canceled_at) {
+			scheduleExportSessions();
+		}
 
 		resolve({ application, sessionID });
     } catch (e) { console.log('saveSession', e); reject(e); /* DO NOTHING */ }

@@ -4,7 +4,7 @@ import { COUNTRY } from '../types';
 import { getExportedSessions } from './sessions';
 import { getLocation } from './queries';
 import { resetCircuit, backendKey } from './circuitBreaker';
-import { scheduleExportSessions } from './exportSessions';
+import { resumeExportSessions } from './exportSessions';
 import { APP_CONFIG } from '../constants';
 
 
@@ -44,7 +44,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
         const onWebeditorConnect = () => resetCircuit(backendKey(country, 'webeditor'));
         const onNodeApiConnect = () => {
             resetCircuit(backendKey(country, 'nodeapi'));
-            scheduleExportSessions();
+            resumeExportSessions();
         };
         const onDataUpdated = (data: any) => onEvent({ name: 'data_updated', ...data });
         const onDataPublished = (data: any) => onEvent({ name: 'data_published', ...data });
@@ -74,7 +74,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
             nodeApiSocket?.off('connect', onNodeApiConnect);
             nodeApiSocket?.off('sessions_exported', onSessionsExported);
         };
-    } catch(e) {
+    } catch {
         return noop;
     }
 }

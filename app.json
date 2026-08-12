@@ -2,7 +2,7 @@
     "expo": {
         "name": "NeoTree",
         "slug": "neotree",
-        "version": "2.5.33",
+        "version": "2.5.35",
         "orientation": "portrait",
         "icon": "./assets/images/icon.png",
         "scheme": "myapp",
@@ -31,6 +31,7 @@
         "android": {
             "usesCleartextTraffic": true,
             "package": "org.neotree",
+            "versionCode": 2,
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/icon.png",
                 "backgroundColor": "#FFFFFF"
@@ -70,7 +71,7 @@
               ]
         ],
         "experiments": {
-            "typedRoutes": true
+            "typedRoutes": false
         }
     }
 }

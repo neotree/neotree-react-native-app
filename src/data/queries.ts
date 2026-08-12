@@ -393,19 +393,67 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
     })();
 });
 
-export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject) => {
+const SESSION_ID_BATCH_SIZE = 400;
+
+function normalizeSessionIds(ids: any[] = []): number[] {
+    return Array.from(new Set((ids || [])
+        .map(id => Number(id))
+        .filter(id => Number.isInteger(id) && id > 0)));
+}
+
+function sessionIdBatches(ids: number[]): number[][] {
+    const batches: number[][] = [];
+    for (let offset = 0; offset < ids.length; offset += SESSION_ID_BATCH_SIZE) {
+        batches.push(ids.slice(offset, offset + SESSION_ID_BATCH_SIZE));
+    }
+    return batches;
+}
+
+export async function getSessionsByIds(ids: any[] = []): Promise<any[]> {
+    const normalized = normalizeSessionIds(ids);
+    const rows: any[] = [];
+    for (const batch of sessionIdBatches(normalized)) {
+        const placeholders = batch.map(() => '?').join(',');
+        rows.push(...await dbTransaction(
+            `select * from sessions where id in (${placeholders});`,
+            batch
+        ));
+    }
+    return rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+}
+
+export const getSessionsForLocation = (
+    country: string,
+    hospital: string,
+) => new Promise<any[]>((resolve, reject) => {
     (async () => {
         try {
-            ids = ids || [];
-            if (!ids.map) ids = [ids];
-
-            const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
-            resolve(res);
-        } catch (e) { 
-            
-            reject(e); }
+            if (!country || !hospital) {
+                resolve([]);
+                return;
+            }
+            const rows = await dbTransaction(
+                `select * from sessions
+                 where json_valid(data)
+                 and json_extract(data, '$.country') = ?
+                 and TRIM(json_extract(data, '$.hospital_id')) = ?
+                 order by createdAt DESC;`,
+                [country, hospital.trim()]
+            );
+            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+        } catch (e) {
+            reject(e);
+        }
     })();
 });
+
+export async function deleteSessions(ids: any[] = []) {
+    const normalized = normalizeSessionIds(ids);
+    if (!normalized.length) return [];
+    // IDs are normalized to positive integers above, so a single statement is
+    // safe here and keeps a large range deletion atomic without bind limits.
+    return dbTransaction(`delete from sessions where id in (${normalized.join(',')})`);
+}
 
 export const saveApplication = (params = {}) => new Promise((resolve, reject) => {
     (async () => {

@@ -52,8 +52,7 @@ export async function makeApiCall(
         const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
-            api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
+        api_endpoint = api_endpoint.endsWith('/') ? api_endpoint.slice(0, -1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/').replace(/\?+$/, '');
@@ -117,8 +116,7 @@ export async function makeLocalApiCall(
         if(target){
 
         let api_endpoint =  target.host;
-        api_endpoint[api_endpoint.length - 1] === '/' ?
-            api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
+        api_endpoint = api_endpoint.endsWith('/') ? api_endpoint.slice(0, -1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
@@ -199,8 +197,7 @@ export async function makeLocalGetApiCall(
         }
         else{
         let api_endpoint =  target.host;
-        api_endpoint[api_endpoint.length - 1] === '/' ?
-            api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
+        api_endpoint = api_endpoint.endsWith('/') ? api_endpoint.slice(0, -1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
@@ -280,7 +277,7 @@ export const reportErrors = async (...args: any[]) => {
             method: 'POST',
             body: JSON.stringify(args),
         });
-    } catch (e) {
+    } catch {
         // do nothing
     }
 };

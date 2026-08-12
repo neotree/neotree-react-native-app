@@ -1,6 +1,7 @@
 import { makeApiCall, makeLocalGetApiCall } from './api';
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
+import { exportAcknowledged } from './deliveryRules';
 
 
 export const exportSession = async (s: any) => {
@@ -13,7 +14,7 @@ export const exportSession = async (s: any) => {
             method: 'POST',
             body: JSON.stringify(s),
         });
-        if (res.status !== 200) {
+        if (!exportAcknowledged(res.status)) {
             const text = await res.text();
             console.log({
                 status: res.status,

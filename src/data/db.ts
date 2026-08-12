@@ -85,6 +85,10 @@ export async function createTablesIfNotExist() {
         'exported boolean',
         'local_export boolean default 0',
         'poll_exported boolean default 0',
+        'main_export_blocked boolean default 0',
+        'poll_export_blocked boolean default 0',
+        'local_export_blocked boolean default 0',
+        'export_last_error text',
         'createdAt datetime',
         'updatedAt datetime',
     ].join(',');
@@ -178,27 +182,44 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists nt_aliases (${aliasesTableColumns});`),
     ]);
 }
- export const addNewColumns = async()=>{
- //ADD COLUMNS TO SESSIONS TABLE
-  const sessionsTableInfo = await dbTransaction(`PRAGMA table_info(sessions);`);
-  if(sessionsTableInfo && sessionsTableInfo.length>0){
-     const localExportExists = sessionsTableInfo.some((col: any) => col.name === 'local_export');
-     if(!localExportExists){
-          await dbTransaction(`ALTER TABLE sessions ADD COLUMN local_export BOOLEAN DEFAULT 0;`);
+export const addNewColumns = async () => {
+    const sessionsTableInfo = await dbTransaction(`PRAGMA table_info(sessions);`);
+    if (!sessionsTableInfo?.length) return;
 
-     }
+    const existing = new Set(sessionsTableInfo.map((col: any) => col.name));
+    const additions = [
+        ['local_export', 'BOOLEAN DEFAULT 0'],
+        ['poll_exported', 'BOOLEAN DEFAULT 0'],
+        ['main_export_blocked', 'BOOLEAN DEFAULT 0'],
+        ['poll_export_blocked', 'BOOLEAN DEFAULT 0'],
+        ['local_export_blocked', 'BOOLEAN DEFAULT 0'],
+        ['export_last_error', 'TEXT'],
+    ];
 
-     const pollExportedExists = sessionsTableInfo.some((col: any) => col.name === 'poll_exported');
-     if(!pollExportedExists){
-          await dbTransaction(`ALTER TABLE sessions ADD COLUMN poll_exported BOOLEAN DEFAULT 0;`);
-     }
-  }
+    for (const [name, definition] of additions) {
+        if (!existing.has(name)) {
+            await dbTransaction(`ALTER TABLE sessions ADD COLUMN ${name} ${definition};`);
+        }
+    }
+};
+
+async function createSessionIndexes() {
+    const statements = [
+        `CREATE INDEX IF NOT EXISTS sessions_main_export_pending_idx ON sessions(exported, main_export_blocked, createdAt);`,
+        `CREATE INDEX IF NOT EXISTS sessions_poll_export_pending_idx ON sessions(poll_exported, poll_export_blocked, createdAt);`,
+        `CREATE INDEX IF NOT EXISTS sessions_local_export_pending_idx ON sessions(local_export, local_export_blocked, createdAt);`,
+        `CREATE INDEX IF NOT EXISTS sessions_location_idx
+            ON sessions(json_extract(data, '$.country'), TRIM(json_extract(data, '$.hospital_id')), createdAt)
+            WHERE json_valid(data);`,
+    ];
+    for (const statement of statements) await dbTransaction(statement);
 }
 
 
 export async function ensureSchema() {
     await createTablesIfNotExist();
     await addNewColumns();
+    await createSessionIndexes();
 }
 
 export const resetTables = async () => {

@@ -9,6 +9,7 @@ import * as api from '../../data';
 import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, useTheme, TextInput } from '@/src/components';
 import exportData from './export';
 import { Session } from './Session';
+import { dateRangeError, filterSessionsByDateRange, SessionDateField } from '../../utils/sessionDateRange';
 
 const exportTypes = [
 	{
@@ -55,8 +56,12 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [openFilterModal, setOpenFilterModal] = React.useState(false);
 	const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
 
-	const [minDate, setMinDate] = React.useState<null | Date>(null);
-	const [maxDate, setMaxDate] = React.useState<null | Date>(null);
+	const [filterMinDate, setFilterMinDate] = React.useState<null | Date>(null);
+	const [filterMaxDate, setFilterMaxDate] = React.useState<null | Date>(null);
+	const [exportMinDate, setExportMinDate] = React.useState<null | Date>(null);
+	const [exportMaxDate, setExportMaxDate] = React.useState<null | Date>(null);
+	const [deleteMinDate, setDeleteMinDate] = React.useState<null | Date>(null);
+	const [deleteMaxDate, setDeleteMaxDate] = React.useState<null | Date>(null);
 	const [filterByDate, setFilterByDate] = React.useState(false);
 
 	const [deleteType, setDeleteType] = React.useState(deleteTypes[0].value);
@@ -67,8 +72,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [showExportFormats, setShowExportFormats] = React.useState(false);
 	const [exportingSessions, setExportingSessions] = React.useState(false);
 
-	const [sessions, setSessions] = React.useState([]);
-	const [dbSessions, setDBSessions] = React.useState([]);
+	const [sessions, setSessions] = React.useState<any[]>([]);
+	const [dbSessions, setDBSessions] = React.useState<any[]>([]);
 	const [loadingSessions, setLoadingSessions] = React.useState(false);
 	const [scriptsFields, setScriptsFields] = React.useState({});
 
@@ -332,13 +337,38 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		};
 	};
 
+	const validateExportDateRange = () => {
+		if (exportType !== 'date_range') return true;
+		if (!exportMinDate && !exportMaxDate) {
+			Alert.alert('Date range required', 'Select a start date, an end date, or both.');
+			return false;
+		}
+		const error = dateRangeError(exportMinDate, exportMaxDate);
+		if (error) {
+			Alert.alert('Invalid date range', error);
+			return false;
+		}
+		return true;
+	};
+
 	const exportSessions = async (opts: any = {}) => {
 		const _dbSessions = dbSessions.filter(api.isExportableSession);
 		let sessions = _dbSessions;
 		switch (exportType) {
-			case 'date_range':
-				sessions = getFilteredSessions(_dbSessions, { minDate, maxDate }).map((s: any) => s.id) as any;
+			case 'date_range': {
+				if (!validateExportDateRange()) return;
+				sessions = getFilteredSessions(_dbSessions, {
+					minDate: exportMinDate,
+					maxDate: exportMaxDate,
+					dateField: 'completed',
+					searchValue: '',
+				});
+				if (!sessions.length) {
+					Alert.alert('Nothing to export', 'No completed sessions fall within the selected completion-date range.');
+					return;
+				}
 				break;
+			}
 			default:
 				// do nothing
 		}
@@ -362,7 +392,9 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						message = (result.localOk
 							? `${result.localOk} session(s) saved to the local server. `
 							: `These sessions are already saved on the local server. `)
-							+ `The cloud server can't be reached right now, Please try again later`;
+							+ (result.failures?.some((failure: api.ExportFailure) => failure.kind === 'network')
+								? `The cloud server can't be reached right now. The app will retry automatically.`
+								: `Cloud delivery needs attention: ${result.failures?.[0]?.message || 'delivery is still pending'}.`);
 						break;
 					case 'partial':
 						title = 'Partially exported';
@@ -417,7 +449,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const deleteSessions = async (ids: any[] = [], opts: { allowDrafts?: boolean } = {}) => {
 		if (!ids.length) return;
 
-		const allRows: any[] = ((await api.getSessions()) as any[]) || [];
+		const allRows: any[] = await api.getSessionsByIds(ids);
 		const byId: any = {};
 		allRows.forEach((s: any) => { if (s?.id !== undefined) byId[s.id] = s; });
 
@@ -428,9 +460,14 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		const blocked = requested.filter((s: any) => !deletable.includes(s));
 
 		if (!deletable.length) {
+			const blockedWithError = blocked.find((session: any) => (
+				session.main_export_blocked || session.poll_export_blocked || session.local_export_blocked
+			));
 			Alert.alert(
 				'Nothing deleted',
-				blocked.length === 1
+				blockedWithError
+					? `This session has an export error and was kept to protect its data. ${blockedWithError.export_last_error || 'Retry the export after checking the server configuration.'}`
+					: blocked.length === 1
 					? 'This session has not finished exporting yet, so it cannot be deleted. It will be sent automatically once a server is reachable.'
 					: `${blocked.length} session(s) have not finished exporting yet, so none were deleted. They will be sent automatically once a server is reachable.`,
 				[{ text: 'Ok' }]
@@ -533,34 +570,29 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		});
 	}, [navigation, selectedSession]);
 
-	const getFilteredSessions = (sessions = dbSessions, filters?: any) => {
-		let _sessions = [...sessions];
-
-		const getParsedDate = (d: any) => {
-			d = moment(d).format('YYYY-MM-DD');
-			return new Date(d).getTime();
+	const getFilteredSessions = (
+		sessions = dbSessions,
+		filters?: {
+			minDate?: Date | null;
+			maxDate?: Date | null;
+			searchValue?: string;
+			dateField?: SessionDateField;
+		}
+	) => {
+		const resolvedFilters = {
+			minDate: filterByDate ? filterMinDate : null,
+			maxDate: filterByDate ? filterMaxDate : null,
+			searchValue: searchValue || '',
+			dateField: 'started' as SessionDateField,
+			...filters,
 		};
 
-		const _filters = {
-			minDate: filterByDate ? minDate : null,
-			maxDate: filterByDate ? maxDate : null,
-            searchValue: searchValue || '', 
-            ...filters
-		};
-
-		if (_filters?.minDate) {
-			_sessions = _sessions.filter((s: any) => getParsedDate(s.data.started_at) >= getParsedDate(_filters.minDate));
+		let filtered = filterSessionsByDateRange(sessions, resolvedFilters);
+		if (resolvedFilters.searchValue) {
+			const query = resolvedFilters.searchValue.toLowerCase();
+			filtered = filtered.filter((session: any) => `${session.uid || ''}`.toLowerCase().includes(query));
 		}
-
-		if (_filters?.maxDate) {
-			_sessions = _sessions.filter((s: any) => getParsedDate(s.data.started_at) <= getParsedDate(_filters.maxDate));
-		}
-
-        if (_filters?.searchValue) {
-            _sessions = _sessions.filter((s: any) => `${s.uid || ''}`.toLowerCase().includes(_filters.searchValue.toLowerCase()));
-        }
-
-		return _sessions;
+		return filtered;
 	};
 
 	const getSessions = (opts: any = {}) => new Promise((resolve, reject) => {
@@ -572,13 +604,9 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				const location = await api.getLocation();
 				setLocation(location);
 				setHasLocalConfig(await api.hasLocalServerConfig());
-				const sessions: any = await api.getSessions();
-				const dbSessions = (sessions || []).filter((s: any) => {
-					return (
-						(s.data?.country === location?.country) &&
-						(s.data?.hospital_id === location?.hospital)
-					);
-				});
+				const dbSessions: any = location?.country && location?.hospital
+					? await api.getSessionsForLocation(location.country, location.hospital)
+					: [];
 				setDBSessions(dbSessions);
 				setSessions(getFilteredSessions(dbSessions));
 				resolve(dbSessions);
@@ -621,6 +649,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				} catch (e) { console.log(e); /* DO NOTHING */ }
 			})();
 		}
+	// getSessions intentionally refreshes from the current render state.
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFocused]);
 
 	React.useEffect(() => {
@@ -654,7 +684,12 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		})();
 	}, []);
 
-	const dateRange = (
+	const renderDateRange = (
+		minDate: Date | null,
+		maxDate: Date | null,
+		setMinDate: (date: Date | null) => void,
+		setMaxDate: (date: Date | null) => void,
+	) => (
 		<>
 			<DatePicker
 				value={minDate}
@@ -768,8 +803,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					<Content>
 						{filterByDate && (
 							<>
-								{!!minDate && <Text color="textDisabled" variant="caption">Min date: {moment(minDate).format('LL')}</Text>}
-								{!!maxDate && <Text color="textDisabled" variant="caption">Min date: {moment(maxDate).format('LL')}</Text>}
+								{!!filterMinDate && <Text color="textDisabled" variant="caption">Min date: {moment(filterMinDate).format('LL')}</Text>}
+								{!!filterMaxDate && <Text color="textDisabled" variant="caption">Max date: {moment(filterMaxDate).format('LL')}</Text>}
 							</>
 						)}
 					</Content>
@@ -787,6 +822,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				)}
 
 				renderItem={({ item }) => {
+					const remoteDelivered = api.isRemoteDelivered(item);
+					const remotePending = api.isExportableSession(item) && !remoteDelivered;
+					const exportBlocked = Boolean(
+						item.main_export_blocked || item.poll_export_blocked || item.local_export_blocked
+					);
 					return (
 						<>
 							<Content>
@@ -798,7 +838,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 										setLoadingSessionDetails(false);
 									}}
 									onLongPress={() => {
-										if (!item?.id) return;
+										if (!item?.id || item.__source === 'localServer') return;
 										Alert.alert(
 											'Delete session',
 											'Do you want to delete this session?',
@@ -816,10 +856,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 									}}
 								>
 									<Card>
-										{(!!item.exported || !!item.local_export) && (
+										{(remoteDelivered || remotePending || !!item.local_export) && (
 											<>
 												<Box flexDirection="row">
-													{!!item.exported && (
+													{remoteDelivered && (
 														<Box
 															backgroundColor="success"
 															paddingVertical="s"
@@ -831,6 +871,21 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 																variant="caption"
 																color="successContrastText"
 															>Exported Online</Text>
+														</Box>
+													)}
+
+													{remotePending && (
+														<Box
+															backgroundColor={exportBlocked ? 'error' : 'highlight'}
+															paddingVertical="s"
+															paddingHorizontal="m"
+															borderRadius="xl"
+														>
+															<Text
+																textAlign="center"
+																variant="caption"
+																color={exportBlocked ? 'successContrastText' : 'grey-900'}
+															>{exportBlocked ? 'Export Needs Attention' : 'Cloud Export Pending'}</Text>
 														</Box>
 													)}
 
@@ -932,23 +987,33 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					{
 						label: 'Cancel',
 						onPress: () => {
-							setMinDate(null);
-							setMaxDate(null);
+							setFilterMinDate(null);
+							setFilterMaxDate(null);
 							setFilterByDate(false);
+							setSessions(getFilteredSessions(dbSessions, { minDate: null, maxDate: null }));
 							setOpenFilterModal(false);
 						}
 					},
 					{
 						label: 'Filter',
 						onPress: () => {
-							if (minDate || maxDate) setFilterByDate(true);
+							const error = dateRangeError(filterMinDate, filterMaxDate);
+							if (error) {
+								Alert.alert('Invalid date range', error);
+								return;
+							}
+							setFilterByDate(Boolean(filterMinDate || filterMaxDate));
+							setSessions(getFilteredSessions(dbSessions, {
+								minDate: filterMinDate,
+								maxDate: filterMaxDate,
+								dateField: 'started',
+							}));
 							setOpenFilterModal(false);
-							setSessions(getFilteredSessions(dbSessions));
 						},
 					}
 				]}
 			>
-				{dateRange}
+				{renderDateRange(filterMinDate, filterMaxDate, setFilterMinDate, setFilterMaxDate)}
 			</Modal>
 
 			<Modal
@@ -960,12 +1025,25 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						label: 'Cancel',
 						onPress: () => {
 							setDeleteType(deleteTypes[0].value);
+							setDeleteMinDate(null);
+							setDeleteMaxDate(null);
 							setOpenDeleteModal(false);
 						}
 					},
 					{
 						label: 'Delete',
-						onPress: () => {							
+						onPress: () => {
+							if (deleteType === 'date_range') {
+								if (!deleteMinDate && !deleteMaxDate) {
+									Alert.alert('Date range required', 'Select a start date, an end date, or both.');
+									return;
+								}
+								const error = dateRangeError(deleteMinDate, deleteMaxDate);
+								if (error) {
+									Alert.alert('Invalid date range', error);
+									return;
+								}
+							}
 							setOpenDeleteModal(false);
 							switch (deleteType) {
 								case 'all':
@@ -982,9 +1060,22 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 										{ allowDrafts: true }
 									);
 									break;
-								case 'date_range':
-									deleteSessions(getFilteredSessions(dbSessions, { minDate, maxDate }).map((s: any) => s.id));
+								case 'date_range': {
+									const rangeSessions = getFilteredSessions(dbSessions, {
+											minDate: deleteMinDate,
+											maxDate: deleteMaxDate,
+											dateField: 'started',
+											searchValue: '',
+										});
+									if (!rangeSessions.length) {
+										Alert.alert('Nothing to delete', 'No sessions were created within the selected date range.');
+									} else {
+										deleteSessions(rangeSessions.map((s: any) => s.id), { allowDrafts: true });
+									}
+									setDeleteMinDate(null);
+									setDeleteMaxDate(null);
 									break;
+								}
 								default:
 									// do nothing
 							}
@@ -1006,7 +1097,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				{deleteType === 'date_range' && (
 					<>
 						<Br spacing='s'/>
-						{dateRange}
+						{renderDateRange(deleteMinDate, deleteMaxDate, setDeleteMinDate, setDeleteMaxDate)}
 					</>
 				)}
 			</Modal>
@@ -1020,6 +1111,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						label: 'Cancel',
 						onPress: () => {
 							setExportType(exportTypes[0].value);
+							setExportMinDate(null);
+							setExportMaxDate(null);
 							setShowExportFormats(false);
 							setOpenExportModal(false);
 						}
@@ -1028,9 +1121,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						label: showExportFormats ? 'Export' : 'Next',
 						onPress: () => {
 							if (showExportFormats) {
+								if (!validateExportDateRange()) return;
 								exportSessions();
 								setOpenExportModal(false);
 							} else {
+								if (!validateExportDateRange()) return;
 								setShowExportFormats(true);
 							}
 						},
@@ -1064,7 +1159,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				{exportType === 'date_range' && (
 					<>
 						<Br spacing='s'/>
-						{dateRange}
+						{renderDateRange(exportMinDate, exportMaxDate, setExportMinDate, setExportMaxDate)}
 					</>
 				)}
 			</Modal>
