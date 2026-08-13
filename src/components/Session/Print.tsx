@@ -30,10 +30,10 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
 
         try {
             setPrinting(true);
-            let html = await formToHTML(session, showConfidential);
-            const printSectionsHTML = await printSectionsToHTML({ session, showConfidential });
-
-            if (printSectionsHTML) html = printSectionsHTML;
+        
+            let html = await printSectionsToHTML({ session, showConfidential });
+            //Avoid Double Trigger By Only Triggering formToHTML is no sections available
+            if (!html) html =  await formToHTML(session, showConfidential);
 
             await ExpoPrint.printAsync({ html, height: 1122, });
         } catch (e: any) {
