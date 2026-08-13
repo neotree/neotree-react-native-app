@@ -36,23 +36,18 @@ export async function printSectionsToHTML({
   const generateQRCode = async (): Promise<string | null> => {
     try {
       const formattedData = await formatExportableSession(session, { showConfidential: true });
-      const hl7: string = await toHL7Like(formattedData);
-      
-      if(hl7.length < 100) {
+      const hl7: string | null = await toHL7Like(formattedData);
+
+      if(!hl7 || hl7.length < 100) {
         qrSmall = true
       }
-      
+
       // QR code parameters
-      const dataToEncode: string = hl7
-      let erc: 'L' | 'M' | 'Q' | 'H' = 'H'
-      
-      if (dataToEncode.length > 3057 && dataToEncode.length <= 3993) {
-        erc = 'Q'
-      } else if (dataToEncode.length > 3993 && dataToEncode.length <= 5596) {
-        erc = 'M'
-      } else if (dataToEncode.length > 5596) {
-        erc = 'L'
-      }
+      const dataToEncode: string = hl7 || ''
+      // toHL7Like caps its output at 2800 chars, well under the 3057-char
+      // Numeric-mode capacity at ECC=H for the largest QR version (40), so
+      // this can never need to drop to a lower error-correction level.
+      const erc: 'L' | 'M' | 'Q' | 'H' = 'H'
 
       const url = await new Promise<string>((resolve, reject) => {
         QRCode.toString(

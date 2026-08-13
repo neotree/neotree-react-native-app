@@ -22,7 +22,7 @@ export async function toHL7Like(data: any) {
     const localConfig = config?.filter(c=>c.hospital===hospital?.trim())
     if(localConfig && localConfig?.[0]?.hospital?.length>0){
   
-     return textToNumbers(compressDataForQRCode(JSON.stringify({uid:data['uid']})))     
+     return encodeOptimised(JSON.stringify({uid:data['uid']}))
     }
 
    }
@@ -51,15 +51,16 @@ export async function toHL7Like(data: any) {
   let entries = 'EDH\n'
   const optimised = await processEntries(data,scritpid)
   let combined = `${metadata}${entries}${optimised}`
-  let compressed = textToNumbers(compressDataForQRCode(combined))
+  let compressed = encodeOptimised(combined)
+
   if(compressed && compressed.length > 2800){
     combined = truncateData(combined)
-    compressed = textToNumbers(compressDataForQRCode(combined))
+    compressed = encodeOptimised(combined)
   }
- 
+
   while (compressed && compressed.length > 2800) {
     combined = truncateData(combined)
-    compressed = textToNumbers(compressDataForQRCode(combined))
+    compressed = encodeOptimised(combined)
   }
   return compressed;
 }
@@ -216,7 +217,16 @@ function truncateData(data: any): string {
   return lines.join('\n');
 }
 
-function compressDataForQRCode(data: any) {
+/**
+ * @deprecated This is the old QR encoding method: deflate + Base64, then
+ * expanded to digits via textToNumbers. It's been superseded by
+ * encodeOptimised, which encodes the same compressed bytes directly as a
+ * fully-numeric string (smaller, and keeps QR codes in Numeric mode). Kept
+ * (together with textToNumbers) only so fromHL7Like can still decode QR
+ * codes that were already printed with this method - do not use it for new
+ * encoding.
+ */
+export function compressDataForQRCode(data: any) {
   try {
     // Validate input
     if (!data) {
@@ -239,7 +249,7 @@ function compressDataForQRCode(data: any) {
   }
 }
 
-function decompressDataFromQRCode(compressedData: Uint8Array): string {
+export function decompressDataFromQRCode(compressedData: Uint8Array): string {
   try {
     // Validate input
     if (!compressedData || compressedData.length === 0) {
@@ -288,6 +298,8 @@ export async function fromHL7Like(data: string) {
           try {
             const decompressed = decompressDataFromQRCode(uint8Array);
             if (decompressed && decompressed.length > 0) {
+              // TEMPORARY: manual scan-verification logging. Remove once done testing.
+              console.log('Decoded HL7-like string (legacy format):\n' + decompressed);
               return await convertToJSON(decompressed);
             }
           } catch (e) {
@@ -307,6 +319,8 @@ export async function fromHL7Like(data: string) {
     try {
       const newUncompressed = decodeOptimisedData(data);
       if (newUncompressed && newUncompressed.length > 0) {
+        // TEMPORARY: manual scan-verification logging. Remove once done testing.
+        console.log('Decoded HL7-like string (optimised format):\n' + newUncompressed);
         return await convertToJSON(newUncompressed);
       }
     } catch (e) {
@@ -321,12 +335,129 @@ export async function fromHL7Like(data: string) {
   }
 }
 
+/**
+ * @deprecated Part of the old QR encoding method (paired with
+ * compressDataForQRCode) - expands each character to its 2-3 digit ASCII
+ * code. Superseded by encodeOptimised. Kept only for backward-compatible
+ * decoding of QR codes already printed with the old method.
+ */
 export function textToNumbers(data: any) {
     const aft = data.split('').map((char: any) => char.charCodeAt(0)).join('');
   return aft
 }
 
-function numbersToText(data: string): string {
+// --- Optimised QR encoding (used by toHL7Like's primary path) ---
+// Encodes the compressed bytes directly as a base-10 integer plus run-length
+// encoding of repeated digits, instead of Base64-encoding them and then
+// expanding each Base64 character into its 2-3 digit ASCII code (what
+// textToNumbers/compressDataForQRCode do for the legacy format). The RLE
+// output is fully numeric (see runLengthEncode above), so QR encoders keep
+// the whole payload in their most compact Numeric mode. Use
+// compareQRCodeEncodings() to compare it against the legacy format.
+
+function compressDataForQRCodeBytes(data: any): Uint8Array | null {
+  try {
+    if (!data) {
+      console.error('Compression error: data is empty');
+      return null;
+    }
+
+    const compressed = pako.deflate(data, { level: 9 });
+
+    if (!compressed || compressed.length === 0) {
+      console.error('Compression error: result is empty');
+      return null;
+    }
+
+    return compressed;
+  } catch (error) {
+    console.error('Compression error:', error);
+    return null;
+  }
+}
+
+// RLE output format, versioned so old and new encodings both keep decoding:
+// - Encodings from before this format existed used ":"/"," as delimiters and
+//   had no leading marker. Their first character is always a nonzero digit,
+//   since they come straight from BigInt#toString(10) (never a leading zero)
+//   or a decimal run-length count (likewise never a leading zero).
+// - This format is unambiguously distinguishable from that: it always starts
+//   with a literal '0' sentinel, a value the old format can never produce as
+//   its first character. Everything after the sentinel is a sequence of
+//   positional (delimiter-free, fully-numeric) tokens:
+//     '1' + 3-digit length + that many literal digits   (literal block)
+//     '2' + 1 digit + 3-digit count                     (run of that digit)
+// Being fully numeric (no ":"/",") lets QR encoders keep the whole payload in
+// their most compact Numeric mode instead of falling back to Alphanumeric/Byte
+// mode for the delimiter characters.
+const RLE_NUMERIC_SENTINEL = '0';
+const RLE_LITERAL_MARKER = '1';
+const RLE_RUN_MARKER = '2';
+const RLE_MAX_LITERAL_CHUNK = 999; // fits the 3-digit length field
+const RLE_MAX_RUN_COUNT = 999; // fits the 3-digit count field
+const RLE_RUN_TOKEN_LEN = 5; // marker(1) + digit(1) + count(3)
+
+function runLengthEncode(digits: string): string {
+  let out = RLE_NUMERIC_SENTINEL;
+  let literalBuf = '';
+  let i = 0;
+
+  const flushLiteral = () => {
+    while (literalBuf.length > 0) {
+      const chunk = literalBuf.slice(0, RLE_MAX_LITERAL_CHUNK);
+      out += RLE_LITERAL_MARKER + String(chunk.length).padStart(3, '0') + chunk;
+      literalBuf = literalBuf.slice(chunk.length);
+    }
+  };
+
+  while (i < digits.length) {
+    const c = digits[i];
+    let runLength = 1;
+    while (i + runLength < digits.length && digits[i + runLength] === c) {
+      runLength++;
+    }
+
+    if (runLength > RLE_RUN_TOKEN_LEN) {
+      flushLiteral();
+      let remaining = runLength;
+      while (remaining > 0) {
+        const chunkCount = Math.min(remaining, RLE_MAX_RUN_COUNT);
+        out += RLE_RUN_MARKER + c + String(chunkCount).padStart(3, '0');
+        remaining -= chunkCount;
+      }
+    } else {
+      literalBuf += c.repeat(runLength);
+    }
+
+    i += runLength;
+  }
+
+  flushLiteral();
+  return out;
+}
+
+export function textToNumbersOptimised(compressedBytes: Uint8Array | null): string | null {
+  if (!compressedBytes || compressedBytes.length === 0) {
+    return null;
+  }
+
+  let big = BigInt(0);
+  for (let i = 0; i < compressedBytes.length; i++) {
+    big = (big << BigInt(8)) | BigInt(compressedBytes[i]);
+  }
+
+  return runLengthEncode(big.toString(10));
+}
+
+export function encodeOptimised(data: any): string | null {
+  return textToNumbersOptimised(compressDataForQRCodeBytes(data));
+}
+
+// QR encoding comparison/metrics tooling has moved to
+// src/utils/qr-encoding-metrics.ts (compareQRCodeEncodings) - it's a manual
+// testing tool, not part of the real encode/decode flow below.
+
+export function numbersToText(data: string): string {
   // Validate input
   if (!data || typeof data !== 'string') {
     return '';
@@ -370,7 +501,7 @@ function looksLikeBase64(value: string): boolean {
   if (trimmed.length === 0 || trimmed.length % 4 !== 0) return false;
   return /^[A-Za-z0-9+/=]+$/.test(trimmed);
 }
-const base64ToUint8Array = (base64: string): Uint8Array | null => {
+export const base64ToUint8Array = (base64: string): Uint8Array | null => {
   try {
     // Validate input
     if (!base64 || typeof base64 !== 'string') {
@@ -725,7 +856,7 @@ export const searchTypes = [
 ];
 
 
-function decodeOptimisedData(encodedStr: string): string {
+export function decodeOptimisedData(encodedStr: string): string {
   try {
 
     if (!encodedStr || typeof encodedStr !== 'string' || encodedStr.trim().length === 0) {
@@ -767,7 +898,10 @@ function decodeOptimisedData(encodedStr: string): string {
   }
 }
 
-// Helper: Reverse RLE (e.g., "4:1,2:0" → "111100")
+// Reverse RLE. Dispatches on the leading sentinel (see runLengthEncode above)
+// to support both the current fully-numeric format and the older ":"/","
+// delimited format, so QR codes already printed with the previous scheme
+// keep decoding correctly.
 function undoRLE(str: string): string {
   try {
     // Validate input
@@ -775,46 +909,85 @@ function undoRLE(str: string): string {
       return '';
     }
 
-    // If no RLE patterns exist, return as-is
-    if (!str.includes(':')) {
-      return str;
+    if (str[0] === RLE_NUMERIC_SENTINEL) {
+      return undoRLENumeric(str);
     }
 
-    let result = '';
-    const segments = str.split(',');
-
-    for (const segment of segments) {
-      if (!segment) continue; // Skip empty segments
-
-      if (segment.includes(':')) {
-        const parts = segment.split(':');
-        if (parts.length !== 2) {
-          console.warn(`Invalid RLE segment: ${segment}`);
-          continue;
-        }
-
-        const [countStr, digit] = parts;
-        const count = parseInt(countStr, 10);
-
-        if (isNaN(count) || count < 0) {
-          console.warn(`Invalid count in RLE segment: ${countStr}`);
-          continue;
-        }
-
-        if (!digit) {
-          console.warn(`Invalid digit in RLE segment: ${segment}`);
-          continue;
-        }
-
-        result += digit.repeat(count);
-      } else {
-        result += segment;
-      }
-    }
-
-    return result;
+    return undoRLEDelimited(str);
   } catch (error) {
     console.error('Error in undoRLE:', error);
     return '';
   }
+}
+
+function undoRLENumeric(str: string): string {
+  let result = '';
+  let i = 1; // skip the leading sentinel
+
+  while (i < str.length) {
+    const marker = str[i];
+    i += 1;
+
+    if (marker === RLE_LITERAL_MARKER) {
+      const len = parseInt(str.substring(i, i + 3), 10);
+      i += 3;
+      result += str.substring(i, i + len);
+      i += len;
+    } else if (marker === RLE_RUN_MARKER) {
+      const digit = str[i];
+      i += 1;
+      const count = parseInt(str.substring(i, i + 3), 10);
+      i += 3;
+      result += digit.repeat(count);
+    } else {
+      console.warn(`Invalid RLE marker digit: ${marker}`);
+      break;
+    }
+  }
+
+  return result;
+}
+
+// Legacy ":"/"," delimited RLE decode (e.g., "4:1,2:0" → "111100"), kept for
+// backward compatibility with QR codes printed before the fully-numeric
+// format above was introduced.
+function undoRLEDelimited(str: string): string {
+  // If no RLE patterns exist, return as-is
+  if (!str.includes(':')) {
+    return str;
+  }
+
+  let result = '';
+  const segments = str.split(',');
+
+  for (const segment of segments) {
+    if (!segment) continue; // Skip empty segments
+
+    if (segment.includes(':')) {
+      const parts = segment.split(':');
+      if (parts.length !== 2) {
+        console.warn(`Invalid RLE segment: ${segment}`);
+        continue;
+      }
+
+      const [countStr, digit] = parts;
+      const count = parseInt(countStr, 10);
+
+      if (isNaN(count) || count < 0) {
+        console.warn(`Invalid count in RLE segment: ${countStr}`);
+        continue;
+      }
+
+      if (!digit) {
+        console.warn(`Invalid digit in RLE segment: ${segment}`);
+        continue;
+      }
+
+      result += digit.repeat(count);
+    } else {
+      result += segment;
+    }
+  }
+
+  return result;
 }

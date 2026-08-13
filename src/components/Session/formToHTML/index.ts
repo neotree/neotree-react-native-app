@@ -34,14 +34,10 @@ export default async (session: any, showConfidential?: boolean) => {
       if (dataToEncode.length < 200) {
         qrSmall = true
       }
-      let erc: any = 'H'
-      if (dataToEncode.length > 3057 && dataToEncode.length <= 3993) {
-        erc = 'Q'
-      } else if (dataToEncode.length > 3993 && dataToEncode.length <= 5596) {
-        erc = 'M'
-      } else if (dataToEncode.length > 5596) {
-        erc = 'L'
-      }
+      // toHL7Like caps its output at 2800 chars, well under the 3057-char
+      // Numeric-mode capacity at ECC=H for the largest QR version (40), so
+      // this can never need to drop to a lower error-correction level.
+      const erc = 'H'
 
       const url = await new Promise((resolve, reject) => {
         QRCode.toString(
