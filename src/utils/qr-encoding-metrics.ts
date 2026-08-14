@@ -1,15 +1,22 @@
-// Manual test/comparison tooling for the HL7-like QR encoding formats.
-// Not used by the app's real encode/decode flow (see src/data/hl7Like.ts for
-// that) - this is for anyone who wants to compare the old (legacy) and
-// current (optimised) QR encodings on a sample record: character/compression
-// sizes, round-trip decode correctness, and similarity between the two
-// decoded results.
+// QR encoding/sizing metrics for the HL7-like QR encoding formats.
+//
+// Most of this file (compareQRCodeEncodings and its helpers) is manual
+// test/comparison tooling - not used by the app's real encode/decode flow
+// (see src/data/hl7Like.ts for that) - for anyone who wants to compare the
+// old (legacy) and current (optimised) QR encodings on a sample record:
+// character/compression sizes, round-trip decode correctness, and
+// similarity between the two decoded results.
 //
 // Usage: import { compareQRCodeEncodings } from '@/src/utils/qr-encoding-metrics'
 // and call it with any HL7-like string (the same shape toHL7Like builds
 // internally, e.g. "MDH\n...\nEDH\n..."). It logs a metrics table and
 // returns the same data as an object.
+//
+// getQRCodeVersion/getQRPrintWidth below ARE used by the real print flow
+// (src/components/Session/formToHTML and .../printSectionsToHTML) to size
+// the printed QR to the actual QR version its payload needed.
 
+import QRCode from 'qrcode';
 import {
   base64ToUint8Array,
   compressDataForQRCode,
@@ -19,6 +26,123 @@ import {
   numbersToText,
   textToNumbers,
 } from '../data/hl7Like';
+
+// --- QR print sizing ---
+// A QR code's version (1-40) determines its module (grid square) count, and
+// therefore how much can be printed before it stops being reliably
+// scannable at a given physical size. Printing every QR at a fixed size
+// wastes page space on payloads that only needed a low version. Versions at
+// or above QR_FULL_SIZE_VERSION keep the current full print size; from
+// there down, every QR_STEP_VERSIONS versions shed QR_STEP_CM off the print
+// width, until QR_MIN_STEP_VERSION, below which it's clamped to the
+// existing small-QR print size (see qrSmall in formToHTML/printSectionsToHTML)
+// rather than continuing to shrink.
+export const QR_FULL_SIZE_PX = 300; // current fixed print size, versions >= QR_FULL_SIZE_VERSION
+export const QR_SMALL_SIZE_PX = 100; // current qrSmall print size; floor for versions <= QR_MIN_STEP_VERSION
+const QR_FULL_SIZE_VERSION = 26;
+const QR_MIN_STEP_VERSION = 3;
+const QR_STEP_VERSIONS = 5;
+const QR_STEP_CM = 0.5;
+const CM_TO_PX = 37.795275591; // 96px/in ÷ 2.54cm/in
+const QR_STEP_PX = QR_STEP_CM * CM_TO_PX;
+
+// ISO/IEC 18004 recommends a quiet zone of at least 4 modules on every side
+// of the QR matrix - this is the actual scan-reliability margin baked into
+// the SVG itself (the `margin` option passed to QRCode.toString), as
+// opposed to the page-layout padding below.
+export const QR_QUIET_ZONE_MODULES = 4;
+// Printed/exported-to-PDF QRs sit flush against adjacent page content on
+// their top and left edges (the two-column print grid puts other content
+// right next to them there), so beyond the quiet zone baked into the SVG,
+// the wrapping container gets extra breathing room on just those two sides.
+export const QR_EXTRA_TOP_LEFT_PADDING_PX = 28;
+
+export function getQRCodeVersion(data: string, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'H'): number {
+  return QRCode.create(data, { errorCorrectionLevel }).version;
+}
+
+// --- Adaptive error correction ---
+// Versions above QR_FULL_SIZE_VERSION no longer grow the print size (see
+// getQRPrintWidth), so a payload that pushes the version up at ECC=H is
+// printed at the same physical size but with denser modules - harder to
+// scan. Trading error-correction budget for version headroom keeps the
+// module density (and therefore scanability) in check.
+//
+// H's version picks a default target tier (H/Q/M/L, ceilings 25/30/35/40).
+// Below that, each level is only adopted over its immediate predecessor if
+// it actually shrinks the version - so the running "champion" is carried
+// forward tier by tier, only swapping to the weaker level when it truly
+// beats what's been picked so far. This only computes as many versions as
+// actually needed (2 calls if Q already fits, up to 4 if L is reached) -
+// never an exhaustive scan of all four levels.
+const ADAPTIVE_ECC_H_MAX_VERSION = 25;
+const ADAPTIVE_ECC_Q_MAX_VERSION = 30;
+const ADAPTIVE_ECC_M_MAX_VERSION = 35;
+type QRErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
+type QRErrorCorrectionChoice = { errorCorrectionLevel: QRErrorCorrectionLevel; version: number };
+
+// Prefers the stronger (already-chosen) option when both encode to the same
+// version - a weaker ECC only wins by actually shrinking the version.
+function strongerIfSameVersion(stronger: QRErrorCorrectionChoice, weaker: QRErrorCorrectionChoice): QRErrorCorrectionChoice {
+  return stronger.version === weaker.version ? stronger : weaker;
+}
+
+// Describes what a tier comparison decided, for the TEMPORARY logging below.
+function describeStep(previous: QRErrorCorrectionChoice, candidate: QRErrorCorrectionChoice, chosen: QRErrorCorrectionChoice): string {
+  return chosen === previous
+    ? `Same version as ${previous.errorCorrectionLevel} (${candidate.version}) - no benefit, keeping ${previous.errorCorrectionLevel}`
+    : `Improved on ${previous.errorCorrectionLevel} (${previous.version} -> ${candidate.version}) - adopting ${candidate.errorCorrectionLevel}`;
+}
+
+export function getAdaptiveQRErrorCorrection(data: string): QRErrorCorrectionChoice {
+  // TEMPORARY: manual verification logging of the adaptive ECC decision.
+  // Remove once done testing.
+  const considerations: { Metric: string; Value: any; Explanation: string }[] = [
+    { Metric: 'Encoded length (chars)', Value: data ? data.length : 0, Explanation: 'Length of the payload being encoded into the QR' },
+  ];
+  const logDecision = (chosen: QRErrorCorrectionChoice) => {
+    considerations.push({ Metric: 'Final ECC level', Value: chosen.errorCorrectionLevel, Explanation: 'Error correction level used for the printed QR' });
+    considerations.push({ Metric: 'Final QR version', Value: chosen.version, Explanation: 'QR version (1-40) at the final ECC level' });
+    logMetricsTable('Adaptive QR Error Correction', considerations);
+  };
+
+  const h: QRErrorCorrectionChoice = { errorCorrectionLevel: 'H', version: getQRCodeVersion(data, 'H') };
+  considerations.push({ Metric: 'H (baseline)', Value: h.version, Explanation: `Version <= ${ADAPTIVE_ECC_H_MAX_VERSION}? ${h.version <= ADAPTIVE_ECC_H_MAX_VERSION}` });
+  if (h.version <= ADAPTIVE_ECC_H_MAX_VERSION) {
+    logDecision(h);
+    return h;
+  }
+
+  const q: QRErrorCorrectionChoice = { errorCorrectionLevel: 'Q', version: getQRCodeVersion(data, 'Q') };
+  const bestUpToQ = strongerIfSameVersion(h, q);
+  considerations.push({ Metric: 'Q', Value: q.version, Explanation: describeStep(h, q, bestUpToQ) });
+  if (q.version <= ADAPTIVE_ECC_Q_MAX_VERSION) {
+    logDecision(bestUpToQ);
+    return bestUpToQ;
+  }
+
+  const m: QRErrorCorrectionChoice = { errorCorrectionLevel: 'M', version: getQRCodeVersion(data, 'M') };
+  const bestUpToM = strongerIfSameVersion(bestUpToQ, m);
+  considerations.push({ Metric: 'M', Value: m.version, Explanation: describeStep(bestUpToQ, m, bestUpToM) });
+  if (m.version <= ADAPTIVE_ECC_M_MAX_VERSION) {
+    logDecision(bestUpToM);
+    return bestUpToM;
+  }
+
+  const l: QRErrorCorrectionChoice = { errorCorrectionLevel: 'L', version: getQRCodeVersion(data, 'L') };
+  const bestUpToL = strongerIfSameVersion(bestUpToM, l);
+  considerations.push({ Metric: 'L (last level)', Value: l.version, Explanation: describeStep(bestUpToM, l, bestUpToL) });
+  logDecision(bestUpToL);
+  return bestUpToL;
+}
+
+export function getQRPrintWidth(version: number): number {
+  if (version >= QR_FULL_SIZE_VERSION) return QR_FULL_SIZE_PX;
+  if (version <= QR_MIN_STEP_VERSION) return QR_SMALL_SIZE_PX;
+
+  const steps = Math.ceil((QR_FULL_SIZE_VERSION - version) / QR_STEP_VERSIONS);
+  return Math.round(QR_FULL_SIZE_PX - steps * QR_STEP_PX);
+}
 
 function decodeLegacyEncodedData(encodedStr: string): string {
   if (!encodedStr || typeof encodedStr !== 'string' || encodedStr.trim().length === 0) {

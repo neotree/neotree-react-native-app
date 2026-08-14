@@ -3,6 +3,7 @@
 import QRCode from 'qrcode';
 import { ScreenEntryValue } from '@/src/types';
 import { formatValueWithUnit } from '@/src/utils/units';
+import { getAdaptiveQRErrorCorrection, getQRPrintWidth, QR_QUIET_ZONE_MODULES, QR_EXTRA_TOP_LEFT_PADDING_PX } from '@/src/utils/qr-encoding-metrics';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
@@ -34,10 +35,11 @@ export default async (session: any, showConfidential?: boolean) => {
       if (dataToEncode.length < 200) {
         qrSmall = true
       }
-      // toHL7Like caps its output at 2800 chars, well under the 3057-char
-      // Numeric-mode capacity at ECC=H for the largest QR version (40), so
-      // this can never need to drop to a lower error-correction level.
-      const erc = 'H'
+      // Versions above 25 keep the print size fixed (see getQRPrintWidth),
+      // so trade error correction for version headroom to keep the module
+      // density (and scanability) in check on larger payloads.
+      const { errorCorrectionLevel: erc, version } = getAdaptiveQRErrorCorrection(dataToEncode);
+      const width = qrSmall ? 100 : getQRPrintWidth(version);
 
       const url = await new Promise((resolve, reject) => {
         QRCode.toString(
@@ -45,8 +47,8 @@ export default async (session: any, showConfidential?: boolean) => {
           {
             type: 'svg',
             errorCorrectionLevel: erc,
-            margin: 2,
-            width: qrSmall ? 100 : undefined
+            margin: QR_QUIET_ZONE_MODULES,
+            width
           },
           (err, url) => {
             if (err) {
@@ -57,7 +59,7 @@ export default async (session: any, showConfidential?: boolean) => {
           }
         );
       });
-      return url;
+      return { url, width };
 
     } catch (e) {
       return null;
@@ -93,10 +95,10 @@ export default async (session: any, showConfidential?: boolean) => {
     try {
       const generatedQR = await generateQRCode()
       let htmlContent = !!qrSmall ? `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
-                  ${generatedQR}
+                  ${generatedQR?.url}
               </div>`:
-        !generatedQR ? '' : `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
-                  ${generatedQR}
+        !generatedQR ? '' : `<div style="width: ${generatedQR.width}px; height: ${generatedQR.width}px; text-align: left; margin: 0 auto; padding-top: ${QR_EXTRA_TOP_LEFT_PADDING_PX}px; padding-left: ${QR_EXTRA_TOP_LEFT_PADDING_PX}px;">
+                  ${generatedQR.url}
               </div>
               `;
 
