@@ -299,7 +299,6 @@ export async function fromHL7Like(data: string) {
             const decompressed = decompressDataFromQRCode(uint8Array);
             if (decompressed && decompressed.length > 0) {
               // TEMPORARY: manual scan-verification logging. Remove once done testing.
-              console.log('Decoded HL7-like string (legacy format):\n' + decompressed);
               return await convertToJSON(decompressed);
             }
           } catch (e) {
@@ -319,8 +318,7 @@ export async function fromHL7Like(data: string) {
     try {
       const newUncompressed = decodeOptimisedData(data);
       if (newUncompressed && newUncompressed.length > 0) {
-        // TEMPORARY: manual scan-verification logging. Remove once done testing.
-        console.log('Decoded HL7-like string (optimised format):\n' + newUncompressed);
+      
         return await convertToJSON(newUncompressed);
       }
     } catch (e) {
