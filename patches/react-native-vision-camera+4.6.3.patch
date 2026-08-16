@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CodeScannerPipeline.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CodeScannerPipeline.kt
+index 23d78d1..5578dd8 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CodeScannerPipeline.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/core/CodeScannerPipeline.kt
+@@ -23,6 +23,7 @@ class CodeScannerPipeline(val configuration: CameraConfiguration.CodeScanner, va
+     val types = configuration.codeTypes.map { it.toBarcodeType() }
+     val barcodeScannerOptions = BarcodeScannerOptions.Builder()
+       .setBarcodeFormats(types[0], *types.toIntArray())
++      .enableAllPotentialBarcodes()
+       .build()
+     scanner = BarcodeScanning.getClient(barcodeScannerOptions)
+   }
