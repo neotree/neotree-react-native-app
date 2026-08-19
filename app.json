@@ -59,7 +59,6 @@
                   "android:turnScreenOn": true
                 }
               ],
-              "./plugins/withAndroidMlkitBarcodeModel",
               [
                 "expo-build-properties",
                 {

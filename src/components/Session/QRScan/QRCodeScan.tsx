@@ -1,28 +1,24 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { StyleSheet, Text, View, Platform, SafeAreaView, StatusBar, Alert, ActivityIndicator, Pressable, Dimensions, GestureResponderEvent } from "react-native";
-import { runOnJS } from "react-native-reanimated";
 import {
   Camera,
   useCameraDevice,
   useCodeScanner,
   useCameraPermission,
-  useCameraFormat,
-  useFrameProcessor,
-  VisionCameraProxy
+  useCameraFormat
 } from "react-native-vision-camera";
+import { scanFromURLAsync } from "expo-camera";
 import { fromHL7Like } from '../../../data/hl7Like'
 import { logError } from '@/src/utils/logError';
-import { reportErrors } from '../../../data/api'
-import { isGmsAvailable, decodeQrFromFile, ZXING_FRAME_PROCESSOR_PLUGIN_NAME } from '../../../../modules/qr-scan-native/src/QrScanNativeModule'
 
 const SIMPLE_QR_MAX_LENGTH = 12;
 const SCAN_TIMEOUT_MS = 30 * 1000;
-const REFOCUS_INTERVAL_MS = 2500;
 // MLKit's live codeScanner analyzes a resolution-capped stream (~720p-1080p
 // regardless of the device's actual sensor resolution), so a dense/high-version
 // QR code can be located (corners/frame reported) but never decoded. If that
 // keeps happening for this long, fall back to a full-resolution still photo,
-// which has far more pixels per module to work with.
+// decoded via expo-camera's scanFromURLAsync (MLKit's still-image API, which
+// runs against the photo's actual resolution rather than the capped stream).
 const UNKNOWN_BLOB_FALLBACK_MS = 1200;
 // Minimum gap between photo-fallback attempts, so a still-undecodable code
 // doesn't trigger a photo capture on every frame.
@@ -58,12 +54,6 @@ const extractUidFromValue = (raw: string) => {
 export function QRCodeScan(props: any) {
   const device = useCameraDevice("back");
   const { hasPermission, requestPermission } = useCameraPermission();
-  // Devices without Google Play Services (e.g. stock Fire OS tablets) can't use
-  // VisionCamera's built-in MLKit-based codeScanner at all, since MLKit's model
-  // is fetched through Play Services. On those devices, fall back to a fully
-  // local ZXing decoder instead. This is fixed for the lifetime of the device,
-  // so it's safe to compute once.
-  const useZXing = useMemo(() => Platform.OS === "android" && !isGmsAvailable(), []);
   const [hasScanned, setHasScanned] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [layout, setLayout] = useState({ width: 0, height: 0 });
@@ -90,26 +80,19 @@ export function QRCodeScan(props: any) {
     { videoAspectRatio: targetAspectRatio },
     { autoFocusSystem: "phase-detection" }
   ]);
-  const clampExposure = useCallback((target: number) => {
+  const exposureBoost = useMemo(() => {
     if (!device || typeof device.minExposure !== 'number' || typeof device.maxExposure !== 'number') {
       return undefined;
     }
+    const target = 0.6;
     return Math.max(device.minExposure, Math.min(device.maxExposure, target));
   }, [device]);
-  // Many low-cost Android devices meter for the whole scene and leave printed
-  // QR codes underexposed in typical clinic lighting. A mild boost is applied
-  // by default (not just when the torch is on) to keep code contrast readable.
-  const defaultExposureBoost = useMemo(() => clampExposure(0.3), [clampExposure]);
-  const torchExposureBoost = useMemo(() => clampExposure(0.6), [clampExposure]);
 
   useEffect(() => {
     if (!device) return;
-    // Stay at the device's natural (neutral) zoom rather than forcing a
-    // digital zoom-in: on many 2022-era Android devices a non-neutral zoom
-    // crops the sensor output and can trigger AF/AE hunting, which costs more
-    // scans than the slight magnification gains back. Users can still pinch
-    // to zoom in for small or distant codes via enableZoomGesture.
-    setZoom(device.neutralZoom || 1);
+    const base = device.neutralZoom || 1;
+    const boosted = Math.min(device.maxZoom || base, Math.max(base, 1.15));
+    setZoom(boosted);
   }, [device]);
 
   useEffect(() => {
@@ -121,18 +104,6 @@ export function QRCodeScan(props: any) {
     }, 250);
     return () => clearTimeout(timeout);
   }, [layout.height, layout.width, didInitialFocus]);
-
-  // Continuous autofocus on older/cheaper camera modules can drift or hunt,
-  // especially at typical QR-scanning distances. Periodically nudging focus
-  // back to the center of frame recovers scans that would otherwise sit just
-  // out of focus until the user manually taps.
-  useEffect(() => {
-    if (!didInitialFocus || hasScanned || isProcessing) return;
-    const interval = setInterval(() => {
-      cameraRef.current?.focus({ x: 0.5, y: 0.5 }).catch(() => undefined);
-    }, REFOCUS_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [didInitialFocus, hasScanned, isProcessing]);
 
   const showInvalidQRError = useCallback(() => {
     Alert.alert(
@@ -146,21 +117,6 @@ export function QRCodeScan(props: any) {
         },
       ]
     );
-  }, []);
-
-  const onCameraError = useCallback((error: any) => {
-    reportErrors('QR_SCAN_CAMERA_ERROR', error?.code || error?.message || error);
-    // ML Kit's barcode model is fetched by Play Services on first use; on a
-    // device that hasn't downloaded it yet (fresh install, poor connectivity)
-    // scanning silently finds nothing until it's ready. Surface that clearly
-    // instead of letting it look like a broken or unreadable QR code.
-    if (error?.code === 'code-scanner/cannot-load-model') {
-      Alert.alert(
-        'Preparing QR Scanner',
-        'The QR scanner is finishing a one-time setup step and needs an internet connection. Please connect to the internet and try again shortly.',
-        [{ text: 'Retry', onPress: () => setHasScanned(false), style: 'cancel' }]
-      );
-    }
   }, []);
 
   const onTapToFocus = useCallback(async (event: GestureResponderEvent) => {
@@ -235,18 +191,15 @@ export function QRCodeScan(props: any) {
       try {
         photo = await cameraRef.current.takePhoto({ enableShutterSound: false });
       } catch (error) {
-        console.log('[QR DEBUG] photo fallback capture error, retrying once', error);
         await new Promise(resolve => setTimeout(resolve, 300));
         photo = await cameraRef.current.takePhoto({ enableShutterSound: false });
       }
 
-      console.log(`[QR DEBUG] photo fallback captured ${photo.width}x${photo.height}, decoding...`);
-      const value = normalizeValue(await decodeQrFromFile(photo.path));
+      const uri = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
+      const results = await scanFromURLAsync(uri, ['qr']);
+      const value = normalizeValue(results?.[0]?.data);
       if (value) {
-        console.log(`[QR DEBUG] photo fallback decoded value length=${value.length}`);
         await handleDecodedValue(value);
-      } else {
-        console.log('[QR DEBUG] photo fallback failed to decode');
       }
     } catch (error) {
       logError('QRCodeScan', error);
@@ -259,20 +212,7 @@ export function QRCodeScan(props: any) {
   const codeScanner = useCodeScanner({
     codeTypes: ["qr"],
     onCodeScanned: async (codes) => {
-      if (useZXing) return;
-      // TEMPORARY: diagnostic logging to tell apart "MLKit never detects the
-      // code" from "MLKit detects it but the decoded value is empty/wrong",
-      // for QR codes that scan fine with the phone's native camera/scanner
-      // but fail in this app. Remove once confirmed.
-      console.log(
-        `[QR DEBUG] onCodeScanned: ${codes?.length ?? 0} code(s)`,
-        (codes || []).map(c => ({
-          type: c?.type,
-          valueLength: normalizeValue(c?.value).length,
-          corners: c?.corners,
-          frame: c?.frame,
-        }))
-      );
+      if (hasScanned || isProcessing) return;
       if (!codes || codes.length === 0) {
         unknownBlobSinceRef.current = null;
         return;
@@ -281,7 +221,10 @@ export function QRCodeScan(props: any) {
       const firstValid = codes.find(code => normalizeValue(code?.value));
       const value = normalizeValue(firstValid?.value);
       if (!value) {
-        console.log('[QR DEBUG] code(s) detected but all values were empty after normalization');
+        // A code was located (corners/frame reported) but MLKit's live stream
+        // couldn't decode it - most likely too dense for the capped stream
+        // resolution. Give it a moment in case it's just a transient miss,
+        // then fall back to a full-resolution still.
         const now = Date.now();
         if (unknownBlobSinceRef.current == null) {
           unknownBlobSinceRef.current = now;
@@ -295,29 +238,9 @@ export function QRCodeScan(props: any) {
       }
 
       unknownBlobSinceRef.current = null;
-      console.log(`[QR DEBUG] decoded value length=${value.length}, first 20 chars="${value.slice(0, 20)}"`);
       await handleDecodedValue(value);
     },
   });
-
-  const zxingPlugin = useMemo(
-    () => (useZXing ? VisionCameraProxy.initFrameProcessorPlugin(ZXING_FRAME_PROCESSOR_PLUGIN_NAME, {}) : undefined),
-    [useZXing]
-  );
-
-  const frameProcessor = useFrameProcessor((frame) => {
-    'worklet';
-    if (!useZXing || !zxingPlugin) return;
-    const result = zxingPlugin.call(frame) as { value?: string } | undefined;
-    const value = normalizeValue(result?.value);
-    // TEMPORARY: diagnostic logging - see the console.log calls in
-    // onCodeScanned above for why. Remove once confirmed.
-    if (result !== undefined) {
-      console.log(`[QR DEBUG] zxing frame processor result: valueLength=${value.length}`);
-    }
-    if (!value) return;
-    runOnJS(handleDecodedValue)(value);
-  }, [useZXing, zxingPlugin, handleDecodedValue]);
 
   useEffect(() => {
     if (!hasPermission) {
@@ -356,12 +279,11 @@ export function QRCodeScan(props: any) {
       >
         <Camera
           ref={cameraRef}
-          codeScanner={useZXing ? undefined : codeScanner}
-          frameProcessor={useZXing ? frameProcessor : undefined}
+          codeScanner={codeScanner}
           style={StyleSheet.absoluteFillObject}
           device={device}
           isActive={true}
-          photo={!useZXing}
+          photo={true}
           format={format}
           fps={[10, 30]}
           enableZoomGesture={true}
@@ -369,11 +291,10 @@ export function QRCodeScan(props: any) {
           resizeMode="cover"
           androidPreviewViewType="texture-view"
           torch={device?.hasTorch && torchOn ? "on" : "off"}
-          exposure={torchOn ? torchExposureBoost : defaultExposureBoost}
+          exposure={torchOn ? exposureBoost : undefined}
           zoom={zoom}
           photoQualityBalance="quality"
           videoStabilizationMode="auto"
-          onError={onCameraError}
           onInitialized={() => setIsCameraInitialized(true)}
         />
       </Pressable>
