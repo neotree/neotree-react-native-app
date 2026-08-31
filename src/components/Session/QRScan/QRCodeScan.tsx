@@ -20,9 +20,25 @@ const SCAN_TIMEOUT_MS = 30 * 1000;
 // decoded via expo-camera's scanFromURLAsync (MLKit's still-image API, which
 // runs against the photo's actual resolution rather than the capped stream).
 const UNKNOWN_BLOB_FALLBACK_MS = 1200;
+// A frame with zero codes at all (MLKit couldn't even locate a finder
+// pattern - not just fail to decode one) gets a longer dwell before falling
+// back to a still photo, since it's ambiguous whether a code is present and
+// too dense/angled to locate, or the camera simply isn't pointed at one yet.
+const NO_CODE_FALLBACK_MS = 4000;
 // Minimum gap between photo-fallback attempts, so a still-undecodable code
 // doesn't trigger a photo capture on every frame.
 const FALLBACK_COOLDOWN_MS = 2500;
+// useCameraDevice's device list is a module-level singleton populated once
+// at native-module load time and only updated via a native "devices changed"
+// event - if that event fires while this screen isn't mounted (e.g. camera
+// enumeration finishing shortly after a cold app start), the running
+// instance never sees it and is stuck reporting no device, even though a
+// fresh mount would immediately see the up-to-date list. Remounting the
+// device-dependent subtree a few times gives that event a chance to have
+// landed, instead of leaving the user stuck on a dead-end error until they
+// manually back out and reopen the screen.
+const DEVICE_RETRY_LIMIT = 6;
+const DEVICE_RETRY_DELAY_MS = 700;
 
 const normalizeValue = (value: unknown) => {
   if (value == null) return '';
@@ -52,6 +68,18 @@ const extractUidFromValue = (raw: string) => {
 };
 
 export function QRCodeScan(props: any) {
+  const [remountKey, setRemountKey] = useState(0);
+  return (
+    <QRCodeScanInner
+      key={remountKey}
+      {...props}
+      deviceAttempt={remountKey}
+      onRetryDevice={() => setRemountKey(count => count + 1)}
+    />
+  );
+}
+
+function QRCodeScanInner(props: any) {
   const device = useCameraDevice("back");
   const { hasPermission, requestPermission } = useCameraPermission();
   const [hasScanned, setHasScanned] = useState(false);
@@ -87,6 +115,12 @@ export function QRCodeScan(props: any) {
     const target = 0.6;
     return Math.max(device.minExposure, Math.min(device.maxExposure, target));
   }, [device]);
+
+  useEffect(() => {
+    if (device || props.deviceAttempt >= DEVICE_RETRY_LIMIT) return;
+    const timeout = setTimeout(() => props.onRetryDevice(), DEVICE_RETRY_DELAY_MS);
+    return () => clearTimeout(timeout);
+  }, [device, props.deviceAttempt, props.onRetryDevice]);
 
   useEffect(() => {
     if (!device) return;
@@ -213,32 +247,34 @@ export function QRCodeScan(props: any) {
     codeTypes: ["qr"],
     onCodeScanned: async (codes) => {
       if (hasScanned || isProcessing) return;
-      if (!codes || codes.length === 0) {
-        unknownBlobSinceRef.current = null;
-        return;
-      }
 
-      const firstValid = codes.find(code => normalizeValue(code?.value));
+      const firstValid = codes?.find(code => normalizeValue(code?.value));
       const value = normalizeValue(firstValid?.value);
-      if (!value) {
-        // A code was located (corners/frame reported) but MLKit's live stream
-        // couldn't decode it - most likely too dense for the capped stream
-        // resolution. Give it a moment in case it's just a transient miss,
-        // then fall back to a full-resolution still.
-        const now = Date.now();
-        if (unknownBlobSinceRef.current == null) {
-          unknownBlobSinceRef.current = now;
-        } else if (
-          now - unknownBlobSinceRef.current >= UNKNOWN_BLOB_FALLBACK_MS &&
-          now - lastFallbackAttemptRef.current >= FALLBACK_COOLDOWN_MS
-        ) {
-          await attemptPhotoFallback();
-        }
+      if (value) {
+        unknownBlobSinceRef.current = null;
+        await handleDecodedValue(value);
         return;
       }
 
-      unknownBlobSinceRef.current = null;
-      await handleDecodedValue(value);
+      // Either a code was located (corners/frame reported) but MLKit's live
+      // stream couldn't decode it - most likely too dense for the capped
+      // stream resolution - or no code was located at all, which for a very
+      // dense/angled code can mean MLKit couldn't even find its finder
+      // pattern in the capped stream. Either way, give it a moment in case
+      // it's just a transient miss, then fall back to a full-resolution
+      // still, which runs against the photo's actual resolution rather than
+      // the capped live stream. A located-but-undecoded code gets the
+      // shorter threshold, since we already know something's there.
+      const located = !!codes && codes.length > 0;
+      const now = Date.now();
+      if (unknownBlobSinceRef.current == null) {
+        unknownBlobSinceRef.current = now;
+      } else if (
+        now - unknownBlobSinceRef.current >= (located ? UNKNOWN_BLOB_FALLBACK_MS : NO_CODE_FALLBACK_MS) &&
+        now - lastFallbackAttemptRef.current >= FALLBACK_COOLDOWN_MS
+      ) {
+        await attemptPhotoFallback();
+      }
     },
   });
 
@@ -262,9 +298,22 @@ export function QRCodeScan(props: any) {
   }
 
   if (!device) {
+    const stillRetrying = props.deviceAttempt < DEVICE_RETRY_LIMIT;
     return (
       <SafeAreaView style={styles.centerContainer}>
-        <Text>Camera device not available</Text>
+        {stillRetrying ? (
+          <>
+            <ActivityIndicator size="large" />
+            <Text style={{ marginTop: 12 }}>Preparing camera...</Text>
+          </>
+        ) : (
+          <>
+            <Text>Camera device not available</Text>
+            <Pressable onPress={props.onRetryDevice} style={[styles.controlButton, { marginTop: 16 }]}>
+              <Text style={styles.controlText}>Retry</Text>
+            </Pressable>
+          </>
+        )}
       </SafeAreaView>
     );
   }

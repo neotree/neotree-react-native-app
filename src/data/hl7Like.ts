@@ -641,6 +641,7 @@ async function convertToJSON(input: string) {
   const normalizedInput = normalizeHL7Input(input);
 
   const lines = normalizedInput.trim().split("\n");
+    console.log("::--KWEMU KWEMU KWEMUZ::--", lines);
   const result: any = {};
   let currentSection: any = result;
 
