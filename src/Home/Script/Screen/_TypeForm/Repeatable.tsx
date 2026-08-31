@@ -11,6 +11,7 @@ import { MultiSelectField } from './_MultiSelect';
 import { fieldsTypes } from '../../../../constants';
 import { normalizeDateLikeValue } from '@/src/utils/date-value-normalization';
 import { formatDate } from '@/src/utils/formatDate';
+import { logError } from '@/src/utils/logError';
 
 
 
@@ -209,7 +210,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
 
     const handleChange = (id: number, key: string, value: any, field: any) => {
         setForms(prevForms => {
-            const updatedForms = prevForms.map((form, formIdx) => {
+            const updatedForms = prevForms.map(form => {
                 if (form.id !== id) return form;
                 const createAt = form.createdAt;
                 const enhancedValue = {
@@ -220,31 +221,6 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                     unit: field.unit,
                     ips: field.ips
                 };
-                const shouldLogField = ['date', 'datetime', 'period'].includes(field.type);
-                if (shouldLogField) {
-                    const incoming = value || {};
-                    console.log('[Repeatable][handleChange]', {
-                        fieldKey: field.key,
-                        fieldLabel: field.label,
-                        fieldType: field.type,
-                        formId: id,
-                        formIndex: formIdx,
-                        incoming: {
-                            value: incoming?.value ?? null,
-                            valueText: incoming?.valueText ?? null,
-                            exportValue: incoming?.exportValue ?? null,
-                            calculateValue: incoming?.calculateValue ?? null,
-                            label: incoming?.label ?? null,
-                        },
-                        enhanced: {
-                            value: enhancedValue?.value ?? null,
-                            valueText: enhancedValue?.valueText ?? null,
-                            exportValue: enhancedValue?.exportValue ?? null,
-                            calculateValue: enhancedValue?.calculateValue ?? null,
-                            label: enhancedValue?.label ?? null,
-                        },
-                    });
-                }
                 let newValues = { ...form.values, [key]: enhancedValue };
 
                 const isComplete = fields.every(field => {
@@ -375,7 +351,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 label: field.label
             };
         } catch (e) {
-            console.error('Error formatting period value:', e);
+            logError('Repeatable.getPeriodValueText', e, { fieldKey: field?.key });
             return null;
         }
     }
@@ -400,7 +376,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                 label: field.label
             };
         } catch (e) {
-            console.error('Error formatting date value:', e);
+            logError('Repeatable.getDateValue', e, { fieldKey: field?.key });
             return null;
         }
     }
@@ -483,7 +459,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                             }
                         }
                     } catch (e) {
-                        console.error('Invalid date for period calculation:', e);
+                        logError('Repeatable.periodCalculation', e, { fieldKey: field?.key });
                         // Don't assign period info if date is invalid
                     }
                 }
@@ -497,7 +473,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
                             Object.assign(base, dateInfo);
                         }
                     } catch (e) {
-                        console.error('Invalid date value:', e);
+                        logError('Repeatable.dateValue', e, { fieldKey: field?.key });
                     }
                 }
             }

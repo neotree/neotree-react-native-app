@@ -21,6 +21,7 @@ import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
 import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
 import moment from "moment";
+import { logError } from '@/src/utils/logError';
 
 type ScriptContextProviderProps = types.StackNavigationProps<types.HomeRoutes, 'Script'>;
 
@@ -1027,7 +1028,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 }
             }
         } catch (e: any) {
-            console.log(e);
+            logError('scriptContext.loadScript', e);
             setLoadScriptError(e.message);
         } finally {
             setLoadingScript(false);

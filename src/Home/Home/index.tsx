@@ -5,6 +5,7 @@ import { useAppContext } from '../../AppContext';
 import { Content, Text, Card, Br, Box, theme } from '../../components';
 import { getLocation, getScripts, syncData } from '../../data';
 import * as types from '../../types';
+import { logError } from '@/src/utils/logError';
 
 export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Home'>) {
 	const isFocused = useIsFocused();
@@ -25,7 +26,6 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			setIsResyncing(true);
 			setHasTriedResync(true);
 			setShowError(null);
-			console.log('No scripts found. Performing resync...');
 			
 			const res = await syncData({ force: true });
 			
@@ -33,10 +33,9 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 				setSyncDataResponse(res);
 			}
 			
-			console.log('Resync completed successfully');
 			return true;
 		} catch (err: any) {
-			console.error('Resync failed:', err);
+			logError('Home.resync', err);
 			setShowError(err?.message || 'Failed to resync data');
 			return false;
 		} finally {
@@ -56,8 +55,6 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 
 			// If selectedHospitalScripts is empty and we haven't tried resyncing yet
 			if (selectedHospitalScripts.length === 0 && !hasTriedResync && !isResyncing) {
-				console.log(`No scripts found for hospital ${location?.hospital}. Triggering resync...`);
-				
 				const resyncSuccess = await performResync();
 				
 				if (resyncSuccess) {
@@ -83,7 +80,7 @@ export function Home({ navigation }: types.StackNavigationProps<types.HomeRoutes
 			setLoadingScripts(false);
 			setScriptsInitialised(true);
 		} catch (err: any) {
-			console.error('Load scripts error:', err);
+			logError('Home.loadScripts', err);
 			setShowError(err?.message || 'Failed to load scripts');
 			setLoadingScripts(false);
 		}

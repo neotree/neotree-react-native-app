@@ -11,6 +11,7 @@ import {
     backendKey,
     NetworkUnavailableError,
 } from './circuitBreaker';
+import { logError } from '@/src/utils/logError';
 
 const PROBE_TIMEOUT_MS = 15_000;
 const REMOTE_TIMEOUT_MS = 60_000;
@@ -61,8 +62,6 @@ export async function makeApiCall(
         const circuitKey = backendKey(country, source);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError(source);
 
-        console.log('[API]: ', url);
-
         let settled = false;
         const settle = (ok: boolean) => {
             if (settled) return;
@@ -96,7 +95,6 @@ export async function makeApiCall(
             settle(false);
         }
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; 
     }
 }
@@ -128,8 +126,6 @@ export async function makeLocalApiCall(
 
         const circuitKey = backendKey(country, 'local', hospital);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
-
-        console.log('[API]: ', url);
 
         let settled = false;
         const settle = (ok: boolean) => {
@@ -166,14 +162,13 @@ export async function makeLocalApiCall(
         }
 
         if (res.status !== 200) {
-            console.log(res);
+            logError('api.localRequestFailed', 'Local server returned a non-200 response', { url, status: res.status });
         }
 
         return res;
     }
     return null
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
 }
 
@@ -210,8 +205,6 @@ export async function makeLocalGetApiCall(
         const circuitKey = backendKey(country, 'local', hospitalId);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
 
-        console.log('[API]: ', url);
-
         let settled = false;
         const settle = (ok: boolean) => {
             if (settled) return;
@@ -246,7 +239,7 @@ export async function makeLocalGetApiCall(
         }
 
         if (res.status !== 200) {
-            console.log(res);
+            logError('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url, status: res.status });
         }
 
         const sessions = decryptInReactNative(await res?.json(), sec);
@@ -254,7 +247,6 @@ export async function makeLocalGetApiCall(
     }
    
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
         throw e; }
 }
 
@@ -288,10 +280,7 @@ export const reportErrors = async (...args: any[]) => {
 function decryptInReactNative(encryptedData: any, secretKey: string): any {
   try {
     // 1. Check for empty input
-    if (!encryptedData) {
-      console.warn('No encrypted data provided');
-      return null;
-    }
+    if (!encryptedData) return null;
 
     // 2. Validate secret key length (AES-256 requires 32 bytes)
     if (secretKey.length !== 32) {
@@ -336,7 +325,7 @@ function decryptInReactNative(encryptedData: any, secretKey: string): any {
 }
     
   } catch (error) {
-    console.error('Decryption error:', error);
+    logError('api.decryptInReactNative', error);
     // Return null or rethrow based on your error handling strategy
     return null;
   }

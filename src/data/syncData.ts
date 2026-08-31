@@ -9,6 +9,7 @@ import { dbTransaction, ensureSchema, db } from './db';
 import { makeApiCall, reportErrors, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
+import { logError } from '@/src/utils/logError';
 
 export async function syncData(opts?: { force?: boolean; }) {
 	const netInfo = await NetInfo.fetch();
@@ -259,7 +260,7 @@ export async function syncData(opts?: { force?: boolean; }) {
                     }
                 }
             } catch(e: any) {
-                console.log('syncData', e)
+                logError('syncData', e);
                 reportErrors('syncData', e.message);
                 AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
 

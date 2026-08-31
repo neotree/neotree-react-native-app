@@ -84,30 +84,10 @@ const FieldRow = React.memo(function FieldRow({
     onLinkedFieldChange,
 }: FieldRowProps) {
     const Component = React.useMemo(() => getFieldComponent(normalizedFieldType), [normalizedFieldType]);
-    const shouldLog = normalizedFieldType === fieldsTypes.DATE
-        || normalizedFieldType === fieldsTypes.DATETIME
-        || normalizedFieldType === fieldsTypes.PERIOD;
 
     const onChange = React.useCallback((val: Partial<types.ScreenEntryValue>) => {
-        if (shouldLog) {
-            const incoming = val || {};
-            console.log('[NonRepeatable][handleChange]', {
-                isRepeatable: false,
-                fieldKey: field.key,
-                fieldLabel: field.label,
-                fieldType: field.type,
-                incoming: {
-                    value: incoming?.value ?? null,
-                    valueText: incoming?.valueText ?? null,
-                    exportValue: incoming?.exportValue ?? null,
-                    calculateValue: incoming?.calculateValue ?? null,
-                    label: incoming?.label ?? null,
-                },
-            });
-        }
-
         onChangeByKey(field.key, val);
-    }, [field.key, field.label, field.type, onChangeByKey, shouldLog]);
+    }, [field.key, onChangeByKey]);
 
     if (!Component || !conditionMet) return null;
 

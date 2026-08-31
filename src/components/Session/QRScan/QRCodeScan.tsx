@@ -8,6 +8,7 @@ import {
   useCameraFormat
 } from "react-native-vision-camera";
 import { fromHL7Like } from '../../../data/hl7Like'
+import { logError } from '@/src/utils/logError';
 
 const SIMPLE_QR_MAX_LENGTH = 12;
 const SCAN_TIMEOUT_MS = 30 * 1000;
@@ -153,7 +154,7 @@ export function QRCodeScan(props: any) {
           props.onRead(converted);
         }
       } catch (error) {
-        console.error("[QR SCAN ERROR]", error);
+        logError('QRCodeScan', error);
         showInvalidQRError();
       } finally {
         setIsProcessing(false);

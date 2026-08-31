@@ -1,29 +1,9 @@
 import { dbTransaction } from './db';
-// export const updateSession = (data: any = {}, opts: any = {}) => new Promise((resolve, reject) => {
-//     (async () => {
-//         try {
-//             console.log("-----DATA BEF====",data)
-//             const where = opts.where || {};
-//             data = { updatedAt: new Date().toISOString(), ...data };
-//             const _where = Object.keys(where).map(key => `${key}=${JSON.stringify(where[key])}`)
-//                 .join(',');
-//             const set = Object.keys(data)
-//                 .map(key => `${key}=?`)
-//                 .join(',');
-//                 console.log("-----SET====",await dbTransaction(`select id,local_export,exported from sessions;`))
-//             const res = await dbTransaction(`update sessions set ${set} where ${_where || 1};`, Object.values(data));
-//             resolve(res);
-//         } catch (e) { 
-            
-//             reject(e); }
-//     })();
-// });
+import { logError } from '@/src/utils/logError';
 
 export const updateSession = (data: any = {}, opts: any = {}) => new Promise((resolve, reject) => {
     (async () => {
         try {
-          
-            
             const where = opts.where || {};
             data = { updatedAt: new Date().toISOString(), ...data };
             
@@ -42,10 +22,9 @@ export const updateSession = (data: any = {}, opts: any = {}) => new Promise((re
             const query = `UPDATE sessions SET ${setStatement} WHERE ${whereStatement};`;
         
             const res = await dbTransaction(query, allValues);
-            console.log("....",res)
             resolve(res);
         } catch (e) {
-            console.error("Update error:", e);
+            logError('updateSession', e);
             reject(e);
         }
     })();

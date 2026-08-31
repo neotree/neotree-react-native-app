@@ -9,8 +9,9 @@
 //
 // Usage: import { compareQRCodeEncodings } from '@/src/utils/qr-encoding-metrics'
 // and call it with any HL7-like string (the same shape toHL7Like builds
-// internally, e.g. "MDH\n...\nEDH\n..."). It logs a metrics table and
-// returns the same data as an object.
+// internally, e.g. "MDH\n...\nEDH\n..."). It returns the metrics as an
+// object, including a preformatted `report` table on `.report` for whoever
+// wants to display it.
 //
 // getQRCodeVersion/getQRPrintWidth below ARE used by the real print flow
 // (src/components/Session/formToHTML and .../printSectionsToHTML) to size
@@ -87,53 +88,20 @@ function strongerIfSameVersion(stronger: QRErrorCorrectionChoice, weaker: QRErro
   return stronger.version === weaker.version ? stronger : weaker;
 }
 
-// Describes what a tier comparison decided, for the TEMPORARY logging below.
-function describeStep(previous: QRErrorCorrectionChoice, candidate: QRErrorCorrectionChoice, chosen: QRErrorCorrectionChoice): string {
-  return chosen === previous
-    ? `Same version as ${previous.errorCorrectionLevel} (${candidate.version}) - no benefit, keeping ${previous.errorCorrectionLevel}`
-    : `Improved on ${previous.errorCorrectionLevel} (${previous.version} -> ${candidate.version}) - adopting ${candidate.errorCorrectionLevel}`;
-}
-
 export function getAdaptiveQRErrorCorrection(data: string): QRErrorCorrectionChoice {
-  // TEMPORARY: manual verification logging of the adaptive ECC decision.
-  // Remove once done testing.
-  const considerations: { Metric: string; Value: any; Explanation: string }[] = [
-    { Metric: 'Encoded length (chars)', Value: data ? data.length : 0, Explanation: 'Length of the payload being encoded into the QR' },
-  ];
-  const logDecision = (chosen: QRErrorCorrectionChoice) => {
-    considerations.push({ Metric: 'Final ECC level', Value: chosen.errorCorrectionLevel, Explanation: 'Error correction level used for the printed QR' });
-    considerations.push({ Metric: 'Final QR version', Value: chosen.version, Explanation: 'QR version (1-40) at the final ECC level' });
-    logMetricsTable('Adaptive QR Error Correction', considerations);
-  };
-
   const h: QRErrorCorrectionChoice = { errorCorrectionLevel: 'H', version: getQRCodeVersion(data, 'H') };
-  considerations.push({ Metric: 'H (baseline)', Value: h.version, Explanation: `Version <= ${ADAPTIVE_ECC_H_MAX_VERSION}? ${h.version <= ADAPTIVE_ECC_H_MAX_VERSION}` });
-  if (h.version <= ADAPTIVE_ECC_H_MAX_VERSION) {
-    logDecision(h);
-    return h;
-  }
+  if (h.version <= ADAPTIVE_ECC_H_MAX_VERSION) return h;
 
   const q: QRErrorCorrectionChoice = { errorCorrectionLevel: 'Q', version: getQRCodeVersion(data, 'Q') };
   const bestUpToQ = strongerIfSameVersion(h, q);
-  considerations.push({ Metric: 'Q', Value: q.version, Explanation: describeStep(h, q, bestUpToQ) });
-  if (q.version <= ADAPTIVE_ECC_Q_MAX_VERSION) {
-    logDecision(bestUpToQ);
-    return bestUpToQ;
-  }
+  if (q.version <= ADAPTIVE_ECC_Q_MAX_VERSION) return bestUpToQ;
 
   const m: QRErrorCorrectionChoice = { errorCorrectionLevel: 'M', version: getQRCodeVersion(data, 'M') };
   const bestUpToM = strongerIfSameVersion(bestUpToQ, m);
-  considerations.push({ Metric: 'M', Value: m.version, Explanation: describeStep(bestUpToQ, m, bestUpToM) });
-  if (m.version <= ADAPTIVE_ECC_M_MAX_VERSION) {
-    logDecision(bestUpToM);
-    return bestUpToM;
-  }
+  if (m.version <= ADAPTIVE_ECC_M_MAX_VERSION) return bestUpToM;
 
   const l: QRErrorCorrectionChoice = { errorCorrectionLevel: 'L', version: getQRCodeVersion(data, 'L') };
-  const bestUpToL = strongerIfSameVersion(bestUpToM, l);
-  considerations.push({ Metric: 'L (last level)', Value: l.version, Explanation: describeStep(bestUpToM, l, bestUpToL) });
-  logDecision(bestUpToL);
-  return bestUpToL;
+  return strongerIfSameVersion(bestUpToM, l);
 }
 
 export function getQRPrintWidth(version: number): number {
@@ -204,8 +172,8 @@ function calculateSimilarity(a: string, b: string): number {
 }
 
 // Hermes (React Native's JS engine) doesn't render console.table as an
-// actual table, so we format one ourselves and print it as a plain string.
-function logMetricsTable(title: string, rows: Array<{ Metric: string; Value: any; Explanation: string }>) {
+// actual table, so we format one ourselves and return it as a plain string.
+function formatMetricsTable(title: string, rows: { Metric: string; Value: any; Explanation: string }[]) {
   const metricWidth = Math.max(...rows.map(r => r.Metric.length), 'Metric'.length);
   const valueWidth = Math.max(...rows.map(r => String(r.Value).length), 'Value'.length);
   const explanationWidth = Math.max(...rows.map(r => r.Explanation.length), 'Explanation'.length);
@@ -222,7 +190,7 @@ function logMetricsTable(title: string, rows: Array<{ Metric: string; Value: any
     border,
   ];
 
-  console.log(lines.join('\n'));
+  return lines.join('\n');
 }
 
 export function compareQRCodeEncodings(data: any) {
@@ -241,16 +209,18 @@ export function compareQRCodeEncodings(data: any) {
   let legacyDecoded = '';
   let optimisedDecoded = '';
 
+  const decodeFailures: string[] = [];
+
   try {
     legacyDecoded = legacy ? decodeLegacyEncodedData(legacy) : '';
   } catch (error) {
-    console.log('Failed to decode legacy encoding:', error);
+    decodeFailures.push(`Failed to decode legacy encoding: ${error}`);
   }
 
   try {
     optimisedDecoded = optimised ? decodeOptimisedData(optimised) : '';
   } catch (error) {
-    console.log('Failed to decode optimised encoding:', error);
+    decodeFailures.push(`Failed to decode optimised encoding: ${error}`);
   }
 
   const legacyDecodedLength = legacyDecoded.length;
@@ -267,7 +237,7 @@ export function compareQRCodeEncodings(data: any) {
     similarityPct = exactMatch ? 100 : calculateSimilarity(legacyDecoded, optimisedDecoded);
   }
 
-  logMetricsTable('QR Code Encoding Comparison', [
+  const report = [...decodeFailures, formatMetricsTable('QR Code Encoding Comparison', [
     {
       Metric: 'Original length (chars)',
       Value: originalLength,
@@ -328,9 +298,10 @@ export function compareQRCodeEncodings(data: any) {
       Value: exactMatch,
       Explanation: 'Should always be true',
     },
-  ]);
+  ])].join('\n');
 
   return {
+    report,
     legacy,
     optimised,
     legacyLength,

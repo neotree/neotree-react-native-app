@@ -9,6 +9,7 @@ import { updateSession } from './updateSession';
 import { withExportLock } from './exportLock';
 import { getLocation } from './queries';
 import { isBackendDown, backendKey, onCircuitCooldownExpired } from './circuitBreaker';
+import { logError } from '@/src/utils/logError';
 
 
 export function pollingRequired(country: string): boolean {
@@ -122,7 +123,7 @@ interface CohortContext {
 
 function markCohortPending(ctx: CohortContext, reason: string, e?: unknown): void {
     const { cohortCountry, cohortSessions, hasLocalConfig, location, result } = ctx;
-    console.log('exportSessions cohort', reason, cohortCountry, e);
+    logError('exportSessions.cohort', e, { reason, cohortCountry });
     cohortSessions.forEach(s => {
         if (!s.exported) result.failedMain.push(s.id);
         if (pollingRequired(cohortCountry) && !s.poll_exported) result.failedPoll.push(s.id);
@@ -172,7 +173,7 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
     } catch (e) {
         // Conversion failed before a single network call was attempted — every
         // session pending for any destination here is still pending.
-        console.log('exportSessions cohort conversion', cohortCountry, e);
+        logError('exportSessions.cohortConversion', e, { cohortCountry });
         remoteExportData.forEach(s => result.failedMain.push(s.id));
         remotePollExportData.forEach(s => result.failedPoll.push(s.id));
         localExportData.forEach(s => result.failedLocal.push(s.id));
@@ -200,7 +201,7 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
                 }
             } catch (e) {
                 result.failedMain.push(remoteExportData[i].id);
-                console.log(e);
+                logError('exportSessions.remote', e, { sessionId: remoteExportData[i].id });
             }
         }).then(deferred => { deferred.forEach((s: any) => result.failedMain.push(s.id)); }));
 
@@ -220,7 +221,7 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
                 }
             } catch (e) {
                 result.failedPoll.push(id);
-                console.log(e);
+                logError('exportSessions.poll', e, { sessionId: id });
             }
         }).then(deferred => { deferred.forEach((s: any) => result.failedPoll.push(s.id)); }));
     }
@@ -246,7 +247,7 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
                 }
             } catch (e) {
                 result.failedLocal.push(id);
-                console.log(e);
+                logError('exportSessions.local', e, { sessionId: id });
             }
         }).then(deferred => { deferred.forEach((s: any) => result.failedLocal.push(s.id)); }));
     }

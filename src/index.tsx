@@ -7,6 +7,7 @@ import { syncData, addSocketEventsListeners, registerExportOnReconnect } from '.
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
+import { logError } from '@/src/utils/logError';
 
 export const assets = Object.values(registerdAssets);
 
@@ -25,7 +26,7 @@ export function Navigation() {
             if(setSyncDataResponse)
                 setSyncDataResponse(res);
         } catch (e) {
-            console.log(e);
+            logError('App.initialise', e);
         } finally {
             setReady(true);
         }

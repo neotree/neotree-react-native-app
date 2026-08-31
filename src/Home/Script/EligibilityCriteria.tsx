@@ -8,6 +8,7 @@ import { parseFieldItems } from '@/src/utils/script-fields-and-items';
 import { diffHours } from '@/src/utils/diffHours';
 import { toLocalISOString } from '@/src/utils/toLocalISOString';
 import * as types from '@/src/types';
+import { logError } from '@/src/utils/logError';
 
 type EligibilityCriteriaProps = {
     onEligible: () => void;
@@ -128,7 +129,7 @@ const evaluateEligibilityCondition = (
         const evaluator = new Function('record', `return ${expression}`);
         return Boolean(evaluator(record));
     } catch (error) {
-        console.warn('Failed to evaluate condition:', condition, error);
+        logError('EligibilityCriteria.evaluateCondition', error, { condition });
         return false;
     }
 };
@@ -282,7 +283,7 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
 
             // Validate diffHours result
             if (typeof calculateValue !== 'number' || isNaN(calculateValue)) {
-                console.warn(`Invalid diffHours result for field ${field?.key}`);
+                logError('EligibilityCriteria.diffHours', 'diffHours did not return a number', { fieldKey: field?.key, calculateValue });
                 return;
             }
 
@@ -358,12 +359,12 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
 
         // Validate required properties
         if (!type) {
-            console.warn('Invalid field type in activeDefinition');
+            logError('EligibilityCriteria.invalidFieldType', 'activeDefinition has no resolvable field type', { type: activeDefinition.type });
             return <Text>Invalid field type</Text>;
         }
 
         if (!activeDefinition.autoFills) {
-            console.warn('Missing autoFills in activeDefinition');
+            logError('EligibilityCriteria.missingAutoFills', 'activeDefinition has no autoFills', { type: activeDefinition.type });
             return <Text>Configuration error</Text>;
         }
 
@@ -443,7 +444,7 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
                         onPress={() => {
                             // Validate activeDefinition has required properties
                             if (!activeDefinition.autoFills) {
-                                console.warn('Missing autoFills in activeDefinition');
+                                logError('EligibilityCriteria.missingAutoFillsOnContinue', 'activeDefinition has no autoFills', { type: activeDefinition.type });
                                 return;
                             }
 

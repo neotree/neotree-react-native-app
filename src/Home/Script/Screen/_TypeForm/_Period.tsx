@@ -63,32 +63,14 @@ export function PeriodField({
     onChange,
     entryValue,
     allValues,
-    formIndex,
     formValues = [],
     onLinkedFieldChange,
-    repeatable,
 }: PeriodFieldProps) {
     const [value, setValue] = React.useState<Date | null>(entryValue?.value ? new Date(entryValue.value) : null);
     const [valueText, setValueText] = React.useState(entryValue?.valueText);
     const [calcFrom, setCalcFrom] = React.useState<null | types.ScreenEntryValue>(null);
     const lastNotifiedPayloadRef = React.useRef<string | null>(null);
     const datePickerMode = field.format === 'years_months' ? 'date' : 'datetime';
-    const fieldKey = field?.key;
-    const fieldLabel = field?.label;
-
-    const logPeriodFieldEvent = React.useCallback(
-        (event: string, payload: Record<string, unknown> = {}) => {
-            const prefix = repeatable ? '[Repeatable][PeriodField]' : '[NonRepeatable][PeriodField]';
-            console.log(prefix, event, {
-                isRepeatable: !!repeatable,
-                fieldKey,
-                fieldLabel,
-                formIndex,
-                ...payload,
-            });
-        },
-        [fieldKey, fieldLabel, formIndex, repeatable]
-    );
 
     const referenceFieldKey = React.useMemo(() => {
         const { key } = normalizeKey(field?.calculation || field?.refKey);
@@ -121,23 +103,14 @@ export function PeriodField({
                 exportLabel: formatted,
                 exportValue: formatted,
             });
-            logPeriodFieldEvent('syncLinkedField', {
-                targetKey: referenceFieldKey,
-                isoValue: date ? toLocalISOString(date) : null,
-                formatted,
-            });
         },
-        [calcFrom?.label, calcFrom?.type, field?.type, logPeriodFieldEvent, onLinkedFieldChange, referenceFieldKey]
+        [calcFrom?.label, calcFrom?.type, field?.type, onLinkedFieldChange, referenceFieldKey]
     );
 
     React.useEffect(() => { 
         const formatted = dateToValueText(value, field.format);
         setValueText(formatted); 
-        logPeriodFieldEvent('valueTextComputed', {
-            isoValue: value ? toLocalISOString(value) : null,
-            valueText: formatted,
-        });
-    }, [field.format, logPeriodFieldEvent, value]);
+    }, [field.format, value]);
 
     React.useEffect(() => { 
         if (!conditionMet) {
@@ -149,16 +122,8 @@ export function PeriodField({
                 exportType: 'number',
 			}); 
             setValue(null);
-            logPeriodFieldEvent('conditionReset', { reason: 'conditionMet=false' });
         }
-    }, [conditionMet, logPeriodFieldEvent, onChange]);
-
-    React.useEffect(() => {
-        logPeriodFieldEvent('entryValueSynced', {
-            entryValue: entryValue?.value || null,
-            entryValueText: entryValue?.valueText || null,
-        });
-    }, [entryValue?.value, entryValue?.valueText, logPeriodFieldEvent]);
+    }, [conditionMet, onChange]);
 
     const normalizeEntries = React.useCallback((input: any): types.ScreenEntryValue[] => {
         if (!input) return [];
@@ -229,12 +194,6 @@ export function PeriodField({
                         lastNotifiedPayloadRef.current = payloadStr;
                         onChange(payload);
                     }
-                    logPeriodFieldEvent('calcFromParseFailed', {
-                        calcFromKey: _calcFrom.key,
-                        calcFromValue: _calcFrom.value ?? null,
-                        calcFromValueText: _calcFrom.valueText ?? null,
-                        calcFromType: _calcFrom.type ?? null,
-                    });
                     return;
                 }
                 setValue(val);
@@ -255,17 +214,10 @@ export function PeriodField({
                     lastNotifiedPayloadRef.current = payloadStr;
                     onChange(payload);
                 }
-                logPeriodFieldEvent('calcFromResolved', {
-                    calcFromKey: _calcFrom.key,
-                    calcFromValue: _calcFrom.value,
-					normalizedValue: normalizedValue,
-                    calculateValue,
-                    displayText: dateToValueText(val, field.format),
-                });
             } catch(e) { /**/ }
           }
         }
-      }, [calcFrom, field.calculation, field.format, field.refKey, getCalculationEntry, logPeriodFieldEvent, scopedValues]);
+      }, [calcFrom, field.calculation, field.format, field.refKey, getCalculationEntry, scopedValues]);
 
     return (
         <Box>
@@ -291,12 +243,6 @@ export function PeriodField({
 						exportValue: diffValue,
        				calculateValue: diffValue,
                     };
-                    logPeriodFieldEvent('onChange', {
-                        pickedValue: date ? toLocalISOString(date) : null,
-                        normalizedValue,
-                        valueText,
-                        diffValue,
-                    });
                     onChange(payload);
                 }}
                 valueText={valueText}
