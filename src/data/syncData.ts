@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { dbTransaction, ensureSchema, db } from './db';
-import { makeApiCall, reportErrors, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
+import { makeApiCall, reportErrors, EDITOR_EXCEPTIONS_ENDPOINT, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { logError } from '@/src/utils/logError';
@@ -238,25 +238,51 @@ export async function syncData(opts?: { force?: boolean; }) {
                     );
                 });
 
-                const exeptions = await getExceptions();
-                if(exeptions){
-                    for (let ex of exeptions){
-                    await makeApiCall('nodeapi', `/exceptions`, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                ...ex,
-                                deviceId,
-                                deviceHash: application.uid_prefix,
-                            }),
-                        }).then(async()=>{
-                            ex.exported = true
-                            await dbTransaction(
-                                `insert or replace into exceptions (${Object.keys(ex).join(',')}) values (${Object.keys(ex).map(() => '?').join(',')});`,
-                                Object.values(ex)
-                            );
+                // Exceptions go to both backends: the nodeapi ingests them
+                // alongside sessions, and the webeditor is the team's error
+                // console. Each destination is tracked with its own flag, so a
+                // row that reaches one but not the other is retried only where
+                // it is still missing rather than being dropped or duplicated.
+                const exceptions = await getExceptions();
+                for (const ex of exceptions || []) {
+                    const payload = {
+                        ...ex,
+                        deviceId,
+                        deviceHash: application.uid_prefix,
+                    };
+                    let delivered = false;
 
-                        }).catch(() => {})
+                    if (!ex.exported) {
+                        try {
+                            await makeApiCall('nodeapi', `/exceptions`, {
+                                method: 'POST',
+                                body: JSON.stringify(payload),
+                            });
+                            ex.exported = true;
+                            delivered = true;
+                        } catch {
+                            // Stays pending for the next sync.
+                        }
+                    }
 
+                    if (!ex.editor_exported) {
+                        try {
+                            await makeApiCall('webeditor', EDITOR_EXCEPTIONS_ENDPOINT, {
+                                method: 'POST',
+                                body: JSON.stringify(payload),
+                            });
+                            ex.editor_exported = true;
+                            delivered = true;
+                        } catch {
+                            // Stays pending for the next sync.
+                        }
+                    }
+
+                    if (delivered) {
+                        await dbTransaction(
+                            `insert or replace into exceptions (${Object.keys(ex).join(',')}) values (${Object.keys(ex).map(() => '?').join(',')});`,
+                            Object.values(ex)
+                        );
                     }
                 }
             } catch(e: any) {

@@ -3,6 +3,7 @@ import { getLocation } from '../data/queries';
 import * as Device from 'expo-device';
 import * as Battery from 'expo-battery'
 import { getAvailableDiskSpace } from './deviceInfo';
+import type { ErrorSource } from './logError';
 
 // Guard rails on what gets written into a synced row: a runaway stack (an
 // infinite recursion, a serialised response body) would otherwise be POSTed
@@ -56,7 +57,7 @@ async function settled<T>(promise: Promise<T>): Promise<T | null> {
     }
 }
 
-export async function handleAppCrush(error: any) {
+export async function handleAppCrush(error: any, source: ErrorSource = 'app') {
     try {
         const { message: rawMessage, stack: rawStack } = normaliseError(error);
         const message = rawMessage.slice(0, MAX_MESSAGE_LENGTH);
@@ -69,11 +70,15 @@ export async function handleAppCrush(error: any) {
         const application = app?.[0];
         if (!application) return;
 
-        // Dedupe on the message so a fault that repeats every render records
-        // one row instead of filling the table. Parameterised: messages
-        // routinely contain apostrophes ("Can't reach the server"), which
-        // would break an interpolated query.
-        const alreadyLogged = await dbTransaction('select id from exceptions where message=?;', [message]);
+        // Dedupe on message + source so a fault that repeats every render
+        // records one row instead of filling the table, while the same symptom
+        // seen against two different backends is still recorded once each.
+        // Parameterised: messages routinely contain apostrophes ("Can't reach
+        // the server"), which would break an interpolated query.
+        const alreadyLogged = await dbTransaction(
+            'select id from exceptions where message=? and source=?;',
+            [message, source],
+        );
         if (alreadyLogged?.length) return;
 
         let webApp: any = null;
@@ -97,13 +102,15 @@ export async function handleAppCrush(error: any) {
             ? 'AVAILABLE STORAGE:' + diskSpace.freeSpace + ' GB' + ' OF ' + diskSpace.totalSpace + 'GB'
             : null;
 
-        const columns = ['message', 'stack', 'device', 'exported', 'country', 'hospital', 'version', 'editor_version', 'battery', 'memory', 'device_model'].join(',');
-        const values = ['?', '?', '?', '?', '?', '?', '?', '?', '?', '?', '?'].join(',');
+        const columns = ['message', 'stack', 'device', 'source', 'exported', 'editor_exported', 'country', 'hospital', 'version', 'editor_version', 'battery', 'memory', 'device_model'];
+        const values = columns.map(() => '?').join(',');
 
-        await dbTransaction(`insert into exceptions (${columns}) values (${values});`, [
+        await dbTransaction(`insert into exceptions (${columns.join(',')}) values (${values});`, [
             message,
             stack,
             application.device_id,
+            source,
+            false,
             false,
             location?.country,
             location?.hospital,

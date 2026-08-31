@@ -147,7 +147,12 @@ export async function createTablesIfNotExist() {
         'battery varchar',
         'device_model varchar',
         'memory varchar',
-        'editor_version varchar'
+        'editor_version varchar',
+        // Which backend the exception came from ('app' for a client-side fault).
+        'source varchar',
+        // The webeditor and nodeapi are drained independently, so each
+        // destination needs its own flag - see the exceptions drain in syncData.
+        'editor_exported boolean'
     ].join(',');
 
     const aliasesTableColumns = [
@@ -191,6 +196,23 @@ export async function createTablesIfNotExist() {
      const pollExportedExists = sessionsTableInfo.some((col: any) => col.name === 'poll_exported');
      if(!pollExportedExists){
           await dbTransaction(`ALTER TABLE sessions ADD COLUMN poll_exported BOOLEAN DEFAULT 0;`);
+     }
+  }
+
+  //ADD COLUMNS TO EXCEPTIONS TABLE
+  const exceptionsTableInfo = await dbTransaction(`PRAGMA table_info(exceptions);`);
+  if(exceptionsTableInfo && exceptionsTableInfo.length>0){
+     const sourceExists = exceptionsTableInfo.some((col: any) => col.name === 'source');
+     if(!sourceExists){
+          // Rows recorded before this column existed were all client-side.
+          await dbTransaction(`ALTER TABLE exceptions ADD COLUMN source VARCHAR DEFAULT 'app';`);
+     }
+
+     const editorExportedExists = exceptionsTableInfo.some((col: any) => col.name === 'editor_exported');
+     if(!editorExportedExists){
+          // Backfills as 0, so exceptions already on the device are picked up
+          // by the next sync and sent to the webeditor too.
+          await dbTransaction(`ALTER TABLE exceptions ADD COLUMN editor_exported BOOLEAN DEFAULT 0;`);
      }
   }
 }

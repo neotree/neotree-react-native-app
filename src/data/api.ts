@@ -11,7 +11,7 @@ import {
     backendKey,
     NetworkUnavailableError,
 } from './circuitBreaker';
-import { logError } from '@/src/utils/logError';
+import { logError, type ErrorSource } from '@/src/utils/logError';
 
 const PROBE_TIMEOUT_MS = 15_000;
 const REMOTE_TIMEOUT_MS = 60_000;
@@ -26,6 +26,27 @@ const _otherOptions = {
 	hospital: '',
 	timeout: REMOTE_TIMEOUT_MS,
 };
+
+// Endpoint on the webeditor that receives device exceptions. Every exception
+// is sent here regardless of which backend it came from - the `source` field on
+// the payload says which. Change this in one place if the webeditor grows a
+// dedicated exceptions route.
+export const EDITOR_EXCEPTIONS_ENDPOINT = '/app/errors';
+
+// Attribute a failure to the backend it came from, so logError records the
+// right `source` without every catch block in the app having to name one. An
+// error that already carries a source keeps it, so a nodeapi failure bubbling
+// up through an outer call is not re-attributed to the outer backend.
+function tagErrorSource<T>(error: T, source: ErrorSource): T {
+    try {
+        if (error && typeof error === 'object' && !(error as any).source) {
+            (error as any).source = source;
+        }
+    } catch {
+        // Frozen or exotic error object - attribution is best-effort.
+    }
+    return error;
+}
 
 export function resolveLocalServer(country: string | null | undefined, hospital: string | null | undefined) {
     if (!country) return null;
@@ -95,7 +116,7 @@ export async function makeApiCall(
             settle(false);
         }
     } catch(e) {
-        throw e; 
+        throw tagErrorSource(e, source);
     }
 }
 export async function makeLocalApiCall( 
@@ -162,14 +183,14 @@ export async function makeLocalApiCall(
         }
 
         if (res.status !== 200) {
-            logError('api.localRequestFailed', 'Local server returned a non-200 response', { url, status: res.status });
+            logError('api.localRequestFailed', 'Local server returned a non-200 response', { url, status: res.status }, 'local');
         }
 
         return res;
     }
     return null
     } catch(e) {
-        throw e; }
+        throw tagErrorSource(e, 'local'); }
 }
 
 export async function makeLocalGetApiCall( 
@@ -239,7 +260,7 @@ export async function makeLocalGetApiCall(
         }
 
         if (res.status !== 200) {
-            logError('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url, status: res.status });
+            logError('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url, status: res.status }, 'local');
         }
 
         const sessions = decryptInReactNative(await res?.json(), sec);
@@ -247,7 +268,7 @@ export async function makeLocalGetApiCall(
     }
    
     } catch(e) {
-        throw e; }
+        throw tagErrorSource(e, 'local'); }
 }
 
 export async function hasLocalServerConfig() {

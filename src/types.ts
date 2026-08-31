@@ -76,6 +76,8 @@ export type Exception = {
   hospital: string;
   stack: string;
   exported: boolean;
+  editor_exported: boolean;
+  source: string;
   version: string;
   editor_version: string;
   battery: string;
