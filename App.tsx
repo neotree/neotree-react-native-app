@@ -29,10 +29,6 @@ const fonts: LoadAssetsProps['fonts'] = {
 
 export default function App() {
     const errorHandler = (error: Error, stackTrace: string) => {
-        // Routed through logFatal rather than straight to handleAppCrush so a
-        // render crash is printed in development like every other report.
-        // react-native-error-boundary swallows the red box, so without this the
-        // most important class of error is the one you cannot see.
         logFatal('app.errorBoundary', { message: error.message, stack: stackTrace })
     };
 
