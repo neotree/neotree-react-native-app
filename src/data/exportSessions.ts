@@ -10,6 +10,7 @@ import { withExportLock } from './exportLock';
 import { getLocation } from './queries';
 import { isBackendDown, backendKey, onCircuitCooldownExpired } from './circuitBreaker';
 import { logError } from '@/src/utils/logError';
+import { runPooled } from '@/src/utils/runPooled';
 
 
 export function pollingRequired(country: string): boolean {
@@ -63,24 +64,6 @@ const afterInteractions = () => new Promise<void>(resolve => {
 });
 
 const EXPORT_CONCURRENCY = 5;
-
-async function runPooled<T>(
-    items: T[],
-    concurrency: number,
-    stop: () => boolean,
-    worker: (item: T, index: number) => Promise<void>,
-): Promise<T[]> {
-    let cursor = 0;
-    const lanes = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-        while (cursor < items.length) {
-            if (stop()) return;
-            const i = cursor++;
-            await worker(items[i], i);
-        }
-    });
-    await Promise.allSettled(lanes);
-    return items.slice(cursor);
-}
 
 export interface ExportBatchResult {
     failedMain: any[];

@@ -1,5 +1,7 @@
 import type { Backend } from '@/src/data/circuitBreaker';
 import { handleAppCrush, normaliseError, safeStringify } from './handleCrashes';
+import { getBreadcrumbs } from './breadcrumbs';
+import { LOG_TO_CONSOLE } from './logConfig';
 
 /**
  * Where an exception came from: one of the backends the app talks to, or the
@@ -49,6 +51,34 @@ function resolveSource(error: any, explicit?: ErrorSource): ErrorSource {
     return 'app';
 }
 
+// Development output. Shows what would have been recorded — including the
+// breadcrumb trail, which is usually what identifies the fault — so a developer
+// never has to reach for the database to see why something failed.
+function printToConsole(
+    level: ErrorLevel,
+    source: ErrorSource,
+    context: string,
+    message: string,
+    stack: string,
+    extra?: Record<string, unknown>,
+) {
+    try {
+        const badge = level === 'fatal' ? 'FATAL' : level === 'warning' ? 'WARN' : 'ERROR';
+        const print = level === 'warning' ? console.warn : console.error;
+
+        print(`[${badge}] [${context}]${source === 'app' ? '' : ` (${source})`} ${message}`);
+        if (extra) print('  context:', extra);
+        if (stack) print(`  ${stack.split('\n').slice(0, 8).join('\n  ')}`);
+
+        const trail = getBreadcrumbs();
+        if (trail.length) {
+            print(`  breadcrumbs: ${trail.slice(-8).map(b => `${b.category}:${b.message}`).join(' → ')}`);
+        }
+    } catch {
+        // Console formatting must never break the reporting path.
+    }
+}
+
 function report(
     level: ErrorLevel,
     context: string,
@@ -59,11 +89,14 @@ function report(
     try {
         const { message, stack } = normaliseError(error);
 
-        if (__DEV__) {
-            // Console output is dev-only and never ships, so the log stays
-            // clean on a device while a developer still sees faults live.
-            const print = level === 'warning' ? console.warn : console.error;
-            print(`[${context}]`, message, extra ?? '');
+        const source = resolveSource(error, opts?.source);
+        const resolvedLevel = opts?.level ?? level;
+
+        if (LOG_TO_CONSOLE) {
+            // Dev-only and never shipped, so the device log stays clean while a
+            // developer still sees faults live — with everything that would
+            // have been recorded, not just the message.
+            printToConsole(resolvedLevel, source, context, message, stack, extra);
         }
 
         handleAppCrush(
@@ -71,8 +104,8 @@ function report(
                 message: `[${context}] ${message}`,
                 stack: extra ? `${stack}\n${safeStringify(extra)}` : stack,
             },
-            resolveSource(error, opts?.source),
-            opts?.level ?? level,
+            source,
+            resolvedLevel,
             extra,
         );
     } catch {
