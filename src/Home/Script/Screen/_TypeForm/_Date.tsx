@@ -87,29 +87,11 @@ export function DateField({
   onChange,
   repeatable,
   editable,
-  formIndex
 }: DateFieldProps) {
   const [mounted, setMounted] = useState(false);
   const [value, setValue] = useState<Date | null>(() => parseToDate(entryValue?.value));
   
   const canEdit = repeatable ? editable : true;
-  const fieldKey = field?.key;
-  const fieldLabel = field?.label;
-
-  // Helper: Log events
-  const logDateFieldEvent = useCallback(
-    (event: string, payload: Record<string, unknown> = {}) => {
-      const prefix = repeatable ? '[Repeatable][DateField]' : '[NonRepeatable][DateField]';
-      console.log(prefix, event, {
-        isRepeatable: !!repeatable,
-        fieldKey,
-        fieldLabel,
-        formIndex,
-        ...payload,
-      });
-    },
-    [fieldKey, fieldLabel, formIndex, repeatable]
-  );
 
   // Calculate min/max dates from related fields
   const { minDate, maxDate } = useMemo(() => {
@@ -181,7 +163,6 @@ export function DateField({
     if (!conditionMet) {
       onChange({ value: null, valueText: null, exportType: 'date' });
       setValue(null);
-      logDateFieldEvent('conditionReset', { reason: 'conditionMet=false' });
       return;
     }
 
@@ -194,12 +175,6 @@ export function DateField({
         const date = createDefaultDate(defaultValueType);
         const normalizedValue = toLocalISOString(date);
         const formattedDate = formatDate(date, field.type as DateFieldType);
-
-        logDateFieldEvent('defaultValueApplied', {
-          defaultValue: field.defaultValue,
-          isoValue: normalizedValue,
-          formatted: formattedDate,
-        });
 
         onChange({
           exportType: 'date',
@@ -221,7 +196,6 @@ export function DateField({
     field.type,
     field.label,
     onChange,
-    logDateFieldEvent,
   ]);
 
   // Set mounted flag
@@ -233,12 +207,6 @@ export function DateField({
   useEffect(() => {
     if (!entryValue) {
       setValue(null);
-      logDateFieldEvent('entryValueSynced', {
-        entryValue: null,
-        entryValueText: null,
-        normalizedValue: null,
-        note: 'entryValue missing',
-      });
       return;
     }
 
@@ -246,23 +214,11 @@ export function DateField({
     
     if (entryValue.value && !nextValue) {
       setValue(null);
-      logDateFieldEvent('entryValueSynced', {
-        entryValue: entryValue.value,
-        entryValueText: entryValue.valueText || null,
-        normalizedValue: null,
-        note: 'invalid date',
-      });
       return;
     }
 
-    logDateFieldEvent('entryValueSynced', {
-      entryValue: entryValue.value || null,
-      entryValueText: entryValue.valueText || null,
-      normalizedValue: nextValue ? toLocalISOString(nextValue) : null,
-    });
-    
     setValue(nextValue);
-  }, [entryValue?.value, entryValue?.valueText, logDateFieldEvent]);
+  }, [entryValue?.value, entryValue?.valueText]);
 
   // Handle date changes
   const handleDateChange = useCallback(
@@ -290,16 +246,9 @@ export function DateField({
 
       setValue(validDate);
       
-      logDateFieldEvent('onChange', {
-        pickedValue: pickedValue ? toLocalISOString(pickedValue) : null,
-        normalizedValue,
-        valueText,
-        error,
-      });
-      
       onChange(payload);
     },
-    [field.label, field.type, getErrors, onChange, logDateFieldEvent]
+    [field.label, field.type, getErrors, onChange]
   );
 
   return (

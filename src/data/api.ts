@@ -11,6 +11,9 @@ import {
     backendKey,
     NetworkUnavailableError,
 } from './circuitBreaker';
+import { logError, logWarning, type ErrorSource } from '@/src/utils/logError';
+import { addBreadcrumb } from '@/src/utils/breadcrumbs';
+import { scrubUrl } from '@/src/utils/scrub';
 
 const PROBE_TIMEOUT_MS = 15_000;
 const REMOTE_TIMEOUT_MS = 60_000;
@@ -25,6 +28,27 @@ const _otherOptions = {
 	hospital: '',
 	timeout: REMOTE_TIMEOUT_MS,
 };
+
+// Endpoint on the webeditor that receives device exceptions. Every exception
+// is sent here regardless of which backend it came from - the `source` field on
+// the payload says which. Change this in one place if the webeditor grows a
+// dedicated exceptions route.
+export const EDITOR_EXCEPTIONS_ENDPOINT = '/app/errors';
+
+// Attribute a failure to the backend it came from, so logError records the
+// right `source` without every catch block in the app having to name one. An
+// error that already carries a source keeps it, so a nodeapi failure bubbling
+// up through an outer call is not re-attributed to the outer backend.
+function tagErrorSource<T>(error: T, source: ErrorSource): T {
+    try {
+        if (error && typeof error === 'object' && !(error as any).source) {
+            (error as any).source = source;
+        }
+    } catch {
+        // Frozen or exotic error object - attribution is best-effort.
+    }
+    return error;
+}
 
 export function resolveLocalServer(country: string | null | undefined, hospital: string | null | undefined) {
     if (!country) return null;
@@ -58,10 +82,10 @@ export async function makeApiCall(
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/').replace(/\?+$/, '');
 
+        addBreadcrumb('api', `${options.method || 'GET'} ${scrubUrl(url)}`, { source });
+
         const circuitKey = backendKey(country, source);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError(source);
-
-        console.log('[API]: ', url);
 
         let settled = false;
         const settle = (ok: boolean) => {
@@ -96,8 +120,7 @@ export async function makeApiCall(
             settle(false);
         }
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; 
+        throw tagErrorSource(e, source);
     }
 }
 export async function makeLocalApiCall( 
@@ -128,8 +151,6 @@ export async function makeLocalApiCall(
 
         const circuitKey = backendKey(country, 'local', hospital);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
-
-        console.log('[API]: ', url);
 
         let settled = false;
         const settle = (ok: boolean) => {
@@ -166,15 +187,14 @@ export async function makeLocalApiCall(
         }
 
         if (res.status !== 200) {
-            console.log(res);
+            logWarning('api.localRequestFailed', 'Local server returned a non-200 response', { url: scrubUrl(url), status: res.status }, { source: 'local' });
         }
 
         return res;
     }
     return null
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; }
+        throw tagErrorSource(e, 'local'); }
 }
 
 export async function makeLocalGetApiCall( 
@@ -210,8 +230,6 @@ export async function makeLocalGetApiCall(
         const circuitKey = backendKey(country, 'local', hospitalId);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
 
-        console.log('[API]: ', url);
-
         let settled = false;
         const settle = (ok: boolean) => {
             if (settled) return;
@@ -246,7 +264,7 @@ export async function makeLocalGetApiCall(
         }
 
         if (res.status !== 200) {
-            console.log(res);
+            logWarning('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url: scrubUrl(url), status: res.status }, { source: 'local' });
         }
 
         const sessions = decryptInReactNative(await res?.json(), sec);
@@ -254,8 +272,7 @@ export async function makeLocalGetApiCall(
     }
    
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; }
+        throw tagErrorSource(e, 'local'); }
 }
 
 export async function hasLocalServerConfig() {
@@ -288,10 +305,7 @@ export const reportErrors = async (...args: any[]) => {
 function decryptInReactNative(encryptedData: any, secretKey: string): any {
   try {
     // 1. Check for empty input
-    if (!encryptedData) {
-      console.warn('No encrypted data provided');
-      return null;
-    }
+    if (!encryptedData) return null;
 
     // 2. Validate secret key length (AES-256 requires 32 bytes)
     if (secretKey.length !== 32) {
@@ -336,7 +350,7 @@ function decryptInReactNative(encryptedData: any, secretKey: string): any {
 }
     
   } catch (error) {
-    console.error('Decryption error:', error);
+    logError('api.decryptInReactNative', error);
     // Return null or rethrow based on your error handling strategy
     return null;
   }

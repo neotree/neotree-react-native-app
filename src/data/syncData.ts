@@ -6,13 +6,71 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { dbTransaction, ensureSchema, db } from './db';
-import { makeApiCall, reportErrors, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
+import { makeApiCall, reportErrors, EDITOR_EXCEPTIONS_ENDPOINT, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
+import { logError } from '@/src/utils/logError';
+import { flushOccurrenceCounts } from '@/src/utils/handleCrashes';
+import { addBreadcrumb } from '@/src/utils/breadcrumbs';
+
+
+// Delivered rows are kept briefly so a backend that re-requests them still has
+// them, then dropped. Without this the table only ever grows: unlike `exports`,
+// exceptions were never pruned.
+const EXCEPTION_RETENTION_DAYS = 30;
+
+/**
+ * POST a batch to one destination. Returns whether the batch was accepted; a
+ * failure leaves every row in it pending for the next sync.
+ */
+async function deliverExceptions(batch: any[], send: () => Promise<any>): Promise<boolean> {
+    if (!batch.length) return false;
+    try {
+        const res = await send();
+        // makeApiCall resolves for any HTTP status, so a 500 must not be
+        // mistaken for delivery.
+        if (res && typeof res.status === 'number' && res.status !== 200) return false;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function markExceptionsDelivered(ids: number[], column: 'exported' | 'editor_exported') {
+    if (!ids.length) return;
+    try {
+        await dbTransaction(
+            `update exceptions set ${column} = 1 where id in (${ids.map(() => '?').join(',')});`,
+            ids,
+        );
+    } catch {
+        // Rows stay pending and are retried on the next sync.
+    }
+}
+
+async function pruneDeliveredExceptions() {
+    try {
+        const cutoff = new Date(Date.now() - EXCEPTION_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        await dbTransaction(
+            `delete from exceptions
+              where exported = 1 and editor_exported = 1
+                and last_seen is not null and last_seen < ?;`,
+            [cutoff],
+        );
+    } catch {
+        // Retention is housekeeping; never fail a sync over it.
+    }
+}
 
 export async function syncData(opts?: { force?: boolean; }) {
 	const netInfo = await NetInfo.fetch();
     // const networkState = await Network.getNetworkStateAsync();
+
+    addBreadcrumb('sync', 'syncData started', {
+        force: !!opts?.force,
+        connected: !!netInfo?.isConnected,
+        connectionType: netInfo?.type,
+    });
 
     await ensureSchema();
 
@@ -237,29 +295,50 @@ export async function syncData(opts?: { force?: boolean; }) {
                     );
                 });
 
-                const exeptions = await getExceptions();
-                if(exeptions){
-                    for (let ex of exeptions){
-                    await makeApiCall('nodeapi', `/exceptions`, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                ...ex,
-                                deviceId,
-                                deviceHash: application.uid_prefix,
+                
+                await flushOccurrenceCounts();
+                const exceptions = await getExceptions();
+
+                if (exceptions?.length) {
+                    const withDevice = exceptions.map(ex => ({
+                        ...ex,
+                        deviceId,
+                        deviceHash: application.uid_prefix,
+                    }));
+
+                    const pendingNodeapi = withDevice.filter(ex => !ex.exported);
+                    const pendingEditor = withDevice.filter(ex => !ex.editor_exported);
+
+                    const [nodeapiDelivered, editorDelivered] = await Promise.all([
+                        deliverExceptions(
+                            pendingNodeapi,
+                            () => makeApiCall('nodeapi', `/exceptions`, {
+                                method: 'POST',
+                                body: JSON.stringify(pendingNodeapi),
                             }),
-                        }).then(async()=>{
-                            ex.exported = true
-                            await dbTransaction(
-                                `insert or replace into exceptions (${Object.keys(ex).join(',')}) values (${Object.keys(ex).map(() => '?').join(',')});`,
-                                Object.values(ex)
-                            );
+                        ),
+                        deliverExceptions(
+                            pendingEditor,
+                            () => makeApiCall('webeditor', EDITOR_EXCEPTIONS_ENDPOINT, {
+                                method: 'POST',
+                                body: JSON.stringify(pendingEditor),
+                            }),
+                        ),
+                    ]);
 
-                        }).catch(() => {})
-
+                    if (nodeapiDelivered) {
+                        await markExceptionsDelivered(pendingNodeapi.map(ex => ex.id), 'exported');
+                    }
+                    if (editorDelivered) {
+                        await markExceptionsDelivered(pendingEditor.map(ex => ex.id), 'editor_exported');
                     }
                 }
+
+                await pruneDeliveredExceptions();
+
             } catch(e: any) {
-                console.log('syncData', e)
+                addBreadcrumb('sync', 'syncData failed');
+                logError('syncData', e);
                 reportErrors('syncData', e.message);
                 AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
 

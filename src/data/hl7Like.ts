@@ -6,6 +6,7 @@ import { parse, isValid, format } from 'date-fns';
 import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
+import { logError, logWarning } from '@/src/utils/logError';
 
 export async function toHL7Like(data: any) {
 
@@ -230,21 +231,21 @@ export function compressDataForQRCode(data: any) {
   try {
     // Validate input
     if (!data) {
-      console.error('Compression error: data is empty');
+      logError('hl7Like.compressDataForQRCode', 'No data to compress');
       return null;
     }
 
     const compressed = pako.deflate(data, { level: 9 });
 
     if (!compressed || compressed.length === 0) {
-      console.error('Compression error: result is empty');
+      logError('hl7Like.compressDataForQRCode', 'Compression produced an empty result');
       return null;
     }
 
     const base64String = uint8ArrayToBase64(compressed);
     return base64String;
   } catch (error) {
-    console.error('Compression error:', error);
+    logError('hl7Like.compressDataForQRCode', error);
     return null;
   }
 }
@@ -253,20 +254,20 @@ export function decompressDataFromQRCode(compressedData: Uint8Array): string {
   try {
     // Validate input
     if (!compressedData || compressedData.length === 0) {
-      console.error('Decompression error: input is empty');
+      logError('hl7Like.decompressDataFromQRCode', 'No data to decompress');
       return '';
     }
 
     const decompressed = pako.inflate(compressedData, { to: 'string' });
 
     if (typeof decompressed !== 'string') {
-      console.error('Decompression error: result is not a string');
+      logError('hl7Like.decompressDataFromQRCode', 'Decompression did not produce a string');
       return '';
     }
 
     return decompressed;
   } catch (error) {
-    console.error('Decompression error:', error);
+    logError('hl7Like.decompressDataFromQRCode', error);
     return '';
   }
 }
@@ -284,10 +285,7 @@ const uint8ArrayToBase64 = (uint8Array: any) => {
 export async function fromHL7Like(data: string) {
   try {
     // Validate input
-    if (!data || typeof data !== 'string' || data.trim().length === 0) {
-      console.log("Invalid input: data is empty or not a string");
-      return [];
-    }
+    if (!data || typeof data !== 'string' || data.trim().length === 0) return [];
 
     // Attempt the first decoding method (base64/compressed format)
     try {
@@ -301,17 +299,13 @@ export async function fromHL7Like(data: string) {
               // TEMPORARY: manual scan-verification logging. Remove once done testing.
               return await convertToJSON(decompressed);
             }
-          } catch (e) {
-            console.log("Decompression failed:", e);
+          } catch {
+            // fall through to the optimised decode below
           }
-        } else {
-          console.log("Base64 to Uint8Array conversion returned null or empty");
         }
-      } else {
-        console.log("Decoded text is not base64-like; skipping base64 decode");
       }
-    } catch (e) {
-      console.log("Numbers to text conversion failed:", e);
+    } catch {
+      // fall through to the optimised decode below
     }
 
     // Attempt the second decoding method (optimized format)
@@ -321,14 +315,13 @@ export async function fromHL7Like(data: string) {
       
         return await convertToJSON(newUncompressed);
       }
-    } catch (e) {
-      console.log("Optimized decode failed:", e);
+    } catch {
       // Continue to next method
     }
 
     return [];
   } catch (e: any) {
-    console.log("Unexpected error in fromHL7Like:", e);
+    logError('hl7Like.fromHL7Like', e);
     return [];
   }
 }
@@ -356,20 +349,20 @@ export function textToNumbers(data: any) {
 function compressDataForQRCodeBytes(data: any): Uint8Array | null {
   try {
     if (!data) {
-      console.error('Compression error: data is empty');
+      logError('hl7Like.compressDataForQRCodeBytes', 'No data to compress');
       return null;
     }
 
     const compressed = pako.deflate(data, { level: 9 });
 
     if (!compressed || compressed.length === 0) {
-      console.error('Compression error: result is empty');
+      logError('hl7Like.compressDataForQRCodeBytes', 'Compression produced an empty result');
       return null;
     }
 
     return compressed;
   } catch (error) {
-    console.error('Compression error:', error);
+    logError('hl7Like.compressDataForQRCodeBytes', error);
     return null;
   }
 }
@@ -503,7 +496,7 @@ export const base64ToUint8Array = (base64: string): Uint8Array | null => {
   try {
     // Validate input
     if (!base64 || typeof base64 !== 'string') {
-      console.error('Invalid base64 input');
+      logError('hl7Like.base64ToUint8Array', 'Input is not a non-empty string');
       return null;
     }
 
@@ -511,7 +504,7 @@ export const base64ToUint8Array = (base64: string): Uint8Array | null => {
     const length = binaryString.length;
 
     if (length === 0) {
-      console.error('Decoded base64 is empty');
+      logError('hl7Like.base64ToUint8Array', 'Decoded base64 is empty');
       return null;
     }
 
@@ -523,7 +516,7 @@ export const base64ToUint8Array = (base64: string): Uint8Array | null => {
 
     return uint8Array;
   } catch (error) {
-    console.error('Base64 decode error:', error);
+    logError('hl7Like.base64ToUint8Array', error);
     return null;
   }
 };
@@ -891,7 +884,6 @@ export function decodeOptimisedData(encodedStr: string): string {
 
     return decompressed;
   } catch (error) {
-    console.log('Error in decodeOptimisedData:', error);
     throw error; // Re-throw to be caught by calling function
   }
 }
@@ -913,7 +905,7 @@ function undoRLE(str: string): string {
 
     return undoRLEDelimited(str);
   } catch (error) {
-    console.error('Error in undoRLE:', error);
+    logError('hl7Like.undoRLE', error);
     return '';
   }
 }
@@ -938,7 +930,7 @@ function undoRLENumeric(str: string): string {
       i += 3;
       result += digit.repeat(count);
     } else {
-      console.warn(`Invalid RLE marker digit: ${marker}`);
+      logWarning('hl7Like.undoRLENumeric', 'Invalid RLE marker digit', { marker });
       break;
     }
   }
@@ -964,7 +956,7 @@ function undoRLEDelimited(str: string): string {
     if (segment.includes(':')) {
       const parts = segment.split(':');
       if (parts.length !== 2) {
-        console.warn(`Invalid RLE segment: ${segment}`);
+        logWarning('hl7Like.undoRLEDelimited', 'Invalid RLE segment', { segment });
         continue;
       }
 
@@ -972,12 +964,12 @@ function undoRLEDelimited(str: string): string {
       const count = parseInt(countStr, 10);
 
       if (isNaN(count) || count < 0) {
-        console.warn(`Invalid count in RLE segment: ${countStr}`);
+        logWarning('hl7Like.undoRLEDelimited', 'Invalid count in RLE segment', { countStr, segment });
         continue;
       }
 
       if (!digit) {
-        console.warn(`Invalid digit in RLE segment: ${segment}`);
+        logWarning('hl7Like.undoRLEDelimited', 'Invalid digit in RLE segment', { segment });
         continue;
       }
 

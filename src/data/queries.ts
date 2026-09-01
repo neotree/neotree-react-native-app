@@ -40,7 +40,14 @@ export const getApplication = () => new Promise<types.Application>((resolve, rej
 export const getExceptions = () => new Promise<types.Exception[]>((resolve, reject) => {
     (async () => {
         try {
-            const results = await dbTransaction('select * from exceptions where exported != ?;', [true]);
+            // Pending for either destination: the nodeapi and the webeditor are
+            // drained independently, so a row already sent to one is still
+            // returned until the other has it too. `is null` covers rows that
+            // predate the editor_exported column.
+            const results = await dbTransaction(
+                'select * from exceptions where exported != ? or editor_exported != ? or editor_exported is null;',
+                [true, true],
+            );
             resolve(results);
         } catch (e) {
              reject(e); }

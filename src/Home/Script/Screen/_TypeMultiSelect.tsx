@@ -164,7 +164,6 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     });
 
     React.useEffect(() => {
-       // console.log('[TypeMultiSelect] available options', JSON.stringify({ screenKey: metadata?.key, options: opts }));
     }, [metadata?.key, opts]);
 
     React.useEffect(() => {

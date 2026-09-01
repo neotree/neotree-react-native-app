@@ -6,6 +6,8 @@ import Icon from '@expo/vector-icons/MaterialIcons';
 
 import {CustomError}from './src/types'
 import {handleAppCrush} from './src/utils/handleCrashes'
+import {installGlobalErrorHandlers} from './src/utils/installGlobalErrorHandlers'
+import {addBreadcrumb} from './src/utils/breadcrumbs'
 
 import { 
     assets as srcAssets,
@@ -15,6 +17,8 @@ import {
 	LoadAssetsProps,
     AppContextProvider 
 } from './src';
+
+installGlobalErrorHandlers();
 
 const assets: LoadAssetsProps['assets'] = [
     ...srcAssets,
@@ -26,9 +30,11 @@ const fonts: LoadAssetsProps['fonts'] = {
 
 export default function App() {
     const errorHandler = (error: Error, stackTrace: string) => {
-        const customError = ({message: error.message,stack: stackTrace} as CustomError)   
-        handleAppCrush(customError)
+        const customError = ({message: error.message,stack: stackTrace} as CustomError)
+        handleAppCrush(customError, 'app', 'fatal')
     };
+
+    React.useEffect(() => { addBreadcrumb('app', 'app mounted'); }, []);
       
     return (
         <ErrorBoundary onError={errorHandler}>

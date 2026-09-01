@@ -1,6 +1,7 @@
 import { dbTransaction } from './db';
 import { makeApiCall } from './api';
 import { scheduleExportSessions } from './exportSessions';
+import { logError } from '@/src/utils/logError';
 
 export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject) => {
 (async () => {
@@ -79,6 +80,6 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
 		scheduleExportSessions();
 
 		resolve({ application, sessionID });
-    } catch (e) { console.log('saveSession', e); reject(e); /* DO NOTHING */ }
+    } catch (e) { logError('saveSession', e); reject(e); }
 })();
 });

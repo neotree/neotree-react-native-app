@@ -147,7 +147,21 @@ export async function createTablesIfNotExist() {
         'battery varchar',
         'device_model varchar',
         'memory varchar',
-        'editor_version varchar'
+        'editor_version varchar',
+        'source varchar', // Which backend the exception came from ('app' for a client-side fault).
+        'level varchar', // fatal | error | warning.
+        'editor_exported boolean',
+        'manufacturer varchar',
+        'device_name varchar',
+        'device_type varchar',
+        'os_version varchar',
+        'free_storage_gb integer',
+        'total_storage_gb integer',
+        'occurrences integer',
+        'first_seen varchar',
+        'last_seen varchar',
+        'breadcrumbs text',
+        'context text'
     ].join(',');
 
     const aliasesTableColumns = [
@@ -192,6 +206,50 @@ export async function createTablesIfNotExist() {
      if(!pollExportedExists){
           await dbTransaction(`ALTER TABLE sessions ADD COLUMN poll_exported BOOLEAN DEFAULT 0;`);
      }
+  }
+
+  //ADD COLUMNS TO EXCEPTIONS TABLE
+  const exceptionsTableInfo = await dbTransaction(`PRAGMA table_info(exceptions);`);
+  if(exceptionsTableInfo && exceptionsTableInfo.length>0){
+     const sourceExists = exceptionsTableInfo.some((col: any) => col.name === 'source');
+     if(!sourceExists){
+          // Rows recorded before this column existed were all client-side.
+          await dbTransaction(`ALTER TABLE exceptions ADD COLUMN source VARCHAR DEFAULT 'app';`);
+     }
+
+     const editorExportedExists = exceptionsTableInfo.some((col: any) => col.name === 'editor_exported');
+     if(!editorExportedExists){
+          // Backfills as 0, so exceptions already on the device are picked up
+          // by the next sync and sent to the webeditor too.
+          await dbTransaction(`ALTER TABLE exceptions ADD COLUMN editor_exported BOOLEAN DEFAULT 0;`);
+     }
+
+     // Remaining columns are additive and independent, so each is added only if
+     // missing. A device can be upgraded from any earlier schema version.
+     const newExceptionColumns: [string, string][] = [
+         ['level', `VARCHAR DEFAULT 'error'`],
+         ['manufacturer', 'VARCHAR'],
+         ['device_name', 'VARCHAR'],
+         ['device_type', 'VARCHAR'],
+         ['os_version', 'VARCHAR'],
+         ['free_storage_gb', 'INTEGER'],
+         ['total_storage_gb', 'INTEGER'],
+         ['occurrences', 'INTEGER DEFAULT 1'],
+         ['first_seen', 'VARCHAR'],
+         ['last_seen', 'VARCHAR'],
+         ['breadcrumbs', 'TEXT'],
+         ['context', 'TEXT'],
+     ];
+     for (const [name, definition] of newExceptionColumns) {
+         const exists = exceptionsTableInfo.some((col: any) => col.name === name);
+         if (!exists) {
+             await dbTransaction(`ALTER TABLE exceptions ADD COLUMN ${name} ${definition};`);
+         }
+     }
+
+     // occurrences drives `occurrences = occurrences + ?`, which is NULL-poisoned
+     // if any row predates the column without a default having been applied.
+     await dbTransaction(`UPDATE exceptions SET occurrences = 1 WHERE occurrences IS NULL;`);
   }
 }
 
