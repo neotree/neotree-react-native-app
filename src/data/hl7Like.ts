@@ -6,7 +6,7 @@ import { parse, isValid, format } from 'date-fns';
 import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
-import { logError } from '@/src/utils/logError';
+import { logError, logWarning } from '@/src/utils/logError';
 
 export async function toHL7Like(data: any) {
 
@@ -930,7 +930,7 @@ function undoRLENumeric(str: string): string {
       i += 3;
       result += digit.repeat(count);
     } else {
-      logError('hl7Like.undoRLENumeric', 'Invalid RLE marker digit', { marker });
+      logWarning('hl7Like.undoRLENumeric', 'Invalid RLE marker digit', { marker });
       break;
     }
   }
@@ -956,7 +956,7 @@ function undoRLEDelimited(str: string): string {
     if (segment.includes(':')) {
       const parts = segment.split(':');
       if (parts.length !== 2) {
-        logError('hl7Like.undoRLEDelimited', 'Invalid RLE segment', { segment });
+        logWarning('hl7Like.undoRLEDelimited', 'Invalid RLE segment', { segment });
         continue;
       }
 
@@ -964,12 +964,12 @@ function undoRLEDelimited(str: string): string {
       const count = parseInt(countStr, 10);
 
       if (isNaN(count) || count < 0) {
-        logError('hl7Like.undoRLEDelimited', 'Invalid count in RLE segment', { countStr, segment });
+        logWarning('hl7Like.undoRLEDelimited', 'Invalid count in RLE segment', { countStr, segment });
         continue;
       }
 
       if (!digit) {
-        logError('hl7Like.undoRLEDelimited', 'Invalid digit in RLE segment', { segment });
+        logWarning('hl7Like.undoRLEDelimited', 'Invalid digit in RLE segment', { segment });
         continue;
       }
 

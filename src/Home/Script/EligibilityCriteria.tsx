@@ -8,7 +8,7 @@ import { parseFieldItems } from '@/src/utils/script-fields-and-items';
 import { diffHours } from '@/src/utils/diffHours';
 import { toLocalISOString } from '@/src/utils/toLocalISOString';
 import * as types from '@/src/types';
-import { logError } from '@/src/utils/logError';
+import { logError, logWarning } from '@/src/utils/logError';
 
 type EligibilityCriteriaProps = {
     onEligible: () => void;
@@ -283,7 +283,7 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
 
             // Validate diffHours result
             if (typeof calculateValue !== 'number' || isNaN(calculateValue)) {
-                logError('EligibilityCriteria.diffHours', 'diffHours did not return a number', { fieldKey: field?.key, calculateValue });
+                logWarning('EligibilityCriteria.diffHours', 'diffHours did not return a number', { fieldKey: field?.key, calculateValue });
                 return;
             }
 
@@ -313,8 +313,6 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
         if (feasibilityEntry) values.push(feasibilityEntry);
         return values;
     }, [buildAutoFillValues, feasibilityEntry]);
-
-    if (!criteria) return null;
 
     const renderYesNo = React.useCallback((
         label: string,
@@ -359,12 +357,12 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
 
         // Validate required properties
         if (!type) {
-            logError('EligibilityCriteria.invalidFieldType', 'activeDefinition has no resolvable field type', { type: activeDefinition.type });
+            logWarning('EligibilityCriteria.invalidFieldType', 'activeDefinition has no resolvable field type', { type: activeDefinition.type });
             return <Text>Invalid field type</Text>;
         }
 
         if (!activeDefinition.autoFills) {
-            logError('EligibilityCriteria.missingAutoFills', 'activeDefinition has no autoFills', { type: activeDefinition.type });
+            logWarning('EligibilityCriteria.missingAutoFills', 'activeDefinition has no autoFills', { type: activeDefinition.type });
             return <Text>Configuration error</Text>;
         }
 
@@ -409,7 +407,12 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
         }
 
         return null;
-    }, [activeDefinition, useAlternative]);
+    }, [activeDefinition, useAlternative, renderYesNo]);
+
+    // Must stay below every hook: bailing out earlier skipped the two
+    // useCallbacks above, so the hook count changed with `criteria` and React
+    // would throw as soon as it went from absent to present.
+    if (!criteria) return null;
 
     const canContinue = !(
         activeDefinition.value?.value === null ||
@@ -444,7 +447,7 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
                         onPress={() => {
                             // Validate activeDefinition has required properties
                             if (!activeDefinition.autoFills) {
-                                logError('EligibilityCriteria.missingAutoFillsOnContinue', 'activeDefinition has no autoFills', { type: activeDefinition.type });
+                                logWarning('EligibilityCriteria.missingAutoFillsOnContinue', 'activeDefinition has no autoFills', { type: activeDefinition.type });
                                 return;
                             }
 

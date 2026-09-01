@@ -7,6 +7,22 @@ import { handleAppCrush, normaliseError, safeStringify } from './handleCrashes';
  */
 export type ErrorSource = Backend | 'app';
 
+/**
+ * How much attention a report deserves.
+ * - `fatal`   — the app crashed or is about to.
+ * - `error`   — an operation failed; the user is affected.
+ * - `warning` — recovered, but something is wrong (bad script config, corrupt
+ *               payload, a non-200 the caller handled).
+ */
+export type ErrorLevel = 'fatal' | 'error' | 'warning';
+
+export type LogOptions = {
+    /** Overrides the source inferred from the error. */
+    source?: ErrorSource;
+    /** Defaults to 'error'. */
+    level?: ErrorLevel;
+};
+
 const SOURCES: ErrorSource[] = ['app', 'webeditor', 'nodeapi', 'local'];
 
 /**
@@ -33,45 +49,89 @@ function resolveSource(error: any, explicit?: ErrorSource): ErrorSource {
     return 'app';
 }
 
+function report(
+    level: ErrorLevel,
+    context: string,
+    error?: unknown,
+    extra?: Record<string, unknown>,
+    opts?: LogOptions,
+): void {
+    try {
+        const { message, stack } = normaliseError(error);
+
+        if (__DEV__) {
+            // Console output is dev-only and never ships, so the log stays
+            // clean on a device while a developer still sees faults live.
+            const print = level === 'warning' ? console.warn : console.error;
+            print(`[${context}]`, message, extra ?? '');
+        }
+
+        handleAppCrush(
+            {
+                message: `[${context}] ${message}`,
+                stack: extra ? `${stack}\n${safeStringify(extra)}` : stack,
+            },
+            resolveSource(error, opts?.source),
+            opts?.level ?? level,
+            extra,
+        );
+    } catch {
+        // Never let reporting break the path that was already failing.
+    }
+}
+
 /**
- * The single entry point for reporting a runtime error.
+ * Report a failed operation. This is the app's only logging entry point.
  *
- * Errors are written to the local `exceptions` table rather than POSTed
- * straight to a backend. That table is drained on the next successful sync, so
- * a fault that happens while the device is offline — which is when faults here
- * are most likely — still reaches the server once connectivity returns,
- * instead of being dropped by a failed request.
+ * Nothing is sent over the network here. The report is written to the local
+ * `exceptions` table and drained on the next successful sync, so a fault that
+ * happens offline — which is when faults here are most likely — still reaches
+ * the server once connectivity returns, instead of being dropped by a failed
+ * request.
  *
- * Fire-and-forget and never throws, so it is safe to call from any catch block
- * without changing the control flow that was already failing.
+ * Fire-and-forget and never throws, so it is safe in any catch block. A fault
+ * already seen this session costs a Set lookup and an integer increment: no
+ * database access, no native calls.
  *
  * @param context Stable label for the call site, e.g. 'exportSessions.local'.
- *                Errors are deduped on `[context] message` plus source, so keep
- *                it free of ids and other per-call values — those go in `extra`.
+ *                Reports are deduped on context + message + source, so keep it
+ *                free of ids and other per-call values — those go in `extra`.
  * @param error   Whatever was caught. Error, string, or arbitrary object.
- * @param extra   Optional diagnostic detail, recorded alongside the stack.
- * @param source  Overrides the source inferred from `error`. Only needed when
- *                reporting a backend problem that isn't itself a thrown API
- *                error, e.g. a non-200 response the caller handled.
+ * @param extra   Diagnostic detail. Scrubbed before it is stored or synced, so
+ *                patient data cannot leave the device by accident.
  */
 export function logError(
     context: string,
     error?: unknown,
     extra?: Record<string, unknown>,
-    source?: ErrorSource,
+    opts?: LogOptions,
 ): void {
-    try {
-        const { message, stack } = normaliseError(error);
-        const details = extra && Object.keys(extra).length ? `\n${safeStringify(extra)}` : '';
+    report('error', context, error, extra, opts);
+}
 
-        handleAppCrush(
-            {
-                message: `[${context}] ${message}`,
-                stack: `${stack}${details}`,
-            },
-            resolveSource(error, source),
-        );
-    } catch {
-        // Never let reporting break the path that was already failing.
-    }
+/**
+ * Report something the app recovered from but that still needs looking at —
+ * a misconfigured script, a corrupt payload, a non-200 the caller handled.
+ * Same guarantees as {@link logError}.
+ */
+export function logWarning(
+    context: string,
+    error?: unknown,
+    extra?: Record<string, unknown>,
+    opts?: LogOptions,
+): void {
+    report('warning', context, error, extra, opts);
+}
+
+/**
+ * Report a crash. Used by the global handlers and the error boundary; prefer
+ * {@link logError} everywhere else.
+ */
+export function logFatal(
+    context: string,
+    error?: unknown,
+    extra?: Record<string, unknown>,
+    opts?: LogOptions,
+): void {
+    report('fatal', context, error, extra, opts);
 }

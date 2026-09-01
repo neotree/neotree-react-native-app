@@ -6,7 +6,7 @@ import * as api from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
-import { logError } from '@/src/utils/logError';
+import { logError, logWarning } from '@/src/utils/logError';
 
 export { getJSON };
 export interface ManualExportOutcome {
@@ -75,11 +75,13 @@ const getExcelEntryValue = ({
     return String(rawValue);
   }
 
-  logError('excelExport.missingEntryValue', 'Entry has no values.value', {
+  // Shape only, never the entry itself: `entry` holds patient data, and this
+  // payload is POSTed off the device to nodeapi and the webeditor.
+  logWarning('excelExport.missingEntryValue', 'Entry has no values.value', {
     scriptId,
     sessionId,
     entryKey,
-    entry,
+    entryShape: entry && typeof entry === 'object' ? Object.keys(entry) : typeof entry,
   });
 
   return 'N/A';
@@ -158,7 +160,7 @@ export function exportEXCEL(opts: any = {}) {
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
         if (!granted) {
-          logError('excelExport.directoryPermissionDenied', 'Directory permission not granted', {
+          logWarning('excelExport.directoryPermissionDenied', 'Directory permission not granted', {
             sessionCount: sessions.length,
             format: opts.format,
           });

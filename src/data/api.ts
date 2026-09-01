@@ -11,7 +11,9 @@ import {
     backendKey,
     NetworkUnavailableError,
 } from './circuitBreaker';
-import { logError, type ErrorSource } from '@/src/utils/logError';
+import { logError, logWarning, type ErrorSource } from '@/src/utils/logError';
+import { addBreadcrumb } from '@/src/utils/breadcrumbs';
+import { scrubUrl } from '@/src/utils/scrub';
 
 const PROBE_TIMEOUT_MS = 15_000;
 const REMOTE_TIMEOUT_MS = 60_000;
@@ -79,6 +81,8 @@ export async function makeApiCall(
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/').replace(/\?+$/, '');
+
+        addBreadcrumb('api', `${options.method || 'GET'} ${scrubUrl(url)}`, { source });
 
         const circuitKey = backendKey(country, source);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError(source);
@@ -183,7 +187,7 @@ export async function makeLocalApiCall(
         }
 
         if (res.status !== 200) {
-            logError('api.localRequestFailed', 'Local server returned a non-200 response', { url, status: res.status }, 'local');
+            logWarning('api.localRequestFailed', 'Local server returned a non-200 response', { url: scrubUrl(url), status: res.status }, { source: 'local' });
         }
 
         return res;
@@ -260,7 +264,7 @@ export async function makeLocalGetApiCall(
         }
 
         if (res.status !== 200) {
-            logError('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url, status: res.status }, 'local');
+            logWarning('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url: scrubUrl(url), status: res.status }, { source: 'local' });
         }
 
         const sessions = decryptInReactNative(await res?.json(), sec);
