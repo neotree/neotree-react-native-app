@@ -208,7 +208,14 @@ export async function createTablesIfNotExist() {
      }
   }
 
-  //ADD COLUMNS TO EXCEPTIONS TABLE
+  // ADD COLUMNS TO EXCEPTIONS TABLE
+  //
+  // Wrapped: ensureSchema() is awaited at the top of syncData, so an error
+  // escaping here would fail the whole sync. Sessions data is worth failing a
+  // sync over; the error-reporting schema is not. If a column cannot be added,
+  // reporting degrades (handleAppCrush swallows the failed insert) and
+  // everything else carries on.
+  try {
   const exceptionsTableInfo = await dbTransaction(`PRAGMA table_info(exceptions);`);
   if(exceptionsTableInfo && exceptionsTableInfo.length>0){
      const sourceExists = exceptionsTableInfo.some((col: any) => col.name === 'source');
@@ -250,6 +257,9 @@ export async function createTablesIfNotExist() {
      // occurrences drives `occurrences = occurrences + ?`, which is NULL-poisoned
      // if any row predates the column without a default having been applied.
      await dbTransaction(`UPDATE exceptions SET occurrences = 1 WHERE occurrences IS NULL;`);
+  }
+  } catch {
+     // Reporting schema only - never block a sync over it.
   }
 }
 

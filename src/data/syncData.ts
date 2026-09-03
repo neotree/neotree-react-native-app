@@ -12,6 +12,7 @@ import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { logError } from '@/src/utils/logError';
 import { flushOccurrenceCounts } from '@/src/utils/handleCrashes';
 import { addBreadcrumb } from '@/src/utils/breadcrumbs';
+import { runPooled } from '@/src/utils/runPooled';
 
 
 // Delivered rows are kept briefly so a backend that re-requests them still has
@@ -19,14 +20,20 @@ import { addBreadcrumb } from '@/src/utils/breadcrumbs';
 // exceptions were never pruned.
 const EXCEPTION_RETENTION_DAYS = 30;
 
+// Matches EXPORT_CONCURRENCY in exportSessions: enough to stop the drain from
+// serialising, low enough not to swamp a slow link during a sync.
+const EXCEPTION_DRAIN_CONCURRENCY = 5;
+
 /**
- * POST a batch to one destination. Returns whether the batch was accepted; a
- * failure leaves every row in it pending for the next sync.
+ * POST one exception to one destination. Returns whether it was accepted; a
+ * failure leaves the row pending for the next sync.
  */
-async function deliverExceptions(batch: any[], send: () => Promise<any>): Promise<boolean> {
-    if (!batch.length) return false;
+async function postException(backend: 'nodeapi' | 'webeditor', endpoint: string, payload: any): Promise<boolean> {
     try {
-        const res = await send();
+        const res = await makeApiCall(backend, endpoint, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
         // makeApiCall resolves for any HTTP status, so a 500 must not be
         // mistaken for delivery.
         if (res && typeof res.status === 'number' && res.status !== 200) return false;
@@ -295,43 +302,41 @@ export async function syncData(opts?: { force?: boolean; }) {
                     );
                 });
 
-                
+
+                // Drain the exceptions table to both backends.
+                //
+                // One row per request: this is the payload shape /exceptions
+                // has always received, and changing it would silently break
+                // reporting, since a failed POST here is swallowed by design.
+                // Bounded concurrency, not batching, is what keeps the drain
+                // off the critical path of the sync.
+                //
+                // Each destination has its own flag, so a row that reaches one
+                // but not the other is retried only where it is still missing.
                 await flushOccurrenceCounts();
                 const exceptions = await getExceptions();
 
                 if (exceptions?.length) {
-                    const withDevice = exceptions.map(ex => ({
-                        ...ex,
-                        deviceId,
-                        deviceHash: application.uid_prefix,
-                    }));
+                    const deliveredToNodeapi: number[] = [];
+                    const deliveredToEditor: number[] = [];
 
-                    const pendingNodeapi = withDevice.filter(ex => !ex.exported);
-                    const pendingEditor = withDevice.filter(ex => !ex.editor_exported);
+                    await runPooled(exceptions, EXCEPTION_DRAIN_CONCURRENCY, () => false, async (ex) => {
+                        const payload = {
+                            ...ex,
+                            deviceId,
+                            deviceHash: application.uid_prefix,
+                        };
 
-                    const [nodeapiDelivered, editorDelivered] = await Promise.all([
-                        deliverExceptions(
-                            pendingNodeapi,
-                            () => makeApiCall('nodeapi', `/exceptions`, {
-                                method: 'POST',
-                                body: JSON.stringify(pendingNodeapi),
-                            }),
-                        ),
-                        deliverExceptions(
-                            pendingEditor,
-                            () => makeApiCall('webeditor', EDITOR_EXCEPTIONS_ENDPOINT, {
-                                method: 'POST',
-                                body: JSON.stringify(pendingEditor),
-                            }),
-                        ),
-                    ]);
+                        if (!ex.exported && await postException('nodeapi', `/exceptions`, payload)) {
+                            deliveredToNodeapi.push(ex.id);
+                        }
+                        if (!ex.editor_exported && await postException('webeditor', EDITOR_EXCEPTIONS_ENDPOINT, payload)) {
+                            deliveredToEditor.push(ex.id);
+                        }
+                    });
 
-                    if (nodeapiDelivered) {
-                        await markExceptionsDelivered(pendingNodeapi.map(ex => ex.id), 'exported');
-                    }
-                    if (editorDelivered) {
-                        await markExceptionsDelivered(pendingEditor.map(ex => ex.id), 'editor_exported');
-                    }
+                    await markExceptionsDelivered(deliveredToNodeapi, 'exported');
+                    await markExceptionsDelivered(deliveredToEditor, 'editor_exported');
                 }
 
                 await pruneDeliveredExceptions();

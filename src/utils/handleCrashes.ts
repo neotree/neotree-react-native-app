@@ -6,6 +6,7 @@ import { getAvailableDiskSpace } from './deviceInfo';
 import { getBreadcrumbs } from './breadcrumbs';
 import { redactMessage, scrubExtra } from './scrub';
 import type { ErrorSource, ErrorLevel } from './logError';
+import { PERSIST_REPORTS } from './logConfig';
 
 // Guard rails on what gets written into a synced row: a runaway stack (an
 // infinite recursion, a serialised response body) would otherwise be POSTed
@@ -140,6 +141,10 @@ export async function handleAppCrush(
     level: ErrorLevel = 'error',
     extra?: Record<string, unknown>,
 ) {
+    // Gated here rather than in logError so every path is covered, including
+    // the error boundary in App.tsx which calls this directly.
+    if (!PERSIST_REPORTS) return;
+
     try {
         const { message: rawMessage, stack: rawStack } = normaliseError(error);
         // Redacting varying tokens does double duty: it strips the most likely
