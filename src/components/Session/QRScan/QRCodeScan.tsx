@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { StyleSheet, Text, View, Platform, SafeAreaView, StatusBar, Alert, ActivityIndicator, Pressable, Dimensions, GestureResponderEvent } from "react-native";
+import { StyleSheet, Text, View, Platform, SafeAreaView, StatusBar, Alert, ActivityIndicator, Pressable, useWindowDimensions, GestureResponderEvent } from "react-native";
 import {
   Camera,
   useCameraDevice,
@@ -8,8 +8,15 @@ import {
   useCameraFormat
 } from "react-native-vision-camera";
 import { scanFromURLAsync } from "expo-camera";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { fromHL7Like } from '../../../data/hl7Like'
 import { logError } from '@/src/utils/logError';
+
+// react-native-vision-camera is a native module - it isn't present in Expo
+// Go, so useCameraDevice() will always return undefined there regardless of
+// how many times the screen is retried. Detect that case up front so the
+// user gets an actionable message instead of a dead-end retry loop.
+const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 const SIMPLE_QR_MAX_LENGTH = 12;
 const SCAN_TIMEOUT_MS = 30 * 1000;
@@ -69,12 +76,27 @@ const extractUidFromValue = (raw: string) => {
 
 export function QRCodeScan(props: any) {
   const [remountKey, setRemountKey] = useState(0);
+  const [deviceAttempt, setDeviceAttempt] = useState(0);
   return (
     <QRCodeScanInner
       key={remountKey}
       {...props}
-      deviceAttempt={remountKey}
-      onRetryDevice={() => setRemountKey(count => count + 1)}
+      deviceAttempt={deviceAttempt}
+      // Called by the auto-retry loop while still within DEVICE_RETRY_LIMIT.
+      onAutoRetryDevice={() => {
+        setRemountKey(count => count + 1);
+        setDeviceAttempt(count => count + 1);
+      }}
+      // Called by the user-facing Retry button once the auto-retry loop has
+      // given up. Resets the attempt count back to 0 (rather than leaving it
+      // past DEVICE_RETRY_LIMIT forever) so the user sees the same
+      // "Preparing camera..." feedback and a fresh round of real attempts,
+      // instead of the error screen instantly reappearing unchanged - which
+      // reads as the button doing nothing.
+      onRetryDevice={() => {
+        setRemountKey(count => count + 1);
+        setDeviceAttempt(0);
+      }}
     />
   );
 }
@@ -100,12 +122,23 @@ function QRCodeScanInner(props: any) {
   const unknownBlobSinceRef = React.useRef<number | null>(null);
   const isFallbackCapturingRef = React.useRef(false);
   const lastFallbackAttemptRef = React.useRef(0);
-  const screen = Dimensions.get("window");
+  const screen = useWindowDimensions();
   const targetAspectRatio = useMemo(() => screen.height / screen.width, [screen.height, screen.width]);
+  // videoAspectRatio must be the top-priority filter (useCameraFormat ranks
+  // filters by array order, highest priority first) - otherwise a
+  // videoResolution/photoResolution "max" filter can win out and select a
+  // format whose aspect ratio is the sensor's native shape (often close to
+  // 4:3) rather than the phone's screen shape (often close to 19.5:9). With
+  // resizeMode="cover" that mismatch gets center-cropped to fill the screen,
+  // cutting visibly into the sides - and by an amount that varies per device
+  // depending on how far off its sensor's max-resolution aspect ratio is.
+  // The live codeScanner stream is resolution-capped by MLKit regardless
+  // (see UNKNOWN_BLOB_FALLBACK_MS above), so there's no need to also demand
+  // max video resolution here; photoResolution stays "max" since that's what
+  // the full-resolution still-photo fallback relies on.
   const format = useCameraFormat(device, [
-    { videoResolution: "max" },
-    { photoResolution: "max" },
     { videoAspectRatio: targetAspectRatio },
+    { photoResolution: "max" },
     { autoFocusSystem: "phase-detection" }
   ]);
   const exposureBoost = useMemo(() => {
@@ -117,10 +150,10 @@ function QRCodeScanInner(props: any) {
   }, [device]);
 
   useEffect(() => {
-    if (device || props.deviceAttempt >= DEVICE_RETRY_LIMIT) return;
-    const timeout = setTimeout(() => props.onRetryDevice(), DEVICE_RETRY_DELAY_MS);
+    if (IS_EXPO_GO || device || props.deviceAttempt >= DEVICE_RETRY_LIMIT) return;
+    const timeout = setTimeout(() => props.onAutoRetryDevice(), DEVICE_RETRY_DELAY_MS);
     return () => clearTimeout(timeout);
-  }, [device, props.deviceAttempt, props.onRetryDevice]);
+  }, [device, props.deviceAttempt, props.onAutoRetryDevice]);
 
   useEffect(() => {
     if (!device) return;
@@ -298,7 +331,7 @@ function QRCodeScanInner(props: any) {
   }
 
   if (!device) {
-    const stillRetrying = props.deviceAttempt < DEVICE_RETRY_LIMIT;
+    const stillRetrying = !IS_EXPO_GO && props.deviceAttempt < DEVICE_RETRY_LIMIT;
     return (
       <SafeAreaView style={styles.centerContainer}>
         {stillRetrying ? (
@@ -308,10 +341,16 @@ function QRCodeScanInner(props: any) {
           </>
         ) : (
           <>
-            <Text>Camera device not available</Text>
-            <Pressable onPress={props.onRetryDevice} style={[styles.controlButton, { marginTop: 16 }]}>
-              <Text style={styles.controlText}>Retry</Text>
-            </Pressable>
+            <Text style={{ textAlign: 'center' }}>
+              {IS_EXPO_GO
+                ? 'QR scanning is not available in Expo Go. Please use the Neotree development build instead.'
+                : 'Camera device not available'}
+            </Text>
+            {!IS_EXPO_GO && (
+              <Pressable onPress={props.onRetryDevice} style={[styles.controlButton, { marginTop: 16 }]}>
+                <Text style={styles.controlText}>Retry</Text>
+              </Pressable>
+            )}
           </>
         )}
       </SafeAreaView>
