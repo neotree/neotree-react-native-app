@@ -297,6 +297,7 @@ export async function fromHL7Like(data: string) {
             const decompressed = decompressDataFromQRCode(uint8Array);
             if (decompressed && decompressed.length > 0) {
               // TEMPORARY: manual scan-verification logging. Remove once done testing.
+              console.log('Decoded HL7-like string (legacy format):\n' + decompressed);
               return await convertToJSON(decompressed);
             }
           } catch {
@@ -312,7 +313,8 @@ export async function fromHL7Like(data: string) {
     try {
       const newUncompressed = decodeOptimisedData(data);
       if (newUncompressed && newUncompressed.length > 0) {
-      
+        // TEMPORARY: manual scan-verification logging. Remove once done testing.
+        console.log('Decoded HL7-like string (optimised format):\n' + newUncompressed);
         return await convertToJSON(newUncompressed);
       }
     } catch {
@@ -641,7 +643,6 @@ async function convertToJSON(input: string) {
   const normalizedInput = normalizeHL7Input(input);
 
   const lines = normalizedInput.trim().split("\n");
-    console.log("::--KWEMU KWEMU KWEMUZ::--", lines);
   const result: any = {};
   let currentSection: any = result;
 
