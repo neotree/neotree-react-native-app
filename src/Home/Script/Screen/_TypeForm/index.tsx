@@ -4,6 +4,13 @@ import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
 import { filterFieldToBidStillBirthOptions } from '@/src/utils/bid-stillbirth-outcome';
 import {
+    applyOptionConditions,
+    collectOptionConditionKeys,
+    fieldHasConditionalOptions,
+    getVisibleOptionValues,
+    pruneValueToVisibleOptions,
+} from '@/src/utils/option-conditions';
+import {
     formatDateLikeLabel,
     isTimestampLabel,
     normalizeDateLikeValue,
@@ -547,6 +554,7 @@ export function TypeForm(_: TypeFormProps) {
             (condition.match(/\$[\w-]+/g) || []).forEach(token => {
                 keys.add(token.slice(1).toLowerCase());
             });
+            collectOptionConditionKeys(field).forEach(key => keys.add(key));
         });
         return keys;
     }, [metadata?.fields]);
@@ -594,14 +602,31 @@ export function TypeForm(_: TypeFormProps) {
             map.set(`${field?.key || ''}`.toLowerCase(), evaluateFieldCondition(field));
         });
         return map;
-        // Running the eval-based condition sweep on every value commit is what froze
-        // large forms. While this screen is mounted, other entries/searches are static
-        // and the current screen's entry only echoes `values`, so outcomes can only
-        // change with the signature, the fields themselves, or the global configuration.
-        // evaluateFieldCondition is deliberately omitted: whenever the memo does re-run,
-        // the factory closes over the fresh callback anyway.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [metadata?.fields, conditionValuesSignature, configuration]);
+
+    const fieldsForRender = React.useMemo(() => (
+        applyOptionConditions(metadata?.fields || [], (condition: string) => (
+            evaluateCondition(parseCondition(condition, [{ values }])) as boolean
+        ))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    ), [metadata?.fields, conditionValuesSignature, configuration]);
+
+
+    React.useEffect(() => {
+        if (repeatable) return;
+        fieldsForRender.forEach((field: any) => {
+            if (!fieldHasConditionalOptions(field)) return;
+            const key = `${field?.key || ''}`;
+            if (!key) return;
+            const patch = pruneValueToVisibleOptions(
+                field,
+                valuesByKey.get(key.toLowerCase()),
+                getVisibleOptionValues(field),
+            );
+            if (patch) setValueByKey(key, patch);
+        });
+    }, [fieldsForRender, repeatable, setValueByKey, valuesByKey]);
 
     const computedEntryValues = React.useMemo(() => {
         if (repeatable) return undefined;
@@ -661,7 +686,7 @@ export function TypeForm(_: TypeFormProps) {
 
     const returnable = (
         <Box>
-            {metadata.fields.map((f: any, i: number) => {
+            {fieldsForRender.map((f: any, i: number) => {
                 const normalizedFieldType = normalizeFieldType(f.type);
                 const Component = getFieldComponent(normalizedFieldType);
 
@@ -688,7 +713,7 @@ export function TypeForm(_: TypeFormProps) {
 
     return (
         repeatable ? <Repeatable collectionName={collectionName}
-            fields={metadata.fields}
+            fields={fieldsForRender}
             onChange={handleRepeatablesChange}
             evaluateCondition={evaluateFieldCondition}
             collectionField={collectionField}
