@@ -22,7 +22,6 @@ axiosClient.interceptors.request.use(async config => {
 	if (config.headers) {
 		config.headers['x-api-key'] = `${api_key || ''}`;
 	}
-	console.log(config.method, [config.baseURL, config.url].join(''));
 	return config;
 });
 

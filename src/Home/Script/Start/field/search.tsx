@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, SafeAreaView, Dimensions } from 'react-native';
+import { ActivityIndicator, ScrollView, Modal as FullScreenModal } from 'react-native';
 import moment from 'moment';
 import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '@/src/components';
 import * as api from '@/src/data';
@@ -7,8 +7,6 @@ import * as types from '@/src/types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
 import { mergeSessions } from '@/src/contexts/script'
-
-const { width, height } = Dimensions.get("window");
 
 type SearchProps = {
     label: string;
@@ -819,9 +817,25 @@ function hasPrePopulate(entry: any): boolean {
     return (
         <>
 
-            {showQR === true ? <SafeAreaView
-                style={{ width, height, marginLeft: -50 }}
-            ><QRCodeScan onRead={onQrRead} /></SafeAreaView>
+            {showQR === true ? (
+                // A true OS-level full-screen presentation, not a View sized
+                // to match the screen's own dimensions - the latter depends
+                // on wherever this component happens to be nested (parent
+                // padding, safe-area insets, screen size) and only ever looks
+                // right on whichever device it was last tuned against. Modal
+                // escapes the surrounding layout entirely, so it covers the
+                // full screen edge-to-edge on any device without needing to
+                // know or compute its dimensions at all.
+                <FullScreenModal
+                    visible
+                    animationType="slide"
+                    presentationStyle="fullScreen"
+                    statusBarTranslucent
+                    onRequestClose={() => setShowQR(false)}
+                >
+                    <QRCodeScan onRead={onQrRead} />
+                </FullScreenModal>
+            )
                 :
                 <Box >
                     <NeotreeIDInput

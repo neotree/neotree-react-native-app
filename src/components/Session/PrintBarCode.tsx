@@ -425,7 +425,6 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
                 color: '#000000',
                 correctionLevel: 'H',
             });
-            console.log('QR Generation response:', response);
 
             // RNQRGenerator returns a file path
             if (response?.uri) {
@@ -434,10 +433,8 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
                     const base64 = await FileSystem.readAsStringAsync(response.uri, {
                         encoding: FileSystem.EncodingType.Base64,
                     });
-                    console.log('QR converted to base64, length:', base64.length);
                     return base64;
-                } catch (fileError) {
-                    console.log('Error reading QR file:', fileError);
+                } catch {
                     return null;
                 }
             }
@@ -451,9 +448,8 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
             if (filePath) {
                 try {
                     await FileSystem.deleteAsync(filePath, { idempotent: true });
-                    console.log('Deleted temp QR file:', filePath);
-                } catch (deleteError) {
-                    console.log('Error deleting temp QR file:', deleteError);
+                } catch {
+                    // ignore temp file cleanup failures
                 }
             }
         }
@@ -471,17 +467,11 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
             const image1 = Skia.Image.MakeImageFromEncoded(data1);
             const image2 = Skia.Image.MakeImageFromEncoded(data2);
 
-            if (!image1 || !image2) {
-                console.log('Failed to decode QR code images');
-                return null;
-            }
+            if (!image1 || !image2) return null;
 
             // Create offscreen surface for combined image
             const surface = Skia.Surface.MakeOffscreen(combinedWidth, combinedHeight);
-            if (!surface) {
-                console.log('Failed to create Skia surface');
-                return null;
-            }
+            if (!surface) return null;
 
             const canvas = surface.getCanvas();
 
@@ -512,10 +502,8 @@ export function PrintBarCode({ session, isGeneric, onPrinted }: PrintBarCodeProp
             const snapshot = surface.makeImageSnapshot();
             const combinedBase64 = snapshot.encodeToBase64(ImageFormat.PNG, 100);
 
-            console.log('Combined QR codes, length:', combinedBase64.length);
             return combinedBase64;
-        } catch (e) {
-            console.log('Error combining QR codes:', e);
+        } catch {
             return null;
         }
     };

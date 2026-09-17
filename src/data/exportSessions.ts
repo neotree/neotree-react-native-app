@@ -16,6 +16,8 @@ import {
     pollingRequired,
 } from './deliveryStatus';
 import { exportAcknowledged, retryableHttpStatus } from './deliveryRules';
+import { logError } from '@/src/utils/logError';
+import { runPooled } from '@/src/utils/runPooled';
 
 const afterInteractions = () => new Promise<void>(resolve => {
     InteractionManager.runAfterInteractions(() => resolve());
@@ -58,24 +60,6 @@ const emptyResult = (): ExportBatchResult => ({
     localSkipped: false,
     hasMore: false,
 });
-
-async function runPooled<T>(
-    items: T[],
-    concurrency: number,
-    stop: () => boolean,
-    worker: (item: T) => Promise<void>,
-): Promise<T[]> {
-    let cursor = 0;
-    const lanes = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-        while (cursor < items.length) {
-            if (stop()) return;
-            const item = items[cursor++];
-            await worker(item);
-        }
-    });
-    await Promise.allSettled(lanes);
-    return items.slice(cursor);
-}
 
 function groupByCountry(sessions: any[]): Map<string, any[]> {
     const groups = new Map<string, any[]>();
@@ -153,7 +137,7 @@ async function recordFailure(
                 export_last_error: failure.message.slice(0, 500),
             }, { where: { id: session.id } });
         } catch (updateError) {
-            console.error('Failed to persist export quarantine', updateError);
+            logError('exportSessions.quarantine', updateError, { sessionId: session.id, destination });
         }
     }
 }

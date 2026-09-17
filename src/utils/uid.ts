@@ -1,5 +1,6 @@
 import { getApplication } from '@/src/data';
 import { generateDeviceHash } from '@/src/utils/generate-device-hash';
+import { logError } from '@/src/utils/logError';
 
 export function validateUID(value = '') {
     const [_firstHalf, _lastHalf] = (value || '').split('-');
@@ -55,7 +56,7 @@ export async function generateUID(scriptType?: string) {
         return uid;
     } catch(e: any) {
         alert('Failed to generate UID');
-        console.log(e);
+        logError('generateUID', e);
         return '';
     }
 }

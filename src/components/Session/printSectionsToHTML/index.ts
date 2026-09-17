@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import { ScreenEntryValue } from '@/src/types';
 import { formatValueWithUnit } from '@/src/utils/units';
+import { getAdaptiveQRErrorCorrection, getQRPrintWidth, QR_QUIET_ZONE_MODULES, QR_EXTRA_TOP_LEFT_PADDING_PX } from '@/src/utils/qr-encoding-metrics';
 import { getBaseHTML } from "./baseHTML";
 import { toHL7Like } from '../../../data/hl7Like'
 import { formatExportableSession } from '../../../data/getConvertedSession'
@@ -33,26 +34,22 @@ export async function printSectionsToHTML({
 
   let qrSmall = false
 
-  const generateQRCode = async (): Promise<string | null> => {
+  const generateQRCode = async (): Promise<{ url: string; width: number } | null> => {
     try {
       const formattedData = await formatExportableSession(session, { showConfidential: true });
-      const hl7: string = await toHL7Like(formattedData);
-      
-      if(hl7.length < 100) {
+      const hl7: string | null = await toHL7Like(formattedData);
+
+      if(!hl7 || hl7.length < 100) {
         qrSmall = true
       }
-      
+
       // QR code parameters
-      const dataToEncode: string = hl7
-      let erc: 'L' | 'M' | 'Q' | 'H' = 'H'
-      
-      if (dataToEncode.length > 3057 && dataToEncode.length <= 3993) {
-        erc = 'Q'
-      } else if (dataToEncode.length > 3993 && dataToEncode.length <= 5596) {
-        erc = 'M'
-      } else if (dataToEncode.length > 5596) {
-        erc = 'L'
-      }
+      const dataToEncode: string = hl7 || ''
+      // Versions above 25 keep the print size fixed (see getQRPrintWidth),
+      // so trade error correction for version headroom to keep the module
+      // density (and scanability) in check on larger payloads.
+      const { errorCorrectionLevel: erc, version } = getAdaptiveQRErrorCorrection(dataToEncode);
+      const width = qrSmall ? 100 : getQRPrintWidth(version);
 
       const url = await new Promise<string>((resolve, reject) => {
         QRCode.toString(
@@ -60,8 +57,8 @@ export async function printSectionsToHTML({
           {
             type: 'svg',
             errorCorrectionLevel: erc,
-            margin: 2,
-            width: qrSmall ? 100 : undefined
+            margin: QR_QUIET_ZONE_MODULES,
+            width
           },
           (err, url) => {
             if (err) {
@@ -72,7 +69,7 @@ export async function printSectionsToHTML({
           }
         );
       });
-      return url;
+      return { url, width };
 
     } catch (e) {
       return null;
@@ -291,13 +288,13 @@ export async function printSectionsToHTML({
 
   const generateImageHtml = async (): Promise<string> => {
     try {
-      const generatedQR: string | null = await generateQRCode()
-      let htmlContent: string = !!qrSmall ? 
+      const generatedQR = await generateQRCode()
+      let htmlContent: string = !!qrSmall ?
         `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
-          ${generatedQR}
+          ${generatedQR?.url}
         </div>` :
-        !generatedQR ? '' : `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
-          ${generatedQR}
+        !generatedQR ? '' : `<div style="width: ${generatedQR.width}px; height: ${generatedQR.width}px; text-align: left; margin: 0 auto; padding-top: ${QR_EXTRA_TOP_LEFT_PADDING_PX}px; padding-left: ${QR_EXTRA_TOP_LEFT_PADDING_PX}px;">
+          ${generatedQR.url}
         </div>`;
       return htmlContent;
     } catch (e) {

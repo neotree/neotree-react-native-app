@@ -2,6 +2,7 @@ import { makeApiCall, makeLocalGetApiCall } from './api';
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 import { exportAcknowledged } from './deliveryRules';
+import { logError } from '@/src/utils/logError';
 
 
 export const exportSession = async (s: any) => {
@@ -16,15 +17,12 @@ export const exportSession = async (s: any) => {
         });
         if (!exportAcknowledged(res.status)) {
             const text = await res.text();
-            console.log({
-                status: res.status,
-                error: text,
-            });
+            logError('exportSession.badStatus', 'Session export rejected by server', { status: res.status, response: text });
             throw new Error('Failed to export session, try again!');
         }
         return true;
     } catch (e) {
-        console.log('exportSession ERR', e);
+        logError('exportSession', e);
         throw e;
     }
 };
@@ -164,7 +162,7 @@ export const getExportedSessions = () => new Promise((resolve, reject) => {
             resolve(null);
         } catch (e) {
 
-            console.log('error', e); reject(e);
+            logError('pruneExports', e); reject(e);
         }
     })();
 });

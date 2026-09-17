@@ -6,6 +6,7 @@ import * as api from '../../../data';
 import moment from 'moment';
 import getJSON from './getJSON';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
+import { logError, logWarning } from '@/src/utils/logError';
 
 export { getJSON };
 export interface ManualExportOutcome {
@@ -76,11 +77,13 @@ const getExcelEntryValue = ({
     return String(rawValue);
   }
 
-  console.error('Excel export entry missing values.value', {
+  // Shape only, never the entry itself: `entry` holds patient data, and this
+  // payload is POSTed off the device to nodeapi and the webeditor.
+  logWarning('excelExport.missingEntryValue', 'Entry has no values.value', {
     scriptId,
     sessionId,
     entryKey,
-    entry,
+    entryShape: entry && typeof entry === 'object' ? Object.keys(entry) : typeof entry,
   });
 
   return 'N/A';
@@ -149,7 +152,7 @@ export function exportEXCEL(opts: any = {}) {
         const permissionGranted = await isSavingToDevicePermitted();
         if (!permissionGranted) {
           const error = new Error('App has not been granted permission to save files to device');
-          console.error('Excel export permission denied', {
+          logError('excelExport.permissionDenied', error, {
             sessionCount: sessions.length,
             format: opts.format,
           });
@@ -159,7 +162,7 @@ export function exportEXCEL(opts: any = {}) {
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
         if (!granted) {
-          console.error('Excel export directory permission not granted', {
+          logWarning('excelExport.directoryPermissionDenied', 'Directory permission not granted', {
             sessionCount: sessions.length,
             format: opts.format,
           });
@@ -217,11 +220,10 @@ export function exportEXCEL(opts: any = {}) {
         
                 resolve([fileUri, wbout]);
               } catch (e) {
-                console.error('Excel export sheet generation failed', {
+                logError('excelExport.sheetGeneration', e, {
                   scriptId,
                   scriptTitle: scripts[scriptId]?.data?.title,
                   sessionCount: json[scriptId]?.length || 0,
-                  error: e,
                 });
                 reject(e);
               }
@@ -235,10 +237,7 @@ export function exportEXCEL(opts: any = {}) {
                   await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
                   resolve(null);
                 } catch (e) {
-                  console.error('Excel export file write failed', {
-                    fileUri,
-                    error: e,
-                  });
+                  logError('excelExport.fileWrite', e, { fileUri });
                   reject(e);
                 }
               })();
@@ -248,10 +247,9 @@ export function exportEXCEL(opts: any = {}) {
 
         resolve(null);
       } catch (e) {
-        console.error('Excel export failed', {
+        logError('excelExport', e, {
           sessionCount: sessions.length,
           format: opts.format,
-          error: e,
         });
         reject(e);
       }
@@ -456,7 +454,7 @@ export function exportToApi(opts: any = {}) {
 
         resolve(outcome);
       } catch (e) {
-        console.log('Export error:', e);
+        logError('exportSessionsToServer', e);
         reject(e);
       }
     })();

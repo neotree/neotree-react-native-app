@@ -6,13 +6,78 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
 import { dbTransaction, ensureSchema, db } from './db';
-import { makeApiCall, reportErrors, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
+import { makeApiCall, reportErrors, EDITOR_EXCEPTIONS_ENDPOINT, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
+import { logError } from '@/src/utils/logError';
+import { flushOccurrenceCounts } from '@/src/utils/handleCrashes';
+import { addBreadcrumb } from '@/src/utils/breadcrumbs';
+import { runPooled } from '@/src/utils/runPooled';
+
+
+// Delivered rows are kept briefly so a backend that re-requests them still has
+// them, then dropped. Without this the table only ever grows: unlike `exports`,
+// exceptions were never pruned.
+const EXCEPTION_RETENTION_DAYS = 30;
+
+// Matches EXPORT_CONCURRENCY in exportSessions: enough to stop the drain from
+// serialising, low enough not to swamp a slow link during a sync.
+const EXCEPTION_DRAIN_CONCURRENCY = 5;
+
+/**
+ * POST one exception to one destination. Returns whether it was accepted; a
+ * failure leaves the row pending for the next sync.
+ */
+async function postException(backend: 'nodeapi' | 'webeditor', endpoint: string, payload: any): Promise<boolean> {
+    try {
+        const res = await makeApiCall(backend, endpoint, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        // makeApiCall resolves for any HTTP status, so a 500 must not be
+        // mistaken for delivery.
+        if (res && typeof res.status === 'number' && res.status !== 200) return false;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function markExceptionsDelivered(ids: number[], column: 'exported' | 'editor_exported') {
+    if (!ids.length) return;
+    try {
+        await dbTransaction(
+            `update exceptions set ${column} = 1 where id in (${ids.map(() => '?').join(',')});`,
+            ids,
+        );
+    } catch {
+        // Rows stay pending and are retried on the next sync.
+    }
+}
+
+async function pruneDeliveredExceptions() {
+    try {
+        const cutoff = new Date(Date.now() - EXCEPTION_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        await dbTransaction(
+            `delete from exceptions
+              where exported = 1 and editor_exported = 1
+                and last_seen is not null and last_seen < ?;`,
+            [cutoff],
+        );
+    } catch {
+        // Retention is housekeeping; never fail a sync over it.
+    }
+}
 
 export async function syncData(opts?: { force?: boolean; }) {
 	const netInfo = await NetInfo.fetch();
     // const networkState = await Network.getNetworkStateAsync();
+
+    addBreadcrumb('sync', 'syncData started', {
+        force: !!opts?.force,
+        connected: !!netInfo?.isConnected,
+        connectionType: netInfo?.type,
+    });
 
     await ensureSchema();
 
@@ -237,29 +302,48 @@ export async function syncData(opts?: { force?: boolean; }) {
                     );
                 });
 
-                const exeptions = await getExceptions();
-                if(exeptions){
-                    for (let ex of exeptions){
-                    await makeApiCall('nodeapi', `/exceptions`, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                ...ex,
-                                deviceId,
-                                deviceHash: application.uid_prefix,
-                            }),
-                        }).then(async()=>{
-                            ex.exported = true
-                            await dbTransaction(
-                                `insert or replace into exceptions (${Object.keys(ex).join(',')}) values (${Object.keys(ex).map(() => '?').join(',')});`,
-                                Object.values(ex)
-                            );
 
-                        }).catch(() => {})
+                // Drain the exceptions table to both backends.
+                //
+                // One row per request: this is the payload shape /exceptions
+                // has always received, and changing it would silently break
+                // reporting, since a failed POST here is swallowed by design.
+                // Bounded concurrency, not batching, is what keeps the drain
+                // off the critical path of the sync.
+                //
+                // Each destination has its own flag, so a row that reaches one
+                // but not the other is retried only where it is still missing.
+                await flushOccurrenceCounts();
+                const exceptions = await getExceptions();
 
-                    }
+                if (exceptions?.length) {
+                    const deliveredToNodeapi: number[] = [];
+                    const deliveredToEditor: number[] = [];
+
+                    await runPooled(exceptions, EXCEPTION_DRAIN_CONCURRENCY, () => false, async (ex) => {
+                        const payload = {
+                            ...ex,
+                            deviceId,
+                            deviceHash: application.uid_prefix,
+                        };
+
+                        if (!ex.exported && await postException('nodeapi', `/exceptions`, payload)) {
+                            deliveredToNodeapi.push(ex.id);
+                        }
+                        if (!ex.editor_exported && await postException('webeditor', EDITOR_EXCEPTIONS_ENDPOINT, payload)) {
+                            deliveredToEditor.push(ex.id);
+                        }
+                    });
+
+                    await markExceptionsDelivered(deliveredToNodeapi, 'exported');
+                    await markExceptionsDelivered(deliveredToEditor, 'editor_exported');
                 }
+
+                await pruneDeliveredExceptions();
+
             } catch(e: any) {
-                console.log('syncData', e)
+                addBreadcrumb('sync', 'syncData failed');
+                logError('syncData', e);
                 reportErrors('syncData', e.message);
                 AsyncStorage.setItem(ASYNC_STORAGE_KEYS.SYNC_ERROR, 'Failed to connect to sync');
 

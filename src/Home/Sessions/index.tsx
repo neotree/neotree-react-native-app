@@ -10,6 +10,7 @@ import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, 
 import exportData from './export';
 import { Session } from './Session';
 import { dateRangeError, filterSessionsByDateRange, SessionDateField } from '../../utils/sessionDateRange';
+import { logError } from '@/src/utils/logError';
 
 const exportTypes = [
 	{
@@ -303,11 +304,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			});
 		}
 
-		const remainingKeys = Object.keys(entries).filter((key) => key !== 'repeatables' && !usedKeys.has(key));
-		if (remainingKeys.length && __DEV__) {
-			console.log('[Sessions][normalizeSessionForDisplay] Unmapped keys:', remainingKeys);
-		}
-
 		if (Object.keys(repeatables).length) {
 			const alreadyHandled = screens.some((s) => s?.data?.metadata?.repeatable);
 			if (!alreadyHandled) {
@@ -421,10 +417,9 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			);
 		} catch (e: any) {
 			if (exportFormat === 'excel') {
-				console.error('Excel export failed from Sessions screen', {
+				logError('Sessions.excelExport', e, {
 					exportType,
 					sessionCount: Array.isArray(sessions) ? sessions.length : 0,
-					error: e,
 				});
 			}
 			Alert.alert(
@@ -646,7 +641,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					const hasLocalServer = await api.hasLocalServerConfig();
 					setLocalServerAvailable(hasLocalServer);
 					setLocalServerChecked(true);
-				} catch (e) { console.log(e); /* DO NOTHING */ }
+				} catch { /* DO NOTHING */ }
 			})();
 		}
 	// getSessions intentionally refreshes from the current render state.

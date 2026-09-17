@@ -5,6 +5,7 @@ import { useAppContext } from '../../AppContext';
 import { Content, LocationForm, OverlayLoader, Box } from "../../components";
 import * as api from '../../data';
 import * as types from '../../types';
+import { logError } from '@/src/utils/logError';
 
 export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Location'>) {
 	const {setSyncDataResponse, bumpLocationVersion} = useAppContext();
@@ -40,7 +41,7 @@ export function Location({ navigation }: types.StackNavigationProps<types.HomeRo
 									const res = await api.syncData({ force: true, });
 									setSyncDataResponse && setSyncDataResponse(res);
 								} catch (e) {
-									console.log('Location syncData', e);
+									logError('Location.syncData', e);
 									Alert.alert(
 										'Sync failed',
 										'Please try again once you have a connection.',
