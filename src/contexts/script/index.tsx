@@ -19,6 +19,7 @@ import { defaultPreferences } from '@/src/constants';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
+import { evaluateSafeExpression } from '@/src/utils/safeExpressionEvaluator';
 import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
 import moment from "moment";
 import { logError } from '@/src/utils/logError';
@@ -178,8 +179,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     const [reviewConfigurations, setReviewConfigurations] = useState<any[]>([]);
 
     // Parsed conditions are fully-substituted literal expressions, so a given
-    // string always evaluates to the same result. eval() is very slow on Hermes;
-    // caching by string skips it for the repeated sweeps large forms perform.
+    // string always evaluates to the same result. Re-tokenizing/re-parsing is
+    // wasted work otherwise; caching by string skips it for the repeated
+    // sweeps large forms perform.
     const evalResultCacheRef = useRef(new Map<string, any>());
 
     const evaluateCondition = useCallback((condition: string, defaultEval = false) => {
@@ -190,7 +192,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
         let conditionMet = defaultEval;
         try {
-            conditionMet = eval(condition);
+            conditionMet = evaluateSafeExpression(condition);
         } catch (e) {
             // do nothing
         }

@@ -1,5 +1,6 @@
 import * as types from '@/src/types';
 import { ScriptContextType } from './index';
+import { evaluateSafeExpression } from '@/src/utils/safeExpressionEvaluator';
 
 type EvaluateDrugsScreenParams = {
     entries: types.ScreenEntry[];
@@ -334,7 +335,7 @@ export function getScreen(
     const evaluateCondition = (condition: string, defaultEval = false) => {
         let conditionMet = defaultEval;
         try {
-            conditionMet = eval(condition);
+            conditionMet = evaluateSafeExpression(condition);
         } catch (e) {
             // do nothing
         }

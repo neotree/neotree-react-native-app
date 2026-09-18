@@ -1,5 +1,5 @@
 import * as types from '@/src/types';
-import { Parser } from 'expr-eval';
+import { evaluateSafeExpression } from './safeExpressionEvaluator';
 
 export function evalMath(
     condition = '',
@@ -150,9 +150,7 @@ export function evalMath(
     let error: null | string = null;
 
     try {
-
-        const parser = new Parser();
-        result = parser.evaluate(parsed);
+        result = evaluateSafeExpression(parsed);
     } catch (e: any) {
         error = e.message;
     }
@@ -223,7 +221,7 @@ function evaluateFormula(formula: string, values: types.ScreenEntryValue[]) {
             throw new Error('Formula contains unsafe characters or functions');
         }
 
-        result = new Function(`return ${safeExpression}`)();
+        result = evaluateSafeExpression(safeExpression);
 
         if (isNaN(result) || !isFinite(result)) {
             throw new Error('Formula evaluation resulted in invalid number');
