@@ -141,7 +141,7 @@ export async function printSectionsToHTML({
             let hideLabel: boolean = false;
 
             let isFlexRow = printDisplayColumns !== 1;
-            if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;  
+            if (v.printDisplayColumns !== undefined) isFlexRow = v.printDisplayColumns !== 1;
 
             let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
             const listStyle: string = v.listStyle || _listStyle;

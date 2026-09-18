@@ -1,5 +1,15 @@
+import CryptoJS from 'crypto-js';
 import { APP_ENV, APP_VERSION } from '@/src/constants';
 import { getApplication } from './queries';
+
+// Deterministic, non-salted SHA-256 hash so the same raw value always
+// produces the same hash and can be independently recomputed against
+// historic raw values by other tooling.
+export function hashConfidentialValue(value: any): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  const normalized = Array.isArray(value) ? JSON.stringify(value) : String(value);
+  return CryptoJS.SHA256(normalized).toString(CryptoJS.enc.Hex);
+}
 
 export function formatExportableSession(session: any = {}, opts: any = {}) {
   return new Promise((resolve, reject) => {
@@ -97,6 +107,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
             prePopulate,
             ips,
             comments,
+            confidential_label_only,
           } = v;
 
           const valType = exportType || dataType || type;
@@ -111,8 +122,13 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           if (Array.isArray(value)) {
             const multi = value.reduce(
               (acc: any, item: any) => {
-                acc.label.push(item.exportLabel || item.valueLabel || item.label);
-                acc.value.push(item.exportValue || item.value);
+                if (confidential_label_only) {
+                  acc.label.push(null);
+                  acc.value.push(hashConfidentialValue(item.exportValue ?? item.value));
+                } else {
+                  acc.label.push(item.exportLabel || item.valueLabel || item.label);
+                  acc.value.push(item.exportValue || item.value);
+                }
                 acc.parentKey = item.parentKey || '';
                 return acc;
               },
@@ -127,6 +143,18 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
               : valType === 'boolean'
               ? value === 'false' ? false : Boolean(value)
               : value;
+
+          if (confidential_label_only) {
+            return {
+              [key]: {
+                ...common,
+                values: {
+                  label: [null],
+                  value: [hashConfidentialValue(exportValue ?? parsedValue)],
+                },
+              },
+            };
+          }
 
           return {
             [key]: {

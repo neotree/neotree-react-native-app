@@ -192,6 +192,7 @@ export type ScreenEntryValue = {
   type?: string;
   dataType?: string;
   confidential?: boolean;
+  confidential_label_only?: boolean;
   exportValue?: any;
   exportLabel?: any;
   exportType?: any;

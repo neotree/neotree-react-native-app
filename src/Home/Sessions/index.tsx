@@ -202,6 +202,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				printable: entry.printable !== false && fieldDef?.printable !== false,
 				prePopulate: entry.prePopulate || fieldDef?.prePopulate || [],
 				confidential: fieldDef?.confidential,
+				confidential_label_only: fieldDef?.confidential_label_only,
 				comments: entry.comments || [],
 			};
 		};
@@ -281,6 +282,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 								dataType: metadata.dataType,
 								printable: screen?.data?.printable,
 								confidential: metadata.confidential,
+								confidential_label_only: metadata.confidential_label_only,
 							});
 							if (val) {
 								values.push(val);

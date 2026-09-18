@@ -46,6 +46,7 @@ export function TypeSingleSelect({}: TypeSingleSelectProps) {
                     type: item.type,
                     dataType: metadata.dataType,
                     confidential: item.confidential,
+                    confidential_label_only: item.confidential_label_only,
                     exportType: 'single_select',
                 }]);
             },

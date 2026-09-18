@@ -337,6 +337,7 @@ export function TypeForm(_: TypeFormProps) {
                 type: f.type,
                 dataType: f.dataType,
                 confidential: f.confidential,
+                confidential_label_only: f.confidential_label_only,
                 prePopulate: f.prePopulate,
                 editable: f.editable,
                 ips: f.ips,

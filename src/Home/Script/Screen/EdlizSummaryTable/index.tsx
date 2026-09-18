@@ -112,6 +112,7 @@ export function EdlizSummaryTable({ searchVal }: EdlizSummaryTableProps) {
                             dataType: item.dataType,
                             exclusive: item.exclusive,
                             confidential: item.confidential,
+                            confidential_label_only: item.confidential_label_only,
                             score,
                         };
 

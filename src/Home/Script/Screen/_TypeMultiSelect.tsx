@@ -83,6 +83,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                     dataType: item?.dataType,
                     exclusive: item?.exclusive,
                     confidential: item?.confidential,
+                    confidential_label_only: item?.confidential_label_only,
                     exportType: 'multi_select',
                 },
             ];

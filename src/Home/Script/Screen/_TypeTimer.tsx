@@ -64,6 +64,7 @@ export function TypeTimer({}: TypeTimerProps) {
             type: metadata.type || metadata.dataType,
             dataType: metadata.dataType,
             confidential: metadata.confidential,
+            confidential_label_only: metadata.confidential_label_only,
             exportType: 'timer',
         }]);
     }
