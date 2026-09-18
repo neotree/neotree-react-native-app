@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import { Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
+import { ActivityIndicator, Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
 import * as MediaLibrary from 'expo-media-library';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
@@ -10,6 +10,8 @@ import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, 
 import exportData from './export';
 import { Session } from './Session';
 import { dateRangeError, filterSessionsByDateRange, SessionDateField } from '../../utils/sessionDateRange';
+import { formatNeotreeIDInput, NEOTREE_ID_MAX_LENGTH } from '../../utils/neotreeId';
+import { getSessionScriptTitle, getSessionUID } from '../../utils/sessionFields';
 import { logError } from '@/src/utils/logError';
 
 const exportTypes = [
@@ -37,6 +39,10 @@ const deleteTypes = [
 		value: 'date_range',
 	},
 ];
+
+// Rows per page in the history list. Large enough that a page fills the screen
+// on a tablet, small enough that opening the screen is never a full-table read.
+const SESSIONS_PAGE_SIZE = 20;
 
 const exportFormats = [
 	{ label: 'Excel Spreadsheet', value: 'excel' },
@@ -72,16 +78,31 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [exportFormat, setExportFormat] = React.useState(exportFormats[0].value);
 	const [showExportFormats, setShowExportFormats] = React.useState(false);
 	const [exportingSessions, setExportingSessions] = React.useState(false);
+	const [exportProgress, setExportProgress] = React.useState<null | { done: number; total: number }>(null);
+	const [backgroundExportRunning, setBackgroundExportRunning] = React.useState(false);
+	const [pendingExportCount, setPendingExportCount] = React.useState(0);
 
 	const [sessions, setSessions] = React.useState<any[]>([]);
-	const [dbSessions, setDBSessions] = React.useState<any[]>([]);
 	const [loadingSessions, setLoadingSessions] = React.useState(false);
+	const [loadingMoreSessions, setLoadingMoreSessions] = React.useState(false);
+	// 'browse' pages straight out of the db; the other modes hold a result set
+	// that is already complete, so there is nothing further to page in.
+	const [listMode, setListMode] = React.useState<'browse' | 'filtered' | 'search' | 'localServer'>('browse');
+	const [hasMoreSessions, setHasMoreSessions] = React.useState(false);
+	const [totalSessions, setTotalSessions] = React.useState(0);
+	const loadedOffset = React.useRef(0);
+	// Guards paged reads the same way searchRequestId guards searches: a slow
+	// page must not append itself after a refresh or a filter has moved on.
+	const listRequestId = React.useRef(0);
 	const [scriptsFields, setScriptsFields] = React.useState({});
 
 	const [selectedSession, setSelectedSession] = React.useState<any>(null);
 
     const [searchValue, setSearchValue] = React.useState('');
+    const [lastSearchedValue, setLastSearchedValue] = React.useState('');
     const searchTimeout = React.useRef<any>();
+    // Incremented per search so replies for superseded searches are ignored.
+    const searchRequestId = React.useRef(0);
 	const [localServerAvailable, setLocalServerAvailable] = React.useState(false);
 	const [localServerChecked, setLocalServerChecked] = React.useState(false);
 	const [searchingLocalServer, setSearchingLocalServer] = React.useState(false);
@@ -348,11 +369,34 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	};
 
 	const exportSessions = async (opts: any = {}) => {
-		const _dbSessions = dbSessions.filter(api.isExportableSession);
+		setExportingSessions(true);
+
+		// The rendered list is paged, so the set to export is read fresh: an
+		// "all completed sessions" export must not mean "the pages scrolled".
+		let allSessions: any[] = [];
+		try {
+			allSessions = await loadAllSessionsForLocation();
+		} catch (e: any) {
+			setExportingSessions(false);
+			Alert.alert(
+				'Failed to read sessions',
+				e.message || e.msg || JSON.stringify(e),
+				[
+					{ text: 'Try again', onPress: () => exportSessions(opts) },
+					{ text: 'Cancel' },
+				]
+			);
+			return;
+		}
+
+		const _dbSessions = allSessions.filter(api.isExportableSession);
 		let sessions = _dbSessions;
 		switch (exportType) {
 			case 'date_range': {
-				if (!validateExportDateRange()) return;
+				if (!validateExportDateRange()) {
+					setExportingSessions(false);
+					return;
+				}
 				sessions = getFilteredSessions(_dbSessions, {
 					minDate: exportMinDate,
 					maxDate: exportMaxDate,
@@ -360,6 +404,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					searchValue: '',
 				});
 				if (!sessions.length) {
+					setExportingSessions(false);
 					Alert.alert('Nothing to export', 'No completed sessions fall within the selected completion-date range.');
 					return;
 				}
@@ -368,10 +413,16 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			default:
 				// do nothing
 		}
-		setExportingSessions(true);
 		try {
-			const result: any = await exportData({ ...opts, format: exportFormat, sessions, scriptsFields, application, });
-			if (exportFormat === 'jsonapi') await getSessions();
+			const result: any = await exportData({
+				...opts,
+				format: exportFormat,
+				sessions,
+				scriptsFields,
+				application,
+				onProgress: (done: number, total: number) => setExportProgress({ done, total }),
+			});
+			if (exportFormat === 'jsonapi') await refreshSessions();
 
 			let title = '';
 			let message = 'Export success';
@@ -438,7 +489,9 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			
 		}
 		setExportingSessions(false);
+		setExportProgress(null);
 		setShowExportFormats(false);
+		refreshPendingExportCount();
 	};
 
 	const deleteSessions = async (ids: any[] = [], opts: { allowDrafts?: boolean } = {}) => {
@@ -474,7 +527,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			setDeletingSessions(true);
 			try {
 				await api.deleteSessions(deletable.map((s: any) => s.id));
-				await getSessions();
+				await refreshSessions();
 			} catch (e: any) {
 				Alert.alert(
 				'ERROR',
@@ -511,6 +564,104 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		await proceed();
 	};
 
+	/**
+	 * Opens the export options, unless an export is already running.
+	 *
+	 * Sending the same sessions twice is already impossible - runs are
+	 * serialized and each one re-reads the delivery flags - but a second export
+	 * started on top of a sweep looks stuck and invites repeated taps, so say
+	 * what is happening and let it finish.
+	 */
+	const openExport = React.useCallback(async () => {
+		if (!api.isExportRunning()) {
+			setOpenExportModal(true);
+			return;
+		}
+
+		let pending = 0;
+		try { pending = await api.countPendingExports(); } catch { /* the count is optional */ }
+		if (pending) setPendingExportCount(pending);
+
+		Alert.alert(
+			'Export already running',
+			(pending
+				? `${pending} session${pending === 1 ? ' is' : 's are'} being sent in the background right now. `
+				: 'An export is running in the background right now. ')
+			+ 'These sessions are already queued, so there is nothing to start again - leave it running and come back in a few minutes.',
+			[
+				{ text: 'Continue in background', style: 'cancel' },
+				{ text: 'Open export options', onPress: () => setOpenExportModal(true) },
+			]
+		);
+	}, []);
+
+	/**
+	 * Resolves what the delete modal selected into ids.
+	 *
+	 * Reads the whole history rather than the rendered page: "all" has to mean
+	 * all, whether or not the user has scrolled.
+	 */
+	const confirmDeleteSelection = async () => {
+		if (deleteType === 'date_range') {
+			if (!deleteMinDate && !deleteMaxDate) {
+				Alert.alert('Date range required', 'Select a start date, an end date, or both.');
+				return;
+			}
+			const error = dateRangeError(deleteMinDate, deleteMaxDate);
+			if (error) {
+				Alert.alert('Invalid date range', error);
+				return;
+			}
+		}
+		setOpenDeleteModal(false);
+
+		let allSessions: any[] = [];
+		setDeletingSessions(true);
+		try {
+			allSessions = await loadAllSessionsForLocation();
+		} catch (e: any) {
+			setDeletingSessions(false);
+			Alert.alert('Failed to read sessions', e.message || e.msg || JSON.stringify(e), [{ text: 'Ok' }]);
+			return;
+		}
+		setDeletingSessions(false);
+
+		switch (deleteType) {
+			case 'all':
+				await deleteSessions(
+					allSessions
+						.filter((s: any) => isDeliveredSession(s) || isDraftSession(s))
+						.map((s: any) => s.id),
+					{ allowDrafts: true }
+				);
+				break;
+			case 'incomplete':
+				await deleteSessions(
+					allSessions.filter(isDraftSession).map((s: any) => s.id),
+					{ allowDrafts: true }
+				);
+				break;
+			case 'date_range': {
+				const rangeSessions = getFilteredSessions(allSessions, {
+					minDate: deleteMinDate,
+					maxDate: deleteMaxDate,
+					dateField: 'started',
+					searchValue: '',
+				});
+				if (!rangeSessions.length) {
+					Alert.alert('Nothing to delete', 'No sessions were created within the selected date range.');
+				} else {
+					await deleteSessions(rangeSessions.map((s: any) => s.id), { allowDrafts: true });
+				}
+				setDeleteMinDate(null);
+				setDeleteMaxDate(null);
+				break;
+			}
+			default:
+				// do nothing
+		}
+	};
+
 	React.useEffect(() => {
 		navigation.setOptions({
 			title: 'Session History',
@@ -542,7 +693,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					</Box>
 
 					<Box marginLeft="m">
-						<TouchableOpacity onPress={() => setOpenExportModal(true)}>
+						<TouchableOpacity onPress={() => { openExport(); }}>
 							<Icon 
 								name="save"
 								size={28} 
@@ -563,10 +714,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				</Box>
 			),
 		});
-	}, [navigation, selectedSession]);
+	}, [navigation, selectedSession, openExport]);
 
 	const getFilteredSessions = (
-		sessions = dbSessions,
+		sessions: any[],
 		filters?: {
 			minDate?: Date | null;
 			maxDate?: Date | null;
@@ -585,26 +736,65 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		let filtered = filterSessionsByDateRange(sessions, resolvedFilters);
 		if (resolvedFilters.searchValue) {
 			const query = resolvedFilters.searchValue.toLowerCase();
-			filtered = filtered.filter((session: any) => `${session.uid || ''}`.toLowerCase().includes(query));
+			filtered = filtered.filter((session: any) => `${getSessionUID(session)}`.toLowerCase().includes(query));
 		}
 		return filtered;
 	};
 
-	const getSessions = (opts: any = {}) => new Promise((resolve, reject) => {
+	/**
+	 * Every session for this site, read at the moment it is needed.
+	 *
+	 * Bulk export and delete act on the whole history, not on whatever has been
+	 * scrolled into view, so they must not read the rendered page.
+	 */
+	const loadAllSessionsForLocation = async (): Promise<any[]> => {
+		const loc = location || await api.getLocation();
+		if (!loc?.country || !loc?.hospital) return [];
+		return api.getSessionsForLocation(loc.country, loc.hospital);
+	};
+
+	const loadFirstPage = (opts: any = {}) => new Promise<any[]>((resolve, reject) => {
 		const { loader } = opts;
 
 		(async () => {
 			setLoadingSessions((loader === undefined) || loader);
+			const requestId = ++listRequestId.current;
 			try {
 				const location = await api.getLocation();
 				setLocation(location);
 				setHasLocalConfig(await api.hasLocalServerConfig());
-				const dbSessions: any = location?.country && location?.hospital
-					? await api.getSessionsForLocation(location.country, location.hospital)
-					: [];
-				setDBSessions(dbSessions);
-				setSessions(getFilteredSessions(dbSessions));
-				resolve(dbSessions);
+
+				if (!(location?.country && location?.hospital)) {
+					if (listRequestId.current === requestId) {
+						setSessions([]);
+						setTotalSessions(0);
+						setHasMoreSessions(false);
+						loadedOffset.current = 0;
+						setListMode('browse');
+					}
+					resolve([]);
+					return;
+				}
+
+				const page = await api.getSessionsPageForLocation(location.country, location.hospital, {
+					limit: SESSIONS_PAGE_SIZE,
+					offset: 0,
+				});
+				if (listRequestId.current !== requestId) {
+					resolve([]);
+					return;
+				}
+
+				loadedOffset.current = page.rows.length;
+				setSessions(page.rows);
+				setHasMoreSessions(page.hasMore);
+				setListMode('browse');
+				resolve(page.rows);
+
+				// The total is only a caption, so it must never hold up the list.
+				api.countSessionsForLocation(location.country, location.hospital)
+					.then(total => { if (listRequestId.current === requestId) setTotalSessions(total); })
+					.catch(() => {});
 			} catch (e: any) {
 				Alert.alert(
 					'Failed to load sessions',
@@ -616,20 +806,192 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						},
 						{
 							text: 'Try again',
-							onPress: () => getSessions(),
+							onPress: () => loadFirstPage(),
 						},
 					]
 				);
-				
+
 				reject(e);
 			}
-			setLoadingSessions(false);
+			if (listRequestId.current === requestId) setLoadingSessions(false);
 		})();
 	});
-	
+
+	/** Appends the next page. Only 'browse' is paged; see `listMode`. */
+	const loadMoreSessions = async () => {
+		if (listMode !== 'browse') return;
+		if (!hasMoreSessions || loadingMoreSessions || loadingSessions) return;
+		if (!location?.country || !location?.hospital) return;
+
+		const requestId = listRequestId.current;
+		setLoadingMoreSessions(true);
+		try {
+			const page = await api.getSessionsPageForLocation(location.country, location.hospital, {
+				limit: SESSIONS_PAGE_SIZE,
+				offset: loadedOffset.current,
+			});
+			// A refresh, filter or search while this page was in flight wins.
+			if (listRequestId.current !== requestId) return;
+
+			loadedOffset.current += page.rows.length;
+			setSessions(current => {
+				const seen = new Set(current.map((s: any) => s.id));
+				return [...current, ...page.rows.filter((s: any) => !seen.has(s.id))];
+			});
+			setHasMoreSessions(page.hasMore);
+		} catch (e: any) {
+			if (listRequestId.current === requestId) {
+				// Silent: the rows already shown stay usable, and pulling again
+				// or scrolling retries. An alert here would fire mid-scroll.
+				logError('Sessions.loadMore', e);
+				setHasMoreSessions(false);
+			}
+		} finally {
+			if (listRequestId.current === requestId) setLoadingMoreSessions(false);
+		}
+	};
+
+	/**
+	 * Applies the date filter. Date matching runs in JS, so the whole history is
+	 * read once here and the result set is complete - hence no paging in this
+	 * mode.
+	 */
+	const applyDateFilter = async (minDate: Date | null, maxDate: Date | null) => {
+		const requestId = ++listRequestId.current;
+		setLoadingSessions(true);
+		try {
+			const all = await loadAllSessionsForLocation();
+			if (listRequestId.current !== requestId) return;
+			const filtered = getFilteredSessions(all, { minDate, maxDate, dateField: 'started' });
+			setSessions(filtered);
+			setTotalSessions(all.length);
+			setHasMoreSessions(false);
+			setListMode('filtered');
+		} catch (e: any) {
+			if (listRequestId.current !== requestId) return;
+			Alert.alert('Failed to filter sessions', e.message || e.msg || JSON.stringify(e), [{ text: 'Ok' }]);
+		} finally {
+			if (listRequestId.current === requestId) setLoadingSessions(false);
+		}
+	};
+
+	const runSearch = async (value: string) => {
+		// A half-typed id ends in the separator the field inserts for the user;
+		// searching for it would never match.
+		const trimmed = (value || '').trim().replace(/-+$/, '');
+
+		// Only the newest search may write results. Without this, a slow reply
+		// for an earlier keystroke can land after a later one and wipe out the
+		// results the user is looking at - which reads as "not found" until
+		// they retype a character and search again.
+		const requestId = ++searchRequestId.current;
+		const isCurrentSearch = () => searchRequestId.current === requestId;
+		// A page fetched before this search must not append itself to results.
+		listRequestId.current += 1;
+
+		if (searchTimeout.current) {
+			clearTimeout(searchTimeout.current);
+			searchTimeout.current = null;
+		}
+
+		setLocalServerError('');
+		setLastSearchedValue(trimmed);
+
+		if (!trimmed) {
+			setSearchingLocalServer(false);
+			setSearchSource(null);
+			if (filterByDate) await applyDateFilter(filterMinDate, filterMaxDate);
+			else await loadFirstPage({ loader: false });
+			return;
+		}
+
+		const loc = location || await api.getLocation();
+		if (!isCurrentSearch()) return;
+
+		// Searched in the db rather than over the loaded page, so a paged list
+		// still finds sessions that have not been scrolled to.
+		const matches = await api.searchSessionsByUIDForLocation(
+			loc?.country as string,
+			loc?.hospital as string,
+			trimmed,
+		);
+		if (!isCurrentSearch()) return;
+
+		const localMatches = getFilteredSessions(matches, { searchValue: '' });
+		if (localMatches.length) {
+			setSearchingLocalServer(false);
+			setSearchSource('local');
+			setSessions(localMatches);
+			setHasMoreSessions(false);
+			setListMode('search');
+			return;
+		}
+
+		try {
+			setSearchingLocalServer(true);
+
+			// Read the configuration now rather than trusting the cached flag:
+			// it is populated by an async effect, so a search typed while the
+			// screen is still settling would report "not configured" for a site
+			// that does have a local server.
+			const location = await api.getLocation();
+			const hospital = location?.hospital;
+			const configured = await api.hasLocalServerConfig();
+			if (!isCurrentSearch()) return;
+
+			setLocalServerAvailable(configured);
+			setLocalServerChecked(true);
+
+			if (!hospital) {
+				setSearchSource(null);
+				setSessions([]);
+				setLocalServerError('This device has no hospital set, so historic records cannot be searched.');
+				return;
+			}
+			if (!configured) {
+				setSearchSource(null);
+				setSessions([]);
+				setLocalServerError('Local server not configured for this site.');
+				return;
+			}
+
+			// An explicit search is a user-initiated attempt, so it gets a fresh
+			// connection: a breaker tripped by background exports must not make
+			// the search fail without the server ever being contacted.
+			api.resetCircuit(api.backendKey(location?.country, 'local', hospital));
+
+			const remoteSessions: any = await api.getLocalSessionsByUID(trimmed, hospital, { partial: true });
+			if (!isCurrentSearch()) return;
+
+			const remoteError = remoteSessions?.[0]?.error;
+			if (remoteError) throw new Error(remoteError);
+
+			const normalized = (remoteSessions || []).map((s: any) => ({ ...s, __source: 'localServer' }));
+			setSearchSource('localServer');
+			setSessions(normalized);
+			setHasMoreSessions(false);
+			setListMode('localServer');
+			if (!normalized.length) setLocalServerError(`No record for ${trimmed} on the local server.`);
+		} catch (e: any) {
+			if (!isCurrentSearch()) return;
+			setSearchSource(null);
+			setSessions([]);
+			setLocalServerError(e?.message || 'Local server unavailable.');
+		} finally {
+			if (isCurrentSearch()) setSearchingLocalServer(false);
+		}
+	};
+
+	/** Re-runs whichever view is active, after a refresh or a change. */
+	const refreshSessions = async (opts: any = {}) => {
+		if (searchValue.trim()) return runSearch(searchValue);
+		if (filterByDate) return applyDateFilter(filterMinDate, filterMaxDate);
+		return loadFirstPage(opts);
+	};
+
 	React.useEffect(() => {
 		if (isFocused) {
-			getSessions();
+			refreshSessions();
 			(async () => {
 				try {
 					const fields: any = await api.getScriptsFields();
@@ -644,9 +1006,33 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				} catch { /* DO NOTHING */ }
 			})();
 		}
-	// getSessions intentionally refreshes from the current render state.
+	// refreshSessions intentionally reads the current render state.
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFocused]);
+
+	React.useEffect(() => () => {
+		if (searchTimeout.current) clearTimeout(searchTimeout.current);
+	}, []);
+
+	const refreshPendingExportCount = React.useCallback(async () => {
+		try {
+			setPendingExportCount(await api.countPendingExports());
+		} catch { /* the caption is optional */ }
+	}, []);
+
+	// The background sweep runs whether or not this screen is open, so the
+	// screen follows it rather than assuming exports only happen here.
+	React.useEffect(() => {
+		setBackgroundExportRunning(api.isExportRunning());
+		refreshPendingExportCount();
+
+		return api.onExportRunningChange(running => {
+			setBackgroundExportRunning(running);
+			// The list is deliberately not reloaded here: that would reset the
+			// scroll position under the user. The caption clearing is the cue.
+			refreshPendingExportCount();
+		});
+	}, [refreshPendingExportCount]);
 
 	React.useEffect(() => {
 		(async () => {
@@ -716,73 +1102,60 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		);
 	}
 
-	const runSearch = async (value: string) => {
-		const trimmed = (value || '').trim();
-		setLocalServerError('');
-		if (!trimmed) {
-			setSearchSource(null);
-			setSessions(getFilteredSessions(dbSessions, { searchValue: trimmed }));
-			return;
-		}
-
-		const localMatches = getFilteredSessions(dbSessions, { searchValue: trimmed });
-		if (localMatches.length) {
-			setSearchSource('local');
-			setSessions(localMatches);
-			return;
-		}
-
-		if (!localServerAvailable) {
-			setSearchSource(null);
-			setSessions([]);
-			setLocalServerError('Local server not configured for this site.');
-			return;
-		}
-
-		try {
-			setSearchingLocalServer(true);
-			const location = await api.getLocation();
-			const hospital = location?.hospital;
-			if (!hospital) throw new Error('Hospital not set');
-			const remoteSessions: any = await api.getLocalSessionsByUID(trimmed, hospital, { partial: true });
-			const remoteError = remoteSessions?.[0]?.error;
-			if (remoteError) throw new Error(remoteError);
-			const normalized = (remoteSessions || []).map((s: any) => ({ ...s, __source: 'localServer' }));
-			setSearchSource('localServer');
-			setSessions(normalized);
-			if (!normalized.length) setLocalServerError('No results found on local server.');
-		} catch (e: any) {
-			setSearchSource(null);
-			setSessions([]);
-			setLocalServerError(e?.message || 'Local server unavailable.');
-		} finally {
-			setSearchingLocalServer(false);
-		}
-	};
-
 	return (
 		<>
             <Content>
                 <TextInput
                     placeholder="Search Neotree ID"
                     value={searchValue}
-                    onChangeText={searchValue => {
-                        setSearchValue(searchValue);
+                    autoCapitalize="characters"
+                    // The shared default is the visible-password keyboard, which
+                    // ignores autoCapitalize on Android, so this field asks for
+                    // the standard keyboard to get a caps-locked keypad.
+                    keyboardType="default"
+                    maxLength={NEOTREE_ID_MAX_LENGTH}
+                    returnKeyType="search"
+                    // Searching on submit means a retry never requires editing
+                    // the id, and it skips the debounce for a complete one.
+                    onSubmitEditing={() => runSearch(searchValue)}
+                    onChangeText={raw => {
+                        const formatted = formatNeotreeIDInput(raw, searchValue);
+                        setSearchValue(formatted);
                         if (searchTimeout.current) clearTimeout(searchTimeout.current);
-                        searchTimeout.current = setTimeout(() => runSearch(searchValue), 1000);
+                        searchTimeout.current = setTimeout(() => runSearch(formatted), 1000);
                     }}
                 />
 				{!!searchingLocalServer && (
 					<Box marginTop="s">
-						<Text variant="caption" color="textSecondary">Searching local server…</Text>
+						<Text variant="caption" color="textSecondary">Searching local server for {lastSearchedValue}…</Text>
 					</Box>
 				)}
-				{!!localServerError && (
-					<Box marginTop="s">
-						<Text variant="caption" color="textSecondary">{localServerError}</Text>
+				{!!localServerError && !searchingLocalServer && (
+					<Box marginTop="s" flexDirection="row" alignItems="center">
+						<Box flex={1}>
+							<Text variant="caption" color="textSecondary">{localServerError}</Text>
+						</Box>
+
+						<TouchableOpacity onPress={() => runSearch(searchValue)}>
+							<Box paddingVertical="s" paddingLeft="m">
+								<Text variant="caption" color="primary">Try again</Text>
+							</Box>
+						</TouchableOpacity>
 					</Box>
 				)}
-				{searchSource === 'localServer' && (
+				{backgroundExportRunning && (
+					<Box marginTop="s" flexDirection="row" alignItems="center">
+						<ActivityIndicator size="small" color={theme.colors.primary} />
+						<Box marginLeft="s" flex={1}>
+							<Text variant="caption" color="textSecondary">
+								{pendingExportCount
+									? `Exporting ${pendingExportCount} session${pendingExportCount === 1 ? '' : 's'} in the background…`
+									: 'Exporting in the background…'}
+							</Text>
+						</Box>
+					</Box>
+				)}
+				{searchSource === 'localServer' && !searchingLocalServer && (
 					<Box marginTop="s">
 						<Text variant="caption" color="textSecondary">Showing results from local server</Text>
 					</Box>
@@ -791,9 +1164,14 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 			<FlatList
 				data={sessions}
-				onRefresh={getSessions}
+				onRefresh={refreshSessions}
 				refreshing={loadingSessions}
 				keyExtractor={(item: any, index) => `${item.id || item?.data?.unique_key || item?.unique_key || index}`}
+				onEndReached={() => { loadMoreSessions(); }}
+				// Half a screen of runway: enough to load before the user hits
+				// the end, without fetching pages they may never reach.
+				onEndReachedThreshold={0.5}
+				initialNumToRender={SESSIONS_PAGE_SIZE}
 				ListHeaderComponent={() => (
 					<Content>
 						{filterByDate && (
@@ -802,14 +1180,40 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 								{!!filterMaxDate && <Text color="textDisabled" variant="caption">Max date: {moment(filterMaxDate).format('LL')}</Text>}
 							</>
 						)}
+						{!!sessions.length && listMode === 'browse' && totalSessions > sessions.length && (
+							<Text color="textDisabled" variant="caption">
+								Showing {sessions.length} of {totalSessions} sessions
+							</Text>
+						)}
 					</Content>
+				)}
+				ListFooterComponent={() => (
+					!sessions.length ? null : (
+						<Content>
+							<Box style={{ paddingVertical: 16 }}>
+								{loadingMoreSessions ? (
+									<ActivityIndicator size="small" color={theme.colors.primary} />
+								) : (
+									<Text style={{ textAlign: 'center' }} variant="caption" color="textDisabled">
+										{hasMoreSessions
+											? 'Scroll for more'
+											: `${sessions.length} session${sessions.length === 1 ? '' : 's'} shown`}
+									</Text>
+								)}
+							</Box>
+						</Content>
+					)
 				)}
 				ListEmptyComponent={() => (
 					<Content>
 						<Box style={{ paddingVertical: 25 }}>
 							<Text style={{ textAlign: 'center', color: '#999' }}>
-								{searchValue && localServerChecked && !localServerAvailable
+								{searchingLocalServer
+									? 'Searching…'
+									: searchValue && localServerChecked && !localServerAvailable
 									? 'Historic search unavailable: no local server configured.'
+									: searchValue && localServerError
+									? 'No results shown - see the message above.'
 									: 'No sessions to display'}
 							</Text>
 						</Box>
@@ -817,8 +1221,13 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				)}
 
 				renderItem={({ item }) => {
-					const remoteDelivered = api.isRemoteDelivered(item);
-					const remotePending = api.isExportableSession(item) && !remoteDelivered;
+					// Rows fetched from the local server are another machine's
+					// records: they carry none of this device's export columns,
+					// so every delivery flag would read as "pending" and the
+					// missing completed_at of a partial record as "interrupted".
+					const isLocalServerResult = item.__source === 'localServer';
+					const remoteDelivered = !isLocalServerResult && api.isRemoteDelivered(item);
+					const remotePending = !isLocalServerResult && api.isExportableSession(item) && !remoteDelivered;
 					const exportBlocked = Boolean(
 						item.main_export_blocked || item.poll_export_blocked || item.local_export_blocked
 					);
@@ -851,6 +1260,26 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 									}}
 								>
 									<Card>
+										{isLocalServerResult && (
+											<>
+												<Box flexDirection="row">
+													<Box
+														backgroundColor="highlight"
+														paddingVertical="s"
+														paddingHorizontal="m"
+														borderRadius="xl"
+													>
+														<Text
+															textAlign="center"
+															variant="caption"
+															color="grey-900"
+														>From Local Server</Text>
+													</Box>
+												</Box>
+												<Br spacing="m" />
+											</>
+										)}
+
 										{(remoteDelivered || remotePending || !!item.local_export) && (
 											<>
 												<Box flexDirection="row">
@@ -903,7 +1332,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											</>
 										)}
 
-										{!(item?.data?.completed_at || item?.data?.canceled_at) && (
+										{!isLocalServerResult && !(item?.data?.completed_at || item?.data?.canceled_at) && (
 											<>
 												<Box flexDirection="row">
 													<Box 
@@ -941,6 +1370,13 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 											</>
 										)}
 
+										<Box>
+											<Text color="textSecondary">Neotree ID</Text>
+											<Text>{getSessionUID(item) || 'N/A'}</Text>
+										</Box>
+
+										<Br spacing="l" />
+
 										<Box flexDirection="row">
 											<View style={{ flex: 1 }}>
 												<Text color="textSecondary">Creation date</Text>
@@ -964,7 +1400,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 										<Box>
 											<Text color="textSecondary">Script</Text>
-											<Text>{item?.data?.script?.data?.title}</Text>
+											<Text>{getSessionScriptTitle(item, 'Unknown script')}</Text>
 										</Box>
 									</Card>
 								</TouchableOpacity>
@@ -985,8 +1421,9 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							setFilterMinDate(null);
 							setFilterMaxDate(null);
 							setFilterByDate(false);
-							setSessions(getFilteredSessions(dbSessions, { minDate: null, maxDate: null }));
 							setOpenFilterModal(false);
+							// Back to the paged view rather than a filtered set.
+							loadFirstPage();
 						}
 					},
 					{
@@ -997,13 +1434,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 								Alert.alert('Invalid date range', error);
 								return;
 							}
-							setFilterByDate(Boolean(filterMinDate || filterMaxDate));
-							setSessions(getFilteredSessions(dbSessions, {
-								minDate: filterMinDate,
-								maxDate: filterMaxDate,
-								dateField: 'started',
-							}));
+							const active = Boolean(filterMinDate || filterMaxDate);
+							setFilterByDate(active);
 							setOpenFilterModal(false);
+							if (active) applyDateFilter(filterMinDate, filterMaxDate);
+							else loadFirstPage();
 						},
 					}
 				]}
@@ -1027,54 +1462,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					},
 					{
 						label: 'Delete',
-						onPress: () => {
-							if (deleteType === 'date_range') {
-								if (!deleteMinDate && !deleteMaxDate) {
-									Alert.alert('Date range required', 'Select a start date, an end date, or both.');
-									return;
-								}
-								const error = dateRangeError(deleteMinDate, deleteMaxDate);
-								if (error) {
-									Alert.alert('Invalid date range', error);
-									return;
-								}
-							}
-							setOpenDeleteModal(false);
-							switch (deleteType) {
-								case 'all':
-									deleteSessions(
-										dbSessions
-											.filter((s: any) => isDeliveredSession(s) || isDraftSession(s))
-											.map((s: any) => s.id),
-										{ allowDrafts: true }
-									);
-									break;
-								case 'incomplete':
-									deleteSessions(
-										dbSessions.filter(isDraftSession).map((s: any) => s.id),
-										{ allowDrafts: true }
-									);
-									break;
-								case 'date_range': {
-									const rangeSessions = getFilteredSessions(dbSessions, {
-											minDate: deleteMinDate,
-											maxDate: deleteMaxDate,
-											dateField: 'started',
-											searchValue: '',
-										});
-									if (!rangeSessions.length) {
-										Alert.alert('Nothing to delete', 'No sessions were created within the selected date range.');
-									} else {
-										deleteSessions(rangeSessions.map((s: any) => s.id), { allowDrafts: true });
-									}
-									setDeleteMinDate(null);
-									setDeleteMaxDate(null);
-									break;
-								}
-								default:
-									// do nothing
-							}
-						},
+						onPress: () => { confirmDeleteSelection(); },
 					}
 				]}
 			>
@@ -1159,7 +1547,13 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				)}
 			</Modal>
 
-			{(deletingSessions || exportingSessions || loadingSessionDetails) && <OverlayLoader />}
+			{(deletingSessions || exportingSessions || loadingSessionDetails) && (
+				<OverlayLoader
+					label={exportingSessions && exportProgress && exportProgress.total > 1
+						? `Exporting ${exportProgress.done} of ${exportProgress.total} sessions…`
+						: undefined}
+				/>
+			)}
 		</>
 	);
 }

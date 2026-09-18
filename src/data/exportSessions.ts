@@ -304,7 +304,12 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
     await Promise.allSettled(work);
 }
 
-function pendingSessionQuery(
+/**
+ * The "still owed somewhere" predicate: completed, not cancelled, and missing
+ * at least one of its deliveries. Shared by the sweep and by the pending count
+ * so the two can never disagree about what is outstanding.
+ */
+function pendingSessionFilter(
     hasLocalConfig: boolean,
     currentCountry: string | null | undefined,
     currentHospital: string | null | undefined,
@@ -335,17 +340,45 @@ function pendingSessionQuery(
         params.push(true, currentCountry, currentHospital.trim());
     }
 
-    params.push(EXPORT_BATCH_SIZE + 1);
     return {
-        sql: `SELECT * FROM sessions
-            WHERE json_valid(data)
+        sql: `WHERE json_valid(data)
             AND json_extract(data, '$.completed_at') IS NOT NULL
             AND json_extract(data, '$.canceled_at') IS NULL
-            AND (${pending.join(' OR ')})
-            ORDER BY createdAt ASC
-            LIMIT ?;`,
+            AND (${pending.join(' OR ')})`,
         params,
     };
+}
+
+function pendingSessionQuery(
+    hasLocalConfig: boolean,
+    currentCountry: string | null | undefined,
+    currentHospital: string | null | undefined,
+): { sql: string; params: any[] } {
+    const filter = pendingSessionFilter(hasLocalConfig, currentCountry, currentHospital);
+    return {
+        sql: `SELECT * FROM sessions
+            ${filter.sql}
+            ORDER BY createdAt ASC
+            LIMIT ?;`,
+        params: [...filter.params, EXPORT_BATCH_SIZE + 1],
+    };
+}
+
+/**
+ * How many sessions still owe a delivery, for telling the user what a
+ * background export is working through. Counts in sqlite - no rows are parsed.
+ */
+export async function countPendingExports(): Promise<number> {
+    try {
+        const hasLocalConfig = await hasLocalServerConfig();
+        const location = await getLocation();
+        const filter = pendingSessionFilter(hasLocalConfig, location?.country, location?.hospital);
+        const rows = await dbTransaction(`SELECT COUNT(id) AS total FROM sessions ${filter.sql};`, filter.params);
+        return Number(rows?.[0]?.total || 0);
+    } catch (error) {
+        logError('countPendingExports', error);
+        return 0;
+    }
 }
 
 function needsDelivery(
@@ -360,50 +393,21 @@ function needsDelivery(
     );
 }
 
-export async function doExportSessions(sessions?: any[]): Promise<ExportBatchResult> {
-    const hasLocalConfig = await hasLocalServerConfig();
-    const location = await getLocation();
-    const currentCountry = location?.country;
-    const currentHospital = location?.hospital;
-    const result = emptyResult();
-    result.localConfigured = hasLocalConfig;
+function deliveredCount(result: ExportBatchResult): number {
+    return result.okMain.length + result.okPoll.length + result.okLocal.length;
+}
 
-    let candidates: any[];
-    if (sessions) {
-        // An explicit/manual export is also the user's retry mechanism for a
-        // quarantined row, so it gets one fresh attempt regardless of blocks.
-        candidates = sessions.filter(session => needsDelivery(session, location, hasLocalConfig));
-    } else {
-        const query = pendingSessionQuery(hasLocalConfig, currentCountry, currentHospital);
-        const rows = await dbTransaction(query.sql, query.params);
-        candidates = rows.map(session => ({ ...session, data: JSON.parse(session.data || '{}') }));
-    }
+interface BatchContext {
+    hasLocalConfig: boolean;
+    location: { country?: string | null; hospital?: string | null } | null | undefined;
+    application: any;
+    result: ExportBatchResult;
+}
 
-    result.hasMore = candidates.length > EXPORT_BATCH_SIZE;
-    let exportData = candidates.slice(0, EXPORT_BATCH_SIZE);
-    if (!exportData.length) return result;
-
-    if (sessions) {
-        const blocked = exportData.filter(session => (
-            session.main_export_blocked || session.poll_export_blocked || session.local_export_blocked
-        ));
-        await Promise.all(blocked.map(session => updateSession({
-            main_export_blocked: false,
-            poll_export_blocked: false,
-            local_export_blocked: false,
-            export_last_error: null,
-        }, { where: { id: session.id } })));
-        exportData = exportData.map(session => ({
-            ...session,
-            main_export_blocked: false,
-            poll_export_blocked: false,
-            local_export_blocked: false,
-        }));
-    }
-
-    await afterInteractions();
-    const application = await getApplication();
-    const cohorts = groupByCountry(exportData);
+/** Sends one batch, grouped by country so each cohort reaches its own backend. */
+async function runExportBatch(batch: any[], ctx: BatchContext): Promise<void> {
+    const { hasLocalConfig, location, application, result } = ctx;
+    const cohorts = groupByCountry(batch);
 
     await Promise.all(Array.from(cohorts.entries()).map(async ([cohortCountry, cohortSessions]) => {
         try {
@@ -425,11 +429,106 @@ export async function doExportSessions(sessions?: any[]): Promise<ExportBatchRes
             }));
         }
     }));
+}
+
+export interface ExportRunOptions {
+    /** Reports batch progress for an explicit selection: (attempted, total). */
+    onProgress?: (done: number, total: number) => void;
+}
+
+export async function doExportSessions(
+    sessions?: any[],
+    opts: ExportRunOptions = {},
+): Promise<ExportBatchResult> {
+    const hasLocalConfig = await hasLocalServerConfig();
+    const location = await getLocation();
+    const currentCountry = location?.country;
+    const currentHospital = location?.hospital;
+    const result = emptyResult();
+    result.localConfigured = hasLocalConfig;
+
+    let candidates: any[];
+    if (sessions) {
+        // An explicit/manual export is also the user's retry mechanism for a
+        // quarantined row, so it gets one fresh attempt regardless of blocks.
+        candidates = sessions.filter(session => needsDelivery(session, location, hasLocalConfig));
+    } else {
+        const query = pendingSessionQuery(hasLocalConfig, currentCountry, currentHospital);
+        const rows = await dbTransaction(query.sql, query.params);
+        candidates = rows.map(session => ({ ...session, data: JSON.parse(session.data || '{}') }));
+    }
+
+    if (!candidates.length) return result;
+
+    if (sessions) {
+        // Quarantine is cleared across the whole selection, not just the first
+        // batch, so every session the user asked for gets its fresh attempt.
+        const blocked = candidates.filter(session => (
+            session.main_export_blocked || session.poll_export_blocked || session.local_export_blocked
+        ));
+        await Promise.all(blocked.map(session => updateSession({
+            main_export_blocked: false,
+            poll_export_blocked: false,
+            local_export_blocked: false,
+            export_last_error: null,
+        }, { where: { id: session.id } })));
+        candidates = candidates.map(session => ({
+            ...session,
+            main_export_blocked: false,
+            poll_export_blocked: false,
+            local_export_blocked: false,
+        }));
+    }
+
+    await afterInteractions();
+    const application = await getApplication();
+    const ctx: BatchContext = { hasLocalConfig, location, application, result };
+
+    if (!sessions) {
+        // Background sweep: one batch per run. `hasMore` makes
+        // scheduleExportSessions come straight back for the next one, so the
+        // whole backlog drains however large it is, without one long run.
+        result.hasMore = candidates.length > EXPORT_BATCH_SIZE;
+        await runExportBatch(candidates.slice(0, EXPORT_BATCH_SIZE), ctx);
+        return result;
+    }
+
+    // Explicit selection: every session asked for is attempted, in batches.
+    // Truncating here would mean "export all" silently exported 25 and left the
+    // rest to a background sweep the user cannot see.
+    const total = candidates.length;
+    for (let offset = 0; offset < total; offset += EXPORT_BATCH_SIZE) {
+        const batch = candidates.slice(offset, offset + EXPORT_BATCH_SIZE);
+        const deliveredBefore = deliveredCount(result);
+        const failuresBefore = result.failures.length;
+
+        await runExportBatch(batch, ctx);
+
+        const attempted = Math.min(offset + batch.length, total);
+        try { opts.onProgress?.(attempted, total); } catch { /* reporting only */ }
+
+        if (attempted >= total) break;
+
+        // Nothing got through and every failure was the network: the backends
+        // are down and their circuits are now open, so the remaining batches
+        // would only fail too. Stop, and let the retry schedule take over.
+        const progressed = deliveredCount(result) > deliveredBefore;
+        const newFailures = result.failures.slice(failuresBefore);
+        const networkOnly = newFailures.length > 0 && newFailures.every(failure => failure.kind === 'network');
+        if (!progressed && networkOnly) {
+            result.hasMore = true;
+            break;
+        }
+
+        // Yield between batches so a large export doesn't freeze the UI.
+        await afterInteractions();
+    }
 
     return result;
 }
 
-export const exportSessions = (sessions?: any[]) => withExportLock(() => doExportSessions(sessions));
+export const exportSessions = (sessions?: any[], opts: ExportRunOptions = {}) =>
+    withExportLock(() => doExportSessions(sessions, opts));
 
 // --- Debounced background export -----------------------------------------------
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;

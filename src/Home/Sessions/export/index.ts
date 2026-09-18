@@ -4,11 +4,9 @@ import * as MediaLibrary from 'expo-media-library';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
-import getJSON from './getJSON';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 import { logError, logWarning } from '@/src/utils/logError';
 
-export { getJSON };
 export interface ManualExportOutcome {
   status: 'success' | 'already-exported' | 'local-only' | 'partial' | 'failed';
   localConfigured: boolean;
@@ -368,7 +366,7 @@ export function exportToApi(opts: any = {}) {
         );
 
 
-        const result = await api.doExportSessions(sessions);
+        const result = await api.doExportSessions(sessions, { onProgress: opts.onProgress });
 
         const postRows: any[] = await api.getSessionsByIds(sessions.map((s: any) => s.id));
         const postById: any = {};

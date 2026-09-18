@@ -8,7 +8,7 @@
     "android": "npx expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test:exports": "node --experimental-strip-types --test tests/export-delivery.test.mjs",
+    "test:exports": "node --experimental-strip-types --test tests/*.test.mjs",
     "lint": "expo lint",
     "build:demo": "NODE_ENV=production NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
     "build:stage": "NODE_ENV=production NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage --clear-cache",

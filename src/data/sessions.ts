@@ -1,38 +1,14 @@
 import { makeApiCall, makeLocalGetApiCall } from './api';
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
-import { exportAcknowledged } from './deliveryRules';
 import { logError } from '@/src/utils/logError';
-
-
-export const exportSession = async (s: any) => {
-    if (!s?.completed_at || s?.canceled_at) {
-        throw new Error('Only completed sessions can be exported');
-    }
-
-    try {
-        const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
-            method: 'POST',
-            body: JSON.stringify(s),
-        });
-        if (!exportAcknowledged(res.status)) {
-            const text = await res.text();
-            logError('exportSession.badStatus', 'Session export rejected by server', { status: res.status, response: text });
-            throw new Error('Failed to export session, try again!');
-        }
-        return true;
-    } catch (e) {
-        logError('exportSession', e);
-        throw e;
-    }
-};
 
 export const getExportedSessionsByUID = (uid: string) => new Promise<any[]>((resolve, reject) => {
     (async () => {
         if (!uid) return reject(new Error('UID is required'));
 
         try {
-            const localRes = await dbTransaction(`select * from sessions where uid='${uid}';`);
+            const localRes = await dbTransaction('select * from sessions where uid=?;', [uid]);
             const localSessions: any = await convertSessionsToExportable(
                 (localRes || []).filter(s => s.data).map(s => ({
                     ...s,
@@ -87,13 +63,6 @@ export const getExportedSessionsByUID = (uid: string) => new Promise<any[]>((res
         } catch (e: any) {
             resolve([{ error: e?.message }]);
         }
-
-        try {
-            const sessions = await dbTransaction('select * from exports where uid=? order by ingested_at desc;', [uid]);
-            resolve(sessions.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
-        } catch (e: any) {
-            resolve([{ 'error': e?.message }])
-        }
     })();
 });
 
@@ -113,16 +82,34 @@ export const getLocalSessionsByUID = (
                 partial ? 'partial=true' : null,
             ].filter(Boolean).join('&');
             const res = await makeLocalGetApiCall(`/localByUid?${query}`);
-            resolve(Object.values({
-                ...(res || [])
-                    .reduce((acc: any, s: any) => ({
-                        ...acc,
-                        [s.data.unique_key]: s,
-                    }), {})
-            }));
-        } catch (e: any) {
 
-            resolve([{'error': e?.message }])
+            // A null response means no local server is configured for this
+            // hospital, which is not the same as the server holding no record.
+            // Reported as an error so callers don't present it as "not found".
+            if (res === null || res === undefined) {
+                resolve([{ error: 'No local server is configured for this hospital.' }]);
+                return;
+            }
+
+            const rows = Array.isArray(res)
+                ? res
+                : (Array.isArray(res?.sessions) ? res.sessions : null);
+            if (!rows) {
+                resolve([{ error: 'The local server returned an unexpected response.' }]);
+                return;
+            }
+
+            // Deduplicate on unique_key, but keep rows that have none in their
+            // own slot: partial records and older rows would otherwise all
+            // collapse onto a single `undefined` key and only one would show.
+            const byKey = new Map<string, any>();
+            rows.forEach((s: any, index: number) => {
+                const key = s?.data?.unique_key || s?.unique_key || `row:${index}`;
+                byKey.set(`${key}`, s);
+            });
+            resolve(Array.from(byKey.values()));
+        } catch (e: any) {
+            resolve([{ error: e?.message }]);
         }
     })();
 });
