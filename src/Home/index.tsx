@@ -20,6 +20,7 @@ import {PrintGenericBarCode} from './BarCode/GenericBarCodePrint'
 import { useAppContext } from '../AppContext';
 import {} from '../components/'
 import * as api from '../data';
+import { SessionModal } from '../components/session-modal';
 
 const Drawer = createDrawerNavigator<HomeRoutes>();
 
@@ -95,6 +96,8 @@ export function HomeNavigator({}: HomeNavigatorProps) {
 				/>	
 	
 			</Drawer.Navigator>
+
+			<SessionModal />
 		</>
 	);
 }``
