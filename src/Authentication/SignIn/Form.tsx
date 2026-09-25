@@ -6,9 +6,10 @@ import * as api from '../../data';
 
 type FormProps = {
 	onSignInSuccess: () => any;
+    message?: React.ReactNode;
 };
 
-export function Form({ onSignInSuccess }: FormProps) {
+export function Form({ message, onSignInSuccess }: FormProps) {
 	const theme = useTheme();
 
 	const emailInputRef = React.useRef<RNTextInput>(null);
@@ -80,6 +81,8 @@ export function Form({ onSignInSuccess }: FormProps) {
 
 	return (
 		<>
+            {message}
+            
 			<TextInput 
 				editable={!submitting}
 				placeholder="Email Address"
