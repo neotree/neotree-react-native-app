@@ -405,11 +405,15 @@ export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject)
         try {
             ids = ids || [];
             if (!ids.map) ids = [ids];
+            if (!ids.length) { resolve([]); return; }
 
-            const res = await dbTransaction(`delete from sessions where id in (${ids.join(',')})`);
+            const res = await dbTransaction(
+                `delete from sessions where id in (${ids.map(() => '?').join(',')})`,
+                ids
+            );
             resolve(res);
-        } catch (e) { 
-            
+        } catch (e) {
+
             reject(e); }
     })();
 });

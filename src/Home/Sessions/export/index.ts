@@ -358,7 +358,7 @@ export function exportToApi(opts: any = {}) {
         const wasRemoteDone = new Set(
           sessions
             .filter((s: any) => {
-              const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(s.poll_exported);
+              const pollSatisfied = !(api.pollingRequired(s.data?.country)) || Boolean(s.poll_exported);
               return Boolean(s.exported) && pollSatisfied;
             })
             .map((s: any) => s.id)
@@ -377,7 +377,7 @@ export function exportToApi(opts: any = {}) {
 
         const isRemoteDone = (s: any) => {
           const row = postById[s.id] || s;
-          const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(row.poll_exported);
+          const pollSatisfied = !(api.pollingRequired(s.data?.country)) || Boolean(row.poll_exported);
           return Boolean(row.exported) && pollSatisfied;
         };
         const isLocalDone = (s: any) => {
