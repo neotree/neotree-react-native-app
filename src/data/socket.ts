@@ -44,6 +44,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
         const onWebeditorConnect = () => resetCircuit(backendKey(country, 'webeditor'));
         const onNodeApiConnect = () => {
             resetCircuit(backendKey(country, 'nodeapi'));
+            resetCircuit(backendKey(country, 'nodeapi', 'poll'));
             scheduleExportSessions();
         };
         const onDataUpdated = (data: any) => onEvent({ name: 'data_updated', ...data });

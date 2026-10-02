@@ -13,12 +13,15 @@ type SummaryProps = {
     onShowConfidential?: (show: boolean) => void;
     session: any;
     qrCode?: any;
+    /** History view: show values the script marks non-printable (printing still hides them). */
+    showNonPrintable?: boolean;
 };
 
 export function Summary({
     Wrapper,
     showConfidential,
     onShowConfidential,
+    showNonPrintable,
     session: { data: { form: sessionForm, dateAndTimeOfDeath }, uid },
 }: SummaryProps) {
     Wrapper = Wrapper || React.Fragment;
@@ -72,7 +75,8 @@ export function Summary({
                         </View>
                     )}
 
-                    {sections
+                    {(() => {
+                    const renderedSections = sections
                         ?.filter(([, entries]) => entries.length)
                         .map(([sectionTitle, entries], sectionIndex) => {
                             const key = [sectionTitle, sectionIndex].join('');
@@ -82,14 +86,15 @@ export function Summary({
                                 .map(({
                                     values,
                                     management = [],
-                                    screen: { metadata: { label }, listStyle: _listStyle = 'none', type: screenType }
+                                    screen: { metadata = {}, listStyle: _listStyle = 'none', type: screenType }
                                 }: any, entryIndex: number) => {
+                                    const { label } = metadata;
                                     management = management?.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
                                     const nodes = values
                                         ?.filter((e: any) => e.confidential ? showConfidential : true)
                                         .filter((v: any) => v.valueText || v.value)
-                                        .filter((v: any) => v.printable !== false)
+                                        .filter((v: any) => showNonPrintable || v.printable !== false)
                                         .map((v: any, i: number) => {
                                             let isFlexRow = true;
                                             let hideLabel = false;
@@ -246,7 +251,18 @@ export function Summary({
                                     {displayItems}
                                 </Box>
                             );
-                        })}
+                        }) ?? [];
+
+                    if (!renderedSections.some(Boolean)) {
+                        return (
+                            <Text color="textSecondary">
+                                {showConfidential ? 'No data to display' : 'No non-confidential data to display'}
+                            </Text>
+                        );
+                    }
+
+                    return renderedSections;
+                    })()}
                 </Content>
             </Wrapper>
         </Box>

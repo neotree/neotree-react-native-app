@@ -92,6 +92,20 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		[location, hasLocalConfig]
 	);
 
+	// The "Exported Online"/"Exported Locally" badges only reflect two of the
+	// three destinations a session may owe data to - the confidential/poll
+	// data delivery (`poll_exported`) has no badge of its own. A session can
+	// look fully exported and still be blocked from deletion because of it, so
+	// spell out exactly what's still pending rather than a generic message.
+	const getPendingDestinations = React.useCallback((s: any): string[] => {
+		if (!api.isExportableSession(s)) return [];
+		const pending: string[] = [];
+		if (!s.exported) pending.push('server');
+		if (api.pollingRequired(s?.data?.country) && !s.poll_exported) pending.push('confidential data sync');
+		if (api.localRequiredForSession(s, location, hasLocalConfig) && !s.local_export) pending.push('local server');
+		return pending;
+	}, [location, hasLocalConfig]);
+
 	const isDraftSession = React.useCallback((s: any) => !api.isTerminalSession(s), []);
 
 	const normalizeSessionForDisplay = async (session: any) => {
@@ -409,8 +423,23 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		setShowExportFormats(false);
 	};
 
+	// Summarizes *why* a set of blocked sessions can't be deleted yet, broken
+	// down by destination, so "exported but still blocked" is never a mystery
+	// (the export/local badges don't show confidential-data-sync status).
+	const summarizePending = React.useCallback((list: any[]): string => {
+		const counts: Record<string, number> = {};
+		list.forEach((s: any) => {
+			getPendingDestinations(s).forEach((dest) => { counts[dest] = (counts[dest] || 0) + 1; });
+		});
+		const parts = Object.entries(counts).map(([dest, count]) => `${count} awaiting ${dest}`);
+		return parts.length ? ` (${parts.join(', ')})` : '';
+	}, [getPendingDestinations]);
+
 	const deleteSessions = async (ids: any[] = [], opts: { allowDrafts?: boolean } = {}) => {
-		if (!ids.length) return;
+		if (!ids.length) {
+			Alert.alert('Nothing to delete', 'No sessions matched this selection.', [{ text: 'Ok' }]);
+			return;
+		}
 
 		const allRows: any[] = ((await api.getSessions()) as any[]) || [];
 		const byId: any = {};
@@ -425,9 +454,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		if (!deletable.length) {
 			Alert.alert(
 				'Nothing deleted',
-				blocked.length === 1
-					? 'This session has not finished exporting yet, so it cannot be deleted. It will be sent automatically once a server is reachable.'
-					: `${blocked.length} session(s) have not finished exporting yet, so none were deleted. They will be sent automatically once a server is reachable.`,
+				(blocked.length === 1
+					? 'This session has not finished exporting yet, so it cannot be deleted.'
+					: `${blocked.length} session(s) have not finished exporting yet, so none were deleted.`)
+				+ summarizePending(blocked)
+				+ ' They will be sent automatically once a server is reachable.',
 				[{ text: 'Ok' }]
 			);
 			return;
@@ -461,7 +492,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		if (blocked.length) {
 			Alert.alert(
 				'Some sessions kept',
-				`${blocked.length} session(s) have not finished exporting and will be kept. `
+				`${blocked.length} session(s) have not finished exporting${summarizePending(blocked)} and will be kept. `
 				+ `Delete the remaining ${deletable.length} session(s)?`,
 				[
 					{ text: 'Cancel', style: 'cancel' },
@@ -964,10 +995,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							setOpenDeleteModal(false);
 							switch (deleteType) {
 								case 'all':
+									// Don't pre-filter to "deletable" sessions here - pass everything
+									// through deleteSessions so any session that isn't fully delivered
+									// yet is reported (and explained), not silently skipped.
 									deleteSessions(
-										dbSessions
-											.filter((s: any) => isDeliveredSession(s) || isDraftSession(s))
-											.map((s: any) => s.id),
+										dbSessions.map((s: any) => s.id),
 										{ allowDrafts: true }
 									);
 									break;
