@@ -242,6 +242,62 @@ test('excludes on $Diagnoses is safe when nothing is confirmed', () => {
     assert.equal(run(`[$Diagnoses excludes ('RDN')]`, [], { extra: [dxScreen({ key: 'RDN' })] }), false);
 });
 
+// -------------------------------------------- live answers vs saved entry
+
+/**
+ * A screen evaluates its own field conditions while the clinician is still
+ * typing, so it hands parseCondition the values currently on screen. Those must
+ * win over whatever that screen last saved.
+ *
+ * createBuildForm merges by screen id: an entry carrying the screen's id
+ * REPLACES the saved one, an entry without an id is appended — and substitution
+ * takes the first value it finds, so an appended entry loses. Getting this
+ * wrong made chained conditions ($BSUnit depends on $BSmonYN, the readings
+ * depend on $BSUnit) show and hide against stale answers.
+ */
+const SCREEN = 'blood-sugar';
+const savedEntry = (monitor: string, unit: any) => [{
+    screen: { id: SCREEN, type: 'form' },
+    values: [{ key: 'BSmonYN', value: monitor }, { key: 'BSUnit', value: unit }],
+}];
+const onScreenNow = (monitor: string, unit: any) => [{ key: 'BSmonYN', value: monitor }, { key: 'BSUnit', value: unit }];
+
+/** What the screen does: evaluate `condition` against the live values. */
+const asScreen = (condition: string, saved: any[], live: any[]) => {
+    const buildForm = createBuildForm({ entries: saved });
+    return evaluateCompiled(compileCondition(condition, [{ screen: { id: SCREEN }, values: live }], { buildForm, configuration: null }));
+};
+
+test('live answers override the screen own saved entry', () => {
+    const saved = savedEntry('Y', 'Mol');
+    const live = onScreenNow('N', null);
+    assert.equal(asScreen(`$BSmonYN = 'Y'`, saved, live), false, 'the unit field must hide once monitoring is set to No');
+    assert.equal(asScreen(`$BSUnit = 'Mol'`, saved, live), false, 'and the reading field with it');
+});
+
+test('live answers are seen even when the saved entry had nothing', () => {
+    const saved = savedEntry('N', null);
+    const live = onScreenNow('Y', 'Mol');
+    assert.equal(asScreen(`$BSmonYN = 'Y'`, saved, live), true);
+    assert.equal(asScreen(`$BSUnit = 'Mol'`, saved, live), true);
+});
+
+test('switching between two option values re-evaluates both branches', () => {
+    const saved = savedEntry('Y', 'Mol');
+    const live = onScreenNow('Y', 'Mg');
+    assert.equal(asScreen(`$BSUnit = 'Mol'`, saved, live), false, 'mmol field must hide');
+    assert.equal(asScreen(`$BSUnit = 'Mg'`, saved, live), true, 'mg field must show');
+});
+
+test('an entry with no screen id is appended, and therefore loses', () => {
+    // Pinned as the reason the screen must pass its id: this is the old,
+    // broken behaviour, and it is a property of the merge rather than a bug
+    // in the caller.
+    const buildForm = createBuildForm({ entries: savedEntry('Y', 'Mol') });
+    const stale = evaluateCompiled(compileCondition(`$BSmonYN = 'Y'`, [{ values: onScreenNow('N', null) }], { buildForm, configuration: null }));
+    assert.equal(stale, true, 'without a screen id the saved answer still wins');
+});
+
 // ------------------------------------------------------------- hazards
 
 test('a != chain joined by or is always true', () => {

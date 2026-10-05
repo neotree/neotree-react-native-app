@@ -407,25 +407,43 @@ export function TypeForm(_: TypeFormProps) {
         return result;
     }, []);
 
+    /**
+     * The screen's own saved entry, as parseCondition identifies it.
+     *
+     * Conditions on this screen must be evaluated against what the clinician is
+     * editing RIGHT NOW, not what the screen last saved. parseCondition merges
+     * the entries it is handed over the saved ones BY SCREEN ID; an entry with
+     * no screen is appended instead, and substitution takes the first value it
+     * finds — so without this the stale saved answer wins and a field shows or
+     * hides against an answer the clinician has already changed.
+     */
+    const liveEntryScreen = React.useMemo(() => ({ id: activeScreen?.id }), [activeScreen?.id]);
+
     const evaluateFieldCondition = React.useCallback((f: any, form?: any) => {
         let conditionMet = true;
         let formatedvalues = values;
+        // A repeatable row carries only that row's answers, so it is passed as an
+        // extra entry rather than as this screen's answers — the screen's own
+        // entry still holds everything outside the row.
+        let isRepeatableRow = false;
         if (repeatable) {
             if (form) {
                 formatedvalues = moveKeysInside([form]);
+                isRepeatableRow = true;
             }
         }
 
         const condition = `${f?.condition ?? ''}`.trim();
 
         if (condition) {
-            conditionMet = evaluateCondition(
-                parseCondition(condition, [{ values: formatedvalues }])
-            ) as boolean;
+            const entry = isRepeatableRow
+                ? { values: formatedvalues }
+                : { screen: liveEntryScreen, values: formatedvalues };
+            conditionMet = evaluateCondition(parseCondition(condition, [entry as any])) as boolean;
         }
 
         return conditionMet;
-    }, [evaluateCondition, moveKeysInside, parseCondition, repeatable, values]);
+    }, [evaluateCondition, liveEntryScreen, moveKeysInside, parseCondition, repeatable, values]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
@@ -606,11 +624,14 @@ export function TypeForm(_: TypeFormProps) {
     }, [metadata?.fields, conditionValuesSignature, configuration]);
 
     const fieldsForRender = React.useMemo(() => (
+        // Same reason as evaluateFieldCondition: option conditions must see the
+        // live answers, so the entry carries this screen's id and replaces the
+        // saved one rather than queueing up behind it.
         applyOptionConditions(metadata?.fields || [], (condition: string) => (
-            evaluateCondition(parseCondition(condition, [{ values }])) as boolean
+            evaluateCondition(parseCondition(condition, [{ screen: liveEntryScreen, values } as any])) as boolean
         ))
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [metadata?.fields, conditionValuesSignature, configuration]);
+    ), [metadata?.fields, conditionValuesSignature, configuration, liveEntryScreen]);
 
 
     React.useEffect(() => {
