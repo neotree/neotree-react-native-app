@@ -1,7 +1,21 @@
 import { APP_VERSION } from '@/src/constants';
 import * as types from '../types';
 import { dbTransaction } from './db';
-import { buildOrder, buildWhere, withParsedData } from './queryBuilders';
+import {
+    buildOrder,
+    buildWhere,
+    locationParams,
+    normaliseUIDSearchTerm,
+    SESSIONS_FOR_LOCATION_WHERE,
+    SESSIONS_NEWEST_FIRST,
+    sessionsCursorAfter,
+    sessionsPageQuery,
+    sessionsUIDSearchQuery,
+    withParsedData,
+} from './queryBuilders';
+import type { SessionsCursor } from './queryBuilders';
+
+export type { SessionsCursor } from './queryBuilders';
 
 export async function getAuthenticatedUser() {
     const rows = await dbTransaction('select * from authenticated_user;');
@@ -371,21 +385,11 @@ export async function getSessionsByIds(ids: any[] = []): Promise<any[]> {
     return withParsedData(rows);
 }
 
-/**
- * Sessions recorded at one site. Matches `sessions_location_idx`, so the
- * ordering and the filter are both served by the index.
- */
-const SESSIONS_FOR_LOCATION_WHERE = `where json_valid(data)
-                 and json_extract(data, '$.country') = ?
-                 and TRIM(json_extract(data, '$.hospital_id')) = ?`;
-
-function locationParams(country: string, hospital: string): any[] {
-    return [country, hospital.trim()];
-}
-
 export interface SessionsPage {
     rows: any[];
     hasMore: boolean;
+    /** Pass back to read the page after this one. Null once there is none. */
+    cursor: SessionsCursor | null;
 }
 
 /**
@@ -408,7 +412,7 @@ export const getSessionsForLocation = (
             const rows = await dbTransaction(
                 `select * from sessions
                  ${SESSIONS_FOR_LOCATION_WHERE}
-                 order by createdAt DESC;`,
+                 ${SESSIONS_NEWEST_FIRST};`,
                 locationParams(country, hospital)
             );
             resolve(withParsedData(rows));
@@ -419,25 +423,25 @@ export const getSessionsForLocation = (
 });
 
 /**
- * One page of the site's sessions, newest first. Reads one row more than
- * asked for to report whether another page exists, without a second query.
+ * One page of the site's sessions, newest first, after `cursor` (omit it for
+ * the first page). Keyset-paged - see `sessionsPageQuery` for why not OFFSET.
  */
 export async function getSessionsPageForLocation(
     country: string,
     hospital: string,
-    opts: { limit: number; offset?: number } = { limit: 20 },
+    opts: { limit: number; cursor?: SessionsCursor | null } = { limit: 20 },
 ): Promise<SessionsPage> {
-    if (!country || !hospital) return { rows: [], hasMore: false };
+    if (!country || !hospital) return { rows: [], hasMore: false, cursor: null };
     const limit = Math.max(1, opts.limit);
-    const offset = Math.max(0, opts.offset || 0);
-    const rows = await dbTransaction(
-        `select * from sessions
-         ${SESSIONS_FOR_LOCATION_WHERE}
-         order by createdAt DESC
-         limit ? offset ?;`,
-        [...locationParams(country, hospital), limit + 1, offset]
-    );
-    return { rows: withParsedData(rows.slice(0, limit)), hasMore: rows.length > limit };
+    const query = sessionsPageQuery({ country, hospital, limit, cursor: opts.cursor });
+    const rows = await dbTransaction(query.sql, query.params);
+    const page = rows.slice(0, limit);
+    const hasMore = rows.length > limit;
+    return {
+        rows: withParsedData(page),
+        hasMore,
+        cursor: hasMore ? sessionsCursorAfter(page[page.length - 1]) : null,
+    };
 }
 
 /** How many sessions the site has, for "showing x of y". */
@@ -451,11 +455,13 @@ export async function countSessionsForLocation(country: string, hospital: string
 }
 
 /**
- * Sessions at the site whose Neotree ID contains `uid`.
+ * Sessions at the site whose Neotree ID matches `uid`.
  *
  * Runs in the db rather than over the loaded page, so a paged list still
- * searches every session the device holds. Older rows kept the id only inside
- * `data`, hence the COALESCE.
+ * searches every session the device holds. IDs are typed from the start, so
+ * the indexed prefix search answers almost every query; only when it finds
+ * nothing does the scan for the term anywhere in the id run - which also
+ * covers older rows that kept the id only inside `data`.
  */
 export async function searchSessionsByUIDForLocation(
     country: string,
@@ -463,19 +469,14 @@ export async function searchSessionsByUIDForLocation(
     uid: string,
     limit = 50,
 ): Promise<any[]> {
-    const term = `${uid || ''}`.trim();
-    if (!country || !hospital || !term) return [];
-    // LIKE wildcards in the term itself would widen the search unexpectedly.
-    const escaped = term.toUpperCase().replace(/[%_\\]/g, '');
-    const rows = await dbTransaction(
-        `select * from sessions
-         ${SESSIONS_FOR_LOCATION_WHERE}
-         and upper(COALESCE(NULLIF(uid, ''), json_extract(data, '$.uid'))) like ?
-         order by createdAt DESC
-         limit ?;`,
-        [...locationParams(country, hospital), `%${escaped}%`, Math.max(1, limit)]
-    );
-    return withParsedData(rows);
+    if (!country || !hospital || !normaliseUIDSearchTerm(uid)) return [];
+
+    for (const mode of ['prefix', 'substring'] as const) {
+        const query = sessionsUIDSearchQuery({ country, hospital, term: uid, limit, mode });
+        const rows = await dbTransaction(query.sql, query.params);
+        if (rows.length) return withParsedData(rows);
+    }
+    return [];
 }
 
 export async function deleteSessions(ids: any[] = []) {

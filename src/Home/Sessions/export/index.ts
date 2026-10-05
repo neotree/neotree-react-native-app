@@ -1,11 +1,19 @@
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 import { logError, logWarning } from '@/src/utils/logError';
+
+export interface FileExportOutcome {
+  /** Sessions written to the file(s). */
+  written: number;
+  /** Sessions that could not be converted and were left out (logged, kept on device). */
+  skipped: number;
+  /** True when the folder picker was dismissed, so nothing was saved. */
+  cancelled: boolean;
+}
 
 export interface ManualExportOutcome {
   status: 'success' | 'already-exported' | 'local-only' | 'partial' | 'failed';
@@ -87,14 +95,10 @@ const getExcelEntryValue = ({
   return 'N/A';
 };
 
-const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
-  (async () => {
-    try {
-      const res = await MediaLibrary.requestPermissionsAsync();
-      resolve(res.granted);
-    } catch (e) { return reject(e); }
-  })();
-});
+// Files are written through the Storage Access Framework: the user picks the
+// folder, and that choice is the permission. The media-library permission this
+// used to require is for reading photos and media (on Android 13+ it does not
+// even cover documents), so declining it blocked exports for no reason.
 
 export function exportJSON(_opts: any = {}) {
   const { sessions: suppliedSessions, ...opts } = _opts;
@@ -103,14 +107,13 @@ export function exportJSON(_opts: any = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
         const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
           ...acc,
           [script.script_id]: script,
         }), {});
 
         const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+        const skipped = Math.max(0, sessions.length - parsedSessions.length);
         const json = parsedSessions.reduce((acc: any, e: any) => ({
           ...acc,
           [e.script.id]: [...(acc[e.script.id] || []), e],
@@ -133,8 +136,13 @@ export function exportJSON(_opts: any = {}) {
             });
           }));
         }
-        
-        resolve(null);
+
+        const outcome: FileExportOutcome = {
+          written: granted ? parsedSessions.length : 0,
+          skipped,
+          cancelled: !granted,
+        };
+        resolve(outcome);
       } catch (e) { return reject(e); }
     })();
   });
@@ -147,16 +155,6 @@ export function exportEXCEL(opts: any = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) {
-          const error = new Error('App has not been granted permission to save files to device');
-          logError('excelExport.permissionDenied', error, {
-            sessionCount: sessions.length,
-            format: opts.format,
-          });
-          return reject(error);
-        }
-
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
         if (!granted) {
@@ -166,6 +164,9 @@ export function exportEXCEL(opts: any = {}) {
           });
         }
 
+        let written = 0;
+        let skipped = 0;
+
         if (granted) {
           const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
             ...acc,
@@ -173,6 +174,8 @@ export function exportEXCEL(opts: any = {}) {
           }), {});
     
           const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+          written = parsedSessions.length;
+          skipped = Math.max(0, sessions.length - parsedSessions.length);
           const json = parsedSessions.reduce((acc: any, e: any) => ({
             ...acc,
             [e.script.id]: [...(acc[e.script.id] || []), e],
@@ -243,7 +246,8 @@ export function exportEXCEL(opts: any = {}) {
           }
         }
 
-        resolve(null);
+        const outcome: FileExportOutcome = { written, skipped, cancelled: !granted };
+        resolve(outcome);
       } catch (e) {
         logError('excelExport', e, {
           sessionCount: sessions.length,
@@ -303,9 +307,16 @@ export function exportToApi(opts: any = {}) {
           .forEach((session: any) => candidatesById.set(session.id, session));
         const candidates = Array.from(candidatesById.values());
 
-        try {
-          if (opts.dontSaveFile !== true) await exportJSON(opts);
-        } catch { /* Do nothing */ }
+        // A copy on the tablet is opt-in. It used to be written on every send,
+        // which put a folder picker in front of an export to the database.
+        if (opts.saveCopy === true) {
+          try {
+            await exportJSON(opts);
+          } catch (e) {
+            // The copy is a convenience; the send still goes ahead.
+            logError('exportSessionsToServer.saveCopy', e);
+          }
+        }
 
         let outcome: ManualExportOutcome = {
           status: 'success',

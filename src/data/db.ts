@@ -1,6 +1,14 @@
 
 import * as SQLite from 'expo-sqlite';
 
+import {
+    EXPORTS_MIGRATION_STATEMENTS,
+    EXPORTS_TABLE_COLUMNS,
+    SESSION_INDEX_STATEMENTS,
+    SESSIONS_ADDED_COLUMNS,
+    SESSIONS_TABLE_COLUMNS,
+} from './schema';
+
 export const db = SQLite.openDatabaseSync('db.db');
 
 export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void, handle: any = db) => new Promise<any[]>((resolve, reject) => {
@@ -74,33 +82,9 @@ export async function createTablesIfNotExist() {
         'updatedAt datetime',
     ].join(',');
 
-    const sessionsTableColumns = [
-        'id integer primary key not null',
-        'session_id integer',
-        'script_id varchar',
-        'type varchar',
-        'uid varchar',
-        'data text',
-        'completed boolean',
-        'exported boolean',
-        'local_export boolean default 0',
-        'poll_exported boolean default 0',
-        'main_export_blocked boolean default 0',
-        'poll_export_blocked boolean default 0',
-        'local_export_blocked boolean default 0',
-        'export_last_error text',
-        'createdAt datetime',
-        'updatedAt datetime',
-    ].join(',');
+    const sessionsTableColumns = SESSIONS_TABLE_COLUMNS.join(',');
 
-    const exportsTableColumns = [
-        'id integer primary key not null',
-        'session_id integer not null',
-        'uid varchar',
-        'scriptid varchar',
-        'data text',
-        'ingested_at datetime',
-    ].join(',');
+    const exportsTableColumns = EXPORTS_TABLE_COLUMNS.join(',');
 
     const authenticatedUserTableColumns = [
         'id integer primary key not null',
@@ -201,16 +185,7 @@ export const addNewColumns = async () => {
     const sessionsTableInfo = await dbTransaction(`PRAGMA table_info(sessions);`);
     if (sessionsTableInfo?.length) {
         const existing = new Set(sessionsTableInfo.map((col: any) => col.name));
-        const additions = [
-            ['local_export', 'BOOLEAN DEFAULT 0'],
-            ['poll_exported', 'BOOLEAN DEFAULT 0'],
-            ['main_export_blocked', 'BOOLEAN DEFAULT 0'],
-            ['poll_export_blocked', 'BOOLEAN DEFAULT 0'],
-            ['local_export_blocked', 'BOOLEAN DEFAULT 0'],
-            ['export_last_error', 'TEXT'],
-        ];
-
-        for (const [name, definition] of additions) {
+        for (const [name, definition] of SESSIONS_ADDED_COLUMNS) {
             if (!existing.has(name)) {
                 await dbTransaction(`ALTER TABLE sessions ADD COLUMN ${name} ${definition};`);
             }
@@ -273,15 +248,11 @@ export const addNewColumns = async () => {
 };
 
 async function createSessionIndexes() {
-    const statements = [
-        `CREATE INDEX IF NOT EXISTS sessions_main_export_pending_idx ON sessions(exported, main_export_blocked, createdAt);`,
-        `CREATE INDEX IF NOT EXISTS sessions_poll_export_pending_idx ON sessions(poll_exported, poll_export_blocked, createdAt);`,
-        `CREATE INDEX IF NOT EXISTS sessions_local_export_pending_idx ON sessions(local_export, local_export_blocked, createdAt);`,
-        `CREATE INDEX IF NOT EXISTS sessions_location_idx
-            ON sessions(json_extract(data, '$.country'), TRIM(json_extract(data, '$.hospital_id')), createdAt)
-            WHERE json_valid(data);`,
-    ];
-    for (const statement of statements) await dbTransaction(statement);
+    for (const statement of SESSION_INDEX_STATEMENTS) await dbTransaction(statement);
+}
+
+async function migrateExports() {
+    for (const statement of EXPORTS_MIGRATION_STATEMENTS) await dbTransaction(statement);
 }
 
 
@@ -289,6 +260,7 @@ export async function ensureSchema() {
     await createTablesIfNotExist();
     await addNewColumns();
     await createSessionIndexes();
+    await migrateExports();
 }
 
 export const resetTables = async () => {

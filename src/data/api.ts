@@ -27,6 +27,9 @@ const _otherOptions = {
 	country: '',
 	hospital: '',
 	timeout: REMOTE_TIMEOUT_MS,
+	// Gives a call its own circuit so its failures can't open the circuit shared by
+	// the backend's other endpoints (e.g. /save-poll-data vs /sessions).
+	circuitScope: '',
 };
 
 // Endpoint on the webeditor that receives device exceptions. Every exception
@@ -83,7 +86,9 @@ export async function makeApiCall(
 
         addBreadcrumb('api', `${options.method || 'GET'} ${scrubUrl(url)}`, { source });
 
-        const circuitKey = backendKey(country, source);
+        const circuitKey = otherOptions.circuitScope
+            ? backendKey(country, source, otherOptions.circuitScope)
+            : backendKey(country, source);
         if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError(source);
 
         let settled = false;

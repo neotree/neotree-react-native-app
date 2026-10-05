@@ -7,6 +7,16 @@ import { updateSession } from './updateSession';
 import { withExportLock } from './exportLock';
 import { getApplication, getLocation } from './queries';
 import { isBackendDown, backendKey, NetworkUnavailableError } from './circuitBreaker';
+import type { ExportDestination, ExportFailureKind } from './exportPlanning';
+import {
+    batchFoundBackendsDown,
+    classifyExportError,
+    isQuarantined,
+    isQuarantineExpired,
+    pendingSessionFilter,
+    QUARANTINED_SESSION_FILTER,
+    quarantineReleaseCutoff,
+} from './exportPlanning';
 import {
     getPollingCountries,
     isExportableSession,
@@ -16,7 +26,7 @@ import {
     pollingRequired,
 } from './deliveryStatus';
 import { exportAcknowledged, retryableHttpStatus } from './deliveryRules';
-import { logError } from '@/src/utils/logError';
+import { logError, logWarning } from '@/src/utils/logError';
 import { runPooled } from '@/src/utils/runPooled';
 
 const afterInteractions = () => new Promise<void>(resolve => {
@@ -26,8 +36,12 @@ const afterInteractions = () => new Promise<void>(resolve => {
 const EXPORT_CONCURRENCY = 3;
 const EXPORT_BATCH_SIZE = 25;
 
-type ExportDestination = 'main' | 'poll' | 'local';
-export type ExportFailureKind = 'network' | 'http' | 'conversion' | 'configuration' | 'unknown';
+// /save-poll-data has its own circuit so a failing poll endpoint cannot stop
+// /sessions (and vice versa). Both still talk to the same nodeapi host.
+export const POLL_CIRCUIT_SCOPE = 'poll';
+const pollCircuitKey = (country: string) => backendKey(country, 'nodeapi', POLL_CIRCUIT_SCOPE);
+
+export type { ExportDestination, ExportFailureKind } from './exportPlanning';
 
 export interface ExportFailure {
     id: any;
@@ -91,20 +105,6 @@ function blockedField(destination: ExportDestination): string {
     return 'local_export_blocked';
 }
 
-function classifyError(error: any, kind?: ExportFailureKind): Pick<ExportFailure, 'kind' | 'message' | 'retryable'> {
-    const message = error instanceof Error ? error.message : `${error || 'Unknown export error'}`;
-    if (kind === 'conversion') return { kind, message, retryable: false };
-    if (error instanceof NetworkUnavailableError
-        || error?.name === 'AbortError'
-        || /network request|timed out|unreachable|offline/i.test(message)) {
-        return { kind: 'network', message, retryable: true };
-    }
-    if (/config|location not set|cannot read propert/i.test(message)) {
-        return { kind: 'configuration', message, retryable: false };
-    }
-    return { kind: kind || 'unknown', message, retryable: true };
-}
-
 async function recordFailure(
     result: ExportBatchResult,
     session: any,
@@ -112,7 +112,7 @@ async function recordFailure(
     error: any,
     opts: { kind?: ExportFailureKind; retryable?: boolean; status?: number } = {},
 ): Promise<void> {
-    const classified = classifyError(error, opts.kind);
+    const classified = classifyExportError(error, opts.kind);
     const failure: ExportFailure = {
         id: session.id,
         destination,
@@ -130,11 +130,14 @@ async function recordFailure(
 
     // Permanent payload/configuration/4xx failures are quarantined so one bad
     // historical row cannot create an endless retry loop or starve newer rows.
+    // The time is recorded so the sweep can give it another attempt later
+    // rather than stranding it for good (see QUARANTINE_RETRY_AFTER_MS).
     if (!failure.retryable) {
         try {
             await updateSession({
                 [blockedField(destination)]: true,
                 export_last_error: failure.message.slice(0, 500),
+                export_blocked_at: new Date().toISOString(),
             }, { where: { id: session.id } });
         } catch (updateError) {
             logError('exportSessions.quarantine', updateError, { sessionId: session.id, destination });
@@ -186,17 +189,21 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
     const localExportData = localOwed.filter(session => !session.local_export && !session.local_export_blocked);
 
     const remoteKey = backendKey(cohortCountry, 'nodeapi');
+    const pollKey = pollCircuitKey(cohortCountry);
     const localKey = backendKey(cohortCountry, 'local', currentHospital);
     const remoteUp = !isBackendDown(remoteKey);
+    const pollUp = !isBackendDown(pollKey);
     const localUp = localExportData.length > 0 && !isBackendDown(localKey);
 
-    if (!remoteUp && (remoteExportData.length || remotePollExportData.length)) {
+    if (!remoteUp && remoteExportData.length) {
         result.remoteSkipped = true;
         const error = new NetworkUnavailableError('nodeapi');
-        await Promise.all([
-            ...remoteExportData.map(session => recordFailure(result, session, 'main', error)),
-            ...remotePollExportData.map(session => recordFailure(result, session, 'poll', error)),
-        ]);
+        await Promise.all(remoteExportData.map(session => recordFailure(result, session, 'main', error)));
+    }
+    if (!pollUp && remotePollExportData.length) {
+        result.remoteSkipped = true;
+        const error = new NetworkUnavailableError('nodeapi');
+        await Promise.all(remotePollExportData.map(session => recordFailure(result, session, 'poll', error)));
     }
     if (localExportData.length && !localUp) {
         result.localSkipped = true;
@@ -212,7 +219,11 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
             cache.set(session.id, convertSessionsToExportable([session], {
                 showConfidential: confidential,
                 application,
-            }).then((rows: any) => rows[0]));
+            }).then((rows: any) => {
+                const row = rows?.[0];
+                if (!row) throw new Error('Session could not be converted for export');
+                return row;
+            }));
         }
         return cache.get(session.id)!;
     };
@@ -240,7 +251,17 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
                     return;
                 }
                 const status = response?.status || 0;
-                await recordFailure(result, session, destination, new Error(await responseError(response)), {
+                const detail = await responseError(response);
+                // A rejected POST is not an exception, so without this the
+                // reason a session stays unexported (bad key, payload refused,
+                // server error) is never reported anywhere.
+                logWarning(
+                    `exportSessions.${destination}Rejected`,
+                    'Export destination returned a non-success response',
+                    { status, detail, sessionId: session.id },
+                    { source: destination === 'local' ? 'local' : 'nodeapi' },
+                );
+                await recordFailure(result, session, destination, new Error(detail), {
                     kind: 'http',
                     status,
                     retryable: retryableHttpStatus(status),
@@ -270,17 +291,17 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
             false,
         ));
     }
-    if (remoteUp && remotePollExportData.length) {
+    if (pollUp && remotePollExportData.length) {
         work.push(runDestination(
             remotePollExportData,
             'poll',
-            () => isBackendDown(remoteKey),
+            () => isBackendDown(pollKey),
             payload => {
                 const { id, exported, local_export, poll_exported, ...exportable } = payload;
                 return makeApiCall('nodeapi', `/save-poll-data?uid=${payload.uid}&scriptId=${payload.script.id}&unique_key=${payload.unique_key}`, {
                     method: 'POST',
                     body: JSON.stringify(exportable),
-                }, { country: cohortCountry });
+                }, { country: cohortCountry, circuitScope: POLL_CIRCUIT_SCOPE });
             },
             true,
         ));
@@ -304,57 +325,26 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
     await Promise.allSettled(work);
 }
 
-/**
- * The "still owed somewhere" predicate: completed, not cancelled, and missing
- * at least one of its deliveries. Shared by the sweep and by the pending count
- * so the two can never disagree about what is outstanding.
- */
-function pendingSessionFilter(
-    hasLocalConfig: boolean,
-    currentCountry: string | null | undefined,
-    currentHospital: string | null | undefined,
-): { sql: string; params: any[] } {
-    const pending: string[] = [
-        `(exported IS NOT ? AND COALESCE(main_export_blocked, 0) = 0)`,
-    ];
-    const params: any[] = [true];
-    const pollingCountries = getPollingCountries();
-
-    if (pollingCountries.length) {
-        pending.push(`(
-            poll_exported IS NOT ?
-            AND COALESCE(poll_export_blocked, 0) = 0
-            AND COALESCE(createdAt, json_extract(data, '$.started_at')) >= ?
-            AND json_extract(data, '$.country') IN (${pollingCountries.map(() => '?').join(',')})
-        )`);
-        params.push(true, POLL_TRACKING_STARTED_AT, ...pollingCountries);
-    }
-
-    if (hasLocalConfig && currentCountry && currentHospital) {
-        pending.push(`(
-            local_export IS NOT ?
-            AND COALESCE(local_export_blocked, 0) = 0
-            AND json_extract(data, '$.country') = ?
-            AND TRIM(json_extract(data, '$.hospital_id')) = ?
-        )`);
-        params.push(true, currentCountry, currentHospital.trim());
-    }
-
-    return {
-        sql: `WHERE json_valid(data)
-            AND json_extract(data, '$.completed_at') IS NOT NULL
-            AND json_extract(data, '$.canceled_at') IS NULL
-            AND (${pending.join(' OR ')})`,
-        params,
-    };
+interface SweepScope {
+    hasLocalConfig: boolean;
+    country: string | null | undefined;
+    hospital: string | null | undefined;
 }
 
-function pendingSessionQuery(
-    hasLocalConfig: boolean,
-    currentCountry: string | null | undefined,
-    currentHospital: string | null | undefined,
-): { sql: string; params: any[] } {
-    const filter = pendingSessionFilter(hasLocalConfig, currentCountry, currentHospital);
+/** What the sweep owes, including quarantined sessions whose wait is over. */
+function pendingFilterFor(scope: SweepScope, now: number = Date.now()) {
+    return pendingSessionFilter({
+        pollingCountries: getPollingCountries(),
+        pollTrackingStartedAt: POLL_TRACKING_STARTED_AT,
+        local: scope.hasLocalConfig && scope.country && scope.hospital
+            ? { country: scope.country, hospital: scope.hospital }
+            : null,
+        releaseBlockedBefore: quarantineReleaseCutoff(now),
+    });
+}
+
+function pendingSessionQuery(scope: SweepScope): { sql: string; params: any[] } {
+    const filter = pendingFilterFor(scope);
     return {
         sql: `SELECT * FROM sessions
             ${filter.sql}
@@ -370,15 +360,46 @@ function pendingSessionQuery(
  */
 export async function countPendingExports(): Promise<number> {
     try {
-        const hasLocalConfig = await hasLocalServerConfig();
         const location = await getLocation();
-        const filter = pendingSessionFilter(hasLocalConfig, location?.country, location?.hospital);
+        const filter = pendingFilterFor({
+            hasLocalConfig: await hasLocalServerConfig(),
+            country: location?.country,
+            hospital: location?.hospital,
+        });
         const rows = await dbTransaction(`SELECT COUNT(id) AS total FROM sessions ${filter.sql};`, filter.params);
         return Number(rows?.[0]?.total || 0);
     } catch (error) {
         logError('countPendingExports', error);
         return 0;
     }
+}
+
+export interface QuarantineSummary {
+    count: number;
+    /** The most recent reason, so the user sees why without opening a session. */
+    lastError: string | null;
+}
+
+/** Sessions on this device that an export has quarantined, whatever the site. */
+export async function getQuarantineSummary(): Promise<QuarantineSummary> {
+    try {
+        const [counted] = await dbTransaction(`SELECT COUNT(id) AS total FROM sessions ${QUARANTINED_SESSION_FILTER};`);
+        const [latest] = await dbTransaction(
+            `SELECT export_last_error FROM sessions ${QUARANTINED_SESSION_FILTER}
+             AND export_last_error IS NOT NULL
+             ORDER BY COALESCE(export_blocked_at, '') DESC LIMIT 1;`
+        );
+        return { count: Number(counted?.total || 0), lastError: latest?.export_last_error || null };
+    } catch (error) {
+        logError('getQuarantineSummary', error);
+        return { count: 0, lastError: null };
+    }
+}
+
+/** The quarantined sessions themselves, for a user-initiated retry. */
+export async function getQuarantinedSessions(): Promise<any[]> {
+    const rows = await dbTransaction(`SELECT * FROM sessions ${QUARANTINED_SESSION_FILTER} ORDER BY createdAt ASC;`);
+    return rows.map(session => ({ ...session, data: JSON.parse(session.data || '{}') }));
 }
 
 function needsDelivery(
@@ -436,6 +457,32 @@ export interface ExportRunOptions {
     onProgress?: (done: number, total: number) => void;
 }
 
+/**
+ * Clears quarantine so a session gets a fresh attempt, in the db and in the
+ * copies about to be sent. A session that fails permanently again is simply
+ * quarantined again, with a new timestamp.
+ */
+async function releaseQuarantine(sessions: any[], release: (session: any) => boolean): Promise<any[]> {
+    const released = sessions.filter(release);
+    if (!released.length) return sessions;
+
+    await Promise.all(released.map(session => updateSession({
+        main_export_blocked: false,
+        poll_export_blocked: false,
+        local_export_blocked: false,
+        export_last_error: null,
+        export_blocked_at: null,
+    }, { where: { id: session.id } })));
+
+    const releasedIds = new Set(released.map(session => session.id));
+    return sessions.map(session => (!releasedIds.has(session.id) ? session : {
+        ...session,
+        main_export_blocked: false,
+        poll_export_blocked: false,
+        local_export_blocked: false,
+    }));
+}
+
 export async function doExportSessions(
     sessions?: any[],
     opts: ExportRunOptions = {},
@@ -453,32 +500,20 @@ export async function doExportSessions(
         // quarantined row, so it gets one fresh attempt regardless of blocks.
         candidates = sessions.filter(session => needsDelivery(session, location, hasLocalConfig));
     } else {
-        const query = pendingSessionQuery(hasLocalConfig, currentCountry, currentHospital);
+        const query = pendingSessionQuery({ hasLocalConfig, country: currentCountry, hospital: currentHospital });
         const rows = await dbTransaction(query.sql, query.params);
         candidates = rows.map(session => ({ ...session, data: JSON.parse(session.data || '{}') }));
     }
 
     if (!candidates.length) return result;
 
-    if (sessions) {
-        // Quarantine is cleared across the whole selection, not just the first
-        // batch, so every session the user asked for gets its fresh attempt.
-        const blocked = candidates.filter(session => (
-            session.main_export_blocked || session.poll_export_blocked || session.local_export_blocked
-        ));
-        await Promise.all(blocked.map(session => updateSession({
-            main_export_blocked: false,
-            poll_export_blocked: false,
-            local_export_blocked: false,
-            export_last_error: null,
-        }, { where: { id: session.id } })));
-        candidates = candidates.map(session => ({
-            ...session,
-            main_export_blocked: false,
-            poll_export_blocked: false,
-            local_export_blocked: false,
-        }));
-    }
+    // A manual export is the user's retry, so the whole selection gets a fresh
+    // attempt. The sweep releases only sessions whose quarantine has expired -
+    // the query selected them for exactly that reason.
+    candidates = await releaseQuarantine(
+        candidates,
+        sessions ? isQuarantined : session => isQuarantineExpired(session),
+    );
 
     await afterInteractions();
     const application = await getApplication();
@@ -509,13 +544,13 @@ export async function doExportSessions(
 
         if (attempted >= total) break;
 
-        // Nothing got through and every failure was the network: the backends
-        // are down and their circuits are now open, so the remaining batches
-        // would only fail too. Stop, and let the retry schedule take over.
-        const progressed = deliveredCount(result) > deliveredBefore;
-        const newFailures = result.failures.slice(failuresBefore);
-        const networkOnly = newFailures.length > 0 && newFailures.every(failure => failure.kind === 'network');
-        if (!progressed && networkOnly) {
+        // The backends are unreachable: further batches would only fail too.
+        // Stop, and let the retry schedule take over.
+        if (batchFoundBackendsDown({
+            deliveredBefore,
+            deliveredAfter: deliveredCount(result),
+            newFailures: result.failures.slice(failuresBefore),
+        })) {
             result.hasMore = true;
             break;
         }

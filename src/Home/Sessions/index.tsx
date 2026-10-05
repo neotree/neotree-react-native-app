@@ -1,7 +1,6 @@
 import React from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
-import * as MediaLibrary from 'expo-media-library';
 import Icon from '@expo/vector-icons/MaterialIcons';
 import moment from 'moment';
 import * as types from '../../types';
@@ -55,8 +54,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 	const isFocused = useIsFocused();
 
-	const [pageInitialised, setPageInitialised] = React.useState(false);
-
 	const [application, setApplication] = React.useState<null | types.Application>(null);
 
 	const [openExportModal, setOpenExportModal] = React.useState(false);
@@ -77,10 +74,14 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [exportType, setExportType] = React.useState(exportTypes[0].value);
 	const [exportFormat, setExportFormat] = React.useState(exportFormats[0].value);
 	const [showExportFormats, setShowExportFormats] = React.useState(false);
+	// Sending to the database can also leave a copy on the tablet. Off unless
+	// asked for: it means choosing a folder, which a send should not require.
+	const [saveCopyOnApiExport, setSaveCopyOnApiExport] = React.useState(false);
 	const [exportingSessions, setExportingSessions] = React.useState(false);
 	const [exportProgress, setExportProgress] = React.useState<null | { done: number; total: number }>(null);
 	const [backgroundExportRunning, setBackgroundExportRunning] = React.useState(false);
 	const [pendingExportCount, setPendingExportCount] = React.useState(0);
+	const [quarantine, setQuarantine] = React.useState<api.QuarantineSummary>({ count: 0, lastError: null });
 
 	const [sessions, setSessions] = React.useState<any[]>([]);
 	const [loadingSessions, setLoadingSessions] = React.useState(false);
@@ -90,7 +91,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 	const [listMode, setListMode] = React.useState<'browse' | 'filtered' | 'search' | 'localServer'>('browse');
 	const [hasMoreSessions, setHasMoreSessions] = React.useState(false);
 	const [totalSessions, setTotalSessions] = React.useState(0);
-	const loadedOffset = React.useRef(0);
+	// Where the next page starts: the last row shown (see sessionsPageQuery).
+	const nextPageCursor = React.useRef<api.SessionsCursor | null>(null);
 	// Guards paged reads the same way searchRequestId guards searches: a slow
 	// page must not append itself after a refresh or a filter has moved on.
 	const listRequestId = React.useRef(0);
@@ -117,6 +119,22 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		(s: any) => api.isFullyDelivered(s, location, hasLocalConfig),
 		[location, hasLocalConfig]
 	);
+
+	// The "Exported Online"/"Exported Locally" badges only reflect two of the
+	// three destinations a session may owe data to - the confidential/poll
+	// data delivery (`poll_exported`) has no badge of its own. A session can
+	// look fully exported and still be blocked from deletion because of it, so
+	// spell out exactly what's still pending rather than a generic message.
+	const getPendingDestinations = React.useCallback((s: any): string[] => {
+		if (!api.isExportableSession(s)) return [];
+		const pending: string[] = [];
+		if (!s.exported) pending.push('server');
+		// isPollDelivered, not the raw flag: it also treats sessions that
+		// predate poll tracking as delivered, exactly as the deletion rule does.
+		if (!api.isPollDelivered(s)) pending.push('confidential data sync');
+		if (api.localRequiredForSession(s, location, hasLocalConfig) && !s.local_export) pending.push('local server');
+		return pending;
+	}, [location, hasLocalConfig]);
 
 	const isDraftSession = React.useCallback((s: any) => !api.isTerminalSession(s), []);
 
@@ -354,6 +372,44 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		};
 	};
 
+	/** Turns an API export's outcome into what the user is told. */
+	const describeApiExport = (result: any): { title: string; message: string } => {
+		switch (result?.status) {
+			case 'already-exported':
+				return {
+					title: 'Already exported',
+					message: result.alreadyExported === 1
+						? 'This session has already been exported. Nothing was sent again.'
+						: `All ${result.alreadyExported} selected sessions have already been exported.`,
+				};
+			case 'local-only':
+				return {
+					title: 'Saved to local server',
+					message: (result.localOk
+						? `${result.localOk} session(s) saved to the local server. `
+						: `These sessions are already saved on the local server. `)
+						+ (result.failures?.some((failure: api.ExportFailure) => failure.kind === 'network')
+							? `The cloud server can't be reached right now. The app will retry automatically.`
+							: `Cloud delivery needs attention: ${result.failures?.[0]?.message || 'delivery is still pending'}.`),
+				};
+			case 'partial':
+				return {
+					title: 'Partially exported',
+					message: `Sent to the cloud: ${result.remoteOk}. `
+						+ (result.localConfigured ? `Saved locally: ${result.localOk}. ` : '')
+						+ (result.alreadyExported ? `Already exported previously: ${result.alreadyExported}. ` : '')
+						+ `Still queued: ${Math.max(result.remotePending, result.localPending)} session(s) — these retry automatically.`,
+				};
+			default:
+				return {
+					title: '',
+					message: result?.localConfigured
+						? 'Export success — sent to both the cloud and the local server.'
+						: 'Export success',
+				};
+		}
+	};
+
 	const validateExportDateRange = () => {
 		if (exportType !== 'date_range') return true;
 		if (!exportMinDate && !exportMaxDate) {
@@ -420,6 +476,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				sessions,
 				scriptsFields,
 				application,
+				saveCopy: opts.saveCopy ?? saveCopyOnApiExport,
 				onProgress: (done: number, total: number) => setExportProgress({ done, total }),
 			});
 			if (exportFormat === 'jsonapi') await refreshSessions();
@@ -427,33 +484,17 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			let title = '';
 			let message = 'Export success';
 			if (exportFormat === 'jsonapi') {
-				switch (result?.status) {
-					case 'already-exported':
-						title = 'Already exported';
-						message = result.alreadyExported === 1
-							? 'This session has already been exported. Nothing was sent again.'
-							: `All ${result.alreadyExported} selected sessions have already been exported.`;
-						break;
-					case 'local-only':
-						title = 'Saved to local server';
-						message = (result.localOk
-							? `${result.localOk} session(s) saved to the local server. `
-							: `These sessions are already saved on the local server. `)
-							+ (result.failures?.some((failure: api.ExportFailure) => failure.kind === 'network')
-								? `The cloud server can't be reached right now. The app will retry automatically.`
-								: `Cloud delivery needs attention: ${result.failures?.[0]?.message || 'delivery is still pending'}.`);
-						break;
-					case 'partial':
-						title = 'Partially exported';
-						message = `Sent to the cloud: ${result.remoteOk}. `
-							+ (result.localConfigured ? `Saved locally: ${result.localOk}. ` : '')
-							+ (result.alreadyExported ? `Already exported previously: ${result.alreadyExported}. ` : '')
-							+ `Still queued: ${Math.max(result.remotePending, result.localPending)} session(s) — these retry automatically.`;
-						break;
-					default:
-						message = result?.localConfigured
-							? `Export success — sent to both the cloud and the local server.`
-							: 'Export success';
+				({ title, message } = describeApiExport(result));
+			} else if (result?.cancelled) {
+				// The folder picker was dismissed, so nothing was written. This
+				// used to report success.
+				title = 'Export cancelled';
+				message = 'No folder was selected, so no file was saved.';
+			} else {
+				message = `Export success — ${result?.written ?? sessions.length} session(s) saved.`;
+				if (result?.skipped) {
+					message += ` ${result.skipped} session(s) could not be prepared and were left out;`
+						+ ` they remain on this device and are reported in the error log.`;
 				}
 			}
 
@@ -479,7 +520,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				[
 					{
 						text: 'Try again',
-						onPress: () => exportSessions({ dontSaveFile: true, })
+						onPress: () => exportSessions({ saveCopy: false })
 					},
 					{
 						text: 'Cancel',
@@ -494,8 +535,23 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		refreshPendingExportCount();
 	};
 
+	// Summarizes *why* a set of blocked sessions can't be deleted yet, broken
+	// down by destination, so "exported but still blocked" is never a mystery
+	// (the export/local badges don't show confidential-data-sync status).
+	const summarizePending = React.useCallback((list: any[]): string => {
+		const counts: Record<string, number> = {};
+		list.forEach((s: any) => {
+			getPendingDestinations(s).forEach((dest) => { counts[dest] = (counts[dest] || 0) + 1; });
+		});
+		const parts = Object.entries(counts).map(([dest, count]) => `${count} awaiting ${dest}`);
+		return parts.length ? ` (${parts.join(', ')})` : '';
+	}, [getPendingDestinations]);
+
 	const deleteSessions = async (ids: any[] = [], opts: { allowDrafts?: boolean } = {}) => {
-		if (!ids.length) return;
+		if (!ids.length) {
+			Alert.alert('Nothing to delete', 'No sessions matched this selection.', [{ text: 'Ok' }]);
+			return;
+		}
 
 		const allRows: any[] = await api.getSessionsByIds(ids);
 		const byId: any = {};
@@ -515,9 +571,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				'Nothing deleted',
 				blockedWithError
 					? `This session has an export error and was kept to protect its data. ${blockedWithError.export_last_error || 'Retry the export after checking the server configuration.'}`
-					: blocked.length === 1
-					? 'This session has not finished exporting yet, so it cannot be deleted. It will be sent automatically once a server is reachable.'
-					: `${blocked.length} session(s) have not finished exporting yet, so none were deleted. They will be sent automatically once a server is reachable.`,
+					: (blocked.length === 1
+						? 'This session has not finished exporting yet, so it cannot be deleted.'
+						: `${blocked.length} session(s) have not finished exporting yet, so none were deleted.`)
+						+ summarizePending(blocked)
+						+ ' They will be sent automatically once a server is reachable.',
 				[{ text: 'Ok' }]
 			);
 			return;
@@ -551,7 +609,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		if (blocked.length) {
 			Alert.alert(
 				'Some sessions kept',
-				`${blocked.length} session(s) have not finished exporting and will be kept. `
+				`${blocked.length} session(s) have not finished exporting${summarizePending(blocked)} and will be kept. `
 				+ `Delete the remaining ${deletable.length} session(s)?`,
 				[
 					{ text: 'Cancel', style: 'cancel' },
@@ -628,12 +686,10 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 		switch (deleteType) {
 			case 'all':
-				await deleteSessions(
-					allSessions
-						.filter((s: any) => isDeliveredSession(s) || isDraftSession(s))
-						.map((s: any) => s.id),
-					{ allowDrafts: true }
-				);
+				// Not pre-filtered to deletable sessions: everything goes through
+				// deleteSessions so anything still awaiting delivery is reported
+				// and explained, rather than silently skipped.
+				await deleteSessions(allSessions.map((s: any) => s.id), { allowDrafts: true });
 				break;
 			case 'incomplete':
 				await deleteSessions(
@@ -769,7 +825,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						setSessions([]);
 						setTotalSessions(0);
 						setHasMoreSessions(false);
-						loadedOffset.current = 0;
+						nextPageCursor.current = null;
 						setListMode('browse');
 					}
 					resolve([]);
@@ -778,14 +834,13 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 				const page = await api.getSessionsPageForLocation(location.country, location.hospital, {
 					limit: SESSIONS_PAGE_SIZE,
-					offset: 0,
 				});
 				if (listRequestId.current !== requestId) {
 					resolve([]);
 					return;
 				}
 
-				loadedOffset.current = page.rows.length;
+				nextPageCursor.current = page.cursor;
 				setSessions(page.rows);
 				setHasMoreSessions(page.hasMore);
 				setListMode('browse');
@@ -828,12 +883,12 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		try {
 			const page = await api.getSessionsPageForLocation(location.country, location.hospital, {
 				limit: SESSIONS_PAGE_SIZE,
-				offset: loadedOffset.current,
+				cursor: nextPageCursor.current,
 			});
 			// A refresh, filter or search while this page was in flight wins.
 			if (listRequestId.current !== requestId) return;
 
-			loadedOffset.current += page.rows.length;
+			nextPageCursor.current = page.cursor;
 			setSessions(current => {
 				const seen = new Set(current.map((s: any) => s.id));
 				return [...current, ...page.rows.filter((s: any) => !seen.has(s.id))];
@@ -1016,9 +1071,56 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 
 	const refreshPendingExportCount = React.useCallback(async () => {
 		try {
-			setPendingExportCount(await api.countPendingExports());
-		} catch { /* the caption is optional */ }
+			const [pending, quarantined] = await Promise.all([
+				api.countPendingExports(),
+				api.getQuarantineSummary(),
+			]);
+			setPendingExportCount(pending);
+			setQuarantine(quarantined);
+		} catch { /* status lines are optional */ }
 	}, []);
+
+	/**
+	 * Gives every quarantined session a fresh attempt now, rather than waiting
+	 * for the sweep to release it. Quarantined sessions can come from any site
+	 * on this device, so this does not go through the site-scoped export.
+	 */
+	const retryQuarantinedExports = async () => {
+		if (api.isExportRunning()) {
+			openExport();
+			return;
+		}
+
+		setExportingSessions(true);
+		try {
+			const quarantined = await api.getQuarantinedSessions();
+			if (!quarantined.length) {
+				Alert.alert('Nothing to retry', 'No sessions are waiting on an export problem any more.', [{ text: 'Ok' }]);
+				return;
+			}
+			const result: any = await exportData({
+				format: 'jsonapi',
+				sessions: quarantined,
+				scriptsFields,
+				application,
+				saveCopy: false,
+				onProgress: (done: number, total: number) => setExportProgress({ done, total }),
+			});
+			await refreshSessions();
+			const { title, message } = describeApiExport(result);
+			Alert.alert(title || 'Retry finished', message, [{ text: 'Ok' }]);
+		} catch (e: any) {
+			Alert.alert(
+				'Retry did not finish',
+				`${e?.message || 'The export failed.'} The sessions remain on this device and will be retried automatically.`,
+				[{ text: 'Ok' }]
+			);
+		} finally {
+			setExportingSessions(false);
+			setExportProgress(null);
+			refreshPendingExportCount();
+		}
+	};
 
 	// The background sweep runs whether or not this screen is open, so the
 	// screen follows it rather than assuming exports only happen here.
@@ -1033,37 +1135,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			refreshPendingExportCount();
 		});
 	}, [refreshPendingExportCount]);
-
-	React.useEffect(() => {
-		(async () => {
-			try {
-				const { granted } = await MediaLibrary.requestPermissionsAsync();
-				if (!granted) {
-					Alert.alert(
-						'Permission denied',
-						'Permission to write files to disk is not granted, you will not be able to export files.',
-						[
-							{
-								text: 'Ok',
-							}
-						]
-					);
-				}
-			} catch (e: any) {
-				Alert.alert(
-					'Error',
-					e.message,
-					[
-						{
-							text: 'Ok',
-						}
-					]
-				);
-				
-				}
-				setPageInitialised(true);
-		})();
-	}, []);
 
 	const renderDateRange = (
 		minDate: Date | null,
@@ -1089,8 +1160,6 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			/>
 		</>
 	);
-
-	if (!pageInitialised) return null;
 
 	if (selectedSession) {
 		return (
@@ -1139,6 +1208,39 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 						<TouchableOpacity onPress={() => runSearch(searchValue)}>
 							<Box paddingVertical="s" paddingLeft="m">
 								<Text variant="caption" color="primary">Try again</Text>
+							</Box>
+						</TouchableOpacity>
+					</Box>
+				)}
+				{quarantine.count > 0 && !backgroundExportRunning && (
+					<Box
+						marginTop="s"
+						padding="m"
+						borderRadius="m"
+						borderWidth={1}
+						borderColor="error"
+						flexDirection="row"
+						alignItems="center"
+					>
+						<Box flex={1}>
+							<Text variant="caption" color="error">
+								{quarantine.count === 1
+									? '1 session on this device could not be exported.'
+									: `${quarantine.count} sessions on this device could not be exported.`}
+							</Text>
+							{!!quarantine.lastError && (
+								<Text variant="caption" color="textSecondary" numberOfLines={2}>
+									{quarantine.lastError}
+								</Text>
+							)}
+							<Text variant="caption" color="textSecondary">
+								They are kept safe and retried automatically every 24 hours.
+							</Text>
+						</Box>
+
+						<TouchableOpacity onPress={() => { retryQuarantinedExports(); }}>
+							<Box paddingVertical="s" paddingLeft="m">
+								<Text variant="caption" color="primary">Retry now</Text>
 							</Box>
 						</TouchableOpacity>
 					</Box>
@@ -1515,19 +1617,32 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 					}
 				]}
 			>
-				{showExportFormats ? 
-					exportFormats.map(t => (
-						<React.Fragment key={t.value}>
-							<Radio 							
-								label={t.label}
-								value={t.value}
-								checked={t.value === exportFormat}
-								onChange={t => setExportFormat(t as string)}
-							/>
-							<Br spacing="m" />
-						</React.Fragment>
-					))
-					:
+				{showExportFormats ? (
+					<>
+						{exportFormats.map(t => (
+							<React.Fragment key={t.value}>
+								<Radio 							
+									label={t.label}
+									value={t.value}
+									checked={t.value === exportFormat}
+									onChange={t => setExportFormat(t as string)}
+								/>
+								<Br spacing="m" />
+							</React.Fragment>
+						))}
+
+						{exportFormat === 'jsonapi' && (
+							<Box marginTop="s" paddingTop="m" borderTopWidth={1} borderColor="divider">
+								<Radio
+									label="Also save a copy to this tablet"
+									value="saveCopy"
+									checked={saveCopyOnApiExport}
+									onChange={() => setSaveCopyOnApiExport(current => !current)}
+								/>
+							</Box>
+						)}
+					</>
+				) :
 					exportTypes.map(t => (
 						<React.Fragment key={t.value}>
 							<Radio 							

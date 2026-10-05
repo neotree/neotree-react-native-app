@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   formatNeotreeIDInput,
   NEOTREE_ID_MAX_LENGTH,
-} from '../src/utils/neotreeId.ts';
+} from '../src/utils/neotreeId';
 
 test('the separator is appended as soon as the prefix is complete', () => {
   assert.equal(formatNeotreeIDInput('FB8E', 'FB8'), 'FB8E-');

@@ -1,7 +1,8 @@
 import { makeApiCall, makeLocalGetApiCall } from './api';
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
-import { logError } from '@/src/utils/logError';
+import { parseLastIngestedResponse } from './exportPlanning';
+import { logError, logWarning } from '@/src/utils/logError';
 
 export const getExportedSessionsByUID = (uid: string) => new Promise<any[]>((resolve, reject) => {
     (async () => {
@@ -114,42 +115,53 @@ export const getLocalSessionsByUID = (
     })();
 });
 
+/**
+ * Pulls in sessions other devices have exported since the last pull, so a
+ * patient can be looked up here after being seen elsewhere. Triggered by the
+ * nodeapi `sessions_exported` socket event.
+ */
 export const getExportedSessions = () => new Promise((resolve, reject) => {
     (async () => {
         try {
             const [{ last_ingested_at }] = await dbTransaction('select max(ingested_at) as last_ingested_at from exports;');
 
-            const rslts = await makeApiCall('nodeapi', `/last-ingested-sessions?last_ingested_at=${last_ingested_at}`);
-            const rsltsJSON = await rslts.json();
-            const { error, sessions } = JSON.parse(rsltsJSON);
+            const res = await makeApiCall(
+                'nodeapi',
+                `/last-ingested-sessions?last_ingested_at=${encodeURIComponent(`${last_ingested_at}`)}`,
+            );
+            // Read as text and parsed in one place: see parseLastIngestedResponse
+            // for why this used to fail on every call.
+            const parsed = parseLastIngestedResponse(await res.text());
+            const error = parsed.error || (res.status >= 400 ? `HTTP ${res.status}` : null);
+            if (error) {
+                logWarning('getExportedSessions.rejected', 'Could not read sessions exported by other devices', {
+                    status: res.status,
+                    error,
+                }, { source: 'nodeapi' });
+                reject(new Error(error));
+                return;
+            }
 
-            if (error) return reject(error);
-
-            await Promise.all(sessions.map((s: any) => {
-                const data = {
-                    session_id: s.id,
-                    uid: s.uid,
-                    scriptid: s.scriptid,
-                    ingested_at: s.ingested_at,
-                    data: JSON.stringify(s.data)
-                };
-                return dbTransaction(
-                    `insert into exports (${Object.keys(data).join(',')}) values (${Object.keys(data).map(() => '?').join(',')})`,
-                    Object.values(data)
-                );
-            }));
+            // One row per remote session: a repeated pull replaces the row
+            // rather than storing the session again (see exports_session_id_idx).
+            await Promise.all(parsed.sessions
+                .filter((s: any) => s?.id !== undefined && s?.id !== null)
+                .map((s: any) => dbTransaction(
+                    `insert or replace into exports (session_id, uid, scriptid, ingested_at, data) values (?, ?, ?, ?, ?);`,
+                    [s.id, s.uid, s.scriptid, s.ingested_at, JSON.stringify(s.data)],
+                )));
 
             const [{ last_ingested_at: maxDate }] = await dbTransaction('select max(ingested_at) as last_ingested_at from exports;');
-            const lastTwoWeeks = new Date(maxDate);
-            const pastDate = lastTwoWeeks.getDate() - 14;
-            lastTwoWeeks.setDate(pastDate);
-
-            await dbTransaction('delete from exports where ingested_at < ?;', [lastTwoWeeks.toISOString()]);
+            if (maxDate) {
+                const lastTwoWeeks = new Date(maxDate);
+                lastTwoWeeks.setDate(lastTwoWeeks.getDate() - 14);
+                await dbTransaction('delete from exports where ingested_at < ?;', [lastTwoWeeks.toISOString()]);
+            }
 
             resolve(null);
         } catch (e) {
-
-            logError('pruneExports', e); reject(e);
+            logError('getExportedSessions', e);
+            reject(e);
         }
     })();
 });
