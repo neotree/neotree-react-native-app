@@ -7,6 +7,7 @@ type FormAndDiagnosesSummaryProps = {
     session: any;
     showConfidential?: boolean;
     scrollable?: boolean;
+    showNonPrintable?: boolean;
     onShowConfidential?: (show: boolean) => void;
 };
 

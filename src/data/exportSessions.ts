@@ -9,7 +9,7 @@ import { updateSession } from './updateSession';
 import { withExportLock } from './exportLock';
 import { getLocation } from './queries';
 import { isBackendDown, backendKey, onCircuitCooldownExpired } from './circuitBreaker';
-import { logError } from '@/src/utils/logError';
+import { logError, logWarning } from '@/src/utils/logError';
 import { runPooled } from '@/src/utils/runPooled';
 
 
@@ -41,6 +41,7 @@ export function localRequiredForSession(
         && session?.data?.hospital_id === location.hospital;
 }
 
+
 export function isFullyDelivered(
     session: any,
     location: { country?: string | null; hospital?: string | null } | null | undefined,
@@ -64,6 +65,21 @@ const afterInteractions = () => new Promise<void>(resolve => {
 });
 
 const EXPORT_CONCURRENCY = 5;
+
+// A non-200 from the cloud server is not an exception, so without this the
+// reason a session stays unexported (bad key, payload rejected, server error)
+// is never recorded anywhere.
+async function logRemoteRejection(context: string, res: any, sessionId: any) {
+    let body = '';
+    try { body = (await res?.text?.() || '').slice(0, 300); } catch { /* body unreadable */ }
+    logWarning(context, 'Cloud server returned a non-200 response', { status: res?.status, body, sessionId }, { source: 'nodeapi' });
+}
+
+
+// /save-poll-data has its own circuit so a failing poll endpoint cannot stop
+// /sessions (and vice versa). Both still talk to the same nodeapi host.
+export const POLL_CIRCUIT_SCOPE = 'poll';
+const pollKey = (country: string) => backendKey(country, 'nodeapi', POLL_CIRCUIT_SCOPE);
 
 export interface ExportBatchResult {
     failedMain: any[];
@@ -129,15 +145,16 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
     const allowLocal = localOwed.length > 0;
 
     const remoteUp = !isBackendDown(backendKey(cohortCountry, 'nodeapi'));
+    const pollUp = !isBackendDown(pollKey(cohortCountry));
     const localUp = allowLocal && !isBackendDown(backendKey(cohortCountry, 'local', currentHospital));
 
     if (!remoteUp) result.remoteSkipped = true;
     if (allowLocal && !localUp) result.localSkipped = true;
 
-    if (!remoteUp && !localUp) return;
+    if (!remoteUp && !pollUp && !localUp) return;
 
     const remoteExportData: any[] = remoteUp ? cohortSessions.filter(s => !s.exported) : [];
-    const remotePollExportData: any[] = (remoteUp && pollRequired) ? cohortSessions.filter(s => !s.poll_exported) : [];
+    const remotePollExportData: any[] = (pollUp && pollRequired) ? cohortSessions.filter(s => !s.poll_exported) : [];
 
     const localExportData: any[] = localUp ? localOwed.filter(s => !s.local_export) : [];
 
@@ -165,13 +182,13 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
 
     const promises: Promise<any>[] = [];
 
-    // --- Remote export: /sessions + /save-poll-data --------------------
+    // --- Remote export: /sessions --------------------------------------
     if (remoteUp) {
         const remoteDown = () => isBackendDown(backendKey(cohortCountry, 'nodeapi'));
 
-        promises.push(runPooled(standardData, EXPORT_CONCURRENCY, remoteDown, async (s: any, i: number) => {
+        promises.push(runPooled(standardData, EXPORT_CONCURRENCY, remoteDown, async (s: any) => {
+            const { id, exported, local_export, poll_exported, ...exportable } = s;
             try {
-                const { id, exported, local_export, poll_exported, ...exportable } = s;
                 const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
                     method: 'POST',
                     body: JSON.stringify(exportable),
@@ -180,26 +197,34 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
                     await updateSession({ exported: true }, { where: { id, }, });
                     result.okMain.push(id);
                 } else {
+                    await logRemoteRejection('exportSessions.remoteRejected', res, id);
                     result.failedMain.push(id);
                 }
             } catch (e) {
-                result.failedMain.push(remoteExportData[i].id);
-                logError('exportSessions.remote', e, { sessionId: remoteExportData[i].id });
+                result.failedMain.push(id);
+                logError('exportSessions.remote', e, { sessionId: id });
             }
         }).then(deferred => { deferred.forEach((s: any) => result.failedMain.push(s.id)); }));
 
+    }
+
+    // --- Poll export: /save-poll-data (independent circuit) -------------
+    if (pollUp) {
+        const pollDown = () => isBackendDown(pollKey(cohortCountry));
+
         const remotePollConfidentialData = confidentialData.filter((s: any) => !s.poll_exported);
-        promises.push(runPooled(remotePollConfidentialData, EXPORT_CONCURRENCY, remoteDown, async (s: any) => {
+        promises.push(runPooled(remotePollConfidentialData, EXPORT_CONCURRENCY, pollDown, async (s: any) => {
             const { id, exported, local_export, poll_exported, ...exportable } = s;
             try {
                 const res = await makeApiCall('nodeapi', `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
                     method: 'POST',
                     body: JSON.stringify(exportable),
-                }, { country: cohortCountry });
+                }, { country: cohortCountry, circuitScope: POLL_CIRCUIT_SCOPE });
                 if (res?.status === 200) {
                     await updateSession({ poll_exported: true }, { where: { id, }, });
                     result.okPoll.push(id);
                 } else {
+                    await logRemoteRejection('exportSessions.pollRejected', res, id);
                     result.failedPoll.push(id);
                 }
             } catch (e) {
