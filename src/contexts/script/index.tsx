@@ -19,9 +19,11 @@ import { defaultPreferences } from '@/src/constants';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
+import { buildOutcomeEntries } from '@/src/utils/outcome-collections';
+import { compileCondition, createBuildForm, flattenRepeatables, parseConditionString, sanitizeCondition } from '@/src/utils/condition-pipeline';
 import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
 import moment from "moment";
-import { logError } from '@/src/utils/logError';
+import { logError, logWarning } from '@/src/utils/logError';
 
 type ScriptContextProviderProps = types.StackNavigationProps<types.HomeRoutes, 'Script'>;
 
@@ -182,7 +184,22 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     // caching by string skips it for the repeated sweeps large forms perform.
     const evalResultCacheRef = useRef(new Map<string, any>());
 
-    const evaluateCondition = useCallback((condition: string, defaultEval = false) => {
+    // A condition that fails to compile is reported once and then stays quiet.
+    // Keyed by the authored expression, not the substituted one: the same broken
+    // expression compiles to a different string for every set of answers, so
+    // deduping on the compiled text would report it again on every keystroke.
+    const reportedBadConditionsRef = useRef(new Set<string>());
+
+    /**
+     * `condition` is the fully-substituted, compiled expression. `source` is the
+     * expression as authored, used only for reporting — pass it wherever it is
+     * to hand, so a broken condition can be traced back to the script.
+     *
+     * A failure here is silent by design: a screen that cannot be evaluated is
+     * skipped rather than blocking the clinician. It is not silent in the logs,
+     * because that is how this stayed broken for so long.
+     */
+    const evaluateCondition = useCallback((condition: string, defaultEval = false, source?: string) => {
         const cache = evalResultCacheRef.current;
         const cacheKey = `${defaultEval}:${condition}`;
 
@@ -192,7 +209,18 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         try {
             conditionMet = eval(condition);
         } catch (e) {
-            // do nothing
+            const reported = reportedBadConditionsRef.current;
+            const reportKey = source || condition;
+            if (!reported.has(reportKey)) {
+                // Bounded: a corrupt script must not grow this without limit.
+                if (reported.size >= 500) reported.clear();
+                reported.add(reportKey);
+                logWarning('Conditional expression failed to evaluate', e, {
+                    expression: reportKey,
+                    compiled: condition,
+                    treatedAs: defaultEval,
+                });
+            }
         }
 
         if (cache.size >= 2000) cache.clear();
@@ -201,258 +229,25 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         return conditionMet;
     }, []);
 
-    const sanitizeCondition = useCallback((condition: string) => {
-        let sanitized = condition
-            .replace(new RegExp(' and ', 'gi'), ' && ')
-            .replace(new RegExp(' or ', 'gi'), ' || ')
-            .replace(new RegExp(' = ', 'gi'), ' == ');
-        sanitized = sanitized.split(' ')
-            .map(s => s[0] === '$' ? `'${s}'` : s).join(' ');
-        return sanitized;
-    }, []);
+    // $Diagnoses / $Problems are derived from every entry, so this is built once
+    // per change rather than for each condition on a screen.
+    const outcomeEntries = useMemo(() => buildOutcomeEntries(entries), [entries]);
 
-    const parseConditionString = useCallback((condition: string, _key = '', value: any) => {
-        const s = (condition || '').toLowerCase().split('$').join(' $');
-        const key = (_key || '').toLowerCase();
-        const parsed = s.replace(/\s\s+/g, ' ')
-            .split(`$${key} =`).join(`${value} =`)
-            .split(`$${key}=`).join(`${value} =`)
-            .split(`$${key} >`).join(`${value} >`)
-            .split(`$${key}>`).join(`${value} >`)
-            .split(`$${key} <`).join(`${value} <`)
-            .split(`$${key}<`).join(`${value} <`)
-            .split(`$${key}!`).join(`${value} !`)
-            .split(`$${key} !`).join(`${value} !`);
-        return parsed;
-    }, []);
-
-    const flattenRepeatables = useCallback((values: any[]): types.ScreenEntryValue[] => {
-        const flat: types.ScreenEntryValue[] = [];
-        
-        values.forEach(v => {
-            if (v?.key === 'repeatables' && typeof v.value === 'object') {
-                const repeatables = v.value as Record<string, any[]>;
-                
-                Object.values(repeatables).forEach((repeatableGroup: any[]) => {
-                    repeatableGroup.forEach(entry => {
-                        Object.entries(entry).forEach(([_, fieldValue]: [string, any]) => {
-                            
-                            if (fieldValue && typeof fieldValue === 'object' && 'value' in fieldValue) {
-                                flat.push({
-                                    ...fieldValue,
-                                    // Preserve the original key structure for repeatables
-                                    key: `${v.key}.${fieldValue.key}`
-                                } as types.ScreenEntryValue);
-                            }
-                        });
-                    });
-                });
-            } else {
-                flat.push(v);
-            }
-            
-        });
-        return flat;
-    }, []);
+    // The form a single line is substituted against. This is the only part that
+    // needs React state; the transformation itself lives in
+    // utils/condition-pipeline so it can be tested against real scripts.
+    const buildForm = useMemo(() => createBuildForm({
+        entries,
+        outcomeEntries,
+        eligibilityAutoFillValues,
+        nuidSearchForm,
+    }), [entries, outcomeEntries, eligibilityAutoFillValues, nuidSearchForm]);
 
     const parseCondition = useCallback((
-        _condition = '', 
+        _condition = '',
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
-    ) => {
-        _condition = `${_condition || ''}`.split('\n').map(_condition => {
-            const _form = _entries.reduce((acc, e) => {
-                const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
-
-                if (index > -1) {
-                    return acc.map((accEntry, i) => {
-                        if (i === index)  {
-                            return { ...accEntry, ...e, }; 
-                        } else { 
-                            return accEntry;
-                        }
-                    }) as types.ScreenEntry[];
-                }
-
-                return [...acc, e] as types.ScreenEntry[];
-            }, [
-                ...entries,
-                {
-                    value: eligibilityAutoFillValues,
-                } as types.ScreenEntry,
-                ...nuidSearchForm.map(f => {
-                    const entry = {
-                        value: [{
-                            value: f.value,
-                            key: f.key,
-                        }],
-                    } as types.ScreenEntry;
-                    
-                    return entry;
-                }),
-            ]);
-
-            _condition = _condition.replace(/\[(.*?)\]/gi, (_, match: string) => {
-                return parseCondition(match, _form);
-            });
-
-            if (
-                _condition.match(/ excludes /gi) ||
-                _condition.match(/ includes /gi) ||
-                _condition.match(/ or_excludes /gi) ||
-                _condition.match(/ or_includes /gi)
-            ) {
-                let joinWith = 'and';
-                if (_condition.match(/ or_excludes /gi) || _condition.match(/ or_includes /gi)) {
-                    joinWith = 'or';
-                    _condition = _condition.replaceAll(' or_excludes ', ' excludes ');
-                    _condition = _condition.replaceAll(' or_includes ', ' includes ');
-                }
-
-                const [key, vals] = _condition.match(/ excludes /gi) ?
-                    _condition.split(/ excludes /gi).map(s => s.trim())
-                    :
-                    _condition.split(/ includes /gi).map(s => s.trim());
-
-                const valsParsed = (vals || '')
-                    .replace(/\((.*?)\)/gi, '$1').trim().split(',')
-                    .map(s => s.trim().replace(/\'(.*?)\'/gi, '$1'))
-                    .map(s => s.trim().replace(/\"(.*?)\"/gi, '$1'))
-                    .map(s => s.trim().replace(/\`(.*?)\`/gi, '$1'));
-
-                // const valsParsed = `${vals || ''}`
-                //     .replace(/\((.*?)\)/, '$1')
-                //     .split(',')
-                //     .map(v => v.trim().replaceAll('"', '').replaceAll("'", '').replaceAll('`', '').replaceAll('`', ''));
-
-                const entryVals = _form.map(e => {
-                    let found: string[] = [];
-                    const entryVals = e.value || e.values || [];
-                    entryVals.forEach(v => {
-                        if (`$${v?.key?.toLowerCase?.()}` === key?.toLowerCase?.()) {
-                            const val = Array.isArray(v.value) ? v.value : [v.value];
-                            val.forEach(v => {
-                                if (v.key) {
-                                    found.push(v.key);
-                                }
-                            });
-                        }
-                    });
-                    return found.filter(v => v);
-                }).reduce((acc, arr) => [...acc, ...arr], []);
-
-                _condition = valsParsed
-                    .map(v => {
-                        // let includes = entryVals.map(v => v.toLowerCase()).includes(v.toLowerCase());
-                        // if (_condition.match(/ excludes /gi)) {
-                        //     includes = !includes;
-                        // }
-                        // return includes;
-                        return `${JSON.stringify(entryVals.map(v => v.toLowerCase()))}.includes(${JSON.stringify(v).toLowerCase()})`;
-                    })
-                    .join(` ${joinWith} `);
-
-                return _condition;
-            }
-
-            const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
-                value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
-                value = ((value === null) || (value === undefined)) ? 'no value' : value;
-                const t = dataType || type;
-        
-                switch (t) {
-                    case 'boolean':
-                        value = value === 'false' ? false : Boolean(value);
-                        break;
-                    default:
-                        if(key==='createdAt'){
-                            value=value
-                        }else{
-                            value = JSON.stringify(value)
-                        }
-                }
-        
-                return parseConditionString(condition, inputKey || key, value);
-            };
-        
-            let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
-                values = value || values || [];
-
-                values = values.reduce((acc: typeof values, v) => {
-                    acc.push(v);
-                    if (v.value2 && v.key2) acc.push({ value: v.value2, key: v.key2, });
-                    return acc;
-                }, []);
-                
-                // First filter out null/undefined values
-                values = values.filter(e => (e.value !== null) && (e.value !== undefined));
-                
-                // Flatten repeatable structures if they exist
-                values = flattenRepeatables(values);
-                
-                // Handle both array and non-array values
-                values = values
-                    .reduce((acc: types.ScreenEntryValue[], e) => {
-                        acc.push(...(e.value && Array.isArray(e.value) ? e.value : [e]));
-                        return acc;
-                    }, []);
-
-                // Make manual-entry text (value2) substitutable under the same key.
-                // Exactly one clone per value, appended after all originals, with
-                // value2 stripped so clones can never be cloned again. (The previous
-                // in-loop acc.forEach re-cloned every prior clone on each iteration,
-                // doubling them per value — exponential once any value2 was set.)
-                const value2Substitutions = values
-                    .filter(v => v.value2)
-                    .map(v => ({ ...v, value: v.value2, value2: undefined }));
-
-                if (value2Substitutions.length) {
-                    values = values.concat(value2Substitutions);
-                }
-
-                // Each parseValue pass is ~8 string split/joins over the whole
-                // condition; once no $tokens remain there is nothing left to
-                // substitute, so skip the remaining values. The first value is
-                // always processed because parseValue also normalizes the string
-                // (lowercase/spacing) even when it substitutes nothing.
-                let c = values.reduce((acc, v, i) => (
-                    (i > 0 && acc.indexOf('$') === -1) ? acc : parseValue(acc, v)
-                ), condition);
-
-                let chunks: string[] = values.filter(v => v.parentKey)
-                    .map(v => parseValue(condition, {
-                        ...v,
-                        key: v.parentKey,
-                    }))
-                    .filter(c => c !== condition);
-        
-                if (screen) {
-                    switch (screen.type) {
-                        case 'multi_select':
-                            chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
-                            break;
-                        default:
-                        // do nothing
-                    }
-                }
-
-                if (chunks.length) {
-                    c = chunks.map(c => `(${c})`).join(' || ');
-                }
-        
-                return c || condition;
-            }, _condition);
-        
-            if (configuration) {
-                parsedCondition = Object.keys(configuration).reduce((acc, key) => {
-                    return parseConditionString(acc, key, configuration[key] ? true : false);
-                }, parsedCondition);
-            }
-        
-            return `(${sanitizeCondition(parsedCondition)})`;
-        }).join(' && ');
-
-        return _condition.toLowerCase();
-    }, [entries, configuration, nuidSearchForm, eligibilityAutoFillValues, parseConditionString, flattenRepeatables, sanitizeCondition]);
+    ) => compileCondition(_condition, _entries, { buildForm, configuration }),
+        [buildForm, configuration]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
@@ -495,7 +290,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
             if (activeScreen?.data?.skipToCondition && (skipToScreenIndex !== null) && (skipToScreenIndex > activeScreenIndex)) {
                 const parsedCondition = parseCondition(`${activeScreen?.data?.skipToCondition || ''}`);
-                index = evaluateCondition(parsedCondition) ? skipToScreenIndex : index;
+                index = evaluateCondition(parsedCondition, false, `${activeScreen?.data?.skipToCondition || ''}`) ? skipToScreenIndex : index;
             }
         
             let screen = screens[index];
@@ -506,7 +301,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 screen = s;
@@ -528,7 +323,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 screen = s;
@@ -572,7 +367,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             if (!condition) return target;
 
             const parsedCondition = parseCondition(condition);
-            let conditionMet = evaluateCondition(parsedCondition);
+            let conditionMet = evaluateCondition(parsedCondition, false, condition);
 
             const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
 
@@ -580,7 +375,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 conditionMet = true;
                 conditionSplit.forEach(c => {
                     const parsedCondition = parseCondition(c);
-                    const isTrue = evaluateCondition(parsedCondition);
+                    const isTrue = evaluateCondition(parsedCondition, false, c);
                     if (!isTrue) conditionMet = false;
                 });
             }
@@ -621,7 +416,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen: lastScreen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 lastScreen = s;
@@ -638,7 +433,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen: lastScreen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 lastScreen = s;
@@ -653,13 +448,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
             if (condition) {
                 const parsedCondition = parseCondition(condition, entries.filter(e => e.screen.id !== lastScreen.id));
-                let conditionMet = evaluateCondition(parsedCondition);
+                let conditionMet = evaluateCondition(parsedCondition, false, condition);
 
                 if (conditionSplit.length > 1) {
                     conditionMet = true;
                     conditionSplit.forEach(c => {
                         const parsedCondition = parseCondition(c);
-                        const isTrue = evaluateCondition(parsedCondition);
+                        const isTrue = evaluateCondition(parsedCondition, false, c);
                         if (!isTrue) conditionMet = false;
                     });
                 }
@@ -709,7 +504,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 const { data: { symptoms: s, expression } } = d;
                 const symptoms: any[] = s || [];
             
-                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression), false, s.expression));
                 // const _symptoms = symptoms;
                 const riskSignCount = _symptoms.reduce((acc, s) => {
                     if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
@@ -722,7 +517,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         { key: 'riskCount', value: riskSignCount.riskCount, },
                         { key: 'signCount', value: riskSignCount.signCount, },
                     ],
-                }]));
+                }]), false, expression);
                 // const conditionMet = i < 2;
                 return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
             }).filter(d => d);
@@ -767,7 +562,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 const { data: { symptoms: s, expression } } = d;
                 const symptoms: any[] = s || [];
             
-                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression), false, s.expression));
                 // const _symptoms = symptoms;
                 const riskSignCount = _symptoms.reduce((acc, s) => {
                     if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
@@ -780,7 +575,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         { key: 'riskCount', value: riskSignCount.riskCount, },
                         { key: 'signCount', value: riskSignCount.signCount, },
                     ],
-                }]));
+                }]), false, expression);
                 // const conditionMet = i < 2;
                 return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
             }).filter(d => d);
