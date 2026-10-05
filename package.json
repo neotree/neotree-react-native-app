@@ -9,6 +9,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test:ce": "for f in membership option-conditions outcome-collections condition-pipeline cross-version; do node --experimental-strip-types --no-warnings --import ./scripts/ts-ext-register.mjs src/utils/$f.test.ts || exit 1; done",
     "build:demo": "NODE_ENV=production NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
     "build:stage": "NODE_ENV=production NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage --clear-cache",
     "build:prod": "NODE_ENV=production NEOTREE_BUILD_TYPE=production eas build --platform android --profile production",
