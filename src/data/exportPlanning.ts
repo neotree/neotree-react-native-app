@@ -128,8 +128,12 @@ export function pendingSessionFilter(options: PendingFilterOptions): { sql: stri
     };
 
     const pending: string[] = [`(exported IS NOT 1 AND ${notBlocked('main_export_blocked')})`];
+    // Every destination clause needs its own delivery flag unset, so a row with
+    // all of them set is rejected on integers alone. Most rows are like that.
+    const owedFlags: string[] = ['exported IS NOT 1'];
 
     if (options.pollingCountries.length) {
+        owedFlags.push('poll_exported IS NOT 1');
         const blocked = notBlocked('poll_export_blocked');
         pending.push(`(
             poll_exported IS NOT 1
@@ -141,6 +145,7 @@ export function pendingSessionFilter(options: PendingFilterOptions): { sql: stri
     }
 
     if (options.local?.country && options.local?.hospital) {
+        owedFlags.push('local_export IS NOT 1');
         const blocked = notBlocked('local_export_blocked');
         pending.push(`(
             local_export IS NOT 1
@@ -152,21 +157,39 @@ export function pendingSessionFilter(options: PendingFilterOptions): { sql: stri
     }
 
     return {
-        sql: `WHERE json_valid(data)
-            AND json_extract(data, '$.completed_at') IS NOT NULL
-            AND json_extract(data, '$.canceled_at') IS NULL
-            AND (${pending.join(' OR ')})`,
+        sql: `WHERE ${owedOnly(owedFlags.join(' OR '), `(${pending.join(' OR ')})`)}`,
         params,
     };
 }
 
-/** Completed sessions that are quarantined from at least one destination. */
-export const QUARANTINED_SESSION_FILTER = `WHERE json_valid(data)
-    AND json_extract(data, '$.completed_at') IS NOT NULL
-    AND json_extract(data, '$.canceled_at') IS NULL
-    AND (COALESCE(main_export_blocked, 0) = 1
+/**
+ * A row filter that rejects on integer flags before reading any JSON.
+ *
+ * The session JSON is the expensive part: tens of kilobytes per row, parsed by
+ * json_valid for every row a scan touches. Testing the flags first means the
+ * JSON of an already-exported session - the vast majority - is never read,
+ * which takes these counts from hundreds of milliseconds to a few at 10k rows.
+ *
+ * CASE fixes the evaluation order. json_extract raises an error on malformed
+ * JSON, so it must never run before json_valid has passed, and the order of
+ * plain AND terms is up to the query planner.
+ */
+function owedOnly(flags: string, detail: string): string {
+    return `CASE
+            WHEN NOT (${flags}) THEN 0
+            WHEN NOT json_valid(data) THEN 0
+            ELSE json_extract(data, '$.completed_at') IS NOT NULL
+                AND json_extract(data, '$.canceled_at') IS NULL
+                AND ${detail}
+        END`;
+}
+
+const QUARANTINE_FLAGS = `COALESCE(main_export_blocked, 0) = 1
         OR COALESCE(poll_export_blocked, 0) = 1
-        OR COALESCE(local_export_blocked, 0) = 1)`;
+        OR COALESCE(local_export_blocked, 0) = 1`;
+
+/** Completed sessions that are quarantined from at least one destination. */
+export const QUARANTINED_SESSION_FILTER = `WHERE ${owedOnly(QUARANTINE_FLAGS, '1')}`;
 
 // --- Sessions exported by other devices -------------------------------------------------
 

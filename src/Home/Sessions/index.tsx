@@ -847,9 +847,14 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				resolve(page.rows);
 
 				// The total is only a caption, so it must never hold up the list.
-				api.countSessionsForLocation(location.country, location.hospital)
-					.then(total => { if (listRequestId.current === requestId) setTotalSessions(total); })
-					.catch(() => {});
+				// Counting reads every session at the site, so it is skipped when
+				// returning to the list from a search or filter: those don't change
+				// how many sessions there are.
+				if (opts.recount !== false) {
+					api.countSessionsForLocation(location.country, location.hospital)
+						.then(total => { if (listRequestId.current === requestId) setTotalSessions(total); })
+						.catch(() => {});
+				}
 			} catch (e: any) {
 				Alert.alert(
 					'Failed to load sessions',
@@ -956,7 +961,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 			setSearchingLocalServer(false);
 			setSearchSource(null);
 			if (filterByDate) await applyDateFilter(filterMinDate, filterMaxDate);
-			else await loadFirstPage({ loader: false });
+			else await loadFirstPage({ loader: false, recount: false });
 			return;
 		}
 
@@ -1069,15 +1074,31 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 		if (searchTimeout.current) clearTimeout(searchTimeout.current);
 	}, []);
 
+	// Export notifications arrive in bursts - a start and a finish for every
+	// batch of a backlog drain - so refreshes are coalesced: one in flight, and
+	// at most one more queued behind it to pick up whatever changed meanwhile.
+	const statusRefresh = React.useRef({ running: false, again: false });
 	const refreshPendingExportCount = React.useCallback(async () => {
+		if (statusRefresh.current.running) {
+			statusRefresh.current.again = true;
+			return;
+		}
+		statusRefresh.current.running = true;
 		try {
-			const [pending, quarantined] = await Promise.all([
-				api.countPendingExports(),
-				api.getQuarantineSummary(),
-			]);
-			setPendingExportCount(pending);
-			setQuarantine(quarantined);
-		} catch { /* status lines are optional */ }
+			do {
+				statusRefresh.current.again = false;
+				const [pending, quarantined] = await Promise.all([
+					api.countPendingExports(),
+					api.getQuarantineSummary(),
+				]);
+				setPendingExportCount(pending);
+				setQuarantine(quarantined);
+			} while (statusRefresh.current.again);
+		} catch {
+			// status lines are optional
+		} finally {
+			statusRefresh.current.running = false;
+		}
 	}, []);
 
 	/**
@@ -1525,7 +1546,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							setFilterByDate(false);
 							setOpenFilterModal(false);
 							// Back to the paged view rather than a filtered set.
-							loadFirstPage();
+							loadFirstPage({ recount: false });
 						}
 					},
 					{
@@ -1540,7 +1561,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 							setFilterByDate(active);
 							setOpenFilterModal(false);
 							if (active) applyDateFilter(filterMinDate, filterMaxDate);
-							else loadFirstPage();
+							else loadFirstPage({ recount: false });
 						},
 					}
 				]}
