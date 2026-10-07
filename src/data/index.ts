@@ -10,6 +10,8 @@ export * from './convertSessionsToExportable';
 
 export * from './exportSessions';
 
+export * from './deliveryStatus';
+
 export * from './exportLock';
 
 export * from './exportOnReconnect';
@@ -25,4 +27,3 @@ export * from './sessions';
 export * from './socket';
 
 export * from './circuitBreaker';
-

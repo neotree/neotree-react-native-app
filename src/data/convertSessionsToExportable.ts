@@ -1,4 +1,5 @@
 import {formatExportableSession} from './getConvertedSession'
+import {getApplication} from './queries'
 import { logError } from '@/src/utils/logError';
 
 /**
@@ -12,8 +13,10 @@ import { logError } from '@/src/utils/logError';
 export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {}) {
     return new Promise(async (resolve, reject) => {
         try {
-    
-            const settled = await Promise.allSettled(_sessions.map((s: any) => formatExportableSession(s, opts)));
+            const application = opts.application || await getApplication();
+            const settled = await Promise.allSettled(
+                _sessions.map((s: any) => formatExportableSession(s, { ...opts, application }))
+            );
 
             const data: any[] = [];
             settled.forEach((result, i) => {
@@ -30,4 +33,3 @@ export function convertSessionsToExportable(_sessions: any[] = [], opts: any = {
         }
     });
 }
-

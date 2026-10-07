@@ -4,7 +4,7 @@ import { COUNTRY } from '../types';
 import { getExportedSessions } from './sessions';
 import { getLocation } from './queries';
 import { resetCircuit, backendKey } from './circuitBreaker';
-import { scheduleExportSessions } from './exportSessions';
+import { POLL_CIRCUIT_SCOPE, scheduleExportSessions } from './exportSessions';
 import { APP_CONFIG } from '../constants';
 
 
@@ -44,7 +44,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
         const onWebeditorConnect = () => resetCircuit(backendKey(country, 'webeditor'));
         const onNodeApiConnect = () => {
             resetCircuit(backendKey(country, 'nodeapi'));
-            resetCircuit(backendKey(country, 'nodeapi', 'poll'));
+            resetCircuit(backendKey(country, 'nodeapi', POLL_CIRCUIT_SCOPE));
             scheduleExportSessions();
         };
         const onDataUpdated = (data: any) => onEvent({ name: 'data_updated', ...data });
@@ -75,7 +75,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
             nodeApiSocket?.off('connect', onNodeApiConnect);
             nodeApiSocket?.off('sessions_exported', onSessionsExported);
         };
-    } catch(e) {
+    } catch {
         return noop;
     }
 }

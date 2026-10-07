@@ -1,7 +1,7 @@
 import { InteractionManager } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
-import { exportSessions } from './exportSessions';
+import { resumeExportSessions } from './exportSessions';
 import { resetAllCircuits } from './circuitBreaker';
 
 let unsubscribe: (() => void) | null = null;
@@ -18,8 +18,8 @@ function queueSilentFlush() {
     flushPending = true;
 
     InteractionManager.runAfterInteractions(() => {
-        const clear = () => { flushPending = false; };
-        exportSessions().then(clear, clear);
+        resumeExportSessions();
+        flushPending = false;
     });
 }
 
@@ -34,10 +34,11 @@ export function registerExportOnReconnect() {
 
     const removeListener = NetInfo.addEventListener(state => {
         const online = Boolean(state.isConnected && state.isInternetReachable);
+        const firstOnlineObservation = wasOnline === null && online;
         const cameBackOnline = wasOnline === false && online;
         wasOnline = online;
 
-        if (cameBackOnline) {
+        if (firstOnlineObservation || cameBackOnline) {
             resetAllCircuits();
             queueSilentFlush();
         }

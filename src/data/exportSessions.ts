@@ -1,85 +1,56 @@
 import { InteractionManager } from 'react-native';
 
-import { APP_CONFIG } from '@/src/constants';
-import * as types from '../types';
 import { dbTransaction } from './db';
 import { convertSessionsToExportable } from './convertSessionsToExportable';
 import { makeApiCall, makeLocalApiCall, hasLocalServerConfig } from './api';
 import { updateSession } from './updateSession';
 import { withExportLock } from './exportLock';
-import { getLocation } from './queries';
-import { isBackendDown, backendKey, onCircuitCooldownExpired } from './circuitBreaker';
+import { getApplication, getLocation } from './queries';
+import { isBackendDown, backendKey, NetworkUnavailableError } from './circuitBreaker';
+import type { ExportDestination, ExportFailureKind } from './exportPlanning';
+import {
+    batchFoundBackendsDown,
+    classifyExportError,
+    isQuarantined,
+    isQuarantineExpired,
+    pendingSessionFilter,
+    QUARANTINED_SESSION_FILTER,
+    quarantineReleaseCutoff,
+} from './exportPlanning';
+import {
+    getPollingCountries,
+    isExportableSession,
+    isPollDelivered,
+    localRequiredForSession,
+    POLL_TRACKING_STARTED_AT,
+    pollingRequired,
+} from './deliveryStatus';
+import { exportAcknowledged, retryableHttpStatus } from './deliveryRules';
 import { logError, logWarning } from '@/src/utils/logError';
 import { runPooled } from '@/src/utils/runPooled';
-
-
-export function pollingRequired(country: string): boolean {
-    return (APP_CONFIG[country] as types.COUNTRY_CONFIG | undefined)?.savePollingData !== false;
-}
-
-export function isTerminalSession(session: any): boolean {
-    return Boolean(session?.data?.completed_at || session?.data?.canceled_at);
-}
-
-/**
- * The hard export boundary: only successfully completed sessions may leave
- * the device. Canceled and interrupted sessions are deliberately excluded,
- * regardless of which caller supplied them or which delivery flag is pending.
- */
-export function isExportableSession(session: any): boolean {
-    return Boolean(session?.data?.completed_at && !session?.data?.canceled_at);
-}
-
-export function localRequiredForSession(
-    session: any,
-    location: { country?: string | null; hospital?: string | null } | null | undefined,
-    hasLocalConfig: boolean,
-): boolean {
-    if (!hasLocalConfig) return false;
-    if (!location?.country || !location?.hospital) return false;
-    return session?.data?.country === location.country
-        && session?.data?.hospital_id === location.hospital;
-}
-
-
-export function isFullyDelivered(
-    session: any,
-    location: { country?: string | null; hospital?: string | null } | null | undefined,
-    hasLocalConfig: boolean,
-): boolean {
-    if (!session) return false;
-    // Canceled sessions have no delivery obligation and can be deleted, but
-    // they must never be sent or have export flags advanced.
-    if (session?.data?.canceled_at && !isExportableSession(session)) return true;
-    if (!isExportableSession(session)) return false;
-
-    if (!session.exported) return false;
-    if (pollingRequired(session?.data?.country) && !session.poll_exported) return false;
-    if (localRequiredForSession(session, location, hasLocalConfig) && !session.local_export) return false;
-    return true;
-}
-
 
 const afterInteractions = () => new Promise<void>(resolve => {
     InteractionManager.runAfterInteractions(() => resolve());
 });
 
-const EXPORT_CONCURRENCY = 5;
-
-// A non-200 from the cloud server is not an exception, so without this the
-// reason a session stays unexported (bad key, payload rejected, server error)
-// is never recorded anywhere.
-async function logRemoteRejection(context: string, res: any, sessionId: any) {
-    let body = '';
-    try { body = (await res?.text?.() || '').slice(0, 300); } catch { /* body unreadable */ }
-    logWarning(context, 'Cloud server returned a non-200 response', { status: res?.status, body, sessionId }, { source: 'nodeapi' });
-}
-
+const EXPORT_CONCURRENCY = 3;
+const EXPORT_BATCH_SIZE = 25;
 
 // /save-poll-data has its own circuit so a failing poll endpoint cannot stop
 // /sessions (and vice versa). Both still talk to the same nodeapi host.
 export const POLL_CIRCUIT_SCOPE = 'poll';
-const pollKey = (country: string) => backendKey(country, 'nodeapi', POLL_CIRCUIT_SCOPE);
+const pollCircuitKey = (country: string) => backendKey(country, 'nodeapi', POLL_CIRCUIT_SCOPE);
+
+export type { ExportDestination, ExportFailureKind } from './exportPlanning';
+
+export interface ExportFailure {
+    id: any;
+    destination: ExportDestination;
+    kind: ExportFailureKind;
+    message: string;
+    retryable: boolean;
+    status?: number;
+}
 
 export interface ExportBatchResult {
     failedMain: any[];
@@ -88,28 +59,112 @@ export interface ExportBatchResult {
     okMain: any[];
     okPoll: any[];
     okLocal: any[];
+    failures: ExportFailure[];
     localConfigured: boolean;
     remoteSkipped: boolean;
     localSkipped: boolean;
+    hasMore: boolean;
 }
 
 const emptyResult = (): ExportBatchResult => ({
     failedMain: [], failedPoll: [], failedLocal: [],
-    okMain: [], okPoll: [], okLocal: [],
+    okMain: [], okPoll: [], okLocal: [], failures: [],
     localConfigured: false,
     remoteSkipped: false,
     localSkipped: false,
+    hasMore: false,
 });
 
-
-function groupByCountry(sessions: any[], fallbackCountry: string | undefined | null): Map<string, any[]> {
+function groupByCountry(sessions: any[]): Map<string, any[]> {
     const groups = new Map<string, any[]>();
-    for (const s of sessions) {
-        const key = s.data?.country || fallbackCountry || 'unknown';
+    for (const session of sessions) {
+        // Never route a malformed legacy row through the tablet's current
+        // country: that could send clinical data to the wrong backend.
+        const key = session.data?.country || 'unknown';
         const list = groups.get(key);
-        if (list) list.push(s); else groups.set(key, [s]);
+        if (list) list.push(session); else groups.set(key, [session]);
     }
     return groups;
+}
+
+function failureIds(result: ExportBatchResult, destination: ExportDestination): any[] {
+    if (destination === 'main') return result.failedMain;
+    if (destination === 'poll') return result.failedPoll;
+    return result.failedLocal;
+}
+
+function successIds(result: ExportBatchResult, destination: ExportDestination): any[] {
+    if (destination === 'main') return result.okMain;
+    if (destination === 'poll') return result.okPoll;
+    return result.okLocal;
+}
+
+function blockedField(destination: ExportDestination): string {
+    if (destination === 'main') return 'main_export_blocked';
+    if (destination === 'poll') return 'poll_export_blocked';
+    return 'local_export_blocked';
+}
+
+async function recordFailure(
+    result: ExportBatchResult,
+    session: any,
+    destination: ExportDestination,
+    error: any,
+    opts: { kind?: ExportFailureKind; retryable?: boolean; status?: number } = {},
+): Promise<void> {
+    const classified = classifyExportError(error, opts.kind);
+    const failure: ExportFailure = {
+        id: session.id,
+        destination,
+        kind: classified.kind,
+        message: classified.message,
+        retryable: opts.retryable ?? classified.retryable,
+        ...(opts.status === undefined ? {} : { status: opts.status }),
+    };
+
+    const ids = failureIds(result, destination);
+    if (!ids.includes(session.id)) ids.push(session.id);
+    if (!result.failures.some(existing => existing.id === session.id && existing.destination === destination)) {
+        result.failures.push(failure);
+    }
+
+    // Permanent payload/configuration/4xx failures are quarantined so one bad
+    // historical row cannot create an endless retry loop or starve newer rows.
+    // The time is recorded so the sweep can give it another attempt later
+    // rather than stranding it for good (see QUARANTINE_RETRY_AFTER_MS).
+    if (!failure.retryable) {
+        try {
+            await updateSession({
+                [blockedField(destination)]: true,
+                export_last_error: failure.message.slice(0, 500),
+                export_blocked_at: new Date().toISOString(),
+            }, { where: { id: session.id } });
+        } catch (updateError) {
+            logError('exportSessions.quarantine', updateError, { sessionId: session.id, destination });
+        }
+    }
+}
+
+async function recordSuccess(
+    result: ExportBatchResult,
+    session: any,
+    destination: ExportDestination,
+): Promise<void> {
+    const flag = destination === 'main'
+        ? 'exported'
+        : destination === 'poll' ? 'poll_exported' : 'local_export';
+    await updateSession({
+        [flag]: true,
+        [blockedField(destination)]: false,
+    }, { where: { id: session.id } });
+    successIds(result, destination).push(session.id);
+}
+
+async function responseError(response: Response | null | undefined): Promise<string> {
+    if (!response) return 'The server returned no response';
+    let detail = '';
+    try { detail = (await response.text()).trim().slice(0, 300); } catch { /* response body is optional */ }
+    return `Server returned HTTP ${response.status}${detail ? `: ${detail}` : ''}`;
 }
 
 interface CohortContext {
@@ -117,218 +172,398 @@ interface CohortContext {
     cohortSessions: any[];
     hasLocalConfig: boolean;
     location: { country?: string | null; hospital?: string | null } | null | undefined;
+    application: any;
     result: ExportBatchResult;
 }
 
-function markCohortPending(ctx: CohortContext, reason: string, e?: unknown): void {
-    const { cohortCountry, cohortSessions, hasLocalConfig, location, result } = ctx;
-    logError('exportSessions.cohort', e, { reason, cohortCountry });
-    cohortSessions.forEach(s => {
-        if (!s.exported) result.failedMain.push(s.id);
-        if (pollingRequired(cohortCountry) && !s.poll_exported) result.failedPoll.push(s.id);
-        if (localRequiredForSession(s, location, hasLocalConfig) && !s.local_export) result.failedLocal.push(s.id);
-    });
-}
-
 async function processCountryCohort(ctx: CohortContext): Promise<void> {
-    const { cohortCountry, cohortSessions, hasLocalConfig, location, result } = ctx;
+    const { cohortCountry, cohortSessions, hasLocalConfig, location, application, result } = ctx;
     const currentHospital = location?.hospital;
-
     const pollRequired = pollingRequired(cohortCountry);
-    if (!pollRequired) {
-        const neverNeedsPoll = cohortSessions.filter(s => !s.poll_exported);
-        // A db failure here must not be swallowed — see markCohortPending.
-        await Promise.all(neverNeedsPoll.map(s => updateSession({ poll_exported: true }, { where: { id: s.id } })));
+    const localOwed = cohortSessions.filter(session => localRequiredForSession(session, location, hasLocalConfig));
+
+    const remoteExportData = cohortSessions.filter(session => !session.exported && !session.main_export_blocked);
+    const remotePollExportData = pollRequired
+        ? cohortSessions.filter(session => !isPollDelivered(session) && !session.poll_export_blocked)
+        : [];
+    const localExportData = localOwed.filter(session => !session.local_export && !session.local_export_blocked);
+
+    const remoteKey = backendKey(cohortCountry, 'nodeapi');
+    const pollKey = pollCircuitKey(cohortCountry);
+    const localKey = backendKey(cohortCountry, 'local', currentHospital);
+    const remoteUp = !isBackendDown(remoteKey);
+    const pollUp = !isBackendDown(pollKey);
+    const localUp = localExportData.length > 0 && !isBackendDown(localKey);
+
+    if (!remoteUp && remoteExportData.length) {
+        result.remoteSkipped = true;
+        const error = new NetworkUnavailableError('nodeapi');
+        await Promise.all(remoteExportData.map(session => recordFailure(result, session, 'main', error)));
+    }
+    if (!pollUp && remotePollExportData.length) {
+        result.remoteSkipped = true;
+        const error = new NetworkUnavailableError('nodeapi');
+        await Promise.all(remotePollExportData.map(session => recordFailure(result, session, 'poll', error)));
+    }
+    if (localExportData.length && !localUp) {
+        result.localSkipped = true;
+        const error = new NetworkUnavailableError('local');
+        await Promise.all(localExportData.map(session => recordFailure(result, session, 'local', error)));
     }
 
-    const localOwed = cohortSessions.filter(s => localRequiredForSession(s, location, hasLocalConfig));
-    const allowLocal = localOwed.length > 0;
+    const standardCache = new Map<any, Promise<any>>();
+    const confidentialCache = new Map<any, Promise<any>>();
+    const convertOne = (session: any, confidential: boolean) => {
+        const cache = confidential ? confidentialCache : standardCache;
+        if (!cache.has(session.id)) {
+            cache.set(session.id, convertSessionsToExportable([session], {
+                showConfidential: confidential,
+                application,
+            }).then((rows: any) => {
+                const row = rows?.[0];
+                if (!row) throw new Error('Session could not be converted for export');
+                return row;
+            }));
+        }
+        return cache.get(session.id)!;
+    };
 
-    const remoteUp = !isBackendDown(backendKey(cohortCountry, 'nodeapi'));
-    const pollUp = !isBackendDown(pollKey(cohortCountry));
-    const localUp = allowLocal && !isBackendDown(backendKey(cohortCountry, 'local', currentHospital));
-
-    if (!remoteUp) result.remoteSkipped = true;
-    if (allowLocal && !localUp) result.localSkipped = true;
-
-    if (!remoteUp && !pollUp && !localUp) return;
-
-    const remoteExportData: any[] = remoteUp ? cohortSessions.filter(s => !s.exported) : [];
-    const remotePollExportData: any[] = (pollUp && pollRequired) ? cohortSessions.filter(s => !s.poll_exported) : [];
-
-    const localExportData: any[] = localUp ? localOwed.filter(s => !s.local_export) : [];
-
-    if (!remoteExportData.length && !remotePollExportData.length && !localExportData.length) return;
-
-    let standardData: any[];
-    let confidentialData: any[];
-    try {
-        standardData = remoteExportData.length ? await convertSessionsToExportable(remoteExportData) as any[] : [];
-        const confidentialSource = Array.from(
-            new Map([...remotePollExportData, ...localExportData].map(s => [s.id, s])).values()
-        );
-        confidentialData = confidentialSource.length
-            ? await convertSessionsToExportable(confidentialSource, { showConfidential: true }) as any[]
-            : [];
-    } catch (e) {
-        // Conversion failed before a single network call was attempted — every
-        // session pending for any destination here is still pending.
-        logError('exportSessions.cohortConversion', e, { cohortCountry });
-        remoteExportData.forEach(s => result.failedMain.push(s.id));
-        remotePollExportData.forEach(s => result.failedPoll.push(s.id));
-        localExportData.forEach(s => result.failedLocal.push(s.id));
-        return;
-    }
-
-    const promises: Promise<any>[] = [];
-
-    // --- Remote export: /sessions --------------------------------------
-    if (remoteUp) {
-        const remoteDown = () => isBackendDown(backendKey(cohortCountry, 'nodeapi'));
-
-        promises.push(runPooled(standardData, EXPORT_CONCURRENCY, remoteDown, async (s: any) => {
-            const { id, exported, local_export, poll_exported, ...exportable } = s;
+    const runDestination = async (
+        sessions: any[],
+        destination: ExportDestination,
+        stop: () => boolean,
+        send: (payload: any) => Promise<Response | null>,
+        confidential: boolean,
+    ) => {
+        const deferred = await runPooled(sessions, EXPORT_CONCURRENCY, stop, async session => {
+            let payload: any;
             try {
-                const res = await makeApiCall('nodeapi', `/sessions?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
-                    method: 'POST',
-                    body: JSON.stringify(exportable),
-                }, { country: cohortCountry });
-                if (res?.status === 200) {
-                    await updateSession({ exported: true }, { where: { id, }, });
-                    result.okMain.push(id);
-                } else {
-                    await logRemoteRejection('exportSessions.remoteRejected', res, id);
-                    result.failedMain.push(id);
-                }
-            } catch (e) {
-                result.failedMain.push(id);
-                logError('exportSessions.remote', e, { sessionId: id });
-            }
-        }).then(deferred => { deferred.forEach((s: any) => result.failedMain.push(s.id)); }));
-
-    }
-
-    // --- Poll export: /save-poll-data (independent circuit) -------------
-    if (pollUp) {
-        const pollDown = () => isBackendDown(pollKey(cohortCountry));
-
-        const remotePollConfidentialData = confidentialData.filter((s: any) => !s.poll_exported);
-        promises.push(runPooled(remotePollConfidentialData, EXPORT_CONCURRENCY, pollDown, async (s: any) => {
-            const { id, exported, local_export, poll_exported, ...exportable } = s;
-            try {
-                const res = await makeApiCall('nodeapi', `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
-                    method: 'POST',
-                    body: JSON.stringify(exportable),
-                }, { country: cohortCountry, circuitScope: POLL_CIRCUIT_SCOPE });
-                if (res?.status === 200) {
-                    await updateSession({ poll_exported: true }, { where: { id, }, });
-                    result.okPoll.push(id);
-                } else {
-                    await logRemoteRejection('exportSessions.pollRejected', res, id);
-                    result.failedPoll.push(id);
-                }
-            } catch (e) {
-                result.failedPoll.push(id);
-                logError('exportSessions.poll', e, { sessionId: id });
-            }
-        }).then(deferred => { deferred.forEach((s: any) => result.failedPoll.push(s.id)); }));
-    }
-
-    // --- Local export: /local ------------------------------------------
-    if (localUp) {
-        const localDown = () => isBackendDown(backendKey(cohortCountry, 'local', currentHospital));
-
-        const localEligibleIds = new Set(localExportData.map((s: any) => s.id));
-        const localConfidentialData = confidentialData.filter((s: any) => !s.local_export && localEligibleIds.has(s.id));
-        promises.push(runPooled(localConfidentialData, EXPORT_CONCURRENCY, localDown, async (s: any) => {
-            const { id, exported, local_export, poll_exported, ...exportable } = s;
-            try {
-                const res = await makeLocalApiCall(`/local?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`, {
-                    method: 'POST',
-                    body: JSON.stringify(exportable),
-                }, { country: cohortCountry, hospital: currentHospital ?? undefined });
-                if (res?.status === 200) {
-                    await updateSession({ local_export: true }, { where: { id, }, });
-                    result.okLocal.push(id);
-                } else {
-                    result.failedLocal.push(id);
-                }
-            } catch (e) {
-                result.failedLocal.push(id);
-                logError('exportSessions.local', e, { sessionId: id });
-            }
-        }).then(deferred => { deferred.forEach((s: any) => result.failedLocal.push(s.id)); }));
-    }
-
-    await Promise.allSettled(promises);
-}
-
-export const doExportSessions = (sessions?: any[]): Promise<ExportBatchResult> => new Promise((resolve, reject) => {
-    (async () => {
-        try {
-            const hasLocalConfig = await hasLocalServerConfig();
-            const location = await getLocation();
-            const currentCountry = location?.country;
-            const currentHospital = location?.hospital;
-
-            let dbSessions = [];
-            if (!sessions) dbSessions = await dbTransaction(
-                hasLocalConfig
-                    ? `SELECT * FROM sessions WHERE json_extract(data, '$.completed_at') IS NOT NULL AND json_extract(data, '$.canceled_at') IS NULL AND (exported IS NOT ? OR poll_exported IS NOT ? OR (local_export IS NOT ? AND json_extract(data, '$.country') = ? AND json_extract(data, '$.hospital_id') = ?));`
-                    : `SELECT * FROM sessions WHERE json_extract(data, '$.completed_at') IS NOT NULL AND json_extract(data, '$.canceled_at') IS NULL AND (exported IS NOT ? OR poll_exported IS NOT ?);`,
-                hasLocalConfig ? [true, true, true, currentCountry, currentHospital] : [true, true]
-            );
-
-            const exportableDbSessions = dbSessions
-                .map(s => ({ ...s, data: JSON.parse(s.data || '{}'), }))
-                .filter(isExportableSession);
-           
-            const suppliedSessions = sessions ? sessions.filter(isExportableSession) : null;
-            const exportData: any[] = suppliedSessions || exportableDbSessions.filter(
-                s => isExportableSession(s) && (
-                    !s.exported ||
-                    !s.poll_exported ||
-                    (hasLocalConfig && !s.local_export && s.data?.country === currentCountry && s.data?.hospital_id === currentHospital)
-                )
-            );
-
-            if (!exportData.length) {
-                resolve({ ...emptyResult(), localConfigured: hasLocalConfig });
+                payload = await convertOne(session, confidential);
+            } catch (error) {
+                await recordFailure(result, session, destination, error, { kind: 'conversion' });
                 return;
             }
 
-            // Yield to the UI before the heavy work below.
-            await afterInteractions();
+            try {
+                const response = await send(payload);
+                if (exportAcknowledged(response?.status)) {
+                    await recordSuccess(result, session, destination);
+                    return;
+                }
+                const status = response?.status || 0;
+                const detail = await responseError(response);
+                // A rejected POST is not an exception, so without this the
+                // reason a session stays unexported (bad key, payload refused,
+                // server error) is never reported anywhere.
+                logWarning(
+                    `exportSessions.${destination}Rejected`,
+                    'Export destination returned a non-success response',
+                    { status, detail, sessionId: session.id },
+                    { source: destination === 'local' ? 'local' : 'nodeapi' },
+                );
+                await recordFailure(result, session, destination, new Error(detail), {
+                    kind: 'http',
+                    status,
+                    retryable: retryableHttpStatus(status),
+                });
+            } catch (error) {
+                await recordFailure(result, session, destination, error);
+            }
+        });
 
-            const result = emptyResult();
-            result.localConfigured = hasLocalConfig;
-            const cohorts = groupByCountry(exportData, currentCountry);
+        const unavailable = new NetworkUnavailableError(destination === 'local' ? 'local' : 'nodeapi');
+        await Promise.all(deferred.map(session => recordFailure(result, session, destination, unavailable)));
+    };
 
-            await Promise.all(Array.from(cohorts.entries()).map(async ([cohortCountry, cohortSessions]) => {
-                const ctx: CohortContext = {
-                    cohortCountry,
-                    cohortSessions,
-                    hasLocalConfig,
-                    location,
-                    result,
-                };
-                try {
-                    await processCountryCohort(ctx);
-                } catch (e) {
-                    markCohortPending(ctx, 'failed', e);
+    const work: Promise<void>[] = [];
+    if (remoteUp && remoteExportData.length) {
+        work.push(runDestination(
+            remoteExportData,
+            'main',
+            () => isBackendDown(remoteKey),
+            payload => {
+                const { id, exported, local_export, poll_exported, ...exportable } = payload;
+                return makeApiCall('nodeapi', `/sessions?uid=${payload.uid}&scriptId=${payload.script.id}&unique_key=${payload.unique_key}`, {
+                    method: 'POST',
+                    body: JSON.stringify(exportable),
+                }, { country: cohortCountry });
+            },
+            false,
+        ));
+    }
+    if (pollUp && remotePollExportData.length) {
+        work.push(runDestination(
+            remotePollExportData,
+            'poll',
+            () => isBackendDown(pollKey),
+            payload => {
+                const { id, exported, local_export, poll_exported, ...exportable } = payload;
+                return makeApiCall('nodeapi', `/save-poll-data?uid=${payload.uid}&scriptId=${payload.script.id}&unique_key=${payload.unique_key}`, {
+                    method: 'POST',
+                    body: JSON.stringify(exportable),
+                }, { country: cohortCountry, circuitScope: POLL_CIRCUIT_SCOPE });
+            },
+            true,
+        ));
+    }
+    if (localUp && localExportData.length) {
+        work.push(runDestination(
+            localExportData,
+            'local',
+            () => isBackendDown(localKey),
+            payload => {
+                const { id, exported, local_export, poll_exported, ...exportable } = payload;
+                return makeLocalApiCall(`/local?uid=${payload.uid}&scriptId=${payload.script.id}&unique_key=${payload.unique_key}`, {
+                    method: 'POST',
+                    body: JSON.stringify(exportable),
+                }, { country: cohortCountry, hospital: currentHospital ?? undefined });
+            },
+            true,
+        ));
+    }
+
+    await Promise.allSettled(work);
+}
+
+interface SweepScope {
+    hasLocalConfig: boolean;
+    country: string | null | undefined;
+    hospital: string | null | undefined;
+}
+
+/** What the sweep owes, including quarantined sessions whose wait is over. */
+function pendingFilterFor(scope: SweepScope, now: number = Date.now()) {
+    return pendingSessionFilter({
+        pollingCountries: getPollingCountries(),
+        pollTrackingStartedAt: POLL_TRACKING_STARTED_AT,
+        local: scope.hasLocalConfig && scope.country && scope.hospital
+            ? { country: scope.country, hospital: scope.hospital }
+            : null,
+        releaseBlockedBefore: quarantineReleaseCutoff(now),
+    });
+}
+
+function pendingSessionQuery(scope: SweepScope): { sql: string; params: any[] } {
+    const filter = pendingFilterFor(scope);
+    return {
+        sql: `SELECT * FROM sessions
+            ${filter.sql}
+            ORDER BY createdAt ASC
+            LIMIT ?;`,
+        params: [...filter.params, EXPORT_BATCH_SIZE + 1],
+    };
+}
+
+/**
+ * How many sessions still owe a delivery, for telling the user what a
+ * background export is working through. Counts in sqlite - no rows are parsed.
+ */
+export async function countPendingExports(): Promise<number> {
+    try {
+        const location = await getLocation();
+        const filter = pendingFilterFor({
+            hasLocalConfig: await hasLocalServerConfig(),
+            country: location?.country,
+            hospital: location?.hospital,
+        });
+        const rows = await dbTransaction(`SELECT COUNT(id) AS total FROM sessions ${filter.sql};`, filter.params);
+        return Number(rows?.[0]?.total || 0);
+    } catch (error) {
+        logError('countPendingExports', error);
+        return 0;
+    }
+}
+
+export interface QuarantineSummary {
+    count: number;
+    /** The most recent reason, so the user sees why without opening a session. */
+    lastError: string | null;
+}
+
+/** Sessions on this device that an export has quarantined, whatever the site. */
+export async function getQuarantineSummary(): Promise<QuarantineSummary> {
+    try {
+        const [counted] = await dbTransaction(`SELECT COUNT(id) AS total FROM sessions ${QUARANTINED_SESSION_FILTER};`);
+        const [latest] = await dbTransaction(
+            `SELECT export_last_error FROM sessions ${QUARANTINED_SESSION_FILTER}
+             AND export_last_error IS NOT NULL
+             ORDER BY COALESCE(export_blocked_at, '') DESC LIMIT 1;`
+        );
+        return { count: Number(counted?.total || 0), lastError: latest?.export_last_error || null };
+    } catch (error) {
+        logError('getQuarantineSummary', error);
+        return { count: 0, lastError: null };
+    }
+}
+
+/** The quarantined sessions themselves, for a user-initiated retry. */
+export async function getQuarantinedSessions(): Promise<any[]> {
+    const rows = await dbTransaction(`SELECT * FROM sessions ${QUARANTINED_SESSION_FILTER} ORDER BY createdAt ASC;`);
+    return rows.map(session => ({ ...session, data: JSON.parse(session.data || '{}') }));
+}
+
+function needsDelivery(
+    session: any,
+    location: { country?: string | null; hospital?: string | null } | null | undefined,
+    hasLocalConfig: boolean,
+): boolean {
+    return isExportableSession(session) && (
+        !session.exported
+        || !isPollDelivered(session)
+        || (localRequiredForSession(session, location, hasLocalConfig) && !session.local_export)
+    );
+}
+
+function deliveredCount(result: ExportBatchResult): number {
+    return result.okMain.length + result.okPoll.length + result.okLocal.length;
+}
+
+interface BatchContext {
+    hasLocalConfig: boolean;
+    location: { country?: string | null; hospital?: string | null } | null | undefined;
+    application: any;
+    result: ExportBatchResult;
+}
+
+/** Sends one batch, grouped by country so each cohort reaches its own backend. */
+async function runExportBatch(batch: any[], ctx: BatchContext): Promise<void> {
+    const { hasLocalConfig, location, application, result } = ctx;
+    const cohorts = groupByCountry(batch);
+
+    await Promise.all(Array.from(cohorts.entries()).map(async ([cohortCountry, cohortSessions]) => {
+        try {
+            await processCountryCohort({
+                cohortCountry,
+                cohortSessions,
+                hasLocalConfig,
+                location,
+                application,
+                result,
+            });
+        } catch (error) {
+            await Promise.all(cohortSessions.map(async session => {
+                if (!session.exported) await recordFailure(result, session, 'main', error);
+                if (!isPollDelivered(session)) await recordFailure(result, session, 'poll', error);
+                if (localRequiredForSession(session, location, hasLocalConfig) && !session.local_export) {
+                    await recordFailure(result, session, 'local', error);
                 }
             }));
-
-            resolve(result);
-        } catch (e) {
-            reject(e);
         }
-    })();
-});
+    }));
+}
 
-export const exportSessions = (sessions?: any[]) => withExportLock(() => doExportSessions(sessions));
+export interface ExportRunOptions {
+    /** Reports batch progress for an explicit selection: (attempted, total). */
+    onProgress?: (done: number, total: number) => void;
+}
 
-onCircuitCooldownExpired(() => scheduleExportSessions());
+/**
+ * Clears quarantine so a session gets a fresh attempt, in the db and in the
+ * copies about to be sent. A session that fails permanently again is simply
+ * quarantined again, with a new timestamp.
+ */
+async function releaseQuarantine(sessions: any[], release: (session: any) => boolean): Promise<any[]> {
+    const released = sessions.filter(release);
+    if (!released.length) return sessions;
+
+    await Promise.all(released.map(session => updateSession({
+        main_export_blocked: false,
+        poll_export_blocked: false,
+        local_export_blocked: false,
+        export_last_error: null,
+        export_blocked_at: null,
+    }, { where: { id: session.id } })));
+
+    const releasedIds = new Set(released.map(session => session.id));
+    return sessions.map(session => (!releasedIds.has(session.id) ? session : {
+        ...session,
+        main_export_blocked: false,
+        poll_export_blocked: false,
+        local_export_blocked: false,
+    }));
+}
+
+export async function doExportSessions(
+    sessions?: any[],
+    opts: ExportRunOptions = {},
+): Promise<ExportBatchResult> {
+    const hasLocalConfig = await hasLocalServerConfig();
+    const location = await getLocation();
+    const currentCountry = location?.country;
+    const currentHospital = location?.hospital;
+    const result = emptyResult();
+    result.localConfigured = hasLocalConfig;
+
+    let candidates: any[];
+    if (sessions) {
+        // An explicit/manual export is also the user's retry mechanism for a
+        // quarantined row, so it gets one fresh attempt regardless of blocks.
+        candidates = sessions.filter(session => needsDelivery(session, location, hasLocalConfig));
+    } else {
+        const query = pendingSessionQuery({ hasLocalConfig, country: currentCountry, hospital: currentHospital });
+        const rows = await dbTransaction(query.sql, query.params);
+        candidates = rows.map(session => ({ ...session, data: JSON.parse(session.data || '{}') }));
+    }
+
+    if (!candidates.length) return result;
+
+    // A manual export is the user's retry, so the whole selection gets a fresh
+    // attempt. The sweep releases only sessions whose quarantine has expired -
+    // the query selected them for exactly that reason.
+    candidates = await releaseQuarantine(
+        candidates,
+        sessions ? isQuarantined : session => isQuarantineExpired(session),
+    );
+
+    await afterInteractions();
+    const application = await getApplication();
+    const ctx: BatchContext = { hasLocalConfig, location, application, result };
+
+    if (!sessions) {
+        // Background sweep: one batch per run. `hasMore` makes
+        // scheduleExportSessions come straight back for the next one, so the
+        // whole backlog drains however large it is, without one long run.
+        result.hasMore = candidates.length > EXPORT_BATCH_SIZE;
+        await runExportBatch(candidates.slice(0, EXPORT_BATCH_SIZE), ctx);
+        return result;
+    }
+
+    // Explicit selection: every session asked for is attempted, in batches.
+    // Truncating here would mean "export all" silently exported 25 and left the
+    // rest to a background sweep the user cannot see.
+    const total = candidates.length;
+    for (let offset = 0; offset < total; offset += EXPORT_BATCH_SIZE) {
+        const batch = candidates.slice(offset, offset + EXPORT_BATCH_SIZE);
+        const deliveredBefore = deliveredCount(result);
+        const failuresBefore = result.failures.length;
+
+        await runExportBatch(batch, ctx);
+
+        const attempted = Math.min(offset + batch.length, total);
+        try { opts.onProgress?.(attempted, total); } catch { /* reporting only */ }
+
+        if (attempted >= total) break;
+
+        // The backends are unreachable: further batches would only fail too.
+        // Stop, and let the retry schedule take over.
+        if (batchFoundBackendsDown({
+            deliveredBefore,
+            deliveredAfter: deliveredCount(result),
+            newFailures: result.failures.slice(failuresBefore),
+        })) {
+            result.hasMore = true;
+            break;
+        }
+
+        // Yield between batches so a large export doesn't freeze the UI.
+        await afterInteractions();
+    }
+
+    return result;
+}
+
+export const exportSessions = (sessions?: any[], opts: ExportRunOptions = {}) =>
+    withExportLock(() => doExportSessions(sessions, opts));
 
 // --- Debounced background export -----------------------------------------------
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -342,7 +577,7 @@ let retryAttempt = 0;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleRetry() {
-    if (retryTimer) return; // one bounded timer at a time
+    if (retryTimer) return;
     const raw = Math.min(RETRY_BASE_MS * (2 ** retryAttempt), RETRY_MAX_MS);
     const jitter = raw * RETRY_JITTER_RATIO * (Math.random() * 2 - 1);
     const delay = Math.max(RETRY_BASE_MS, Math.round(raw + jitter));
@@ -361,31 +596,41 @@ function clearRetry() {
     retryAttempt = 0;
 }
 
-
 export function scheduleExportSessions() {
     if (exporting) {
         pendingTrailing = true;
         return;
     }
-    if (debounceTimer) return;
+    if (debounceTimer || retryTimer) return;
+
     debounceTimer = setTimeout(() => {
         debounceTimer = null;
         exporting = true;
+        let continueImmediately = false;
+
         exportSessions()
             .then(result => {
-                const hasPending = result.failedMain.length || result.failedPoll.length || result.failedLocal.length;
-                if (hasPending) scheduleRetry();
-                else clearRetry();
+                const retryableFailure = result.failures.some(failure => failure.retryable);
+                if (retryableFailure) {
+                    scheduleRetry();
+                } else {
+                    clearRetry();
+                    continueImmediately = result.hasMore;
+                }
             })
-            .catch(() => {
-                scheduleRetry();
-            })
+            .catch(() => scheduleRetry())
             .finally(() => {
                 exporting = false;
-                if (pendingTrailing) {
+                if (continueImmediately || (pendingTrailing && !retryTimer)) {
                     pendingTrailing = false;
                     scheduleExportSessions();
                 }
             });
     }, 1500);
+}
+
+/** Retry promptly after an observed connectivity recovery. */
+export function resumeExportSessions() {
+    clearRetry();
+    scheduleExportSessions();
 }

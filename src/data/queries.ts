@@ -1,6 +1,21 @@
 import { APP_VERSION } from '@/src/constants';
 import * as types from '../types';
 import { dbTransaction } from './db';
+import {
+    buildOrder,
+    buildWhere,
+    locationParams,
+    normaliseUIDSearchTerm,
+    SESSIONS_FOR_LOCATION_WHERE,
+    SESSIONS_NEWEST_FIRST,
+    sessionsCursorAfter,
+    sessionsPageQuery,
+    sessionsUIDSearchQuery,
+    withParsedData,
+} from './queryBuilders';
+import type { SessionsCursor } from './queryBuilders';
+
+export type { SessionsCursor } from './queryBuilders';
 
 export async function getAuthenticatedUser() {
     const rows = await dbTransaction('select * from authenticated_user;');
@@ -60,21 +75,14 @@ export const getConfigKeys = (options = {}) => new Promise<types.ConfigKey[]>((r
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['position', 'ASC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['position', 'ASC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from config_keys';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from config_keys${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             reject(e); }
     })();
@@ -87,11 +95,14 @@ export const getAliasFromKeyAndScriptId = (options:{
 } ) => new Promise<types.Alias>((resolve, reject) => {
     (async () => {
         try {
-         
-
-            let q = `select alias from nt_aliases where (scriptid='${options.script}'
-             or old_script='${options.script}') and name='${options.name}' limit 1`;
-            const rows = await dbTransaction(`${q};`.trim(), null);
+            // Script ids and field keys come from synced script content, so they
+            // are bound rather than inlined: an apostrophe in either one would
+            // otherwise break the statement.
+            const rows = await dbTransaction(
+                `select alias from nt_aliases
+                 where (scriptid=? or old_script=?) and name=? limit 1;`,
+                [options.script, options.script, options.name]
+            );
             resolve(rows?.[0]);
         } catch (e) { 
             reject(e); }
@@ -105,12 +116,11 @@ export const getAliasKeyFromAliasAndScript= (options:{
 } ) => new Promise<types.Alias>((resolve, reject) => {
     (async () => {
         try {
-         
-
-            let q = `select name from nt_aliases where (scriptid='${options.script}'
-             or old_script='${options.script}') and alias='${options.alias}' limit 1`;
-
-            const rows = await dbTransaction(`${q};`.trim(), null);
+            const rows = await dbTransaction(
+                `select name from nt_aliases
+                 where (scriptid=? or old_script=?) and alias=? limit 1;`,
+                [options.script, options.script, options.alias]
+            );
             resolve(rows?.[0]);
         } catch (e) { 
             reject(e); }
@@ -122,24 +132,14 @@ export const getDrugsLibrary = (options = {}) => new Promise<{ data: types.Drugs
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['position', 'ASC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['position', 'ASC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from drugs_library';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from drugs_library${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(r => ({
-                ...r,
-                data: JSON.parse(r.data || '{}'),
-            })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             reject(e); }
     })();
@@ -149,15 +149,13 @@ export const getConfiguration = (options = {}) => new Promise<types.Configuratio
     (async () => {
         try {
             const { ..._where }: any = options || {};
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
-            let q = 'select * from configuration';
-            q = where ? `${q} where ${where}` : q;
+            const where = buildWhere(_where);
+            const q = `select * from configuration${where.sql}`;
 
-            const configurationRslts = await dbTransaction(`${q} limit 1;`.trim());
+            const configurationRslts = await dbTransaction(`${q} limit 1;`, where.params);
             const configuration = {
                 data: {},
-                ...configurationRslts.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]
+                ...withParsedData(configurationRslts)[0]
             };
             const configKeys = await getConfigKeys();
             resolve({
@@ -194,23 +192,20 @@ export const getScript = (options = {}) => new Promise<{
     (async () => {
         try {
             const { ..._where }: any = options || {};
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
-            let q = 'select * from scripts';
-            q = where ? `${q} where ${where}` : q;
+            const where = buildWhere(_where);
+            const q = `select * from scripts${where.sql}`;
 
-            const res = await dbTransaction(`${q} limit 1;`.trim());
-            const script = res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0];
+            const res = await dbTransaction(`${q} limit 1;`, where.params);
+            const script = withParsedData(res)[0];
             let screens = [];
             let diagnoses = [];
             let problems = [];
 
             if (script) {
-                const _screens = await dbTransaction(`select * from screens where script_id='${script.script_id}' order by position asc;`);
-                const _diagnoses = await dbTransaction(`select * from diagnoses where script_id='${script.script_id}' order by position asc;`);
-                const _problems = await dbTransaction(`select * from problems where script_id='${script.script_id}' order by position asc;`);
-                screens = _screens
-                    .map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))
+                const _screens = await dbTransaction('select * from screens where script_id=? order by position asc;', [script.script_id]);
+                const _diagnoses = await dbTransaction('select * from diagnoses where script_id=? order by position asc;', [script.script_id]);
+                const _problems = await dbTransaction('select * from problems where script_id=? order by position asc;', [script.script_id]);
+                screens = withParsedData(_screens)
                     .map(s => ({
                         ...s,
                         data: {
@@ -222,8 +217,8 @@ export const getScript = (options = {}) => new Promise<{
                             },
                         },
                     }));
-                diagnoses = _diagnoses.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
-                problems = _problems.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }));
+                diagnoses = withParsedData(_diagnoses);
+                problems = withParsedData(_problems);
 
                
             }
@@ -241,21 +236,14 @@ export const getScripts = (options = {}) => new Promise<types.Script[]>((resolve
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['position', 'ASC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['position', 'ASC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from scripts';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from scripts${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim());
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             
             reject(e); }
@@ -267,21 +255,14 @@ export const getScreens = (options = {}) => new Promise<types.Screen[]>((resolve
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['position', 'ASC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['position', 'ASC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from screens';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from screens${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             
             reject(e); }
@@ -293,21 +274,14 @@ export const getDiagnoses = (options = {}) => new Promise<types.Diagnosis[]>((re
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['position', 'ASC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['position', 'ASC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from diagnoses';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from diagnoses${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             
             reject(e); }
@@ -319,21 +293,14 @@ export const getProblems = (options = {}) => new Promise<types.Problem[]>((resol
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['position', 'ASC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['position', 'ASC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from problems';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from problems${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             
             reject(e); }
@@ -344,12 +311,10 @@ export const countSessions = (options = {}) => new Promise((resolve, reject) => 
     (async () => {
         try {
             const { ..._where }: any = options || {};
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
-            let q = 'select count(id) from sessions';
-            q = where ? `${q} where ${where}` : q;
+            const where = buildWhere(_where);
+            const q = `select count(id) from sessions${where.sql}`;
 
-            const res = await dbTransaction(`${q};`.trim());
+            const res = await dbTransaction(`${q};`, where.params);
             resolve(res ? res[0] : 0);
         } catch (e) {
             
@@ -361,13 +326,11 @@ export const getSession = (options = {}) => new Promise((resolve, reject) => {
     (async () => {
         try {
             const { ..._where }: any = options || {};
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
-            let q = 'select * from sessions';
-            q = where ? `${q} where ${where}` : q;
+            const where = buildWhere(_where);
+            const q = `select * from sessions${where.sql}`;
 
-            const res = await dbTransaction(`${q} limit 1;`.trim());
-            resolve(res.map(s => ({ ...s, data: JSON.parse(s.data || '{}') }))[0]);
+            const res = await dbTransaction(`${q} limit 1;`, where.params);
+            resolve(withParsedData(res)[0]);
         } catch (e) { 
             
             reject(e); }
@@ -379,44 +342,150 @@ export const getSessions = (options = {}) => new Promise((resolve, reject) => {
         try {
             const { _order, ..._where }: any = options || {};
 
-            let order = (_order || [['createdAt', 'DESC']]);
-            order = (order.map ? order : [])
-                .map((keyVal: any) => (!keyVal.map ? '' : `${keyVal[0] || ''} ${keyVal[1] || ''}`).trim())
-                .filter((clause: any) => clause)
-                .join(',');
+            const order = buildOrder(_order, [['createdAt', 'DESC']]);
 
-            const where = Object.keys(_where).map(key => `${key}=${JSON.stringify(_where[key])}`)
-                .join(',');
+            const where = buildWhere(_where);
 
-            let q = 'select * from sessions';
-            q = where ? `${q} where ${where}` : q;
-            q = order ? `${q} order by ${order}` : q;
+            const q = `select * from sessions${where.sql}${order}`;
 
-            const rows = await dbTransaction(`${q};`.trim(), null);
-            resolve(rows.map(s => ({ ...s, data: JSON.parse(s.data || '{}') })));
+            const rows = await dbTransaction(`${q};`, where.params);
+            resolve(withParsedData(rows));
         } catch (e) { 
             
             reject(e); }
     })();
 });
 
-export const deleteSessions = (ids: any[] = []) => new Promise((resolve, reject) => {
+const SESSION_ID_BATCH_SIZE = 400;
+
+function normalizeSessionIds(ids: any[] = []): number[] {
+    return Array.from(new Set((ids || [])
+        .map(id => Number(id))
+        .filter(id => Number.isInteger(id) && id > 0)));
+}
+
+function sessionIdBatches(ids: number[]): number[][] {
+    const batches: number[][] = [];
+    for (let offset = 0; offset < ids.length; offset += SESSION_ID_BATCH_SIZE) {
+        batches.push(ids.slice(offset, offset + SESSION_ID_BATCH_SIZE));
+    }
+    return batches;
+}
+
+export async function getSessionsByIds(ids: any[] = []): Promise<any[]> {
+    const normalized = normalizeSessionIds(ids);
+    const rows: any[] = [];
+    for (const batch of sessionIdBatches(normalized)) {
+        const placeholders = batch.map(() => '?').join(',');
+        rows.push(...await dbTransaction(
+            `select * from sessions where id in (${placeholders});`,
+            batch
+        ));
+    }
+    return withParsedData(rows);
+}
+
+export interface SessionsPage {
+    rows: any[];
+    hasMore: boolean;
+    /** Pass back to read the page after this one. Null once there is none. */
+    cursor: SessionsCursor | null;
+}
+
+/**
+ * Every session for the site, in one read.
+ *
+ * Only for callers that genuinely act on the whole set - exporting or deleting
+ * in bulk - since it parses the JSON of every row. Use
+ * `getSessionsPageForLocation` to populate a list.
+ */
+export const getSessionsForLocation = (
+    country: string,
+    hospital: string,
+) => new Promise<any[]>((resolve, reject) => {
     (async () => {
         try {
-            ids = ids || [];
-            if (!ids.map) ids = [ids];
-            if (!ids.length) { resolve([]); return; }
-
-            const res = await dbTransaction(
-                `delete from sessions where id in (${ids.map(() => '?').join(',')})`,
-                ids
+            if (!country || !hospital) {
+                resolve([]);
+                return;
+            }
+            const rows = await dbTransaction(
+                `select * from sessions
+                 ${SESSIONS_FOR_LOCATION_WHERE}
+                 ${SESSIONS_NEWEST_FIRST};`,
+                locationParams(country, hospital)
             );
-            resolve(res);
+            resolve(withParsedData(rows));
         } catch (e) {
-
-            reject(e); }
+            reject(e);
+        }
     })();
 });
+
+/**
+ * One page of the site's sessions, newest first, after `cursor` (omit it for
+ * the first page). Keyset-paged - see `sessionsPageQuery` for why not OFFSET.
+ */
+export async function getSessionsPageForLocation(
+    country: string,
+    hospital: string,
+    opts: { limit: number; cursor?: SessionsCursor | null } = { limit: 20 },
+): Promise<SessionsPage> {
+    if (!country || !hospital) return { rows: [], hasMore: false, cursor: null };
+    const limit = Math.max(1, opts.limit);
+    const query = sessionsPageQuery({ country, hospital, limit, cursor: opts.cursor });
+    const rows = await dbTransaction(query.sql, query.params);
+    const page = rows.slice(0, limit);
+    const hasMore = rows.length > limit;
+    return {
+        rows: withParsedData(page),
+        hasMore,
+        cursor: hasMore ? sessionsCursorAfter(page[page.length - 1]) : null,
+    };
+}
+
+/** How many sessions the site has, for "showing x of y". */
+export async function countSessionsForLocation(country: string, hospital: string): Promise<number> {
+    if (!country || !hospital) return 0;
+    const rows = await dbTransaction(
+        `select count(id) as total from sessions ${SESSIONS_FOR_LOCATION_WHERE};`,
+        locationParams(country, hospital)
+    );
+    return Number(rows?.[0]?.total || 0);
+}
+
+/**
+ * Sessions at the site whose Neotree ID matches `uid`.
+ *
+ * Runs in the db rather than over the loaded page, so a paged list still
+ * searches every session the device holds. IDs are typed from the start, so
+ * the indexed prefix search answers almost every query; only when it finds
+ * nothing does the scan for the term anywhere in the id run - which also
+ * covers older rows that kept the id only inside `data`.
+ */
+export async function searchSessionsByUIDForLocation(
+    country: string,
+    hospital: string,
+    uid: string,
+    limit = 50,
+): Promise<any[]> {
+    if (!country || !hospital || !normaliseUIDSearchTerm(uid)) return [];
+
+    for (const mode of ['prefix', 'substring'] as const) {
+        const query = sessionsUIDSearchQuery({ country, hospital, term: uid, limit, mode });
+        const rows = await dbTransaction(query.sql, query.params);
+        if (rows.length) return withParsedData(rows);
+    }
+    return [];
+}
+
+export async function deleteSessions(ids: any[] = []) {
+    const normalized = normalizeSessionIds(ids);
+    if (!normalized.length) return [];
+    // IDs are normalized to positive integers above, so a single statement is
+    // safe here and keeps a large range deletion atomic without bind limits.
+    return dbTransaction(`delete from sessions where id in (${normalized.join(',')})`);
+}
 
 export const saveApplication = (params = {}) => new Promise((resolve, reject) => {
     (async () => {
