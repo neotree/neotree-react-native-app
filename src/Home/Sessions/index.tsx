@@ -44,7 +44,7 @@ const deleteTypes = [
 const SESSIONS_PAGE_SIZE = 20;
 
 const exportFormats = [
-	{ label: 'Excel Spreadsheet', value: 'excel' },
+	{ label: 'CSV (Save to Tablet)', value: 'csv' },
 	{ label: 'JSON (Save to Tablet)', value: 'json' },
 	{ label: 'JSONAPI (Send to Database)', value: 'jsonapi' },
 ];
@@ -508,8 +508,8 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
 				]
 			);
 		} catch (e: any) {
-			if (exportFormat === 'excel') {
-				logError('Sessions.excelExport', e, {
+			if (exportFormat === 'csv') {
+				logError('Sessions.csvExport', e, {
 					exportType,
 					sessionCount: Array.isArray(sessions) ? sessions.length : 0,
 				});
