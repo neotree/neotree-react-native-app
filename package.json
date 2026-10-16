@@ -143,6 +143,7 @@
     "@expo/webpack-config/webpack/**/ajv": "8.18.0",
     "expo-build-properties/ajv": "8.18.0",
     "expo-router/**/ajv": "8.18.0",
-    "image-size": "2.0.4"
+    "image-size": "2.0.4",
+    "fast-xml-parser": "5.7.0"
   }
 }

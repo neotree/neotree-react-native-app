@@ -160,11 +160,32 @@ async function recordSuccess(
     successIds(result, destination).push(session.id);
 }
 
+const MAX_REJECTION_DETAIL = 200;
+
+/**
+ * A short, human-readable reason for a non-success response.
+ *
+ * Transient statuses (5xx, 408, 425, 429) get a fixed message with no body:
+ * the body is a proxy or gateway page (nginx's "502 Bad Gateway" HTML), tells
+ * nobody anything, and the export is retried anyway. Permanent 4xx responses
+ * keep the body because it is usually the API's own reason for refusing, but
+ * markup is never passed through.
+ *
+ * The wording avoids "offline", "unreachable" and "timed out": classifyExportError
+ * would read those as a network failure and change how the failure is handled.
+ */
 async function responseError(response: Response | null | undefined): Promise<string> {
     if (!response) return 'The server returned no response';
+    const status = response.status;
+    const statusText = response.statusText ? ` ${response.statusText}` : '';
+    if (retryableHttpStatus(status)) {
+        return `Server error (HTTP ${status}), will retry`;
+    }
     let detail = '';
-    try { detail = (await response.text()).trim().slice(0, 300); } catch { /* response body is optional */ }
-    return `Server returned HTTP ${response.status}${detail ? `: ${detail}` : ''}`;
+    try { detail = (await response.text()).trim(); } catch { /* response body is optional */ }
+    const isMarkup = /^</.test(detail) || /text\/html/i.test(response.headers?.get?.('content-type') || '');
+    if (!detail || isMarkup) return `Server returned HTTP ${status}${statusText}`;
+    return `Server returned HTTP ${status}: ${detail.slice(0, MAX_REJECTION_DETAIL)}`;
 }
 
 interface CohortContext {
@@ -252,19 +273,24 @@ async function processCountryCohort(ctx: CohortContext): Promise<void> {
                 }
                 const status = response?.status || 0;
                 const detail = await responseError(response);
-                // A rejected POST is not an exception, so without this the
-                // reason a session stays unexported (bad key, payload refused,
-                // server error) is never reported anywhere.
-                logWarning(
-                    `exportSessions.${destination}Rejected`,
-                    'Export destination returned a non-success response',
-                    { status, detail, sessionId: session.id },
-                    { source: destination === 'local' ? 'local' : 'nodeapi' },
-                );
+                const retryable = retryableHttpStatus(status);
+                // A transient rejection (gateway error, rate limit) is retried
+                // by the sweep, so it is not reported: one line per session per
+                // attempt during an outage only buries the failures that need
+                // someone to look. Permanent refusals are the ones worth a
+                // warning, since the session is quarantined because of them.
+                if (!retryable) {
+                    logWarning(
+                        `exportSessions.${destination}Rejected`,
+                        'Export destination returned a non-success response',
+                        { status, detail, sessionId: session.id },
+                        { source: destination === 'local' ? 'local' : 'nodeapi' },
+                    );
+                }
                 await recordFailure(result, session, destination, new Error(detail), {
                     kind: 'http',
                     status,
-                    retryable: retryableHttpStatus(status),
+                    retryable,
                 });
             } catch (error) {
                 await recordFailure(result, session, destination, error);
