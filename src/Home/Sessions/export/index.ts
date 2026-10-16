@@ -1,4 +1,3 @@
-import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
@@ -56,6 +55,28 @@ const removeFromExportQueue = async (ids: number[]) => {
   await setExportQueue(existing.filter((id) => !removeSet.has(id)));
 };
 
+const CSV_BOM = '\uFEFF';
+
+/**
+ * Serialise one CSV field (RFC 4180). Values that a spreadsheet would read as a
+ * formula (=, @, tab, CR, or +/- that is not a plain number) get a leading
+ * apostrophe so opening the file in Excel cannot execute them.
+ */
+const toCsvField = (value: any): string => {
+  let text = value === null || value === undefined ? '' : String(value);
+  if (/^[=@\t\r]/.test(text) || (/^[+-]/.test(text) && Number.isNaN(Number(text)))) {
+    text = `'${text}`;
+  }
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const toCsv = (rows: Record<string, any>[], columns?: string[]): string => {
+  const header = columns?.length ? columns : Object.keys(rows[0] || {});
+  const lines = [header, ...rows.map((row) => header.map((key) => row[key]))]
+    .map((line) => line.map(toCsvField).join(','));
+  return CSV_BOM + lines.join('\r\n') + '\r\n';
+};
+
 const getExcelEntryValue = ({
   entry,
   entryKey,
@@ -85,7 +106,7 @@ const getExcelEntryValue = ({
 
   // Shape only, never the entry itself: `entry` holds patient data, and this
   // payload is POSTed off the device to nodeapi and the webeditor.
-  logWarning('excelExport.missingEntryValue', 'Entry has no values.value', {
+  logWarning('csvExport.missingEntryValue', 'Entry has no values.value', {
     scriptId,
     sessionId,
     entryKey,
@@ -148,7 +169,7 @@ export function exportJSON(_opts: any = {}) {
   });
 }
 
-export function exportEXCEL(opts: any = {}) {
+export function exportCSV(opts: any = {}) {
   const sessions = (opts.sessions || []).filter(api.isExportableSession);
   const scriptsFields = { ...opts.scriptsFields };
 
@@ -158,7 +179,7 @@ export function exportEXCEL(opts: any = {}) {
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
         if (!granted) {
-          logWarning('excelExport.directoryPermissionDenied', 'Directory permission not granted', {
+          logWarning('csvExport.directoryPermissionDenied', 'Directory permission not granted', {
             sessionCount: sessions.length,
             format: opts.format,
           });
@@ -185,8 +206,8 @@ export function exportEXCEL(opts: any = {}) {
             (async () => {
               try {
                 const scriptTitle = scripts[scriptId].data.title;
-                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.xlsx`;
-                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.csv`;
+                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'text/csv');
         
                 const keys = !scriptsFields[scriptId] ? [] : scriptsFields[scriptId].reduce((acc: any, { keys }: any) => [...acc, ...keys], []);
         
@@ -212,16 +233,11 @@ export function exportEXCEL(opts: any = {}) {
                   return !values ? null : keys.reduce((acc: any, key: any) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
                 }).filter((e: any) => e);
         
-                const ws = XLSX.utils.json_to_sheet(data);
-        
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, scriptTitle.substring(0, 31));
-        
-                const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+                const wbout = toCsv(data, keys);
         
                 resolve([fileUri, wbout]);
               } catch (e) {
-                logError('excelExport.sheetGeneration', e, {
+                logError('csvExport.sheetGeneration', e, {
                   scriptId,
                   scriptTitle: scripts[scriptId]?.data?.title,
                   sessionCount: json[scriptId]?.length || 0,
@@ -235,10 +251,10 @@ export function exportEXCEL(opts: any = {}) {
             await Promise.all(sheets.map(([fileUri, wbout]: any) => new Promise((resolve, reject) => {
               (async () => {
                 try {
-                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.UTF8 });
                   resolve(null);
                 } catch (e) {
-                  logError('excelExport.fileWrite', e, { fileUri });
+                  logError('csvExport.fileWrite', e, { fileUri });
                   reject(e);
                 }
               })();
@@ -249,7 +265,7 @@ export function exportEXCEL(opts: any = {}) {
         const outcome: FileExportOutcome = { written, skipped, cancelled: !granted };
         resolve(outcome);
       } catch (e) {
-        logError('excelExport', e, {
+        logError('csvExport', e, {
           sessionCount: sessions.length,
           format: opts.format,
         });
@@ -478,8 +494,8 @@ export default function exportData(opts: any = {}) {
   switch (format) {
     case 'jsonapi':
       return exportToApi(opts);
-    case 'excel':
-      return exportEXCEL(opts);
+    case 'csv':
+      return exportCSV(opts);
     case 'json':
       return exportJSON(opts);
     default:
