@@ -11,6 +11,10 @@ import {
 
 export const db = SQLite.openDatabaseSync('db.db');
 
+// Wait briefly for a competing write instead of failing straight away with
+// "database is locked". Applies to this connection only.
+try { db.execSync('PRAGMA busy_timeout = 5000;'); } catch { /* best effort */ }
+
 export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void, handle: any = db) => new Promise<any[]>((resolve, reject) => {
     const done = (error?: null | Error, data?: any[]) => {
         if (error) {

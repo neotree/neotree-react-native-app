@@ -21,21 +21,27 @@ export function AppContextProvider({ children }: React.PropsWithChildren<{}>) {
     const [application, setApplication] = React.useState<types.Application | null>(null);
     const [locationVersion, setLocationVersion] = React.useState(0);
 
+    // Stable identities: Navigation builds its sync callback and socket
+    // subscription from these, so new functions each render would restart the
+    // startup sync and resubscribe on every provider update.
+    const setSyncDataResponse = React.useCallback((res: Awaited<ReturnType<typeof api.syncData>>) => {
+        setAuthenticatedUser(res?.authenticatedUser);
+        setApplication(res?.application);
+    }, []);
+    const bumpLocationVersion = React.useCallback(() => setLocationVersion(v => v + 1), []);
+
+    const value = React.useMemo(() => ({
+        authenticatedUser,
+        application,
+        setAuthenticatedUser,
+        setApplication,
+        setSyncDataResponse,
+        locationVersion,
+        bumpLocationVersion,
+    }), [authenticatedUser, application, setSyncDataResponse, locationVersion, bumpLocationVersion]);
+
     return (
-        <AppContext.Provider 
-            value={{
-                authenticatedUser,
-                application,
-                setAuthenticatedUser,
-                setApplication,
-                setSyncDataResponse: res => {
-                    setAuthenticatedUser(res?.authenticatedUser);
-                    setApplication(res?.application);
-                },
-                locationVersion,
-                bumpLocationVersion: () => setLocationVersion(v => v + 1),
-            }}
-        >
+        <AppContext.Provider value={value}>
             {children}
         </AppContext.Provider>
     )

@@ -69,7 +69,7 @@ async function pruneDeliveredExceptions() {
     }
 }
 
-export async function syncData(opts?: { force?: boolean; }) {
+async function runSyncData(opts?: { force?: boolean; }) {
 	const netInfo = await NetInfo.fetch();
     // const networkState = await Network.getNetworkStateAsync();
 
@@ -359,4 +359,31 @@ export async function syncData(opts?: { force?: boolean; }) {
         application: _app,
         last_sync_date,
     };
+}
+
+type SyncDataResult = Awaited<ReturnType<typeof runSyncData>>;
+
+let currentSync: Promise<SyncDataResult> | null = null;
+
+/**
+ * Only one sync touches the database at a time. A sync replaces six tables in
+ * an exclusive transaction, so a second one running alongside it (startup, a
+ * socket event, a manual resync, sign-in) would fail with "database is locked"
+ * and double the downloads.
+ *
+ * A plain call made while one is running shares its result. A forced call
+ * (an explicit user resync) still runs, queued behind the current one, because
+ * it must not be satisfied by a sync that may have started before the data
+ * changed.
+ */
+export function syncData(opts?: { force?: boolean; }): Promise<SyncDataResult> {
+    if (currentSync && !opts?.force) return currentSync;
+
+    const run = () => runSyncData(opts);
+    const next = currentSync ? currentSync.then(run, run) : run();
+    const tracked: Promise<SyncDataResult> = next.finally(() => {
+        if (currentSync === tracked) currentSync = null;
+    });
+    currentSync = tracked;
+    return tracked;
 }
