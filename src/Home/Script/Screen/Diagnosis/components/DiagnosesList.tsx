@@ -52,110 +52,110 @@ export function DiagnosesList({
     const Container = scrollable ? ScrollView : Fragment;
 
     return (
-		<Container>
-			<Content>
-				<Box>
-					{!!instructions && (
-						<Box style={{ marginBottom: 30, marginTop: 20 }}>
-							<Text color="primary">Instructions</Text>
-							<Text variant="caption">{instructions}</Text>
-						</Box>
-					)}
+        <Container>
+            <Content>
+                <Box>
+                    {!!instructions && (
+                        <Box style={{ marginBottom: 30, marginTop: 20 }}>
+                            <Text color="primary">Instructions</Text>
+                            <Text variant="caption">{instructions}</Text>
+                        </Box>
+                    )}
 
-					<Box
-						style={{
-							padding: 10,
-							borderTopWidth: 1,
-							borderBottomWidth: 1,
-							borderColor: '#999',
-						}}
-					>
-						<Text
-							color="textDisabled"
-							textTransform="uppercase"
-							fontWeight="bold"
-						>{title}</Text>
+                    <Box
+                        style={{
+                            padding: 10,
+                            borderTopWidth: 1,
+                            borderBottomWidth: 1,
+                            borderColor: '#999',
+                        }}
+                    >
+                        <Text
+                            color="textDisabled"
+                            textTransform="uppercase"
+                            fontWeight="bold"
+                        >{title}</Text>
 
-						{!!subtitle && <Text variant="caption" color="textDisabled">{subtitle}</Text>}
-					</Box>
+                        {!!subtitle && <Text variant="caption" color="textDisabled">{subtitle}</Text>}
+                    </Box>
 
-					{diagnoses.map((item, index) => {
-						if (filter && !filter(item, index)) return null;
-						const key = item.id || index;
+                    {diagnoses.map((item, index) => {
+                        if (filter && !filter(item, index)) return null;
+                        const key = item.id || index;
 
-						const card = (
-							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-								<View style={{ flex: 1, }}>
-									<Text>{item.customValue || item.name}</Text>
-									{!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
-								</View>
+                        const card = (
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <View style={{ flex: 1, }}>
+                                    <Text>{item.customValue || item.name}</Text>
+                                    {!!item.expressionMeaning && <Text variant="caption" style={{ color: '#999' }}>{item.expressionMeaning}</Text>}
+                                </View>
 
-								{canAgreeDisagree !== false && (
-									<Diagnosis
-										setDiagnosis={s => {
-											setDiagnoses(diagnoses.map((d, i) => {
-												if (i !== index) return d;
-												return { ...d, ...s };
-											}));
-										}}
-										diagnosis={item}
-									/>
-								)}
+                                {canAgreeDisagree !== false && (
+                                    <Diagnosis
+                                        setDiagnosis={s => {
+                                            setDiagnoses(diagnoses.map((d, i) => {
+                                                if (i !== index) return d;
+                                                return { ...d, ...s };
+                                            }));
+                                        }}
+                                        diagnosis={item}
+                                    />
+                                )}
 
-								<View style={{ marginHorizontal: 5 }} />
+                                <View style={{ marginHorizontal: 5 }} />
 
-								{canDelete !== false && (
-									<TouchableOpacity
-										onPress={() => {
-											const deleteDiagnosis = () => {
-												setDiagnoses(diagnoses.filter((_, i) => i !== index));
-												_setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d: any) => d.name !== item.name));
-											};
-											Alert.alert(
-												'Delete diagnosis',
-												'Are you sure?',
-												[
-													{
-														text: 'Cancel',
-														onPress: () => {},
-														style: 'cancel'
-													},
-													{
-														text: 'Yes',
-														onPress: () => deleteDiagnosis()
-													}
-												],
-												{ cancelable: false }
-											);
-										}}
-									>
-										<Icon 
-											size={30} 
-											color={theme.colors.textDisabled} 
-											name="delete" 
-										/>
-									</TouchableOpacity>
-								)}
-							</View>
-						);
+                                {canDelete !== false && (
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            const deleteDiagnosis = () => {
+                                                setDiagnoses(diagnoses.filter((_, i) => i !== index));
+                                                _setHcwDiagnoses(hcwDiagnoses => hcwDiagnoses.filter((d: any) => d.name !== item.name));
+                                            };
+                                            Alert.alert(
+                                                'Delete diagnosis',
+                                                'Are you sure?',
+                                                [
+                                                    {
+                                                        text: 'Cancel',
+                                                        onPress: () => {},
+                                                        style: 'cancel'
+                                                    },
+                                                    {
+                                                        text: 'Yes',
+                                                        onPress: () => deleteDiagnosis()
+                                                    }
+                                                ],
+                                                { cancelable: false }
+                                            );
+                                        }}
+                                    >
+                                        <Icon 
+                                            size={30} 
+                                            color={theme.colors.textDisabled} 
+                                            name="delete" 
+                                        />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        );
 
-						return (
-							<Box 
-								key={key} 
-								borderColor="divider"
-								borderRadius="m"
-								marginVertical="m"
-								borderWidth={1}
-								padding="m"
-							>
-								{itemWrapper ? itemWrapper(card, { item, index }) : card}
-							</Box>
-						);
-					})}
+                        return (
+                            <Box 
+                                key={key} 
+                                borderColor="divider"
+                                borderRadius="m"
+                                marginVertical="m"
+                                borderWidth={1}
+                                padding="m"
+                            >
+                                {itemWrapper ? itemWrapper(card, { item, index }) : card}
+                            </Box>
+                        );
+                    })}
 
-					{!!divider && <Br spacing="l" />}
-				</Box>
-			</Content>
-		</Container>
+                    {!!divider && <Br spacing="l" />}
+                </Box>
+            </Content>
+        </Container>
     );
 }
