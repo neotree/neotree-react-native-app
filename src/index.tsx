@@ -32,13 +32,14 @@ export function Navigation() {
         }
     }, [setSyncDataResponse]);
 
-    React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
+    React.useEffect(() => { if (!ready) initialiseApp(); }, [ready, initialiseApp]);
 
     // Registered once: NetInfo transitions and circuit resets aren't tied to location.
     React.useEffect(() => {
+        if (!ready) return;
         const unsubscribe = registerExportOnReconnect();
         return unsubscribe;
-    }, []);
+    }, [ready]);
 
     React.useEffect(() => {
         let cancelled = false;
@@ -53,7 +54,7 @@ export function Navigation() {
             cancelled = true;
             cleanup?.();
         };
-    }, [locationVersion]);
+    }, [locationVersion, initialiseApp]);
 
     if (!ready) return <Splash />;
 

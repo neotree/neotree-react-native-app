@@ -1,14 +1,19 @@
-import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
-import getJSON from './getJSON';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 import { logError, logWarning } from '@/src/utils/logError';
 
-export { getJSON };
+export interface FileExportOutcome {
+  /** Sessions written to the file(s). */
+  written: number;
+  /** Sessions that could not be converted and were left out (logged, kept on device). */
+  skipped: number;
+  /** True when the folder picker was dismissed, so nothing was saved. */
+  cancelled: boolean;
+}
+
 export interface ManualExportOutcome {
   status: 'success' | 'already-exported' | 'local-only' | 'partial' | 'failed';
   localConfigured: boolean;
@@ -17,6 +22,8 @@ export interface ManualExportOutcome {
   localPending: number;
   remotePending: number;
   alreadyExported: number;
+  failures: api.ExportFailure[];
+  hasMore: boolean;
 }
 
 const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
@@ -48,6 +55,28 @@ const removeFromExportQueue = async (ids: number[]) => {
   await setExportQueue(existing.filter((id) => !removeSet.has(id)));
 };
 
+const CSV_BOM = '\uFEFF';
+
+/**
+ * Serialise one CSV field (RFC 4180). Values that a spreadsheet would read as a
+ * formula (=, @, tab, CR, or +/- that is not a plain number) get a leading
+ * apostrophe so opening the file in Excel cannot execute them.
+ */
+const toCsvField = (value: any): string => {
+  let text = value === null || value === undefined ? '' : String(value);
+  if (/^[=@\t\r]/.test(text) || (/^[+-]/.test(text) && Number.isNaN(Number(text)))) {
+    text = `'${text}`;
+  }
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const toCsv = (rows: Record<string, any>[], columns?: string[]): string => {
+  const header = columns?.length ? columns : Object.keys(rows[0] || {});
+  const lines = [header, ...rows.map((row) => header.map((key) => row[key]))]
+    .map((line) => line.map(toCsvField).join(','));
+  return CSV_BOM + lines.join('\r\n') + '\r\n';
+};
+
 const getExcelEntryValue = ({
   entry,
   entryKey,
@@ -77,7 +106,7 @@ const getExcelEntryValue = ({
 
   // Shape only, never the entry itself: `entry` holds patient data, and this
   // payload is POSTed off the device to nodeapi and the webeditor.
-  logWarning('excelExport.missingEntryValue', 'Entry has no values.value', {
+  logWarning('csvExport.missingEntryValue', 'Entry has no values.value', {
     scriptId,
     sessionId,
     entryKey,
@@ -87,14 +116,10 @@ const getExcelEntryValue = ({
   return 'N/A';
 };
 
-const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
-  (async () => {
-    try {
-      const res = await MediaLibrary.requestPermissionsAsync();
-      resolve(res.granted);
-    } catch (e) { return reject(e); }
-  })();
-});
+// Files are written through the Storage Access Framework: the user picks the
+// folder, and that choice is the permission. The media-library permission this
+// used to require is for reading photos and media (on Android 13+ it does not
+// even cover documents), so declining it blocked exports for no reason.
 
 export function exportJSON(_opts: any = {}) {
   const { sessions: suppliedSessions, ...opts } = _opts;
@@ -103,14 +128,13 @@ export function exportJSON(_opts: any = {}) {
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
         const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
           ...acc,
           [script.script_id]: script,
         }), {});
 
         const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+        const skipped = Math.max(0, sessions.length - parsedSessions.length);
         const json = parsedSessions.reduce((acc: any, e: any) => ({
           ...acc,
           [e.script.id]: [...(acc[e.script.id] || []), e],
@@ -133,38 +157,36 @@ export function exportJSON(_opts: any = {}) {
             });
           }));
         }
-        
-        resolve(null);
+
+        const outcome: FileExportOutcome = {
+          written: granted ? parsedSessions.length : 0,
+          skipped,
+          cancelled: !granted,
+        };
+        resolve(outcome);
       } catch (e) { return reject(e); }
     })();
   });
 }
 
-export function exportEXCEL(opts: any = {}) {
+export function exportCSV(opts: any = {}) {
   const sessions = (opts.sessions || []).filter(api.isExportableSession);
   const scriptsFields = { ...opts.scriptsFields };
 
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) {
-          const error = new Error('App has not been granted permission to save files to device');
-          logError('excelExport.permissionDenied', error, {
-            sessionCount: sessions.length,
-            format: opts.format,
-          });
-          return reject(error);
-        }
-
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
         if (!granted) {
-          logWarning('excelExport.directoryPermissionDenied', 'Directory permission not granted', {
+          logWarning('csvExport.directoryPermissionDenied', 'Directory permission not granted', {
             sessionCount: sessions.length,
             format: opts.format,
           });
         }
+
+        let written = 0;
+        let skipped = 0;
 
         if (granted) {
           const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
@@ -173,6 +195,8 @@ export function exportEXCEL(opts: any = {}) {
           }), {});
     
           const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+          written = parsedSessions.length;
+          skipped = Math.max(0, sessions.length - parsedSessions.length);
           const json = parsedSessions.reduce((acc: any, e: any) => ({
             ...acc,
             [e.script.id]: [...(acc[e.script.id] || []), e],
@@ -182,8 +206,8 @@ export function exportEXCEL(opts: any = {}) {
             (async () => {
               try {
                 const scriptTitle = scripts[scriptId].data.title;
-                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.xlsx`;
-                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.csv`;
+                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'text/csv');
         
                 const keys = !scriptsFields[scriptId] ? [] : scriptsFields[scriptId].reduce((acc: any, { keys }: any) => [...acc, ...keys], []);
         
@@ -209,16 +233,11 @@ export function exportEXCEL(opts: any = {}) {
                   return !values ? null : keys.reduce((acc: any, key: any) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
                 }).filter((e: any) => e);
         
-                const ws = XLSX.utils.json_to_sheet(data);
-        
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, scriptTitle.substring(0, 31));
-        
-                const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+                const wbout = toCsv(data, keys);
         
                 resolve([fileUri, wbout]);
               } catch (e) {
-                logError('excelExport.sheetGeneration', e, {
+                logError('csvExport.sheetGeneration', e, {
                   scriptId,
                   scriptTitle: scripts[scriptId]?.data?.title,
                   sessionCount: json[scriptId]?.length || 0,
@@ -232,10 +251,10 @@ export function exportEXCEL(opts: any = {}) {
             await Promise.all(sheets.map(([fileUri, wbout]: any) => new Promise((resolve, reject) => {
               (async () => {
                 try {
-                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.UTF8 });
                   resolve(null);
                 } catch (e) {
-                  logError('excelExport.fileWrite', e, { fileUri });
+                  logError('csvExport.fileWrite', e, { fileUri });
                   reject(e);
                 }
               })();
@@ -243,9 +262,10 @@ export function exportEXCEL(opts: any = {}) {
           }
         }
 
-        resolve(null);
+        const outcome: FileExportOutcome = { written, skipped, cancelled: !granted };
+        resolve(outcome);
       } catch (e) {
-        logError('excelExport', e, {
+        logError('csvExport', e, {
           sessionCount: sessions.length,
           format: opts.format,
         });
@@ -264,8 +284,7 @@ export function exportToApi(opts: any = {}) {
         const queuedIds = await getExportQueue();
         let queuedSessions: any[] = [];
         if (queuedIds.length) {
-          const allSessions: any[] = (await api.getSessions()) as any[];
-          queuedSessions = (allSessions || []).filter(s => queuedIds.includes(s.id));
+          queuedSessions = await api.getSessionsByIds(queuedIds);
           const existingIds = queuedSessions.map(s => s.id);
           const missingIds = queuedIds.filter(id => !existingIds.includes(id));
           if (missingIds.length) {
@@ -294,23 +313,26 @@ export function exportToApi(opts: any = {}) {
 
         const needsExport = (s: any) => api.isExportableSession(s) && (
           !s.exported ||
-          (api.pollingRequired(s.data?.country) && !s.poll_exported) ||
+          !api.isPollDelivered(s) ||
           (localRequired(s) && !s.local_export)
         );
 
-        const candidates = [
-          ..._sessions,
-          ...queuedSessions,
-        ]
+        const candidatesById = new Map<any, any>();
+        [..._sessions, ...queuedSessions]
           .filter(needsExport)
-          .reduce((acc: any[], s: any) => {
-            if (!acc.some(e => e.id === s.id)) acc.push(s);
-            return acc;
-          }, []);
+          .forEach((session: any) => candidatesById.set(session.id, session));
+        const candidates = Array.from(candidatesById.values());
 
-        try {
-          if (opts.dontSaveFile !== true) await exportJSON(opts);
-        } catch { /* Do nothing */ }
+        // A copy on the tablet is opt-in. It used to be written on every send,
+        // which put a folder picker in front of an export to the database.
+        if (opts.saveCopy === true) {
+          try {
+            await exportJSON(opts);
+          } catch (e) {
+            // The copy is a convenience; the send still goes ahead.
+            logError('exportSessionsToServer.saveCopy', e);
+          }
+        }
 
         let outcome: ManualExportOutcome = {
           status: 'success',
@@ -320,6 +342,8 @@ export function exportToApi(opts: any = {}) {
           localPending: 0,
           remotePending: 0,
           alreadyExported: 0,
+          failures: [],
+          hasMore: false,
         };
 
         if (!candidates.length) {
@@ -334,13 +358,14 @@ export function exportToApi(opts: any = {}) {
         try {
           const loc = await api.getLocation();
           if (loc?.country) {
+            api.resetCircuit(api.backendKey(loc.country, 'nodeapi'));
             api.resetCircuit(api.backendKey(loc.country, 'local', loc.hospital));
           }
         } catch { /* a failed location read just means no local reset */ }
 
         await api.withExportLock(async () => {
 
-        const freshRows: any[] = ((await api.getSessions()) as any[]) || [];
+        const freshRows: any[] = await api.getSessionsByIds(candidates.map((s: any) => s.id));
         const freshById: any = {};
         freshRows.forEach((s: any) => { if (s?.id !== undefined) freshById[s.id] = s; });
 
@@ -358,8 +383,7 @@ export function exportToApi(opts: any = {}) {
         const wasRemoteDone = new Set(
           sessions
             .filter((s: any) => {
-              const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(s.poll_exported);
-              return Boolean(s.exported) && pollSatisfied;
+              return api.isRemoteDelivered(s);
             })
             .map((s: any) => s.id)
         );
@@ -369,16 +393,15 @@ export function exportToApi(opts: any = {}) {
         );
 
 
-        const result = await api.doExportSessions(sessions);
+        const result = await api.doExportSessions(sessions, { onProgress: opts.onProgress });
 
-        const postRows: any[] = ((await api.getSessions()) as any[]) || [];
+        const postRows: any[] = await api.getSessionsByIds(sessions.map((s: any) => s.id));
         const postById: any = {};
         postRows.forEach((s: any) => { if (s?.id !== undefined) postById[s.id] = s; });
 
         const isRemoteDone = (s: any) => {
           const row = postById[s.id] || s;
-          const pollSatisfied = !api.pollingRequired(s.data?.country) || Boolean(row.poll_exported);
-          return Boolean(row.exported) && pollSatisfied;
+          return api.isRemoteDelivered(row);
         };
         const isLocalDone = (s: any) => {
 
@@ -413,10 +436,22 @@ export function exportToApi(opts: any = {}) {
           localPending: localPending.length,
           remotePending: remotePending.length,
           alreadyExported: alreadyDone.length,
+          failures: result.failures,
+          hasMore: result.hasMore,
         };
 
         if (remotePending.length || localPending.length) {
-          api.scheduleExportSessions();
+          console.log('Export outcome:', {
+            sentRemote: sentRemote.length,
+            sentLocal: sentLocal.length,
+            alreadyExported: alreadyDone.length,
+            remotePending: remotePending.length,
+            localPending: localPending.length,
+          });
+
+          if (result.hasMore || result.failures.some((failure: api.ExportFailure) => failure.retryable)) {
+            api.scheduleExportSessions();
+          }
         }
 
         if (!remotePending.length && !localPending.length) {
@@ -432,9 +467,11 @@ export function exportToApi(opts: any = {}) {
         }
 
         if (outcome.status === 'failed') {
+          const firstFailure = result.failures[0];
           throw new Error(
-            `Could not export ${remotePending.length} session(s) — no server could be reached. `
-            + `The data is saved on this device and will be sent automatically once a server is available.`
+            firstFailure
+              ? `Could not finish exporting ${Math.max(remotePending.length, localPending.length)} session(s). ${firstFailure.message}`
+              : `Could not finish exporting ${Math.max(remotePending.length, localPending.length)} session(s). The data remains saved on this device.`
           );
         }
 
@@ -457,8 +494,8 @@ export default function exportData(opts: any = {}) {
   switch (format) {
     case 'jsonapi':
       return exportToApi(opts);
-    case 'excel':
-      return exportEXCEL(opts);
+    case 'csv':
+      return exportCSV(opts);
     case 'json':
       return exportJSON(opts);
     default:

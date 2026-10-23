@@ -407,25 +407,31 @@ export function TypeForm(_: TypeFormProps) {
         return result;
     }, []);
 
+
+    const liveEntryScreen = React.useMemo(() => ({ id: activeScreen?.id }), [activeScreen?.id]);
+
     const evaluateFieldCondition = React.useCallback((f: any, form?: any) => {
         let conditionMet = true;
         let formatedvalues = values;
+        let isRepeatableRow = false;
         if (repeatable) {
             if (form) {
                 formatedvalues = moveKeysInside([form]);
+                isRepeatableRow = true;
             }
         }
 
         const condition = `${f?.condition ?? ''}`.trim();
 
         if (condition) {
-            conditionMet = evaluateCondition(
-                parseCondition(condition, [{ values: formatedvalues }])
-            ) as boolean;
+            const entry = isRepeatableRow
+                ? { values: formatedvalues }
+                : { screen: liveEntryScreen, values: formatedvalues };
+            conditionMet = evaluateCondition(parseCondition(condition, [entry as any])) as boolean;
         }
 
         return conditionMet;
-    }, [evaluateCondition, moveKeysInside, parseCondition, repeatable, values]);
+    }, [evaluateCondition, liveEntryScreen, moveKeysInside, parseCondition, repeatable, values]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
@@ -607,10 +613,10 @@ export function TypeForm(_: TypeFormProps) {
 
     const fieldsForRender = React.useMemo(() => (
         applyOptionConditions(metadata?.fields || [], (condition: string) => (
-            evaluateCondition(parseCondition(condition, [{ values }])) as boolean
+            evaluateCondition(parseCondition(condition, [{ screen: liveEntryScreen, values } as any])) as boolean
         ))
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    ), [metadata?.fields, conditionValuesSignature, configuration]);
+    ), [metadata?.fields, conditionValuesSignature, configuration, liveEntryScreen]);
 
 
     React.useEffect(() => {

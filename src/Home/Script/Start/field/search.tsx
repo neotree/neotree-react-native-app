@@ -6,6 +6,7 @@ import * as api from '@/src/data';
 import * as types from '@/src/types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
+import { getSessionScriptTitle } from '@/src/utils/sessionFields';
 import { mergeSessions } from '@/src/contexts/script'
 
 type SearchProps = {
@@ -20,9 +21,7 @@ type SearchProps = {
     noRecordMessage?: (uid: string) => string;
 };
 
-const getSessionTitle = (session: any) => {
-    return session?.data?.title || session?.data?.script?.title || session?.data?.script?.data?.title || 'Unknown script';
-};
+const getSessionTitle = (session: any) => getSessionScriptTitle(session, 'Unknown script');
 
 const getSessionType = (session: any) => {
     return session?.data?.type || session?.data?.script?.type || '';

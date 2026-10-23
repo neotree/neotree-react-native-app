@@ -6,11 +6,11 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
     (async () => {
       try {
         const { showConfidential } = opts;
-        const application = await getApplication();
+        const application = opts.application || await getApplication();
 
         const {
           script,
-          form,
+          form: rawForm,
           app_mode,
           country,
           hospital_id,
@@ -20,19 +20,22 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
           unique_key,
           dateAndTimeOfDeath = null,
         } = session.data;
+        const form = Array.isArray(rawForm) ? rawForm : [];
 
-        const drugsScreenEntry = form.find((e: any) => e.screen.type === 'drugs');
-        const fluidsScreenEntry = form.find((e: any) => e.screen.type === 'fluids');
-        const feedsScreenEntry = form.find((e: any) => e.screen.type === 'feeds');
+        const drugsScreenEntry = form.find((e: any) => e?.screen?.type === 'drugs');
+        const fluidsScreenEntry = form.find((e: any) => e?.screen?.type === 'fluids');
+        const feedsScreenEntry = form.find((e: any) => e?.screen?.type === 'feeds');
 
-        const diagnosisScreenEntry = form.find((e: any) => e.screen.type === 'diagnosis');
+        const diagnosisScreenEntry = form.find((e: any) => e?.screen?.type === 'diagnosis');
         const diagnoses = diagnosisScreenEntry
-          ? diagnosisScreenEntry.values.map((v: any) => v.diagnosis)
+          ? (Array.isArray(diagnosisScreenEntry.values) ? diagnosisScreenEntry.values : [])
+              .map((v: any) => v.diagnosis)
           : [];
 
-        const problemsScreenEntry = form.find((e: any) => e.screen.type === 'problems');
+        const problemsScreenEntry = form.find((e: any) => e?.screen?.type === 'problems');
         const problems = problemsScreenEntry
-          ? problemsScreenEntry.values.map((v: any) => v.problems)
+          ? (Array.isArray(problemsScreenEntry.values) ? problemsScreenEntry.values : [])
+              .map((v: any) => v.problems)
           : [];
 
         // Helper: convert repeatable item values
@@ -72,7 +75,7 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
 
             repeatables[repeatKey] = repeatables[repeatKey] || [];
 
-            repeatItems.forEach((item: any) => {  
+            (Array.isArray(repeatItems) ? repeatItems : []).forEach((item: any) => {
               repeatables[repeatKey].push({
                 ...extractValueObject(item),
                 id: item.id,
@@ -143,7 +146,8 @@ export function formatExportableSession(session: any = {}, opts: any = {}) {
         const flatEntries = form
           .map((entry: any) => ({
             ...entry,
-            values: entry.values.filter((v: any) => (v.confidential ? showConfidential : true)),
+            values: (Array.isArray(entry?.values) ? entry.values : [])
+              .filter((v: any) => (v.confidential ? showConfidential : true)),
           }))
           .flatMap((entry: any) =>
             entry.values.map((v: any) => transformValue(v, entry.prePopulate))

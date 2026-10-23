@@ -18,6 +18,25 @@ export function getItemCondition(item: any): string {
     return `${item?.condition ?? ''}`.trim();
 }
 
+/**
+ * `$self` is how the editor refers to the field's own value inside an option
+ * condition. It is just an alias for the field's own key, so rewriting it to
+ * `$<key>` lets the normal substitution machinery handle it and keeps one code
+ * path for both spellings.
+ *
+ * Non-global probe first: this runs for every option of every conditional
+ * field on every render, and almost no condition uses `$self`.
+ */
+const SELF_PROBE = /\$self\b/i;
+const SELF_TOKEN = /\$self\b/gi;
+
+function resolveSelf(condition: string, field: any): string {
+    if (!SELF_PROBE.test(condition)) return condition;
+    const key = `${field?.key ?? ''}`.trim();
+    if (!key) return condition;
+    return condition.replace(SELF_TOKEN, `$${key}`);
+}
+
 /** True when a field's options are not all unconditional. */
 export function fieldHasConditionalOptions(field: any): boolean {
     const items = field?.items;
@@ -29,7 +48,7 @@ export function fieldHasConditionalOptions(field: any): boolean {
 export function collectOptionConditionKeys(field: any): string[] {
     const keys: string[] = [];
     for (const item of (field?.items || [])) {
-        const condition = getItemCondition(item);
+        const condition = resolveSelf(getItemCondition(item), field);
         if (!condition) continue;
         (condition.match(/\$[\w-]+/g) || []).forEach(token => keys.push(token.slice(1).toLowerCase()));
     }
@@ -45,7 +64,7 @@ export function getVisibleFieldItems(field: any, evaluate: ConditionEvaluator): 
     if (!Array.isArray(items) || !fieldHasConditionalOptions(field)) return items;
 
     const visible = items.filter(item => {
-        const condition = getItemCondition(item);
+        const condition = resolveSelf(getItemCondition(item), field);
         if (!condition) return true;
         try {
             return !!evaluate(condition);
