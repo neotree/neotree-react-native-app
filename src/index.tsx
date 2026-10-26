@@ -8,6 +8,7 @@ import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
 import { logError } from '@/src/utils/logError';
+import { ConfirmModal } from './components/modals/confirm-modal';
 
 export const assets = Object.values(registerdAssets);
 
@@ -63,6 +64,7 @@ export function Navigation() {
             <StatusBar style="dark" />
             {!authenticatedUser ? <Authentication /> : <HomeNavigator />}
             <SyncStatus />
+            <ConfirmModal />
         </>
     );
 }

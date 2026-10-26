@@ -8,6 +8,7 @@ import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
 import { getSessionScriptTitle } from '@/src/utils/sessionFields';
 import { mergeSessions } from '@/src/contexts/script'
+import { useConfirm } from '@/src/hooks/use-confirm';
 
 type SearchProps = {
     label: string;
@@ -214,8 +215,12 @@ export function Search({
     noRecordTitle,
     noRecordMessage,
 }: SearchProps) {
+    const { confirm, } = useConfirm();
+
     const [uid, setUID] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getLocalSessionsByUID>>>([]);
+    const [allQRSessions, setAllQRSessions] = React.useState<any[]>([]);
+    const [appendQRSession, setAppendQRSession] = React.useState(false);
     const [merged, setMerged] = React.useState<any>([])
     const [sessionType, setSessionType] = React.useState('admission');
     const [selectedSession, setSelectedSession] = React.useState<any>(null);
@@ -374,8 +379,8 @@ export function Search({
     }, [script_type]);
 
     const onQrRead = (qrtext: any) => {
-        if (qrtext) {
-            resetSearchState();
+        if (qrtext) {            
+            if (!appendQRSession) resetSearchState();
             setSearchedFromQR(true);
             const session = normalizeQrSession(qrtext);
             if (session && typeof session === 'object' && session['uid']) {
@@ -385,6 +390,7 @@ export function Search({
                     const sessions = [session];
                     qrSessionRef.current = sessions;
                     setQRSession(sessions);
+                    setAllQRSessions(prev => !appendQRSession ? [session] : [...prev, session]);
                     setRecommendedSessionKey(getSessionKey(session, 0));
                     setRecommendedSession(session);
                     setSessionType('qr');
@@ -394,6 +400,7 @@ export function Search({
             }
         }
         setShowQR(false);
+        setAppendQRSession(false);
     };
 
     const deselectSession = React.useCallback(() => {
@@ -664,7 +671,7 @@ export function Search({
             const exportedError = lookupResults?.[0]?.['error'];
             if (exportedError) lookupError = lookupResults?.[0];
 
-            const rawSessions = mergeSearchResults(qrResults, lookupResults || []);
+            const rawSessions = mergeSearchResults(allQRSessions, lookupResults || []);
 
             if (lookupError && !rawSessions.length) {
                 setSearching(false);
@@ -727,11 +734,28 @@ export function Search({
         })();
     }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, getRecommendedSession, noRecordMessage, onSession, qrSession, script_type, searchedFromQR, uid, useSearchedUidForSession]);
 
-    const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || getSessionTitle(s).match(/admission/gi) || (s.data?.script?.type === 'admission'));
-    const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
-    const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || getSessionTitle(s).match(/discharge/gi) || (s?.data?.script?.type === 'discharge'));
-    const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || getSessionTitle(s).match(/daily record/gi) || (s?.data?.script?.type === 'drecord'));
-    const qrSessions = searchedFromQR ? (qrSessionRef.current?.length ? qrSessionRef.current : (qrSession?.length ? qrSession : [])) : [];
+    const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || 
+        getSessionTitle(s).match(/admission/gi) || 
+        (s.data?.script?.type === 'admission')
+    );
+
+    const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || 
+        getSessionTitle(s).match(/neolab/gi) || 
+        (s.data?.script?.type === 'neolab')
+    );
+
+    const dischargeSessions =merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'discharge' || 
+        getSessionTitle(s).match(/discharge/gi) || 
+        (s?.data?.script?.type === 'discharge')
+    );
+
+    const dailyRecordsSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'drecord' || 
+        getSessionTitle(s).match(/daily record/gi) || 
+        (s?.data?.script?.type === 'drecord')
+    );
+
+    // const qrSessions = searchedFromQR ? (qrSessionRef.current?.length ? qrSessionRef.current : (qrSession?.length ? qrSession : [])) : [];
+    const qrSessions = searchedFromQR ? allQRSessions : [];
    
     function renderList(sessions: any[]) {
         return (
@@ -848,7 +872,24 @@ function hasPrePopulate(entry: any): boolean {
                         <Br />
                         <Button disabled={searching}
                             color="primary"
-                            onPress={() => openQRscanner()}>
+                            onPress={() => {
+                                if (!allQRSessions.length) {
+                                    openQRscanner();
+                                } else {
+                                    confirm({
+                                        title: 'Merge QR results',
+                                        message: 'Do you want to merge incoming results with previous QR results?',
+                                        negativeLabel: 'Clear previous results',
+                                        positiveLabel: 'Merge incoming results',
+                                        modalProps: { stackActions: true, },
+                                        onNegative: () => openQRscanner(),
+                                        onPositive: () => {
+                                            setAppendQRSession(true);
+                                            openQRscanner();
+                                        },
+                                    });
+                                }
+                            }}>
                             Scan QR
                         </Button>
                     </>

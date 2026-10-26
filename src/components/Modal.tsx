@@ -10,18 +10,19 @@ import { Br } from './Br';
 import { Content } from './Content';
 import { Box, Text, useTheme } from './Theme';
 
-type ModalAction = {
+export type ModalAction = {
     color?:any;
     label: React.ReactNode;
     onPress?: TouchableOpacityProps['onPress'];
 };
 
-type ModalProps = React.PropsWithChildren<RNModalProps & {
+export type ModalProps = React.PropsWithChildren<RNModalProps & {
     open: boolean;
     onClose: () => void;
     title?: React.ReactNode;
     actions?: ModalAction[];
     scrollable?: boolean;
+    stackActions?: boolean;
 }>;
 
 export function Modal({ 
@@ -31,6 +32,7 @@ export function Modal({
     title,
     actions,
     scrollable = true,
+    stackActions,
     ...props 
 }: ModalProps) {
     const theme = useTheme();
@@ -87,8 +89,10 @@ export function Modal({
 
                             {!actions ? null : (
                                 <Box 
-                                    flexDirection="row"
-                                    justifyContent="flex-end" 
+                                    flexDirection={stackActions ? undefined : "row"}
+                                    justifyContent={stackActions ? undefined : "flex-end"} 
+                                    alignItems={stackActions ? 'flex-end' : undefined}
+                                    rowGap={stackActions ? 'm' : undefined}
                                     padding="m"
                                 >
                                     {actions.map((action, i) => {
