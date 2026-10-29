@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "ci:prepare": "patch-package",
+    "ci:prepare": "patch-package && node scripts/ci-config.js",
     "build:demo": "NODE_ENV=production NEOTREE_BUILD_TYPE=demo eas build --platform android --profile demo",
     "build:stage": "NODE_ENV=production NEOTREE_BUILD_TYPE=stage eas build --platform android --profile stage --clear-cache",
     "build:prod": "NODE_ENV=production NEOTREE_BUILD_TYPE=production eas build --platform android --profile production",
