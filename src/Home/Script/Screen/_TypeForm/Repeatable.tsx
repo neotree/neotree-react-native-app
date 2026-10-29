@@ -24,7 +24,8 @@ type RepeatableProps = {
     fields: any[];
     onChange: (updatedRepeatables: Record<string, Repeatable[]>, key: string) => void;
     evaluateCondition: (f: any,form?:any) => boolean;
-    allValues: any;
+    allValues?: any;
+    allRepeatableValues: any;
 };
 type FormItem = {
     createdAt: string;
@@ -52,13 +53,21 @@ const normalizeFieldType = (fieldType: any) => {
 };
 
 
-const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluateCondition, allValues }: RepeatableProps) => {
+const Repeatable = ({ 
+    collectionName, 
+    collectionField, 
+    fields, 
+    allValues,
+    allRepeatableValues,
+    onChange, 
+    evaluateCondition,  
+}: RepeatableProps) => {
 
 
-    const transformAllValuesToForms = (allValues: Array<Record<string, any>>): FormItem[] => {
-        if (!allValues?.length) return [];
+    const transformAllValuesToForms = (allRepeatableValues: Array<Record<string, any>>): FormItem[] => {
+        if (!allRepeatableValues?.length) return [];
 
-        return allValues.flatMap((item, index) => {
+        return allRepeatableValues.flatMap((item, index) => {
             const { createdAt, id, ...dynamicFields } = item;
             const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
 
@@ -109,7 +118,7 @@ const Repeatable = ({ collectionName, collectionField, fields, onChange, evaluat
         });
     };
 
-    const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allValues));
+    const [forms, setForms] = useState<FormItem[]>(() => transformAllValuesToForms(allRepeatableValues));
     const [disabled, setDisabled] = useState(false)
 
     useEffect(() => {
