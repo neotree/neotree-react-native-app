@@ -1,14 +1,13 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, SafeAreaView, Dimensions } from 'react-native';
+import { ActivityIndicator, ScrollView, Modal as FullScreenModal } from 'react-native';
 import moment from 'moment';
 import { Box, Br, Button, NeotreeIDInput, Text, Dropdown, Radio, theme, Modal } from '@/src/components';
 import * as api from '@/src/data';
 import * as types from '@/src/types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
+import { getSessionScriptTitle } from '@/src/utils/sessionFields';
 import { mergeSessions } from '@/src/contexts/script'
-
-const { width, height } = Dimensions.get("window");
 
 type SearchProps = {
     label: string;
@@ -22,13 +21,7 @@ type SearchProps = {
     noRecordMessage?: (uid: string) => string;
 };
 
-const getSessionKey = (session: any, index?: number) => {
-    return `${session?.data?.unique_key || session?.data?.uid || session?.uid || session?.data?.id || (index ?? '')}`;
-};
-
-const getSessionTitle = (session: any) => {
-    return session?.data?.title || session?.data?.script?.title || session?.data?.script?.data?.title || 'Unknown script';
-};
+const getSessionTitle = (session: any) => getSessionScriptTitle(session, 'Unknown script');
 
 const getSessionType = (session: any) => {
     return session?.data?.type || session?.data?.script?.type || '';
@@ -36,6 +29,39 @@ const getSessionType = (session: any) => {
 
 const getSessionDate = (session: any) => {
     return session?.data?.completed_at || session?.data?.started_at || session?.ingested_at || session?.created_at;
+};
+
+const getSessionScriptId = (session: any) => {
+    return session?.data?.script?.id
+        || session?.data?.script_id
+        || session?.data?.scriptTitle
+        || session?.script_id
+        || session?.scriptId
+        || session?.data?.id;
+};
+
+const getSessionKey = (session: any, index?: number) => {
+    const uniqueKey = session?.data?.unique_key;
+    if (uniqueKey) return `${uniqueKey}`;
+    const composite = [
+        session?.data?.uid || session?.uid,
+        getSessionScriptId(session) || getSessionType(session),
+        getSessionDate(session),
+    ].filter(Boolean).join('|');
+    return composite || `${session?.data?.id || (index ?? '')}`;
+};
+
+const SESSION_TYPE_TABS = ['admission', 'neolab', 'discharge', 'drecord'];
+
+const getSessionTab = (session: any) => {
+    const type = getSessionType(session);
+    if (SESSION_TYPE_TABS.includes(type)) return type;
+    const title = getSessionTitle(session);
+    if (/admission/i.test(title)) return 'admission';
+    if (/neolab/i.test(title)) return 'neolab';
+    if (/discharge/i.test(title)) return 'discharge';
+    if (/daily record/i.test(title)) return 'drecord';
+    return 'admission';
 };
 
 function getSessionFacility(session: any) {
@@ -86,6 +112,97 @@ const mergeSearchResults = (...groups: any[][]) => {
     });
 };
 
+const MIN_PATIENT_SUMMARY_DETAIL_ITEMS = 5;
+
+const PATIENT_SUMMARY_FALLBACK_LABELS: Record<string, string> = {
+    DateBCT: 'Date of birth',
+    DateBCR: 'Date of birth recorded',
+    DOBTOB: 'Date and time of birth',
+    DateTimeOfBirth: 'Date and time of birth',
+    GestAge: 'Gestational age',
+    Gestation: 'Gestational age',
+    BirthWeight: 'Birth weight',
+    AdmissionWeight: 'Admission weight',
+    BabyWeight: 'Baby weight',
+    BirthFacility: 'Birth facility',
+    Sex: 'Sex',
+    BabySex: 'Sex',
+};
+
+const firstValue = (input: any) => {
+    if (Array.isArray(input)) {
+        return input.find(item => item !== undefined && item !== null && item !== '') ?? input[0];
+    }
+    return input;
+};
+
+const humanizePatientSummaryKey = (key: string) => {
+    return key
+        .replace(/_/g, ' ')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/\bNUID\b/gi, 'NEOTREE ID')
+        .replace(/\bUID\b/gi, 'NEOTREE ID')
+        .replace(/\bGA\b/g, 'gestational age')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
+const buildPatientSummaryLabelMap = (screens: any[]) => {
+    return (screens || []).reduce((acc: Record<string, string>, screen: any) => {
+        const metadata = screen?.data?.metadata || {};
+        const fields = metadata.fields || [];
+        const items = metadata.items || [];
+
+        [...fields, ...items].forEach((field: any) => {
+            const key = field?.key || field?.inputKey || field?.value;
+            const label = field?.label || field?.text || field?.title;
+            if (!key || !label) return;
+            acc[`${key}`.toLowerCase()] = `${label}`.trim();
+        });
+
+        return acc;
+    }, {});
+};
+
+const getFallbackPatientSummaryLabel = (key: string) => {
+    return Object.entries(PATIENT_SUMMARY_FALLBACK_LABELS).find(([candidate]) =>
+        candidate.toLowerCase() === key.toLowerCase()
+    )?.[1];
+};
+
+const isNeotreeIdSummaryKey = (key: string) => {
+    return /^uid$/i.test(key)
+        || /^nuid$/i.test(key)
+        || /neotree.*id/i.test(key)
+        || /nuid/i.test(key);
+};
+
+const getPatientSummaryLabel = (
+    key: string,
+    entry: any,
+    labelMap: Record<string, string>,
+    fallbackLabel?: string,
+) => {
+    const fieldLabel = firstValue(
+        entry?.fieldLabel
+        ?? entry?.label
+        ?? entry?.metadata?.label
+        ?? entry?.field?.label
+        ?? entry?.values?.fieldLabel
+    );
+
+    if (fieldLabel !== undefined && fieldLabel !== null && `${fieldLabel}`.trim() !== '') {
+        return `${fieldLabel}`.trim();
+    }
+
+    const metadataLabel = labelMap[key.toLowerCase()];
+    if (metadataLabel) return metadataLabel;
+
+    if (fallbackLabel) return fallbackLabel;
+
+    return humanizePatientSummaryKey(key);
+};
+
 export function Search({
     label,
     autofillKeys,
@@ -112,11 +229,16 @@ export function Search({
     const [searching, setSearching] = React.useState(false);
     const [qrSession, setQRSession] = React.useState<any>([]);
     const [showQR, setShowQR] = React.useState(false);
-    const [toClear, setToClear] = React.useState(false);
-    const [validationMessage, setValidationMessage] = React.useState('');
+    const [noRecordOpen, setNoRecordOpen] = React.useState(false);
+    const [noRecordText, setNoRecordText] = React.useState('');
+    const [lookupFailed, setLookupFailed] = React.useState(false);
+    const [dateConfirmOpen, setDateConfirmOpen] = React.useState(false);
+    const [dateConfirmMessage, setDateConfirmMessage] = React.useState('');
+    const [inputResetKey, setInputResetKey] = React.useState(0);
     const [recommendedSessionKey, setRecommendedSessionKey] = React.useState('');
     const [recommendedSession, setRecommendedSession] = React.useState<any>(null);
     const [searchedFromQR, setSearchedFromQR] = React.useState(false);
+    const [patientSummaryLabels, setPatientSummaryLabels] = React.useState<Record<string, string>>({});
     const qrSessionRef = React.useRef<any[]>([]);
     const qrUidRef = React.useRef('');
 
@@ -131,8 +253,11 @@ export function Search({
         setNeolabResultsOpen(false);
         setPendingPatientSelection(null);
         setPatientSummaryOpen(false);
-        setToClear(false);
-        setValidationMessage('');
+        setNoRecordOpen(false);
+        setNoRecordText('');
+        setLookupFailed(false);
+        setDateConfirmOpen(false);
+        setDateConfirmMessage('');
         onSession(null);
     }, [onSession]);
 
@@ -151,14 +276,19 @@ export function Search({
         setSearchedFromQR(false);
     }, [clearResolvedSearch]);
 
-    const handleUIDChange = React.useCallback((nextUID: string) => {
-        if (qrUidRef.current && (!nextUID || nextUID === qrUidRef.current)) {
-            setUID(qrUidRef.current);
-            return;
-        }
+    const handleUIDChange = React.useCallback((nextUID: string, isManual?: boolean) => {
+        // Non-manual changes are the input echoing values we set programmatically
+        // (e.g. from a QR scan) — they must not wipe the search state.
+        if (!isManual) return;
         setUID(nextUID);
         resetSearchState();
     }, [resetSearchState]);
+
+    const clearUID = React.useCallback(() => {
+        setUID('');
+        // NeotreeIDInput keeps its text when the value prop goes empty, so force a remount.
+        setInputResetKey(k => k + 1);
+    }, []);
 
     const resolveUIDWithoutMatch = React.useCallback((nextUID: string) => {
         onSession({
@@ -247,75 +377,28 @@ export function Search({
         if (qrtext) {
             resetSearchState();
             setSearchedFromQR(true);
-            const session = normalizeQrSession(qrtext)
-            const sessions = []
-            if (session['uid']) {
-                qrUidRef.current = session['uid']
-                setUID(session['uid'])
-                if (Object.keys(session).length > 1) {
-                    sessions.push(session)
-                    qrSessionRef.current = sessions
-                    setQRSession(sessions)
-                    setRecommendedSessionKey(getSessionKey(session, 0))
-                    setRecommendedSession(session)
-                    setSessionType('qr')
+            const session = normalizeQrSession(qrtext);
+            if (session && typeof session === 'object' && session['uid']) {
+                qrUidRef.current = session['uid'];
+                setUID(session['uid']);
+                if (hasFullQrSession(session)) {
+                    const sessions = [session];
+                    qrSessionRef.current = sessions;
+                    setQRSession(sessions);
+                    setRecommendedSessionKey(getSessionKey(session, 0));
+                    setRecommendedSession(session);
+                    setSessionType('qr');
                 }
-
-                if (script_type === 'discharge') {
-                    if (sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0
-                        && sessions?.filter(s => s?.data?.script?.type === 'admission').length > 0) {
-                            {
-                                const mergedSessions = [mergeSessions(sessions?.filter((s: any) => s?.data?.script?.type === 'drecord')[0],
-                                    sessions?.filter((s: any) => s?.data?.script?.type === 'admission')[0])]
-                                      
-                                setMerged(mergedSessions)
-                                setSessionType('merged')
-                            }
-                    }
-                } else if (!sessions.length) {
-
-                    if (script_type === 'drecord' && sessions?.filter(s => s?.data?.script?.type === 'drecord').length > 0) {
-                        setSessionType('drecord')
-                    }
-                }
-
-            } else {
-                setUID(session)
+            } else if (typeof session === 'string') {
+                setUID(session);
             }
-
         }
         setShowQR(false);
-
     };
 
-    const validateSearchResultDates = React.useCallback((matched: any) => {
-        if (matched != null) {
-            const completedDate = matched?.session?.completed_at
-            const type = matched?.session?.type
-            setSelectedSession(matched)
-            if (completedDate && type === 'drecord') {
-                const dateDiff = getDaysDifference(new Date(), completedDate);
-                if (dateDiff === 1) {
-                    setToClear(false)
-                    onSession(matched)
-                } else {
-                    setToClear(true)
-                    if (dateDiff === 0) {
-                        setValidationMessage("The Scanned Record was created today. Do you want to proceed auto populating?")
-                    } else {
-                        setValidationMessage(`The Scanned Record was created ${dateDiff} days ago. Do you want to proceed auto populating?`)
-                    }
-                }
-
-            } else {
-                setToClear(false)
-                onSession(matched)
-            }
-        } else {
-            onSession(matched)
-        }
-
-
+    const deselectSession = React.useCallback(() => {
+        setSelectedSession(null);
+        onSession(null);
     }, [onSession]);
 
     const isNeolabSession = React.useCallback((session: any) => {
@@ -410,11 +493,46 @@ export function Search({
         setSelectedSession(null);
     }, []);
 
+    React.useEffect(() => {
+        let cancelled = false;
+
+        (async () => {
+            const session = pendingPatientSelection?.session;
+            const scriptId = getSessionScriptId(session);
+            if (!scriptId) {
+                setPatientSummaryLabels({});
+                return;
+            }
+
+            try {
+                const script = await api.getScript({ script_id: scriptId });
+                if (!cancelled) {
+                    setPatientSummaryLabels(buildPatientSummaryLabelMap(script?.screens || []));
+                }
+            } catch {
+                if (!cancelled) setPatientSummaryLabels({});
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pendingPatientSelection?.session]);
+
     const getPatientSummaryItems = React.useCallback((session: any) => {
         const entries = session?.data?.entries || {};
-        const keyMatch = /(baby|mother|uid|datebct|datebcr|datetime|dobtob|gestation|weight)/i;
         const entriesList = Object.entries(entries);
-        const buildItems = (filterFn: (key: string, entry: any) => boolean) =>
+        const hasBirthWeight = entriesList.some(([key, entry]: [string, any]) => {
+            if (!/^BirthWeight$/i.test(`${key || ''}`.trim())) return false;
+            const rawValue = Array.isArray(entry?.values?.value)
+                ? entry.values.value[0]
+                : entry?.values?.value ?? entry?.value;
+            return rawValue !== undefined && rawValue !== null && rawValue !== '';
+        });
+        const buildItems = (
+            filterFn: (key: string, entry: any) => boolean,
+            getFallbackLabel?: (key: string) => string | undefined,
+        ) =>
             entriesList.reduce((acc: any[], [key, entry]: [string, any]) => {
                 const safeKey = typeof key === 'string' ? key.trim() : '';
                 if (!safeKey) return acc;
@@ -424,34 +542,38 @@ export function Search({
                     : entry?.values?.value ?? entry?.value;
                 const hasValue = rawValue !== undefined && rawValue !== null && rawValue !== '';
                 if (!hasValue) return acc;
-                const label = entry?.values?.label?.[0] || safeKey;
+                const label = getPatientSummaryLabel(safeKey, entry, patientSummaryLabels, getFallbackLabel?.(safeKey));
                 acc.push({ key: safeKey, label, value: rawValue });
                 return acc;
             }, []);
 
-        const uidItems = buildItems((key) => /^uid$/i.test(key));
+        const uidItems = buildItems(isNeotreeIdSummaryKey);
         const uidItem = uidItems[0];
         const ipsItems = buildItems((_, entry) => entry?.ips === true).filter(i => !uidItem || i.key !== uidItem.key);
-        const keyMatchItems = buildItems((key) => keyMatch.test(key)).filter(i => !uidItem || i.key !== uidItem.key);
+        const fallbackItems = buildItems(
+            (key) => {
+                if (/^AdmissionWeight$/i.test(key) && hasBirthWeight) return false;
+                return Boolean(getFallbackPatientSummaryLabel(key));
+            },
+            getFallbackPatientSummaryLabel,
+        ).filter(i => !uidItem || i.key !== uidItem.key);
 
         const result: any[] = [];
         if (uidItem) result.push(uidItem);
         result.push(...ipsItems);
 
-        if (ipsItems.length < 4) {
-            const seen = new Set(result.map(i => i.key));
-            let added = 0;
-            for (const item of keyMatchItems) {
-                if (seen.has(item.key)) continue;
+        if (ipsItems.length < MIN_PATIENT_SUMMARY_DETAIL_ITEMS) {
+            const seen = new Set(result.map(i => i.key.toLowerCase()));
+            for (const item of fallbackItems) {
+                if (seen.has(item.key.toLowerCase())) continue;
                 result.push(item);
-                seen.add(item.key);
-                added += 1;
-                if (ipsItems.length + added >= 4) break;
+                seen.add(item.key.toLowerCase());
+                if (result.filter(i => !uidItem || i.key !== uidItem.key).length >= MIN_PATIENT_SUMMARY_DETAIL_ITEMS) break;
             }
         }
 
         return result.map(({ key, label, value }) => ({ key, label, value }));
-    }, []);
+    }, [patientSummaryLabels]);
 
     const formatPatientValue = React.useCallback((value: any, label?: string, key?: string) => {
         const labelKey = `${label || ''} ${key || ''}`.toLowerCase();
@@ -466,6 +588,31 @@ export function Search({
         setPatientSummaryOpen(false);
         setPendingPatientSelection(null);
     }, []);
+
+    // Called when the user confirms the patient summary. The selection is already
+    // resolved (onSession fired on radio tap); this only adds a staleness warning
+    // for daily-record sessions that were not completed yesterday.
+    const confirmPatientSelection = React.useCallback(() => {
+        const matched = pendingPatientSelection || null;
+        resetPatientSummary();
+        if (!matched) return;
+
+        const session = matched.session;
+        const completedAt = session?.data?.completed_at || session?.completed_at;
+        const type = getSessionType(session) || session?.type;
+        if (type !== 'drecord' || !completedAt) return;
+
+        const completedDate = new Date(completedAt);
+        if (isNaN(completedDate.getTime())) return;
+
+        const dateDiff = getDaysDifference(new Date(), completedDate);
+        if (dateDiff === 1) return;
+
+        setDateConfirmMessage(dateDiff === 0
+            ? 'The selected record was created today. Do you want to proceed with auto-population?'
+            : `The selected record was created ${dateDiff} days ago. Do you want to proceed with auto-population?`);
+        setDateConfirmOpen(true);
+    }, [pendingPatientSelection, resetPatientSummary]);
 
     const enforceNeolabView = React.useCallback((items: any[]) => {
         if (script_type === 'admission') return false;
@@ -520,74 +667,65 @@ export function Search({
             const rawSessions = mergeSearchResults(qrResults, lookupResults || []);
 
             if (lookupError && !rawSessions.length) {
-                setToClear(true)
-                setValidationMessage('We could not check patient records right now. Please try again, or re-scan the QR code.')
                 setSearching(false);
-            }
-            else {
-                setSessions(rawSessions);
-                setSearching(false);
-                setSearched(uid);
-                enforceNeolabView(rawSessions);
-                if (!rawSessions.length) {
-                    setToClear(true);
-                    setValidationMessage(
-                        noRecordMessage
-                            ? noRecordMessage(uid)
-                            : `No patient record was found for ${uid}. Re-scan or continue without pre-population. ${useSearchedUidForSession ? 'The script NUID will use the current Neotree ID.' : 'A new Neotree ID will be generated for this baby.'}`
-                    );
-                    return;
-                }
-
-                let recommendationSource = rawSessions;
-
-                if (script_type === 'discharge') {
-                    if (rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0
-                        && rawSessions?.filter((s: any) => s?.data?.script?.type === 'admission').length > 0) {
-                        const mergedSessions = [mergeSessions(rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord')[0],
-                            rawSessions?.filter((s: any) => s?.data?.script?.type === 'admission')[0])]
-
-                        setMerged(mergedSessions)
-                        setSessionType('merged')
-                        recommendationSource = mergedSessions;
-                    }
-                } else if (!(searchedFromQR && qrSession?.length)) {
-                    if (script_type === 'drecord' && rawSessions?.filter((s: any) => s?.data?.script?.type === 'drecord').length > 0) {
-                        setSessionType('drecord')
-                    }
-                }
-
-                const recommended = getRecommendedSession(recommendationSource);
-                setRecommendedSessionKey(recommended ? getSessionKey(recommended, 0) : '');
-                setRecommendedSession(recommended);
-
-                if (searchedFromQR && recommended) {
-                    const matched = buildMatchedSession(recommended);
-                    setSelectedSession(matched);
-                    setPendingPatientSelection(matched);
-                    setPatientSummaryOpen(true);
-                }
+                setLookupFailed(true);
+                setNoRecordText('We could not check patient records right now. You can retry, re-scan the QR code, or continue without pre-population.');
+                setNoRecordOpen(true);
+                return;
             }
 
+            setSessions(rawSessions);
+            setSearching(false);
+            setSearched(uid);
+
+            if (!rawSessions.length) {
+                setLookupFailed(false);
+                setNoRecordText(
+                    noRecordMessage
+                        ? noRecordMessage(uid)
+                        : `No patient record was found for ${uid}. Re-scan or continue without pre-population. ${useSearchedUidForSession ? 'The script NUID will use the current Neotree ID.' : 'A new Neotree ID will be generated for this baby.'}`
+                );
+                setNoRecordOpen(true);
+                return;
+            }
+
+            const neolabGated = enforceNeolabView(rawSessions);
+
+            let recommended: any = null;
+            const canMergeForDischarge = script_type === 'discharge'
+                && rawSessions.filter((s: any) => getSessionType(s) === 'drecord').length > 0
+                && rawSessions.filter((s: any) => getSessionType(s) === 'admission').length > 0;
+
+            if (canMergeForDischarge) {
+                const mergedSessions = [mergeSessions(
+                    rawSessions.filter((s: any) => getSessionType(s) === 'drecord')[0],
+                    rawSessions.filter((s: any) => getSessionType(s) === 'admission')[0]
+                )];
+                setMerged(mergedSessions);
+                setSessionType('merged');
+                recommended = mergedSessions[0];
+            } else if (searchedFromQR && qrResults.length) {
+                // The QR code carries a full record: it stays the default selection.
+                const qrKey = getSessionKey(qrResults[0], 0);
+                recommended = rawSessions.find((s: any) => getSessionKey(s) === qrKey) || qrResults[0];
+                setSessionType('qr');
+            } else {
+                recommended = getRecommendedSession(rawSessions);
+                if (recommended) setSessionType(getSessionTab(recommended));
+            }
+
+            setRecommendedSessionKey(recommended ? getSessionKey(recommended, 0) : '');
+            setRecommendedSession(recommended);
+
+            if (!neolabGated && searchedFromQR && recommended) {
+                const matched = buildMatchedSession(recommended);
+                setSelectedSession(matched);
+                onSession(matched);
+                setPendingPatientSelection(matched);
+                setPatientSummaryOpen(true);
+            }
         })();
-    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, getRecommendedSession, noRecordMessage, qrSession, script_type, searchedFromQR, uid, useSearchedUidForSession]);
-
-
-    const handleYesPress = () => {
-        setToClear(false)
-        if (selectedSession) {
-            onSession(selectedSession)
-        } else {
-            resolveUIDWithoutMatch(uid)
-        }
-    };
-
-    const handleNoPress = (error?: boolean) => {
-        resetSearchState()
-        if (!error) {
-            setUID('')
-        }
-    }
+    }, [buildMatchedSession, clearResolvedSearch, enforceNeolabView, getRecommendedSession, noRecordMessage, onSession, qrSession, script_type, searchedFromQR, uid, useSearchedUidForSession]);
 
     const admissionSessions = merged.length>0?[]:sessions?.filter(s => s?.data?.type === 'admission' || getSessionTitle(s).match(/admission/gi) || (s.data?.script?.type === 'admission'));
     const neolabSessions =merged.length>0?[]: sessions?.filter(s => s?.data?.type === 'neolab' || getSessionTitle(s).match(/neolab/gi) || (s.data?.script?.type === 'neolab'));
@@ -615,20 +753,22 @@ export function Search({
                                     checked={selected}
                                     onChange={() => {
                                         if (selected) {
-                                            setSelectedSession(null)
-                                            onSession(null);
+                                            deselectSession();
                                             return;
-                                        } else {
-                                            const matched = buildMatchedSession(s);
-                                            setSelectedSession(matched)
-                                            setPendingPatientSelection(matched);
-                                            setPatientSummaryOpen(true);
                                         }
+                                        // Resolve immediately so the Start button state always
+                                        // mirrors the visible radio selection; the patient summary
+                                        // is a verification step that can undo it.
+                                        const matched = buildMatchedSession(s);
+                                        setSelectedSession(matched);
+                                        onSession(matched);
+                                        setPendingPatientSelection(matched);
+                                        setPatientSummaryOpen(true);
                                     }}
                                     label={(
                                         <>
                                             <Box flexDirection="row" alignItems="center">
-                                                <Text variant="title3">{(merged.length>0)?'Merged Records':getSessionTitle(s)}</Text>
+                                                <Text variant="title3">{sessionType === 'merged' ? 'Merged Records' : getSessionTitle(s)}</Text>
                                                 {recommended ? (
                                                     <Box
                                                         marginLeft="s"
@@ -652,29 +792,6 @@ export function Search({
                                         </>
                                     )}
                                 />
-                                <Modal
-                                    open={toClear && !searching}
-                                    onClose={() => { setToClear(false) }}
-                                    title="Validate Selected Session."
-                                    actions={[
-                                        {
-                                            color: 'error',
-                                            label: 'RE-SCAN',
-                                            onPress: () => handleNoPress(),
-                                        },
-                                        {
-                                            color: 'primary',
-                                            label: 'Continue',
-                                            onPress: handleYesPress,
-
-                                        },
-                                    ]}
-                                >
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
-                                        {validationMessage || ''}
-                                    </Text>
-                                </Modal>
-
                             </Box>
                         </React.Fragment>
                     );
@@ -699,12 +816,29 @@ function hasPrePopulate(entry: any): boolean {
     return (
         <>
 
-            {showQR === true ? <SafeAreaView
-                style={{ width, height, marginLeft: -50 }}
-            ><QRCodeScan onRead={onQrRead} /></SafeAreaView>
+            {showQR === true ? (
+                // A true OS-level full-screen presentation, not a View sized
+                // to match the screen's own dimensions - the latter depends
+                // on wherever this component happens to be nested (parent
+                // padding, safe-area insets, screen size) and only ever looks
+                // right on whichever device it was last tuned against. Modal
+                // escapes the surrounding layout entirely, so it covers the
+                // full screen edge-to-edge on any device without needing to
+                // know or compute its dimensions at all.
+                <FullScreenModal
+                    visible
+                    animationType="slide"
+                    presentationStyle="fullScreen"
+                    statusBarTranslucent
+                    onRequestClose={() => setShowQR(false)}
+                >
+                    <QRCodeScan onRead={onQrRead} />
+                </FullScreenModal>
+            )
                 :
                 <Box >
                     <NeotreeIDInput
+                        key={`uid-input-${inputResetKey}`}
                         label={label}
                         onChange={handleUIDChange}
                         value={uid}
@@ -712,7 +846,7 @@ function hasPrePopulate(entry: any): boolean {
                     <Br spacing='l' />
                     <>
                         <Br />
-                        <Button disabled={searching || uid !== ''}
+                        <Button disabled={searching}
                             color="primary"
                             onPress={() => openQRscanner()}>
                             Scan QR
@@ -789,33 +923,74 @@ function hasPrePopulate(entry: any): boolean {
                             </>
                         ) : (
                             <>
-                                <Modal
-                                    open={toClear && !searching}
-                                    onClose={() => { setToClear(false) }}
-                                    title={noRecordTitle || 'Continue Without Pre-Population'}
-                                    actions={[
-                                        {
-                                            color: 'error',
-                                            label: 'RE-SCAN',
-                                            onPress: () => handleNoPress(),
-                                        },
-                                        {
-                                            color: 'primary',
-                                            label: 'Continue',
-                                            onPress: handleYesPress,
-
-                                        },
-                                    ]}
-                                >
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
-                                        {validationMessage || ''}
-                                    </Text>
-                                </Modal>
-                                {!searched && !toClear ? null : <Text textAlign="center" color="textSecondary">No results found</Text>}
+                                {!searched ? null : <Text textAlign="center" color="textSecondary">No results found</Text>}
                             </>
                         )}
                     </ScrollView>
                 </Box>}
+            <Modal
+                open={noRecordOpen && !searching}
+                onClose={() => setNoRecordOpen(false)}
+                title={lookupFailed ? 'Unable to check records' : (noRecordTitle || 'No matching record found')}
+                actions={[
+                    {
+                        color: 'error',
+                        label: 'RE-SCAN',
+                        onPress: () => {
+                            setNoRecordOpen(false);
+                            resetSearchState();
+                            clearUID();
+                        },
+                    },
+                    ...(lookupFailed ? [{
+                        color: 'primary',
+                        label: 'Retry',
+                        onPress: () => {
+                            setNoRecordOpen(false);
+                            search();
+                        },
+                    }] : []),
+                    {
+                        color: 'primary',
+                        label: lookupFailed ? 'Continue anyway' : 'Continue',
+                        onPress: () => {
+                            setNoRecordOpen(false);
+                            resolveUIDWithoutMatch(uid);
+                        },
+                    },
+                ]}
+            >
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
+                    {noRecordText || ''}
+                </Text>
+            </Modal>
+            <Modal
+                open={dateConfirmOpen && !searching}
+                onClose={() => {
+                    setDateConfirmOpen(false);
+                    deselectSession();
+                }}
+                title="Confirm selected record"
+                actions={[
+                    {
+                        color: 'error',
+                        label: 'Change selection',
+                        onPress: () => {
+                            setDateConfirmOpen(false);
+                            deselectSession();
+                        },
+                    },
+                    {
+                        color: 'primary',
+                        label: 'Continue',
+                        onPress: () => setDateConfirmOpen(false),
+                    },
+                ]}
+            >
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'maroon' }}>
+                    {dateConfirmMessage || ''}
+                </Text>
+            </Modal>
             <Modal
                 open={neolabGateOpen}
                 onClose={() => {}}
@@ -921,7 +1096,7 @@ function hasPrePopulate(entry: any): boolean {
                         color="warning"
                         size="m"
                         onPress={() => {
-                            setSelectedSession(null);
+                            deselectSession();
                             resetPatientSummary();
                         }}
                         style={{ flex: 1, marginRight: 10 }}
@@ -931,11 +1106,7 @@ function hasPrePopulate(entry: any): boolean {
                     <Button
                         color="success"
                         size="m"
-                        onPress={() => {
-                            const matched = pendingPatientSelection || null;
-                            resetPatientSummary();
-                            validateSearchResultDates(matched);
-                        }}
+                        onPress={confirmPatientSelection}
                         style={{ flex: 1, marginLeft: 10 }}
                     >
                         Continue

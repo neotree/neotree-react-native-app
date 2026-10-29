@@ -4,6 +4,7 @@ import { Box, Br, Text, useTheme, Button  } from "../../components";
 import { Form } from './Form';
 import { syncData } from '../../data';
 import { useAppContext } from '../../AppContext';
+import { logError } from '@/src/utils/logError';
 
 type SignInProps = { onSignIn: () => void; };
 
@@ -23,7 +24,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 				setSyncDataResponse &&setSyncDataResponse(res);
 				onSignIn();
 			} catch(e) { 
-				console.log(e);
+				logError('SignIn.initialise', e);
 				setInitialiseDataFailed(true); 
 			}
 		})();

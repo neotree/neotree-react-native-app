@@ -3,10 +3,11 @@ import { StatusBar } from 'expo-status-bar';
 import registerdAssets from './assets';
 import { Authentication } from './Authentication';
 import { HomeNavigator } from './Home';
-import { syncData, addSocketEventsListeners } from './data';
+import { syncData, addSocketEventsListeners, registerExportOnReconnect } from './data';
 import { useAppContext } from './AppContext';
 import { Splash } from './components';
 import { SyncStatus } from './components/sync-status';
+import { logError } from '@/src/utils/logError';
 
 export const assets = Object.values(registerdAssets);
 
@@ -17,29 +18,43 @@ export * from './components';
 
 export function Navigation() {
     const [ready, setReady] = React.useState(false);
-    const {setSyncDataResponse,authenticatedUser} = useAppContext()||{};
+    const {setSyncDataResponse,authenticatedUser,locationVersion} = useAppContext()||{};
 
     const initialiseApp = React.useCallback(async () => {
-        try { 
-            const res = await syncData(); 
-            if(setSyncDataResponse)          
+        try {
+            const res = await syncData();
+            if(setSyncDataResponse)
                 setSyncDataResponse(res);
         } catch (e) {
-            console.log(e);
+            logError('App.initialise', e);
         } finally {
             setReady(true);
-        } 
+        }
     }, [setSyncDataResponse]);
 
-    React.useEffect(() => { if (!ready) initialiseApp(); }, [ready]);
+    React.useEffect(() => { if (!ready) initialiseApp(); }, [ready, initialiseApp]);
 
-    React.useEffect(() => { 
-        
-        addSocketEventsListeners(initialiseApp)
-    
-      
-        ; }, []);
-      
+    // Registered once: NetInfo transitions and circuit resets aren't tied to location.
+    React.useEffect(() => {
+        if (!ready) return;
+        const unsubscribe = registerExportOnReconnect();
+        return unsubscribe;
+    }, [ready]);
+
+    React.useEffect(() => {
+        let cancelled = false;
+        let cleanup: (() => void) | undefined;
+
+        addSocketEventsListeners(initialiseApp).then(unsubscribe => {
+            if (cancelled) { unsubscribe(); return; }
+            cleanup = unsubscribe;
+        });
+
+        return () => {
+            cancelled = true;
+            cleanup?.();
+        };
+    }, [locationVersion, initialiseApp]);
 
     if (!ready) return <Splash />;
 

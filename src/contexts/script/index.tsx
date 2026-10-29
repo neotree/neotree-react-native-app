@@ -1,9 +1,10 @@
-import { 
-    createContext, 
-    useContext, 
-    useState, 
-    useMemo, 
+import {
+    createContext,
+    useContext,
+    useState,
+    useMemo,
     useCallback,
+    useRef,
 } from "react";
 import { type TextProps, Alert, View, TouchableOpacity, Platform } from 'react-native';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
@@ -18,8 +19,12 @@ import { defaultPreferences } from '@/src/constants';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
+import { buildOutcomeEntries } from '@/src/utils/outcome-collections';
+import { compileCondition, createBuildForm, flattenRepeatables, parseConditionString, sanitizeCondition } from '@/src/utils/condition-pipeline';
+import { evaluateExpression } from '@/src/utils/safe-eval';
 import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
 import moment from "moment";
+import { logError, logWarning } from '@/src/utils/logError';
 
 type ScriptContextProviderProps = types.StackNavigationProps<types.HomeRoutes, 'Script'>;
 
@@ -100,6 +105,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [loadingScreen, setLoadingScreen] = useState(false);
     const [nuidSearchForm, setNuidSearchForm] = useState<types.NuidSearchFormField[]>([]);
+    const [startSessionMode, setStartSessionMode] = useState<null | 'bidStillBirth'>(
+        route.params?.session?.data?.startSessionMode || null
+    );
+    const [eligibilityCompleted, setEligibilityCompleted] = useState(Boolean(route.params?.session?.data?.eligibilityCompleted));
+    const [eligibilityAutoFillValues, setEligibilityAutoFillValues] = useState<types.ScreenEntryValue[]>(
+        route.params?.session?.data?.eligibilityAutoFillValues || []
+    );
     const [matched, setMatched] = useState<types.MatchedSession | null>(null);
     const [patientDetails, setPatientDetails] = useState({
         isTwin: false,
@@ -168,199 +180,85 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
     const [reviewConfigurations, setReviewConfigurations] = useState<any[]>([]);
 
-    const evaluateCondition = useCallback((condition: string, defaultEval = false) => {
+    // Parsed conditions are fully-substituted literal expressions, so a given
+    // string always evaluates to the same result. Caching by string skips the
+    // parse for the repeated sweeps large forms perform.
+    const evalResultCacheRef = useRef(new Map<string, any>());
+
+    // A condition that fails to compile is reported once and then stays quiet.
+    // Keyed by the authored expression, not the substituted one: the same broken
+    // expression compiles to a different string for every set of answers, so
+    // deduping on the compiled text would report it again on every keystroke.
+    const reportedBadConditionsRef = useRef(new Set<string>());
+
+    /**
+     * `condition` is the fully-substituted, compiled expression. `source` is the
+     * expression as authored, used only for reporting — pass it wherever it is
+     * to hand, so a broken condition can be traced back to the script.
+     *
+     * A failure here is silent by design: a screen that cannot be evaluated is
+     * skipped rather than blocking the clinician. It is not silent in the logs,
+     * because that is how this stayed broken for so long.
+     */
+    const evaluateCondition = useCallback((condition: string, defaultEval = false, source?: string) => {
+        const cache = evalResultCacheRef.current;
+        const cacheKey = `${defaultEval}:${condition}`;
+
+        if (cache.has(cacheKey)) return cache.get(cacheKey);
+
         let conditionMet = defaultEval;
         try {
-            conditionMet = eval(condition);
+            // Restricted evaluator, never raw eval: a compiled condition is literals and
+            // operators only, so nothing in it should be able to reach the app's scope.
+            conditionMet = evaluateExpression(condition);
         } catch (e) {
-            // do nothing
+            const reported = reportedBadConditionsRef.current;
+            const reportKey = source || condition;
+            if (!reported.has(reportKey)) {
+                // Bounded: a corrupt script must not grow this without limit.
+                if (reported.size >= 500) reported.clear();
+                reported.add(reportKey);
+                logWarning('Conditional expression failed to evaluate', e, {
+                    expression: reportKey,
+                    compiled: condition,
+                    treatedAs: defaultEval,
+                });
+            }
         }
+
+        if (cache.size >= 2000) cache.clear();
+        cache.set(cacheKey, conditionMet);
+
         return conditionMet;
     }, []);
 
-    const sanitizeCondition = useCallback((condition: string) => {
-        let sanitized = condition
-            .replace(new RegExp(' and ', 'gi'), ' && ')
-            .replace(new RegExp(' or ', 'gi'), ' || ')
-            .replace(new RegExp(' = ', 'gi'), ' == ');
-        sanitized = sanitized.split(' ')
-            .map(s => s[0] === '$' ? `'${s}'` : s).join(' ');
-        return sanitized;
-    }, []);
+    // $Diagnoses / $Problems are derived from every entry, so this is built once
+    // per change rather than for each condition on a screen.
+    const outcomeEntries = useMemo(() => buildOutcomeEntries(entries), [entries]);
 
-    const parseConditionString = useCallback((condition: string, _key = '', value: any) => {
-        const s = (condition || '').toLowerCase().split('$').join(' $');
-        const key = (_key || '').toLowerCase();
-        const parsed = s.replace(/\s\s+/g, ' ')
-            .split(`$${key} =`).join(`${value} =`)
-            .split(`$${key}=`).join(`${value} =`)
-            .split(`$${key} >`).join(`${value} >`)
-            .split(`$${key}>`).join(`${value} >`)
-            .split(`$${key} <`).join(`${value} <`)
-            .split(`$${key}<`).join(`${value} <`)
-            .split(`$${key}!`).join(`${value} !`)
-            .split(`$${key} !`).join(`${value} !`);
-        return parsed;
-    }, []);
-
-    const flattenRepeatables = useCallback((values: any[]): types.ScreenEntryValue[] => {
-        const flat: types.ScreenEntryValue[] = [];
-        
-        values.forEach(v => {
-            if (v?.key === 'repeatables' && typeof v.value === 'object') {
-                const repeatables = v.value as Record<string, any[]>;
-                
-                Object.values(repeatables).forEach((repeatableGroup: any[]) => {
-                    repeatableGroup.forEach(entry => {
-                        Object.entries(entry).forEach(([_, fieldValue]: [string, any]) => {
-                            
-                            if (fieldValue && typeof fieldValue === 'object' && 'value' in fieldValue) {
-                                flat.push({
-                                    ...fieldValue,
-                                    // Preserve the original key structure for repeatables
-                                    key: `${v.key}.${fieldValue.key}`
-                                } as types.ScreenEntryValue);
-                            }
-                        });
-                    });
-                });
-            } else {
-                flat.push(v);
-            }
-            
-        });
-        return flat;
-    }, []);
+    // The form a single line is substituted against. This is the only part that
+    // needs React state; the transformation itself lives in
+    // utils/condition-pipeline so it can be tested against real scripts.
+    const buildForm = useMemo(() => createBuildForm({
+        entries,
+        outcomeEntries,
+        eligibilityAutoFillValues,
+        nuidSearchForm,
+    }), [entries, outcomeEntries, eligibilityAutoFillValues, nuidSearchForm]);
 
     const parseCondition = useCallback((
-        _condition = '', 
+        _condition = '',
         _entries: ({ values: types.ScreenEntry['values'], screen?: types.ScreenEntry['screen'] })[] = []
-    ) => {
-        _condition = (_condition || '').toString();
-
-        const _form = _entries.reduce((acc, e) => {
-            const index = !e?.screen?.id ? -1 : acc.filter(e => e.screen).map(e => e.screen.id).indexOf(e.screen.id);
-
-            if (index > -1) {
-                return acc.map((accEntry, i) => {
-                    if (i === index)  {
-                        return { ...accEntry, ...e, }; 
-                    } else { 
-                        return accEntry;
-                    }
-                }) as types.ScreenEntry[];
-            }
-
-            return [...acc, e] as types.ScreenEntry[];
-        }, [
-            ...entries,
-            ...nuidSearchForm.map(f => {
-                const entry = {
-                    value: [{
-                        value: f.value,
-                        key: f.key,
-                    }],
-                } as types.ScreenEntry;
-                
-                return entry;
-            }),
-        ]);
-    
-        const parseValue = (condition = '', { value, calculateValue, type, inputKey, key, dataType }: types.ScreenEntryValue) => {
-            value = ((calculateValue === null) || (calculateValue === undefined)) ? value : calculateValue;
-            value = ((value === null) || (value === undefined)) ? 'no value' : value;
-            const t = dataType || type;
-    
-            switch (t) {
-                case 'boolean':
-                    value = value === 'false' ? false : Boolean(value);
-                    break;
-                default:
-                    if(key==='createdAt'){
-                        value=value
-                    }else{
-                        value = JSON.stringify(value)
-                    }
-            }
-    
-            return parseConditionString(condition, inputKey || key, value);
-        };
-    
-        let parsedCondition = _form.reduce((condition: string, { screen, values, value }: types.ScreenEntry) => {
-            values = value || values || [];
-
-            values = values.reduce((acc: typeof values, v) => {
-                acc = [...acc, v];
-                if (v.value2 && v.key2) acc = [...acc, { value: v.value2, key: v.key2, }];
-                return acc;
-            }, []);
-            
-            // First filter out null/undefined values
-            values = values.filter(e => (e.value !== null) && (e.value !== undefined));
-            
-            // Flatten repeatable structures if they exist
-            values = flattenRepeatables(values);
-            
-            // Handle both array and non-array values
-            values = values
-                .reduce((acc: types.ScreenEntryValue[], e) => {
-                    acc = [
-                        ...acc,
-                        ...(e.value && Array.isArray(e.value) ? e.value : [e]),
-                    ];
-
-                    acc.forEach(v => {
-                        if (v.value2) {
-                            acc.push({
-                                ...v,
-                                value: v.value2,
-                            });
-                        }
-                    });
-
-                    return acc;
-                }, []);
-    
-            let c = values.reduce((acc, v) => parseValue(acc, v), condition);
-
-            let chunks: string[] = values.filter(v => v.parentKey)
-                .map(v => parseValue(condition, {
-                    ...v,
-                    key: v.parentKey,
-                }))
-                .filter(c => c !== condition);
-    
-            if (screen) {
-                switch (screen.type) {
-                    case 'multi_select':
-                        chunks = values.map(v => parseValue(condition, v)).filter(c => c !== condition);
-                        break;
-                    default:
-                    // do nothing
-                }
-            }
-
-            if (chunks.length) {
-                c = chunks.map(c => `(${c})`).join(' || ');
-            }
-    
-            return c || condition;
-        }, _condition);
-    
-        if (configuration) {
-            parsedCondition = Object.keys(configuration).reduce((acc, key) => {
-                return parseConditionString(acc, key, configuration[key] ? true : false);
-            }, parsedCondition);
-        }
-    
-        return sanitizeCondition(parsedCondition);
-    }, [entries, configuration, nuidSearchForm, parseConditionString, flattenRepeatables, sanitizeCondition]);
+    ) => compileCondition(_condition, _entries, { buildForm, configuration }),
+        [buildForm, configuration]);
 
     const getScreen = useCallback((opts?: { direction?: 'next' | 'back', index?: number; }) => {
         const { index: i, direction: d } = { ...opts };
         const direction = (d && ['next', 'back'].includes(d)) ? d : null;
         
-        if ((i !== undefined) && !isNaN(Number(i))) return screens[i] ? { screen: screens[i], index: i } : null;
+        if ((i !== undefined) && !isNaN(Number(i)) && !(direction === 'next' && i < 0)) {
+            return screens[i] ? { screen: screens[i], index: i } : null;
+        }
 
         let skipToScreenIndex: number | null = null;
         
@@ -395,7 +293,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
             if (activeScreen?.data?.skipToCondition && (skipToScreenIndex !== null) && (skipToScreenIndex > activeScreenIndex)) {
                 const parsedCondition = parseCondition(`${activeScreen?.data?.skipToCondition || ''}`);
-                index = evaluateCondition(parsedCondition) ? skipToScreenIndex : index;
+                index = evaluateCondition(parsedCondition, false, `${activeScreen?.data?.skipToCondition || ''}`) ? skipToScreenIndex : index;
             }
         
             let screen = screens[index];
@@ -406,7 +304,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 screen = s;
@@ -428,7 +326,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 screen = s;
@@ -445,6 +343,24 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             }
             
             if (!screen) return null;
+
+            const inferredScreenEntry = eligibilityAutoFillValues.find(v => {
+                if (!v?.data?.inferredFromEligibility) return false;
+                const screenKey = screen?.data?.metadata?.key;
+                return screenKey && `${v.key}`.toLowerCase() === `${screenKey}`.toLowerCase();
+            });
+
+            if (inferredScreenEntry && direction && index > 0) {
+                const res = getTargetScreen(index);
+                if (res) {
+                    screen = res.screen;
+                    index = res.index;
+                } else {
+                    screen = null;
+                }
+            }
+
+            if (!screen) return null;
         
             if (!direction) return { screen, index, };
         
@@ -454,7 +370,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             if (!condition) return target;
 
             const parsedCondition = parseCondition(condition);
-            let conditionMet = evaluateCondition(parsedCondition);
+            let conditionMet = evaluateCondition(parsedCondition, false, condition);
 
             const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
 
@@ -462,7 +378,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 conditionMet = true;
                 conditionSplit.forEach(c => {
                     const parsedCondition = parseCondition(c);
-                    const isTrue = evaluateCondition(parsedCondition);
+                    const isTrue = evaluateCondition(parsedCondition, false, c);
                     if (!isTrue) conditionMet = false;
                 });
             }
@@ -482,6 +398,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         activeScreenIndex, 
         drugsLibrary, 
         screens, 
+        eligibilityAutoFillValues,
         evaluateCondition, 
         parseCondition,
     ]);
@@ -502,7 +419,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen: lastScreen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 lastScreen = s;
@@ -519,7 +436,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     drugsLibrary,
                     screen: lastScreen,
                     scriptType: script?.data?.type,
-                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition)),
+                    evaluateCondition: (condition) => evaluateCondition(parseCondition(condition), false, condition),
                 });
 
                 lastScreen = s;
@@ -534,13 +451,13 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             const conditionSplit = condition.split('\n').map(c => c.trim()).filter(c => c);
             if (condition) {
                 const parsedCondition = parseCondition(condition, entries.filter(e => e.screen.id !== lastScreen.id));
-                let conditionMet = evaluateCondition(parsedCondition);
+                let conditionMet = evaluateCondition(parsedCondition, false, condition);
 
                 if (conditionSplit.length > 1) {
                     conditionMet = true;
                     conditionSplit.forEach(c => {
                         const parsedCondition = parseCondition(c);
-                        const isTrue = evaluateCondition(parsedCondition);
+                        const isTrue = evaluateCondition(parsedCondition, false, c);
                         if (!isTrue) conditionMet = false;
                     });
                 }
@@ -590,7 +507,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 const { data: { symptoms: s, expression } } = d;
                 const symptoms: any[] = s || [];
             
-                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression), false, s.expression));
                 // const _symptoms = symptoms;
                 const riskSignCount = _symptoms.reduce((acc, s) => {
                     if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
@@ -603,7 +520,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         { key: 'riskCount', value: riskSignCount.riskCount, },
                         { key: 'signCount', value: riskSignCount.signCount, },
                     ],
-                }]));
+                }]), false, expression);
                 // const conditionMet = i < 2;
                 return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
             }).filter(d => d);
@@ -648,7 +565,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 const { data: { symptoms: s, expression } } = d;
                 const symptoms: any[] = s || [];
             
-                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression)));
+                const _symptoms = symptoms.filter(s => s.expression).filter(s => evaluateCondition(parseCondition(s.expression), false, s.expression));
                 // const _symptoms = symptoms;
                 const riskSignCount = _symptoms.reduce((acc, s) => {
                     if (s.type === 'risk') acc.riskCount += Number(s.weight || 1);
@@ -661,7 +578,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         { key: 'riskCount', value: riskSignCount.riskCount, },
                         { key: 'signCount', value: riskSignCount.signCount, },
                     ],
-                }]));
+                }]), false, expression);
                 // const conditionMet = i < 2;
                 return conditionMet ? { ...d.data, symptoms: _symptoms, ...d, } : null;
             }).filter(d => d);
@@ -723,12 +640,20 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
       }, [entries]);
 
     const createSessionSummary = useCallback((_payload: any = {}) => {    
-        const { completed, cancelled, dateAndTimeOfDeath, nuidSearchForm: payloadNuidSearchForm, ...payload } = _payload;
+        const {
+            completed,
+            cancelled,
+            dateAndTimeOfDeath,
+            nuidSearchForm: payloadNuidSearchForm,
+            startSessionMode: payloadStartSessionMode,
+            ...payload
+        } = _payload;
 
         const matchingSession = matched?.session || null;
 		const session = route.params?.session;
         const matches: any[] = [];
         const resolvedNuidSearchForm = payloadNuidSearchForm || nuidSearchForm;
+        const resolvedStartSessionMode = payloadStartSessionMode ?? startSessionMode;
 
         let uid = entries.reduce((acc, { values }) => {
             const uid = values.reduce((acc, { key, value }) => {
@@ -771,14 +696,17 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             type: script?.type,
             data: {
                 dateAndTimeOfDeath,
-				unique_key: `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
+				unique_key: session?.data?.unique_key || summary?.data?.unique_key || `${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
 				app_mode: application?.mode,
+                startSessionMode: resolvedStartSessionMode,
 				country: location?.country,
 				hospital_id: location?.hospital,
 				started_at: session?.data?.started_at || startTime,
 				completed_at: completed ? new Date().toISOString() : null,
 				canceled_at: cancelled ? new Date().toISOString() : null,
 				script,
+                eligibilityCompleted,
+                eligibilityAutoFillValues,
 				management: screens
 					.map(s => s.data)
 					.filter(s => s.type === 'management')
@@ -810,8 +738,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         location,
         screens,
         script,
+        startSessionMode,
         restructureForm,
         nuidSearchForm,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
+        summary,
     ]);
 
     const getScreenIndex = useCallback((screenId: string | number) => {
@@ -843,7 +775,6 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         (async () => {
             try {
                 const summary = await saveSession(params);
-                api.exportSessions().then(() => { }).catch(() => { });
                 setSummary(summary);
                 resolve(summary);
             } catch (e) {
@@ -887,7 +818,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         (s.screenId === lastEntry?.screen?.screen_id)
                     ) return i;
                     return null;
-                }).filter(i => i !== null)[0];
+                }).filter((i): i is number => i !== null)[0];
 
                 if (lastEntry && activeScreenIndex >= 0) {
                     setActiveScreen(screens[activeScreenIndex]);
@@ -895,7 +826,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                 }
             }
         } catch (e: any) {
-            console.log(e);
+            logError('scriptContext.loadScript', e);
             setLoadScriptError(e.message);
         } finally {
             setLoadingScript(false);
@@ -1278,6 +1209,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         startTime,
         refresh,
         nuidSearchForm,
+        startSessionMode,
+        eligibilityCompleted,
+        eligibilityAutoFillValues,
         matched,
         patientDetails,
         mountedScreens,
@@ -1313,6 +1247,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
         setMoreNavOptions,
         setRefresh,
         setNuidSearchForm,
+        setStartSessionMode,
+        setEligibilityCompleted,
+        setEligibilityAutoFillValues,
         setMatched,
         setPatientDetails,
         setMountedScreens,

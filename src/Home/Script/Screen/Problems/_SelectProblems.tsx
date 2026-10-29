@@ -14,8 +14,8 @@ export function SelectProblems({
     hcwProblems, 
     searchVal, 
     problems,
-	acceptedProblems,
-	rejectedProblems,
+    acceptedProblems,
+    rejectedProblems,
     getDefaultProblem, 
     setHcwProblems, 
     setProblems, 
@@ -57,10 +57,10 @@ export function SelectProblems({
             }),
         };
     }).filter((p: types.Problem) => {
-		const isAccpetedAndSuggested = acceptedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
-		const isRejectedAndSuggested = rejectedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
-		return !(isAccpetedAndSuggested || isRejectedAndSuggested);
-	});
+        const isAccpetedAndSuggested = acceptedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
+        const isRejectedAndSuggested = rejectedProblems.find(ap => (ap.key === p.key) && ap?.suggested);
+        return !(isAccpetedAndSuggested || isRejectedAndSuggested);
+    });
 
 
     const exclusiveIsSelected = items
@@ -70,43 +70,43 @@ export function SelectProblems({
     return (
         <>
             <Box>
-				<FlatList 
-					data={items}
-					keyExtractor={(item, index) => `${item.key}${index}`}
-					ListHeaderComponent={(
-						<>
-							{!!activeScreen?.data?.instructions && (
-								<>
-									<Box>
-										<Text color="primary">Instructions</Text>
-										<Text 
+                <FlatList 
+                    data={items}
+                    keyExtractor={(item, index) => `${item.key}${index}`}
+                    ListHeaderComponent={(
+                        <>
+                            {!!activeScreen?.data?.instructions && (
+                                <>
+                                    <Box>
+                                        <Text color="primary">Instructions</Text>
+                                        <Text 
                                             variant="caption"
                                             style={getFieldPreferences('instructions')?.style}
                                         >{activeScreen?.data?.instructions}</Text>
-									</Box>
-								</>
-							)}
+                                    </Box>
+                                </>
+                            )}
 
-							<Br spacing="xl" />
-						</>
-					)}
-					centerContent
-					contentContainerStyle={{
-						...CONTENT_STYLES,
-						marginLeft: 'auto',
-						marginRight: 'auto',
-						paddingBottom: 200,
-					}}
-					renderItem={({ item }) => {
-						const hide = searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false;
+                            <Br spacing="xl" />
+                        </>
+                    )}
+                    centerContent
+                    contentContainerStyle={{
+                        ...CONTENT_STYLES,
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        paddingBottom: 200,
+                    }}
+                    renderItem={({ item }) => {
+                        const hide = searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false;
                     
-						const isExclusive = item.exclusive;
-						const problem = hcwProblems.filter(d => d.name === item.label)[0];
-						const isSelected = !!problem;
-						const disabled = exclusiveIsSelected && !isExclusive;
-			
-						const setValue = (val?: Partial<types.Problem>) => {
-							setHcwProblems([
+                        const isExclusive = item.exclusive;
+                        const problem = hcwProblems.filter(d => d.name === item.label)[0];
+                        const isSelected = !!problem;
+                        const disabled = exclusiveIsSelected && !isExclusive;
+            
+                        const setValue = (val?: Partial<types.Problem>) => {
+                            setHcwProblems([
                                 ...hcwProblems.filter(d => !isExclusive ? true : !items.map(item => item.label).includes(d.name)), 
                                 {
                                     ...getDefaultProblem({
@@ -127,88 +127,88 @@ export function SelectProblems({
                                     }),
                                 },
                             ]);
-						};
+                        };
 
-						return (
-							<View
-								style={hide ? { display: 'none' } : {}}
-							>
-								<TouchableOpacity                                
-									onPress={() => {
-										if (exclusiveIsSelected && !isExclusive) return;
-										if (isSelected) {
-											const matchKey = item.key || item.id || item.label;
-											const matchName = item.label || item.id || item.key;
-											setHcwProblems(hcwProblems.filter(d => d.key !== matchKey && d.name !== matchName));
-											setProblems(problems.filter(d => d.key !== matchKey && d.name !== matchName));
-										} else {
-											const selectedValues = items
-												.filter(i => hcwProblems.some(d => d.name === i.label))
-												.map(i => i.key || i.id || i.label);
+                        return (
+                            <View
+                                style={hide ? { display: 'none' } : {}}
+                            >
+                                <TouchableOpacity                                
+                                    onPress={() => {
+                                        if (exclusiveIsSelected && !isExclusive) return;
+                                        if (isSelected) {
+                                            const matchKey = item.key || item.id || item.label;
+                                            const matchName = item.label || item.id || item.key;
+                                            setHcwProblems(hcwProblems.filter(d => d.key !== matchKey && d.name !== matchName));
+                                            setProblems(problems.filter(d => d.key !== matchKey && d.name !== matchName));
+                                        } else {
+                                            const selectedValues = items
+                                                .filter(i => hcwProblems.some(d => d.name === i.label))
+                                                .map(i => i.key || i.id || i.label);
 
-											const conflicts = getSelectionConflicts({
-												items,
-												selectedValues: [...selectedValues, item.key || item.id || item.label],
-											});
+                                            const conflicts = getSelectionConflicts({
+                                                items,
+                                                selectedValues: [...selectedValues, item.key || item.id || item.label],
+                                            });
 
-											if (conflicts.length) {
-												Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
-												return;
-											}
+                                            if (conflicts.length) {
+                                                Alert.alert('Selection not allowed', getSelectionConflictMessage(conflicts));
+                                                return;
+                                            }
 
-											if (item.enterValueManually) {
-												setCustomValueModal({ onClose: setValue });
-											} else {
-												setValue();
-											}
-										}
-									}}
-								>  
-									<Card
-										backgroundColor={(() => {
-											if (isSelected) return 'primary';
-											if (disabled) return 'disabledBackground';
-											return;
-										})()}
-									>
-										<Text
-											variant="title3"
-											color={(() => {
-												if (isSelected) return 'primaryContrastText';
-												if (disabled) return 'textDisabled';
-												return;
-											})()}
-										>{item.label}</Text>
+                                            if (item.enterValueManually) {
+                                                setCustomValueModal({ onClose: setValue });
+                                            } else {
+                                                setValue();
+                                            }
+                                        }
+                                    }}
+                                >  
+                                    <Card
+                                        backgroundColor={(() => {
+                                            if (isSelected) return 'primary';
+                                            if (disabled) return 'disabledBackground';
+                                            return;
+                                        })()}
+                                    >
+                                        <Text
+                                            variant="title3"
+                                            color={(() => {
+                                                if (isSelected) return 'primaryContrastText';
+                                                if (disabled) return 'textDisabled';
+                                                return;
+                                            })()}
+                                        >{item.label}</Text>
 
-										{!!(problem && problem.customValue) && (
-											<Text
-												variant="caption"
-												color={(() => {
-													if (isSelected) return 'primaryContrastText';
-													if (disabled) return 'textDisabled';
-													return;
-												})()}
-											>{problem.customValue}</Text>
-										)}
-									</Card>
-								</TouchableOpacity>
+                                        {!!(problem && problem.customValue) && (
+                                            <Text
+                                                variant="caption"
+                                                color={(() => {
+                                                    if (isSelected) return 'primaryContrastText';
+                                                    if (disabled) return 'textDisabled';
+                                                    return;
+                                                })()}
+                                            >{problem.customValue}</Text>
+                                        )}
+                                    </Card>
+                                </TouchableOpacity>
 
-								{problem && problem.customValue && (
-									<TouchableOpacity 
-										onPress={() => {
-											setCustomValue(problem.customValue);
-											setCustomValueModal({ onClose: setValue });
-										}}
-									>
-										<Text variant="caption">Edit value</Text>
-									</TouchableOpacity>
-								)}
+                                {problem && problem.customValue && (
+                                    <TouchableOpacity 
+                                        onPress={() => {
+                                            setCustomValue(problem.customValue);
+                                            setCustomValueModal({ onClose: setValue });
+                                        }}
+                                    >
+                                        <Text variant="caption">Edit value</Text>
+                                    </TouchableOpacity>
+                                )}
 
-								<Br spacing="m" />
-							</View>
-						);
-					}}
-				/>
+                                <Br spacing="m" />
+                            </View>
+                        );
+                    }}
+                />
             </Box>
 
             <Modal

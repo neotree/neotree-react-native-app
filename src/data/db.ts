@@ -1,9 +1,17 @@
 
 import * as SQLite from 'expo-sqlite';
 
+import {
+    EXPORTS_MIGRATION_STATEMENTS,
+    EXPORTS_TABLE_COLUMNS,
+    SESSION_INDEX_STATEMENTS,
+    SESSIONS_ADDED_COLUMNS,
+    SESSIONS_TABLE_COLUMNS,
+} from './schema';
+
 export const db = SQLite.openDatabaseSync('db.db');
 
-export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void) => new Promise<any[]>((resolve, reject) => {
+export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void, handle: any = db) => new Promise<any[]>((resolve, reject) => {
     const done = (error?: null | Error, data?: any[]) => {
         if (error) {
             reject(error);
@@ -12,8 +20,8 @@ export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?:
         }
         cb?.(error, data);
     };
-    db.getAllAsync<any>(q, data)
-        .then(res => done(null, res))
+    handle.getAllAsync(q, data)
+        .then((res: any) => done(null, res))
         .catch(done);
 });
 
@@ -74,27 +82,9 @@ export async function createTablesIfNotExist() {
         'updatedAt datetime',
     ].join(',');
 
-    const sessionsTableColumns = [
-        'id integer primary key not null',
-        'session_id integer',
-        'script_id varchar',
-        'type varchar',
-        'uid varchar',
-        'data text',
-        'completed boolean',
-        'exported boolean',
-        'createdAt datetime',
-        'updatedAt datetime',
-    ].join(',');
+    const sessionsTableColumns = SESSIONS_TABLE_COLUMNS.join(',');
 
-    const exportsTableColumns = [
-        'id integer primary key not null',
-        'session_id integer not null',
-        'uid varchar',
-        'scriptid varchar',
-        'data text',
-        'ingested_at datetime',
-    ].join(',');
+    const exportsTableColumns = EXPORTS_TABLE_COLUMNS.join(',');
 
     const authenticatedUserTableColumns = [
         'id integer primary key not null',
@@ -145,7 +135,21 @@ export async function createTablesIfNotExist() {
         'battery varchar',
         'device_model varchar',
         'memory varchar',
-        'editor_version varchar'
+        'editor_version varchar',
+        'source varchar', // Which backend the exception came from ('app' for a client-side fault).
+        'level varchar', // fatal | error | warning.
+        'editor_exported boolean',
+        'manufacturer varchar',
+        'device_name varchar',
+        'device_type varchar',
+        'os_version varchar',
+        'free_storage_gb integer',
+        'total_storage_gb integer',
+        'occurrences integer',
+        'first_seen varchar',
+        'last_seen varchar',
+        'breadcrumbs text',
+        'context text'
     ].join(',');
 
     const aliasesTableColumns = [
@@ -176,20 +180,91 @@ export async function createTablesIfNotExist() {
         dbTransaction(`create table if not exists nt_aliases (${aliasesTableColumns});`),
     ]);
 }
- export const addNewColumns = async()=>{
- //ADD COLUMNS TO SESSIONS TABLE
-  const sessionsTableInfo = await dbTransaction(`PRAGMA table_info(sessions);`);
-  if(sessionsTableInfo && sessionsTableInfo.length>0){
-     const localExportExists = sessionsTableInfo.some((col: any) => col.name === 'local_export');
-     if(!localExportExists){
-          await dbTransaction(`ALTER TABLE sessions ADD COLUMN local_export BOOLEAN DEFAULT 0;`);
+export const addNewColumns = async () => {
+    // ADD COLUMNS TO SESSIONS TABLE
+    const sessionsTableInfo = await dbTransaction(`PRAGMA table_info(sessions);`);
+    if (sessionsTableInfo?.length) {
+        const existing = new Set(sessionsTableInfo.map((col: any) => col.name));
+        for (const [name, definition] of SESSIONS_ADDED_COLUMNS) {
+            if (!existing.has(name)) {
+                await dbTransaction(`ALTER TABLE sessions ADD COLUMN ${name} ${definition};`);
+            }
+        }
+    }
 
+  // ADD COLUMNS TO EXCEPTIONS TABLE
+  //
+  // Wrapped: ensureSchema() is awaited at the top of syncData, so an error
+  // escaping here would fail the whole sync. Sessions data is worth failing a
+  // sync over; the error-reporting schema is not. If a column cannot be added,
+  // reporting degrades (handleAppCrush swallows the failed insert) and
+  // everything else carries on.
+  try {
+  const exceptionsTableInfo = await dbTransaction(`PRAGMA table_info(exceptions);`);
+  if(exceptionsTableInfo && exceptionsTableInfo.length>0){
+     const sourceExists = exceptionsTableInfo.some((col: any) => col.name === 'source');
+     if(!sourceExists){
+          // Rows recorded before this column existed were all client-side.
+          await dbTransaction(`ALTER TABLE exceptions ADD COLUMN source VARCHAR DEFAULT 'app';`);
      }
+
+     const editorExportedExists = exceptionsTableInfo.some((col: any) => col.name === 'editor_exported');
+     if(!editorExportedExists){
+          // Backfills as 0, so exceptions already on the device are picked up
+          // by the next sync and sent to the webeditor too.
+          await dbTransaction(`ALTER TABLE exceptions ADD COLUMN editor_exported BOOLEAN DEFAULT 0;`);
+     }
+
+     // Remaining columns are additive and independent, so each is added only if
+     // missing. A device can be upgraded from any earlier schema version.
+     const newExceptionColumns: [string, string][] = [
+         ['level', `VARCHAR DEFAULT 'error'`],
+         ['manufacturer', 'VARCHAR'],
+         ['device_name', 'VARCHAR'],
+         ['device_type', 'VARCHAR'],
+         ['os_version', 'VARCHAR'],
+         ['free_storage_gb', 'INTEGER'],
+         ['total_storage_gb', 'INTEGER'],
+         ['occurrences', 'INTEGER DEFAULT 1'],
+         ['first_seen', 'VARCHAR'],
+         ['last_seen', 'VARCHAR'],
+         ['breadcrumbs', 'TEXT'],
+         ['context', 'TEXT'],
+     ];
+     for (const [name, definition] of newExceptionColumns) {
+         const exists = exceptionsTableInfo.some((col: any) => col.name === name);
+         if (!exists) {
+             await dbTransaction(`ALTER TABLE exceptions ADD COLUMN ${name} ${definition};`);
+         }
+     }
+
+     // occurrences drives `occurrences = occurrences + ?`, which is NULL-poisoned
+     // if any row predates the column without a default having been applied.
+     await dbTransaction(`UPDATE exceptions SET occurrences = 1 WHERE occurrences IS NULL;`);
   }
+  } catch {
+     // Reporting schema only - never block a sync over it.
+  }
+};
+
+async function createSessionIndexes() {
+    for (const statement of SESSION_INDEX_STATEMENTS) await dbTransaction(statement);
+}
+
+async function migrateExports() {
+    for (const statement of EXPORTS_MIGRATION_STATEMENTS) await dbTransaction(statement);
+}
+
+
+export async function ensureSchema() {
+    await createTablesIfNotExist();
+    await addNewColumns();
+    await createSessionIndexes();
+    await migrateExports();
 }
 
 export const resetTables = async () => {
-    await createTablesIfNotExist();
+    await ensureSchema();
     return await Promise.all([
         // 'delete * from application where 1;',
         'delete * from scripts where 1;',
@@ -221,6 +296,7 @@ export const resetApp = async () => {
         dbTransaction(`drop table if exists exports;`),
         dbTransaction(`drop table if exists exceptions;`),
         dbTransaction(`drop table if exists aliases;`),
-    ]); 
-    await createTablesIfNotExist();
+        dbTransaction(`drop table if exists nt_aliases;`),
+    ]);
+    await ensureSchema();
 };

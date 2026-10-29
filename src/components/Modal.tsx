@@ -21,6 +21,7 @@ type ModalProps = React.PropsWithChildren<RNModalProps & {
     onClose: () => void;
     title?: React.ReactNode;
     actions?: ModalAction[];
+    scrollable?: boolean;
 }>;
 
 export function Modal({ 
@@ -29,6 +30,7 @@ export function Modal({
     onClose, 
     title,
     actions,
+    scrollable = true,
     ...props 
 }: ModalProps) {
     const theme = useTheme();
@@ -69,12 +71,18 @@ export function Modal({
                             )}
 
                             <Box maxHeight={500}>
-                                <ScrollView>
+                                {scrollable ? (
+                                    <ScrollView>
+                                        <Box padding="l">
+                                            {children}
+                                        </Box>
+                                        <Br spacing="l" />
+                                    </ScrollView>
+                                ) : (
                                     <Box padding="l">
                                         {children}
                                     </Box>
-                                    <Br spacing="l" />
-                                </ScrollView>
+                                )}
                             </Box>
 
                             {!actions ? null : (

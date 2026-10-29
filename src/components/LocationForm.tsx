@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator } from "react-native";
-import { countries, SDK_VERSION } from '@/src/constants';
+import { countries,} from '@/src/constants';
 
 import { useTheme, Text  } from "./Theme";
 import { Br } from './Br';
@@ -27,7 +27,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 	const [loadingHospitals, setLoadingHospitals] = React.useState(false);
   	const [loadHospitalsError, setLoadHospitalsError] = React.useState(null);
 
-	const [errors, setErrors] = React.useState<({ field?: string; message: string })[]>([]);
+	const [, setErrors] = React.useState<({ field?: string; message: string })[]>([]);
 	const [saveError, setSaveError] = React.useState(null);
 
 	const [submitting, setSubmitting] = React.useState(false);
@@ -43,6 +43,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 						`insert or replace into location (${Object.keys(location).join(',')}) values (${Object.keys(location).map(() => '?').join(',')});`,
 						Object.values(location),
 					);
+					api.invalidateLocationCache();
 					onSetLocation();
 					setSubmitting(false);
 				} else {

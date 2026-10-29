@@ -1,13 +1,14 @@
 import React from 'react';
-import { ScrollView, TouchableOpacity, Platform } from "react-native";
+import { ScrollView, TouchableOpacity, Platform, Alert } from "react-native";
 import Icon from '@expo/vector-icons/MaterialIcons';
 import { useAppContext } from '../../AppContext';
 import { Content, LocationForm, OverlayLoader, Box } from "../../components";
 import * as api from '../../data';
 import * as types from '../../types';
+import { logError } from '@/src/utils/logError';
 
 export function Location({ navigation }: types.StackNavigationProps<types.HomeRoutes, 'Location'>) {
-	const {setSyncDataResponse} = useAppContext();
+	const {setSyncDataResponse, bumpLocationVersion} = useAppContext();
 	const [displayLoader, setDisplayLoader] = React.useState(false);
 
 
@@ -33,11 +34,22 @@ export function Location({ navigation }: types.StackNavigationProps<types.HomeRo
 				<Content>
 					<LocationForm 
 						onSetLocation={() => {
+							bumpLocationVersion && bumpLocationVersion();
 							(async () => {
 								setDisplayLoader(true);
-								const res = await api.syncData({ force: true, });
-								setSyncDataResponse && setSyncDataResponse(res);
-								setDisplayLoader(false);
+								try {
+									const res = await api.syncData({ force: true, });
+									setSyncDataResponse && setSyncDataResponse(res);
+								} catch (e) {
+									logError('Location.syncData', e);
+									Alert.alert(
+										'Sync failed',
+										'Please try again once you have a connection.',
+										[{ text: 'OK' }],
+									);
+								} finally {
+									setDisplayLoader(false);
+								}
 							})();
 						}}
 					/>

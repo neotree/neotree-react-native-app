@@ -1,4 +1,3 @@
-import * as Application from 'expo-application';
 import * as FileSystem from 'expo-file-system';
 
 const getAvailableDiskSpace = async () => {

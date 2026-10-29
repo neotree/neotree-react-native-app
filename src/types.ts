@@ -10,6 +10,7 @@ export type Preferences = {
     textColor: { [key: string]: undefined | string; };
     backgroundColor: { [key: string]: undefined | string; };
     highlight: { [key: string]: undefined | boolean; };
+    enableSeverityRanking?: boolean;
 };
 
 export type Location = { 
@@ -75,11 +76,25 @@ export type Exception = {
   hospital: string;
   stack: string;
   exported: boolean;
+  editor_exported: boolean;
+  source: string;
+  level: string;
   version: string;
   editor_version: string;
   battery: string;
   memory: string;
   device_model: string;
+  manufacturer: string;
+  device_name: string;
+  device_type: string;
+  os_version: string;
+  free_storage_gb: number;
+  total_storage_gb: number;
+  occurrences: number;
+  first_seen: string;
+  last_seen: string;
+  breadcrumbs: string;
+  context: string;
 };
 
 export type Script = any;
@@ -165,6 +180,8 @@ export type ScreenEntryValue = {
   value?: any;
   value2?: any;
   key2?: any;
+  enterValueManually?: boolean;
+  enterValueManuallyLabel?: string;
   valueText?: any;
   valueLabel?: any;
   unit?: string;

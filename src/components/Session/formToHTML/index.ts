@@ -3,6 +3,7 @@
 import QRCode from 'qrcode';
 import { ScreenEntryValue } from '@/src/types';
 import { formatValueWithUnit } from '@/src/utils/units';
+import { getAdaptiveQRErrorCorrection, getQRPrintWidth, QR_QUIET_ZONE_MODULES, QR_EXTRA_TOP_LEFT_PADDING_PX } from '@/src/utils/qr-encoding-metrics';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
 import { reportErrors } from '../../../data/api';
@@ -18,7 +19,7 @@ import { toHL7Like } from '../../../data/hl7Like'
 
 export default async (session: any, showConfidential?: boolean) => {
 
-  let { form, management, } = { ...session?.data };
+  let { form, management, } = { ...session?.data } as any;
   let qrSmall = false
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
@@ -34,14 +35,11 @@ export default async (session: any, showConfidential?: boolean) => {
       if (dataToEncode.length < 200) {
         qrSmall = true
       }
-      let erc: any = 'H'
-      if (dataToEncode.length > 3057 && dataToEncode.length <= 3993) {
-        erc = 'Q'
-      } else if (dataToEncode.length > 3993 && dataToEncode.length <= 5596) {
-        erc = 'M'
-      } else if (dataToEncode.length > 5596) {
-        erc = 'L'
-      }
+      // Versions above 25 keep the print size fixed (see getQRPrintWidth),
+      // so trade error correction for version headroom to keep the module
+      // density (and scanability) in check on larger payloads.
+      const { errorCorrectionLevel: erc, version } = getAdaptiveQRErrorCorrection(dataToEncode);
+      const width = qrSmall ? 100 : getQRPrintWidth(version);
 
       const url = await new Promise((resolve, reject) => {
         QRCode.toString(
@@ -49,8 +47,8 @@ export default async (session: any, showConfidential?: boolean) => {
           {
             type: 'svg',
             errorCorrectionLevel: erc,
-            margin: 2,
-            width: qrSmall ? 100 : undefined
+            margin: QR_QUIET_ZONE_MODULES,
+            width
           },
           (err, url) => {
             if (err) {
@@ -61,7 +59,7 @@ export default async (session: any, showConfidential?: boolean) => {
           }
         );
       });
-      return url;
+      return { url, width };
 
     } catch (e) {
       return null;
@@ -97,10 +95,10 @@ export default async (session: any, showConfidential?: boolean) => {
     try {
       const generatedQR = await generateQRCode()
       let htmlContent = !!qrSmall ? `<div style="text-align: right; margin: 0 auto; padding-right: 40px;">
-                  ${generatedQR}
+                  ${generatedQR?.url}
               </div>`:
-        `<div style="width: 300px; height: 300px; text-align: left; margin: 0 auto;">
-                  ${generatedQR}
+        !generatedQR ? '' : `<div style="width: ${generatedQR.width}px; height: ${generatedQR.width}px; text-align: left; margin: 0 auto; padding-top: ${QR_EXTRA_TOP_LEFT_PADDING_PX}px; padding-left: ${QR_EXTRA_TOP_LEFT_PADDING_PX}px;">
+                  ${generatedQR.url}
               </div>
               `;
 
@@ -120,7 +118,6 @@ export default async (session: any, showConfidential?: boolean) => {
   <br/>
 </div>`
   const getManualValue = (values: any[], key: string) => {
-    console.log("----HERE123::::---")
     const filtered = values?.filter((v: any) => v.key === `manual${key}`)
     if (filtered.length > 0) return filtered[0].value
     return null
@@ -147,7 +144,7 @@ export default async (session: any, showConfidential?: boolean) => {
               metadata: { label },
               listStyle: _listStyle = 'none',
               printDisplayColumns = 2,
-              type
+              type: screenType
             }
           }: any) => {
             // management = management || [];
@@ -156,7 +153,7 @@ export default async (session: any, showConfidential?: boolean) => {
               .filter((e: any) => e.confidential ? showConfidential : true)
               .filter((v: any) => v.valueText || v.value)
               .filter((e: any) => e.printable !== false)
-              .map((v: any) => {
+              .map((v: any, i: number) => {
                 let hideLabel = false;
 
                 let isFlexRow = printDisplayColumns !== 1;
@@ -165,7 +162,7 @@ export default async (session: any, showConfidential?: boolean) => {
                 let extraLabels = (v.extraLabels as ScreenEntryValue['extraLabels']) || [];
                 const listStyle = v.listStyle || _listStyle;
 
-                const isDff = ['fluids', 'drugs'].includes(type);
+                const isDff = ['fluids', 'drugs'].includes(screenType);
 
                 if (isDff) {
                   isFlexRow = false;
@@ -189,10 +186,16 @@ export default async (session: any, showConfidential?: boolean) => {
                   value = formatValueWithUnit(value, v.unit)
                 }
                 let value2 = v.value2
-                if (exportType === 'dropdown') {
+                if (exportType === 'dropdown' && !value2) {
                   value2 = getManualValue(values, v.key)
                 }
 
+                let bullet = '';
+                if (['diagnosis', 'problems'].includes(screenType)) {
+                  hideLabel = true;
+                  bullet = listStyle === 'bullet' ? '• ' : `${i + 1}. `;
+                  if (listStyle === 'none') bullet = '';
+                }
 
                 return `
                   <div  class="${isFlexRow ? 'row' : ''}">
@@ -206,7 +209,7 @@ export default async (session: any, showConfidential?: boolean) => {
                       return `<span>${bullet}${v.valueText || v.value || 'N/A'}</span>${!v.value2 ? '' : `<span> (${v.value2})</span>`}`;
                     }).join('<br />')
                     :
-                    `<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
+                    `${bullet}<span>${value}</span>${!value2 ? '' : `<span> (${value2})</span>`}`
                   }
                       </div>
 

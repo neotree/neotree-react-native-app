@@ -1,15 +1,30 @@
-import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as api from '../../../data';
 import moment from 'moment';
-import getJSON from './getJSON';
-import { APP_CONFIG } from '../../../constants';
-import * as types from '../../../types';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
+import { logError, logWarning } from '@/src/utils/logError';
 
-export { getJSON };
+export interface FileExportOutcome {
+  /** Sessions written to the file(s). */
+  written: number;
+  /** Sessions that could not be converted and were left out (logged, kept on device). */
+  skipped: number;
+  /** True when the folder picker was dismissed, so nothing was saved. */
+  cancelled: boolean;
+}
+
+export interface ManualExportOutcome {
+  status: 'success' | 'already-exported' | 'local-only' | 'partial' | 'failed';
+  localConfigured: boolean;
+  localOk: number;
+  remoteOk: number;
+  localPending: number;
+  remotePending: number;
+  alreadyExported: number;
+  failures: api.ExportFailure[];
+  hasMore: boolean;
+}
 
 const getDate = () => moment(new Date()).format('YYYYMMDDhmm');
 
@@ -40,6 +55,28 @@ const removeFromExportQueue = async (ids: number[]) => {
   await setExportQueue(existing.filter((id) => !removeSet.has(id)));
 };
 
+const CSV_BOM = '\uFEFF';
+
+/**
+ * Serialise one CSV field (RFC 4180). Values that a spreadsheet would read as a
+ * formula (=, @, tab, CR, or +/- that is not a plain number) get a leading
+ * apostrophe so opening the file in Excel cannot execute them.
+ */
+const toCsvField = (value: any): string => {
+  let text = value === null || value === undefined ? '' : String(value);
+  if (/^[=@\t\r]/.test(text) || (/^[+-]/.test(text) && Number.isNaN(Number(text)))) {
+    text = `'${text}`;
+  }
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const toCsv = (rows: Record<string, any>[], columns?: string[]): string => {
+  const header = columns?.length ? columns : Object.keys(rows[0] || {});
+  const lines = [header, ...rows.map((row) => header.map((key) => row[key]))]
+    .map((line) => line.map(toCsvField).join(','));
+  return CSV_BOM + lines.join('\r\n') + '\r\n';
+};
+
 const getExcelEntryValue = ({
   entry,
   entryKey,
@@ -67,39 +104,37 @@ const getExcelEntryValue = ({
     return String(rawValue);
   }
 
-  console.error('Excel export entry missing values.value', {
+  // Shape only, never the entry itself: `entry` holds patient data, and this
+  // payload is POSTed off the device to nodeapi and the webeditor.
+  logWarning('csvExport.missingEntryValue', 'Entry has no values.value', {
     scriptId,
     sessionId,
     entryKey,
-    entry,
+    entryShape: entry && typeof entry === 'object' ? Object.keys(entry) : typeof entry,
   });
 
   return 'N/A';
 };
 
-const isSavingToDevicePermitted = () => new Promise((resolve, reject) => {
-  (async () => {
-    try {
-      const res = await MediaLibrary.requestPermissionsAsync();
-      resolve(res.granted);
-    } catch (e) { return reject(e); }
-  })();
-});
+// Files are written through the Storage Access Framework: the user picks the
+// folder, and that choice is the permission. The media-library permission this
+// used to require is for reading photos and media (on Android 13+ it does not
+// even cover documents), so declining it blocked exports for no reason.
 
 export function exportJSON(_opts: any = {}) {
-  const { sessions, ...opts } = _opts;
+  const { sessions: suppliedSessions, ...opts } = _opts;
+  const sessions = (suppliedSessions || []).filter(api.isExportableSession);
 
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) return reject(new Error('App has not been granted permission to save files to device'));
         const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
           ...acc,
           [script.script_id]: script,
         }), {});
 
         const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+        const skipped = Math.max(0, sessions.length - parsedSessions.length);
         const json = parsedSessions.reduce((acc: any, e: any) => ({
           ...acc,
           [e.script.id]: [...(acc[e.script.id] || []), e],
@@ -122,38 +157,36 @@ export function exportJSON(_opts: any = {}) {
             });
           }));
         }
-        
-        resolve(null);
+
+        const outcome: FileExportOutcome = {
+          written: granted ? parsedSessions.length : 0,
+          skipped,
+          cancelled: !granted,
+        };
+        resolve(outcome);
       } catch (e) { return reject(e); }
     })();
   });
 }
 
-export function exportEXCEL(opts: any = {}) {
-  const sessions = opts.sessions || [];
+export function exportCSV(opts: any = {}) {
+  const sessions = (opts.sessions || []).filter(api.isExportableSession);
   const scriptsFields = { ...opts.scriptsFields };
 
   return new Promise((resolve, reject) => {
     (async () => {
       try {
-        const permissionGranted = await isSavingToDevicePermitted();
-        if (!permissionGranted) {
-          const error = new Error('App has not been granted permission to save files to device');
-          console.error('Excel export permission denied', {
-            sessionCount: sessions.length,
-            format: opts.format,
-          });
-          return reject(error);
-        }
-
         const { granted, directoryUri }: any = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
         if (!granted) {
-          console.error('Excel export directory permission not granted', {
+          logWarning('csvExport.directoryPermissionDenied', 'Directory permission not granted', {
             sessionCount: sessions.length,
             format: opts.format,
           });
         }
+
+        let written = 0;
+        let skipped = 0;
 
         if (granted) {
           const scripts = sessions.reduce((acc: any, { data: { script } }: any) => ({
@@ -162,6 +195,8 @@ export function exportEXCEL(opts: any = {}) {
           }), {});
     
           const parsedSessions: any = await api.convertSessionsToExportable(sessions, opts);
+          written = parsedSessions.length;
+          skipped = Math.max(0, sessions.length - parsedSessions.length);
           const json = parsedSessions.reduce((acc: any, e: any) => ({
             ...acc,
             [e.script.id]: [...(acc[e.script.id] || []), e],
@@ -171,8 +206,8 @@ export function exportEXCEL(opts: any = {}) {
             (async () => {
               try {
                 const scriptTitle = scripts[scriptId].data.title;
-                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.xlsx`;
-                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                const fileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}.csv`;
+                const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, fileName, 'text/csv');
         
                 const keys = !scriptsFields[scriptId] ? [] : scriptsFields[scriptId].reduce((acc: any, { keys }: any) => [...acc, ...keys], []);
         
@@ -198,20 +233,14 @@ export function exportEXCEL(opts: any = {}) {
                   return !values ? null : keys.reduce((acc: any, key: any) => ({ ...acc, [key]: values[key] || 'N/A' }), {});
                 }).filter((e: any) => e);
         
-                const ws = XLSX.utils.json_to_sheet(data);
-        
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, scriptTitle.substring(0, 31));
-        
-                const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+                const wbout = toCsv(data, keys);
         
                 resolve([fileUri, wbout]);
               } catch (e) {
-                console.error('Excel export sheet generation failed', {
+                logError('csvExport.sheetGeneration', e, {
                   scriptId,
                   scriptTitle: scripts[scriptId]?.data?.title,
                   sessionCount: json[scriptId]?.length || 0,
-                  error: e,
                 });
                 reject(e);
               }
@@ -222,13 +251,10 @@ export function exportEXCEL(opts: any = {}) {
             await Promise.all(sheets.map(([fileUri, wbout]: any) => new Promise((resolve, reject) => {
               (async () => {
                 try {
-                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.Base64 });
+                  await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.UTF8 });
                   resolve(null);
                 } catch (e) {
-                  console.error('Excel export file write failed', {
-                    fileUri,
-                    error: e,
-                  });
+                  logError('csvExport.fileWrite', e, { fileUri });
                   reject(e);
                 }
               })();
@@ -236,12 +262,12 @@ export function exportEXCEL(opts: any = {}) {
           }
         }
 
-        resolve(null);
+        const outcome: FileExportOutcome = { written, skipped, cancelled: !granted };
+        resolve(outcome);
       } catch (e) {
-        console.error('Excel export failed', {
+        logError('csvExport', e, {
           sessionCount: sessions.length,
           format: opts.format,
-          error: e,
         });
         reject(e);
       }
@@ -250,7 +276,7 @@ export function exportEXCEL(opts: any = {}) {
 }
 
 export function exportToApi(opts: any = {}) {
-  const _sessions = opts.sessions || [];
+  const _sessions = (opts.sessions || []).filter(api.isExportableSession);
 
   return new Promise((resolve, reject) => {
     (async () => {
@@ -258,155 +284,194 @@ export function exportToApi(opts: any = {}) {
         const queuedIds = await getExportQueue();
         let queuedSessions: any[] = [];
         if (queuedIds.length) {
-          const allSessions: any[] = (await api.getSessions()) as any[];
-          queuedSessions = (allSessions || []).filter(s => queuedIds.includes(s.id));
+          queuedSessions = await api.getSessionsByIds(queuedIds);
           const existingIds = queuedSessions.map(s => s.id);
           const missingIds = queuedIds.filter(id => !existingIds.includes(id));
           if (missingIds.length) {
             await removeFromExportQueue(missingIds);
           }
+
+          const nonExportableIds = queuedSessions
+            .filter(s => !api.isExportableSession(s))
+            .map(s => s.id);
+          if (nonExportableIds.length) {
+            await removeFromExportQueue(nonExportableIds);
+            queuedSessions = queuedSessions.filter(api.isExportableSession);
+          }
+
+          const alreadyExportedIds = queuedSessions.filter(s => Boolean(s.exported)).map(s => s.id);
+          if (alreadyExportedIds.length) {
+            await removeFromExportQueue(alreadyExportedIds);
+            queuedSessions = queuedSessions.filter(s => !Boolean(s.exported));
+          }
         }
 
-        const sessions = [
-          ..._sessions,
-          ...queuedSessions,
-        ]
-          .filter((s: any) => s && !s.exported)
-          .reduce((acc: any[], s: any) => {
-            if (!acc.some(e => e.id === s.id)) acc.push(s);
-            return acc;
-          }, []);
+        const hasLocalConfig = await api.hasLocalServerConfig();
+        const location = await api.getLocation();
 
-        try {
-          if (opts.dontSaveFile !== true) await exportJSON(opts);
-        } catch (e) { /* Do nothing */ }
+        const localRequired = (s: any) => api.localRequiredForSession(s, location, hasLocalConfig);
 
-        if (!sessions.length) {
-          resolve(null);
+        const needsExport = (s: any) => api.isExportableSession(s) && (
+          !s.exported ||
+          !api.isPollDelivered(s) ||
+          (localRequired(s) && !s.local_export)
+        );
+
+        const candidatesById = new Map<any, any>();
+        [..._sessions, ...queuedSessions]
+          .filter(needsExport)
+          .forEach((session: any) => candidatesById.set(session.id, session));
+        const candidates = Array.from(candidatesById.values());
+
+        // A copy on the tablet is opt-in. It used to be written on every send,
+        // which put a folder picker in front of an export to the database.
+        if (opts.saveCopy === true) {
+          try {
+            await exportJSON(opts);
+          } catch (e) {
+            // The copy is a convenience; the send still goes ahead.
+            logError('exportSessionsToServer.saveCopy', e);
+          }
+        }
+
+        let outcome: ManualExportOutcome = {
+          status: 'success',
+          localConfigured: hasLocalConfig,
+          localOk: 0,
+          remoteOk: 0,
+          localPending: 0,
+          remotePending: 0,
+          alreadyExported: 0,
+          failures: [],
+          hasMore: false,
+        };
+
+        if (!candidates.length) {
+          const selectedCount = Array.isArray(_sessions) ? _sessions.length : 0;
+          if (selectedCount) {
+            outcome = { ...outcome, status: 'already-exported', alreadyExported: selectedCount };
+          }
+          resolve(outcome);
           return;
         }
 
-        // Get location config once for all operations
-        const location = await api.getLocation();
-        const country = location?.country;
-        const hasLocalConfig = Boolean(
-          country &&
-          country.length > 0 &&
-          (() => {
-            const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-            const hospital = location?.hospital;
-            const localConfig = config?.filter(c => c.hospital === hospital?.trim());
-            return localConfig?.[0]?.hospital?.length > 0;
-          })()
+        try {
+          const loc = await api.getLocation();
+          if (loc?.country) {
+            api.resetCircuit(api.backendKey(loc.country, 'nodeapi'));
+            api.resetCircuit(api.backendKey(loc.country, 'local', loc.hospital));
+          }
+        } catch { /* a failed location read just means no local reset */ }
+
+        await api.withExportLock(async () => {
+
+        const freshRows: any[] = await api.getSessionsByIds(candidates.map((s: any) => s.id));
+        const freshById: any = {};
+        freshRows.forEach((s: any) => { if (s?.id !== undefined) freshById[s.id] = s; });
+
+        const sessions = candidates
+          .map((s: any) => !freshById[s?.id] ? s : {
+            ...s,
+            exported: freshById[s.id].exported,
+            poll_exported: freshById[s.id].poll_exported,
+            local_export: freshById[s.id].local_export,
+          })
+          .filter(needsExport);
+
+        if (!sessions.length) return;
+
+        const wasRemoteDone = new Set(
+          sessions
+            .filter((s: any) => {
+              return api.isRemoteDelivered(s);
+            })
+            .map((s: any) => s.id)
         );
 
-        // Convert sessions once for standard export, once for poll/local data
-        const [standardExportData, pollExportData] = await Promise.all([
-          api.convertSessionsToExportable(sessions, opts),
-          api.convertSessionsToExportable(sessions, { ...opts, showConfidential: true })
-        ]) as [any[], any[]];
-
-        // Three independent API call groups
-        const apiCallGroups = [
-          // 1. Main session export to /sessions
-          ...standardExportData.map((s: any, i: number) => ({
-            type: 'main',
-            sessionId: sessions[i]?.id,
-            execute: async () => {
-              await api.exportSession(s);
-              await api.updateSession({ exported: true }, { where: { id: sessions[i]?.id } });
-              return { success: true, id: sessions[i]?.id };
-            }
-          })),
-
-          // 2. Local export to /local (if hasLocalConfig)
-          ...(hasLocalConfig ? pollExportData.map((s: any, i: number) => ({
-            type: 'local',
-            sessionId: sessions[i]?.id,
-            execute: async () => {
-              if (sessions[i]?.local_export) return { success: true, skipped: true };
-
-              const { id, exported, local_export, ...exportable } = s;
-              const res = await api.makeLocalApiCall(
-                `/local?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
-                {
-                  method: 'POST',
-                  body: JSON.stringify(exportable),
-                }
-              );
-
-              if (res?.status === 200) {
-                await api.updateSession({ local_export: true }, { where: { id: sessions[i]?.id } });
-                return { success: true, id: sessions[i]?.id };
-              }
-              throw new Error(`Failed to local export session ${sessions[i]?.id}`);
-            }
-          })) : []),
-
-          // 3. Poll data export to /save-poll-data
-          ...pollExportData.map((s: any, i: number) => ({
-            type: 'poll',
-            sessionId: sessions[i]?.id,
-            execute: async () => {
-              if (sessions[i]?.exported) return { success: true, skipped: true };
-
-              const { id, exported, local_export, ...exportable } = s;
-              const res = await api.makeApiCall(
-                'nodeapi',
-                `/save-poll-data?uid=${s.uid}&scriptId=${s.script.id}&unique_key=${s.unique_key}`,
-                {
-                  method: 'POST',
-                  body: JSON.stringify(exportable),
-                }
-              );
-              if (res?.status !== 200) {
-                throw new Error(`Failed to export poll data for session ${sessions[i]?.id}`);
-              }
-              return { success: true, id: sessions[i]?.id };
-            }
-          }))
-        ];
-
-        // Execute all API calls independently - failures don't affect other calls
-        const results = await Promise.allSettled(
-          apiCallGroups.map(group => group.execute())
+        const wasLocalDone = new Set(
+          sessions.filter((s: any) => !localRequired(s) || Boolean(s.local_export)).map((s: any) => s.id)
         );
 
-        // Collect failures for logging
-        const failures = results
-          .map((result, index) => ({ result, group: apiCallGroups[index] }))
-          .filter(({ result }) => result.status === 'rejected')
-          .map(({ result, group }) => ({
-            type: group.type,
-            sessionId: group.sessionId,
-            error: result.status === 'rejected' ? result.reason : null
-          }));
 
-        if (failures.length > 0) {
-          console.log('Export failures:', failures);
-          const mainFailures = failures.filter(f => f.type === 'main');
-          if (mainFailures.length > 0) {
-            await addToExportQueue(mainFailures.map(f => f.sessionId).filter(Boolean));
+        const result = await api.doExportSessions(sessions, { onProgress: opts.onProgress });
+
+        const postRows: any[] = await api.getSessionsByIds(sessions.map((s: any) => s.id));
+        const postById: any = {};
+        postRows.forEach((s: any) => { if (s?.id !== undefined) postById[s.id] = s; });
+
+        const isRemoteDone = (s: any) => {
+          const row = postById[s.id] || s;
+          return api.isRemoteDelivered(row);
+        };
+        const isLocalDone = (s: any) => {
+
+          if (!localRequired(s)) return true;
+          return Boolean((postById[s.id] || s).local_export);
+        };
+
+        const remotePending = sessions.filter((s: any) => !isRemoteDone(s));
+        const localPending = sessions.filter((s: any) => !isLocalDone(s));
+
+        const sentRemote = sessions.filter((s: any) => isRemoteDone(s) && !wasRemoteDone.has(s.id));
+        const sentLocal = sessions.filter((s: any) => isLocalDone(s) && !wasLocalDone.has(s.id));
+        const alreadyDone = sessions.filter((s: any) => (
+          wasRemoteDone.has(s.id) && wasLocalDone.has(s.id)
+        ));
+
+        const clearedIds = sessions
+          .map((s: any) => s.id)
+          .filter((id: any) => Boolean(postById[id]?.exported));
+        if (clearedIds.length) await removeFromExportQueue(clearedIds);
+
+        const stillPendingMainIds = sessions
+          .map((s: any) => s.id)
+          .filter((id: any) => !postById[id]?.exported);
+        if (stillPendingMainIds.length) await addToExportQueue(stillPendingMainIds);
+
+        outcome = {
+          status: 'success',
+          localConfigured: result.localConfigured,
+          localOk: sentLocal.length,
+          remoteOk: sentRemote.length,
+          localPending: localPending.length,
+          remotePending: remotePending.length,
+          alreadyExported: alreadyDone.length,
+          failures: result.failures,
+          hasMore: result.hasMore,
+        };
+
+        if (remotePending.length || localPending.length) {
+          if (result.hasMore || result.failures.some((failure: api.ExportFailure) => failure.retryable)) {
+            api.scheduleExportSessions();
           }
-          if (mainFailures.length > 0) {
-            throw new Error(`Failed to export ${mainFailures.length} session(s). Check network and try again.`);
-          }
-          // Local/poll failures are treated as warnings
         }
 
-        const mainSuccessIds = results
-          .map((result, index) => ({ result, group: apiCallGroups[index] }))
-          .filter(({ result, group }) => group.type === 'main' && result.status === 'fulfilled')
-          .map(({ group }) => group.sessionId)
-          .filter(Boolean);
-
-        if (mainSuccessIds.length > 0) {
-          await removeFromExportQueue(mainSuccessIds);
+        if (!remotePending.length && !localPending.length) {
+          outcome.status = (!sentRemote.length && !sentLocal.length && alreadyDone.length)
+            ? 'already-exported'
+            : 'success';
+        } else if (sessions.some(localRequired) && !localPending.length && remotePending.length) {
+          outcome.status = 'local-only';
+        } else if (sentRemote.length || sentLocal.length) {
+          outcome.status = 'partial';
+        } else {
+          outcome.status = 'failed';
         }
 
-        resolve(null);
+        if (outcome.status === 'failed') {
+          const firstFailure = result.failures[0];
+          throw new Error(
+            firstFailure
+              ? `Could not finish exporting ${Math.max(remotePending.length, localPending.length)} session(s). ${firstFailure.message}`
+              : `Could not finish exporting ${Math.max(remotePending.length, localPending.length)} session(s). The data remains saved on this device.`
+          );
+        }
+
+        });
+
+        resolve(outcome);
       } catch (e) {
-        console.log('Export error:', e);
+        logError('exportSessionsToServer', e);
         reject(e);
       }
     })();
@@ -416,13 +481,13 @@ export function exportToApi(opts: any = {}) {
 export default function exportData(opts: any = {}) {
   const { format } = opts;
 
-  opts.sessions = (opts.sessions || []).filter((s: any) => s?.data?.completed_at || s?.data?.canceled_at);
+  opts.sessions = (opts.sessions || []).filter(api.isExportableSession);
 
   switch (format) {
     case 'jsonapi':
       return exportToApi(opts);
-    case 'excel':
-      return exportEXCEL(opts);
+    case 'csv':
+      return exportCSV(opts);
     case 'json':
       return exportJSON(opts);
     default:

@@ -1,5 +1,5 @@
 import * as types from '@/src/types';
-import { Parser } from 'expr-eval';
+import { evaluateArithmetic } from '@/src/utils/safe-math';
 
 export function evalMath(
     condition = '',
@@ -150,9 +150,9 @@ export function evalMath(
     let error: null | string = null;
 
     try {
-
-        const parser = new Parser();
-        result = parser.evaluate(parsed);
+        // expr-eval's reading of the shorthand is kept (see ArithmeticDialect); expr-eval
+        // itself is gone - it has an unpatched code-execution flaw (NEOAPP-1484).
+        result = evaluateArithmetic(parsed, 'expr-eval');
     } catch (e: any) {
         error = e.message;
     }
@@ -213,17 +213,11 @@ function evaluateFormula(formula: string, values: types.ScreenEntryValue[]) {
             safeExpression = safeExpression.replace(regex, String(value));
         }
 
-        let result: number;
-
-        // Validate expression safety
-        const allowedChars = /^[0-9+\-*/().\sMath\.floor|Math\.round|%]+$/;
-        const testExpression = safeExpression.replace(/Math\./g, '');
-
-        if (!allowedChars.test(testExpression)) {
-            throw new Error('Formula contains unsafe characters or functions');
-        }
-
-        result = new Function(`return ${safeExpression}`)();
+        // A restricted parser rather than `new Function`: numbers, + - * / % **, parentheses,
+        // Math.floor and Math.round only. The character-class check that guarded the old
+        // `new Function` call accepted any word spelled from the letters of
+        // "Math.floor|Math.round", so it did not limit what could run.
+        const result = evaluateArithmetic(safeExpression);
 
         if (isNaN(result) || !isFinite(result)) {
             throw new Error('Formula evaluation resulted in invalid number');

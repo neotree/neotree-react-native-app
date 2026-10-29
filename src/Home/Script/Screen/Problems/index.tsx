@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { Alert, TextProps } from 'react-native';
 
+import { defaultPreferences } from '@/src/constants';
+import { Preferences } from '@/src/types';
 import { useScriptContext } from '@/src/contexts/script';
 import { Box } from '../../../../components';
 import * as types from '../../../../types';
@@ -61,6 +63,11 @@ export function Problems(props: ProblemProps) {
         setEntryValues,
         getSuggestedProblems,
     } = useScriptContext();
+
+    const { enableSeverityRanking } = React.useMemo(() => ({ 
+        ...defaultPreferences,
+        ...activeScreen?.data?.preferences, 
+    } as Preferences), [activeScreen]);
 
     const initialEntries = React.useMemo(() => {
         const suggestedProblems = (getSuggestedProblems() || []) as types.Problem[];
@@ -175,7 +182,11 @@ export function Problems(props: ProblemProps) {
                 } else {
                     setValues(entries);
                     setEntryValues(entries);
-                    setSection('sort_priority');
+                    if (enableSeverityRanking) {
+                        setSection('sort_priority');
+                    } else {
+                        done();
+                    }
                 }
             } else {
                 done();   
@@ -186,6 +197,7 @@ export function Problems(props: ProblemProps) {
         activeProblemIndex,
         acceptedProblems,
         isDischarge,
+        enableSeverityRanking,
         getSuggestedProblems,
         setEntryValues,
         done,
@@ -216,6 +228,7 @@ export function Problems(props: ProblemProps) {
         loading,
         activeProblemIndex,
         acceptedProblems,
+        enableSeverityRanking,
         ctxGoBack,
     ]);
 

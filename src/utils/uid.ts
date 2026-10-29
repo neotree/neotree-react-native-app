@@ -1,5 +1,6 @@
 import { getApplication } from '@/src/data';
 import { generateDeviceHash } from '@/src/utils/generate-device-hash';
+import { logError } from '@/src/utils/logError';
 
 export function validateUID(value = '') {
     const [_firstHalf, _lastHalf] = (value || '').split('-');
@@ -40,9 +41,9 @@ export function validateUID(value = '') {
     };
 };
 
-export async function generateUID(scriptType?: string) {
+export async function generateUID(_scriptType?: string) {
     try {
-        const { uid_prefix, total_sessions_recorded, device_id } = await getApplication();
+        const { uid_prefix, total_sessions_recorded } = await getApplication();
 
         // https://neotree.atlassian.net/browse/NEOAPP-790?atlOrigin=eyJpIjoiZGY0NjQyYjk3NTg1NDVmY2I1YTgxNGZiMzk0OTNjYzkiLCJwIjoiaiJ9
         const extraChars = generateDeviceHash('0123456789', 3);
@@ -55,7 +56,7 @@ export async function generateUID(scriptType?: string) {
         return uid;
     } catch(e: any) {
         alert('Failed to generate UID');
-        console.log(e);
+        logError('generateUID', e);
         return '';
     }
 }

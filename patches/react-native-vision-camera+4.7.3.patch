@@ -1,0 +1,23 @@
+diff --git a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraDevicesManager.kt b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraDevicesManager.kt
+index 0386478..0017617 100644
+--- a/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraDevicesManager.kt
++++ b/node_modules/react-native-vision-camera/android/src/main/java/com/mrousavy/camera/react/CameraDevicesManager.kt
+@@ -68,6 +68,18 @@ class CameraDevicesManager(private val reactContext: ReactApplicationContext) :
+         Log.i(TAG, "Initializing ExtensionsManager...")
+         extensionsManager = ExtensionsManager.getInstanceAsync(reactContext, cameraProvider!!).await(executor)
+         Log.i(TAG, "Successfully initialized!")
++        // cameraProvider/extensionsManager are required to build the device
++        // list (see getDevicesJson below), but they're only ready once this
++        // coroutine finishes - which on some OEMs (e.g. Samsung, which binds
++        // to its own CameraExtensionService) can take several seconds. The
++        // only other sends of "CameraDevicesChanged" are the single one in
++        // initialize() (fired long before this coroutine completes, so it
++        // carries an empty list) and the AvailabilityCallback below (which
++        // only fires on an actual state *change*, never for cameras that
++        // were already present at registration time). Without this call,
++        // JS is permanently stuck with an empty device list once both of
++        // those miss, with no way to ever recover it.
++        sendAvailableDevicesChangedEvent()
+       } catch (error: Throwable) {
+         Log.e(TAG, "Failed to initialize ProcessCameraProvider/ExtensionsManager! Error: ${error.message}", error)
+       }

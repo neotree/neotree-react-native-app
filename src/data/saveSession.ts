@@ -1,33 +1,48 @@
 import { dbTransaction } from './db';
 import { makeApiCall } from './api';
-import { exportSessions } from './exportSessions';
+import { scheduleExportSessions } from './exportSessions';
+import { logError } from '@/src/utils/logError';
 
 export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject) => {
 (async () => {
-    const columns = [data.id ? 'id' : '', 'uid', 'script_id', 'data', 'completed', 'exported', 'createdAt', 'updatedAt']
-        .filter(c => c)
-        .join(',');
-
-    const values = [data.id ? '?' : '', '?', '?', '?', '?', '?', '?', '?']
-        .filter(c => c)
-        .join(',');
-
-    const params = [
-        ...data.id ? [data.id] : [],
-        data.uid,
-        data.script_id,
-        JSON.stringify({ ...data?.data, }),
-        data.completed || false,
-        data.exported || false,
-        data.createdAt || new Date().toISOString(),
-        data.updatedAt || new Date().toISOString(),
-    ];
-
 	let sessionID = null;
 
     let application = null;
     try {
-		const res = await dbTransaction(`insert or replace into sessions (${columns}) values (${values}) RETURNING id;`, params);
+        let payloadData = { ...data?.data };
+        if (data.id) {
+            const existingRows = await dbTransaction('select data from sessions where id=?;', [data.id]);
+            const existingKey = (() => {
+                try { return JSON.parse(existingRows?.[0]?.data || '{}')?.unique_key; }
+                catch { return undefined; }
+            })();
+            if (existingKey) payloadData = { ...payloadData, unique_key: existingKey };
+        }
+
+        const res = data.id
+            ? await dbTransaction(
+                `UPDATE sessions SET uid=?, script_id=?, data=?, completed=?, updatedAt=? WHERE id=? RETURNING id;`,
+                [
+                    data.uid,
+                    data.script_id,
+                    JSON.stringify(payloadData),
+                    data.completed || false,
+                    data.updatedAt || new Date().toISOString(),
+                    data.id,
+                ]
+            )
+            : await dbTransaction(
+                `insert into sessions (uid, script_id, data, completed, exported, createdAt, updatedAt) values (?, ?, ?, ?, ?, ?, ?) RETURNING id;`,
+                [
+                    data.uid,
+                    data.script_id,
+                    JSON.stringify(payloadData),
+                    data.completed || false,
+                    data.exported || false,
+                    data.createdAt || new Date().toISOString(),
+                    data.updatedAt || new Date().toISOString(),
+                ]
+            );
 
         if (!res[0]) throw new Error('Failed to save session');
 
@@ -57,13 +72,18 @@ export const saveSession = (data: any = {}) => new Promise<any>((resolve, reject
             makeApiCall('webeditor', '/update-device-registration', {
                 method: 'POST',
                 body: JSON.stringify({ deviceId: application.device_id, details: { scripts_count } }),
-            }).then(() => {}).catch((e) => {
+            }).then(() => {}).catch(() => {
                  
             });
         }
-		exportSessions().then(() => {}).catch(() => {}); // this will export sessions that haven't yet been exported
-		
+
+		// Page-level draft saves are frequent. Only completed, non-cancelled
+		// sessions can be exported, so drafts must not trigger a database sweep.
+		if (payloadData.completed_at && !payloadData.canceled_at) {
+			scheduleExportSessions();
+		}
+
 		resolve({ application, sessionID });
-    } catch (e) { console.log('saveSession', e); reject(e); /* DO NOTHING */ }
+    } catch (e) { logError('saveSession', e); reject(e); }
 })();
 });

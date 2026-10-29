@@ -12,6 +12,7 @@ type TypeMultiSelectProps = types.ScreenTypeProps & {
 
 export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
     const autoFilled = useRef(false);
+    const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     
     const {
         activeScreen,
@@ -33,8 +34,24 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
         ...acc,
         [v.value]: v,
     }), {}));
+    const valueRef = useRef(value);
 
-    function onChange(_value: typeof value) {
+    React.useEffect(() => {
+        valueRef.current = value;
+    }, [value]);
+
+    const clearScheduledSync = React.useCallback(() => {
+        if (syncTimeoutRef.current) {
+            clearTimeout(syncTimeoutRef.current);
+            syncTimeoutRef.current = null;
+        }
+    }, []);
+
+    const syncValue = React.useCallback((_value: typeof value) => {
+        // Supersede any pending debounced sync so its stale state can't fire
+        // after this emission and silently drop a just-toggled selection.
+        clearScheduledSync();
+
         const keys = Object.keys(_value).filter(key => _value[key]);
 
         // Validate that all selected items with enterValueManually have value2 filled
@@ -84,11 +101,25 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 
         setValue(values.reduce((acc, v) => ({
             ...acc,
-            [v.key]: v,
+            [v.key as string]: v,
         }), {} as Record<string, any>));
 
         setEntryValues?.(entryValues);
-    }
+    }, [clearScheduledSync, metadata, printable, setEntryValues]);
+
+    const scheduleValueSync = React.useCallback((_value: typeof value, immediate = false) => {
+        clearScheduledSync();
+
+        if (immediate) {
+            syncValue(_value);
+            return;
+        }
+
+        syncTimeoutRef.current = setTimeout(() => {
+            syncValue(_value);
+            syncTimeoutRef.current = null;
+        }, 180);
+    }, [clearScheduledSync, syncValue]);
 
     const opts: any[] = metadata.items.map((item: any,index: number) => {
         return {
@@ -98,6 +129,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
             hide: searchVal ? !`${item.label}`.match(new RegExp(searchVal, 'gi')) : false,
             exclusive: item.exclusive,
             enterValueManually: item.enterValueManually,
+            enterValueManuallyLabel: item.enterValueManuallyLabel,
             disabled: (() => {
                 const exclusive = metadata.items.reduce((acc: any, item: any) => {
                 if (item.exclusive) acc = item.id;
@@ -126,13 +158,12 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                         return;
                     }
                 }
-                onChange(form);
+                syncValue(form);
             },
           };
     });
 
     React.useEffect(() => {
-       // console.log('[TypeMultiSelect] available options', JSON.stringify({ screenKey: metadata?.key, options: opts }));
     }, [metadata?.key, opts]);
 
     React.useEffect(() => {
@@ -140,10 +171,16 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
             const _value: any = {};
             const _matched = matched[metadata.key]?.values?.value || [];
             _matched.forEach((m: string) => { _value[m] = true; });
-            if (_matched.length) onChange(_value);
+            if (_matched.length) syncValue(_value);
             autoFilled.current = true;
         }
-    }, [canAutoFill, matched, metadata]);
+    }, [canAutoFill, matched, metadata, syncValue]);
+
+    React.useEffect(() => {
+        return () => {
+            clearScheduledSync();
+        };
+    }, [clearScheduledSync]);
 
     return (
         <Box>
@@ -153,6 +190,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
                 const _value = value[o.value];
 
                 const isSelected = !!_value;
+                const manualLabel = `${o.enterValueManuallyLabel || ''}`.trim() || `${o.label || ''} (Required)`;
 
                 return (
                     <React.Fragment key={o.key}>
@@ -177,10 +215,15 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 
                                 <Box>
                                     <TextInput
-                                        label={`${o.label || ''} (Required)`}
+                                        label={manualLabel}
                                         value={_value.value2 || ''}
                                         onChangeText={value2 => {
-                                            onChange({ ...value, [o.value]: { value2, }, });
+                                            const nextState = { ...value, [o.value]: { ..._value, value2 } };
+                                            setValue(nextState);
+                                            scheduleValueSync(nextState);
+                                        }}
+                                        onBlur={() => {
+                                            scheduleValueSync(valueRef.current, true);
                                         }}
                                         errors={!_value.value2?.trim() ? ['This field is required'] : undefined}
                                     />

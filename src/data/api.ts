@@ -4,12 +4,63 @@ import queryString from 'query-string';
 import { APP_CONFIG } from '@/src/constants';
 import * as types from '../types';
 import { getLocation } from './queries';
+import {
+    acquireAttempt,
+    recordSuccess,
+    recordFailure,
+    backendKey,
+    NetworkUnavailableError,
+} from './circuitBreaker';
+import { logError, logWarning, type ErrorSource } from '@/src/utils/logError';
+import { addBreadcrumb } from '@/src/utils/breadcrumbs';
+import { scrubUrl } from '@/src/utils/scrub';
 
+const PROBE_TIMEOUT_MS = 15_000;
+const REMOTE_TIMEOUT_MS = 60_000;
+const LOCAL_TIMEOUT_MS = 30_000;
+
+export const SYNC_DOWNLOAD_TIMEOUT_MS = 300_000;
+export const REMOTE_PROBE_TIMEOUT_MS = PROBE_TIMEOUT_MS;
 
 const _otherOptions = {
     useHost: false,
 	country: '',
+	hospital: '',
+	timeout: REMOTE_TIMEOUT_MS,
+	// Gives a call its own circuit so its failures can't open the circuit shared by
+	// the backend's other endpoints (e.g. /save-poll-data vs /sessions).
+	circuitScope: '',
 };
+
+// Endpoint on the webeditor that receives device exceptions. Every exception
+// is sent here regardless of which backend it came from - the `source` field on
+// the payload says which. Change this in one place if the webeditor grows a
+// dedicated exceptions route.
+export const EDITOR_EXCEPTIONS_ENDPOINT = '/app/errors';
+
+// Attribute a failure to the backend it came from, so logError records the
+// right `source` without every catch block in the app having to name one. An
+// error that already carries a source keeps it, so a nodeapi failure bubbling
+// up through an outer call is not re-attributed to the outer backend.
+function tagErrorSource<T>(error: T, source: ErrorSource): T {
+    try {
+        if (error && typeof error === 'object' && !(error as any).source) {
+            (error as any).source = source;
+        }
+    } catch {
+        // Frozen or exotic error object - attribution is best-effort.
+    }
+    return error;
+}
+
+export function resolveLocalServer(country: string | null | undefined, hospital: string | null | undefined) {
+    if (!country) return null;
+    const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)?.['local'];
+    if (!Array.isArray(config) || !config.length) return null;
+    const trimmedHospital = hospital?.trim();
+    if (!trimmedHospital) return null;
+    return config.find(c => c.hospital === trimmedHospital) || null;
+}
 
 export async function makeApiCall(
     source: 'webeditor' | 'nodeapi', 
@@ -17,7 +68,7 @@ export async function makeApiCall(
     options: RequestInit = {},
     otherOptions: Partial<(typeof _otherOptions)> = _otherOptions,
 ) {
-    const { useHost } = { ..._otherOptions, ...otherOptions, };
+    const { useHost, timeout: timeoutMs } = { ..._otherOptions, ...otherOptions, };
     let url = '';
     try {
         const location = await getLocation();
@@ -28,52 +79,52 @@ export async function makeApiCall(
         const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)[source];
 
         let api_endpoint = useHost ? config.host : config.api_endpoint;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
-            api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
+        api_endpoint = api_endpoint.endsWith('/') ? api_endpoint.slice(0, -1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/').replace(/\?+$/, '');
 
-        console.log('[API]: ', url);
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 300000);
+        addBreadcrumb('api', `${options.method || 'GET'} ${scrubUrl(url)}`, { source });
 
-        const method = options?.method?.toUpperCase() || 'GET';
+        const circuitKey = otherOptions.circuitScope
+            ? backendKey(country, source, otherOptions.circuitScope)
+            : backendKey(country, source);
+        if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError(source);
+
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (ok) recordSuccess(circuitKey); else recordFailure(circuitKey);
+        };
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
-            if(method==='GET') {
-                const res = await fetch(url, {
-                    ...options,
-                    signal: controller.signal,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers,
-                        'x-api-key': config.api_key,
-                    },
-                });
-                clearTimeout(timeout);
-                return res;
-            } else {
-                const res = await fetch(url, {
-                    ...options,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers,
-                        'x-api-key': config.api_key,
-                    },
-                });
-                clearTimeout(timeout);
-                return res;
-            }
+            const res = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    'x-api-key': config.api_key,
+                },
+            });
+            settle(true);
+            return res;
         } catch(err:any) {
+            settle(false);
             if (err.name === 'AbortError') {
-                throw new Error('Network Request Taking Too Longer than the expected 45 Seconds!!');
+                throw new Error('Network request timed out. Check your connection and try again.');
             }
             throw err;
+        } finally {
+            clearTimeout(timeout);
+            settle(false);
         }
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; 
+        throw tagErrorSource(e, source);
     }
 }
 export async function makeLocalApiCall( 
@@ -85,44 +136,68 @@ export async function makeLocalApiCall(
     try {
         const location = await getLocation();
         const country = otherOptions.country || location?.country;
+        const hospital = otherOptions.hospital || location?.hospital;
 
         if (!country) throw new Error('Location not set');
 
-        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-        if(config && Array.isArray(config)){
+        const target = resolveLocalServer(country, hospital);
+        if(target){
 
-        let api_endpoint =  config?.[0].host;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
-            api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
+        let api_endpoint =  target.host;
+        api_endpoint = api_endpoint.endsWith('/') ? api_endpoint.slice(0, -1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
 
-        console.log('[API]: ', url);
-    
-       const sec = config?.[0].secret
-        const body =encryptInReactNative(options.body, sec);
-        const res = await fetch(url, {
-            method:'POST',
-            body: JSON.stringify({data:body}),
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                'x-api-key': config?.[0].api_key,
+        const sec = target.secret;
+        const body = encryptInReactNative(options.body, sec);
+
+        const circuitKey = backendKey(country, 'local', hospital);
+        if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
+
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (ok) recordSuccess(circuitKey); else recordFailure(circuitKey);
+        };
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), LOCAL_TIMEOUT_MS);
+
+        let res;
+        try {
+            res = await fetch(url, {
+                method:'POST',
+                body: JSON.stringify({data:body}),
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    'x-api-key': target.api_key,
+                }
+            });
+            settle(true);
+        } catch (err: any) {
+            settle(false);
+            if (err.name === 'AbortError') {
+                throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
             }
-        });
+            throw err;
+        } finally {
+            clearTimeout(timeout);
+            settle(false);
+        }
 
         if (res.status !== 200) {
-            console.log(res);
+            logWarning('api.localRequestFailed', 'Local server returned a non-200 response', { url: scrubUrl(url), status: res.status }, { source: 'local' });
         }
-       
 
         return res;
     }
     return null
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; }
+        throw tagErrorSource(e, 'local'); }
 }
 
 export async function makeLocalGetApiCall( 
@@ -137,73 +212,76 @@ export async function makeLocalGetApiCall(
 
         if (!country) throw new Error('Location not set');
 
-        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
         const queryString = endpoint.split('?')[1];
         const params = new URLSearchParams(queryString);
         const hospitalId = params.get("hospital");
 
-        if(!config || !Array.isArray(config) || config.length<=0){
-            return null
-        }
-        if(config.length>0 && config[0]['hospital']!=hospitalId){
+        const target = resolveLocalServer(country, hospitalId);
+        if(!target){
             return null
         }
         else{
-        let api_endpoint =  config?.[0].host;
-        api_endpoint[api_endpoint.length - 1] === '/' ? 
-            api_endpoint.substring(0, api_endpoint.length - 1) : api_endpoint;
+        let api_endpoint =  target.host;
+        api_endpoint = api_endpoint.endsWith('/') ? api_endpoint.slice(0, -1) : api_endpoint;
 
         endpoint = endpoint[0] === '/' ? endpoint.substring(1) : endpoint;
         url = [api_endpoint, endpoint].join('/');
 
-        console.log('[API]: ', url);
-    
-       const sec = config?.[0].secret
+        const sec = target.secret;
+
+        const circuitKey = backendKey(country, 'local', hospitalId);
+        if (!(await acquireAttempt(circuitKey))) throw new NetworkUnavailableError('local');
+
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (ok) recordSuccess(circuitKey); else recordFailure(circuitKey);
+        };
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), LOCAL_TIMEOUT_MS);
 
-          try {
-
-        const res = await fetch(url, {
-            method:'GET',
-            signal: controller.signal,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                'x-api-key': config?.[0].api_key,
+        let res;
+        try {
+            res = await fetch(url, {
+                method:'GET',
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                    'x-api-key': target.api_key,
+                }
+            });
+            settle(true);
+        } catch (err: any) {
+            settle(false);
+            if (err.name === 'AbortError') {
+                throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
             }
-        });
-        
+            throw err;
+        } finally {
+            clearTimeout(timeout);
+            settle(false);
+        }
+
         if (res.status !== 200) {
-            console.log(res);
+            logWarning('api.localSessionsRequestFailed', 'Local server returned a non-200 response', { url: scrubUrl(url), status: res.status }, { source: 'local' });
         }
-       
-        const sessions = decryptInReactNative(await res?.json(),sec)
-        clearTimeout(timeout);
+
+        const sessions = decryptInReactNative(await res?.json(), sec);
         return sessions;
-    }catch (err:any) {
-        if (err.name === 'AbortError') {
-            throw new Error('Local Server Connection Taking Longer Than The Expected 30 Seconds. Check With The Administrator if it is up!!');
-        }
-        throw err;
-       }
     }
    
     } catch(e) {
-        // if (process.env.APP_ENV !== 'PROD') console.error(`[ERROR]: ${url}`, e);
-        throw e; }
+        throw tagErrorSource(e, 'local'); }
 }
 
 export async function hasLocalServerConfig() {
     try {
         const location = await getLocation();
-        const country = location?.country;
-        if (!country) return false;
-        const config = (APP_CONFIG[country] as types.COUNTRY_CONFIG)['local'];
-        const hospital = location?.hospital;
-        const localConfig = Array.isArray(config) ? config.filter(c => c.hospital === hospital?.trim()) : [];
-        return Boolean(localConfig?.[0]?.hospital?.length);
+        if (!location?.country) return false;
+        return Boolean(resolveLocalServer(location.country, location.hospital));
     } catch {
         return false;
     }
@@ -221,7 +299,7 @@ export const reportErrors = async (...args: any[]) => {
             method: 'POST',
             body: JSON.stringify(args),
         });
-    } catch (e) {
+    } catch {
         // do nothing
     }
 };
@@ -229,10 +307,7 @@ export const reportErrors = async (...args: any[]) => {
 function decryptInReactNative(encryptedData: any, secretKey: string): any {
   try {
     // 1. Check for empty input
-    if (!encryptedData) {
-      console.warn('No encrypted data provided');
-      return null;
-    }
+    if (!encryptedData) return null;
 
     // 2. Validate secret key length (AES-256 requires 32 bytes)
     if (secretKey.length !== 32) {
@@ -277,7 +352,7 @@ function decryptInReactNative(encryptedData: any, secretKey: string): any {
 }
     
   } catch (error) {
-    console.error('Decryption error:', error);
+    logError('api.decryptInReactNative', error);
     // Return null or rethrow based on your error handling strategy
     return null;
   }

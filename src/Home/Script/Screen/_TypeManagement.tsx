@@ -4,16 +4,36 @@ import { useScriptContext } from '@/src/contexts/script';
 import { Box, ManagementScreen } from '../../../components';
 import * as types from '../../../types';
 
-type TypeManagementProps = types.ScreenTypeProps & {
-    
-};
+type TypeManagementProps = types.ScreenTypeProps & {};
 
-export function TypeManagement({}: TypeManagementProps) {
-    const { activeScreen, setEntryValues, getFieldPreferences } = useScriptContext();
+export function TypeManagement(_props: TypeManagementProps) {
+    const { activeScreen, activeScreenEntry, setEntryValues, getFieldPreferences, setMoreNavOptions } = useScriptContext();
    
     const metadata = activeScreen?.data?.metadata;
 
-    React.useEffect(() => { setEntryValues([]); }, [metadata]);
+    React.useEffect(() => {
+        if (!activeScreen?.id) return;
+        if (`${activeScreenEntry?.screen?.id}` === `${activeScreen.id}`) return;
+        setEntryValues([]);
+    }, [activeScreen?.id, activeScreenEntry?.screen?.id, setEntryValues]);
+    React.useLayoutEffect(() => {
+        setMoreNavOptions(prev => {
+            if (
+                prev?.showFAB === true &&
+                prev?.hideSearch === true &&
+                prev?.goNext === undefined
+            ) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                showFAB: true,
+                hideSearch: true,
+                goNext: undefined,
+            };
+        });
+    }, [activeScreen?.id, setMoreNavOptions]);
 
     return (
         <Box>

@@ -7,6 +7,7 @@ type FormAndDiagnosesSummaryProps = {
     session: any;
     showConfidential?: boolean;
     scrollable?: boolean;
+    showNonPrintable?: boolean;
     onShowConfidential?: (show: boolean) => void;
 };
 
@@ -15,13 +16,12 @@ export function FormAndDiagnosesSummary({
     ...props
 }: FormAndDiagnosesSummaryProps) {
     const scrollViewRef = React.useRef<ScrollView>(null);
-    const [scrollOffset, setScrollOffset] = React.useState(0);
+    const [, setScrollOffset] = React.useState(0);
 
     const handleScroll = (event: any) => {
         setScrollOffset(event.nativeEvent.contentOffset.y);
     };
 
-    const RootComponent = scrollable !== false ? ScrollView : React.Fragment;
 
     const scrollProps = scrollable !== false ? {
         ref: scrollViewRef,
