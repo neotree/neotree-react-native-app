@@ -5,5 +5,42 @@
     "rejected and reported as POLICY_OVERLAY_WEAKENED. Everything here is a security",
     "control, so changes require Code Owner review and a security-reviewed:<sha7> label."
   ],
-  "exceptions": []
+  "exceptions": [
+    {
+      "rule": "POSSIBLE_SQL_INJECTION",
+      "paths": [
+        "src/data/db.ts"
+      ],
+      "sites": 2,
+      "reason": "ALTER TABLE ... ADD COLUMN migrations. The column name and type come from fixed arrays in the source (SESSIONS_ADDED_COLUMNS in schema.ts, newExceptionColumns in db.ts); SQLite cannot bind identifiers, and no runtime or user data reaches these statements.",
+      "expires": "2027-04-30"
+    },
+    {
+      "rule": "POSSIBLE_SQL_INJECTION",
+      "paths": [
+        "src/data/exportSessions.ts"
+      ],
+      "sites": 5,
+      "reason": "Interpolates WHERE fragments built in code by pendingSessionFilter() and QUARANTINED_SESSION_FILTER (exportPlanning.ts). Column names in those fragments are literals and every value - countries, hospital, dates, batch size - is a bound ? parameter.",
+      "expires": "2027-04-30"
+    },
+    {
+      "rule": "POSSIBLE_SQL_INJECTION",
+      "paths": [
+        "src/data/queryBuilders.ts"
+      ],
+      "sites": 2,
+      "reason": "Sessions paging and UID search compose fixed SQL fragments (SESSIONS_FOR_LOCATION_WHERE, cursor and match clauses) chosen in code. All user input - search term, cursor, location, limit - is passed as bound ? parameters.",
+      "expires": "2027-04-30"
+    },
+    {
+      "rule": "POSSIBLE_SQL_INJECTION",
+      "paths": [
+        "src/data/updateSession.ts"
+      ],
+      "sites": 1,
+      "reason": "Column names cannot be bound, so every key is checked against the sessions schema (assertSessionColumns) before the SQL is built; values are bound ? parameters. An unknown or crafted key is rejected before reaching SQL.",
+      "expires": "2027-04-30"
+    }
+  ]
 }
