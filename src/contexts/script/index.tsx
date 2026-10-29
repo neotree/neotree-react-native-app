@@ -21,6 +21,7 @@ import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
 import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
 import { buildOutcomeEntries } from '@/src/utils/outcome-collections';
 import { compileCondition, createBuildForm, flattenRepeatables, parseConditionString, sanitizeCondition } from '@/src/utils/condition-pipeline';
+import { evaluateExpression } from '@/src/utils/safe-eval';
 import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
 import moment from "moment";
 import { logError, logWarning } from '@/src/utils/logError';
@@ -180,8 +181,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
     const [reviewConfigurations, setReviewConfigurations] = useState<any[]>([]);
 
     // Parsed conditions are fully-substituted literal expressions, so a given
-    // string always evaluates to the same result. eval() is very slow on Hermes;
-    // caching by string skips it for the repeated sweeps large forms perform.
+    // string always evaluates to the same result. Caching by string skips the
+    // parse for the repeated sweeps large forms perform.
     const evalResultCacheRef = useRef(new Map<string, any>());
 
     // A condition that fails to compile is reported once and then stays quiet.
@@ -207,7 +208,9 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
         let conditionMet = defaultEval;
         try {
-            conditionMet = eval(condition);
+            // Restricted evaluator, never raw eval: a compiled condition is literals and
+            // operators only, so nothing in it should be able to reach the app's scope.
+            conditionMet = evaluateExpression(condition);
         } catch (e) {
             const reported = reportedBadConditionsRef.current;
             const reportKey = source || condition;

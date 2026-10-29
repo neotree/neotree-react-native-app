@@ -441,14 +441,6 @@ export function exportToApi(opts: any = {}) {
         };
 
         if (remotePending.length || localPending.length) {
-          console.log('Export outcome:', {
-            sentRemote: sentRemote.length,
-            sentLocal: sentLocal.length,
-            alreadyExported: alreadyDone.length,
-            remotePending: remotePending.length,
-            localPending: localPending.length,
-          });
-
           if (result.hasMore || result.failures.some((failure: api.ExportFailure) => failure.retryable)) {
             api.scheduleExportSessions();
           }
