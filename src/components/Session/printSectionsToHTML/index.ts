@@ -30,7 +30,7 @@ export async function printSectionsToHTML({
   session: any;
   showConfidential?: boolean;
 }): Promise<string> {
-  const { form, script } = { ...session?.data };
+  const { form, script } = { ...session?.data } as any;
 
   let qrSmall = false
 
@@ -107,7 +107,7 @@ export async function printSectionsToHTML({
           metadata: screenMeta,
           listStyle: _listStyle = 'none',
           printDisplayColumns = 2,
-        } = { ...screen, metadata: { ...screen?.metadata } };
+        } = { ...screen, metadata: { ...screen?.metadata } } as any;
 
         // Handle 'management' screens
         if (screenType === 'management') {

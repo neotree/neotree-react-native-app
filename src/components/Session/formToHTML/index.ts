@@ -19,7 +19,7 @@ import { toHL7Like } from '../../../data/hl7Like'
 
 export default async (session: any, showConfidential?: boolean) => {
 
-  let { form, management, } = { ...session?.data };
+  let { form, management, } = { ...session?.data } as any;
   let qrSmall = false
 
   management = (management || []).filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));

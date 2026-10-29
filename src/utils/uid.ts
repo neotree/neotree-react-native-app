@@ -41,9 +41,9 @@ export function validateUID(value = '') {
     };
 };
 
-export async function generateUID(scriptType?: string) {
+export async function generateUID(_scriptType?: string) {
     try {
-        const { uid_prefix, total_sessions_recorded, device_id } = await getApplication();
+        const { uid_prefix, total_sessions_recorded } = await getApplication();
 
         // https://neotree.atlassian.net/browse/NEOAPP-790?atlOrigin=eyJpIjoiZGY0NjQyYjk3NTg1NDVmY2I1YTgxNGZiMzk0OTNjYzkiLCJwIjoiaiJ9
         const extraChars = generateDeviceHash('0123456789', 3);

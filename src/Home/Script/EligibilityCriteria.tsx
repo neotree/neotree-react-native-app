@@ -9,6 +9,7 @@ import { diffHours } from '@/src/utils/diffHours';
 import { toLocalISOString } from '@/src/utils/toLocalISOString';
 import * as types from '@/src/types';
 import { logError, logWarning } from '@/src/utils/logError';
+import { evaluateExpression } from '@/src/utils/safe-eval';
 
 type EligibilityCriteriaProps = {
     onEligible: () => void;
@@ -102,8 +103,9 @@ const getConditionValue = (entry?: types.ScreenEntryValue | null) => {
 };
 
 /**
- * Safely evaluates a condition expression without using eval().
- * Converts condition string to a safe JavaScript expression and evaluates it.
+ * Evaluates an eligibility condition. Every `$key` is replaced by its JSON-encoded
+ * value, so the result is literals and operators only, which the restricted
+ * evaluator handles without any access to the app's scope.
  */
 const evaluateEligibilityCondition = (
     condition: string,
@@ -124,10 +126,7 @@ const evaluateEligibilityCondition = (
         .replace(/\$([A-Za-z0-9_.-]+)/g, (_, rawKey) => JSON.stringify(record[normalizeKey(rawKey)] ?? null));
 
     try {
-        // Use Function constructor instead of eval for better security and performance
-        // This is still safer than eval as it doesn't have access to local scope
-        const evaluator = new Function('record', `return ${expression}`);
-        return Boolean(evaluator(record));
+        return Boolean(evaluateExpression(expression));
     } catch (error) {
         logError('EligibilityCriteria.evaluateCondition', error, { condition });
         return false;

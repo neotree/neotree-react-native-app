@@ -27,7 +27,7 @@ export function LocationForm({ onSetLocation, buttonLabel }: LocationFormProps) 
 	const [loadingHospitals, setLoadingHospitals] = React.useState(false);
   	const [loadHospitalsError, setLoadHospitalsError] = React.useState(null);
 
-	const [errors, setErrors] = React.useState<({ field?: string; message: string })[]>([]);
+	const [, setErrors] = React.useState<({ field?: string; message: string })[]>([]);
 	const [saveError, setSaveError] = React.useState(null);
 
 	const [submitting, setSubmitting] = React.useState(false);
