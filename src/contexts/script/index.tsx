@@ -818,7 +818,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         (s.screenId === lastEntry?.screen?.screen_id)
                     ) return i;
                     return null;
-                }).filter(i => i !== null)[0];
+                }).filter((i): i is number => i !== null)[0];
 
                 if (lastEntry && activeScreenIndex >= 0) {
                     setActiveScreen(screens[activeScreenIndex]);

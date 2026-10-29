@@ -4,12 +4,10 @@ import { Asset } from "expo-asset";
 import * as Font from "expo-font";
 import { InitialState, NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import Constants from "expo-constants";
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync();
 
-const NAVIGATION_STATE_KEY = `NAVIGATION_STATE_KEY-${Constants?.manifest?.sdkVersion}`;
 
 export type FontSource = Parameters<typeof Font.loadAsync>[0];
 
@@ -41,7 +39,7 @@ export interface LoadAssetsProps {
 
 export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAssetsProps) => {
     const [isNavigationReady, setIsNavigationReady] = useState(true); // useState(!__DEV__);
-    const [initialState, setInitialState] = useState<InitialState | undefined>();
+    const [initialState] = useState<InitialState | undefined>();
     const [dataInitialised, setDataInitialised] = useState(false);
     const ready = useLoadAssets(assets || [], fonts || {});
 
@@ -72,7 +70,7 @@ export const LoadAssets = ({ assets, fonts, children, initialiseData }: LoadAsse
         })();
     }, [ready, isNavigationReady]);
 
-    const onStateChange = useCallback((state: any) => {
+    const onStateChange = useCallback((_state: any) => {
         // AsyncStorage.setItem(NAVIGATION_STATE_KEY, JSON.stringify(state));
     }, []);
 

@@ -1,0 +1,32 @@
+diff --git a/node_modules/@expo/cli/build/src/utils/npm.js b/node_modules/@expo/cli/build/src/utils/npm.js
+index a49faac..ca5aed9 100644
+--- a/node_modules/@expo/cli/build/src/utils/npm.js
++++ b/node_modules/@expo/cli/build/src/utils/npm.js
+@@ -60,7 +60,10 @@ function _stream() {
+     return data;
+ }
+ function _tar() {
+-    const data = /*#__PURE__*/ _interopRequireDefault(require("tar"));
++    // Patched: tar 7 is compiled with __esModule set but has no default export, so
++    // _interopRequireDefault(...).default is undefined. Wrap it explicitly; this gives
++    // the same `.default.extract` on tar 6 and tar 7 (tar >= 7.5.19 fixes GHSA-23hp-3jrh-7fpw).
++    const data = { default: require("tar") };
+     _tar = function() {
+         return data;
+     };
+diff --git a/node_modules/@expo/cli/build/src/utils/tar.js b/node_modules/@expo/cli/build/src/utils/tar.js
+index 8bf12d8..10c2d6e 100644
+--- a/node_modules/@expo/cli/build/src/utils/tar.js
++++ b/node_modules/@expo/cli/build/src/utils/tar.js
+@@ -14,7 +14,10 @@ function _spawnAsync() {
+     return data;
+ }
+ function _tar() {
+-    const data = /*#__PURE__*/ _interopRequireDefault(require("tar"));
++    // Patched: tar 7 is compiled with __esModule set but has no default export, so
++    // _interopRequireDefault(...).default is undefined. Wrap it explicitly; this gives
++    // the same `.default.extract` on tar 6 and tar 7 (tar >= 7.5.19 fixes GHSA-23hp-3jrh-7fpw).
++    const data = { default: require("tar") };
+     _tar = function() {
+         return data;
+     };

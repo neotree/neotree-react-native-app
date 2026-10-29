@@ -101,7 +101,7 @@ export function TypeMultiSelect({ searchVal }: TypeMultiSelectProps) {
 
         setValue(values.reduce((acc, v) => ({
             ...acc,
-            [v.key]: v,
+            [v.key as string]: v,
         }), {} as Record<string, any>));
 
         setEntryValues?.(entryValues);

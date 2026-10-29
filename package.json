@@ -94,7 +94,7 @@
   },
   "private": true,
   "resolutions": {
-    "shell-quote": "1.9.0",
+    "shell-quote": "1.11.0",
     "websocket-driver": "0.7.5",
     "fast-uri": "3.1.9",
     "flatted": "3.4.2",
@@ -106,6 +106,8 @@
     "socket.io-parser": "4.2.7",
     "svgo": "2.8.4",
     "undici": "6.29.1",
+    "proxy-addr": "2.0.8",
+    "tar": "7.5.22",
     "body-parser": "1.20.9",
     "follow-redirects": "1.16.0",
     "joi": "17.13.8",
