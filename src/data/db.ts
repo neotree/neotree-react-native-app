@@ -11,6 +11,19 @@ import {
 
 export const db = SQLite.openDatabaseSync('db.db');
 
+// WAL lets reads carry on, against the last committed data, while another
+// connection is writing. The sync replaces six tables in one exclusive
+// transaction on its own connection and now runs in the background, so without
+// this every screen reading scripts during that swap failed with "database is
+// locked". The mode is stored in the database file; setting it again is a no-op.
+//
+// busy_timeout makes a write (e.g. saving a session) wait for the swap to
+// finish instead of failing. It is per connection and applies to this one.
+try {
+    db.execSync('PRAGMA journal_mode = WAL;');
+    db.execSync('PRAGMA busy_timeout = 30000;');
+} catch { /* best effort: fall back to the default journal mode */ }
+
 export const dbTransaction = (q: string, data: any = null, cb?: (e: any, rslts?: any) => void, handle: any = db) => new Promise<any[]>((resolve, reject) => {
     const done = (error?: null | Error, data?: any[]) => {
         if (error) {

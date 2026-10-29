@@ -28,6 +28,8 @@ export const sockets: { [key: string]: any; } = countries.reduce((acc, country) 
 
 const noop = () => {};
 
+const SOCKET_EVENT_DEBOUNCE_MS = 1500;
+
 export async function addSocketEventsListeners(listener: (e: any) => void): Promise<() => void> {
     try {
         const loc = await getLocation();
@@ -35,7 +37,17 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
 
         if (!country) return noop;
 
-        const onEvent = (e: any) => setTimeout(() => listener && listener(e), 0);
+        // Events usually arrive in bursts (a publish emits data_updated and
+        // data_published together), and each one triggers a full sync. Coalesce
+        // them into one call after things go quiet.
+        let eventTimer: ReturnType<typeof setTimeout> | null = null;
+        const onEvent = (e: any) => {
+            if (eventTimer) clearTimeout(eventTimer);
+            eventTimer = setTimeout(() => {
+                eventTimer = null;
+                listener && listener(e);
+            }, SOCKET_EVENT_DEBOUNCE_MS);
+        };
 
         const webeditorSocket = sockets[`${country}WebEditor`];
         const nodeApiSocket = sockets[`${country}NodeApi`];
@@ -68,6 +80,7 @@ export async function addSocketEventsListeners(listener: (e: any) => void): Prom
         }
 
         return () => {
+            if (eventTimer) clearTimeout(eventTimer);
             webeditorSocket?.off('connect', onWebeditorConnect);
             webeditorSocket?.off('data_updated', onDataUpdated);
             webeditorSocket?.off('data_published', onDataPublished);
