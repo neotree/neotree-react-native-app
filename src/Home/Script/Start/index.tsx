@@ -3,22 +3,13 @@ import { Alert, Keyboard, ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
 import { hasBidStillBirthOutcomeOptions } from '@/src/utils/bid-stillbirth-outcome';
+import { getNuidSearchBehaviour } from '@/src/utils/nuid-search-role';
 import { Box, Button, Content, Text } from '../../../components';
 import { Field } from './field';
 import * as types from '../../../types';
 
 function isStandardNuidSearchField(field: any) {
-    const key = `${field?.key ?? ''}`.toLowerCase();
-    const label = `${field?.label ?? ''}`.toLowerCase();
-
-    return field?.type === 'text'
-        && !key.includes('twin')
-        && !label.includes('twin')
-        && !key.includes('transfer')
-        && !key.includes('transfered')
-        && !key.includes('transferred')
-        && !label.includes('transfer')
-        && !label.includes('transferred');
+    return getNuidSearchBehaviour(field).isPrimarySearch;
 }
 
 export function Start() {
@@ -50,6 +41,8 @@ export function Start() {
         value: null,
         condition: f.condition,
         type: f.type,
+        label: f.label,
+        searchRole: f.searchRole,
         results: null,
     })));
 

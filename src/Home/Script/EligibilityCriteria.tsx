@@ -10,6 +10,7 @@ import { toLocalISOString } from '@/src/utils/toLocalISOString';
 import * as types from '@/src/types';
 import { logError, logWarning } from '@/src/utils/logError';
 import { evaluateExpression } from '@/src/utils/safe-eval';
+import { resolveMemberships } from '@/src/utils/membership';
 
 type EligibilityCriteriaProps = {
     onEligible: () => void;
@@ -90,8 +91,32 @@ const makeDropdownEntry = (key: string, value: any, option: any, label: string):
     type: 'dropdown',
 });
 
+const YES_VALUES = ['yes', 'y', 'true', '1'];
+const NO_VALUES = ['no', 'n', 'false', '0'];
+
+/**
+ * Yes/no is a screen type only, and a yes/no screen stores 'true' / 'false'
+ * with dataType 'boolean' (see _TypeYesNo), so conditions on its key compare
+ * against a bare `true` / `false`.
+ * The eligibility options are authored separately ('yes' / 'Yes' by default),
+ * so the answer is translated before it stands in for the screen. Null when the
+ * option cannot be read as yes or no.
+ */
+const toYesNoScreenValue = (picked: EligibilityValue): 'true' | 'false' | null => {
+    const candidates = [picked.value, picked.option?.value, picked.valueText, picked.option?.label];
+    for (const candidate of candidates) {
+        const normalized = `${candidate ?? ''}`.trim().toLowerCase();
+        if (YES_VALUES.includes(normalized)) return 'true';
+        if (NO_VALUES.includes(normalized)) return 'false';
+    }
+    return null;
+};
+
 const getConditionValue = (entry?: types.ScreenEntryValue | null) => {
     if (!entry) return null;
+    // Eligibility conditions are written against the option as shown on this
+    // screen, not the 'true' / 'false' the auto-filled screen stores.
+    if (normalizeFieldType(entry.type) === 'yesno') return entry.valueText ?? entry.value;
     if (entry.calculateValue !== null && entry.calculateValue !== undefined) {
         const numericValue = Number(entry.calculateValue);
         if (normalizeFieldType(entry.type) === 'period' && !isNaN(numericValue)) {
@@ -103,9 +128,43 @@ const getConditionValue = (entry?: types.ScreenEntryValue | null) => {
 };
 
 /**
+ * Applies `rewrite` to the parts of `source` outside quoted literals, so an
+ * option such as 'Born here or referred' is compared as written.
+ */
+const rewriteOutsideStrings = (source: string, rewrite: (code: string) => string) => {
+    let out = '';
+    let code = '';
+    let quote: string | null = null;
+
+    for (let i = 0; i < source.length; i++) {
+        const char = source[i];
+        if (quote) {
+            out += char;
+            if (char === '\\' && i + 1 < source.length) out += source[++i];
+            else if (char === quote) quote = null;
+            continue;
+        }
+        if (char === '\'' || char === '"' || char === '`') {
+            out += rewrite(code) + char;
+            code = '';
+            quote = char;
+            continue;
+        }
+        code += char;
+    }
+
+    return out + rewrite(code);
+};
+
+/**
  * Evaluates an eligibility condition. Every `$key` is replaced by its JSON-encoded
  * value, so the result is literals and operators only, which the restricted
  * evaluator handles without any access to the app's scope.
+ *
+ * Like the script's own conditions (utils/condition-pipeline), comparisons are
+ * case-insensitive and `includes` / `excludes` are supported. It is not that
+ * pipeline: this one also accepts `=` without spaces, which the editor's default
+ * `$feasibilityprompt="No"` relies on and the pipeline cannot parse.
  */
 const evaluateEligibilityCondition = (
     condition: string,
@@ -119,11 +178,16 @@ const evaluateEligibilityCondition = (
         return acc;
     }, { self } as Record<string, any>);
 
-    const expression = condition
+    const membershipForm = [{
+        values: Object.keys(record).map(key => ({ key, value: record[key] })),
+    }];
+
+    const expression = rewriteOutsideStrings(resolveMemberships(condition, membershipForm), code => code
         .replace(/\band\b/gi, '&&')
         .replace(/\bor\b/gi, '||')
-        .replace(/([^<>=!])=([^=])/g, '$1==$2')
-        .replace(/\$([A-Za-z0-9_.-]+)/g, (_, rawKey) => JSON.stringify(record[normalizeKey(rawKey)] ?? null));
+        .replace(/(^|[^<>=!])=(?!=)/g, '$1==')
+        .replace(/\$([A-Za-z0-9_.-]+)/g, (_, rawKey) => JSON.stringify(record[normalizeKey(rawKey)] ?? null)))
+        .toLowerCase();
 
     try {
         return Boolean(evaluateExpression(expression));
@@ -246,7 +310,8 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
         const autoFillKey = activeDefinition.autoFills;
         const picked = activeDefinition.value;
 
-        if (!autoFillKey || !picked?.value) return values;
+        // Same test as canContinue: an option whose value is 0 or false is an answer.
+        if (!autoFillKey || !picked || picked.value === null || picked.value === undefined || picked.value === '') return values;
 
         const type = normalizeFieldType(activeDefinition.type);
         if (['date', 'datetime'].includes(type)) {
@@ -255,15 +320,22 @@ export function EligibilityCriteria({ onEligible }: EligibilityCriteriaProps) {
         } else if (type === 'dropdown') {
             values.push(makeDropdownEntry(autoFillKey, picked.value, picked.option, activeDefinition.label || autoFillKey));
         } else if (type === 'yesno') {
+            const valueText = picked.valueText || `${picked.value}`;
+            const screenValue = toYesNoScreenValue(picked);
+            // The screen's dataType ('boolean') is what makes the pipeline
+            // substitute a bare true/false, which is what `$Key = true` compares
+            // against. An answer that is not yes or no stays a plain string.
+            const target = allScriptFields.find(f => normalizeKey(f?.key) === normalizeKey(autoFillKey));
             values.push({
                 key: autoFillKey,
                 label: activeDefinition.label || autoFillKey,
-                value: picked.valueText || picked.value,
-                valueText: picked.valueText || `${picked.value}`,
-                exportValue: picked.valueText || picked.value,
-                exportLabel: picked.valueText || `${picked.value}`,
+                value: screenValue ?? (picked.valueText || picked.value),
+                valueText,
+                exportValue: valueText,
+                exportLabel: valueText,
                 exportType: 'yesno',
                 type: 'yesno',
+                ...(screenValue ? { dataType: target?.dataType || 'boolean' } : {}),
             });
         }
 

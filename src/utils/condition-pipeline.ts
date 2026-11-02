@@ -32,7 +32,9 @@ export interface FormSources {
     entries: any[];
     /** Built by buildOutcomeEntries — $Diagnoses / $Problems. */
     outcomeEntries?: readonly any[];
+    /** Lowest priority: only answers keys nothing else has. */
     eligibilityAutoFillValues?: any[];
+    /** Below everything answered on a screen, above eligibility. */
     nuidSearchForm?: { key: string; value: any }[];
 }
 
@@ -40,6 +42,13 @@ export interface FormSources {
  * The form assembly, as a factory over plain data so the context and the tests
  * use the same one. `extraEntries` are merged over the base by screen id, which
  * is how a caller overrides what a screen answered.
+ *
+ * Substitution is first-match-wins, so order is priority. The answers captured
+ * before the script started (NUID search, then eligibility) go last: they are
+ * only a fallback for keys nothing else has answered. Ahead of them they would
+ * shadow the live answers that should replace them — the NUID search screen's
+ * own fields, and the screen being filled, which is not in `entries` until it
+ * is complete.
  */
 export function createBuildForm(sources: FormSources): CompileContext['buildForm'] {
     const {
@@ -50,23 +59,25 @@ export function createBuildForm(sources: FormSources): CompileContext['buildForm
     } = sources;
 
     const nuidEntries = nuidSearchForm.map(f => ({ value: [{ value: f.value, key: f.key }] }));
+    const preScriptEntries = [...nuidEntries, { value: eligibilityAutoFillValues }];
 
-    return (line: string, extraEntries: any[]) => extraEntries.reduce((acc: any[], e: any) => {
-        const index = !e?.screen?.id
-            ? -1
-            : acc.filter(x => x.screen).map(x => x.screen.id).indexOf(e.screen.id);
+    return (line: string, extraEntries: any[]) => [
+        ...extraEntries.reduce((acc: any[], e: any) => {
+            const index = !e?.screen?.id
+                ? -1
+                : acc.findIndex(x => x?.screen && (x.screen.id === e.screen.id));
 
-        if (index > -1) return acc.map((accEntry, i) => i === index ? { ...accEntry, ...e } : accEntry);
+            if (index > -1) return acc.map((accEntry, i) => i === index ? { ...accEntry, ...e } : accEntry);
 
-        return [...acc, e];
-    }, [
-        ...entries,
-        // Only for lines that ask for them: each outcome costs a full
-        // substitution pass, and almost no condition references these.
-        ...(referencesOutcomeCollection(line) ? outcomeEntries : NO_OUTCOME_ENTRIES),
-        { value: eligibilityAutoFillValues },
-        ...nuidEntries,
-    ]);
+            return [...acc, e];
+        }, [
+            ...entries,
+            // Only for lines that ask for them: each outcome costs a full
+            // substitution pass, and almost no condition references these.
+            ...(referencesOutcomeCollection(line) ? outcomeEntries : NO_OUTCOME_ENTRIES),
+        ]),
+        ...preScriptEntries,
+    ];
 }
 
 export function sanitizeCondition(condition: string): string {
