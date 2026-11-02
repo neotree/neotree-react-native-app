@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useScriptContext } from '@/src/contexts/script';
 import { parseFieldValues, parseFieldItems } from '@/src/utils/script-fields-and-items'; 
 import { filterFieldToBidStillBirthOptions } from '@/src/utils/bid-stillbirth-outcome';
+import { getNuidSearchBehaviour } from '@/src/utils/nuid-search-role';
 import {
     applyOptionConditions,
     collectOptionConditionKeys,
@@ -209,7 +210,7 @@ export function TypeForm(_: TypeFormProps) {
     const patientNUID = useMemo(() => {
         const primarySearch = nuidSearchForm
             .find(f => (
-                (f.key === 'patientNUID' || f.key === 'BabyTransferedNUID') &&
+                getNuidSearchBehaviour(f).isPreferredPatientId &&
                 f.value
             ));
         const nuidSearch = nuidSearchForm.find(f => (

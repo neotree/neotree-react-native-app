@@ -1,5 +1,6 @@
 import { Box, Radio, Text } from '../../../../components';
 import { Search } from './search';
+import { getNuidSearchBehaviour } from '@/src/utils/nuid-search-role';
 
 export function Field({ field, value, onChange,script_type }: {
     field: {
@@ -9,12 +10,13 @@ export function Field({ field, value, onChange,script_type }: {
         values: string;
         optional?: boolean;
         type: 'dropdown' | 'text';
+        searchRole?: string;
     },
     value: any,
     onChange: (value: any) => void;
     script_type?:string
 }) {
-    const isTwinSearchField = field.key === 'BabyTwinNUID';
+    const { isTwinSearch: isTwinSearchField, suppliesSessionUid } = getNuidSearchBehaviour(field);
     const label = `${field.label || ''}${field.optional ? '' : ' *'}`;
     const opts = (field.values || '').split('\n')
         .map((v = '') => v.trim())
@@ -62,7 +64,7 @@ export function Field({ field, value, onChange,script_type }: {
                     <Search
                         label={label}
                         prePopulateWithUID={true}
-                        useSearchedUidForSession={!isTwinSearchField}
+                        useSearchedUidForSession={suppliesSessionUid}
                         noRecordTitle={isTwinSearchField ? 'Twin record not found' : undefined}
                         noRecordMessage={isTwinSearchField
                             ? (uid => `No twin record was found for ${uid}. You can continue without twin pre-population. A new Neotree ID will be generated for this baby.`)

@@ -37,6 +37,9 @@ export type NuidSearchFormField = {
     value: any;
     type: string;
     condition: string;
+    /** Kept so the field's search role can be worked out later (utils/nuid-search-role). */
+    label?: string;
+    searchRole?: string;
 };
 
 export type MatchedSession = { 

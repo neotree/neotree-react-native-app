@@ -22,6 +22,7 @@ import { evaluateFluidsScreen } from '@/src/utils/evaluate-fluids-screen';
 import { buildOutcomeEntries } from '@/src/utils/outcome-collections';
 import { compileCondition, createBuildForm, flattenRepeatables, parseConditionString, sanitizeCondition } from '@/src/utils/condition-pipeline';
 import { evaluateExpression } from '@/src/utils/safe-eval';
+import { getNuidSearchBehaviour } from '@/src/utils/nuid-search-role';
 import { DateAndTimeOfDeathRadio, DateAndTimeOfDeathModal, useDateAndTimeOfDeathState } from './date-and-time-of-birth';
 import moment from "moment";
 import { logError, logWarning } from '@/src/utils/logError';
@@ -1109,7 +1110,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                     const prePopulate = rules;
                     if (!prePopulate.length) return false;
                     if (prePopulate.includes('allSearches')) return true;
-                    const isTwinSearch = f.key === 'BabyTwinNUID';
+                    const isTwinSearch = getNuidSearchBehaviour(f).isTwinSearch;
                     if (!prePopulate.includes('twinSearches') && isTwinSearch) return false;
                     return true;
                 };
@@ -1128,7 +1129,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
                 return isPrePopulatable;
             });
-        const twin = results.filter(item => item.key === 'BabyTwinNUID')[0];
+        const twin = results.filter(item => getNuidSearchBehaviour(item).isTwinSearch)[0];
         return {
             ...results.reduce((acc, item) => ({
                 ...acc,
