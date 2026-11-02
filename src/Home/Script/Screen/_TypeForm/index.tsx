@@ -724,7 +724,8 @@ export function TypeForm(_: TypeFormProps) {
             onChange={handleRepeatablesChange}
             evaluateCondition={evaluateFieldCondition}
             collectionField={collectionField}
-            allValues={repeatableValues}
+            allValues={allValues} // {repeatableValues}
+            allRepeatableValues={repeatableValues}
         /> : returnable
     );
 }
