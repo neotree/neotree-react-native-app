@@ -9062,9 +9062,9 @@ react-native-helmet-async@2.0.4:
     shallowequal "^1.1.0"
 
 react-native-qrcode-svg@^6.3.14:
-  version "6.3.27"
-  resolved "https://registry.yarnpkg.com/react-native-qrcode-svg/-/react-native-qrcode-svg-6.3.27.tgz#69c05c787f944a35ac906ba1436e5097a17c47b7"
-  integrity sha512-ETMIYT9nhdjGYoFu0GrpQcrpk4md+Ceej0JP4Xxm547k3MIc6od+bi12Qs6M3fPVRbohuwSfOS6n4HqBtJus4w==
+  version "6.3.54"
+  resolved "https://registry.yarnpkg.com/react-native-qrcode-svg/-/react-native-qrcode-svg-6.3.54.tgz#146783f49d11cce8ac1be344afcae2b4fa025d5b"
+  integrity sha512-xq41lfXYY5lNI9Pk3SvJJMaxdb7VDv2OO/J5oj0Y/2NUW1kQGis4A5ZcQQocwxpZXqf9kxP0qjNO3F7fEfVHwg==
   dependencies:
     prop-types "^15.8.0"
     qrcode "^1.5.4"
