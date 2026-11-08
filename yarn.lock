@@ -5313,10 +5313,10 @@ expo-linking@~6.3.1:
     expo-constants "~16.0.0"
     invariant "^2.2.4"
 
-expo-media-library@~16.0.4:
-  version "16.0.5"
-  resolved "https://registry.yarnpkg.com/expo-media-library/-/expo-media-library-16.0.5.tgz#5827f237f4425088bdb15f1f0949916613d0ae3d"
-  integrity sha512-O9RUqBWgJVRF0mO6EiLSBFyfb5wR1/ZqovbT43V0TAo5sgcjrHRs+0NID/U6BWDRuiFeX2AU516JgNDutNUFSw==
+expo-media-library@~58.0.13:
+  version "58.0.13"
+  resolved "https://registry.yarnpkg.com/expo-media-library/-/expo-media-library-58.0.13.tgz#7a41de91498da47918fea06519f1306b0d0e3061"
+  integrity sha512-OEMzRbwgLeK42skOxv6sp7Txpeof+zepGkt8UKu6IuKF3Uz1lKMC3Ox54R/87ZZrRijQ8UpIVg/JOEBpzSGNwg==
 
 expo-modules-autolinking@1.11.3:
   version "1.11.3"
