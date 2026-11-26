@@ -6,6 +6,7 @@ import * as api from '@/src/data';
 import * as types from '@/src/types';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import { getDaysDifference } from '@/src/utils/formatDate'
+import { checkScannedUid } from '@/src/utils/scanned-uid';
 import { getSessionScriptTitle } from '@/src/utils/sessionFields';
 import { mergeSessions } from '@/src/contexts/script'
 
@@ -16,6 +17,7 @@ type SearchProps = {
     onSession: (data: null | types.MatchedSession) => void;
     filterEntries?: (entry: any) => any;
     script_type?: string;
+    idType?: 'nuid' | 'muid';
     useSearchedUidForSession?: boolean;
     noRecordTitle?: string;
     noRecordMessage?: (uid: string) => string;
@@ -210,11 +212,13 @@ export function Search({
     onSession,
     filterEntries,
     script_type,
+    idType = 'nuid',
     useSearchedUidForSession = prePopulateWithUID !== false,
     noRecordTitle,
     noRecordMessage,
 }: SearchProps) {
     const [uid, setUID] = React.useState('');
+    const [scanError, setScanError] = React.useState('');
     const [sessions, setSessions] = React.useState<Awaited<ReturnType<typeof api.getLocalSessionsByUID>>>([]);
     const [merged, setMerged] = React.useState<any>([])
     const [sessionType, setSessionType] = React.useState('admission');
@@ -280,11 +284,13 @@ export function Search({
         // Non-manual changes are the input echoing values we set programmatically
         // (e.g. from a QR scan) — they must not wipe the search state.
         if (!isManual) return;
+        setScanError('');
         setUID(nextUID);
         resetSearchState();
     }, [resetSearchState]);
 
     const clearUID = React.useCallback(() => {
+        setScanError('');
         setUID('');
         // NeotreeIDInput keeps its text when the value prop goes empty, so force a remount.
         setInputResetKey(k => k + 1);
@@ -375,9 +381,21 @@ export function Search({
 
     const onQrRead = (qrtext: any) => {
         if (qrtext) {
+            setScanError('');
+            const scanned = normalizeQrSession(qrtext);
+            const scannedUid = scanned && typeof scanned === 'object' ? scanned['uid'] : scanned;
+
+            // The script's ID type decides the format a scan must have.
+            const checked = checkScannedUid(scannedUid, idType);
+            if (!checked.ok) {
+                setScanError(checked.message);
+                setShowQR(false);
+                return;
+            }
+
             resetSearchState();
             setSearchedFromQR(true);
-            const session = normalizeQrSession(qrtext);
+            const session = scanned && typeof scanned === 'object' ? { ...scanned, uid: checked.uid } : checked.uid;
             if (session && typeof session === 'object' && session['uid']) {
                 qrUidRef.current = session['uid'];
                 setUID(session['uid']);
@@ -840,9 +858,16 @@ function hasPrePopulate(entry: any): boolean {
                     <NeotreeIDInput
                         key={`uid-input-${inputResetKey}`}
                         label={label}
+                        idType={idType}
                         onChange={handleUIDChange}
                         value={uid}
                     />
+                    {!!scanError && (
+                        <>
+                            <Br spacing='s' />
+                            <Text variant="caption" color="error">{scanError}</Text>
+                        </>
+                    )}
                     <Br spacing='l' />
                     <>
                         <Br />

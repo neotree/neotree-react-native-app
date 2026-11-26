@@ -4,8 +4,14 @@ import { generateUID, validateUID } from '@/src/utils/uid';
 import { Br } from '../Br';
 import { Box, Text } from '../Theme';
 import { TextInput } from './TextInput';
+import { MuidInput } from './MuidInput';
 
 export type NeotreeIDInputProps = {
+    /**
+     * Which ID the field takes. "nuid" (default) is the two-part NUID; "muid" is one MUID field;
+     * "any" accepts either, for screens that aren't tied to a script (e.g. printing a QR code).
+     */
+    idType?: 'nuid' | 'muid' | 'any';
     autoGenerateValue?: boolean;
     label?: string;
     onChange: (value: string, isManual?: boolean) => void;
@@ -169,6 +175,7 @@ function Input({
 
 export function NeotreeIDInput({
     generatedUID: generatedUidProp,
+    idType = 'nuid',
     ...props
 }: NeotreeIDInputProps & { generatedUID?: string; }) {
     const [generatedUID, setGeneratedUID] = useState(generatedUidProp);
@@ -177,18 +184,25 @@ export function NeotreeIDInput({
     React.useEffect(() => {
         (async () => {
             if (!generatedUID) {
-                const uid = await generateUID();
+                const uid = await generateUID(undefined, idType === 'muid' ? 'muid' : 'nuid');
                 setGeneratedUID(uid);
             }
             setIsReady(true);
         })();
-    }, [generatedUID]);
+    }, [generatedUID, idType]);
 
-    return !isReady ? null : (
+    if (!isReady) return null;
+
+    return idType === 'nuid' ? (
         <Input 
             {...props}
             generatedUID={generatedUID}
         />
-       
+    ) : (
+        <MuidInput
+            {...props}
+            accept={idType === 'any' ? 'any' : 'muid'}
+            generatedUID={generatedUID}
+        />
     );
 }

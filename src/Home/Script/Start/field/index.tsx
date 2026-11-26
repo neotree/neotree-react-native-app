@@ -2,7 +2,7 @@ import { Box, Radio, Text } from '../../../../components';
 import { Search } from './search';
 import { getNuidSearchBehaviour } from '@/src/utils/nuid-search-role';
 
-export function Field({ field, value, onChange,script_type }: {
+export function Field({ field, value, onChange,script_type, idType }: {
     field: {
         key: string;
         condition: string;
@@ -14,7 +14,9 @@ export function Field({ field, value, onChange,script_type }: {
     },
     value: any,
     onChange: (value: any) => void;
-    script_type?:string
+    script_type?:string;
+    /** The script's session ID type; the search page only accepts IDs of this kind. */
+    idType?: 'nuid' | 'muid';
 }) {
     const { isTwinSearch: isTwinSearchField, suppliesSessionUid } = getNuidSearchBehaviour(field);
     const label = `${field.label || ''}${field.optional ? '' : ' *'}`;
@@ -71,6 +73,7 @@ export function Field({ field, value, onChange,script_type }: {
                             : undefined}
                         onSession={value => onChange(value)}
                         script_type={script_type}
+                        idType={idType}
                     />
                 </>
             )}

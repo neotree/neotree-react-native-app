@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { APP_VERSION } from '@/src/constants';
 import { getDeviceID } from '@/src/utils/getDeviceID';
+import { resolveSessionCounter, resolveUidPrefix, shouldReportCounter } from '@/src/utils/uid-counter';
 import { dbTransaction, ensureSchema, db } from './db';
 import { makeApiCall, reportErrors, EDITOR_EXCEPTIONS_ENDPOINT, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
@@ -122,6 +123,32 @@ async function runSyncData(opts?: { force?: boolean; }) {
             const deviceRegJSON = await deviceReg.json();
             probeSucceeded = true;
 
+            // A reinstall, "clear data" or restored backup can leave the counter behind what the editor
+            // has recorded. Correct it now, not only on a full sync, before another UID is issued.
+            if (app) {
+                const counter = resolveSessionCounter({
+                    local: app.total_sessions_recorded,
+                    serverCount: deviceRegJSON?.device?.details?.scripts_count,
+                    serverFloor: deviceRegJSON?.device?.uid_counter_floor,
+                });
+                if (counter !== (app.total_sessions_recorded || 0)) {
+                    await dbTransaction('update application set total_sessions_recorded=? where id=1 and coalesce(total_sessions_recorded,0)<?;', [counter, counter]);
+                }
+
+                // Repair a lost upload: the count is otherwise sent once, right after a new session,
+                // and silently dropped if there was no connection at that moment.
+                if (shouldReportCounter(counter, deviceRegJSON?.device?.details?.scripts_count)) {
+                    try {
+                        await makeApiCall('webeditor', '/update-device-registration', {
+                            method: 'POST',
+                            body: JSON.stringify({ deviceId: app.device_id || deviceId, details: { scripts_count: counter } }),
+                        }, { timeout: REMOTE_PROBE_TIMEOUT_MS });
+                    } catch {
+                        // Not fatal: it is retried at the next check-in.
+                    }
+                }
+            }
+
             webUpdated = deviceRegJSON?.info?.last_backup_date &&
                 last_sync_date &&
                 (new Date(deviceRegJSON?.info?.last_backup_date).getTime() !== new Date(last_sync_date).getTime());
@@ -178,8 +205,13 @@ async function runSyncData(opts?: { force?: boolean; }) {
                     id: 1,
                     mode: _application?.mode || 'production',
                     last_sync_date,
-                    uid_prefix: _application?.uid_prefix || device?.device_hash||'FB8E',
-                    total_sessions_recorded: Math.max(_application?.total_sessions_recorded || 0, device?.details?.scripts_count || 0),
+                    // No default prefix: a shared made-up one would let two tablets issue the same UID.
+                    uid_prefix: resolveUidPrefix(_application?.uid_prefix, device?.device_hash),
+                    total_sessions_recorded: resolveSessionCounter({
+                        local: _application?.total_sessions_recorded,
+                        serverCount: device?.details?.scripts_count,
+                        serverFloor: device?.uid_counter_floor,
+                    }),
                     device_id: _application?.device_id || device?.device_id || deviceId,
                     webeditor_info: JSON.stringify(webeditorInfo),
                     createdAt: _application?.createdAt || new Date().toISOString(),

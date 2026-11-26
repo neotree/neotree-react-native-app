@@ -6,10 +6,26 @@
  * can be unit tested.
  */
 
+import { MUID_LETTER, MUID_STORED_LENGTH, formatMuid, formatMuidInput, normaliseMuid } from './muid';
+
 export const NEOTREE_ID_PREFIX_LENGTH = 4;
 export const NEOTREE_ID_SUFFIX_LENGTH = 7;
-/** Both halves plus the separator. */
-export const NEOTREE_ID_MAX_LENGTH = NEOTREE_ID_PREFIX_LENGTH + NEOTREE_ID_SUFFIX_LENGTH + 1;
+/** The longest an ID can be as typed: a MUID with its hyphen (M0K7Q-000001R). A NUID is 12. */
+export const NEOTREE_ID_MAX_LENGTH = MUID_STORED_LENGTH;
+
+/**
+ * A MUID always starts with the letter M, which a NUID prefix (hex digits only) never does, so the
+ * first character is enough to tell what is being typed.
+ */
+export function looksLikeMuid(raw = ''): boolean {
+    return normaliseMuid(raw).startsWith(MUID_LETTER);
+}
+
+/** The text to search sessions for: a MUID is searched in its stored form (M0K7Q-000001R), however it was typed. */
+export function normaliseUidSearch(value = ''): string {
+    const trimmed = `${value || ''}`.trim();
+    return looksLikeMuid(trimmed) ? formatMuid(trimmed) : trimmed.replace(/-+$/, '');
+}
 
 /**
  * Formats what the user has typed into an ID: upper-cases it, drops characters
@@ -21,6 +37,7 @@ export const NEOTREE_ID_MAX_LENGTH = NEOTREE_ID_PREFIX_LENGTH + NEOTREE_ID_SUFFI
  * immediately re-insert it and trap the cursor.
  */
 export function formatNeotreeIDInput(raw = '', previous = ''): string {
+    if (looksLikeMuid(raw)) return formatMuidInput(raw, previous);
     const cleaned = `${raw || ''}`.toUpperCase().replace(/[^A-Z0-9]/g, '');
     const prefix = cleaned.slice(0, NEOTREE_ID_PREFIX_LENGTH);
     const suffix = cleaned.slice(

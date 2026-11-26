@@ -6,6 +6,7 @@ import { Br } from "../../components/Br";
 import { Box, Text } from "../../components/Theme";
 import { NeotreeIDInput } from "../../components/Form";
 import { PrintBarCode } from "../../components/Session/PrintBarCode";
+import { checkScannedUid } from '@/src/utils/scanned-uid';
 import { QRCodeScan } from '@/src/components/Session/QRScan/QRCodeScan';
 import * as types from '../../types';
 import { useIsFocused } from '@react-navigation/native';
@@ -53,8 +54,10 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
             return;
         }
         if (qrtext) {
-            setUID(qrtext);
-            setSession({"uid":qrtext})
+            const checked = checkScannedUid(qrtext, 'any');
+            const uid = checked.ok ? checked.uid : qrtext;
+            setUID(uid);
+            setSession({"uid":uid})
         }
         setShowQR(false);
     };
@@ -70,6 +73,7 @@ export function PrintGenericBarCode({ navigation }: types.StackNavigationProps<t
             <Br spacing="m" />
             <NeotreeIDInput
                 label="NEOTREE ID"
+                idType="any"
                 onChange={uid => {
                     setUID(uid);
                     setSession(uid ? { uid } : null);

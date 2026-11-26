@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, TextInput } from '@/src/components';
+import { Box, Text, TextInput } from '@/src/components';
 import * as types from '@/src/types';
 import { evalMath } from '@/src/utils/eval-math';
+import { isCalculatedNumberField } from '@/src/utils/calculated-field';
 
 type NumberFieldProps = types.ScreenFormTypeProps & {
     
@@ -16,6 +17,8 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
     const [error, setError] = React.useState('');
     const [calcFrom, setCalcFrom] = React.useState<types.ScreenEntryValue[]>([]);
     const canEdit = repeatable?editable:true
+    // A calculated number is shown but not editable: it follows the answers it is calculated from.
+    const isCalculated = isCalculatedNumberField(field);
     
     const onValueChange = React.useCallback((_value: string | number) => {
         const value = `${_value}`;
@@ -71,11 +74,14 @@ export function NumberField({ field, onChange, conditionMet, entryValue, allValu
                 value={value}
                 keyboardType="numeric"
                 errors={error ? [error] : []}
-                editable={conditionMet && canEdit}
+                editable={conditionMet && canEdit && !isCalculated}
                 onChangeText={value => {                    
                     onValueChange(value);
                 }}
             />
+            {isCalculated && (
+                <Text variant="caption" color="textSecondary">Calculated from your other answers</Text>
+            )}
         </Box>
     );
 }
