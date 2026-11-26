@@ -9,6 +9,7 @@ import { resolveSessionCounter, resolveUidPrefix, shouldReportCounter } from '@/
 import { dbTransaction, ensureSchema, db } from './db';
 import { makeApiCall, reportErrors, EDITOR_EXCEPTIONS_ENDPOINT, SYNC_DOWNLOAD_TIMEOUT_MS, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { getApplication, getAuthenticatedUser, getExceptions, getLocation } from './queries';
+import { isUserDeactivated, logout } from './auth';
 import { ASYNC_STORAGE_KEYS } from '../constants/async-storage';
 import { logError } from '@/src/utils/logError';
 import { flushOccurrenceCounts } from '@/src/utils/handleCrashes';
@@ -103,6 +104,17 @@ async function runSyncData(opts?: { force?: boolean; }) {
     }
 
 	// if (authenticatedUser && networkState?.isConnected && networkState?.isInternetReachable) {
+    // A user an administrator has deactivated is signed out here, the first time the tablet can reach
+    // the editor. Offline, the tablet keeps working until it next connects.
+    if (shouldAttempt && await isUserDeactivated(authenticatedUser?.email)) {
+        await logout();
+        return {
+            authenticatedUser: null,
+            application: await getApplication(),
+            last_sync_date,
+        };
+    }
+
     if (shouldAttempt) {
         const app = await getApplication();
 
