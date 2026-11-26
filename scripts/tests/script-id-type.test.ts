@@ -51,25 +51,24 @@ console.log('script-id-type tests passed');
 
 // ---- Scanning: the script's ID type decides what a QR code must hold ----
 {
-    const ok = (r: any) => r.ok === true;
     // MUID script: only valid MUIDs
     assert.deepEqual(checkScannedUid('M0K7Q-000001R', 'muid'), { ok: true, uid: 'M0K7Q-000001R' });
     assert.deepEqual(checkScannedUid('m0k7q000001r', 'muid'), { ok: true, uid: 'M0K7Q-000001R' }, 'a missing hyphen and case are put right');
     assert.deepEqual(checkScannedUid('M0K7-Q000-001R', 'muid'), { ok: true, uid: 'M0K7Q-000001R' }, 'the old grouping is accepted and stored properly');
     assert.deepEqual(checkScannedUid(' MOK7Q-000001R ', 'muid'), { ok: true, uid: 'M0K7Q-000001R' }, 'O read as 0');
     let r = checkScannedUid('FB8E-1230042', 'muid');
-    assert.ok(!ok(r) && /NUID/.test(r.message) && /MUID/.test(r.message), 'a NUID is explained, not silently accepted');
+    assert.ok(!r.ok && /NUID/.test(r.message) && /MUID/.test(r.message), 'a NUID is explained, not silently accepted');
     r = checkScannedUid('M0K7Q000002R', 'muid');
-    assert.ok(!ok(r) && /mistyped|doesn't match/i.test(r.message), 'bad check character');
+    assert.ok(!r.ok && /mistyped|doesn't match/i.test(r.message), 'bad check character');
     r = checkScannedUid('hello', 'muid');
-    assert.ok(!ok(r) && /valid MUID/.test(r.message));
-    assert.ok(!ok(checkScannedUid('', 'muid')) && !ok(checkScannedUid(null, 'muid')) && !ok(checkScannedUid(undefined, 'nuid')));
+    assert.ok(!r.ok && /valid MUID/.test(r.message));
+    assert.ok(!checkScannedUid('', 'muid').ok && !checkScannedUid(null, 'muid').ok && !checkScannedUid(undefined, 'nuid').ok);
     // NUID script: unchanged, except a MUID is refused
     assert.deepEqual(checkScannedUid('FB8E-1230042', 'nuid'), { ok: true, uid: 'FB8E-1230042' });
     assert.deepEqual(checkScannedUid('FB8E-1230042'), { ok: true, uid: 'FB8E-1230042' }, 'default is nuid');
     assert.deepEqual(checkScannedUid('AB12-123', 'nuid'), { ok: true, uid: 'AB12-123' }, 'older codes are not newly rejected');
     r = checkScannedUid('M0K7Q000001R', 'nuid');
-    assert.ok(!ok(r) && /MUID/.test(r.message) && /NUID/.test(r.message));
+    assert.ok(!r.ok && /MUID/.test(r.message) && /NUID/.test(r.message));
     // Any (barcode printing)
     assert.deepEqual(checkScannedUid('M0K7Q000001R', 'any'), { ok: true, uid: 'M0K7Q-000001R' });
     assert.deepEqual(checkScannedUid('FB8E-1230042', 'any'), { ok: true, uid: 'FB8E-1230042' });
