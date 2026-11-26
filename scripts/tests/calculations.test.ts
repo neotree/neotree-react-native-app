@@ -22,7 +22,7 @@ assert.equal(math('DIVIDE($A,$B)', { A: 6, B: 3 }), 2);
 assert.equal(math('SUBTRACT($A,$B)', { A: 6, B: 3 }), 3);
 assert.equal(math('$A', { A: 5 }), 5);
 assert.ok(String(math('MATH($Missing + 1)', {})).startsWith('ERR:'), 'MATH still reports a missing value');
-assert.ok(String(math('MATH(eval("1"))', {})).startsWith('ERR:'), 'still no arbitrary functions');
+assert.ok(String(math('MATH(alert("1"))', {})).startsWith('ERR:'), 'any function outside the allowlist is rejected');
 assert.ok(String(math('MATH(process.exit())', {})).startsWith('ERR:'));
 
 // ---- More Math functions ---------------------------------------------------
@@ -80,7 +80,7 @@ assert.ok(date("DATE_ADD($LMPDate, 1, 'fortnights')", D).startsWith('ERR:'));
 assert.ok(date("DATE_ADD($LMPDate, 1)", D).startsWith('ERR:'));
 assert.ok(date("DATE_ADD($LMPDate, $Nope, 'days')", D).startsWith('ERR:'));
 assert.ok(date("DATE_ADD($LMPDate, 1, 'days') + 1", D).startsWith('ERR:'), 'trailing text rejected');
-assert.ok(date("DATE_ADD(eval(1), 1, 'days')", D).startsWith('ERR:'), 'no code');
+assert.ok(date("DATE_ADD(fetch(1), 1, 'days')", D).startsWith('ERR:'), 'no code');
 assert.ok(date("DATE_ADD($LMPDate, process.exit(), 'days')", D).startsWith('ERR:'), 'no code in the amount');
 // DATE_FIRST
 const F = "DATE_FIRST(DATE_ADD($DOBTOB, 280, 'days'), DATE_ADD(DATE_ADD($FALLBACKDATE, 7, 'days'), -3, 'months'))";
