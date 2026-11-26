@@ -18,7 +18,8 @@ import { logError } from '@/src/utils/logError';
 // user gets an actionable message instead of a dead-end retry loop.
 const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-const SIMPLE_QR_MAX_LENGTH = 12;
+// The longest direct ID: a MUID with its hyphen (M0K7Q-000001R). NUIDs are 12.
+const SIMPLE_QR_MAX_LENGTH = 13;
 const SCAN_TIMEOUT_MS = 30 * 1000;
 // MLKit's live codeScanner analyzes a resolution-capped stream (~720p-1080p
 // regardless of the device's actual sensor resolution), so a dense/high-version

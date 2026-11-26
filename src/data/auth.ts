@@ -1,6 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 
-import { makeApiCall } from './api';
+import { makeApiCall, REMOTE_PROBE_TIMEOUT_MS } from './api';
 import { dbTransaction } from './db';
 import { getAuthenticatedUser } from './queries';
 
@@ -14,8 +14,32 @@ export const checkEmailRegistration = async ({ email }: { email: string }) => {
 
     if (json?.errors) throw new Error(json.errors.map((e: any) => e?.message || e).join(', '));
 
+    if (json?.deactivated) throw new Error(DEACTIVATED_ACCOUNT_MESSAGE);
+
     return json;
 };
+
+export const DEACTIVATED_ACCOUNT_MESSAGE = 'This account has been deactivated. Please contact an administrator.';
+
+/**
+ * Asks the editor whether a signed-in user has been deactivated. Only a clear "yes" counts: no
+ * connection, an error or an unknown email must never sign anyone out.
+ */
+export async function isUserDeactivated(email?: string | null): Promise<boolean> {
+    if (!email) return false;
+    try {
+        const res = await makeApiCall(
+            'webeditor',
+            '/check-email-registration?email=' + encodeURIComponent(email),
+            {},
+            { useHost: true, timeout: REMOTE_PROBE_TIMEOUT_MS },
+        );
+        const json = await res.json();
+        return json?.deactivated === true;
+    } catch {
+        return false;
+    }
+}
 
 export const logout = () => new Promise((resolve, reject) => {
     (async () => {

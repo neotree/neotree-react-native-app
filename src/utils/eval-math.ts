@@ -1,10 +1,53 @@
 import * as types from '@/src/types';
 import { evaluateArithmetic } from '@/src/utils/safe-math';
+import { findEntry, getReferencedKeys, isEmptyValue, splitTopLevelArgs, unwrapCall } from '@/src/utils/calculation-utils';
+
+/** True when every $key the formula references has a usable number. */
+function hasAllNumbers(formula: string, values: types.ScreenEntryValue[]) {
+    return getReferencedKeys(formula).every(key => {
+        const entry = findEntry(values, key);
+        if (!entry) return false;
+        const raw = entry.type == 'period' ? entry.exportValue : entry.value;
+        return !isEmptyValue(raw) && Number.isFinite(Number(raw));
+    });
+}
+
+/**
+ * FIRST_OF(a, b, ...): the first option whose values are all present and that calculates
+ * without error. Options are ordinary formulas ($Key, SUM(...), MATH(...), ...), so each is
+ * evaluated by evalMath itself.
+ */
+function evaluateFirstOf(inner: string, values: types.ScreenEntryValue[]) {
+    const options = splitTopLevelArgs(inner).filter(Boolean);
+    if (options.length < 2) {
+        return { expresion: inner, result: null, error: 'FIRST_OF needs at least 2 options' };
+    }
+
+    for (const option of options) {
+        // A nested FIRST_OF chooses among its own options, so it needs no values up front.
+        if (unwrapCall(option, 'FIRST_OF') === null && !hasAllNumbers(option, values)) continue;
+        const attempt: any = evalMath(option, values);
+        if (attempt.result !== null && attempt.result !== undefined && !attempt.error && Number.isFinite(attempt.result)) {
+            return { expresion: attempt.expresion ?? attempt.expression, result: attempt.result as number, error: null };
+        }
+    }
+
+    return { expresion: inner, result: null, error: 'No option has a value' };
+}
 
 export function evalMath(
     condition = '',
     values: types.ScreenEntryValue[],
 ) {
+    condition = `${condition ?? ''}`.trim();
+
+    // A lone `$Key` is a valid calculation (the editor offers it) but the shorthand evaluator
+    // below only substitutes keys that sit next to an operator, so it used to fail.
+    if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(condition)) return evaluateFormula(`MATH(${condition})`, values);
+
+    const firstOf = unwrapCall(condition, 'FIRST_OF');
+    if (firstOf !== null) return evaluateFirstOf(firstOf, values);
+
     if (condition.match(/MATH\(([^)]+)\)/)) {
         return evaluateFormula(condition, values)
     }

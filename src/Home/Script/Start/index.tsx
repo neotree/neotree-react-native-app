@@ -2,6 +2,7 @@ import React, { Fragment, useState } from 'react';
 import { Alert, Keyboard, ScrollView } from 'react-native';
 
 import { useScriptContext } from '@/src/contexts/script';
+import { getScriptIdType } from '@/src/utils/script-id-type';
 import { hasBidStillBirthOutcomeOptions } from '@/src/utils/bid-stillbirth-outcome';
 import { getNuidSearchBehaviour } from '@/src/utils/nuid-search-role';
 import { Box, Button, Content, Text } from '../../../components';
@@ -24,13 +25,10 @@ export function Start() {
         screens,
         matched,
         setMatched,
-        script: {
-            type,
-            data: {
-                nuidSearchFields = [], 
-            },
-        }, 
+        script,
     } = useScriptContext();
+    const { type, data: { nuidSearchFields = [] } } = script;
+    const idType = getScriptIdType(script);
 
 
     const [keyboardIsOpen, setKeyboardIsOpen] = React.useState(false);
@@ -181,6 +179,7 @@ export function Start() {
                                     field={field}
                                     value={fields[i].value}
                                     script_type ={type}
+                                    idType={idType}
                                     onChange={value => {
                                         let results: types.NuidSearchResults | null = null;
 
