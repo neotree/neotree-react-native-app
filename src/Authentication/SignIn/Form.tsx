@@ -22,6 +22,16 @@ export function Form({ onSignInSuccess }: FormProps) {
 
 	const [submitting, setSubmitting] = React.useState(false);
 
+	// Back to the email step: forget the account that was looked up and everything typed after it.
+	const useDifferentEmail = React.useCallback(() => {
+		if (submitting) return;
+		setRegistration(null);
+		setPassword('');
+		setPassword2('');
+		setErrors([]);
+		setTimeout(() => emailInputRef.current?.focus(), 0);
+	}, [submitting]);
+
 	const submit = React.useCallback(async () => {
 		try {
 			if (!submitting) {
@@ -85,7 +95,15 @@ export function Form({ onSignInSuccess }: FormProps) {
 				placeholder="Email Address"
 				ref={emailInputRef}
 				value={email}
-				onChangeText={email => setEmail(email)}
+				onChangeText={email => {
+					setEmail(email);
+					// a different address is a different account: look it up again
+					if (registration) {
+						setRegistration(null);
+						setPassword('');
+						setPassword2('');
+					}
+				}}
 				keyboardType="email-address"
 				textContentType="username"
 				autoCapitalize="none"
@@ -144,6 +162,18 @@ export function Form({ onSignInSuccess }: FormProps) {
 			))}
 
 			<Br spacing='l' />
+
+			{!!registration && (
+				<>
+					<Button
+						variant="link"
+						onPress={useDifferentEmail}
+						disabled={submitting}
+					>Use a different email</Button>
+
+					<Br spacing='s' />
+				</>
+			)}
 
 			<Button
 				onPress={submit}

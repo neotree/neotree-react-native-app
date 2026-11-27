@@ -16,6 +16,9 @@ import { merge } from 'lodash'
 import * as types from '@/src/types';
 import * as api from '@/src/data';
 import { generateUID } from '@/src/utils/uid';
+import { getScriptIdType } from '@/src/utils/script-id-type';
+import { pickSessionUid } from '@/src/utils/session-uid';
+import { keepExistingScreens } from '@/src/utils/review-configurations';
 import { defaultPreferences } from '@/src/constants';
 import { Theme, Text, Box, Modal, Radio, useTheme } from '@/src/components';
 import { evaluateDrugsScreen } from '@/src/utils/evaluate-drugs-screen';
@@ -682,12 +685,15 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             f.results.useSearchedUidForSession === true
         ));
 
-        uid = searchedUID || uid;
-
-        if (requiresSearchedUID && !uid) {
-            throw new Error('This session requires the searched Neotree ID, but no Neotree ID was found. Please re-scan or re-enter the patient Neotree ID before continuing.');
-        }
-        uid = uid || (requiresSearchedUID ? '' : generatedUID);
+        // The script's ID type decides which candidate is usable (see utils/session-uid).
+        uid = pickSessionUid({
+            idType: getScriptIdType(script),
+            searchedUid: searchedUID,
+            entryUid: uid,
+            existingUid: route.params?.session?.uid,
+            generatedUid: generatedUID,
+            requiresSearchedUid: requiresSearchedUID,
+        });
         
         const neolabKeys = ['DateBCT', 'BCResult', 'Bac', 'CONS', 'EC', 'Ent', 'GBS', 'GDS', 'Kl', 'LFC', 'NLFC', 'OGN', 'OGP', 'Oth', 'Pseud', 'SA'];
     
@@ -802,7 +808,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             const drugsLibrary = await api.getDrugsLibrary();
 
 
-            const uid = await generateUID(script?.type);
+            const uid = await generateUID(script?.type, getScriptIdType(script));
             setGeneratedUID(uid);
             setScript(script);
             setScreens(screens);
@@ -810,7 +816,8 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
             setProblems(problems);
             setDrugsLibrary(drugsLibrary.map(d => d.data));
             setLoadingScript(false);
-            setReviewConfigurations(script?.data?.reviewConfigurations)
+            // Only entries for screens this tablet has: a screen deleted in the editor may still be named in an older sync.
+            setReviewConfigurations(keepExistingScreens(script?.data?.reviewConfigurations, screens))
             setShouldReview(script.data?.reviewable)
             if (route.params?.session?.data?.form?.length) {
                 const lastEntry = route.params.session.data.form[route.params.session.data.form.length - 1];

@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import moment from 'moment';
-import { Box, DatePicker } from '../../../../components';
+import { Box, DatePicker, Text } from '../../../../components';
 import * as types from '../../../../types';
 import { toLocalISOString } from '../../../../utils/toLocalISOString';
+import { DATE_RANGE, evalDateCalculation, isDateCalculation } from '../../../../utils/eval-date-calculation';
+import { isCalculatedDateField } from '../../../../utils/calculated-field';
 
 type DateFieldProps = types.ScreenFormTypeProps & {
 
@@ -89,9 +91,13 @@ export function DateField({
   editable,
 }: DateFieldProps) {
   const [mounted, setMounted] = useState(false);
+  // Set when a calculated date is out of range; cleared as soon as the date changes any other way.
+  const [calcError, setCalcError] = useState<string | null>(null);
   const [value, setValue] = useState<Date | null>(() => parseToDate(entryValue?.value));
   
   const canEdit = repeatable ? editable : true;
+  // A calculated date is shown but not editable: it follows the answers it is calculated from.
+  const isCalculated = isCalculatedDateField(field);
 
   // Calculate min/max dates from related fields
   const { minDate, maxDate } = useMemo(() => {
@@ -163,6 +169,7 @@ export function DateField({
     if (!conditionMet) {
       onChange({ value: null, valueText: null, exportType: 'date' });
       setValue(null);
+      setCalcError(null);
       return;
     }
 
@@ -245,26 +252,64 @@ export function DateField({
       };
 
       setValue(validDate);
-      
+      setCalcError(null);
+
       onChange(payload);
     },
     [field.label, field.type, getErrors, onChange]
   );
 
+  // Calculated dates (DATE_ADD / DATE_FIRST). Like calculated numbers, the value is recomputed
+  // when a value it depends on changes, and cannot be edited by hand (the field is disabled).
+  const calcSignature = React.useRef<string | null>(null);
+  useEffect(() => {
+    const calc = field.calculation;
+    if (!conditionMet || !calc || !isDateCalculation(calc)) return;
+
+    const lowerCalc = calc.toLowerCase();
+    const signature = JSON.stringify(
+      (allValues || [])
+        .filter(v => v.key && lowerCalc.includes(`$${v.key}`.toLowerCase()))
+        .map(v => [v.key, v.value]),
+    );
+    if (signature === calcSignature.current) return;
+    const isFirstRun = calcSignature.current === null;
+    calcSignature.current = signature;
+
+    const { result, outOfRange } = evalDateCalculation(calc, allValues || []);
+    if (outOfRange) {
+      // Do not store an absurd date. Say what is wrong and how to fix it.
+      const message =
+        `The calculated date (${moment(outOfRange).format('LL')}) is outside ${DATE_RANGE.minYear}-${DATE_RANGE.maxYear}. ` +
+        'Check the date this one is based on, or ask for the formula to be corrected in the editor.';
+      setValue(null);
+      onChange({ label: field.label, error: message, exportType: 'date' as const, value: null, valueText: null });
+      setCalcError(message);
+    } else if (result) {
+      handleDateChange(field.type === 'date' ? moment(result).startOf('day').toDate() : result);
+    } else if (!isFirstRun) {
+      // Its inputs were cleared or became invalid: clear the calculated date too.
+      handleDateChange(null);
+    }
+  }, [allValues, conditionMet, field.calculation, field.type, handleDateChange]);
+
   return (
     <Box>
       <DatePicker
-        errors={getErrors(entryValue?.value || null)}
+        errors={[...getErrors(entryValue?.value || null), ...(calcError ? [calcError] : [])]}
         mode={field.type === 'date' ? 'date' : 'datetime'}
         value={value}
         valueText={entryValue?.valueText || undefined}
-        disabled={!conditionMet || !canEdit}
+        disabled={!conditionMet || !canEdit || isCalculated}
         label={`${field.label}${field.optional ? '' : ' *'}`}
         fieldKey={field.key}
         onChange={handleDateChange}
         maxDate={maxDate || field.maxDate}
         minDate={minDate || field.minDate}
       />
+      {isCalculated && (
+        <Text variant="caption" color="textSecondary">Calculated from your other answers</Text>
+      )}
     </Box>
   );
 }

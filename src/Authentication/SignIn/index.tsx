@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator } from 'react-native';
 import { Box, Br, Text, useTheme, Button  } from "../../components";
 import { Form } from './Form';
-import { syncData } from '../../data';
+import { getApplication, getAuthenticatedUser, syncData } from '../../data';
 import { useAppContext } from '../../AppContext';
 import { logError } from '@/src/utils/logError';
 
@@ -20,6 +20,15 @@ export function SignIn({ onSignIn }: SignInProps) {
 			try {
 				setLoggedIn(true);
 				setInitialiseDataFailed(false);
+				const [user, app] = await Promise.all([getAuthenticatedUser(), getApplication()]);
+				if (user && app?.webeditor_info?.version) {
+					setSyncDataResponse?.({ authenticatedUser: user, application: app, last_sync_date: app.last_sync_date });
+					onSignIn();
+					syncData()
+						.then(res => setSyncDataResponse?.(res))
+						.catch(e => logError('SignIn.backgroundSync', e));
+					return;
+				}
 				const res = await syncData();
 				setSyncDataResponse &&setSyncDataResponse(res);
 				onSignIn();
@@ -28,7 +37,7 @@ export function SignIn({ onSignIn }: SignInProps) {
 				setInitialiseDataFailed(true); 
 			}
 		})();
-	}, []);
+	}, [onSignIn, setSyncDataResponse]);
 
 	return (
 		<>

@@ -258,7 +258,7 @@ export function decompressDataFromQRCode(compressedData: Uint8Array): string {
       return '';
     }
 
-    const decompressed = pako.inflate(compressedData, { to: 'string' });
+    const decompressed = pako.inflate(compressedData, { toText: true });
 
     if (typeof decompressed !== 'string') {
       logError('hl7Like.decompressDataFromQRCode', 'Decompression did not produce a string');
@@ -876,7 +876,7 @@ export function decodeOptimisedData(encodedStr: string): string {
 
     // ===== 3. Decompress with pako.inflate =====
     const compressedData = new Uint8Array(byteArray);
-    const decompressed = pako.inflate(compressedData, { to: 'string' });
+    const decompressed = pako.inflate(compressedData, { toText: true });
 
     if (!decompressed || typeof decompressed !== 'string') {
       throw new Error('Decompression failed or returned invalid data');

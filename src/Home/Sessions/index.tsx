@@ -10,7 +10,7 @@ import { Box, Text, Modal, DatePicker, Br, Radio, Content, Card, OverlayLoader, 
 import exportData from './export';
 import { Session } from './Session';
 import { dateRangeError, filterSessionsByDateRange, SessionDateField } from '../../utils/sessionDateRange';
-import { formatNeotreeIDInput, NEOTREE_ID_MAX_LENGTH } from '../../utils/neotreeId';
+import { formatNeotreeIDInput, NEOTREE_ID_MAX_LENGTH, normaliseUidSearch } from '../../utils/neotreeId';
 import { getSessionScriptTitle, getSessionUID } from '../../utils/sessionFields';
 import { logError } from '@/src/utils/logError';
 
@@ -971,7 +971,7 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
     const runSearch = async (value: string) => {
         // A half-typed id ends in the separator the field inserts for the user;
         // searching for it would never match.
-        const trimmed = (value || '').trim().replace(/-+$/, '');
+        const trimmed = normaliseUidSearch(value);
 
         // Only the newest search may write results. Without this, a slow reply
         // for an earlier keystroke can land after a later one and wipe out the

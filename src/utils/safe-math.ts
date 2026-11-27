@@ -8,7 +8,8 @@
  * "Math.floor|Math.round", and expr-eval 2.0.2 has an unpatched code-execution flaw.
  *
  * The grammar here is exactly what a formula needs and nothing else:
- *   numbers, + - * / % **, unary - and +, parentheses, Math.floor(x), Math.round(x).
+ *   numbers, + - * / % **, unary - and +, parentheses and the pure Math functions in
+ *   FUNCTIONS below (floor, round, ceil, trunc, abs, sqrt, pow, min, max).
  * There are no identifiers, no property access and no other functions, so a formula can
  * produce a wrong number but never run code. Precedence and associativity follow
  * JavaScript, which is what `new Function` used; as in JavaScript, `-2 ** 2` without
@@ -24,9 +25,18 @@ type Token = { kind: 'num'; value: number } | { kind: 'punct'; value: string } |
 // was a syntax error under `new Function`, and reading it as `5 - -3` would quietly
 // change what an existing formula produces.
 const PUNCTUATION = ['**', '--', '++', '+', '-', '*', '/', '%', '(', ')', ','];
-const FUNCTIONS: Record<string, (x: number) => number> = {
-    'Math.floor': Math.floor,
-    'Math.round': Math.round,
+// name -> [min args, max args, implementation]. Must stay in step with the editor's
+// MATH_FUNCTIONS (neotree-editor/lib/conditional-expression/calculation.ts).
+const FUNCTIONS: Record<string, [number, number, (...args: number[]) => number]> = {
+    'Math.floor': [1, 1, Math.floor],
+    'Math.round': [1, 1, Math.round],
+    'Math.ceil': [1, 1, Math.ceil],
+    'Math.trunc': [1, 1, Math.trunc],
+    'Math.abs': [1, 1, Math.abs],
+    'Math.sqrt': [1, 1, Math.sqrt],
+    'Math.pow': [2, 2, Math.pow],
+    'Math.min': [1, Infinity, Math.min],
+    'Math.max': [1, Infinity, Math.max],
 };
 
 /**
@@ -164,10 +174,18 @@ class Parser {
         if (token.kind === 'num') return token.value;
 
         if (token.kind === 'fn') {
+            const [min, max, fn] = FUNCTIONS[token.value];
             this.expect('(');
-            const argument = this.additive();
+            const args: number[] = [this.additive()];
+            while (this.atPunct(',')) {
+                this.pos += 1;
+                args.push(this.additive());
+            }
             this.expect(')');
-            return FUNCTIONS[token.value](argument);
+            if (args.length < min || args.length > max) {
+                throw new MathSyntaxError(`${token.value} takes ${min === max ? min : `${min} or more`} value(s)`);
+            }
+            return fn(...args);
         }
 
         if (token.value === '(') {
