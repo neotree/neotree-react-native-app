@@ -34,6 +34,7 @@ export const fieldsTypes = {
     TEXT: 'text',
     TIME: 'time',
     MULTI_SELECT: 'multi_select',
+    FRACTION: 'fraction',
 };
 
 export const screenTypes = {
@@ -65,4 +66,11 @@ export const scriptPrintConfig = {
     headerFields: [] as string[],
     footerFields: [] as string[],
     sections: [] as any[],
+    /** Set in the editor's Print config (NEOAPP-1575); unset prints portrait. */
+    orientation: undefined as 'portrait' | 'landscape' | undefined,
 };
+
+/** The page orientation a session prints in (the script's print setting; portrait by default). */
+export function getSessionPrintOrientation(session: any): 'portrait' | 'landscape' {
+    return session?.data?.script?.data?.printConfig?.orientation === 'landscape' ? 'landscape' : 'portrait';
+}

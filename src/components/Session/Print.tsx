@@ -8,6 +8,7 @@ import { useTheme } from "../Theme";
 import { OverlayLoader } from "../OverlayLoader";
 import { getSessionPrintBlockMessage, isSessionPrintable } from "./printEligibility";
 import { PrintBlockedDialog } from "./PrintBlockedDialog";
+import { getSessionPrintOrientation } from "@/src/constants";
 
 type PrintSessionProps = {
     session: any;
@@ -35,7 +36,10 @@ export function PrintSession({ session, showConfidential }: PrintSessionProps) {
             //Avoid Double Trigger By Only Triggering formToHTML is no sections available
             if (!html) html =  await formToHTML(session, showConfidential);
 
-            await ExpoPrint.printAsync({ html, height: 1122, });
+            const landscape = getSessionPrintOrientation(session) === 'landscape';
+            await ExpoPrint.printAsync(landscape
+                ? { html, width: 1122, height: 794, orientation: ExpoPrint.Orientation.landscape, }
+                : { html, height: 1122, });
         } catch (e: any) {
             setPrintingError(e);
         } finally {

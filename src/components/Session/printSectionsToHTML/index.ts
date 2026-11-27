@@ -3,6 +3,8 @@ import { ScreenEntryValue } from '@/src/types';
 import { formatValueWithUnit } from '@/src/utils/units';
 import { getAdaptiveQRErrorCorrection, getQRPrintWidth, QR_QUIET_ZONE_MODULES, QR_EXTRA_TOP_LEFT_PADDING_PX } from '@/src/utils/qr-encoding-metrics';
 import { getBaseHTML } from "./baseHTML";
+import { combineFractionDisplayValues } from '@/src/utils/fraction-values';
+import { getEntryTable, tableToHTML } from '@/src/utils/screen-table';
 import { toHL7Like } from '../../../data/hl7Like'
 import { formatExportableSession } from '../../../data/getConvertedSession'
 
@@ -132,8 +134,8 @@ export async function printSectionsToHTML({
                   `;
         }
 
-        // Handle regular values
-        const valuesHTML: string = values
+        // Handle regular values (a fraction's two numbers printed as one "120 / 80")
+        const valuesHTML: string = combineFractionDisplayValues(values)
           .filter((e: any) => e.confidential ? showConfidential : true)
           .filter((v: any) => v.valueText || v.value)
           .filter((e: any) => e.printable !== false)
@@ -215,13 +217,24 @@ export async function printSectionsToHTML({
             `;
           }).join('');
 
-        // Handle repeatables
-        const repeatablesHTML: string = repeatables
+        // Handle repeatables (a table prints as a table)
+        const table = getEntryTable({ screen, repeatables });
+        const repeatablesHTML: string = table
+          ? tableToHTML(table, {
+            title: table.config?.title || screenMeta?.label,
+            isVisible: (v: any) => (!v?.confidential || !!showConfidential) && v?.printable !== false,
+          })
+          : repeatables
           ? (Object.entries(repeatables) as [string, any[]][]).map(([_, groupItems]) => {
             return groupItems.map((item: any, groupIndex: number) => {
-              const repeatableFields: string = Object.entries(item)
-                .filter(([, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
-                .map(([k, v]: [string, any], itemIndex: number) => {
+              const itemValues = combineFractionDisplayValues(
+                Object.entries(item)
+                  .filter(([, v]: [string, any]) => typeof v === 'object' && v?.value !== undefined)
+                  .map(([k, v]: [string, any]) => ({ ...v, key: k }))
+              );
+              const repeatableFields: string = itemValues
+                .map((v: any, itemIndex: number) => {
+                  const k = v.key;
                   let value: string = v.valueText || v.value || 'N/A'
                   let index: string = ''
                   

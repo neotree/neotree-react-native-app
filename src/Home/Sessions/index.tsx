@@ -1,4 +1,5 @@
 import React from 'react';
+import { getFractionLabels, getFractionStorageKeys, isFractionType } from '@/src/utils/fraction-values';
 import { useIsFocused } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Platform, TouchableOpacity, FlatList, View } from "react-native";
 import Icon from '@expo/vector-icons/MaterialIcons';
@@ -247,6 +248,11 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
                 prePopulate: entry.prePopulate || fieldDef?.prePopulate || [],
                 confidential: fieldDef?.confidential,
                 comments: entry.comments || [],
+                ...(!fieldDef?.fractionKey ? {} : {
+                    fractionKey: fieldDef.fractionKey,
+                    fractionPart: fieldDef.fractionPart,
+                    fractionLabel: fieldDef.fractionLabel,
+                }),
             };
         };
 
@@ -266,7 +272,24 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
         if (screens.length) {
             screens.forEach((screen) => {
                 const metadata = screen?.data?.metadata || {};
-                const fields = (metadata.fields || []).map((f: any) => ({ ...f, _source: 'field' }));
+                // A fraction field is stored as two numbers, each under a key of its own.
+                const fields = (metadata.fields || []).flatMap((f: any) => {
+                    if (!isFractionType(f?.type)) return [{ ...f, _source: 'field' }];
+                    const { numeratorKey, denominatorKey } = getFractionStorageKeys(f.key);
+                    const { numeratorLabel, denominatorLabel } = getFractionLabels(f);
+                    const part = (key: string, fractionPart: 'numerator' | 'denominator', partLabel: string) => ({
+                        ...f,
+                        key,
+                        label: `${f.label || f.key} (${partLabel})`,
+                        type: 'number',
+                        dataType: 'number',
+                        fractionKey: f.key,
+                        fractionPart,
+                        fractionLabel: f.label || f.key,
+                        _source: 'field',
+                    });
+                    return [part(numeratorKey, 'numerator', numeratorLabel), part(denominatorKey, 'denominator', denominatorLabel)];
+                });
                 const items = (metadata.items || []).map((f: any) => ({ ...f, _source: 'item' }));
                 const defs = [...fields, ...items];
 
@@ -334,10 +357,20 @@ export function Sessions({ navigation }: types.StackNavigationProps<types.HomeRo
                     }
                 }
 
-                const repeatableGroup =
+                let repeatableGroup =
                     metadata?.repeatable && metadata?.collectionName
                         ? repeatables?.[metadata.collectionName]
                         : null;
+                if (metadata?.tableConfig && Array.isArray(repeatableGroup)) {
+                    repeatableGroup = repeatableGroup.map((row: any) => Object.fromEntries(
+                        Object.entries(row || {}).map(([k, v]: [string, any]) => [
+                            k,
+                            v && typeof v === 'object' && !Array.isArray(v) && v.valueText === undefined && v.label !== undefined
+                                ? { ...v, valueText: v.label }
+                                : v,
+                        ]),
+                    ));
+                }
 
                 pushScreenEntry(screen, values, repeatableGroup);
             });

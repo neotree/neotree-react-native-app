@@ -27,7 +27,11 @@ import { DropDownField } from './_DropDown';
 import { PeriodField } from './_Period';
 import { TimeField } from './_Time';
 import { MultiSelectField } from './_MultiSelect';
+import { FractionField } from './_Fraction';
 import Repeatable from './Repeatable';
+import TableForm from './Table';
+import { buildFractionFieldValue, collapseFractionValue, expandFractionValues, getFractionStorageKeys } from '@/src/utils/fraction-values';
+import { getScreenTableConfig } from '@/src/utils/screen-table';
 
 type TypeFormProps = types.ScreenTypeProps & {};
 const EMPTY_VALUES: types.ScreenEntry['values'] = [];
@@ -51,6 +55,8 @@ const getFieldComponent = (normalizedFieldType: string): FieldComponent | null =
             return TimeField;
         case fieldsTypes.MULTI_SELECT:
             return MultiSelectField;
+        case fieldsTypes.FRACTION:
+            return FractionField;
         default:
             return null;
     }
@@ -327,6 +333,29 @@ export function TypeForm(_: TypeFormProps) {
                 }
             }
 
+            if (normalizedFieldType === fieldsTypes.FRACTION) {
+                // What this session holds, else what an earlier session holds (prepopulation).
+                const { numeratorKey, denominatorKey } = getFractionStorageKeys(f.key);
+                const prepopulated = !shouldAutoPopulate ? {} : getPrepopulationData(f.prePopulate);
+                const fromEarlier = collapseFractionValue(f, {
+                    [numeratorKey]: { value: (prepopulated[numeratorKey]?.values?.value || [])[0] },
+                    [denominatorKey]: { value: (prepopulated[denominatorKey]?.values?.value || [])[0] },
+                });
+                const fraction = collapseFractionValue(f, cachedValuesByKey)
+                    || fromEarlier
+                    || buildFractionFieldValue(f, '', '');
+                return {
+                    ...fraction,
+                    printable: f.printable !== false,
+                    confidential: f.confidential,
+                    prePopulate: f.prePopulate,
+                    editable: f.editable,
+                    ips: f.ips,
+                    dataType: f.dataType,
+                    printDisplayColumns: f.printDisplayColumns || activeScreen?.data?.printDisplayColumns,
+                };
+            }
+
             return {
                 printable: f.printable !== false,
                 value,
@@ -411,9 +440,12 @@ export function TypeForm(_: TypeFormProps) {
 
     const liveEntryScreen = React.useMemo(() => ({ id: activeScreen?.id }), [activeScreen?.id]);
 
+    // What conditions see: the values as they are stored, so `$BP_numerator` works on this screen too.
+    const conditionValues = React.useMemo(() => expandFractionValues(values), [values]);
+
     const evaluateFieldCondition = React.useCallback((f: any, form?: any) => {
         let conditionMet = true;
-        let formatedvalues = values;
+        let formatedvalues = conditionValues;
         let isRepeatableRow = false;
         if (repeatable) {
             if (form) {
@@ -432,7 +464,7 @@ export function TypeForm(_: TypeFormProps) {
         }
 
         return conditionMet;
-    }, [evaluateCondition, liveEntryScreen, moveKeysInside, parseCondition, repeatable, values]);
+    }, [conditionValues, evaluateCondition, liveEntryScreen, moveKeysInside, parseCondition, repeatable]);
 
     const handleRepeatablesChange = React.useCallback((data: Record<string, Repeatable[]>) => {
         try {
@@ -574,7 +606,7 @@ export function TypeForm(_: TypeFormProps) {
 
         const parts: string[] = [];
 
-        values.forEach(v => {
+        conditionValues.forEach(v => {
             const key = `${v?.key || ''}`.toLowerCase();
             const key2 = `${v?.key2 || ''}`.toLowerCase();
 
@@ -601,7 +633,7 @@ export function TypeForm(_: TypeFormProps) {
         });
 
         return parts.join('|');
-    }, [conditionDependencyKeys, values]);
+    }, [conditionDependencyKeys, conditionValues]);
 
     const conditionMetByKey = React.useMemo(() => {
         const map = new Map<string, boolean>();
@@ -614,7 +646,7 @@ export function TypeForm(_: TypeFormProps) {
 
     const fieldsForRender = React.useMemo(() => (
         applyOptionConditions(metadata?.fields || [], (condition: string) => (
-            evaluateCondition(parseCondition(condition, [{ screen: liveEntryScreen, values } as any])) as boolean
+            evaluateCondition(parseCondition(condition, [{ screen: liveEntryScreen, values: conditionValues } as any])) as boolean
         ))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [metadata?.fields, conditionValuesSignature, configuration, liveEntryScreen]);
@@ -662,7 +694,7 @@ export function TypeForm(_: TypeFormProps) {
             return undefined;
         }
 
-        return values.filter((v, i) => {
+        return expandFractionValues(values.filter((v, i) => {
             if (entryValsToRemove.includes(i)) return false;
 
             return (
@@ -670,7 +702,7 @@ export function TypeForm(_: TypeFormProps) {
                 && v?.value !== undefined
                 && v?.value !== ''
             );
-        });
+        }));
     }, [conditionMetByKey, metadata.fields, normalizeFieldType, repeatable, values]);
 
     React.useEffect(() => {
@@ -717,6 +749,23 @@ export function TypeForm(_: TypeFormProps) {
             })}
         </Box>
     );
+
+    const tableConfig = React.useMemo(() => getScreenTableConfig(metadata), [metadata]);
+
+    if (repeatable && tableConfig) {
+        return (
+            <TableForm
+                config={tableConfig}
+                collectionName={collectionName}
+                fields={fieldsForRender}
+                onChange={handleRepeatablesChange}
+                evaluateCondition={evaluateFieldCondition}
+                allValues={allValues}
+                allRepeatableValues={repeatableValues}
+                required={!activeScreen?.data?.skippable}
+            />
+        );
+    }
 
     return (
         repeatable ? <Repeatable collectionName={collectionName}

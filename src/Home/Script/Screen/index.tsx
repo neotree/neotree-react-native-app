@@ -3,6 +3,7 @@ import React from 'react';
 import { useScriptContext } from '@/src/contexts/script';
 import { Box, Content, Fab, Text, TextInput, OverlayLoader } from '@/src/components';
 import { ScreenType } from './ScreenType';
+import { getScreenTableConfig, isTableComplete } from '@/src/utils/screen-table';
 
 export function Screen() {
     const [searchVal, setSearchVal] = React.useState('');
@@ -26,7 +27,16 @@ export function Screen() {
 
     React.useEffect(()=>{
         
-        if(metadata?.repeatable){
+        const tableConfig = getScreenTableConfig(metadata);
+
+        if (tableConfig) {
+            // A table is done when its rows meet the row limits and every row is complete;
+            // an untouched table only when the screen can be skipped.
+            const groups = activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value || {};
+            const rows = groups?.[metadata?.collectionName] || [];
+            setRepeatableComplete(rows.length ? isTableComplete(tableConfig, rows) : !!skippable);
+        }
+        else if(metadata?.repeatable){
             if(skippable && !activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
                 if(!activeScreenEntry?.values?.find(v => v.key === "repeatables")?.value){
                     setRepeatableComplete(true)

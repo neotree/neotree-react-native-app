@@ -4,6 +4,7 @@ import * as api from '../../../data';
 import moment from 'moment';
 import { ASYNC_STORAGE_KEYS } from '../../../constants/async-storage';
 import { logError, logWarning } from '@/src/utils/logError';
+import { buildCollectionSheets } from '@/src/utils/csv-collections';
 
 export interface FileExportOutcome {
   /** Sessions written to the file(s). */
@@ -234,8 +235,20 @@ export function exportCSV(opts: any = {}) {
                 }).filter((e: any) => e);
         
                 const wbout = toCsv(data, keys);
-        
-                resolve([fileUri, wbout]);
+
+                // Tables and repeatable forms: one CSV per collection, one line per row.
+                const collections = (scriptsFields[scriptId] || [])
+                  .map((s: any) => s?.collection)
+                  .filter(Boolean);
+                const collectionFiles = await Promise.all(
+                  buildCollectionSheets(json[scriptId], collections).map(async (sheet) => {
+                    const collectionFileName = `${getDate()}-${scriptTitle.replace(/[^a-zA-Z0-9]/gi, '_')}-${sheet.collectionName.replace(/[^a-zA-Z0-9]/gi, '_')}.csv`;
+                    const collectionUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri, collectionFileName, 'text/csv');
+                    return [collectionUri, toCsv(sheet.rows, sheet.columns)];
+                  }),
+                );
+
+                resolve([[fileUri, wbout], ...collectionFiles]);
               } catch (e) {
                 logError('csvExport.sheetGeneration', e, {
                   scriptId,
@@ -247,8 +260,9 @@ export function exportCSV(opts: any = {}) {
             })();
           })));
     
-          if (sheets.length) {
-            await Promise.all(sheets.map(([fileUri, wbout]: any) => new Promise((resolve, reject) => {
+          const files = (sheets as any[]).flat();
+          if (files.length) {
+            await Promise.all(files.map(([fileUri, wbout]: any) => new Promise((resolve, reject) => {
               (async () => {
                 try {
                   await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: FileSystem.EncodingType.UTF8 });

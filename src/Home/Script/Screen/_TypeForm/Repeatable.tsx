@@ -8,6 +8,8 @@ import { DropDownField } from './_DropDown';
 import { PeriodField, dateToValueText } from './_Period';
 import { TimeField } from './_Time';
 import { MultiSelectField } from './_MultiSelect';
+import { FractionField } from './_Fraction';
+import { collapseFractionValue, expandFractionValue, getFractionStorageKeys, isFractionType } from '@/src/utils/fraction-values';
 import { fieldsTypes } from '../../../../constants';
 import { normalizeDateLikeValue } from '@/src/utils/date-value-normalization';
 import { formatDate } from '@/src/utils/formatDate';
@@ -68,7 +70,16 @@ const Repeatable = ({
         if (!allRepeatableValues?.length) return [];
 
         return allRepeatableValues.flatMap((item, index) => {
-            const { createdAt, id, ...dynamicFields } = item;
+            const { createdAt, id, ...storedFields } = item;
+            // A fraction is stored as its two numbers; the form edits it as one value.
+            const dynamicFields: Record<string, any> = { ...storedFields };
+            fields.filter(f => isFractionType(f?.type)).forEach(f => {
+                const { numeratorKey, denominatorKey } = getFractionStorageKeys(f.key);
+                const collapsed = collapseFractionValue(f, storedFields);
+                delete dynamicFields[numeratorKey];
+                delete dynamicFields[denominatorKey];
+                if (collapsed) dynamicFields[f.key] = collapsed;
+            });
             const values: Record<string, any> = transformToFullFieldObject({ ...dynamicFields });
 
             const collectionFieldValue = values?.[collectionField];
@@ -294,8 +305,19 @@ const Repeatable = ({
             .map(({ values, id, createdAt, requiredComplete, hasCollectionField }) => ({ ...values, id, createdAt, requiredComplete, hasCollectionField }));
 
         const formatted = completedForms?.map(cf => {
-
-            return cleanNumericKeys(cf)
+            // Store each fraction as its two numbers (<key>_numerator, <key>_denominator).
+            const stored: Record<string, any> = { ...cf };
+            fields.filter(f => isFractionType(f?.type)).forEach(f => {
+                const value = stored[f.key];
+                delete stored[f.key];
+                const { numeratorKey, denominatorKey } = getFractionStorageKeys(f.key);
+                const parts = value && typeof value === 'object'
+                    ? expandFractionValue({ ...value, key: f.key, label: f.label, unit: f.unit })
+                    : [];
+                stored[numeratorKey] = parts.find(p => p.key === numeratorKey) || null;
+                stored[denominatorKey] = parts.find(p => p.key === denominatorKey) || null;
+            });
+            return cleanNumericKeys(stored)
         })
 
         onChange({ [collectionName]: formatted }, collectionName);
@@ -548,6 +570,8 @@ const Repeatable = ({
                 return <TimeField key={componentKey} {...fieldProps} />;
             case fieldsTypes.MULTI_SELECT:
                 return <MultiSelectField key={componentKey} {...fieldProps} />;
+            case fieldsTypes.FRACTION:
+                return <FractionField key={componentKey} {...fieldProps} />;
             default:
                 return null;
         }

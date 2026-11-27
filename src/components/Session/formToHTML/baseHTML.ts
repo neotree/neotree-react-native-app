@@ -1,7 +1,8 @@
 import moment from 'moment';
 
 import { ScreenEntry } from '@/src/types';
-import { scriptPrintConfig } from '@/src/constants';
+import { getSessionPrintOrientation, scriptPrintConfig } from '@/src/constants';
+import { combineFractionDisplayValues } from '@/src/utils/fraction-values';
 
 export default (html: any, session: any) => {
   const { completed_at, canceled_at, script, form, dateAndTimeOfDeath, } = session.data;
@@ -17,6 +18,8 @@ export default (html: any, session: any) => {
   form.forEach((e: ScreenEntry) => {
     let values = Array.isArray(e.value) ? e.value : (e.value ? [e.value] : []);
     values = Array.isArray(e.values) ? e.values : (e.values ? [e.values] : []);
+    // a fraction header field ([BP]) shows its two numbers as "120 / 80"
+    values = combineFractionDisplayValues(values);
 
     values
       .filter(v => printConfig.headerFields.includes(v.key))
@@ -128,7 +131,7 @@ export default (html: any, session: any) => {
         }
 
         @page {
-          size: A4;
+          size: A4 ${getSessionPrintOrientation(session)};
           margin: 11mm 0;
         }
 

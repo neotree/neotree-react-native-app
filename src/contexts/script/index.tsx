@@ -1,3 +1,4 @@
+import { describeTableColumns, getScreenTableConfig } from '@/src/utils/screen-table';
 import {
     createContext,
     useContext,
@@ -1148,6 +1149,7 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
 
         if (values) {
             const screenMeta = activeScreen.data.metadata;
+            const tableConfig = getScreenTableConfig(screenMeta);
             setEntry({
                 values,
                 prePopulate: activeScreen?.data?.prePopulate,
@@ -1178,6 +1180,12 @@ function useScriptContextValue(props: ScriptContextProviderProps) {
                         title3: screenMeta.title3,
                         text3: screenMeta.text3,
                         image3: screenMeta.image3,
+                        // A table keeps its layout so summaries and print can show it as a table.
+                        ...(!tableConfig ? {} : {
+                            collectionName: screenMeta.collectionName,
+                            tableConfig,
+                            tableColumns: describeTableColumns(screenMeta.fields || []),
+                        }),
                     },
                     index: activeScreenIndex,
                 },

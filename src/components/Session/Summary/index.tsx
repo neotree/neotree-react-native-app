@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { ScreenEntryValue } from '@/src/types';
 import { Box, Text } from "../../Theme";
 import { Confidentials } from "./Confidentials";
+import { TableSummary } from "./TableSummary";
 import { ManagementScreen } from '../../ManagementScreen';
 import groupEntries from '../formToHTML/groupEntries';
 import { Content, } from "../../Content";
@@ -86,9 +87,24 @@ export function Summary({
                                 .map(({
                                     values,
                                     management = [],
+                                    table,
                                     screen: { metadata = {}, listStyle: _listStyle = 'none', type: screenType }
                                 }: any, entryIndex: number) => {
                                     const { label } = metadata;
+
+                                    if (table) {
+                                        return (
+                                            <TableSummary
+                                                key={entryIndex}
+                                                table={table}
+                                                title={table.config?.title || label}
+                                                isVisible={(v: any) => (
+                                                    (!v?.confidential || !!showConfidential) &&
+                                                    (showNonPrintable || v?.printable !== false)
+                                                )}
+                                            />
+                                        );
+                                    }
                                     management = management?.filter((s: any) => form.map((e: any) => e.screen.screen_id).includes(s.screen_id));
 
                                     const nodes = values

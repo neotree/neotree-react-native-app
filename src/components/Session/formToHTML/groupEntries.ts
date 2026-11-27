@@ -1,4 +1,6 @@
 import ucFirst from '../../../utils/ucFirst';
+import { combineFractionDisplayValues } from '../../../utils/fraction-values';
+import { getEntryTable } from '../../../utils/screen-table';
 
 type Repeatables = {
   [key: string]: Record<string, any>[];
@@ -30,8 +32,8 @@ export default function groupEntries(form: any[]) {
           sectionIndex = sections.length - 1;
         }
 
-        // Push normal values if any
-        const filteredValues = values.filter((v: any) => {
+        // Push normal values if any (a fraction's two numbers shown as one "120 / 80")
+        const filteredValues = combineFractionDisplayValues(values).filter((v: any) => {
           if (screenType === 'diagnosis') {
             return v.diagnosis?.how_agree !== 'No';
           }
@@ -45,16 +47,31 @@ export default function groupEntries(form: any[]) {
           sections[sectionIndex][1].push({ ...entry, values: filteredValues });
         }
 
+        // A table is shown as one table, not one block per row.
+        const table = getEntryTable(entry);
+        if (table) {
+          if (table.rows.length) {
+            sections[sectionIndex][1].push({
+              ...entry,
+              // one placeholder value so the usual "has values" checks keep the entry
+              values: [{ key: '__table', value: true, printable: true }],
+              isRepeatable: true,
+              table,
+            });
+          }
+          return;
+        }
+
         // Push repeatables as individual entries
         const repeatablesTyped = repeatables as Repeatables;
         Object.entries(repeatablesTyped).forEach(([repeatKey, repeatItems]) => {
           repeatItems.forEach((repeatEntry, i) => {
             const subSectionEntry = {
               ...entry,
-              values: Object.entries(repeatEntry).map(([key, val]) => ({
+              values: combineFractionDisplayValues(Object.entries(repeatEntry).map(([key, val]) => ({
                 key,
                 ...val,
-              })),
+              }))),
               isRepeatable: true,
               repeatKey,
               repeatIndex: i,

@@ -1,4 +1,5 @@
 import { APP_VERSION } from '@/src/constants';
+import { fieldStorageKeys, screenCollectionColumns } from '@/src/utils/csv-collections';
 import * as types from '../types';
 import { dbTransaction } from './db';
 import {
@@ -525,15 +526,22 @@ export const getScriptsFields = () => new Promise((resolve, reject) => {
                             [script.script_id]: screens.map(screen => {
                                 const metadata = { ...screen.data.metadata };
                                 const fields = metadata.fields || [];
+                                const collection = screenCollectionColumns(metadata);
                                 return {
                                     screen_id: screen.screen_id,
                                     script_id: screen.script_id,
                                     screen_type: screen.type,
+                                    // a table's or repeatable form's rows (exported to a CSV of their own)
+                                    collection,
                                     keys: (() => {
                                         let keys = [];
                                         switch (screen.type) {
                                             case 'form':
-                                                keys = fields.map((f: any) => f.key);
+                                                // A table's columns live in its rows, never on the session line.
+                                                // A fraction is stored as its two numbers.
+                                                keys = metadata.tableConfig && collection
+                                                    ? []
+                                                    : fields.flatMap(fieldStorageKeys);
                                                 break;
                                             default:
                                                 keys.push(metadata.key);

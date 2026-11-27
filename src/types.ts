@@ -216,6 +216,16 @@ export type ScreenEntryValue = {
   comments?: { key?: string; label: string; }[];
   listStyle?: 'none' | 'number' | 'bullet';
   score?: number;
+  /** Fraction field being filled in: its two numbers (stored as <key>_numerator / <key>_denominator). */
+  numerator?: string | null;
+  denominator?: string | null;
+  numeratorLabel?: string;
+  denominatorLabel?: string;
+  /** Stored fraction number: the fraction field it belongs to and which number it is. */
+  fractionKey?: string;
+  fractionPart?: 'numerator' | 'denominator';
+  fractionLabel?: string;
+  fractionText?: string;
 };
 
 export type ScreenEntry = {

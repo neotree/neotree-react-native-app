@@ -6,6 +6,7 @@ import { formatValueWithUnit } from '@/src/utils/units';
 import { getAdaptiveQRErrorCorrection, getQRPrintWidth, QR_QUIET_ZONE_MODULES, QR_EXTRA_TOP_LEFT_PADDING_PX } from '@/src/utils/qr-encoding-metrics';
 import baseHTML from './baseHTML';
 import groupEntries from './groupEntries';
+import { tableToHTML } from '../../../utils/screen-table';
 import { reportErrors } from '../../../data/api';
 import { formatExportableSession } from '../../../data/getConvertedSession'
 import { toHL7Like } from '../../../data/hl7Like'
@@ -139,6 +140,7 @@ export default async (session: any, showConfidential?: boolean) => {
         ${entries.filter((e: any) => e.values.length)
           .map(({
             values,
+            table,
             // management, 
             screen: {
               metadata: { label },
@@ -148,6 +150,13 @@ export default async (session: any, showConfidential?: boolean) => {
             }
           }: any) => {
             // management = management || [];
+
+            if (table) {
+              return tableToHTML(table, {
+                title: table.config?.title || label,
+                isVisible: (v: any) => (!v?.confidential || !!showConfidential) && v?.printable !== false,
+              });
+            }
 
             const valuesHTML = values
               .filter((e: any) => e.confidential ? showConfidential : true)
